@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+        name="description"
+        content="Interactive GCSE maths lessons for grades 1 to 9."
+    >
+
+    <title>Maths1to9 | Interactive GCSE maths lessons</title>
+
+    <link
+        rel="preload"
+        href="./assets/fonts/Nunito-Variable.woff2"
+        as="font"
+        type="font/woff2"
+        crossorigin
+    >
+    <link rel="stylesheet" href="./assets/css/app.css">
+    <link rel="stylesheet" href="./assets/css/home.css">
+</head>
+
+<body class="home-page">
+    <header class="home-header">
+        <div class="home-header__inner">
+            <a class="home-brand" href="./" aria-label="Maths1to9 home">
+                <span class="home-brand__mark" aria-hidden="true">1–9</span>
+                <span>Maths1to9</span>
+            </a>
+
+            <div class="home-header__right">
+                <span class="home-header__label">GCSE maths · Grades 1–9</span>
+                <a class="cta-button" href="#catalogue">Start learning</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="home-hero" aria-labelledby="page-title">
+            <div class="home-shell home-hero__inner">
+                <div>
+                    <p class="home-eyebrow">Learn by doing</p>
+                    <h1 id="page-title">
+                        Master GCSE maths, <em>one idea</em> at a time.
+                    </h1>
+                    <p class="home-hero__copy">
+                        Visual explanations, guided methods and practice that
+                        responds to your answers. No sign-up, no fuss — just
+                        pick a lesson and start.
+                    </p>
+
+                    <div class="home-hero__actions">
+                        <a class="cta-button" href="#catalogue">Start learning</a>
+                        <a class="cta-button cta-button--ghost" href="#catalogue">Browse topics</a>
+                    </div>
+
+                    <div class="home-hero__meta" aria-label="Course summary">
+                        <span>11 interactive lessons</span>
+                        <span>Grades 1–9</span>
+                        <span>Free to explore</span>
+                    </div>
+                </div>
+
+                <div class="hero-tiles" aria-hidden="true">
+                    <span class="hero-tile" style="--tile: var(--topic-number); --tilt: -5deg; --delay: 0s;">½</span>
+                    <span class="hero-tile hero-tile--fill" style="--tile: var(--topic-algebra); --tilt: 3deg; --delay: 0.6s;">x²</span>
+                    <span class="hero-tile" style="--tile: var(--topic-graphs); --tilt: -2deg; --delay: 1.2s;">y=</span>
+                    <span class="hero-tile hero-tile--fill" style="--tile: var(--topic-ratio); --tilt: 4deg; --delay: 1.8s;">a:b</span>
+                    <span class="hero-tile" style="--tile: var(--topic-geometry); --tilt: -4deg; --delay: 2.4s;">△</span>
+                    <span class="hero-tile hero-tile--fill" style="--tile: var(--topic-statistics); --tilt: 2deg; --delay: 3s;">%</span>
+                    <span class="hero-tile" style="--tile: var(--topic-ratio); --tilt: 3deg; --delay: 3.6s;">π</span>
+                    <span class="hero-tile hero-tile--fill" style="--tile: var(--topic-number); --tilt: -3deg; --delay: 4.2s;">÷</span>
+                    <span class="hero-tile" style="--tile: var(--topic-algebra); --tilt: 5deg; --delay: 4.8s;">√</span>
+                </div>
+            </div>
+        </section>
+
+        <section
+            class="daily-review"
+            data-daily-review
+            aria-labelledby="daily-review-title"
+            hidden
+        >
+            <div class="home-shell">
+                <div class="daily-review__head">
+                    <h2 id="daily-review-title">Daily Review</h2>
+                    <p>
+                        A quick second look at skills you had secure about
+                        a week ago.
+                    </p>
+                </div>
+
+                <div
+                    class="lesson-list daily-review__list"
+                    data-daily-review-list
+                ></div>
+
+                <p
+                    class="daily-review__empty"
+                    data-daily-review-empty
+                    hidden
+                >
+                    You’re up to date — nothing to review today.
+                </p>
+            </div>
+        </section>
+
+        <div id="catalogue" class="home-shell home-layout">
+                            <nav class="category-nav" aria-label="Lesson categories">
+                    <p class="category-nav__title">Topics</p>
+                    <div class="category-nav__links">
+                                                                                <a
+                                href="#number"
+                                style="--topic: var(--topic-number);"
+                            >
+                                <span>Number</span>
+                                <span aria-label="4 lessons">
+                                    4                                </span>
+                            </a>
+                                                                                <a
+                                href="#algebra"
+                                style="--topic: var(--topic-algebra);"
+                            >
+                                <span>Algebra</span>
+                                <span aria-label="6 lessons">
+                                    6                                </span>
+                            </a>
+                                                                                <a
+                                href="#ratio-proportion-and-rates-of-change"
+                                style="--topic: var(--topic-ratio);"
+                            >
+                                <span>Ratio, proportion and rates of change</span>
+                                <span aria-label="0 lessons">
+                                    0                                </span>
+                            </a>
+                                                                                <a
+                                href="#geometry-and-measures"
+                                style="--topic: var(--topic-geometry);"
+                            >
+                                <span>Geometry and measures</span>
+                                <span aria-label="0 lessons">
+                                    0                                </span>
+                            </a>
+                                                                                <a
+                                href="#probability"
+                                style="--topic: var(--topic-statistics);"
+                            >
+                                <span>Probability</span>
+                                <span aria-label="0 lessons">
+                                    0                                </span>
+                            </a>
+                                                                                <a
+                                href="#statistics"
+                                style="--topic: var(--topic-statistics);"
+                            >
+                                <span>Statistics</span>
+                                <span aria-label="1 lessons">
+                                    1                                </span>
+                            </a>
+                                            </div>
+                </nav>
+            
+            <div class="lesson-catalogue">
+                                                                                    <section
+                            id="number"
+                            class="lesson-category"
+                            style="--topic: var(--topic-number);"
+                            aria-labelledby="category-title-0"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    ÷                                </span>
+
+                                <div>
+                                    <h2 id="category-title-0">
+                                        Number                                    </h2>
+
+                                                                            <p>Build confidence with numbers, calculations, fractions and accuracy.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <div class="lesson-list">
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/place-value/"
+                                                                                            data-skills="place-value,order-numbers,inequality-symbols"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    ÷                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Place value                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    See how a digit&#039;s position changes its value.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/negative-numbers/"
+                                                                                            data-skills="order-negative-numbers,calculate-negative-numbers"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    ÷                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Negative numbers                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Compare them, move on a number line, and calculate with them.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/order-of-operations/"
+                                                                                            data-skills="order-of-operations,inverse-operations"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    ÷                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Order of operations                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Use BIDMAS to decide which operation to complete first.                                                </span>
+                                            </span>
+
+                                                                                            <span class="lesson-card__meta">
+                                                                                                            <span>Grades 1–4</span>
+                                                    
+                                                                                                            <span>20 min</span>
+                                                                                                    </span>
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/simplifying%20fractions/"
+                                                                                            data-skills="equivalent-fractions,simplify-fractions"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    ÷                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Equivalent and simplifying fractions                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Split or merge the pieces. The amount stays the same.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                    </div>
+                                                    </section>
+                                                                    <section
+                            id="algebra"
+                            class="lesson-category"
+                            style="--topic: var(--topic-algebra);"
+                            aria-labelledby="category-title-1"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    x²                                </span>
+
+                                <div>
+                                    <h2 id="category-title-1">
+                                        Algebra                                    </h2>
+
+                                                                            <p>Use symbols, expressions, equations, graphs and sequences to solve problems.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <div class="lesson-list">
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/algebraic-expressions/"
+                                                                                            data-skills="use-algebraic-notation,write-expressions"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Writing algebraic expressions                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Use a letter for a number you do not know yet. Then follow what happens to it.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/substituting-into-formulae/"
+                                                                                            data-skills="substitute-expressions,substitute-formulae"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Substituting into formulae                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    One formula, many values. Swap the letter for its number, then calculate.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/simplifying-expressions/"
+                                                                                            data-skills="collect-like-terms,simplify-products-powers"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Simplifying expressions                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Collecting like terms                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/function-machines-find-the-input-2/"
+                                                                                            data-skills="function-input-output,reverse-function-machines"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Function machines: find the input                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Start at the output and work backwards.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/solving-linear-equations/"
+                                                                                            data-skills="solve-one-step-equations,solve-two-step-equations,solve-equations-with-brackets"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Solving linear equations                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Undo one operation at a time to find the unknown.                                                </span>
+                                            </span>
+
+                                                                                            <span class="lesson-card__meta">
+                                                                                                            <span>Grades 2–4</span>
+                                                    
+                                                                                                            <span>20 min</span>
+                                                                                                    </span>
+                                                                                    </a>
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/solving-quadratic-equations/"
+                                                                                            data-skills="solve-quadratics-factorising"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    x²                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Solving quadratic equations by factorising                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Factorise a quadratic, use the zero product rule and find both solutions.                                                </span>
+                                            </span>
+
+                                                                                            <span class="lesson-card__meta">
+                                                                                                            <span>Grades 4–5</span>
+                                                    
+                                                                                                            <span>25 min</span>
+                                                                                                    </span>
+                                                                                    </a>
+                                                                    </div>
+                                                    </section>
+                                                                    <section
+                            id="ratio-proportion-and-rates-of-change"
+                            class="lesson-category"
+                            style="--topic: var(--topic-ratio);"
+                            aria-labelledby="category-title-2"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    a:b                                </span>
+
+                                <div>
+                                    <h2 id="category-title-2">
+                                        Ratio, proportion and rates of change                                    </h2>
+
+                                                                            <p>Compare quantities and work with proportional change, percentages and rates.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <p class="lesson-category__empty">
+                                    Lessons coming soon — check back shortly.
+                                </p>
+                                                    </section>
+                                                                    <section
+                            id="geometry-and-measures"
+                            class="lesson-category"
+                            style="--topic: var(--topic-geometry);"
+                            aria-labelledby="category-title-3"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    △                                </span>
+
+                                <div>
+                                    <h2 id="category-title-3">
+                                        Geometry and measures                                    </h2>
+
+                                                                            <p>Explore shape, space, angles, constructions and measurement.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <p class="lesson-category__empty">
+                                    Lessons coming soon — check back shortly.
+                                </p>
+                                                    </section>
+                                                                    <section
+                            id="probability"
+                            class="lesson-category"
+                            style="--topic: var(--topic-statistics);"
+                            aria-labelledby="category-title-4"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    P                                </span>
+
+                                <div>
+                                    <h2 id="category-title-4">
+                                        Probability                                    </h2>
+
+                                                                            <p>Describe chance and calculate the likelihood of single and combined events.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <p class="lesson-category__empty">
+                                    Lessons coming soon — check back shortly.
+                                </p>
+                                                    </section>
+                                                                    <section
+                            id="statistics"
+                            class="lesson-category"
+                            style="--topic: var(--topic-statistics);"
+                            aria-labelledby="category-title-5"
+                        >
+                            <header class="lesson-category__header">
+                                <span class="lesson-category__icon" aria-hidden="true">
+                                    %                                </span>
+
+                                <div>
+                                    <h2 id="category-title-5">
+                                        Statistics                                    </h2>
+
+                                                                            <p>Collect, represent, analyse and compare data.</p>
+                                                                    </div>
+                            </header>
+
+                                                            <div class="lesson-list">
+                                                                            <a
+                                            class="lesson-card"
+                                            href="content/pie-charts/"
+                                                                                            data-skills="interpret-pie-charts,construct-pie-charts"
+                                                                                    >
+                                            <span class="lesson-card__top">
+                                                <span class="lesson-card__glyph" aria-hidden="true">
+                                                    %                                                </span>
+                                                <span class="lesson-card__arrow" aria-hidden="true">→</span>
+                                            </span>
+
+                                            <span class="lesson-card__content">
+                                                <span class="lesson-card__title">
+                                                    Pie charts                                                </span>
+                                                <span class="lesson-card__subtitle">
+                                                    Read pie charts and turn frequencies into angles.                                                </span>
+                                            </span>
+
+                                                                                    </a>
+                                                                    </div>
+                                                    </section>
+                                                </div>
+        </div>
+    </main>
+
+    <footer class="home-footer">
+        <div class="home-shell">
+            <p>
+                <span class="home-brand__mark" aria-hidden="true">1–9</span>
+                Maths1to9
+            </p>
+            <p>Interactive GCSE maths for grades 1–9.</p>
+        </div>
+    </footer>
+    <script src="./assets/js/progress.js" defer></script>
+    <script src="./assets/js/home-progress.js" defer></script>
+</body>
+</html>

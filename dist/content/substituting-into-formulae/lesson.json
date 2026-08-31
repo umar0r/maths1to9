@@ -1,0 +1,242 @@
+{
+  "id": "substituting-into-formulae-01",
+  "slug": "substituting-into-formulae",
+  "title": "Substituting into formulae",
+  "subtitle": "One formula, many values. Swap the letter for its number, then calculate.",
+  "assessment": {
+    "question_types": {
+      "replace-values": "substitute-formulae"
+    }
+  },
+  "section_order": [
+    "explanation",
+    "method",
+    "interactive",
+    "worked-examples",
+    "question-bank"
+  ],
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "One rule, used again and again",
+    "paragraphs": [
+      "A cinema ticket costs £5, plus £2 for each snack. One friend wants 2 snacks. Another wants 4. Do you need a new price rule for each friend?",
+      "No. One rule covers everyone: C = 5 + 2s. This rule is a formula. The letter s stands for the number of snacks.",
+      "A letter in a formula is a placeholder. It holds a space for a number.",
+      "When you know the number, you swap the letter for it. This swap is called substitution.",
+      "After the swap, no letters are left. The formula has become a calculation. For s = 4, C = 5 + 2s becomes C = 5 + 2 × 4."
+    ],
+    "key_points": [
+      "A number next to a letter means multiply: 2s means 2 × s.",
+      "Replace every copy of the letter.",
+      "Keep powers and brackets exactly where they are.",
+      "Put a negative value inside brackets."
+    ]
+  },
+  "method": {
+    "eyebrow": "Method",
+    "title": "Find → Replace → Calculate → Check",
+    "steps": [
+      {
+        "title": "Find",
+        "text": "Write down each letter and the value you are given for it."
+      },
+      {
+        "title": "Replace",
+        "text": "Rewrite the formula with every letter swapped for its value. Write × where a number meets a letter. Put brackets around any negative value."
+      },
+      {
+        "title": "Calculate",
+        "text": "Work through it using BIDMAS: powers first, then multiply and divide, then add and subtract. Show one line of working at a time."
+      },
+      {
+        "title": "Check",
+        "text": "Confirm every letter is gone. Add the unit to your answer if the question uses one."
+      }
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Use the method",
+    "intro": "Substitute s = 4 into C = 5 + 2s. Each step asks for one decision. A wrong choice tells you why it is wrong."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "One letter",
+      "title": "Use C = 6 + 4h when h = 3",
+      "method_steps": [
+        {
+          "title": "Find",
+          "line": "h = 3"
+        },
+        {
+          "title": "Replace",
+          "line": "C = 6 + 4 × 3"
+        },
+        {
+          "title": "Calculate",
+          "lines": [
+            "C = 6 + 12",
+            "C = 18"
+          ]
+        },
+        {
+          "title": "Check",
+          "line": "The cost is £18."
+        }
+      ],
+      "mistakes_to_watch": [
+        {
+          "wrong": "C = 6 + 43",
+          "reason": "4h means 4 multiplied by h.",
+          "correct": "C = 6 + 4 × 3"
+        }
+      ],
+      "answer": "The cost is £18."
+    },
+    {
+      "eyebrow": "Two letters",
+      "title": "Use P = 2l + 2w when l = 7 and w = 4",
+      "method_steps": [
+        {
+          "title": "Find",
+          "line": "l = 7 and w = 4"
+        },
+        {
+          "title": "Replace",
+          "line": "P = 2 × 7 + 2 × 4"
+        },
+        {
+          "title": "Calculate",
+          "lines": [
+            "P = 14 + 8",
+            "P = 22"
+          ]
+        },
+        {
+          "title": "Check",
+          "line": "P = 22 cm"
+        }
+      ],
+      "mistakes_to_watch": [
+        {
+          "wrong": "P = 2 × 7 + 2w",
+          "reason": "Both letters have been given values, so both must be replaced.",
+          "correct": "P = 2 × 7 + 2 × 4"
+        },
+        {
+          "wrong": "P = 22 cm²",
+          "reason": "Perimeter is a length, so the unit is cm.",
+          "correct": "P = 22 cm"
+        }
+      ],
+      "answer": "P = 22 cm"
+    },
+    {
+      "eyebrow": "Repeated letter",
+      "title": "Use y = x² + 3x when x = 4",
+      "method_steps": [
+        {
+          "title": "Find",
+          "line": "x = 4"
+        },
+        {
+          "title": "Replace",
+          "line": "y = 4² + 3 × 4"
+        },
+        {
+          "title": "Calculate",
+          "lines": [
+            "y = 16 + 12",
+            "y = 28"
+          ]
+        },
+        {
+          "title": "Check",
+          "line": "Both copies of x have been replaced."
+        }
+      ],
+      "mistakes_to_watch": [
+        {
+          "wrong": "y = 4² + 3x",
+          "reason": "The second copy of x was not replaced.",
+          "correct": "y = 4² + 3 × 4"
+        },
+        {
+          "wrong": "y = 4 + 12",
+          "reason": "x² becomes 4², not 4.",
+          "correct": "y = 16 + 12"
+        }
+      ],
+      "answer": "y = 28"
+    },
+    {
+      "eyebrow": "Negative value",
+      "title": "Use m = 3n + 7 when n = −2",
+      "method_steps": [
+        {
+          "title": "Find",
+          "line": "n = −2"
+        },
+        {
+          "title": "Replace",
+          "line": "m = 3 × (−2) + 7"
+        },
+        {
+          "title": "Calculate",
+          "lines": [
+            "m = −6 + 7",
+            "m = 1"
+          ]
+        },
+        {
+          "title": "Check",
+          "line": "The negative value stayed inside brackets."
+        }
+      ],
+      "mistakes_to_watch": [
+        {
+          "wrong": "m = 3 × 2 + 7",
+          "reason": "The negative sign was lost.",
+          "correct": "m = 3 × (−2) + 7"
+        }
+      ],
+      "answer": "m = 1"
+    },
+    {
+      "eyebrow": "Division",
+      "title": "Use v = d ÷ t when d = 150 and t = 3",
+      "method_steps": [
+        {
+          "title": "Find",
+          "line": "d = 150 and t = 3"
+        },
+        {
+          "title": "Replace",
+          "line": "v = 150 ÷ 3"
+        },
+        {
+          "title": "Calculate",
+          "line": "v = 50"
+        },
+        {
+          "title": "Check",
+          "line": "v = 50 miles per hour"
+        }
+      ],
+      "mistakes_to_watch": [
+        {
+          "wrong": "v = 3 ÷ 150",
+          "reason": "Keep the values in the same positions as the letters in the formula.",
+          "correct": "v = 150 ÷ 3"
+        }
+      ],
+      "answer": "v = 50 miles per hour"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Practice",
+    "title": "Practise substitution",
+    "intro": "The questions get harder as you go: one letter first, then two letters, repeated letters, powers, brackets, negative values and division.",
+    "completion_target": 8
+  }
+}

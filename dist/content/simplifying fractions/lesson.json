@@ -1,0 +1,100 @@
+{
+  "id": "equivalent-simplifying-fractions-01",
+  "slug": "equivalent-simplifying-fractions",
+  "title": "Equivalent and simplifying fractions",
+  "subtitle": "Split or merge the pieces. The amount stays the same.",
+  "assessment": {
+    "question_types": {
+      "equivalentGap": "equivalent-fractions",
+      "reverseGap": "equivalent-fractions",
+      "spotEquivalent": "equivalent-fractions",
+      "shadedFraction": "equivalent-fractions",
+      "equalOrNot": "equivalent-fractions",
+      "simplifyOneStep": "simplify-fractions",
+      "simplifyFully": "simplify-fractions",
+      "fullySimplified": "simplify-fractions",
+      "validDivisor": "simplify-fractions",
+      "spotTheMistake": "simplify-fractions"
+    }
+  },
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "Same amount, different pieces",
+    "paragraphs": [
+      "Use the diagrams to split and merge equal pieces."
+    ]
+  },
+  "method": {
+    "eyebrow": "Method",
+    "title": "Find → Divide top → Divide bottom → Repeat",
+    "steps": [
+      {
+        "title": "Find",
+        "text": "Choose a whole number greater than 1 that divides both numbers."
+      },
+      {
+        "title": "Divide the top",
+        "text": "Divide the numerator by the number you chose."
+      },
+      {
+        "title": "Divide the bottom",
+        "text": "Divide the denominator by the same number."
+      },
+      {
+        "title": "Repeat",
+        "text": "Keep going until no whole number greater than 1 divides both numbers."
+      }
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Simplify the fraction",
+    "intro": "The support is removed one step at a time. Use the fraction bars to see what each division does."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1",
+      "title": "Simplify 15/20 in one step",
+      "steps": [
+        "15 and 20 both divide by 5.",
+        "15 ÷ 5 = 3 and 20 ÷ 5 = 4.",
+        "3/4 cannot be simplified again."
+      ],
+      "answer": "15/20 = 3/4"
+    },
+    {
+      "eyebrow": "Worked example 2",
+      "title": "Simplify 18/24 in more than one step",
+      "steps": [
+        "Divide both numbers by 2 to get 9/12.",
+        "9/12 is not finished because 9 and 12 both divide by 3.",
+        "Divide both numbers by 3 to get 3/4."
+      ],
+      "answer": "18/24 = 9/12 = 3/4"
+    },
+    {
+      "eyebrow": "Worked example 3",
+      "title": "Check 5/7",
+      "steps": [
+        "No whole number greater than 1 divides both 5 and 7.",
+        "The fraction is already fully simplified."
+      ],
+      "answer": "5/7 stays as 5/7"
+    },
+    {
+      "eyebrow": "Common mistake",
+      "title": "Do not subtract from both numbers",
+      "steps": [
+        "Subtracting 1 changes 6/10 into 5/9, which is a different value.",
+        "To simplify, divide both numbers by the same number.",
+        "6 and 10 both divide by 2."
+      ],
+      "answer": "6/10 = 3/5"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Practice",
+    "title": "Practise equivalent and simplifying fractions",
+    "intro": "Answer one question at a time. Simplify fully and check that the numerator and denominator have no common divisor greater than 1."
+  }
+}

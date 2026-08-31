@@ -31,12 +31,11 @@ $pageTitle = 'Solving quadratic equations';
     <link rel="stylesheet" href="../../assets/css/app.css">
 
     <!-- Lesson-specific styles -->
-    <link rel="stylesheet" href="./app.css">
 
     <!-- KaTeX -->
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+        href="../../vendor/katex/katex.min.css"
     >
 </head>
 
@@ -80,10 +79,10 @@ $pageTitle = 'Solving quadratic equations';
     <script src="../../assets/js/progress.js"></script>
 
     <!-- Maths rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script src="../../vendor/katex/katex.min.js"></script>
 
     <!-- Animation -->
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+    <script src="../../vendor/gsap/gsap.min.js"></script>
 
     <!-- Lesson-specific behaviour -->
     <script src="./questions.js?v=10"></script>

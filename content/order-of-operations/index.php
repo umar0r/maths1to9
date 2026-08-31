@@ -28,7 +28,6 @@ $pageTitle = 'Order of operations';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css">
-    <link rel="stylesheet" href="./app.css">
 </head>
 
 <body

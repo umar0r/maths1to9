@@ -1,0 +1,150 @@
+{
+  "schema_version": 2,
+  "title": "Maths1to9 GCSE Mathematics",
+  "route": "foundation",
+  "categories": [
+    {
+      "id": "number",
+      "title": "Number",
+      "description": "Build confidence with numbers, calculations, fractions and accuracy.",
+      "lessons": [
+        {"folder":"place-value","title":"Place value and ordering","subtitle":"Understand what each digit is worth and put numbers in order.","skills":["place-value","order-numbers","inequality-symbols"]},
+        {"folder":"negative-numbers","title":"Negative numbers","subtitle":"Order and calculate with numbers below zero.","skills":["order-negative-numbers","calculate-negative-numbers"]},
+        {"folder":"calculating-with-decimals","title":"Calculating with decimals","subtitle":"Use the four operations accurately with decimal numbers.","skills":["decimal-add-subtract","decimal-multiply-divide"]},
+        {"folder":"order-of-operations","title":"Order of operations","subtitle":"Choose the correct calculation to do next.","skills":["order-of-operations","inverse-operations"]},
+        {"folder":"rounding-and-significant-figures","title":"Rounding and significant figures","subtitle":"Round numbers to a requested degree of accuracy.","skills":["round-decimal-places","round-significant-figures","round-in-context"]},
+        {"folder":"estimation","title":"Estimation","subtitle":"Use rounded values to predict and check an answer.","skills":["estimate-calculations","check-with-estimation"]},
+        {"folder":"truncation-and-error-intervals","title":"Truncation and error intervals","subtitle":"Describe the possible values hidden by rounding or truncation.","skills":["understand-truncation","write-error-intervals","limits-of-accuracy"]},
+        {"folder":"fractions-introduction","title":"Understanding fractions","subtitle":"Interpret, compare and order fractions.","skills":["interpret-fractions","compare-fractions","mixed-and-improper-fractions"]},
+        {"folder":"simplifying fractions","title":"Equivalent and simplifying fractions","subtitle":"Split or merge the pieces. The amount stays the same.","skills":["equivalent-fractions","simplify-fractions"]},
+        {"folder":"fractions-of-amounts","title":"Fractions of amounts","subtitle":"Use a fraction as an instruction on an amount.","skills":["unit-fractions-of-amounts","fractions-of-amounts"]},
+        {"folder":"adding-and-subtracting-fractions","title":"Adding and subtracting fractions","subtitle":"Build common denominators before combining fractions.","skills":["add-subtract-same-denominator","add-subtract-different-denominators","add-subtract-mixed-numbers"]},
+        {"folder":"multiplying-and-dividing-fractions","title":"Multiplying and dividing fractions","subtitle":"Multiply straight across or use the reciprocal to divide.","skills":["multiply-fractions","divide-fractions"]},
+        {"folder":"fractions-decimals-percentages","title":"Fractions, decimals and percentages","subtitle":"Write the same value in three different forms.","skills":["fraction-decimal-conversion","decimal-percentage-conversion","fraction-percentage-conversion"]},
+        {"folder":"powers-roots-and-indices","title":"Powers, roots and indices","subtitle":"Read, recognise and calculate powers and roots.","skills":["positive-integer-powers","square-cube-roots","recognise-power-sequences"]},
+        {"folder":"laws-of-indices","title":"Laws of indices","subtitle":"Use index laws to simplify and calculate.","skills":["multiply-divide-indices","power-of-a-power","zero-and-negative-indices"]},
+        {"folder":"factors-multiples-and-primes","title":"Factors, multiples and primes","subtitle":"Recognise how whole numbers are built and related.","skills":["factors-and-multiples","prime-numbers","common-factors-multiples"]},
+        {"folder":"prime-factor-decomposition","title":"Prime factor decomposition","subtitle":"Write a number as a product of prime factors.","skills":["prime-factor-decomposition","prime-factor-index-form"]},
+        {"folder":"hcf-and-lcm","title":"Highest common factor and lowest common multiple","subtitle":"Use common prime factors to find the HCF and LCM.","skills":["find-hcf","find-lcm","hcf-lcm-problems"]},
+        {"folder":"standard-form","title":"Standard form","subtitle":"Write, compare and calculate with very large and small numbers.","skills":["write-standard-form","compare-standard-form","calculate-standard-form","calculator-standard-form"]}
+      ]
+    },
+    {
+      "id": "algebra",
+      "title": "Algebra",
+      "description": "Use symbols, expressions, equations, graphs and sequences to solve problems.",
+      "lessons": [
+        {"folder":"algebraic-expressions","title":"Writing algebraic expressions","subtitle":"Use a letter for an unknown number and follow what happens to it.","skills":["use-algebraic-notation","write-expressions"]},
+        {"folder":"substituting-into-formulae","title":"Substitution","subtitle":"Replace letters with numbers and calculate the result.","skills":["substitute-expressions","substitute-formulae"]},
+        {"folder":"terms-and-expressions","title":"Terms and expressions","subtitle":"Recognise terms, coefficients, factors and constants.","skills":["algebra-vocabulary","expression-equation-formula"]},
+        {"folder":"simplifying-expressions","title":"Simplifying expressions","subtitle":"Collect like terms and simplify products and powers.","skills":["collect-like-terms","simplify-products-powers"]},
+        {"folder":"equations-and-identities","title":"Equations and identities","subtitle":"Tell equations, identities, formulae and expressions apart.","skills":["equations-vs-identities","show-equivalent-expressions"]},
+        {"folder":"function-machines-find-the-input-2","title":"Function machines","subtitle":"Follow inputs through operations to find outputs and missing inputs.","skills":["function-input-output","reverse-function-machines"]},
+        {"folder":"solving-linear-equations","title":"Solving linear equations","subtitle":"Undo operations to find an unknown value.","skills":["solve-one-step-equations","solve-two-step-equations","solve-equations-with-brackets"]},
+        {"folder":"unknowns-on-both-sides","title":"Unknowns on both sides","subtitle":"Collect unknown terms before solving the equation.","skills":["solve-unknown-both-sides"]},
+        {"folder":"writing-and-solving-equations","title":"Writing and solving equations","subtitle":"Turn a situation into an equation and interpret the answer.","skills":["form-equations","solve-context-equations"]},
+        {"folder":"rearranging-formulae","title":"Rearranging formulae","subtitle":"Change which letter is isolated in a formula.","skills":["rearrange-formulae"]},
+        {"folder":"expanding-and-factorising-single-brackets","title":"Single brackets","subtitle":"Expand a bracket or reverse the process by factorising.","skills":["expand-single-bracket","factorise-single-bracket"]},
+        {"folder":"expanding-double-brackets","title":"Expanding two brackets","subtitle":"Multiply every term in one bracket by every term in the other.","skills":["expand-two-binomials"]},
+        {"folder":"factorising-quadratics","title":"Factorising quadratic expressions","subtitle":"Reverse an expansion to write a quadratic as two brackets.","skills":["factorise-monic-quadratics","difference-of-two-squares"]},
+        {"folder":"solving-quadratic-equations","title":"Solving quadratic equations","subtitle":"Factorise a quadratic and use the zero-product rule.","skills":["solve-quadratics-factorising"]},
+        {"folder":"simultaneous-equations","title":"Simultaneous equations","subtitle":"Find values that make two linear equations true together.","skills":["simultaneous-elimination","simultaneous-substitution","form-simultaneous-equations"]},
+        {"folder":"linear-inequalities","title":"Linear inequalities","subtitle":"Solve inequalities and show their solutions on a number line.","skills":["inequality-notation","solve-linear-inequalities","inequalities-number-line"]},
+        {"folder":"coordinates-and-linear-graphs","title":"Coordinates and linear graphs","subtitle":"Plot coordinates and draw straight-line graphs from equations.","skills":["coordinates-four-quadrants","plot-linear-graphs"]},
+        {"folder":"gradient-and-intercept","title":"Gradient and intercept","subtitle":"Read a line's steepness and where it crosses the axis.","skills":["interpret-gradient","interpret-intercept","calculate-gradient"]},
+        {"folder":"equations-of-straight-lines","title":"Equations of straight lines","subtitle":"Use y = mx + c to describe and compare straight lines.","skills":["use-y-mx-c","parallel-lines","equation-line-from-information"]},
+        {"folder":"quadratic-cubic-reciprocal-graphs","title":"Non-linear graphs","subtitle":"Recognise and interpret quadratic, cubic and reciprocal graphs.","skills":["quadratic-graphs","cubic-reciprocal-graphs"]},
+        {"folder":"solutions-from-graphs","title":"Solutions from graphs","subtitle":"Use intersections and roots to find approximate solutions.","skills":["graphical-solutions-linear","graphical-solutions-quadratic"]},
+        {"folder":"real-life-and-kinematic-graphs","title":"Real-life and kinematic graphs","subtitle":"Interpret changing quantities from graphs in context.","skills":["real-context-graphs","kinematic-graphs"]},
+        {"folder":"sequences","title":"Generating and recognising sequences","subtitle":"Continue sequences from term-to-term and position rules.","skills":["generate-sequences","recognise-special-sequences"]},
+        {"folder":"nth-term","title":"The nth term","subtitle":"Use and find position-to-term rules for linear sequences.","skills":["use-nth-term","find-linear-nth-term"]}
+      ]
+    },
+    {
+      "id": "ratio-proportion-and-rates-of-change",
+      "title": "Ratio, proportion and rates of change",
+      "description": "Compare quantities and work with proportional change, percentages and rates.",
+      "lessons": [
+        {"folder":"ratio-basics","title":"Understanding and simplifying ratio","subtitle":"Describe multiplicative comparisons and write ratios simply.","skills":["ratio-notation","simplify-ratios","ratio-as-fraction"]},
+        {"folder":"sharing-in-a-ratio","title":"Sharing in a ratio","subtitle":"Use the total number of parts to divide an amount fairly.","skills":["share-part-part-ratio","share-part-whole-ratio"]},
+        {"folder":"ratio-problems","title":"Solving ratio problems","subtitle":"Use ratio to compare, scale, mix and find missing amounts.","skills":["ratio-missing-amounts","ratio-contexts","best-buys"]},
+        {"folder":"proportion-and-unitary-method","title":"Proportion and the unitary method","subtitle":"Find the value of one unit, then scale to what is needed.","skills":["equality-of-ratios","unitary-method","proportion-contexts"]},
+        {"folder":"percentages-of-amounts","title":"Percentages of amounts","subtitle":"Find common and non-calculator percentages of quantities.","skills":["percentage-as-operator","percentage-of-amount"]},
+        {"folder":"percentage-change","title":"Percentage change","subtitle":"Calculate and interpret percentage increases and decreases.","skills":["percentage-increase-decrease","express-change-percentage"]},
+        {"folder":"percentage-multipliers","title":"Percentage multipliers","subtitle":"Use one multiplication to apply percentage change.","skills":["decimal-multipliers","repeated-percentage-change"]},
+        {"folder":"reverse-percentages","title":"Reverse percentages","subtitle":"Work backwards from a changed amount to the original.","skills":["original-value-percentages"]},
+        {"folder":"growth-decay-and-interest","title":"Growth, decay and interest","subtitle":"Model repeated percentage change over time.","skills":["simple-interest","compound-growth-decay"]},
+        {"folder":"direct-proportion","title":"Direct proportion","subtitle":"Recognise and solve relationships that scale together.","skills":["direct-proportion-numerical","direct-proportion-algebraic","direct-proportion-graphs"]},
+        {"folder":"inverse-proportion","title":"Inverse proportion","subtitle":"Recognise and solve relationships where one value rises as another falls.","skills":["inverse-proportion-numerical","inverse-proportion-algebraic","inverse-proportion-graphs"]},
+        {"folder":"units-and-conversions","title":"Units and conversions","subtitle":"Convert related measures, including area, volume and capacity.","skills":["convert-standard-units","convert-area-volume-units","convert-compound-units"]},
+        {"folder":"speed-distance-time","title":"Speed, distance and time","subtitle":"Use a compound measure to connect distance, speed and time.","skills":["speed-distance-time","speed-unit-conversions"]},
+        {"folder":"density-and-pressure","title":"Density and pressure","subtitle":"Use compound measures involving mass, volume, force and area.","skills":["density-mass-volume","pressure-force-area"]},
+        {"folder":"rates-and-unit-pricing","title":"Rates and unit pricing","subtitle":"Compare pay, prices and other rates per unit.","skills":["rates-of-pay","unit-pricing","compare-rates"]},
+        {"folder":"rate-of-change-graphs","title":"Rates of change on graphs","subtitle":"Interpret a straight-line gradient as a rate of change.","skills":["gradient-as-rate","proportion-graphs"]}
+      ]
+    },
+    {
+      "id": "geometry-and-measures",
+      "title": "Geometry and measures",
+      "description": "Explore shape, space, angles, constructions and measurement.",
+      "lessons": [
+        {"folder":"measures-time-and-timetables","title":"Measures, time and timetables","subtitle":"Read measures and solve problems involving time.","skills":["standard-measures","time-calculations","timetables"]},
+        {"folder":"scale-drawings-and-maps","title":"Scale drawings and maps","subtitle":"Use scales to move between drawings and real dimensions.","skills":["scale-drawings","map-scales"]},
+        {"folder":"angle-facts","title":"Angle facts","subtitle":"Use angles around points, on lines and across parallel lines.","skills":["angles-point-line","vertically-opposite-angles","parallel-line-angles"]},
+        {"folder":"triangles-and-quadrilaterals","title":"Triangles and quadrilaterals","subtitle":"Use the names, properties and angle facts of common shapes.","skills":["triangle-properties","quadrilateral-properties","angles-in-triangles"]},
+        {"folder":"polygons","title":"Polygons","subtitle":"Calculate interior and exterior angles of polygons.","skills":["polygon-angle-sums","regular-polygon-angles"]},
+        {"folder":"bearings","title":"Bearings","subtitle":"Measure and use three-figure bearings.","skills":["compass-directions","three-figure-bearings"]},
+        {"folder":"transformations","title":"Reflections, rotations and translations","subtitle":"Perform and describe transformations on coordinate grids.","skills":["reflection","rotation","translation"]},
+        {"folder":"enlargement","title":"Enlargement","subtitle":"Enlarge shapes from a centre using integer and fractional scale factors.","skills":["enlargement-integer","enlargement-fractional"]},
+        {"folder":"congruence","title":"Congruent shapes and triangles","subtitle":"Recognise congruent shapes and use triangle congruence tests.","skills":["identify-congruence","triangle-congruence"]},
+        {"folder":"similar-shapes","title":"Similar shapes","subtitle":"Use scale factors to find corresponding lengths.","skills":["identify-similarity","similar-lengths"]},
+        {"folder":"perimeter-and-area","title":"Perimeter and area","subtitle":"Calculate the boundary and space inside common 2D shapes.","skills":["perimeter","areas-basic-shapes"]},
+        {"folder":"compound-shapes","title":"Compound shapes","subtitle":"Split or subtract shapes to find total area and perimeter.","skills":["compound-area","compound-perimeter"]},
+        {"folder":"circles","title":"Circles","subtitle":"Use radius and diameter to calculate circumference and area.","skills":["circle-vocabulary","circumference","circle-area"]},
+        {"folder":"arcs-and-sectors","title":"Arcs and sectors","subtitle":"Find fractions of a circle's circumference and area.","skills":["arc-length","sector-area","sector-angle"]},
+        {"folder":"three-dimensional-shapes","title":"Three-dimensional shapes","subtitle":"Recognise faces, surfaces, edges and vertices of common solids.","skills":["properties-3d-shapes"]},
+        {"folder":"plans-elevations-and-nets","title":"Plans, elevations and nets","subtitle":"Connect three-dimensional shapes with two-dimensional views.","skills":["plans-elevations","nets"]},
+        {"folder":"surface-area","title":"Surface area","subtitle":"Find the total area covering prisms and other solids.","skills":["surface-area-prisms","surface-area-solids"]},
+        {"folder":"volume-of-prisms-and-cylinders","title":"Volume of prisms and cylinders","subtitle":"Multiply a constant cross-section by its length.","skills":["volume-cuboids-prisms","volume-cylinders"]},
+        {"folder":"volume-of-pyramids-cones-spheres","title":"Pyramids, cones and spheres","subtitle":"Calculate volumes and solve problems involving curved solids.","skills":["volume-pyramids-cones","volume-spheres","composite-solids"]},
+        {"folder":"constructions","title":"Constructions","subtitle":"Use a ruler and compass to construct triangles and bisectors.","skills":["construct-triangles","perpendicular-bisectors","angle-bisectors"]},
+        {"folder":"loci","title":"Loci","subtitle":"Describe and construct all points satisfying a distance rule.","skills":["construct-loci","solve-loci-problems"]},
+        {"folder":"pythagoras","title":"Pythagoras' theorem","subtitle":"Find missing lengths in right-angled triangles.","skills":["pythagoras-hypotenuse","pythagoras-shorter-side","pythagoras-contexts"]},
+        {"folder":"right-angled-trigonometry","title":"Right-angled trigonometry","subtitle":"Use sine, cosine and tangent to find missing sides and angles.","skills":["choose-trig-ratio","trig-missing-side","trig-missing-angle"]},
+        {"folder":"exact-trig-values","title":"Exact trigonometric values","subtitle":"Recall exact sine, cosine and tangent values for special angles.","skills":["exact-trig-values"]},
+        {"folder":"vectors","title":"Vectors","subtitle":"Describe translations and calculate with column vectors.","skills":["translation-vectors","vector-add-subtract","vector-scalars"]}
+      ]
+    },
+    {
+      "id": "probability",
+      "title": "Probability",
+      "description": "Describe chance and calculate the likelihood of single and combined events.",
+      "lessons": [
+        {"folder":"probability-scale","title":"The probability scale","subtitle":"Describe likelihood using words, fractions, decimals and percentages.","skills":["probability-scale","probability-forms"]},
+        {"folder":"theoretical-and-experimental-probability","title":"Theoretical and experimental probability","subtitle":"Compare expected chance with results from experiments.","skills":["theoretical-probability","experimental-probability","relative-frequency"]},
+        {"folder":"expected-results","title":"Expected results","subtitle":"Use probability to predict frequencies over repeated trials.","skills":["expected-frequency","randomness-and-fairness"]},
+        {"folder":"mutually-exclusive-and-exhaustive-events","title":"Mutually exclusive and exhaustive events","subtitle":"Use probabilities that cannot happen together and totals that sum to one.","skills":["mutually-exclusive-events","exhaustive-events","probability-complement"]},
+        {"folder":"possibility-spaces","title":"Possibility spaces","subtitle":"List combined outcomes systematically and calculate probabilities.","skills":["systematic-outcomes","possibility-spaces"]},
+        {"folder":"venn-diagrams-and-set-notation","title":"Venn diagrams and set notation","subtitle":"Organise overlapping sets and calculate probabilities.","skills":["venn-diagrams","set-notation-probability"]},
+        {"folder":"frequency-trees-and-two-way-tables","title":"Frequency trees and two-way tables","subtitle":"Organise frequencies before calculating probabilities.","skills":["frequency-trees","probability-two-way-tables"]},
+        {"folder":"tree-diagrams","title":"Tree diagrams","subtitle":"Calculate probabilities for independent and dependent events.","skills":["tree-diagrams","independent-events","dependent-events"]}
+      ]
+    },
+    {
+      "id": "statistics",
+      "title": "Statistics",
+      "description": "Collect, represent, analyse and compare data.",
+      "lessons": [
+        {"folder":"sampling-and-data","title":"Sampling and types of data","subtitle":"Use samples carefully and recognise the data being collected.","skills":["populations-and-samples","sampling-limitations","data-types"]},
+        {"folder":"frequency-tables-and-charts","title":"Frequency tables and charts","subtitle":"Organise and display categorical and discrete data clearly.","skills":["frequency-tables","bar-and-line-charts","pictograms"]},
+        {"folder":"pie-charts","title":"Pie charts","subtitle":"Read pie charts and turn frequencies into angles.","skills":["interpret-pie-charts","construct-pie-charts"]},
+        {"folder":"averages-and-range","title":"Averages and range","subtitle":"Calculate and choose suitable measures of centre and spread.","skills":["mean-median-mode","range-and-outliers","choose-average"]},
+        {"folder":"averages-from-tables","title":"Averages from tables","subtitle":"Calculate averages from frequency and grouped tables.","skills":["mean-frequency-table","estimated-mean-grouped","modal-class"]},
+        {"folder":"comparing-distributions","title":"Comparing distributions","subtitle":"Use averages, range and graphs to compare data sets.","skills":["compare-distributions"]},
+        {"folder":"scatter-graphs","title":"Scatter graphs","subtitle":"Plot paired data and describe the strength and direction of correlation.","skills":["scatter-graphs","recognise-correlation","correlation-not-causation"]},
+        {"folder":"lines-of-best-fit","title":"Lines of best fit","subtitle":"Draw a trend line and use it to estimate values carefully.","skills":["line-of-best-fit","interpolate-extrapolate"]},
+        {"folder":"time-series","title":"Time series","subtitle":"Display data over time and interpret trends and patterns.","skills":["time-series-graphs","interpret-time-series"]}
+      ]
+    }
+  ]
+}

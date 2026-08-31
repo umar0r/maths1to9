@@ -1,0 +1,65 @@
+{
+  "id": "solving-linear-equations-01",
+  "slug": "solving-linear-equations",
+  "title": "Solving linear equations",
+  "subtitle": "Undo one operation at a time to find the unknown.",
+  "grade": "2–4",
+  "estimated_minutes": 20,
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "Keep both sides equal",
+    "paragraphs": [
+      "An equation is like a set of balanced scales. The left side has the same value as the right side.",
+      "The letter stands for a number we do not know yet. Solving the equation means finding that number.",
+      "To find the letter, undo the operations one at a time. Use the opposite operation each time.",
+      "Whatever you do to one side, do the same to the other side. This keeps the equation balanced.",
+      "Look at 3 + 2m = 17. The 3 is added on, so subtract 3 from both sides. This leaves 2m = 14. The m is multiplied by 2, so divide both sides by 2. This gives m = 7."
+    ],
+    "key_points": [
+      "Undo each operation with its opposite.",
+      "Undo addition with subtraction.",
+      "Undo subtraction with addition.",
+      "Undo multiplication with division.",
+      "Undo division with multiplication.",
+      "Do the same thing to both sides.",
+      "Check your answer in the original equation."
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Turn a story into an equation, then solve it",
+    "intro": "Each example is a real-life problem with one unknown number. First we write the problem as an equation. Then we solve it one step at a time. Read the instruction on each card and click the highlighted part."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1",
+      "title": "Solve b − 12 = −3",
+      "steps": [
+        "The 12 is subtracted from b. Undo this by adding 12 to both sides.",
+        "b = −3 + 12, so b = 9.",
+        "Check: 9 − 12 = −3 ✓"
+      ],
+      "answer": "b = 9"
+    },
+    {
+      "eyebrow": "Worked example 2",
+      "title": "Solve 3x + 1 = 7",
+      "steps": [
+        "The 1 is added on. Subtract 1 from both sides: 3x = 6.",
+        "The x is multiplied by 3. Divide both sides by 3: x = 2.",
+        "Check: 3 × 2 + 1 = 7 ✓"
+      ],
+      "answer": "x = 2"
+    },
+    {
+      "eyebrow": "Worked example 3",
+      "title": "Solve 5c + 17 = 32",
+      "steps": [
+        "Subtract 17 from both sides: 5c = 15.",
+        "Divide both sides by 5: c = 3.",
+        "Check: 5 × 3 + 17 = 32 ✓"
+      ],
+      "answer": "c = 3"
+    }
+  ]
+}
