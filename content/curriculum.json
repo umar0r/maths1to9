@@ -47,7 +47,7 @@
         {"folder":"expanding-and-factorising-single-brackets","title":"Single brackets","subtitle":"Expand a bracket or reverse the process by factorising.","skills":["expand-single-bracket","factorise-single-bracket"]},
         {"folder":"expanding-double-brackets","title":"Expanding two brackets","subtitle":"Multiply every term in one bracket by every term in the other.","skills":["expand-two-binomials"]},
         {"folder":"factorising-quadratics","title":"Factorising quadratic expressions","subtitle":"Reverse an expansion to write a quadratic as two brackets.","skills":["factorise-monic-quadratics","difference-of-two-squares"]},
-        {"folder":"solving-quadratic-equations","title":"Solving quadratic equations","subtitle":"Factorise a quadratic and use the zero-product rule.","skills":["solve-quadratics-factorising","quadratic-solutions-graphs"]},
+        {"folder":"solving-quadratic-equations","title":"Solving quadratic equations","subtitle":"Factorise a quadratic and use the zero-product rule.","skills":["solve-quadratics-factorising"]},
         {"folder":"simultaneous-equations","title":"Simultaneous equations","subtitle":"Find values that make two linear equations true together.","skills":["simultaneous-elimination","simultaneous-substitution","form-simultaneous-equations"]},
         {"folder":"linear-inequalities","title":"Linear inequalities","subtitle":"Solve inequalities and show their solutions on a number line.","skills":["inequality-notation","solve-linear-inequalities","inequalities-number-line"]},
         {"folder":"coordinates-and-linear-graphs","title":"Coordinates and linear graphs","subtitle":"Plot coordinates and draw straight-line graphs from equations.","skills":["coordinates-four-quadrants","plot-linear-graphs"]},

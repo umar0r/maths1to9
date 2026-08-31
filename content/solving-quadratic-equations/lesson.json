@@ -5,6 +5,20 @@
   "subtitle": "Factorise a quadratic, use the zero product rule and find both solutions.",
   "grade": "4–5",
   "estimated_minutes": 25,
+  "assessment": {
+    "question_types": {
+      "squareEqualsNumber": "solve-quadratics-factorising",
+      "monicReady": "solve-quadratics-factorising",
+      "rearrangeToZero": "solve-quadratics-factorising",
+      "factoriseThenSolve": "solve-quadratics-factorising",
+      "commonFactor": "solve-quadratics-factorising",
+      "setFactorsZero": "solve-quadratics-factorising",
+      "bothSolutionsFromBrackets": "solve-quadratics-factorising",
+      "spotError": "solve-quadratics-factorising",
+      "notFinished": "solve-quadratics-factorising",
+      "contextReject": "solve-quadratics-factorising"
+    }
+  },
   "curriculum": {
     "tier": "Foundation",
     "calculator": "Non-calculator skill; questions may appear on any paper.",

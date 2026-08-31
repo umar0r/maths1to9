@@ -3,6 +3,17 @@
   "slug": "algebraic-expressions",
   "title": "Writing algebraic expressions",
   "subtitle": "Use a letter for a number you do not know yet. Then follow what happens to it.",
+  "assessment": {
+    "question_types": {
+      "multiplyVariable": "write-expressions",
+      "addFixedAmount": "write-expressions",
+      "twoStep": "write-expressions",
+      "notation": "use-algebraic-notation",
+      "orderSensitive": "write-expressions",
+      "matchStory": "write-expressions",
+      "spotMistake": "write-expressions"
+    }
+  },
   "explanation": {
     "eyebrow": "Learn",
     "title": "A letter can take the place of a number",
