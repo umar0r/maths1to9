@@ -1,0 +1,278 @@
+{
+  "id": "function-machines-find-the-input-01",
+  "slug": "function-machines-find-the-input",
+  "title": "Function machines: find the input",
+  "subtitle": "Start at the output and work backwards.",
+  "assessment": {
+    "question_types": {
+      "identify-output": "function-input-output",
+      "reverse-operation": "reverse-function-machines",
+      "check-forward": "function-input-output"
+    }
+  },
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "What a function machine does",
+    "blocks": [
+      {
+        "title": "What a function machine does",
+        "paragraphs": [
+          "A function machine takes a number, changes it, and gives a new number.",
+          "For example, a number goes in. The machine adds 3. The number that comes out is 7.",
+          "So the starting number must have been 4, because 4 + 3 = 7.",
+          "The number going in is called the input.",
+          "The number coming out is called the output."
+        ],
+        "graphic": {
+          "values": [
+            "4",
+            "7"
+          ],
+          "operations": [
+            "+ 3"
+          ],
+          "labels": [
+            "Input",
+            "Output"
+          ],
+          "caption": "4 goes in. Add 3. 7 comes out."
+        }
+      },
+      {
+        "title": "Following a machine forwards",
+        "paragraphs": [
+          "Imagine a number goes into a machine. First 4 is added, then the answer is multiplied by 3.",
+          "Start with 3.",
+          "3 + 4 = 7.",
+          "7 × 3 = 21.",
+          "When working forwards, follow each step in order from left to right."
+        ],
+        "graphic": {
+          "values": [
+            "3",
+            "7",
+            "21"
+          ],
+          "operations": [
+            "+ 4",
+            "× 3"
+          ],
+          "labels": [
+            "Input",
+            "",
+            "Output"
+          ],
+          "caption": "Start with 3. Add 4. Then multiply by 3."
+        }
+      },
+      {
+        "title": "When the input is missing",
+        "paragraphs": [
+          "Now imagine a number goes in. The machine adds 4, then multiplies by 3. The output is 21.",
+          "What number went in?",
+          "We cannot start at the beginning because we do not know the input.",
+          "Instead, start with the number we do know: 21.",
+          "Then work backwards through the steps."
+        ],
+        "graphic": {
+          "values": [
+            "?",
+            "?",
+            "21"
+          ],
+          "operations": [
+            "+ 4",
+            "× 3"
+          ],
+          "labels": [
+            "Input",
+            "",
+            "Output"
+          ],
+          "caption": "The output is known. The input is missing."
+        }
+      },
+      {
+        "title": "Undoing the steps",
+        "paragraphs": [
+          "The last thing the machine did was multiply by 3.",
+          "To undo that, divide by 3: 21 ÷ 3 = 7.",
+          "Before that, the machine added 4.",
+          "To undo that, subtract 4: 7 − 4 = 3.",
+          "So the input is 3."
+        ],
+        "reverse_rows": [
+          {
+            "machine": "× 3",
+            "reverse": "÷ 3",
+            "working": "21 ÷ 3 = 7"
+          },
+          {
+            "machine": "+ 4",
+            "reverse": "− 4",
+            "working": "7 − 4 = 3"
+          }
+        ]
+      },
+      {
+        "title": "Forwards and backwards",
+        "paragraphs": [
+          "Going forwards, the machine adds 4 first and multiplies by 3 last.",
+          "Going backwards, you meet the last step first.",
+          "That is why you divide by 3 before subtracting 4."
+        ],
+        "paired_graphics": [
+          {
+            "label": "Forwards",
+            "values": [
+              "3",
+              "7",
+              "21"
+            ],
+            "operations": [
+              "+ 4",
+              "× 3"
+            ],
+            "direction": "forwards"
+          },
+          {
+            "label": "Backwards",
+            "values": [
+              "3",
+              "7",
+              "21"
+            ],
+            "operations": [
+              "− 4",
+              "÷ 3"
+            ],
+            "direction": "backwards"
+          }
+        ],
+        "big_idea": [
+          "Start at the output.",
+          "Undo the last step first.",
+          "Keep working backwards until you reach the input."
+        ]
+      }
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Find the missing input",
+    "intro": "Work backwards through the machine. Complete one step at a time.",
+    "input": 10,
+    "middle_values": [
+      7
+    ],
+    "output": 28,
+    "operations": [
+      {
+        "label": "− 3"
+      },
+      {
+        "label": "× 4"
+      }
+    ],
+    "steps": [
+      {
+        "label": "Start at the output",
+        "prompt": "Which number do you start with?",
+        "options": [
+          "28",
+          "10",
+          "4"
+        ],
+        "answer": "28",
+        "feedback": "Start with 28 because 28 is the output.",
+        "start_value": "28"
+      },
+      {
+        "label": "Undo the last step",
+        "prompt": "The last box says × 4. What do you do to reverse it?",
+        "options": [
+          "÷ 4",
+          "× 4",
+          "− 4"
+        ],
+        "answer": "÷ 4",
+        "feedback": "Dividing by 4 reverses multiplying by 4.",
+        "machine_operation": "× 4",
+        "reverse_operation": "÷ 4",
+        "calculation": "28 ÷ 4 = 7"
+      },
+      {
+        "label": "Keep working backwards",
+        "prompt": "The next box says − 3. What do you do to reverse it?",
+        "options": [
+          "+ 3",
+          "− 3",
+          "÷ 3"
+        ],
+        "answer": "+ 3",
+        "feedback": "Adding 3 reverses subtracting 3.",
+        "machine_operation": "− 3",
+        "reverse_operation": "+ 3",
+        "calculation": "7 + 3 = 10"
+      },
+      {
+        "label": "Check forwards",
+        "prompt": "Which calculation checks that the input is 10?",
+        "options": [
+          "10 − 3 = 7, then 7 × 4 = 28",
+          "10 + 3 = 13, then 13 × 4 = 52",
+          "10 × 4 = 40, then 40 − 3 = 37"
+        ],
+        "answer": "10 − 3 = 7, then 7 × 4 = 28",
+        "feedback": "The input follows the original machine and gives an output of 28."
+      }
+    ],
+    "completion": {
+      "eyebrow": "Try it complete",
+      "title": "The input is 10",
+      "check": "10 − 3 = 7, then 7 × 4 = 28."
+    }
+  },
+  "worked_examples": [
+    {
+      "title": "The machine multiplies by 2, then adds 7. The output is 25. Find the input.",
+      "steps": [
+        "Start at 25.",
+        "The last box says + 7. Undo it by subtracting 7: 25 − 7 = 18.",
+        "The next box says × 2. Undo it by dividing by 2: 18 ÷ 2 = 9.",
+        "So the input is 9.",
+        "Check: 9 × 2 = 18, then 18 + 7 = 25."
+      ],
+      "answer": "Input = 9"
+    },
+    {
+      "title": "The machine subtracts 7, then multiplies by 3. The output is 24. Find the input.",
+      "steps": [
+        "Start at 24.",
+        "The last box says × 3. Undo it by dividing by 3: 24 ÷ 3 = 8.",
+        "The next box says − 7. Undo it by adding 7: 8 + 7 = 15.",
+        "So the input is 15.",
+        "Check: 15 − 7 = 8, then 8 × 3 = 24."
+      ],
+      "answer": "Input = 15"
+    },
+    {
+      "title": "The machine adds 4, multiplies by 3, then subtracts 5. The output is 25. Find the input.",
+      "steps": [
+        "Start at 25.",
+        "Undo − 5 by adding 5: 25 + 5 = 30.",
+        "Undo × 3 by dividing by 3: 30 ÷ 3 = 10.",
+        "Undo + 4 by subtracting 4: 10 − 4 = 6.",
+        "So the input is 6.",
+        "Check: 6 + 4 = 10, then 10 × 3 = 30, then 30 − 5 = 25."
+      ],
+      "answer": "Input = 6"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Practice",
+    "title": "Find each input",
+    "intro": "Use the same backwards steps. The machines get harder as you continue.",
+    "completion_target": 8
+  }
+}

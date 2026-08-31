@@ -1,0 +1,122 @@
+{
+  "id": "solving-quadratic-equations-01",
+  "slug": "solving-quadratic-equations",
+  "title": "Solving quadratic equations by factorising",
+  "subtitle": "Factorise a quadratic, use the zero product rule and find both solutions.",
+  "grade": "4–5",
+  "estimated_minutes": 25,
+  "curriculum": {
+    "tier": "Foundation",
+    "calculator": "Non-calculator skill; questions may appear on any paper.",
+    "aqa_references": [
+      "A18",
+      "A4",
+      "A17"
+    ],
+    "dfe_references": [
+      "A18",
+      "A4"
+    ]
+  },
+  "prerequisites": [
+    "expanding-brackets",
+    "factorising-expressions",
+    "solving-linear-equations"
+  ],
+  "explanation": {
+    "eyebrow": "Explanation",
+    "title": "Why factorising helps us solve quadratics",
+    "paragraphs": [
+      "A quadratic equation contains a squared term as its highest power. Examples include x² = 25, x² + 5x = 0, x² + 7x + 10 = 0 and x² − 36 = 0.",
+      "A linear equation normally has one solution, but a quadratic equation can have two. For example, both x = 5 and x = −5 satisfy x² = 25 because 5² = 25 and (−5)² = 25.",
+      "The key idea is the zero product rule: if two factors multiply to give 0, at least one of the factors must equal 0.",
+      "For example, if (x + 2)(x + 5) = 0, then x + 2 = 0 or x + 5 = 0. This gives x = −2 or x = −5.",
+      "Factorising turns one quadratic equation into two smaller linear equations. Two brackets give two equations and usually two solutions.",
+      "To factorise x² + bx + c, find two numbers that multiply to give c and add to give b. For x² + 7x + 10, the numbers are 2 and 5, so x² + 7x + 10 = (x + 2)(x + 5).",
+      "Signs matter. For x² − x − 12, the numbers are 3 and −4 because 3 × (−4) = −12 and 3 + (−4) = −1. Therefore x² − x − 12 = (x + 3)(x − 4).",
+      "If there is no constant term, factor out x. For x² + 5x = 0, write x(x + 5) = 0, so x = 0 or x = −5. Do not divide by x because that loses the solution x = 0.",
+      "For a difference of two squares, use a² − b² = (a + b)(a − b). Therefore x² − 36 = (x + 6)(x − 6), so x = −6 or x = 6.",
+      "Factorising is not the final answer when the question says solve. Always set each factor equal to 0 and finish both linear equations."
+    ],
+    "key_points": [
+      "Rearrange the equation so one side equals 0 before factorising.",
+      "Find two numbers whose product is c and whose sum is b.",
+      "Set each factor equal to 0.",
+      "The solution has the opposite sign to the number inside its bracket.",
+      "Give both solutions unless a context makes one impossible.",
+      "Never divide by x when x could equal 0."
+    ]
+  },
+  "method": {
+    "eyebrow": "Step-by-step guide",
+    "title": "Solve a quadratic by factorising",
+    "steps": [
+      {
+        "title": "Make the equation equal 0",
+        "text": "Move every term to one side. The zero product rule only works when the product equals 0."
+      },
+      {
+        "title": "Factorise the quadratic",
+        "text": "For x² + bx + c, find two numbers that multiply to c and add to b."
+      },
+      {
+        "title": "Set each factor equal to 0",
+        "text": "Turn the two brackets into two separate linear equations."
+      },
+      {
+        "title": "Solve both equations",
+        "text": "Write both values of x. Remember that x + a = 0 gives x = −a."
+      },
+      {
+        "title": "Check the solutions",
+        "text": "Substitute each value into the original equation. In a context question, reject any value that is impossible."
+      }
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Solve x² + 3x = 10",
+    "intro": "Rearrange the equation, choose the correct factor pair, form the brackets and solve both linear equations. After the walkthrough, practise recognising factor pairs in the Factor Pair Sprint."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1",
+      "title": "Solve x² + 3x = 10",
+      "steps": [
+        "The equation does not equal 0, so subtract 10 from both sides: x² + 3x − 10 = 0.",
+        "Find two numbers that multiply to −10 and add to 3: 5 and −2.",
+        "Factorise: (x + 5)(x − 2) = 0.",
+        "Set each factor equal to 0: x + 5 = 0 or x − 2 = 0.",
+        "Solve both equations: x = −5 or x = 2.",
+        "Check both values in the original equation."
+      ],
+      "answer": "x = −5 or x = 2"
+    },
+    {
+      "eyebrow": "Worked example 2",
+      "title": "Solve x² + 7x = 0",
+      "steps": [
+        "Both terms contain x, so factor out the common factor: x(x + 7) = 0.",
+        "Use the zero product rule: x = 0 or x + 7 = 0.",
+        "Solve the second equation: x = −7.",
+        "Do not divide by x because that would remove the solution x = 0."
+      ],
+      "answer": "x = 0 or x = −7"
+    },
+    {
+      "eyebrow": "Worked example 3",
+      "title": "Solve x² − 36 = 0",
+      "steps": [
+        "Recognise a difference of two squares: x² − 6².",
+        "Factorise: (x + 6)(x − 6) = 0.",
+        "Set each factor equal to 0 and solve both equations."
+      ],
+      "answer": "x = −6 or x = 6"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Question bank",
+    "title": "Practise solving quadratic equations",
+    "intro": "Start with equations such as x² = 49, then practise factorising, rearranging to equal 0, taking out a common factor, spotting errors and solving GCSE-style context questions. The practice continues with new questions and becomes more varied as the student progresses."
+  }
+}

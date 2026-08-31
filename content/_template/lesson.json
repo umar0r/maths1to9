@@ -1,0 +1,72 @@
+{
+    "id": "my-lesson-slug-01",
+    "slug": "my-lesson-slug",
+    "title": "My lesson title",
+    "subtitle": "One-line hook. What changes, what stays the same.",
+    "assessment": {
+        "question_types": {
+            "sample": "REPLACE_WITH_SKILL_ID"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "The big idea in one line",
+        "paragraphs": [
+            "Fallback text. interactive.js usually replaces this section with Learn cards."
+        ],
+        "video": {
+            "youtube_id": "REPLACE_WITH_YOUTUBE_ID",
+            "title": "Lesson video",
+            "caption": "Optional caption shown under the video. Delete the whole video block if the lesson has no video."
+        }
+    },
+    "method": {
+        "eyebrow": "Method",
+        "title": "Step 1 \u2192 Step 2 \u2192 Step 3",
+        "steps": [
+            {
+                "title": "Step 1 name",
+                "text": "One clause. What the pupil does first."
+            },
+            {
+                "title": "Step 2 name",
+                "text": "One clause. What they do next."
+            },
+            {
+                "title": "Step 3 name",
+                "text": "One clause. How they check."
+            }
+        ]
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Have a go",
+        "intro": "The support is removed one step at a time."
+    },
+    "worked_examples": [
+        {
+            "eyebrow": "Worked example 1",
+            "title": "Straightforward case",
+            "steps": [
+                "First move.",
+                "Second move.",
+                "Result."
+            ],
+            "answer": "x = ?"
+        },
+        {
+            "eyebrow": "Common mistake",
+            "title": "The error most pupils make",
+            "steps": [
+                "Show the wrong move and why it fails.",
+                "Show the correct move."
+            ],
+            "answer": "Correct result"
+        }
+    ],
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise this topic",
+        "intro": "Answer one question at a time. Check each answer before moving on."
+    }
+}

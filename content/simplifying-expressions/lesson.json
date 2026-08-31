@@ -1,0 +1,401 @@
+{
+  "id": "simplifying-expressions",
+  "slug": "simplifying-expressions",
+  "title": "Simplifying expressions",
+  "subtitle": "Collecting like terms",
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "Collecting like terms",
+    "paragraphs": [
+      "Like terms have the same letter part and the same powers.",
+      "Collect like terms by adding or subtracting the numbers in front.",
+      "Use the three examples below to see how matching terms are found, grouped and collected."
+    ],
+    "interactives": [
+      {
+        "type": "paint-merge",
+        "title": "Find and merge the like terms",
+        "prompt": "Click all the a terms.",
+        "terms": [
+          {
+            "id": "paint-1",
+            "text": "4a",
+            "family": "a",
+            "coefficient": 4
+          },
+          {
+            "id": "paint-2",
+            "text": "+5",
+            "family": "number",
+            "coefficient": 5
+          },
+          {
+            "id": "paint-3",
+            "text": "−2a",
+            "family": "a",
+            "coefficient": -2
+          }
+        ],
+        "targetFamily": "a",
+        "mergeCalculation": "4a − 2a = 2a",
+        "mergedTerm": "2a",
+        "remainingTerm": "+5",
+        "finalExpression": "2a + 5"
+      },
+      {
+        "type": "sorting-trays",
+        "title": "Sort terms into matching groups",
+        "prompt": "Drag each term into the correct tray.",
+        "terms": [
+          {
+            "id": "sort-1",
+            "text": "3x",
+            "family": "x"
+          },
+          {
+            "id": "sort-2",
+            "text": "+2y",
+            "family": "y"
+          },
+          {
+            "id": "sort-3",
+            "text": "−x",
+            "family": "x"
+          },
+          {
+            "id": "sort-4",
+            "text": "+4",
+            "family": "number"
+          },
+          {
+            "id": "sort-5",
+            "text": "+y",
+            "family": "y"
+          },
+          {
+            "id": "sort-6",
+            "text": "−1",
+            "family": "number"
+          }
+        ],
+        "trays": [
+          {
+            "family": "x",
+            "label": "x terms",
+            "calculation": "3x − x = 2x",
+            "result": "2x"
+          },
+          {
+            "family": "y",
+            "label": "y terms",
+            "calculation": "2y + y = 3y",
+            "result": "3y"
+          },
+          {
+            "family": "number",
+            "label": "numbers",
+            "calculation": "4 − 1 = 3",
+            "result": "3"
+          }
+        ],
+        "finalExpression": "2x + 3y + 3"
+      },
+      {
+        "type": "algebra-tiles",
+        "title": "Cancel zero pairs",
+        "prompt": "Drag a red −m tile onto a green +m tile.",
+        "positiveCount": 7,
+        "negativeCount": 2,
+        "letter": "m",
+        "finalExpression": "7m − 2m = 5m"
+      }
+    ]
+  },
+  "method": {
+    "eyebrow": "Method",
+    "title": "Collecting like terms",
+    "steps": [
+      {
+        "title": "Find the like terms.",
+        "text": ""
+      },
+      {
+        "title": "Add or subtract the numbers in front.",
+        "text": ""
+      },
+      {
+        "title": "Keep the letter part the same.",
+        "text": ""
+      },
+      {
+        "title": "Write the simplified expression.",
+        "text": ""
+      }
+    ]
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Example 1",
+      "title": "Simplify: 4a + 5a",
+      "steps": [
+        "Both terms are a terms, so add the numbers.",
+        "4 + 5 = 9"
+      ],
+      "answer": "9a",
+      "visual": {
+        "terms": [
+          {
+            "text": "4a",
+            "family": "a"
+          },
+          {
+            "text": "+5a",
+            "family": "a"
+          }
+        ],
+        "groups": [
+          {
+            "label": "a terms",
+            "calculation": "4 + 5 = 9",
+            "result": "9a"
+          }
+        ]
+      }
+    },
+    {
+      "eyebrow": "Example 2",
+      "title": "Simplify: 8x − 3x",
+      "steps": [
+        "Both terms are x terms.",
+        "Subtract the numbers.",
+        "8 − 3 = 5"
+      ],
+      "answer": "5x",
+      "visual": {
+        "terms": [
+          {
+            "text": "8x",
+            "family": "x"
+          },
+          {
+            "text": "−3x",
+            "family": "x"
+          }
+        ],
+        "groups": [
+          {
+            "label": "x terms",
+            "calculation": "8 − 3 = 5",
+            "result": "5x"
+          }
+        ]
+      }
+    },
+    {
+      "eyebrow": "Example 3",
+      "title": "Simplify: 3y + 2b + 4y + b",
+      "steps": [
+        "Collect the y terms: 3y + 4y = 7y.",
+        "Collect the b terms: 2b + b = 3b."
+      ],
+      "answer": "7y + 3b",
+      "visual": {
+        "terms": [
+          {
+            "text": "3y",
+            "family": "y"
+          },
+          {
+            "text": "+2b",
+            "family": "b"
+          },
+          {
+            "text": "+4y",
+            "family": "y"
+          },
+          {
+            "text": "+b",
+            "family": "b"
+          }
+        ],
+        "groups": [
+          {
+            "label": "y terms",
+            "calculation": "3 + 4 = 7",
+            "result": "7y"
+          },
+          {
+            "label": "b terms",
+            "calculation": "2 + 1 = 3",
+            "result": "3b"
+          }
+        ]
+      }
+    },
+    {
+      "eyebrow": "Example 4",
+      "title": "Simplify: 9e + 2 + e + 2",
+      "steps": [
+        "Collect the e terms: 9e + e = 10e.",
+        "Collect the numbers: 2 + 2 = 4."
+      ],
+      "answer": "10e + 4",
+      "visual": {
+        "terms": [
+          {
+            "text": "9e",
+            "family": "e"
+          },
+          {
+            "text": "+2",
+            "family": "number"
+          },
+          {
+            "text": "+e",
+            "family": "e"
+          },
+          {
+            "text": "+2",
+            "family": "number"
+          }
+        ],
+        "groups": [
+          {
+            "label": "e terms",
+            "calculation": "9 + 1 = 10",
+            "result": "10e"
+          },
+          {
+            "label": "numbers",
+            "calculation": "2 + 2 = 4",
+            "result": "4"
+          }
+        ]
+      }
+    },
+    {
+      "eyebrow": "Example 5",
+      "title": "Simplify: 6a² + 2a² − 9a²",
+      "steps": [
+        "These are all a² terms, so collect them.",
+        "6 + 2 − 9 = −1"
+      ],
+      "answer": "−a²",
+      "visual": {
+        "terms": [
+          {
+            "text": "6a²",
+            "family": "a²"
+          },
+          {
+            "text": "+2a²",
+            "family": "a²"
+          },
+          {
+            "text": "−9a²",
+            "family": "a²"
+          }
+        ],
+        "groups": [
+          {
+            "label": "a² terms",
+            "calculation": "6 + 2 − 9 = −1",
+            "result": "−a²"
+          }
+        ]
+      }
+    },
+    {
+      "eyebrow": "Example 6",
+      "title": "Simplify: 3x + 5y − 2x + y",
+      "steps": [
+        "Collect the x terms: 3x − 2x = x.",
+        "Collect the y terms: 5y + y = 6y."
+      ],
+      "answer": "x + 6y",
+      "visual": {
+        "terms": [
+          {
+            "text": "3x",
+            "family": "x"
+          },
+          {
+            "text": "+5y",
+            "family": "y"
+          },
+          {
+            "text": "−2x",
+            "family": "x"
+          },
+          {
+            "text": "+y",
+            "family": "y"
+          }
+        ],
+        "groups": [
+          {
+            "label": "x terms",
+            "calculation": "3 − 2 = 1",
+            "result": "x"
+          },
+          {
+            "label": "y terms",
+            "calculation": "5 + 1 = 6",
+            "result": "6y"
+          }
+        ]
+      }
+    }
+  ],
+  "commonGotchas": [
+    {
+      "title": "Different letters do not match",
+      "example": "3x + 2y",
+      "text": "This cannot be simplified further."
+    },
+    {
+      "title": "Different powers do not match",
+      "example": "4x² + 3x",
+      "text": "These are not like terms."
+    },
+    {
+      "title": "Watch the minus sign",
+      "example": "7m − 2m = 5m",
+      "text": "The minus belongs to the 2m."
+    },
+    {
+      "title": "A single letter means one of that letter",
+      "example": "n = 1n",
+      "text": "So 7n − n = 6n."
+    },
+    {
+      "title": "Collect constants separately",
+      "example": "4x + 7 + 3x − 2 = 7x + 5",
+      "text": "The numbers and the letter terms are collected separately."
+    }
+  ],
+  "interactive": {
+    "eyebrow": "Quick check",
+    "title": "Simplify: 2a + 6 + 5a − 1",
+    "intro": "Select the like terms, then collect them.",
+    "terms": [
+      {
+        "text": "2a",
+        "family": "a"
+      },
+      {
+        "text": "+6",
+        "family": "number"
+      },
+      {
+        "text": "+5a",
+        "family": "a"
+      },
+      {
+        "text": "−1",
+        "family": "number"
+      }
+    ],
+    "answer": "7a + 5"
+  }
+}

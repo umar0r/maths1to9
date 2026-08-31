@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "description": "Optional student-facing routes across the six official curriculum domains.",
+  "collections": [
+    {
+      "id": "graphs",
+      "title": "Graphs",
+      "description": "Learn how graphs represent equations, rates, movement and data.",
+      "lessons": [
+        "coordinates-and-linear-graphs",
+        "gradient-and-intercept",
+        "equations-of-straight-lines",
+        "quadratic-cubic-reciprocal-graphs",
+        "solutions-from-graphs",
+        "real-life-and-kinematic-graphs",
+        "direct-proportion",
+        "inverse-proportion",
+        "rate-of-change-graphs",
+        "scatter-graphs",
+        "lines-of-best-fit",
+        "time-series"
+      ]
+    },
+    {
+      "id": "fractions-decimals-and-percentages",
+      "title": "Fractions, decimals and percentages",
+      "description": "Build connected understanding of equivalent values and proportional calculations.",
+      "lessons": [
+        "fractions-introduction",
+        "simplifying fractions",
+        "fractions-of-amounts",
+        "adding-and-subtracting-fractions",
+        "multiplying-and-dividing-fractions",
+        "fractions-decimals-percentages",
+        "percentages-of-amounts",
+        "percentage-change",
+        "percentage-multipliers",
+        "reverse-percentages"
+      ]
+    },
+    {
+      "id": "algebra-to-equations",
+      "title": "From expressions to equations",
+      "description": "Follow a route from algebraic notation to forming and solving equations.",
+      "lessons": [
+        "algebraic-expressions",
+        "substituting-into-formulae",
+        "terms-and-expressions",
+        "simplifying-expressions",
+        "equations-and-identities",
+        "function-machines-find-the-input-2",
+        "solving-linear-equations",
+        "unknowns-on-both-sides",
+        "writing-and-solving-equations",
+        "rearranging-formulae"
+      ]
+    },
+    {
+      "id": "shape-calculations",
+      "title": "Shape calculations",
+      "description": "Bring together length, area, volume, Pythagoras and trigonometry.",
+      "lessons": [
+        "perimeter-and-area",
+        "compound-shapes",
+        "circles",
+        "arcs-and-sectors",
+        "surface-area",
+        "volume-of-prisms-and-cylinders",
+        "volume-of-pyramids-cones-spheres",
+        "pythagoras",
+        "right-angled-trigonometry"
+      ]
+    },
+    {
+      "id": "non-calculator-number",
+      "title": "Non-calculator number skills",
+      "description": "Practise exact and efficient calculations without relying on a calculator.",
+      "lessons": [
+        "place-value",
+        "negative-numbers",
+        "order-of-operations",
+        "simplifying fractions",
+        "adding-and-subtracting-fractions",
+        "multiplying-and-dividing-fractions",
+        "powers-roots-and-indices",
+        "laws-of-indices",
+        "prime-factor-decomposition",
+        "hcf-and-lcm"
+      ]
+    },
+    {
+      "id": "foundation-problem-solving",
+      "title": "Foundation problem solving",
+      "description": "Apply connected skills to multi-step GCSE Foundation problems.",
+      "lessons": [
+        "hcf-and-lcm",
+        "writing-and-solving-equations",
+        "ratio-problems",
+        "percentage-change",
+        "reverse-percentages",
+        "speed-distance-time",
+        "compound-shapes",
+        "venn-diagrams-and-set-notation",
+        "tree-diagrams"
+      ]
+    }
+  ]
+}

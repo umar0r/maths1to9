@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+__MACOSX/
+
+# Duplicate / backup blobs (kept on disk, out of the repo)
+content.zip
+content/_ss/
+*copy.json
+*copy.php
+
+# Editor
+.vscode/
+.idea/

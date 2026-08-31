@@ -1,0 +1,123 @@
+<?php
+
+declare(strict_types=1);
+
+$pageTitle = 'Pie charts';
+?>
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> | Maths1to9</title>
+
+    <link
+        rel="preload"
+        href="../../assets/fonts/Nunito-Variable.woff2"
+        as="font"
+        type="font/woff2"
+        crossorigin
+    >
+    <link
+        rel="stylesheet"
+        href="../../assets/css/app.css"
+    >
+
+    <script src="./lessons.js" defer></script>
+</head>
+
+<body>
+    <header class="lesson-header">
+        <div class="lesson-header__inner">
+            <a
+                class="lesson-header__back"
+                href="../../index.php"
+            >
+                Maths1to9
+            </a>
+
+            <h1 class="lesson-header__title">
+                Pie charts
+            </h1>
+        </div>
+    </header>
+
+    <main class="lesson-page">
+        <nav
+            class="lesson-navigation"
+            aria-label="Lesson sections"
+        >
+            <div class="button-group lesson-navigation__buttons">
+                <a
+                    class="button lesson-navigation__button"
+                    href="#learn"
+                    aria-current="page"
+                >
+                    Learn
+                </a>
+
+                <a
+                    class="button lesson-navigation__button"
+                    href="#method"
+                >
+                    Method
+                </a>
+
+                <a
+                    class="button lesson-navigation__button"
+                    href="#try-it"
+                >
+                    Try It
+                </a>
+
+                <a
+                    class="button lesson-navigation__button"
+                    href="#worked-examples"
+                >
+                    Worked Examples
+                </a>
+
+                <a
+                    class="button lesson-navigation__button"
+                    href="#practice"
+                >
+                    Practice
+                </a>
+            </div>
+        </nav>
+
+        <section
+            id="learn"
+            class="lesson-section lesson-explanation"
+            aria-label="Learn what a pie chart is"
+        >
+            <div
+                id="pie-chart-lesson"
+                aria-live="polite"
+            ></div>
+        </section>
+
+        <section
+            id="method"
+            class="lesson-section lesson-explanation"
+            aria-label="Method for making a pie chart"
+        >
+            <div
+                id="pie-chart-method"
+                aria-live="polite"
+            ></div>
+        </section>
+
+        <noscript>
+            <p>
+                JavaScript must be enabled to use this lesson.
+            </p>
+        </noscript>
+    </main>
+</body>
+</html>

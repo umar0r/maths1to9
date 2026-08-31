@@ -1,0 +1,118 @@
+{
+  "id": "algebraic-expressions-01",
+  "slug": "algebraic-expressions",
+  "title": "Writing algebraic expressions",
+  "subtitle": "Use a letter for a number you do not know yet. Then follow what happens to it.",
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "A letter can take the place of a number",
+    "paragraphs": [
+      "A game screen usually shows a number beside the coin symbol.",
+      "Sometimes you do not know that number yet.",
+      "A letter can take its place on the counter.",
+      "If the counter shows c, then c stands for the whole number of coins you started with.",
+      "If you win 200 more coins, the counter changes from c to c + 200.",
+      "c + 200 is called an expression."
+    ],
+    "key_points": [
+      "The letter stands for the starting number.",
+      "Follow the story in order.",
+      "A number beside a letter means multiply. For example, 3p means 3 × p."
+    ]
+  },
+  "method": {
+    "eyebrow": "Method",
+    "title": "Start → Follow → Write",
+    "steps": [
+      {
+        "title": "Start",
+        "text": "Write the letter that stands for the starting number."
+      },
+      {
+        "title": "Follow",
+        "text": "Follow each change in the order it happens."
+      },
+      {
+        "title": "Write",
+        "text": "Write the final expression."
+      }
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Try it",
+    "title": "Build the expression",
+    "intro": "Start with the letter. Choose each change in the story. Watch the expression grow one step at a time."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1 · Gaming",
+      "title": "You win more coins",
+      "steps": [
+        "Your coin counter starts at c.",
+        "You win 200 more coins.",
+        "Add 200 to the starting total."
+      ],
+      "answer": "c + 200"
+    },
+    {
+      "eyebrow": "Worked example 2 · Music",
+      "title": "Miguel, Adam and Josh",
+      "steps": [
+        "Miguel has p songs.",
+        "Adam has twice as many songs, so Adam has 2p.",
+        "Josh has 30 more songs than Adam.",
+        "Add 30 to 2p."
+      ],
+      "answer": "2p + 30"
+    },
+    {
+      "eyebrow": "Worked example 3 · Football",
+      "title": "Two more wins",
+      "steps": [
+        "A team starts with t points.",
+        "Each win adds 3 points.",
+        "Two wins add 6 points.",
+        "Add 6 to the starting total."
+      ],
+      "answer": "t + 6"
+    },
+    {
+      "eyebrow": "Worked example 4 · Food",
+      "title": "Three burgers and delivery",
+      "steps": [
+        "One burger costs b pounds.",
+        "Three burgers cost 3b pounds.",
+        "Delivery costs £2.",
+        "Add the delivery cost once."
+      ],
+      "answer": "3b + 2"
+    },
+    {
+      "eyebrow": "Worked example 5 · Gaming",
+      "title": "Triple your score, then collect a bonus",
+      "steps": [
+        "Your score starts at s.",
+        "A power-up triples your score, so it becomes 3s.",
+        "You collect 50 bonus points.",
+        "Add 50 to 3s."
+      ],
+      "answer": "3s + 50"
+    },
+    {
+      "eyebrow": "Worked example 6 · Money",
+      "title": "How much money is left?",
+      "steps": [
+        "You start with £50.",
+        "Each game costs £4.",
+        "n games cost 4n pounds.",
+        "Subtract the amount spent from 50."
+      ],
+      "answer": "50 − 4n"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Practice",
+    "title": "Write the expression",
+    "intro": "Use stories about games, football, food and money. Start with the letter, then follow each change."
+  }
+}
