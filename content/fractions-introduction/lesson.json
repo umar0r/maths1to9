@@ -1,0 +1,114 @@
+{
+    "id": "fractions-introduction-01",
+    "slug": "fractions-introduction",
+    "title": "Understanding fractions",
+    "subtitle": "A fraction is one number: a count of equal parts of a whole.",
+    "assessment": {
+        "question_types": {
+            "nameThePart": "interpret-fractions",
+            "shadedFraction": "interpret-fractions",
+            "classifyFraction": "interpret-fractions",
+            "improperToMixed": "mixed-and-improper-fractions",
+            "mixedToImproper": "mixed-and-improper-fractions",
+            "chooseInequality": "compare-fractions",
+            "orderThree": "compare-fractions",
+            "compareNegative": "compare-fractions"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "The bottom number names the pieces; the top number counts them",
+        "paragraphs": [
+            "A fraction splits one whole into equal parts. The denominator says how many equal parts the whole is cut into. The numerator says how many of those parts you have.",
+            "If the numerator is smaller than the denominator you have less than one whole (a proper fraction). If it is equal or larger you have one whole or more, which can be written as an improper fraction or as a mixed number."
+        ]
+    },
+    "method": {
+        "eyebrow": "Method",
+        "title": "Same bottom → common bottom → compare tops → point the sign",
+        "steps": [
+            {
+                "title": "Same denominator",
+                "text": "If the bottom numbers already match, the fraction with the larger top number is larger."
+            },
+            {
+                "title": "Different denominators",
+                "text": "Rewrite both fractions with a common denominator using equivalent fractions."
+            },
+            {
+                "title": "Compare the new tops",
+                "text": "With equal bottoms, compare the numerators to decide which fraction is larger."
+            },
+            {
+                "title": "Negatives",
+                "text": "On the number line the fraction further to the left is smaller, so − 3/4 is less than − 1/2."
+            },
+            {
+                "title": "Write the sign",
+                "text": "Point < or > towards the smaller number, or use = when the fractions are equivalent."
+            }
+        ]
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Name it, sort it, order it",
+        "intro": "The support is removed one step at a time."
+    },
+    "worked_examples": [
+        {
+            "eyebrow": "Worked example 1",
+            "title": "Name the parts of 3/8",
+            "steps": [
+                "The whole is cut into 8 equal parts, so the denominator is 8.",
+                "3 of those parts are counted, so the numerator is 3.",
+                "3 is smaller than 8, so 3/8 is a proper fraction."
+            ],
+            "answer": "numerator 3, denominator 8, proper fraction"
+        },
+        {
+            "eyebrow": "Worked example 2",
+            "title": "Write 7/4 as a mixed number",
+            "steps": [
+                "7 ÷ 4 = 1 remainder 3.",
+                "The 1 is a whole; the remainder 3 stays over the denominator 4.",
+                "So 7/4 = 1 3/4, and it is an improper fraction because 7 is larger than 4."
+            ],
+            "answer": "7/4 = 1 3/4"
+        },
+        {
+            "eyebrow": "Worked example 3",
+            "title": "Compare 2/3 and 3/5",
+            "steps": [
+                "A common denominator of 3 and 5 is 15.",
+                "2/3 = 10/15 and 3/5 = 9/15.",
+                "10 is larger than 9, so 2/3 > 3/5."
+            ],
+            "answer": "2/3 > 3/5"
+        },
+        {
+            "eyebrow": "Worked example 4",
+            "title": "Order −3/4, 2/5 and −1/2 from smallest",
+            "steps": [
+                "The two negatives are left of zero, and 2/5 is right of zero, so 2/5 is the largest.",
+                "Compare −3/4 and −1/2: as sizes, 3/4 > 1/2, so as positions −3/4 is further left.",
+                "Smallest first: −3/4, −1/2, 2/5."
+            ],
+            "answer": "−3/4 < −1/2 < 2/5"
+        },
+        {
+            "eyebrow": "Common mistake",
+            "title": "Bigger digits do not mean a bigger negative fraction",
+            "steps": [
+                "A pupil writes −3/4 > −1/2 because 3 and 4 look larger than 1 and 2.",
+                "For negatives the order flips: the further left on the number line, the smaller.",
+                "−3/4 is further from zero on the left, so −3/4 < −1/2."
+            ],
+            "answer": "−3/4 < −1/2"
+        }
+    ],
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise reading, classifying and ordering fractions",
+        "intro": "Answer one question at a time. Decide what each number means before you choose."
+    }
+}

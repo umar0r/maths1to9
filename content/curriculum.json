@@ -16,7 +16,7 @@
         {"folder":"estimation","title":"Estimation","subtitle":"Use rounded values to predict and check an answer.","skills":["estimate-calculations","check-with-estimation"]},
         {"folder":"truncation-and-error-intervals","title":"Truncation and error intervals","subtitle":"Describe the possible values hidden by rounding or truncation.","skills":["understand-truncation","write-error-intervals","limits-of-accuracy"]},
         {"folder":"fractions-introduction","title":"Understanding fractions","subtitle":"Interpret, compare and order fractions.","skills":["interpret-fractions","compare-fractions","mixed-and-improper-fractions"]},
-        {"folder":"simplifying fractions","title":"Equivalent and simplifying fractions","subtitle":"Split or merge the pieces. The amount stays the same.","skills":["equivalent-fractions","simplify-fractions"]},
+        {"folder":"simplifying-fractions","title":"Equivalent and simplifying fractions","subtitle":"Split or merge the pieces. The amount stays the same.","skills":["equivalent-fractions","simplify-fractions"]},
         {"folder":"fractions-of-amounts","title":"Fractions of amounts","subtitle":"Use a fraction as an instruction on an amount.","skills":["unit-fractions-of-amounts","fractions-of-amounts"]},
         {"folder":"adding-and-subtracting-fractions","title":"Adding and subtracting fractions","subtitle":"Build common denominators before combining fractions.","skills":["add-subtract-same-denominator","add-subtract-different-denominators","add-subtract-mixed-numbers"]},
         {"folder":"multiplying-and-dividing-fractions","title":"Multiplying and dividing fractions","subtitle":"Multiply straight across or use the reciprocal to divide.","skills":["multiply-fractions","divide-fractions"]},
