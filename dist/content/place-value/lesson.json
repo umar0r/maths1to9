@@ -3,6 +3,37 @@
   "slug": "place-value",
   "title": "Place value",
   "subtitle": "See how a digit's position changes its value.",
+  "section_order": [
+    "explanation",
+    "method",
+    "worked-examples",
+    "interactive",
+    "product-interactive",
+    "question-bank",
+    "comparison"
+  ],
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn",
+      "sections": ["explanation", "method", "worked-examples"]
+    },
+    {
+      "id": "try-it",
+      "label": "Try It",
+      "sections": ["interactive", "product-interactive"]
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "sections": ["question-bank"]
+    },
+    {
+      "id": "check",
+      "label": "Check",
+      "sections": ["comparison"]
+    }
+  ],
   "assessment": {
     "question_types": {
       "digitValue": "place-value",

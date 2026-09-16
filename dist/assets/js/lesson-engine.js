@@ -30,6 +30,7 @@
         sections: [],
         sectionElements: [],
         navigationButtons: [],
+        navigationGroups: [],
         currentIndex: 0,
         highestUnlockedIndex: 0,
         finished: false,
@@ -72,6 +73,10 @@
             state.lesson = lesson;
             state.slug = getLessonSlug(lesson);
             state.sections = createSectionDefinitions(lesson);
+            state.navigationGroups = createNavigationGroups(
+                lesson,
+                state.sections
+            );
 
             if (state.sections.length === 0) {
                 throw new Error(
@@ -373,6 +378,79 @@
         return sections;
     }
 
+    /*
+     * Lessons can group their existing sections into a simpler pupil-facing
+     * journey without changing section rendering, gates, or progress data.
+     * Lessons without navigation_stages retain one navigation item per section.
+     */
+    function createNavigationGroups(lesson, sections) {
+        const configuredStages = safeArray(
+            lesson.navigation_stages
+        ).filter(isObject);
+
+        if (configuredStages.length === 0) {
+            return sections.map((section, index) => ({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index
+            }));
+        }
+
+        const usedSectionIds = new Set();
+        const groups = [];
+
+        configuredStages.forEach((stage, stageIndex) => {
+            const id = normaliseText(stage.id) ||
+                `stage-${stageIndex + 1}`;
+            const sectionIds = safeArray(stage.sections)
+                .map(normaliseText)
+                .filter(Boolean);
+            const sectionIndexes = sectionIds
+                .map(findId => sections.findIndex(
+                    section => section.id === findId
+                ))
+                .filter(index => index !== -1)
+                .filter(index => {
+                    const sectionId = sections[index].id;
+
+                    if (usedSectionIds.has(sectionId)) {
+                        return false;
+                    }
+
+                    usedSectionIds.add(sectionId);
+                    return true;
+                })
+                .sort((a, b) => a - b);
+
+            if (sectionIndexes.length === 0) {
+                return;
+            }
+
+            groups.push({
+                id,
+                label: normaliseText(stage.label) || id,
+                sectionIndexes,
+                firstIndex: sectionIndexes[0]
+            });
+        });
+
+        sections.forEach((section, index) => {
+            if (usedSectionIds.has(section.id)) {
+                return;
+            }
+
+            groups.push({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index
+            });
+        });
+
+        return groups;
+    }
+
     function hasExplanation(explanation) {
         if (!isObject(explanation)) {
             return false;
@@ -628,20 +706,22 @@
             'button-group lesson-navigation__buttons'
         );
 
-        state.navigationButtons = state.sections.map(
-            (section, index) => {
+        state.navigationButtons = state.navigationGroups.map(
+            (group, index) => {
                 const button = createElement(
                     'button',
                     'button lesson-navigation__button',
-                    section.label
+                    group.label
                 );
 
                 button.type = 'button';
-                button.dataset.sectionIndex = String(index);
-                button.disabled = index > 0;
+                button.dataset.stageIndex = String(index);
+                button.disabled = group.firstIndex > 0;
                 button.setAttribute(
                     'aria-controls',
-                    `lesson-section-${section.id}`
+                    `lesson-section-${
+                        state.sections[group.firstIndex].id
+                    }`
                 );
                 button.setAttribute(
                     'aria-pressed',
@@ -649,11 +729,14 @@
                 );
 
                 button.addEventListener('click', () => {
-                    if (index > state.highestUnlockedIndex) {
+                    if (
+                        group.firstIndex >
+                        state.highestUnlockedIndex
+                    ) {
                         return;
                     }
 
-                    showSection(index);
+                    showSection(group.firstIndex);
                 });
 
                 buttonGroup.append(button);
@@ -1671,10 +1754,13 @@
             }
         );
 
+        const currentGroup = findNavigationGroup(index);
+
         state.navigationButtons.forEach(
             (button, buttonIndex) => {
                 const isCurrent =
-                    buttonIndex === index;
+                    state.navigationGroups[buttonIndex] ===
+                    currentGroup;
 
                 button.setAttribute(
                     'aria-pressed',
@@ -1808,9 +1894,16 @@
         state.navigationButtons.forEach(
             (button, index) => {
                 button.disabled =
-                    index > state.highestUnlockedIndex;
+                    state.navigationGroups[index].firstIndex >
+                    state.highestUnlockedIndex;
             }
         );
+    }
+
+    function findNavigationGroup(sectionIndex) {
+        return state.navigationGroups.find(group =>
+            group.sectionIndexes.includes(sectionIndex)
+        ) ?? null;
     }
 
     function finishLesson() {
