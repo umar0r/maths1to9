@@ -1355,6 +1355,16 @@
                 );
         }
 
+        if (Number.isFinite(productInteractive.minimum_offset)) {
+            productRoot.dataset.minimumOffset =
+                String(productInteractive.minimum_offset);
+        }
+
+        if (Number.isFinite(productInteractive.maximum_offset)) {
+            productRoot.dataset.maximumOffset =
+                String(productInteractive.maximum_offset);
+        }
+
         container.append(productRoot);
     }
 

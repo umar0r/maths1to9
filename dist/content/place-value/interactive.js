@@ -700,6 +700,18 @@
             columns,
             onesIndex
         );
+        const configuredMinimum = Number(
+            root.dataset.minimumOffset
+        );
+        const configuredMaximum = Number(
+            root.dataset.maximumOffset
+        );
+        const minimumOffset = Number.isFinite(configuredMinimum)
+            ? Math.max(bounds.minimumOffset, configuredMinimum)
+            : bounds.minimumOffset;
+        const maximumOffset = Number.isFinite(configuredMaximum)
+            ? Math.min(bounds.maximumOffset, configuredMaximum)
+            : bounds.maximumOffset;
 
         gateSection('product-interactive');
 
@@ -719,7 +731,9 @@
         function getScaleMessage() {
             if (state.offset === 0) {
                 return (
-                    'Start with 45 × 89 = 4,005.'
+                    `Start with ${addThousandsSeparators(factors[0])} × `
+                    + `${addThousandsSeparators(factors[1])} = `
+                    + `${addThousandsSeparators(product)}.`
                 );
             }
 
@@ -823,9 +837,9 @@
                                 data-role="product-digit-row"
                                 role="slider"
                                 tabindex="0"
-                                aria-label="Move both numbers left to multiply each by 10 or right to divide each by 10"
-                                aria-valuemin="${bounds.minimumOffset}"
-                                aria-valuemax="${bounds.maximumOffset}"
+                                aria-label="Drag both numbers right one place to divide each by 10"
+                                aria-valuemin="${minimumOffset}"
+                                aria-valuemax="${maximumOffset}"
                                 aria-valuenow="${state.offset}"
                                 style="
                                     grid-template-columns: ${rowTemplate};
@@ -882,10 +896,8 @@
             createDragController({
                 root,
                 state,
-                minimumOffset:
-                    bounds.minimumOffset,
-                maximumOffset:
-                    bounds.maximumOffset,
+                minimumOffset,
+                maximumOffset,
                 getRows: () => (
                     Array.from(
                         root.querySelectorAll(

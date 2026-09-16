@@ -86,15 +86,17 @@
   },
   "product_interactive": {
     "eyebrow": "Explore",
-    "title": "Use what you already know",
-    "known": "45 × 89 = 4,005",
-    "question": "What do you think 4.5 × 8.9 is?",
-    "intro": "Drag both numbers one column left or right.",
+    "title": "Scale the product",
+    "known": "89 × 54 = 4,806",
+    "question": "Drag both numbers one place to the right.",
+    "intro": "Each number is divided by 10, so the product is divided by 100.",
     "factors": [
-      "45",
-      "89"
+      "89",
+      "54"
     ],
-    "product": "4005",
+    "product": "4806",
+    "minimum_offset": 0,
+    "maximum_offset": 1,
     "columns": [
       "Ten-thousands",
       "Thousands",
@@ -165,17 +167,6 @@
     ]
   },
 "worked_examples": [
-  {
-    "title": "Given that 89 × 54 = 4,806, work out 8.9 × 5.4",
-    "steps": [
-      "Start with the fact: 89 × 54 = 4,806.",
-      "Track the first number: 89 → 8.9 is ÷10.",
-      "Track the second number: 54 → 5.4 is ÷10.",
-      "Combine the changes: dividing by 10, then by 10 again, divides the answer by 100.",
-      "Scale the answer: 4,806 ÷ 100 = 48.06."
-    ],
-    "answer": "8.9 × 5.4 = 48.06"
-  },
   {
     "title": "Given that 89 × 54 = 4,806, work out 89 × 5.4",
     "steps": [
