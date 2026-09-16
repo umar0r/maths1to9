@@ -104,25 +104,64 @@
       "Thousandths"
     ]
   },
-"method": {
-  "eyebrow": "Method",
-  "title": "Find the value of a digit",
-  "intro": "A digit's value depends on the column it is in.",
-  "steps": [
-    {
-      "title": "Locate",
-      "text": "Find the digit named in the question. In 670, find the 7."
-    },
-    {
-      "title": "Name the column",
-      "text": "Read the place-value heading above the digit. The 7 is in the tens column."
-    },
-    {
-      "title": "Multiply",
-      "text": "Multiply the digit by its column value. 7 × 10 = 70. The value of the 7 is 70, not \"tens\"."
-    }
-  ]
-},
+  "method": {
+    "eyebrow": "Method",
+    "title": "Find the value of a digit",
+    "intro": "Work through each example. Click the digit in the column named in the question.",
+    "interaction": "place-value-locator",
+    "guided_examples": [
+      {
+        "step": "1. Locate",
+        "number": "670",
+        "columns": ["Hundreds", "Tens", "Ones"],
+        "digits": ["6", "7", "0"],
+        "prompt": "Which digit is in the tens column?",
+        "correct_index": 1,
+        "correct_feedback": "Correct. The digit 7 is in the tens column. Its value is 7 × 10 = 70.",
+        "incorrect_feedback": "Not quite. Count from the right: ones, tens, hundreds."
+      },
+      {
+        "step": "2. Name the column",
+        "number": "670",
+        "columns": ["Hundreds", "Tens", "Ones"],
+        "digits": ["6", "7", "0"],
+        "prompt": "Which digit is in the ones column?",
+        "correct_index": 2,
+        "correct_feedback": "Correct. The digit 0 is in the ones column. Its value is 0 × 1 = 0.",
+        "incorrect_feedback": "Not quite. The ones column is the rightmost column."
+      },
+      {
+        "step": "2. Name the column",
+        "number": "670",
+        "columns": ["Hundreds", "Tens", "Ones"],
+        "digits": ["6", "7", "0"],
+        "prompt": "Which digit is in the hundreds column?",
+        "correct_index": 0,
+        "correct_feedback": "Correct. The digit 6 is in the hundreds column. Its value is 6 × 100 = 600.",
+        "incorrect_feedback": "Not quite. Hundreds is the third column from the right."
+      },
+      {
+        "step": "3. Decimals",
+        "number": "46.275",
+        "columns": ["Tens", "Ones", ".", "Tenths", "Hundredths", "Thousandths"],
+        "digits": ["4", "6", ".", "2", "7", "5"],
+        "prompt": "Which digit is in the tens column?",
+        "correct_index": 0,
+        "correct_feedback": "Correct. The digit 4 is in the tens column. Its value is 4 × 10 = 40.",
+        "incorrect_feedback": "Not quite. Tens is immediately to the left of ones."
+      },
+      {
+        "step": "3. Decimals",
+        "number": "46.275",
+        "columns": ["Tens", "Ones", ".", "Tenths", "Hundredths", "Thousandths"],
+        "digits": ["4", "6", ".", "2", "7", "5"],
+        "prompt": "Which digit is in the hundredths column?",
+        "correct_index": 4,
+        "correct_feedback": "Correct. The digit 7 is in the hundredths column. Its value is 7 × 0.01 = 0.07.",
+        "incorrect_feedback": "Not quite. Move two columns to the right of the decimal point: tenths, then hundredths."
+      }
+    ]
+  },
 "worked_examples": [
   {
     "title": "Given that 89 × 54 = 4,806, work out 8.9 × 5.4",

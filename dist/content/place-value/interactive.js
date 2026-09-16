@@ -846,6 +846,153 @@
         render();
     }
 
+    function mountGuidedMethod(root) {
+        const examples = parseJsonData(
+            root.dataset.guidedMethod
+        ).filter((example) => (
+            example
+            && Array.isArray(example.columns)
+            && Array.isArray(example.digits)
+        ));
+
+        if (examples.length === 0) {
+            return;
+        }
+
+        gateSection('method');
+
+        let exampleIndex = 0;
+
+        function render() {
+            const example = examples[exampleIndex];
+            const columns = example.columns;
+            const digits = example.digits;
+            const correctIndex = Number(example.correct_index);
+            const decimalSeparatorIndex = columns.indexOf('.');
+            const decimalIndex = decimalSeparatorIndex === -1
+                ? -1
+                : decimalSeparatorIndex + 1;
+            const template = `repeat(${columns.length}, minmax(78px, 1fr))`;
+            const chartWidth = Math.max(360, columns.length * 104);
+
+            root.innerHTML = `
+                <article class="place-value-method__card">
+                    <p class="place-value-method__progress">
+                        ${escapeHtml(example.step || 'Guided example')}
+                        <span>Example ${exampleIndex + 1} of ${examples.length}</span>
+                    </p>
+                    <p class="interactive-equation">
+                        ${escapeHtml(example.number)}
+                    </p>
+                    <p class="place-value-method__prompt">
+                        ${escapeHtml(example.prompt)}
+                    </p>
+                    <div class="place-value-chart-wrapper">
+                        <div
+                            class="place-value-chart place-value-method__chart"
+                            style="min-width: ${chartWidth}px;"
+                        >
+                            <div
+                                class="place-value-row"
+                                style="grid-template-columns: ${template};"
+                            >
+                                ${columns.map((column, index) => `
+                                    <div class="place-value-cell place-value-cell--heading ${
+                                        index === decimalIndex
+                                            ? 'place-value-cell--decimal-start'
+                                            : ''
+                                    }">
+                                        ${escapeHtml(column)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div
+                                class="place-value-row"
+                                style="grid-template-columns: ${template};"
+                            >
+                                ${digits.map((digit, index) => `
+                                    <div class="place-value-cell place-value-cell--digit ${
+                                        index === decimalIndex
+                                            ? 'place-value-cell--decimal-start'
+                                            : ''
+                                    }">
+                                        ${digit === '.'
+                                            ? '<span aria-hidden="true">.</span>'
+                                            : `<button
+                                                class="place-value-method__digit"
+                                                type="button"
+                                                data-digit-index="${index}"
+                                                aria-label="Select digit ${escapeHtml(digit)}"
+                                            >${escapeHtml(digit)}</button>`
+                                        }
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <p class="place-value-method__feedback" hidden></p>
+                </article>
+            `;
+
+            const feedback = root.querySelector(
+                '.place-value-method__feedback'
+            );
+
+            root.querySelectorAll('[data-digit-index]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const selectedIndex = Number(
+                        button.dataset.digitIndex
+                    );
+
+                    if (selectedIndex !== correctIndex) {
+                        button.classList.add('is-wrong');
+                        feedback.textContent = example.incorrect_feedback ||
+                            'Not quite. Try again.';
+                        feedback.className =
+                            'place-value-method__feedback is-wrong';
+                        feedback.hidden = false;
+                        return;
+                    }
+
+                    root.querySelectorAll('[data-digit-index]').forEach((item) => {
+                        item.disabled = true;
+                    });
+                    button.classList.add('is-correct');
+                    feedback.textContent = example.correct_feedback ||
+                        'Correct.';
+                    feedback.className =
+                        'place-value-method__feedback is-correct';
+                    feedback.hidden = false;
+
+                    const next = document.createElement('button');
+                    next.className = 'button button--primary';
+                    next.type = 'button';
+                    next.textContent = exampleIndex === examples.length - 1
+                        ? 'Finish method'
+                        : 'Next example';
+                    next.addEventListener('click', () => {
+                        if (exampleIndex === examples.length - 1) {
+                            completeSection('method');
+                            root.innerHTML = `
+                                <p class="place-value-method__complete">
+                                    You can now identify a digit, name its
+                                    column and find its value.
+                                </p>
+                            `;
+                            return;
+                        }
+
+                        exampleIndex += 1;
+                        render();
+                    }, { once: true });
+                    feedback.after(next);
+                });
+            });
+        }
+
+        render();
+    }
+
     /* ---------- mounting ----------
        The lesson engine renders the mount points after fetching
        lesson.json, so this script must wait for that render. It
@@ -870,6 +1017,15 @@
         if (productRoot && !productRoot.dataset.mounted) {
             productRoot.dataset.mounted = 'true';
             mountProductScaling(productRoot);
+        }
+
+        const guidedMethodRoot = document.getElementById(
+            'place-value-guided-method'
+        );
+
+        if (guidedMethodRoot && !guidedMethodRoot.dataset.mounted) {
+            guidedMethodRoot.dataset.mounted = 'true';
+            mountGuidedMethod(guidedMethodRoot);
         }
     }
 

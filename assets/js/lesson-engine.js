@@ -1141,6 +1141,12 @@
     }
 
     function renderMethod(container, method) {
+        if (method.interaction === 'place-value-locator') {
+            renderGuidedPlaceValueMethod(container, method);
+
+            return;
+        }
+
         if (isRichMethod(method)) {
             renderRichMethod(container, method);
 
@@ -1201,6 +1207,30 @@
         }
 
         container.append(list);
+    }
+
+    function renderGuidedPlaceValueMethod(container, method) {
+        appendSectionHeading(
+            container,
+            method,
+            'Step-by-step guide',
+            'Method',
+            'method'
+        );
+
+        appendIntro(container, method.intro);
+
+        const root = createElement(
+            'div',
+            'lesson-module place-value-guided-method'
+        );
+
+        root.id = `${state.slug}-guided-method`;
+        root.dataset.guidedMethod = JSON.stringify(
+            safeArray(method.guided_examples)
+        );
+
+        container.append(root);
     }
 
     function renderInteractive(container, interactive) {

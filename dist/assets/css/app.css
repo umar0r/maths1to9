@@ -986,6 +986,96 @@ a {
     border-left: 3px solid var(--accent);
 }
 
+.place-value-method__card {
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-small);
+}
+
+.place-value-method__progress {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.place-value-method__progress span {
+    color: var(--text-muted);
+}
+
+.place-value-method__prompt {
+    margin: 0 0 18px;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.place-value-method__digit {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border: 2px solid transparent;
+    border-radius: var(--radius-small);
+    font: inherit;
+    font-size: 1.35rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.place-value-method__digit:hover:not(:disabled) {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.place-value-method__digit:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.2);
+}
+
+.place-value-method__digit.is-correct {
+    background: var(--success);
+    color: #ffffff;
+}
+
+.place-value-method__digit.is-wrong {
+    background: var(--error-background);
+    color: var(--error);
+    border-color: var(--error);
+}
+
+.place-value-method__feedback {
+    margin: 18px 0 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-small);
+    font-weight: 600;
+}
+
+.place-value-method__feedback.is-correct {
+    background: var(--success-background);
+    color: var(--success-dark);
+}
+
+.place-value-method__feedback.is-wrong {
+    background: var(--error-background);
+    color: var(--error);
+}
+
+.place-value-method__complete {
+    margin: 0;
+    padding: 18px;
+    background: var(--success-background);
+    color: var(--success-dark);
+    border-radius: var(--radius-small);
+    font-weight: 700;
+}
+
 .interactive-explanation {
     max-width: var(--reading-width);
     margin: 16px 0 0;
