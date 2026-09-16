@@ -815,7 +815,7 @@
 
         elements.nextButton.addEventListener(
             'click',
-            handleNext
+            handlePrimaryAction
         );
 
         elements.status = createElement(
@@ -1773,6 +1773,18 @@
         finishLesson();
     }
 
+    function handlePrimaryAction() {
+        const section = state.sections[state.currentIndex];
+        const action = state.sectionActions.get(section?.id);
+
+        if (action && !action.disabled && typeof action.onClick === 'function') {
+            action.onClick();
+            return;
+        }
+
+        handleNext();
+    }
+
     function showSection(
         index,
         options = {}
@@ -1940,54 +1952,30 @@
         const complete =
             isSectionComplete(state.currentIndex);
 
-        /*
-         * The footer has no backwards navigation. A lesson module's
-         * current Check / Retry / Next action appears first, followed
-         * by Continue once the section has been completed.
-         */
-        const showForward =
-            complete && !(isLast && state.finished);
-
         const section =
             state.sections[state.currentIndex];
 
         const sectionAction =
             state.sectionActions.get(section?.id);
 
-        const showSectionAction =
-            Boolean(sectionAction);
+        const showSectionAction = Boolean(sectionAction) && !state.finished;
+        const showForward = complete && !(isLast && state.finished);
+        const showPrimaryButton = showSectionAction || showForward;
 
-        if (showSectionAction) {
-            elements.sectionActionButton.textContent =
-                sectionAction.label;
+        elements.sectionActionButton.remove();
 
-            elements.sectionActionButton.disabled =
-                sectionAction.disabled;
-
-            elements.controlButtonGroup.append(
-                elements.sectionActionButton
-            );
-        } else {
-            elements.sectionActionButton.remove();
-        }
-
-        if (showForward) {
-            elements.nextButton.disabled = false;
-
-            elements.controlButtonGroup.append(
-                elements.nextButton
-            );
+        if (showPrimaryButton) {
+            elements.nextButton.disabled = showSectionAction
+                ? sectionAction.disabled
+                : false;
+            elements.controlButtonGroup.append(elements.nextButton);
         } else {
             elements.nextButton.remove();
         }
 
-        elements.controlButtonGroup.hidden =
-            !showSectionAction && !showForward;
+        elements.controlButtonGroup.hidden = !showPrimaryButton;
 
-        elements.nextButton.textContent =
-            isLast
-                ? 'Finish lesson'
-                : 'Continue';
+        elements.nextButton.textContent = 'Continue';
 
         if (state.finished) {
             elements.status.textContent =

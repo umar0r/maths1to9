@@ -69,6 +69,6 @@ $pageTitle = 'Place value';
     <script src="../../assets/js/progress.js"></script>
     <script src="./interactive.js?v=12"></script>
     <script src="./questions.js?v=14"></script>
-    <script src="../../assets/js/lesson-engine.js?v=13"></script>
+    <script src="../../assets/js/lesson-engine.js?v=14"></script>
 </body>
 </html>
