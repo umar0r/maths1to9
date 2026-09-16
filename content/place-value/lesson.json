@@ -88,15 +88,35 @@
     "eyebrow": "Explore",
     "title": "Scale the product",
     "known": "89 × 54 = 4,806",
-    "question": "Drag both numbers one place to the right.",
-    "intro": "Each number is divided by 10, so the product is divided by 100.",
-    "factors": [
-      "89",
-      "54"
+    "examples": [
+      {
+        "prompt": "Drag both numbers one place to the right.",
+        "factors": ["89", "54"],
+        "product": "4806",
+        "minimum_offsets": [0, 0],
+        "maximum_offsets": [1, 1],
+        "target_offsets": [1, 1],
+        "complete_message": "89 → 8.9 is ÷10 and 54 → 5.4 is ÷10. Both changes divide the product by 100."
+      },
+      {
+        "prompt": "Drag 89 one place left and 54 one place right.",
+        "factors": ["89", "54"],
+        "product": "4806",
+        "minimum_offsets": [-1, 0],
+        "maximum_offsets": [0, 1],
+        "target_offsets": [-1, 1],
+        "complete_message": "89 → 890 is ×10 and 54 → 5.4 is ÷10. The changes cancel out, so the product stays the same."
+      },
+      {
+        "prompt": "Drag both numbers two places to the right.",
+        "factors": ["89", "54"],
+        "product": "4806",
+        "minimum_offsets": [0, 0],
+        "maximum_offsets": [2, 2],
+        "target_offsets": [2, 2],
+        "complete_message": "89 → 0.89 is ÷100 and 54 → 0.54 is ÷100. Together, the product is divided by 10,000."
+      }
     ],
-    "product": "4806",
-    "minimum_offset": 0,
-    "maximum_offset": 1,
     "columns": [
       "Ten-thousands",
       "Thousands",
@@ -167,39 +187,6 @@
     ]
   },
 "worked_examples": [
-  {
-    "title": "Given that 89 × 54 = 4,806, work out 89 × 5.4",
-    "steps": [
-      "Start with the fact: 89 × 54 = 4,806.",
-      "Track the first number: 89 stays the same, so no change.",
-      "Track the second number: 54 → 5.4 is ÷10.",
-      "Combine the changes: only one number changed, so the answer is divided by 10.",
-      "Scale the answer: 4,806 ÷ 10 = 480.6."
-    ],
-    "answer": "89 × 5.4 = 480.6"
-  },
-  {
-    "title": "Given that 89 × 54 = 4,806, work out 890 × 5.4",
-    "steps": [
-      "Start with the fact: 89 × 54 = 4,806.",
-      "Track the first number: 89 → 890 is ×10.",
-      "Track the second number: 54 → 5.4 is ÷10.",
-      "Combine the changes: ×10 and ÷10 cancel out, so the answer does not change.",
-      "Scale the answer: it stays at 4,806."
-    ],
-    "answer": "890 × 5.4 = 4,806"
-  },
-  {
-    "title": "Given that 89 × 54 = 4,806, work out 0.89 × 0.54",
-    "steps": [
-      "Start with the fact: 89 × 54 = 4,806.",
-      "Track the first number: 89 → 0.89 is ÷100.",
-      "Track the second number: 54 → 0.54 is ÷100.",
-      "Combine the changes: dividing by 100, then by 100 again, divides the answer by 10,000.",
-      "Scale the answer: 4,806 ÷ 10,000 = 0.4806."
-    ],
-    "answer": "0.89 × 0.54 = 0.4806"
-  }
 ],
   "comparison": {
     "eyebrow": "Try it",

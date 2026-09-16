@@ -664,257 +664,192 @@
     }
 
     function mountProductScaling(root) {
-        const factors = parseJsonData(
-            root.dataset.factors
-        )
-            .map((factor) => (
-                String(factor)
-                    .replace(/[^0-9]/g, '')
-            ))
-            .filter(Boolean);
-
-        const product = String(
-            root.dataset.product || '4005'
-        ).replace(/[^0-9]/g, '');
-
-        const columns = parseJsonData(
-            root.dataset.columns
+        const asArray = (value) => (
+            Array.isArray(value) ? value : []
         );
-
+        const columns = parseJsonData(root.dataset.columns);
         const onesIndex = findOnesIndex(columns);
+        const configuredExamples = parseJsonData(root.dataset.productExamples);
+        const fallbackExample = {
+            factors: parseJsonData(root.dataset.factors),
+            product: root.dataset.product,
+            minimum_offsets: [Number(root.dataset.minimumOffset)],
+            maximum_offsets: [Number(root.dataset.maximumOffset)],
+            target_offsets: [1, 1]
+        };
+        const examples = (Array.isArray(configuredExamples)
+            && configuredExamples.length > 0
+            ? configuredExamples
+            : [fallbackExample]
+        ).map((example) => ({
+            ...example,
+            factors: asArray(example.factors)
+                .map((factor) => String(factor).replace(/[^0-9]/g, ''))
+                .filter(Boolean),
+            product: String(example.product || '').replace(/[^0-9]/g, '')
+        })).filter((example) => (
+            example.factors.length === 2 && example.product !== ''
+        ));
 
-        if (
-            factors.length !== 2
-            || product === ''
-            || !Array.isArray(columns)
-            || columns.length === 0
-            || onesIndex === -1
-        ) {
-            root.textContent =
-                'The multiplication interactive could not be loaded.';
+        if (!Array.isArray(columns) || columns.length === 0 || onesIndex === -1 || examples.length === 0) {
+            root.textContent = 'The multiplication interactive could not be loaded.';
             return;
         }
 
-        const bounds = getMovementBounds(
-            factors,
-            columns,
-            onesIndex
-        );
-        const configuredMinimum = Number(
-            root.dataset.minimumOffset
-        );
-        const configuredMaximum = Number(
-            root.dataset.maximumOffset
-        );
-        const minimumOffset = Number.isFinite(configuredMinimum)
-            ? Math.max(bounds.minimumOffset, configuredMinimum)
-            : bounds.minimumOffset;
-        const maximumOffset = Number.isFinite(configuredMaximum)
-            ? Math.min(bounds.maximumOffset, configuredMaximum)
-            : bounds.maximumOffset;
-
         gateSection('product-interactive');
+        let exampleIndex = 0;
 
-        const state = {
-            offset: 0,
-            dragging: false,
-            pointerId: null,
-            startX: 0,
-            distance: 0,
-            completed: false
-        };
-
-        function isDecimalStart(index) {
-            return index === onesIndex + 1;
-        }
-
-        function getScaleMessage() {
-            if (state.offset === 0) {
-                return (
-                    `Start with ${addThousandsSeparators(factors[0])} × `
-                    + `${addThousandsSeparators(factors[1])} = `
-                    + `${addThousandsSeparators(product)}.`
-                );
-            }
-
-            const factorScale =
-                10 ** Math.abs(state.offset);
-
-            const productScale =
-                10 ** (Math.abs(state.offset) * 2);
-
-            if (state.offset > 0) {
-                return (
-                    `Both numbers ÷ `
-                    + `${addThousandsSeparators(factorScale)}, `
-                    + `so the product ÷ `
-                    + `${addThousandsSeparators(productScale)}.`
-                );
-            }
-
-            return (
-                `Both numbers × `
-                + `${addThousandsSeparators(factorScale)}, `
-                + `so the product × `
-                + `${addThousandsSeparators(productScale)}.`
-            );
-        }
-
-        function render() {
-            if (!state.completed && state.offset !== 0) {
-                state.completed = true;
-                completeSection('product-interactive');
-            }
-
-            const displayedRows = factors.map(
-                (factor, index) => (
-                    getDisplayCells(
-                        factor,
-                        state.offset,
-                        columns.length,
-                        onesIndex,
-                        bounds.starts[index]
-                    )
-                )
-            );
-
-            const displayedFactors =
-                displayedRows.map(
-                    (cells) => (
-                        getDisplayedNumber(
-                            cells,
-                            onesIndex
-                        )
-                    )
-                );
-
-            const displayedProduct =
-                shiftWholeNumber(
-                    product,
-                    state.offset * 2
-                );
-
-            const rowTemplate = (
-                `120px repeat(${columns.length}, `
-                + 'minmax(90px, 1fr))'
-            );
-
-            const chartWidth =
-                120 + (columns.length * 110);
-
-            root.innerHTML = `
-                <p class="interactive-explanation">
-                    <strong>← ×10 each</strong>
-                    &nbsp;&nbsp; Drag either row &nbsp;&nbsp;
-                    <strong>÷10 each →</strong>
-                </p>
-
-                <div class="place-value-chart-wrapper">
-                    <div
-                        class="place-value-chart"
-                        style="min-width: ${chartWidth}px;"
-                    >
-                        <div
-                            class="place-value-row"
-                            style="grid-template-columns: ${rowTemplate};"
-                        >
-                            <div class="place-value-cell place-value-cell--heading"></div>
-
-                            ${columns.map((column, index) => `
-                                <div class="place-value-cell place-value-cell--heading ${
-                                    isDecimalStart(index)
-                                        ? 'place-value-cell--decimal-start'
-                                        : ''
-                                }">
-                                    ${escapeHtml(column)}
-                                </div>
-                            `).join('')}
-                        </div>
-
-                        ${displayedRows.map((cells, rowIndex) => `
-                            <div
-                                class="place-value-row"
-                                data-role="product-digit-row"
-                                role="slider"
-                                tabindex="0"
-                                aria-label="Drag both numbers right one place to divide each by 10"
-                                aria-valuemin="${minimumOffset}"
-                                aria-valuemax="${maximumOffset}"
-                                aria-valuenow="${state.offset}"
-                                style="
-                                    grid-template-columns: ${rowTemplate};
-                                    cursor: grab;
-                                    touch-action: pan-y;
-                                    user-select: none;
-                                "
-                            >
-                                <div class="place-value-cell place-value-cell--row-label">
-                                    Number ${rowIndex + 1}
-                                </div>
-
-                                ${cells.map((digit, index) => `
-                                    <div class="place-value-cell place-value-cell--digit ${
-                                        isDecimalStart(index)
-                                            ? 'place-value-cell--decimal-start'
-                                            : ''
-                                    }">
-                                        <span
-                                            data-role="product-movable-digit"
-                                            style="
-                                                display: inline-block;
-                                                will-change: transform;
-                                            "
-                                        >
-                                            ${escapeHtml(digit)}
-                                        </span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <p
-                    class="interactive-explanation"
-                    aria-live="polite"
-                >
-                    ${escapeHtml(getScaleMessage())}
-                </p>
-
-                <div
-                    class="interactive-equation"
-                    aria-live="polite"
-                >
-                    ${escapeHtml(
-                        `${displayedFactors[0]} × `
-                        + `${displayedFactors[1]} = `
-                        + displayedProduct
-                    )}
-                </div>
-            `;
-
-            createDragController({
-                root,
-                state,
-                minimumOffset,
-                maximumOffset,
-                getRows: () => (
-                    Array.from(
-                        root.querySelectorAll(
-                            '[data-role="product-digit-row"]'
-                        )
-                    )
-                ),
-                getMovableDigits: () => (
-                    root.querySelectorAll(
-                        '[data-role="product-movable-digit"]'
-                    )
-                ),
-                render
+        function setContinue(disabled, onClick) {
+            window.Maths1to9Lesson?.setSectionAction?.('product-interactive', {
+                label: 'Continue',
+                disabled,
+                onClick
             });
         }
 
-        render();
+        function renderExample() {
+            const example = examples[exampleIndex];
+            const bounds = getMovementBounds(example.factors, columns, onesIndex);
+            const minimumOffsets = example.factors.map((factor, index) => {
+                const configured = Number(asArray(example.minimum_offsets)[index]);
+                return Number.isFinite(configured)
+                    ? Math.max(bounds.minimumOffset, configured)
+                    : bounds.minimumOffset;
+            });
+            const maximumOffsets = example.factors.map((factor, index) => {
+                const configured = Number(asArray(example.maximum_offsets)[index]);
+                return Number.isFinite(configured)
+                    ? Math.min(bounds.maximumOffset, configured)
+                    : bounds.maximumOffset;
+            });
+            const targetOffsets = example.factors.map((factor, index) => {
+                const configured = Number(asArray(example.target_offsets)[index]);
+                return Number.isFinite(configured) ? configured : 0;
+            });
+            const state = {
+                offsets: example.factors.map(() => 0),
+                draggingIndex: null,
+                pointerId: null,
+                startX: 0,
+                distance: 0
+            };
+            const rowTemplate = `120px repeat(${columns.length}, minmax(90px, 1fr))`;
+            const chartWidth = 120 + (columns.length * 110);
+
+            function isDecimalStart(index) {
+                return index === onesIndex + 1;
+            }
+
+            function hasReachedTarget() {
+                return state.offsets.every((offset, index) => offset === targetOffsets[index]);
+            }
+
+            function getMessage() {
+                if (hasReachedTarget()) {
+                    return example.complete_message || 'Correct.';
+                }
+
+                return `Start with ${addThousandsSeparators(example.factors[0])} × ${addThousandsSeparators(example.factors[1])} = ${addThousandsSeparators(example.product)}.`;
+            }
+
+            function render() {
+                const displayedRows = example.factors.map((factor, index) => getDisplayCells(
+                    factor,
+                    state.offsets[index],
+                    columns.length,
+                    onesIndex,
+                    bounds.starts[index]
+                ));
+                const displayedFactors = displayedRows.map((cells) => getDisplayedNumber(cells, onesIndex));
+                const displayedProduct = formatCalculationNumber(
+                    shiftWholeNumber(
+                        example.product,
+                        state.offsets.reduce((total, offset) => total + offset, 0)
+                    )
+                );
+
+                root.innerHTML = `
+                    <p class="place-value-method__prompt">${escapeHtml(example.prompt || 'Drag the numbers into the correct columns.')}</p>
+                    <p class="interactive-explanation"><strong>← One place left: ×10</strong>&nbsp;&nbsp; <strong>One place right: ÷10 →</strong></p>
+                    <div class="place-value-chart-wrapper">
+                        <div class="place-value-chart" style="min-width: ${chartWidth}px;">
+                            <div class="place-value-row" style="grid-template-columns: ${rowTemplate};">
+                                <div class="place-value-cell place-value-cell--heading"></div>
+                                ${columns.map((column, index) => `<div class="place-value-cell place-value-cell--heading ${isDecimalStart(index) ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</div>`).join('')}
+                            </div>
+                            ${displayedRows.map((cells, rowIndex) => `
+                                <div class="place-value-row" data-role="product-digit-row" data-row-index="${rowIndex}" role="slider" tabindex="0" aria-label="Move number ${rowIndex + 1}" aria-valuemin="${minimumOffsets[rowIndex]}" aria-valuemax="${maximumOffsets[rowIndex]}" aria-valuenow="${state.offsets[rowIndex]}" style="grid-template-columns: ${rowTemplate}; cursor: grab; touch-action: pan-y; user-select: none;">
+                                    <div class="place-value-cell place-value-cell--row-label">Number ${rowIndex + 1}</div>
+                                    ${cells.map((digit, index) => `<div class="place-value-cell place-value-cell--digit ${isDecimalStart(index) ? 'place-value-cell--decimal-start' : ''}"><span data-role="product-movable-digit" style="display: inline-block; will-change: transform;">${escapeHtml(digit)}</span></div>`).join('')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <p class="interactive-explanation" aria-live="polite">${escapeHtml(getMessage())}</p>
+                    <div class="interactive-equation" aria-live="polite">${escapeHtml(`${displayedFactors[0]} × ${displayedFactors[1]} = ${displayedProduct}`)}</div>
+                `;
+
+                setContinue(!hasReachedTarget(), () => {
+                    if (exampleIndex === examples.length - 1) {
+                        window.Maths1to9Lesson?.clearSectionAction?.('product-interactive');
+                        completeSection('product-interactive');
+                        return;
+                    }
+                    exampleIndex += 1;
+                    renderExample();
+                });
+
+                root.querySelectorAll('[data-role="product-digit-row"]').forEach((row) => {
+                    const rowIndex = Number(row.dataset.rowIndex);
+                    const getColumnWidth = () => row.querySelector('.place-value-cell:nth-child(2)')?.getBoundingClientRect().width || 1;
+                    const moveDigits = (distance) => row.querySelectorAll('[data-role="product-movable-digit"]').forEach((digit) => {
+                        digit.style.transform = `translateX(${distance}px)`;
+                    });
+                    const finishDrag = (event) => {
+                        if (state.draggingIndex !== rowIndex) return;
+                        const threshold = Math.max(24, getColumnWidth() * 0.3);
+                        if (state.distance <= -threshold && state.offsets[rowIndex] > minimumOffsets[rowIndex]) state.offsets[rowIndex] -= 1;
+                        if (state.distance >= threshold && state.offsets[rowIndex] < maximumOffsets[rowIndex]) state.offsets[rowIndex] += 1;
+                        if (event && row.hasPointerCapture(event.pointerId)) row.releasePointerCapture(event.pointerId);
+                        state.draggingIndex = null;
+                        state.pointerId = null;
+                        state.distance = 0;
+                        render();
+                    };
+                    row.addEventListener('pointerdown', (event) => {
+                        state.draggingIndex = rowIndex;
+                        state.pointerId = event.pointerId;
+                        state.startX = event.clientX;
+                        state.distance = 0;
+                        row.setPointerCapture(event.pointerId);
+                    });
+                    row.addEventListener('pointermove', (event) => {
+                        if (state.draggingIndex !== rowIndex || state.pointerId !== event.pointerId) return;
+                        const maximum = getColumnWidth() * 0.9;
+                        state.distance = Math.max(-maximum, Math.min(maximum, event.clientX - state.startX));
+                        moveDigits(state.distance);
+                    });
+                    row.addEventListener('pointerup', finishDrag);
+                    row.addEventListener('pointercancel', finishDrag);
+                    row.addEventListener('keydown', (event) => {
+                        if (event.key === 'ArrowLeft' && state.offsets[rowIndex] > minimumOffsets[rowIndex]) {
+                            event.preventDefault();
+                            state.offsets[rowIndex] -= 1;
+                            render();
+                        }
+                        if (event.key === 'ArrowRight' && state.offsets[rowIndex] < maximumOffsets[rowIndex]) {
+                            event.preventDefault();
+                            state.offsets[rowIndex] += 1;
+                            render();
+                        }
+                    });
+                });
+            }
+
+            render();
+        }
+
+        renderExample();
     }
 
     function mountGuidedMethod(root) {

@@ -1348,6 +1348,11 @@
         productRoot.dataset.product =
             normaliseText(productInteractive.product);
 
+        if (hasItems(productInteractive.examples)) {
+            productRoot.dataset.productExamples =
+                JSON.stringify(productInteractive.examples);
+        }
+
         if (hasItems(productInteractive.columns)) {
             productRoot.dataset.columns =
                 JSON.stringify(
