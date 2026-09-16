@@ -312,39 +312,18 @@
 
         const ordered = [...values].sort((first, second) => first.units - second.units);
         const correctOrder = ordered.map((item) => item.display);
-        const answer = correctOrder.join(' → ');
-
-        // Misconception distractor: ignore the decimal point and compare the
-        // digit strings ("longer means bigger").
-        const longerIsBigger = [...values]
-            .sort((first, second) => (
-                Number(first.display.replace('.', ''))
-                - Number(second.display.replace('.', ''))
-            ))
-            .map((item) => item.display)
-            .join(' → ');
-
-        const swapFirst = [...correctOrder];
-        [swapFirst[0], swapFirst[1]] = [swapFirst[1], swapFirst[0]];
-
-        const swapLast = [...correctOrder];
-        [swapLast[2], swapLast[3]] = [swapLast[3], swapLast[2]];
-
         const padded = ordered.map((item) => formatScaledInteger(item.units, 3, true));
 
         return makeQuestion({
             type: 'Order decimals',
-            prompt: 'Which option puts these numbers in order from smallest to biggest?',
-            display: shuffle(values.map((item) => item.display)).join(', '),
-            options: uniqueOptions(answer, [
-                longerIsBigger,
-                swapFirst.join(' → '),
-                swapLast.join(' → ')
-            ]),
-            answer,
+            prompt: 'Put these decimals in order from smallest to largest.',
+            interaction: 'order-tiles',
+            values: shuffle(values.map((item) => item.display)),
+            correctOrder,
+            answer: correctOrder.join(' → '),
             explanation: (
-                `Write them with the same number of decimal places: ${padded.join(', ')}. `
-                + `The correct order is ${answer}.`
+                `Add zeros so every decimal has the same number of decimal places: ${padded.join(', ')}. `
+                + 'Now compare the digits from left to right.'
             )
         });
     }
@@ -692,6 +671,7 @@
                 questionId:
                     `question-bank:${state.questions.length + 1}`,
                 selected: '',
+                order: [],
                 checked: false,
                 answered: false,
                 lastAnswer: '',
@@ -839,9 +819,19 @@ function historyHtml() {
         function render() {
             const entry = currentEntry();
             const question = entry.question;
+            const isOrdering = question.interaction === 'order-tiles';
+
+            if (isOrdering && !Array.isArray(entry.order)) {
+                entry.order = [];
+            }
+
+            if (isOrdering) {
+                entry.selected = entry.order.join(' → ');
+            }
+
             const correct = entry.selected === question.answer;
 
-            const optionsHtml = question.options.map((option) => (
+            const optionsHtml = !isOrdering ? question.options.map((option) => (
                 `<label class="question-option ${optionClass(option, entry)}">`
                 + '<input type="radio" name="place-value-practice-answer"'
                 + ` value="${escapeHtml(option)}"`
@@ -849,7 +839,28 @@ function historyHtml() {
                 + `${entry.checked ? ' disabled' : ''}>`
                 + `<span>${escapeHtml(option)}</span>`
                 + '</label>'
-            )).join('');
+            )).join('') : '';
+
+            const orderingHtml = isOrdering ? `
+                <div class="ordering-tile-bank" aria-label="Unordered decimals">
+                    ${question.values
+                        .filter((value) => !entry.order.includes(value))
+                        .map((value) => `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(value)}" data-order-source="pool">${escapeHtml(value)}</button>`)
+                        .join('')}
+                </div>
+                <div class="ordering-row" aria-label="Order decimals from smallest to largest">
+                    <span class="ordering-row__label">Smallest</span>
+                    <span class="ordering-row__arrow" aria-hidden="true">→</span>
+                    <div class="ordering-slots">
+                        ${question.values.map((value, index) => {
+                            const placed = entry.order[index];
+                            return `<div class="ordering-slot ${placed ? 'is-filled' : ''}" data-order-slot="${index}">${placed ? `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(placed)}" data-order-source="slot">${escapeHtml(placed)}</button>` : `<span>${index + 1}</span>`}</div>`;
+                        }).join('')}
+                    </div>
+                    <span class="ordering-row__arrow" aria-hidden="true">→</span>
+                    <span class="ordering-row__label">Largest</span>
+                </div>
+            ` : '';
 
             const displayHtml = question.display
                 ? `<div class="interactive-equation">${escapeHtml(question.display)}</div>`
@@ -857,10 +868,21 @@ function historyHtml() {
 
             const feedbackHtml = entry.checked
                 ? (
+                    isOrdering
+                    ? (
+                        `<div class="question-feedback is-visible ${correct ? 'is-correct' : 'is-incorrect'}">`
+                        + `<strong>${correct ? 'Correct.' : 'Not quite.'}</strong> `
+                        + (correct
+                            ? `<p class="ordering-answer">${escapeHtml(question.correctOrder.join(' < '))}</p>${escapeHtml(question.explanation)}`
+                            : 'Add zeros to make the decimal places line up, then compare again.')
+                        + '</div>'
+                    )
+                    : (
                     `<div class="question-feedback is-visible ${correct ? 'is-correct' : 'is-incorrect'}">`
                     + `<strong>${correct ? 'Correct.' : 'Not quite.'}</strong> `
                     + escapeHtml(question.explanation)
                     + '</div>'
+                    )
                 )
                 : '';
 
@@ -872,27 +894,64 @@ function historyHtml() {
                 : action === 'retry'
                     ? 'Try again'
                     : 'Check answer';
-            const actionDisabled =
-                action === 'check' && entry.selected === '';
+            const actionDisabled = action === 'check' && (
+                isOrdering
+                    ? entry.order.length !== question.values.length
+                    : entry.selected === ''
+            );
 
             root.innerHTML = (
                 '<article class="question-card question-card--bare">'
                 + `<p class="question-prompt">${escapeHtml(question.prompt)}</p>`
                 + displayHtml
-                + '<div class="question-options" role="radiogroup" aria-label="Choose an answer">'
-                + optionsHtml
-                + '</div>'
+                + (isOrdering
+                    ? orderingHtml
+                    : '<div class="question-options" role="radiogroup" aria-label="Choose an answer">' + optionsHtml + '</div>')
                 + feedbackHtml
                 + '</article>'
                 + historyHtml()
             );
 
-            root.querySelectorAll('input[name="place-value-practice-answer"]').forEach((input) => {
-                input.addEventListener('change', (event) => {
-                    entry.selected = event.currentTarget.value;
-                    render();
+            if (isOrdering) {
+                root.querySelectorAll('[data-order-tile]').forEach((tile) => {
+                    tile.addEventListener('click', () => {
+                        if (entry.checked) return;
+                        const value = tile.dataset.orderTile;
+                        if (tile.dataset.orderSource === 'slot') {
+                            entry.order = entry.order.filter((item) => item !== value);
+                        } else if (entry.order.length < question.values.length) {
+                            entry.order.push(value);
+                        }
+                        render();
+                    });
+
+                    tile.addEventListener('dragstart', (event) => {
+                        event.dataTransfer?.setData('text/plain', tile.dataset.orderTile);
+                    });
                 });
-            });
+
+                root.querySelectorAll('[data-order-slot]').forEach((slot) => {
+                    slot.addEventListener('dragover', (event) => event.preventDefault());
+                    slot.addEventListener('drop', (event) => {
+                        event.preventDefault();
+                        if (entry.checked) return;
+                        const value = event.dataTransfer?.getData('text/plain');
+                        if (!value || !question.values.includes(value)) return;
+                        const currentIndex = entry.order.indexOf(value);
+                        if (currentIndex !== -1) entry.order.splice(currentIndex, 1);
+                        const destination = Math.min(Number(slot.dataset.orderSlot), entry.order.length);
+                        entry.order.splice(destination, 0, value);
+                        render();
+                    });
+                });
+            } else {
+                root.querySelectorAll('input[name="place-value-practice-answer"]').forEach((input) => {
+                    input.addEventListener('change', (event) => {
+                        entry.selected = event.currentTarget.value;
+                        render();
+                    });
+                });
+            }
 
             window.Maths1to9Lesson
                 ?.setSectionAction?.('question-bank', {
