@@ -885,13 +885,6 @@
 
             root.innerHTML = `
                 <article class="place-value-method__card">
-                    <p class="place-value-method__progress">
-                        ${escapeHtml(example.step || 'Guided example')}
-                        <span>Example ${exampleIndex + 1} of ${examples.length}</span>
-                    </p>
-                    <p class="interactive-equation">
-                        ${escapeHtml(example.number)}
-                    </p>
                     <p class="place-value-method__prompt">
                         ${escapeHtml(example.prompt)}
                     </p>
