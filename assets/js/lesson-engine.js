@@ -393,7 +393,8 @@
                 id: section.id,
                 label: section.label,
                 sectionIndexes: [index],
-                firstIndex: index
+                firstIndex: index,
+                lastIndex: index
             }));
         }
 
@@ -431,7 +432,8 @@
                 id,
                 label: normaliseText(stage.label) || id,
                 sectionIndexes,
-                firstIndex: sectionIndexes[0]
+                firstIndex: sectionIndexes[0],
+                lastIndex: sectionIndexes.at(-1)
             });
         });
 
@@ -444,7 +446,8 @@
                 id: section.id,
                 label: section.label,
                 sectionIndexes: [index],
-                firstIndex: index
+                firstIndex: index,
+                lastIndex: index
             });
         });
 
@@ -698,8 +701,14 @@
 
         navigation.setAttribute(
             'aria-label',
-            'Lesson sections'
+            state.lesson.navigation_stages
+                ? 'Lesson stages'
+                : 'Lesson sections'
         );
+
+        if (safeArray(state.lesson.navigation_stages).length > 0) {
+            navigation.classList.add('lesson-navigation--stages');
+        }
 
         const buttonGroup = createElement(
             'div',
@@ -716,6 +725,7 @@
 
                 button.type = 'button';
                 button.dataset.stageIndex = String(index);
+                button.dataset.stageNumber = String(index + 1);
                 button.disabled = group.firstIndex > 0;
                 button.setAttribute(
                     'aria-controls',
@@ -1771,6 +1781,16 @@
                     'button--primary',
                     isCurrent
                 );
+                button.classList.toggle(
+                    'lesson-navigation__button--complete',
+                    state.navigationGroups[buttonIndex].lastIndex <
+                    state.highestUnlockedIndex
+                );
+                button.classList.toggle(
+                    'lesson-navigation__button--locked',
+                    state.navigationGroups[buttonIndex].firstIndex >
+                    state.highestUnlockedIndex
+                );
             }
         );
 
@@ -1804,6 +1824,37 @@
     }
 
     function updateProgress() {
+        const currentGroup = findNavigationGroup(
+            state.currentIndex
+        );
+
+        if (
+            currentGroup !== null &&
+            safeArray(state.lesson.navigation_stages).length > 0
+        ) {
+            const stageIndex = state.navigationGroups.indexOf(
+                currentGroup
+            );
+            const stepNumber =
+                currentGroup.sectionIndexes.indexOf(
+                    state.currentIndex
+                ) + 1;
+
+            elements.progressText.textContent =
+                `${currentGroup.label} · step ${stepNumber} of ` +
+                `${currentGroup.sectionIndexes.length}`;
+
+            elements.progressBar.max =
+                state.navigationGroups.length;
+            elements.progressBar.value = stageIndex + 1;
+            elements.progressBar.setAttribute(
+                'aria-label',
+                `${currentGroup.label}, stage ${stageIndex + 1} of ` +
+                `${state.navigationGroups.length}`
+            );
+            return;
+        }
+
         const currentNumber =
             state.currentIndex + 1;
 
@@ -1896,6 +1947,15 @@
                 button.disabled =
                     state.navigationGroups[index].firstIndex >
                     state.highestUnlockedIndex;
+                button.classList.toggle(
+                    'lesson-navigation__button--complete',
+                    state.navigationGroups[index].lastIndex <
+                    state.highestUnlockedIndex
+                );
+                button.classList.toggle(
+                    'lesson-navigation__button--locked',
+                    button.disabled
+                );
             }
         );
     }

@@ -660,6 +660,115 @@ a {
     box-shadow: var(--shadow-small);
 }
 
+/* Student-facing lesson journey ----------------------------------------- */
+
+.lesson-navigation--stages {
+    width: min(var(--page-width), calc(100% - 40px));
+    margin: 0 auto 28px;
+}
+
+.lesson-navigation--stages .lesson-navigation__buttons {
+    display: flex;
+    width: min(100%, 620px);
+    justify-content: stretch;
+    gap: 0;
+    margin: 0 auto;
+    padding: 0;
+    background: transparent;
+}
+
+.lesson-navigation--stages .lesson-navigation__button,
+.lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"] {
+    position: relative;
+    display: grid;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 4px;
+    place-items: center;
+    gap: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.lesson-navigation--stages .lesson-navigation__button::before {
+    content: attr(data-stage-number);
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border-dark);
+    border-radius: 50%;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.lesson-navigation--stages .lesson-navigation__button:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 2px;
+    background: var(--border);
+}
+
+.lesson-navigation--stages .lesson-navigation__button--complete,
+.lesson-navigation--stages .lesson-navigation__button--complete:hover {
+    color: var(--success-dark);
+}
+
+.lesson-navigation--stages .lesson-navigation__button--complete::before {
+    content: "✓";
+    background: var(--success);
+    color: #ffffff;
+    border-color: var(--success);
+}
+
+.lesson-navigation--stages .lesson-navigation__button--complete::after {
+    background: var(--success);
+}
+
+.lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"],
+.lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"]:hover {
+    color: var(--primary);
+}
+
+.lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"]::before {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(47, 111, 237, 0.12);
+}
+
+.lesson-navigation--stages .lesson-navigation__button--locked,
+.lesson-navigation--stages .lesson-navigation__button--locked:hover {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+@media (max-width: 520px) {
+    .lesson-navigation--stages {
+        width: min(100% - 32px, var(--page-width));
+    }
+
+    .lesson-navigation--stages .lesson-navigation__buttons {
+        display: flex;
+    }
+
+    .lesson-navigation--stages .lesson-navigation__button {
+        font-size: 0.7rem;
+    }
+}
+
 /* Shared lesson footer: activity action + Continue ----------------------- */
 
 .lesson-controls {
