@@ -897,22 +897,8 @@
                                 class="place-value-row"
                                 style="grid-template-columns: ${template};"
                             >
-                                ${columns.map((column, index) => `
-                                    <div class="place-value-cell place-value-cell--heading ${
-                                        index === decimalIndex
-                                            ? 'place-value-cell--decimal-start'
-                                            : ''
-                                    }">
-                                        ${escapeHtml(column)}
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <div
-                                class="place-value-row"
-                                style="grid-template-columns: ${template};"
-                            >
                                 ${digits.map((digit, index) => `
-                                    <div class="place-value-cell place-value-cell--digit ${
+                                    <div class="place-value-cell place-value-cell--digit place-value-method__digit-cell ${
                                         index === decimalIndex
                                             ? 'place-value-cell--decimal-start'
                                             : ''
@@ -961,6 +947,16 @@
                         item.disabled = true;
                     });
                     button.classList.add('is-correct');
+                    const digitCell = button.closest(
+                        '.place-value-method__digit-cell'
+                    );
+                    const columnLabel = document.createElement('span');
+
+                    columnLabel.className =
+                        'place-value-method__answer-column';
+                    columnLabel.textContent = columns[correctIndex];
+                    digitCell?.prepend(columnLabel);
+                    digitCell?.classList.add('is-revealed');
                     feedback.textContent = example.correct_feedback ||
                         'Correct.';
                     feedback.className =

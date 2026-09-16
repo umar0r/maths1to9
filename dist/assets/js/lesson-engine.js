@@ -1210,6 +1210,8 @@
     }
 
     function renderGuidedPlaceValueMethod(container, method) {
+        container.classList.add('lesson-section--guided');
+
         const root = createElement(
             'div',
             'lesson-module place-value-guided-method'

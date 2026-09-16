@@ -373,6 +373,13 @@ a {
     box-shadow: var(--shadow-small);
 }
 
+.lesson-section--guided {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
 .lesson-section::before {
     display: none;
 }
@@ -987,18 +994,36 @@ a {
 }
 
 .place-value-method__card {
-    padding: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-medium);
-    box-shadow: var(--shadow-small);
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .place-value-method__prompt {
-    margin: 0 0 18px;
+    margin: 0 0 24px;
     color: var(--text);
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.place-value-method__digit-cell {
+    gap: 6px;
+}
+
+.place-value-method__digit-cell.is-revealed {
+    min-height: 84px;
+    background: var(--success-background);
+}
+
+.place-value-method__answer-column {
+    color: var(--success-dark);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .place-value-method__digit {
