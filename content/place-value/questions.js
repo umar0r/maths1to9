@@ -172,6 +172,29 @@
         );
     }
 
+    function completedComparisonExplanation(left, right, answer) {
+        const places = Math.max(
+            splitDecimal(left).decimal.length,
+            splitDecimal(right).decimal.length
+        );
+        const leftPadded = padDecimal(left, places);
+        const rightPadded = padDecimal(right, places);
+        const equivalences = [];
+
+        if (leftPadded !== left) {
+            equivalences.push(`${left} = ${leftPadded}.`);
+        }
+
+        if (rightPadded !== right) {
+            equivalences.push(`${right} = ${rightPadded}.`);
+        }
+
+        return (
+            `${equivalences.join(' ')} Since ${leftPadded} ${answer} `
+            + `${rightPadded}, the correct symbol is ${answer}.`
+        ).trim();
+    }
+
     /* ---------- question generators ---------- */
 
     function generateDigitValueQuestion() {
@@ -537,7 +560,10 @@
             const correct = state.selected === question.answer;
             const isLast = state.index === questions.length - 1;
 
-            const optionsHtml = ['>', '<'].map((option) => {
+            const options = question.answer === '='
+                ? ['<', '>', '=']
+                : ['<', '>'];
+            const optionsHtml = options.map((option) => {
                 let className = '';
 
                 if (state.checked) {
@@ -565,8 +591,11 @@
                     `<div class="question-feedback is-visible ${correct ? 'is-correct' : 'is-incorrect'}">`
                     + `<strong>${correct ? 'Correct.' : 'Not quite.'}</strong> `
                     + escapeHtml(
-                        `${question.left} ${question.answer} ${question.right}. `
-                        + question.explanation
+                        completedComparisonExplanation(
+                            question.left,
+                            question.right,
+                            question.answer
+                        )
                     )
                     + '</div>'
                     + getComparisonChart(question)
@@ -582,13 +611,12 @@
                 : '';
 
             root.innerHTML = (
-                '<article class="question-card">'
-                + `<p class="question-number">Comparison ${state.index + 1} of ${questions.length}</p>`
-                + '<p class="question-prompt">Choose the symbol that makes this true.</p>'
+                '<article class="question-card question-card--bare">'
+                + `<p class="question-prompt">Select ${question.answer === '=' ? '<, > or =' : '< or >'} to make the statement correct.</p>`
                 + '<div class="interactive-equation">'
-                + `${escapeHtml(question.left)} ${escapeHtml(state.selected || '?')} ${escapeHtml(question.right)}`
+                + `${escapeHtml(question.left)} ${escapeHtml(state.selected || '□')} ${escapeHtml(question.right)}`
                 + '</div>'
-                + '<div class="question-options" role="radiogroup" aria-label="Choose greater than or less than">'
+                + '<div class="question-options" role="radiogroup" aria-label="Select a comparison symbol">'
                 + optionsHtml
                 + '</div>'
                 + feedbackHtml
