@@ -66,6 +66,7 @@
     }
   },
   "interactive": {
+    "hide_heading": true,
     "eyebrow": "",
     "title": "Divide by 10",
     "intro": "Drag every digit one place to the right. Watch what happens to its value.",

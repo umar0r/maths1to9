@@ -1232,13 +1232,15 @@
             return;
         }
 
-        appendSectionHeading(
-            container,
-            interactive,
-            'Try it',
-            'Try it yourself',
-            'interactive'
-        );
+        if (!interactive.hide_heading) {
+            appendSectionHeading(
+                container,
+                interactive,
+                'Try it',
+                'Try it yourself',
+                'interactive'
+            );
+        }
 
         appendIntro(
             container,
