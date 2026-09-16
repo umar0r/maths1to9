@@ -537,7 +537,6 @@
         function render() {
             const question = questions[state.index];
             const correct = state.selected === question.answer;
-            const isLast = state.index === questions.length - 1;
 
             const options = question.answer === '='
                 ? ['<', '>', '=']
@@ -582,7 +581,7 @@
                 : '';
 
             const buttonLabel = state.checked
-                ? (isLast ? 'Start again' : 'Next comparison')
+                ? 'Continue'
                 : 'Check answer';
 
             const buttonDisabled = !state.checked && state.selected === ''
@@ -890,7 +889,7 @@ function historyHtml() {
                 ? (correct ? 'next' : 'retry')
                 : 'check';
             const actionLabel = action === 'next'
-                ? 'Next question'
+                ? 'Continue'
                 : action === 'retry'
                     ? 'Try again'
                     : 'Check answer';
@@ -909,7 +908,6 @@ function historyHtml() {
                     : '<div class="question-options" role="radiogroup" aria-label="Choose an answer">' + optionsHtml + '</div>')
                 + feedbackHtml
                 + '</article>'
-                + historyHtml()
             );
 
             if (isOrdering) {

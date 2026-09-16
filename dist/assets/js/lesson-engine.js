@@ -1975,7 +1975,9 @@
 
         elements.controlButtonGroup.hidden = !showPrimaryButton;
 
-        elements.nextButton.textContent = 'Continue';
+        elements.nextButton.textContent = showSectionAction
+            ? sectionAction.label
+            : 'Continue';
 
         if (state.finished) {
             elements.status.textContent =
