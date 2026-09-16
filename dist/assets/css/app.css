@@ -675,6 +675,8 @@ a {
     margin: 0 auto;
     padding: 0;
     background: transparent;
+    border: 0;
+    border-radius: 0;
 }
 
 .lesson-navigation--stages .lesson-navigation__button,
