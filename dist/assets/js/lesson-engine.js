@@ -502,8 +502,12 @@
     function hasProductInteractive(productInteractive) {
         return (
             isObject(productInteractive) &&
-            hasItems(productInteractive.factors) &&
-            normaliseText(productInteractive.product) !== ''
+            (
+                (
+                    hasItems(productInteractive.factors) &&
+                    normaliseText(productInteractive.product) !== ''
+                ) || hasItems(productInteractive.examples)
+            )
         );
     }
 
