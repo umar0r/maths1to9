@@ -1622,9 +1622,12 @@
         fallbackTitle,
         sectionId
     ) {
-        const eyebrow =
-            normaliseText(data.eyebrow) ||
-            fallbackEyebrow;
+        const eyebrow = data.hide_eyebrow
+            ? ''
+            : (
+                normaliseText(data.eyebrow) ||
+                fallbackEyebrow
+            );
 
         const title =
             normaliseText(data.title) ||

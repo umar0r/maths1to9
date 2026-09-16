@@ -749,7 +749,7 @@
                     return example.complete_message || 'Correct.';
                 }
 
-                return `Start with ${addThousandsSeparators(example.factors[0])} × ${addThousandsSeparators(example.factors[1])} = ${addThousandsSeparators(example.product)}.`;
+                return '';
             }
 
             function render() {
@@ -767,9 +767,12 @@
                         state.offsets.reduce((total, offset) => total + offset, 0)
                     )
                 );
+                const hasMoved = state.offsets.some((offset) => offset !== 0);
+                const message = getMessage();
 
                 root.innerHTML = `
-                    <p class="place-value-method__prompt">${escapeHtml(example.prompt || 'Drag the numbers into the correct columns.')}</p>
+                    <p class="place-value-method__prompt">${escapeHtml(example.question || example.prompt || 'Drag the numbers into the correct columns.')}</p>
+                    ${example.question && example.prompt ? `<p class="interactive-explanation">${escapeHtml(example.prompt)}</p>` : ''}
                     <p class="interactive-explanation"><strong>← One place left: ×10</strong>&nbsp;&nbsp; <strong>One place right: ÷10 →</strong></p>
                     <div class="place-value-chart-wrapper">
                         <div class="place-value-chart" style="min-width: ${chartWidth}px;">
@@ -785,8 +788,8 @@
                             `).join('')}
                         </div>
                     </div>
-                    <p class="interactive-explanation" aria-live="polite">${escapeHtml(getMessage())}</p>
-                    <div class="interactive-equation" aria-live="polite">${escapeHtml(`${displayedFactors[0]} × ${displayedFactors[1]} = ${displayedProduct}`)}</div>
+                    ${message ? `<p class="interactive-explanation" aria-live="polite">${escapeHtml(message)}</p>` : ''}
+                    ${hasMoved ? `<div class="interactive-equation" aria-live="polite">${escapeHtml(`${displayedFactors[0]} × ${displayedFactors[1]} = ${displayedProduct}`)}</div>` : ''}
                 `;
 
                 setContinue(!hasReachedTarget(), () => {

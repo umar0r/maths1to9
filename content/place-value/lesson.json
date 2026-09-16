@@ -85,20 +85,21 @@
     ]
   },
   "product_interactive": {
-    "eyebrow": "Explore",
-    "title": "Scale the product",
-    "known": "89 × 54 = 4,806",
+    "hide_eyebrow": true,
+    "title": "Use a known calculation",
     "examples": [
       {
+        "question": "Given that 89 × 54 = 4,806, work out 8.9 × 5.4.",
         "prompt": "Drag both numbers one place to the right.",
         "factors": ["89", "54"],
         "product": "4806",
         "minimum_offsets": [0, 0],
         "maximum_offsets": [1, 1],
         "target_offsets": [1, 1],
-        "complete_message": "89 → 8.9 is ÷10 and 54 → 5.4 is ÷10. Both changes divide the product by 100."
+        "complete_message": "Each number is 10 times smaller, so the answer is 10 × 10 = 100 times smaller. You divided both numbers by 10, so divide the original answer by 100."
       },
       {
+        "question": "Given that 89 × 54 = 4,806, work out 890 × 5.4.",
         "prompt": "Drag 89 one place left and 54 one place right.",
         "factors": ["89", "54"],
         "product": "4806",
@@ -108,6 +109,7 @@
         "complete_message": "89 → 890 is ×10 and 54 → 5.4 is ÷10. The changes cancel out, so the product stays the same."
       },
       {
+        "question": "Given that 89 × 54 = 4,806, work out 0.89 × 0.54.",
         "prompt": "Drag both numbers two places to the right.",
         "factors": ["89", "54"],
         "product": "4806",
