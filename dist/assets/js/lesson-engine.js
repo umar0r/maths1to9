@@ -1210,16 +1210,6 @@
     }
 
     function renderGuidedPlaceValueMethod(container, method) {
-        appendSectionHeading(
-            container,
-            method,
-            'Step-by-step guide',
-            'Method',
-            'method'
-        );
-
-        appendIntro(container, method.intro);
-
         const root = createElement(
             'div',
             'lesson-module place-value-guided-method'
