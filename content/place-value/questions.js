@@ -119,14 +119,23 @@
         return shuffle(options.slice(0, count));
     }
 
-    function makeQuestion({ type, prompt, display = '', options, answer, explanation }) {
+    function makeQuestion({
+        type,
+        prompt,
+        display = '',
+        options = [],
+        answer,
+        explanation,
+        ...extra
+    }) {
         return {
             type,
             prompt,
             display,
             options: shuffle(options),
             answer: String(answer),
-            explanation
+            explanation,
+            ...extra
         };
     }
 
