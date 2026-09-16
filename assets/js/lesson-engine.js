@@ -1242,10 +1242,20 @@
             );
         }
 
-        appendIntro(
-            container,
-            interactive.intro
-        );
+        if (interactive.prominent_intro) {
+            container.append(
+                createElement(
+                    'p',
+                    'lesson-section__intro lesson-section__intro--prominent',
+                    normaliseText(interactive.intro)
+                )
+            );
+        } else {
+            appendIntro(
+                container,
+                interactive.intro
+            );
+        }
 
         const interactiveRoot = createElement(
             'div',

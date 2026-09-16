@@ -410,6 +410,14 @@ a {
     line-height: 1.6;
 }
 
+.lesson-section__intro--prominent {
+    max-width: 52rem;
+    color: var(--text);
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
 .lesson-copy {
     max-width: var(--reading-width);
     color: var(--text-soft);
