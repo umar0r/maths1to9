@@ -863,6 +863,14 @@
 
         let exampleIndex = 0;
 
+        function setContinue(disabled, onClick) {
+            window.Maths1to9Lesson?.setSectionAction?.('method', {
+                label: 'Continue',
+                disabled,
+                onClick
+            });
+        }
+
         function render() {
             const example = examples[exampleIndex];
             const columns = example.columns;
@@ -938,6 +946,8 @@
                 '.place-value-method__feedback'
             );
 
+            setContinue(true, () => {});
+
             root.querySelectorAll('[data-digit-index]').forEach((button) => {
                 button.addEventListener('click', () => {
                     const selectedIndex = Number(
@@ -964,14 +974,10 @@
                         'place-value-method__feedback is-correct';
                     feedback.hidden = false;
 
-                    const next = document.createElement('button');
-                    next.className = 'button button--primary';
-                    next.type = 'button';
-                    next.textContent = exampleIndex === examples.length - 1
-                        ? 'Finish method'
-                        : 'Next example';
-                    next.addEventListener('click', () => {
+                    setContinue(false, () => {
                         if (exampleIndex === examples.length - 1) {
+                            window.Maths1to9Lesson
+                                ?.clearSectionAction?.('method');
                             completeSection('method');
                             root.innerHTML = `
                                 <p class="place-value-method__complete">
@@ -984,8 +990,7 @@
 
                         exampleIndex += 1;
                         render();
-                    }, { once: true });
-                    feedback.after(next);
+                    });
                 });
             });
         }

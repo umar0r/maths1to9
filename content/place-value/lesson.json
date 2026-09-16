@@ -20,7 +20,7 @@
     },
     {
       "id": "try-it",
-      "label": "Try It",
+      "label": "Step by step",
       "sections": ["interactive", "product-interactive"]
     },
     {
