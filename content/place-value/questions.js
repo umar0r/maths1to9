@@ -445,7 +445,16 @@
     };
 
     function createQuestionBag() {
-        return shuffle(Object.keys(generators));
+        const otherTypes = Object.keys(generators).filter(
+            (type) => type !== 'order'
+        );
+
+        // pop() is used to select the next question, so keep ordering last:
+        // every new Practice cycle begins with the hands-on ordering task.
+        return [
+            ...shuffle(otherTypes),
+            'order'
+        ];
     }
 
     /* ---------- place value chart ---------- */
