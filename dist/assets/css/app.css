@@ -1093,6 +1093,50 @@ a {
     font-size: 0.95rem;
 }
 
+.place-value-scaling-result {
+    margin: 24px 0;
+    padding: 20px 24px;
+    background: var(--warning-background);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-medium);
+    text-align: center;
+}
+
+.place-value-scaling-result__prompt,
+.place-value-scaling-result__explanation,
+.place-value-scaling-result__journey,
+.place-value-scaling-result__equation,
+.place-value-scaling-result__note {
+    margin: 0;
+}
+
+.place-value-scaling-result__explanation {
+    max-width: 52rem;
+    margin: 0 auto;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.place-value-scaling-result__journey {
+    margin-top: 16px;
+    color: var(--text);
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 800;
+}
+
+.place-value-scaling-result__equation {
+    margin-top: 8px;
+    color: var(--text);
+    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+    font-weight: 800;
+}
+
+.place-value-scaling-result__note {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
 /* Worked examples -------------------------------------------------------- */
 
 .worked-example-list {

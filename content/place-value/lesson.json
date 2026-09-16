@@ -5,9 +5,9 @@
   "subtitle": "See how a digit's position changes its value.",
   "section_order": [
     "explanation",
-    "worked-examples",
     "method",
     "interactive",
+    "worked-examples",
     "product-interactive",
     "question-bank",
     "comparison"
@@ -66,9 +66,9 @@
     }
   },
   "interactive": {
-    "eyebrow": "Explore",
-    "title": "Move the number",
-    "intro": "Drag the digits one column left or right.",
+    "eyebrow": "",
+    "title": "Divide by 10",
+    "intro": "Drag every digit one place to the right. Watch what happens to its value.",
     "number": "4270",
     "columns": [
       "Ten-thousands",

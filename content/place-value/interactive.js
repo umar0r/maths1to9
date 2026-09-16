@@ -232,6 +232,12 @@
         );
     }
 
+    function formatCalculationNumber(value) {
+        return String(value)
+            .replace(/(\.\d*?)0+$/, '$1')
+            .replace(/\.$/, '');
+    }
+
     function createDragController({
         root,
         state,
@@ -470,28 +476,84 @@
                     || '0'
             );
 
-            let equation = original;
+            const places = Math.abs(state.offset);
+            const factor = 10 ** places;
+            const direction = state.offset > 0 ? 'right' : 'left';
+            const movement = places === 1 ? 'place' : 'places';
+            const scale = addThousandsSeparators(factor);
+            const numberJourney = Array.from(
+                { length: places + 1 },
+                (_, step) => formatCalculationNumber(
+                    shiftWholeNumber(
+                        originalNumber,
+                        state.offset > 0 ? step : -step
+                    )
+                )
+            ).join(' → ');
+            const calculationNumber = formatCalculationNumber(
+                displayedNumber
+            );
 
-            if (state.offset < 0) {
-                const multiplier =
-                    10 ** Math.abs(state.offset);
+            let resultPanel = `
+                <p class="place-value-scaling-result__prompt">
+                    Move the digits to see how their values change.
+                </p>
+            `;
 
-                equation = (
-                    `${original} × `
-                    + `${addThousandsSeparators(multiplier)} = `
-                    + displayedNumber
-                );
+            if (places > 0 && direction === 'right') {
+                const fractionalNames = {
+                    1: 'one tenth',
+                    2: 'one hundredth',
+                    3: 'one thousandth',
+                    4: 'one ten-thousandth'
+                };
+                const valueDescription = fractionalNames[places]
+                    ? `${fractionalNames[places]} as much`
+                    : `1/${scale} as much`;
+                const changeDescription = places === 1
+                    ? 'The number has been divided by 10.'
+                    : `Each move divides its value by 10, so ${places} moves divide the number by ${scale}.`;
+
+                resultPanel = `
+                    <p class="place-value-scaling-result__explanation">
+                        You moved every digit ${places} ${movement} to the right.
+                        Each digit is worth ${valueDescription}. ${changeDescription}
+                    </p>
+                    <p class="place-value-scaling-result__journey">
+                        ${escapeHtml(numberJourney)}
+                    </p>
+                    <p class="place-value-scaling-result__equation">
+                        ${escapeHtml(original)} ÷ ${escapeHtml(scale)} =
+                        ${escapeHtml(calculationNumber)}
+                    </p>
+                    ${displayedNumber !== calculationNumber
+                        ? `<p class="place-value-scaling-result__note">
+                            ${escapeHtml(displayedNumber)} has the same value as
+                            ${escapeHtml(calculationNumber)}.
+                        </p>`
+                        : ''}
+                `;
             }
 
-            if (state.offset > 0) {
-                const divisor =
-                    10 ** state.offset;
+            if (places > 0 && direction === 'left') {
+                const valueDescription = places === 1
+                    ? '10 times as much'
+                    : '100 times as much';
 
-                equation = (
-                    `${original} ÷ `
-                    + `${addThousandsSeparators(divisor)} = `
-                    + displayedNumber
-                );
+                resultPanel = `
+                    <p class="place-value-scaling-result__explanation">
+                        Each digit has moved ${places} ${movement} to the left,
+                        so each digit is worth ${valueDescription}. The number has
+                        been multiplied by ${scale}.
+                    </p>
+                    <p class="place-value-scaling-result__journey">
+                        ${escapeHtml(numberJourney)}
+                    </p>
+                    <p class="place-value-scaling-result__equation">
+                        ${escapeHtml(original)} × ${escapeHtml(scale)} =
+                        ${escapeHtml(calculationNumber)}
+                    </p>
+                `;
             }
 
             const rowTemplate = (
@@ -504,9 +566,9 @@
 
             root.innerHTML = `
                 <p class="interactive-explanation">
-                    <strong>← ×10</strong>
-                    &nbsp;&nbsp; Drag the digits &nbsp;&nbsp;
-                    <strong>÷10 →</strong>
+                    <strong>← One place left: ×10</strong>
+                    &nbsp;&nbsp;
+                    <strong>One place right: ÷10 →</strong>
                 </p>
 
                 <div class="place-value-chart-wrapper">
@@ -536,7 +598,7 @@
                             data-role="single-digit-row"
                             role="slider"
                             tabindex="0"
-                            aria-label="Move the digits left to multiply by 10 or right to divide by 10"
+                            aria-label="Drag the digits right to divide by 10, or left to multiply by 10"
                             aria-valuemin="${bounds.minimumOffset}"
                             aria-valuemax="${bounds.maximumOffset}"
                             aria-valuenow="${state.offset}"
@@ -572,11 +634,8 @@
                     </div>
                 </div>
 
-                <div
-                    class="interactive-equation"
-                    aria-live="polite"
-                >
-                    ${escapeHtml(equation)}
+                <div class="place-value-scaling-result" aria-live="polite">
+                    ${resultPanel}
                 </div>
             `;
 
