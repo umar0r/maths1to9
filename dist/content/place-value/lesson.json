@@ -5,8 +5,8 @@
   "subtitle": "See how a digit's position changes its value.",
   "section_order": [
     "explanation",
-    "method",
     "worked-examples",
+    "method",
     "interactive",
     "product-interactive",
     "question-bank",
@@ -16,12 +16,12 @@
     {
       "id": "learn",
       "label": "Learn",
-      "sections": ["explanation", "method", "worked-examples"]
+      "sections": ["explanation", "worked-examples"]
     },
     {
       "id": "try-it",
       "label": "Step by step",
-      "sections": ["interactive", "product-interactive"]
+      "sections": ["method", "interactive", "product-interactive"]
     },
     {
       "id": "practice",
