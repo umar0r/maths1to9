@@ -1555,18 +1555,20 @@
         container,
         questionBank
     ) {
-        appendSectionHeading(
-            container,
-            questionBank,
-            'Question bank',
-            'Practise',
-            'question-bank'
-        );
+        if (!questionBank.hide_heading) {
+            appendSectionHeading(
+                container,
+                questionBank,
+                'Question bank',
+                'Practise',
+                'question-bank'
+            );
 
-        appendIntro(
-            container,
-            questionBank.intro
-        );
+            appendIntro(
+                container,
+                questionBank.intro
+            );
+        }
 
         if (hasItems(questionBank.method_reminder)) {
             const reminderRow = createElement(

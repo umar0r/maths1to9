@@ -848,11 +848,7 @@ function historyHtml() {
                 action === 'check' && entry.selected === '';
 
             root.innerHTML = (
-                '<article class="question-card">'
-                + '<p class="question-number">'
-                + `Question ${state.currentIndex + 1} · ${correctCount()} correct from ${answeredCount()} answered`
-                + '</p>'
-                + `<p class="lesson-eyebrow">${escapeHtml(question.type)}</p>`
+                '<article class="question-card question-card--bare">'
                 + `<p class="question-prompt">${escapeHtml(question.prompt)}</p>`
                 + displayHtml
                 + '<div class="question-options" role="radiogroup" aria-label="Choose an answer">'
