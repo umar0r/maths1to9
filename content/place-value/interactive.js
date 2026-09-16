@@ -876,6 +876,19 @@
             const columns = example.columns;
             const digits = example.digits;
             const correctIndex = Number(example.correct_index);
+            // Keep the answers visible while a student works through the
+            // related questions for the same number. This lets the three
+            // whole-number questions build a complete place-value chart.
+            const previousCorrectIndices = examples
+                .slice(0, exampleIndex)
+                .filter((previousExample) => (
+                    previousExample.number === example.number
+                    && JSON.stringify(previousExample.columns) ===
+                        JSON.stringify(columns)
+                    && JSON.stringify(previousExample.digits) ===
+                        JSON.stringify(digits)
+                ))
+                .map((previousExample) => Number(previousExample.correct_index));
             const decimalSeparatorIndex = columns.indexOf('.');
             const decimalIndex = decimalSeparatorIndex === -1
                 ? -1
@@ -897,23 +910,30 @@
                                 class="place-value-row"
                                 style="grid-template-columns: ${template};"
                             >
-                                ${digits.map((digit, index) => `
+                                ${digits.map((digit, index) => {
+                                    const isPreviouslyCorrect = previousCorrectIndices.includes(index);
+
+                                    return `
                                     <div class="place-value-cell place-value-cell--digit place-value-method__digit-cell ${
                                         index === decimalIndex
                                             ? 'place-value-cell--decimal-start'
                                             : ''
-                                    }">
+                                    } ${isPreviouslyCorrect ? 'is-revealed' : ''}">
                                         ${digit === '.'
                                             ? '<span aria-hidden="true">.</span>'
-                                            : `<button
-                                                class="place-value-method__digit"
+                                            : `${isPreviouslyCorrect
+                                                ? `<span class="place-value-method__answer-column">${escapeHtml(columns[index])}</span>`
+                                                : ''}<button
+                                                class="place-value-method__digit ${isPreviouslyCorrect ? 'is-correct' : ''}"
                                                 type="button"
                                                 data-digit-index="${index}"
                                                 aria-label="Select digit ${escapeHtml(digit)}"
+                                                ${isPreviouslyCorrect ? 'disabled' : ''}
                                             >${escapeHtml(digit)}</button>`
                                         }
                                     </div>
-                                `).join('')}
+                                `;
+                                }).join('')}
                             </div>
                         </div>
                     </div>
