@@ -54,6 +54,8 @@
     };
 
     const elements = {
+        header: null,
+        headerStageProgress: null,
         navigation: null,
         sectionActionButton: null,
         nextButton: null,
@@ -602,6 +604,8 @@
             'lesson-header__inner'
         );
 
+        elements.header = header;
+
         const meta = createElement(
             'div',
             'lesson-header__meta'
@@ -659,6 +663,17 @@
                 )
             );
         }
+
+        const stageProgress = createElement(
+            'div',
+            'lesson-header__stage-progress'
+        );
+
+        stageProgress.hidden = true;
+        stageProgress.setAttribute('role', 'status');
+        stageProgress.append(createElement('span'));
+        inner.append(stageProgress);
+        elements.headerStageProgress = stageProgress;
 
         header.append(inner);
 
@@ -1816,6 +1831,8 @@
 
         const currentGroup = findNavigationGroup(index);
 
+        updateHeaderMode(currentGroup);
+
         state.navigationButtons.forEach(
             (button, buttonIndex) => {
                 const isCurrent =
@@ -1876,6 +1893,51 @@
     function updateProgress() {
         // Progress is communicated by the stage navigation. Individual
         // activities can add their own focused progress indicator.
+    }
+
+    function updateHeaderMode(currentGroup) {
+        const hasJourney = safeArray(
+            state.lesson.navigation_stages
+        ).length > 0;
+        const isCompact = (
+            hasJourney
+            && currentGroup !== null
+            && currentGroup.id !== 'learn'
+        );
+
+        elements.header?.classList.toggle(
+            'lesson-header--compact',
+            isCompact
+        );
+
+        const stageProgress = elements.headerStageProgress;
+        if (!stageProgress) {
+            return;
+        }
+
+        const stageIndex = state.navigationGroups.indexOf(
+            currentGroup
+        );
+        const showStageProgress = isCompact && currentGroup.id !== 'practice';
+
+        stageProgress.hidden = !showStageProgress;
+
+        if (!showStageProgress) {
+            return;
+        }
+
+        const stageNumber = stageIndex + 1;
+        const totalStages = state.navigationGroups.length;
+
+        stageProgress.style.setProperty(
+            '--stage-progress',
+            `${Math.round((stageNumber / totalStages) * 100)}%`
+        );
+        stageProgress.setAttribute(
+            'aria-label',
+            `${currentGroup.label}, stage ${stageNumber} of ${totalStages}`
+        );
+        stageProgress.querySelector('span').textContent = String(stageNumber);
     }
 
     function updateControls() {

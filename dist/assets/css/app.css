@@ -318,6 +318,100 @@ a {
     right: 0;
 }
 
+.lesson-header__stage-progress {
+    position: absolute;
+    top: 12px;
+    right: 0;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    background: conic-gradient(
+        var(--primary) var(--stage-progress),
+        var(--border) 0
+    );
+    border-radius: 50%;
+}
+
+.lesson-header__stage-progress::before {
+    grid-area: 1 / 1;
+    width: 32px;
+    height: 32px;
+    background: var(--surface);
+    border-radius: 50%;
+    content: '';
+}
+
+.lesson-header__stage-progress span {
+    z-index: 1;
+    grid-area: 1 / 1;
+    color: var(--primary-dark);
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.lesson-header--compact {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    margin-bottom: 12px;
+    background: var(--surface);
+}
+
+.lesson-header--compact::after {
+    display: none;
+}
+
+.lesson-header--compact .lesson-header__inner {
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.lesson-header--compact .lesson-header__meta,
+.lesson-header--compact .lesson-header__subtitle {
+    display: none;
+}
+
+.lesson-header--compact .lesson-header__title {
+    max-width: calc(100% - 64px);
+    margin: 0;
+    font-size: clamp(1.2rem, 2.6vw, 1.55rem);
+    line-height: 1.15;
+}
+
+.lesson-header--compact .lesson-header__practice-progress {
+    top: 11px;
+}
+
+.lesson-header--compact .practice-progress-ring {
+    width: 42px;
+    height: 42px;
+}
+
+.lesson-header--compact .practice-progress-ring::before {
+    width: 32px;
+    height: 32px;
+}
+
+.lesson-header--compact .practice-progress-ring span {
+    font-size: 0.75rem;
+}
+
+.lesson-header--compact .practice-progress-ring small {
+    font-size: 0.55rem;
+}
+
+.lesson-header--compact + .lesson-navigation {
+    margin-top: 0;
+}
+
+.lesson-header--compact ~ .lesson-section-container .lesson-section {
+    margin-bottom: 16px;
+    padding: clamp(20px, 3vw, 28px);
+}
+
 /* Main lesson layout ------------------------------------------------------ */
 
 .lesson-page {
@@ -1881,6 +1975,11 @@ noscript p {
         padding: 32px 0;
     }
 
+    .lesson-header--compact .lesson-header__inner {
+        min-height: 56px;
+        padding: 8px 0;
+    }
+
     .lesson-header__back {
         margin-bottom: 20px;
     }
@@ -1931,6 +2030,10 @@ noscript p {
 
     .lesson-header__title {
         font-size: clamp(1.8rem, 10vw, 2.5rem);
+    }
+
+    .lesson-header--compact .lesson-header__title {
+        font-size: 1.15rem;
     }
 
     .lesson-step {
