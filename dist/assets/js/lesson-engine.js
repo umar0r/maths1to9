@@ -1499,7 +1499,76 @@
                 .map(normaliseText)
                 .filter(Boolean);
 
-            if (steps.length > 0) {
+            const revealSteps = example.reveal_steps === true;
+
+            if (steps.length > 0 && revealSteps) {
+                let visibleStepCount = 1;
+                const answer = normaliseText(example.answer);
+
+                const renderRevealedSteps = () => {
+                    article.querySelector('.worked-example__steps')?.remove();
+                    article.querySelector('.worked-example__reveal')?.remove();
+                    article.querySelectorAll('.worked-example__answer')
+                        .forEach((element) => element.remove());
+
+                    const stepList = createElement(
+                        'ol',
+                        'worked-example__steps'
+                    );
+
+                    steps.slice(0, visibleStepCount).forEach((step) => {
+                        stepList.append(createElement('li', '', step));
+                    });
+                    article.append(stepList);
+
+                    safeArray(example.step_callouts)
+                        .slice(0, visibleStepCount)
+                        .map(normaliseText)
+                        .filter(Boolean)
+                        .forEach((callout) => {
+                            article.append(createElement(
+                                'p',
+                                'worked-example__answer',
+                                callout
+                            ));
+                        });
+
+                    if (visibleStepCount < steps.length) {
+                        const revealButton = createElement(
+                            'button',
+                            'button worked-example__reveal',
+                            'Continue'
+                        );
+                        revealButton.type = 'button';
+                        revealButton.addEventListener('click', () => {
+                            visibleStepCount += 1;
+                            renderRevealedSteps();
+                        });
+                        article.append(revealButton);
+                        return;
+                    }
+
+                    if (answer !== '') {
+                        const answerButton = createElement(
+                            'button',
+                            'button worked-example__reveal',
+                            'Show answer'
+                        );
+                        answerButton.type = 'button';
+                        answerButton.addEventListener('click', () => {
+                            answerButton.remove();
+                            article.append(createElement(
+                                'p',
+                                'worked-example__answer',
+                                answer
+                            ));
+                        });
+                        article.append(answerButton);
+                    }
+                };
+
+                renderRevealedSteps();
+            } else if (steps.length > 0) {
                 const stepList = createElement(
                     'ol',
                     'worked-example__steps'
@@ -1514,11 +1583,9 @@
                 article.append(stepList);
             }
 
-            const answer = normaliseText(
-                example.answer
-            );
+            const answer = normaliseText(example.answer);
 
-            if (answer !== '') {
+            if (answer !== '' && !revealSteps) {
                 article.append(
                     createElement(
                         'p',

@@ -291,6 +291,10 @@
     // Comparisons are built in thousandths (3 decimal places), the deepest
     // column GCSE questions use.
     function generateComparisonQuestion() {
+        if (randomInt(1, 3) === 1) {
+            return generateContextualComparisonQuestion();
+        }
+
         const whole = randomInt(0, 5);
         const shortPlaces = randomInt(1, 2);
         const shortFraction = randomInt(10 ** (shortPlaces - 1), (10 ** shortPlaces) - 1);
@@ -330,14 +334,59 @@
         });
     }
 
-    function generateOrderingQuestion() {
-        // Keep the decimal comparison focused, but vary the size of the
-        // whole-number part from decimals below one through to millions.
-        // GCSE place value covers decimals and integers of any size.
-        const digitLength = randomInt(0, 7);
-        const whole = digitLength === 0
-            ? 0
-            : randomInt(10 ** (digitLength - 1), (10 ** digitLength) - 1);
+    function generateContextualComparisonQuestion() {
+        const whole = randomInt(2, 12);
+        const tenths = randomInt(1, 7);
+        const hundredths = randomInt(1, 9);
+        const shorter = `${whole}.${tenths}${hundredths}`;
+        const longer = `${whole}.${tenths + 1}`;
+
+        if (Math.random() < 0.5) {
+            const longerPrice = `${longer}0`;
+            const prices = shuffle([shorter, longerPrice]);
+            const moreExpensive = prices
+                .reduce((current, price) => (
+                    Number(price) > Number(current) ? price : current
+                ));
+
+            return makeQuestion({
+                type: 'Compare decimals',
+                prompt: (
+                    `One game costs £${prices[0]} and another costs £${prices[1]}. `
+                    + 'Which game costs more?'
+                ),
+                options: prices.map((price) => `£${price}`),
+                answer: `£${moreExpensive}`,
+                explanation: (
+                    `Since £${shorter} < £${longerPrice}, `
+                    + `£${longerPrice} costs more.`
+                )
+            });
+        }
+
+        const names = Math.random() < 0.5
+            ? ['Zara', 'Maya']
+            : ['Maya', 'Zara'];
+        const times = [shorter, longer];
+        const shorterName = names[times.indexOf(shorter)];
+
+        return makeQuestion({
+            type: 'Compare decimals',
+            prompt: (
+                `${names[0]} finishes a race in ${times[0]} seconds. `
+                + `${names[1]} finishes in ${times[1]} seconds. `
+                + 'Who has the shorter time?'
+            ),
+            options: names,
+            answer: shorterName,
+            explanation: (
+                `${longer} = ${longer}0. Since ${shorter} < ${longer}0, `
+                + `${shorterName} has the shorter time.`
+            )
+        });
+    }
+
+    function createOrderingQuestion(whole, prompt) {
         const tenth = randomInt(1, 8);
 
         const exactTenth = (whole * 1000) + (tenth * 100);
@@ -360,7 +409,7 @@
 
         return makeQuestion({
             type: 'Order decimals',
-            prompt: 'Put these numbers in order from smallest to largest.',
+            prompt,
             interaction: 'order-tiles',
             values: shuffle(values.map((item) => item.display)),
             correctOrder,
@@ -370,6 +419,28 @@
                 + 'Now compare the digits from left to right.'
             )
         });
+    }
+
+    function generateOrderingQuestion() {
+        if (randomInt(1, 3) === 1) {
+            return createOrderingQuestion(
+                randomInt(2, 4),
+                'Four pieces of ribbon have these lengths in metres. Put them in order from shortest to longest.'
+            );
+        }
+
+        // Keep the decimal comparison focused, but vary the size of the
+        // whole-number part from decimals below one through to millions.
+        // GCSE place value covers decimals and integers of any size.
+        const digitLength = randomInt(0, 7);
+        const whole = digitLength === 0
+            ? 0
+            : randomInt(10 ** (digitLength - 1), (10 ** digitLength) - 1);
+
+        return createOrderingQuestion(
+            whole,
+            'Put these numbers in order from smallest to largest.'
+        );
     }
 
     const UK_DECIMAL_FORMAT = /^-?\d{1,3}(?:,\d{3})*(?:\.\d+)?$/;

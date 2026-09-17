@@ -5,9 +5,9 @@
   "subtitle": "See how a digit's position changes its value.",
   "section_order": [
     "explanation",
+    "worked-examples",
     "method",
     "interactive",
-    "worked-examples",
     "product-interactive",
     "question-bank",
     "comparison"
@@ -50,6 +50,10 @@
       "Place value tells us what each digit is worth.",
       "A digit's value depends on its position in the number.",
       "In 670, the digit 7 is in the tens column. It is worth 70."
+    ],
+    "key_points": [
+      "When decimals have different numbers of digits, add zeros to the end so the place-value columns line up. The zeros do not change the value.",
+      "0.8 = 0.800, so 0.800 < 0.809."
     ],
     "chart": {
       "columns": [
@@ -188,8 +192,38 @@
       }
     ]
   },
-"worked_examples": [
-],
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1",
+      "title": "What is the value of the 7 in 46.275?",
+      "reveal_steps": true,
+      "steps": [
+        "Look at the digits after the decimal point: 2, 7 and 5.",
+        "2 is in the tenths place.",
+        "7 is in the hundredths place.",
+        "Seven hundredths is 0.07."
+      ],
+      "step_callouts": [
+        "",
+        "",
+        "7 → hundredths place",
+        ""
+      ],
+      "answer": "The value of the 7 is 0.07."
+    },
+    {
+      "eyebrow": "Worked example 2",
+      "title": "Put 3.4, 3.35 and 3.402 in order from smallest to largest.",
+      "reveal_steps": true,
+      "steps": [
+        "Line up the decimal points.",
+        "Add placeholder zeros: 3.400, 3.350 and 3.402.",
+        "Adding zeros to the end of a decimal does not change its value. 3.4 = 3.400 and 3.35 = 3.350.",
+        "Compare the digits from left to right.",
+        "3.35 < 3.4 < 3.402"
+      ]
+    }
+  ],
   "comparison": {
     "eyebrow": "Final check",
     "title": "Final check",

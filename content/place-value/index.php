@@ -70,6 +70,6 @@ $pageTitle = 'Place value';
     <script src="../../assets/js/lesson-recommendations.js?v=1"></script>
     <script src="./interactive.js?v=15"></script>
     <script src="./questions.js?v=34"></script>
-    <script src="../../assets/js/lesson-engine.js?v=19"></script>
+    <script src="../../assets/js/lesson-engine.js?v=20"></script>
 </body>
 </html>
