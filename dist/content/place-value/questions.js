@@ -606,6 +606,57 @@
 
     /* ---------- fixed comparison activity ---------- */
 
+    function mountFinalCheck(root, questions) {
+        gateSection('comparison');
+        const state = { index: 0, answers: [] };
+
+        function isCorrect(question, answer) {
+            if (question.type === 'misconception') {
+                return answer.decision === question.decision && answer.reason === question.reason;
+            }
+            if (question.type === 'order') {
+                return answer.order.join('|') === question.answer.join('|');
+            }
+            return String(answer.value || '').trim() === question.answer;
+        }
+
+        function renderReview() {
+            const score = state.answers.filter((answer, index) => isCorrect(questions[index], answer)).length;
+            const ready = score >= 4;
+            const missed = state.answers.map((answer, index) => ({ answer, question: questions[index], index }))
+                .filter(({ answer, question }) => !isCorrect(question, answer))
+                .map(({ question, index }) => `<article class="practice-review-item is-incorrect"><p class="practice-review-item__number">Question ${index + 1}</p><h3>${escapeHtml(question.prompt)}</h3><p><strong>Answer: ${escapeHtml(question.answer)}</strong></p><p class="practice-review-item__explanation">${escapeHtml(question.explanation)}</p></article>`).join('');
+            root.innerHTML = `<section class="practice-review" aria-label="Final check review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><div><h2>${ready ? "You're ready" : 'Practise once more'}</h2><p>${ready ? 'You can recognise and use place value in different kinds of problems.' : 'Review the questions you missed, then return to Practice before trying the Check again.'}</p></div></div>${missed ? `<h3 class="practice-review__title">Review your answers</h3><div class="practice-review__list">${missed}</div>` : ''}</section>`;
+            window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: ready ? 'Finish' : 'Return to Practice', disabled: false, onClick: () => {
+                if (ready) { completeSection('comparison'); return; }
+                window.Maths1to9Lesson?.goToSection?.('question-bank', { moveFocus: true });
+            }});
+        }
+
+        function render() {
+            if (state.index >= questions.length) { renderReview(); return; }
+            const question = questions[state.index];
+            const answer = state.answers[state.index] || { value: '', decision: '', reason: '', order: [] };
+            let body = '';
+            if (question.type === 'number') {
+                body = `<input class="final-check-input" inputmode="decimal" aria-label="Your answer" value="${escapeHtml(answer.value)}">`;
+            } else if (question.type === 'misconception') {
+                const choices = answer.decision ? question.reasons : ['Yes', 'No'];
+                body = `<div class="question-options" role="radiogroup">${choices.map((choice) => `<button class="answer-choice ${choice === (answer.decision || answer.reason) ? 'is-selected' : ''}" type="button" data-final-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join('')}</div>`;
+            } else {
+                body = `<div class="ordering-tile-bank">${question.values.filter((value) => !answer.order.includes(value)).map((value) => `<button class="ordering-tile" type="button" data-final-tile="${escapeHtml(value)}">${escapeHtml(value)}</button>`).join('')}</div><div class="ordering-row"><div class="ordering-slots">${question.values.map((value, index) => `<button class="ordering-slot ${answer.order[index] ? 'is-filled' : ''}" type="button" data-final-slot="${index}">${escapeHtml(answer.order[index] || '')}</button>`).join('')}</div></div>`;
+            }
+            root.innerHTML = `<article class="question-card question-card--bare"><p class="final-check-count">Question ${state.index + 1} of ${questions.length}</p><p class="question-prompt">${escapeHtml(question.prompt)}</p>${body}</article>`;
+            root.querySelector('.final-check-input')?.addEventListener('input', (event) => { answer.value = event.target.value; state.answers[state.index] = answer; render(); });
+            root.querySelectorAll('[data-final-choice]').forEach((button) => button.addEventListener('click', () => { if (!answer.decision) answer.decision = button.dataset.finalChoice; else answer.reason = button.dataset.finalChoice; state.answers[state.index] = answer; render(); }));
+            root.querySelectorAll('[data-final-tile]').forEach((button) => button.addEventListener('click', () => { answer.order.push(button.dataset.finalTile); state.answers[state.index] = answer; render(); }));
+            root.querySelectorAll('[data-final-slot]').forEach((button) => button.addEventListener('click', () => { const value = answer.order[Number(button.dataset.finalSlot)]; if (value) { answer.order = answer.order.filter((item) => item !== value); state.answers[state.index] = answer; render(); } }));
+            const complete = question.type === 'misconception' ? Boolean(answer.decision && answer.reason) : question.type === 'order' ? answer.order.length === question.values.length : answer.value.trim() !== '';
+            window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: 'Next question', disabled: !complete, onClick: () => { const correct = isCorrect(question, answer); window.Maths1to9Lesson?.recordAssessment?.({ questionType: 'place-value', questionId: `final-check-${state.index + 1}`, correct }); state.index += 1; render(); }});
+        }
+        render();
+    }
+
     function mountFixedComparisons(root) {
         let questions = [];
 
@@ -617,6 +668,11 @@
 
         if (!Array.isArray(questions) || questions.length === 0) {
             root.textContent = 'The comparison activity could not be loaded.';
+            return;
+        }
+
+        if (questions[0]?.type) {
+            mountFinalCheck(root, questions);
             return;
         }
 

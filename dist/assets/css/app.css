@@ -338,6 +338,10 @@ a {
     border-radius: 50%;
 }
 
+.lesson-header__stage-progress[hidden] {
+    display: none !important;
+}
+
 .lesson-header__stage-progress::before {
     grid-area: 1 / 1;
     width: 32px;
@@ -1486,6 +1490,24 @@ a {
 
 .practice-review-item__explanation {
     color: var(--text-soft);
+}
+
+.final-check-count {
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.final-check-input {
+    width: min(320px, 100%);
+    min-height: 56px;
+    padding: 12px 16px;
+    border: 2px solid var(--border-dark);
+    border-radius: var(--radius-medium);
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
 }
 
 /* Multiple Choice Button Tiles ------------------------------------------ */

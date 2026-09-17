@@ -191,45 +191,43 @@
 "worked_examples": [
 ],
   "comparison": {
-    "eyebrow": "Try it",
-    "title": "Which decimal is greater?",
-    "intro": "Choose > or <. Compare the digits from left to right. Add placeholder zeros when one number ends sooner.",
+    "eyebrow": "Final check",
+    "title": "Final check",
+    "intro": "Answer five questions without hints. Some questions present place value in a different way from the practice questions.",
     "questions": [
       {
-        "left": "0.809",
-        "right": "0.8",
-        "answer": ">",
-        "explanation": "Write 0.8 as 0.800. The tenths and hundredths are equal. In the thousandths column, 9 is greater than 0."
+        "type": "number",
+        "prompt": "A number has 3 hundreds, 6 ones, 8 tenths and 4 hundredths. What is the number?",
+        "answer": "306.84",
+        "explanation": "There are no tens, so the number has 3 hundreds, 0 tens, 6 ones, 8 tenths and 4 hundredths."
       },
       {
-        "left": "0.507",
-        "right": "0.57",
-        "answer": "<",
-        "explanation": "Write 0.57 as 0.570. The tenths are equal. In the hundredths column, 0 is less than 7."
+        "type": "misconception",
+        "prompt": "Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?",
+        "decision": "No",
+        "reason": "No. 0.7 = 0.70, and 0.70 > 0.67.",
+        "reasons": ["No. 0.7 = 0.70, and 0.70 > 0.67.", "No. A number with more decimal digits is always smaller.", "Yes. 67 > 7.", "Yes. Hundredths are worth more than tenths."],
+        "answer": "No. 0.7 = 0.70, and 0.70 > 0.67.",
+        "explanation": "Write 0.7 as 0.70. Seven tenths is greater than six tenths."
       },
       {
-        "left": "4.0901",
-        "right": "4.09",
-        "answer": ">",
-        "explanation": "Write 4.09 as 4.0900. The first three decimal digits are equal. In the ten-thousandths column, 1 is greater than 0."
+        "type": "order",
+        "prompt": "Four pupils recorded these long-jump distances. Put the distances in order from shortest to longest: 2.8 m, 2.75 m, 2.805 m and 2.79 m.",
+        "values": ["2.8", "2.75", "2.805", "2.79"],
+        "answer": ["2.75", "2.79", "2.8", "2.805"],
+        "explanation": "Write the distances as 2.800, 2.750, 2.805 and 2.790."
       },
       {
-        "left": "2.999",
-        "right": "3.001",
-        "answer": "<",
-        "explanation": "Compare the ones first. 2 ones is less than 3 ones, so you can stop there."
+        "type": "number",
+        "prompt": "A machine divides its input by 10. The input is 438. What is the output?",
+        "answer": "43.8",
+        "explanation": "Each digit is worth one tenth as much, so 438 becomes 43.8."
       },
       {
-        "left": "6.071",
-        "right": "6.072",
-        "answer": "<",
-        "explanation": "The ones, tenths and hundredths are equal. In the thousandths column, 1 is less than 2."
-      },
-      {
-        "left": "0.4009",
-        "right": "0.4008",
-        "answer": ">",
-        "explanation": "The digits match until the ten-thousandths column. There, 9 is greater than 8."
+        "type": "number",
+        "prompt": "A number is multiplied by 100. The result is 4,270. What was the original number?",
+        "answer": "42.7",
+        "explanation": "Work backwards by dividing by 100. 4,270 ÷ 100 = 42.7."
       }
     ]
   },
