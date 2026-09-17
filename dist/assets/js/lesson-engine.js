@@ -54,9 +54,6 @@
     };
 
     const elements = {
-        progressText: null,
-        progressBar: null,
-        progressWrapper: null,
         navigation: null,
         sectionActionButton: null,
         nextButton: null,
@@ -663,38 +660,6 @@
             );
         }
 
-        const progressWrapper = createElement(
-            'div',
-            'lesson-progress'
-        );
-
-        elements.progressWrapper = progressWrapper;
-
-        elements.progressText = createElement(
-            'p',
-            'lesson-progress__text'
-        );
-
-        elements.progressText.id = 'lesson-progress-text';
-
-        elements.progressBar =
-            document.createElement('progress');
-
-        elements.progressBar.id = 'lesson-progress-bar';
-        elements.progressBar.className =
-            'lesson-progress__bar';
-
-        elements.progressBar.max =
-            state.sections.length;
-
-        elements.progressBar.value = 1;
-
-        progressWrapper.append(
-            elements.progressText,
-            elements.progressBar
-        );
-
-        inner.append(progressWrapper);
         header.append(inner);
 
         return header;
@@ -1909,59 +1874,8 @@
     }
 
     function updateProgress() {
-        const currentGroup = findNavigationGroup(
-            state.currentIndex
-        );
-
-        elements.progressWrapper?.classList.toggle(
-            'lesson-progress--practice',
-            currentGroup?.id === 'practice'
-        );
-
-        if (
-            currentGroup !== null &&
-            safeArray(state.lesson.navigation_stages).length > 0
-        ) {
-            const stageIndex = state.navigationGroups.indexOf(
-                currentGroup
-            );
-            const stepNumber =
-                currentGroup.sectionIndexes.indexOf(
-                    state.currentIndex
-                ) + 1;
-
-            elements.progressText.textContent =
-                `${currentGroup.label} · step ${stepNumber} of ` +
-                `${currentGroup.sectionIndexes.length}`;
-
-            elements.progressBar.max =
-                state.navigationGroups.length;
-            elements.progressBar.value = stageIndex + 1;
-            elements.progressBar.setAttribute(
-                'aria-label',
-                `${currentGroup.label}, stage ${stageIndex + 1} of ` +
-                `${state.navigationGroups.length}`
-            );
-            return;
-        }
-
-        const currentNumber =
-            state.currentIndex + 1;
-
-        const total =
-            state.sections.length;
-
-        elements.progressText.textContent =
-            `Section ${currentNumber} of ${total}`;
-
-        elements.progressBar.max = total;
-        elements.progressBar.value =
-            currentNumber;
-
-        elements.progressBar.setAttribute(
-            'aria-label',
-            `Section ${currentNumber} of ${total}`
-        );
+        // Progress is communicated by the stage navigation. Individual
+        // activities can add their own focused progress indicator.
     }
 
     function updateControls() {

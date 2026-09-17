@@ -312,52 +312,6 @@ a {
     line-height: 1.55;
 }
 
-/* Lesson progress (Khan-style mastery bar) -------------------------------- */
-
-.lesson-progress {
-    max-width: 460px;
-    margin-top: 26px;
-}
-
-.lesson-progress__text {
-    margin: 0 0 8px;
-    color: var(--text-soft);
-    font-size: 0.85rem;
-    font-weight: 800;
-}
-
-.lesson-progress__bar {
-    display: block;
-    width: 100%;
-    height: 12px;
-    appearance: none;
-    -webkit-appearance: none;
-    border: none;
-    border-radius: 999px;
-    background: rgba(28, 43, 74, 0.10);
-    overflow: hidden;
-}
-
-.lesson-progress__bar::-webkit-progress-bar {
-    background: rgba(28, 43, 74, 0.10);
-    border-radius: 999px;
-}
-
-.lesson-progress__bar::-webkit-progress-value {
-    background: linear-gradient(90deg, var(--success) 0%, #34d399 100%);
-    border-radius: 999px;
-    transition: width 400ms ease;
-}
-
-.lesson-progress__bar::-moz-progress-bar {
-    background: linear-gradient(90deg, var(--success) 0%, #34d399 100%);
-    border-radius: 999px;
-}
-
-.lesson-progress--practice {
-    display: none;
-}
-
 .lesson-header__practice-progress {
     position: absolute;
     top: 28px;
