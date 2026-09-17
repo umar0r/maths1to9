@@ -321,14 +321,6 @@ a {
 .practice-progress-summary {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.practice-progress-label {
-    color: var(--text-soft);
-    font-size: 0.72rem;
-    font-weight: 800;
-    white-space: nowrap;
 }
 
 .lesson-header__stage-progress {

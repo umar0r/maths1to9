@@ -825,7 +825,6 @@
             badge.hidden = Boolean(practiceSection?.hidden);
             badge.innerHTML = (
                 '<div class="practice-progress-summary">'
-                + `<span class="practice-progress-label">${completed} of ${sessionLength}</span>`
                 + `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}">`
                 + `<span>${completed}</span>`
                 + '</div>'
@@ -915,7 +914,9 @@
                                 state.completionDispatched = true;
                                 completeSection('question-bank');
                             }
-                            window.Maths1to9Lesson?.goToSection?.('comparison');
+                            window.Maths1to9Lesson?.goToSection?.('comparison', {
+                                unlock: true
+                            });
                             return;
                         }
                         restart(true);
