@@ -27,7 +27,7 @@ $pageTitle = 'Place value';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=16">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=17">
 </head>
 
 <body
