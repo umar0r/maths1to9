@@ -347,10 +347,12 @@
 
         const values = [
             { units: justBelow, display: formatScaledInteger(justBelow, 3, true) },
-            { units: exactTenth, display: `${whole}.${tenth}` },
+            { units: exactTenth, display: formatScaledInteger(exactTenth, 3, false) },
             { units: firstAbove, display: formatScaledInteger(firstAbove, 3, false) },
             { units: secondAbove, display: formatScaledInteger(secondAbove, 3, false) }
         ];
+
+        assertOrderingNumberFormat(values.map((item) => item.display));
 
         const ordered = [...values].sort((first, second) => first.units - second.units);
         const correctOrder = ordered.map((item) => item.display);
@@ -369,6 +371,30 @@
             )
         });
     }
+
+    const UK_DECIMAL_FORMAT = /^-?\d{1,3}(?:,\d{3})*(?:\.\d+)?$/;
+
+    function assertOrderingNumberFormat(values) {
+        if (!values.every((value) => UK_DECIMAL_FORMAT.test(value))) {
+            throw new Error('Ordering question contains an invalid number format.');
+        }
+    }
+
+    function runOrderingNumberFormatFuzzCheck() {
+        for (let index = 0; index < 250; index += 1) {
+            const integer = randomInt(0, 9999999);
+            const decimalPlaces = randomInt(1, 3);
+            const formatted = formatScaledInteger(
+                integer * (10 ** decimalPlaces) + randomInt(0, (10 ** decimalPlaces) - 1),
+                decimalPlaces,
+                Math.random() < 0.5
+            );
+
+            assertOrderingNumberFormat([formatted]);
+        }
+    }
+
+    runOrderingNumberFormatFuzzCheck();
 
     // Positive places divide a factor by 10^places, negative places multiply.
     // The combos cover scaling down, scaling up, and the two cancelling out.
