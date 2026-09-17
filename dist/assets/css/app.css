@@ -1097,22 +1097,23 @@ a {
     border-left: 3px solid var(--accent);
 }
 
-/* Show the fixed decimal point between ones and tenths only when the row
- * currently contains decimal-place digits. */
-.place-value-row--has-decimal .place-value-cell--digit.place-value-cell--decimal-start {
+/* The fixed decimal point appears only when this number has crossed into
+ * decimal-place columns. It is a real element so it stays visible in every
+ * draggable grid, including the two-row product examples. */
+.place-value-cell--digit.place-value-cell--decimal-start {
     position: relative;
 }
 
-.place-value-row--has-decimal .place-value-cell--digit.place-value-cell--decimal-start::before {
+.place-value-decimal-marker {
     position: absolute;
     z-index: 1;
     top: 50%;
     left: -8px;
     color: var(--text);
-    content: '.';
     font-size: 1.9rem;
     font-weight: 800;
     line-height: 1;
+    pointer-events: none;
     transform: translateY(-36%);
 }
 
