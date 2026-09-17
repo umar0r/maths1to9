@@ -439,6 +439,22 @@
         await store.adapter.save(store.userId, detail.slug, record);
     }
 
+    async function saveCurrentLesson() {
+        if (!restoreAttempted || !activeSlug) {
+            return;
+        }
+
+        const current =
+            window.Maths1to9Lesson?.getProgress?.() ?? {};
+
+        await saveFromEngine({
+            slug: activeSlug,
+            sectionId: current.currentSectionId,
+            sectionIndex: current.currentSectionIndex,
+            totalSections: null
+        });
+    }
+
     /* ------------------------------------------------------------------ *
      * Engine wiring
      * ------------------------------------------------------------------ */
@@ -542,6 +558,30 @@
             );
         }
     );
+
+    /* Keep the lesson resume point up to date when a student leaves via
+     * the header link, including future non-local progress adapters. */
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest('a.site-header__back');
+
+        if (
+            !link ||
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        saveCurrentLesson().finally(() => {
+            window.location.assign(link.href);
+        });
+    });
 
     /* ------------------------------------------------------------------ *
      * Per-skill evidence
@@ -789,6 +829,8 @@
         getAllProgress() {
             return store.adapter.list(store.userId);
         },
+
+        saveCurrentLesson,
 
         getSkillProgress(skillId) {
             return store.skillAdapter.load(store.userId, skillId);
