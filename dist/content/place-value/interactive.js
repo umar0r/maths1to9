@@ -594,7 +594,7 @@
                         </div>
 
                         <div
-                            class="place-value-row"
+                            class="place-value-row ${displayedCells.slice(onesIndex + 1).some(Boolean) ? 'place-value-row--has-decimal' : ''}"
                             data-role="single-digit-row"
                             role="slider"
                             tabindex="0"
@@ -781,7 +781,7 @@
                                 ${columns.map((column, index) => `<div class="place-value-cell place-value-cell--heading ${isDecimalStart(index) ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</div>`).join('')}
                             </div>
                             ${displayedRows.map((cells, rowIndex) => `
-                                <div class="place-value-row" data-role="product-digit-row" data-row-index="${rowIndex}" role="slider" tabindex="0" aria-label="Move number ${rowIndex + 1}" aria-valuemin="${minimumOffsets[rowIndex]}" aria-valuemax="${maximumOffsets[rowIndex]}" aria-valuenow="${state.offsets[rowIndex]}" style="grid-template-columns: ${rowTemplate}; cursor: grab; touch-action: pan-y; user-select: none;">
+                                <div class="place-value-row ${cells.slice(onesIndex + 1).some(Boolean) ? 'place-value-row--has-decimal' : ''}" data-role="product-digit-row" data-row-index="${rowIndex}" role="slider" tabindex="0" aria-label="Move number ${rowIndex + 1}" aria-valuemin="${minimumOffsets[rowIndex]}" aria-valuemax="${maximumOffsets[rowIndex]}" aria-valuenow="${state.offsets[rowIndex]}" style="grid-template-columns: ${rowTemplate}; cursor: grab; touch-action: pan-y; user-select: none;">
                                     <div class="place-value-cell place-value-cell--row-label">Number ${rowIndex + 1}</div>
                                     ${cells.map((digit, index) => `<div class="place-value-cell place-value-cell--digit ${isDecimalStart(index) ? 'place-value-cell--decimal-start' : ''}"><span data-role="product-movable-digit" style="display: inline-block; will-change: transform;">${escapeHtml(digit)}</span></div>`).join('')}
                                 </div>

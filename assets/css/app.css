@@ -1060,13 +1060,13 @@ a {
     border-left: 3px solid var(--accent);
 }
 
-/* The fixed divider is the decimal point: every number row shows that
- * point between ones and tenths, even while the digits move around it. */
-.place-value-cell--digit.place-value-cell--decimal-start {
+/* Show the fixed decimal point between ones and tenths only when the row
+ * currently contains decimal-place digits. */
+.place-value-row--has-decimal .place-value-cell--digit.place-value-cell--decimal-start {
     position: relative;
 }
 
-.place-value-cell--digit.place-value-cell--decimal-start::before {
+.place-value-row--has-decimal .place-value-cell--digit.place-value-cell--decimal-start::before {
     position: absolute;
     z-index: 1;
     top: 50%;
