@@ -331,7 +331,13 @@
     }
 
     function generateOrderingQuestion() {
-        const whole = randomInt(0, 3);
+        // Keep the decimal comparison focused, but vary the size of the
+        // whole-number part from decimals below one through to millions.
+        // GCSE place value covers decimals and integers of any size.
+        const digitLength = randomInt(0, 7);
+        const whole = digitLength === 0
+            ? 0
+            : randomInt(10 ** (digitLength - 1), (10 ** digitLength) - 1);
         const tenth = randomInt(1, 8);
 
         const exactTenth = (whole * 1000) + (tenth * 100);
