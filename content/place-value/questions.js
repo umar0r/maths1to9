@@ -608,7 +608,13 @@
 
     function mountFinalCheck(root, questions) {
         gateSection('comparison');
-        const state = { index: 0, answers: [] };
+        const state = {
+            index: 0,
+            answers: [],
+            showMistakes: false,
+            lessonCompleted: false,
+            resetOnReturn: false
+        };
 
         function isCorrect(question, answer) {
             if (question.type === 'misconception') {
@@ -620,17 +626,153 @@
             return String(answer.value || '').trim() === question.answer;
         }
 
+        function removeCheckIntroduction() {
+            const section = root.closest('.lesson-section');
+
+            if (!section) {
+                return;
+            }
+
+            Array.from(section.children).forEach((child) => {
+                if (
+                    child.classList.contains('lesson-eyebrow')
+                    || child.classList.contains('lesson-section__title')
+                    || child.classList.contains('lesson-section__intro')
+                ) {
+                    child.remove();
+                }
+            });
+
+            section.removeAttribute('aria-labelledby');
+            section.setAttribute('aria-label', 'Place value completion');
+        }
+
+        function missedQuestionsHtml() {
+            return state.answers
+                .map((answer, index) => ({ answer, question: questions[index], index }))
+                .filter(({ answer, question }) => !isCorrect(question, answer))
+                .map(({ question, index }) => (
+                    `<article class="practice-review-item is-incorrect">`
+                    + `<p class="practice-review-item__number">Question ${index + 1}</p>`
+                    + `<h3>${escapeHtml(question.prompt)}</h3>`
+                    + `<p><strong>Answer: ${escapeHtml(
+                        Array.isArray(question.answer)
+                            ? question.answer.join(' < ')
+                            : question.answer
+                    )}</strong></p>`
+                    + `<p class="practice-review-item__explanation">${escapeHtml(question.explanation)}</p>`
+                    + '</article>'
+                ))
+                .join('');
+        }
+
+        function renderRecommendations(container) {
+            const recommendationApi = window.Maths1to9Recommendations;
+
+            if (!recommendationApi?.getForLesson) {
+                container.innerHTML = '<p class="lesson-completion__empty">You’re up to date.</p>';
+                return;
+            }
+
+            recommendationApi.getForLesson('place-value')
+                .then((lessons) => {
+                    if (!Array.isArray(lessons) || lessons.length === 0) {
+                        container.innerHTML = '<p class="lesson-completion__empty">You’re up to date.</p>';
+                        return;
+                    }
+
+                    const card = (lesson, primary = false) => (
+                        `<a class="lesson-recommendation-card ${primary ? 'lesson-recommendation-card--primary' : ''}" href="${escapeHtml(lesson.url)}">`
+                        + `<span class="lesson-recommendation-card__title">${escapeHtml(lesson.title)}</span>`
+                        + (lesson.subtitle
+                            ? `<span class="lesson-recommendation-card__subtitle">${escapeHtml(lesson.subtitle)}</span>`
+                            : '')
+                        + `<span class="lesson-recommendation-card__meta">${escapeHtml(lesson.state.label)}</span>`
+                        + `<span class="lesson-recommendation-card__action">${lesson.state.label === 'In progress' ? 'Continue lesson' : 'Start lesson'}</span>`
+                        + '</a>'
+                    );
+                    const primary = lessons[0];
+                    const more = lessons.slice(1, 3);
+
+                    container.innerHTML = (
+                        '<h3 class="lesson-completion__next-title">Up next</h3>'
+                        + card(primary, true)
+                        + (more.length > 0
+                            ? '<h3 class="lesson-completion__more-title">More lessons to try</h3>'
+                                + `<div class="lesson-completion__more">${more.map((lesson) => card(lesson)).join('')}</div>`
+                            : '')
+                    );
+                })
+                .catch(() => {
+                    container.innerHTML = '<p class="lesson-completion__empty">You’re up to date.</p>';
+                });
+        }
+
         function renderReview() {
             const score = state.answers.filter((answer, index) => isCorrect(questions[index], answer)).length;
             const ready = score >= 4;
-            const missed = state.answers.map((answer, index) => ({ answer, question: questions[index], index }))
-                .filter(({ answer, question }) => !isCorrect(question, answer))
-                .map(({ question, index }) => `<article class="practice-review-item is-incorrect"><p class="practice-review-item__number">Question ${index + 1}</p><h3>${escapeHtml(question.prompt)}</h3><p><strong>Answer: ${escapeHtml(question.answer)}</strong></p><p class="practice-review-item__explanation">${escapeHtml(question.explanation)}</p></article>`).join('');
-            root.innerHTML = `<section class="practice-review" aria-label="Final check review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><div><h2>${ready ? "You're ready" : 'Practise once more'}</h2><p>${ready ? 'You can recognise and use place value in different kinds of problems.' : 'Review the questions you missed, then return to Practice before trying the Check again.'}</p></div></div>${missed ? `<h3 class="practice-review__title">Review your answers</h3><div class="practice-review__list">${missed}</div>` : ''}</section>`;
-            window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: ready ? 'Finish' : 'Return to Practice', disabled: false, onClick: () => {
-                if (ready) { completeSection('comparison'); return; }
-                window.Maths1to9Lesson?.goToSection?.('question-bank', { moveFocus: true });
-            }});
+
+            removeCheckIntroduction();
+            window.Maths1to9Lesson?.clearSectionAction?.('comparison');
+
+            if (ready) {
+                root.innerHTML = (
+                    '<section class="lesson-completion" aria-label="Place value complete">'
+                    + '<div class="lesson-completion__result">'
+                    + '<div><h2>Place value complete</h2><p>Nice work — you’re ready to move on.</p></div>'
+                    + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
+                    + '</div>'
+                    + '<div class="lesson-completion__recommendations" aria-live="polite">'
+                    + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
+                    + '</div>'
+                    + '<a class="lesson-completion__all-lessons" href="../../index.php">View all lessons</a>'
+                    + '</section>'
+                );
+
+                renderRecommendations(
+                    root.querySelector('.lesson-completion__recommendations')
+                );
+
+                if (!state.lessonCompleted) {
+                    state.lessonCompleted = true;
+                    completeSection('comparison');
+                    window.Maths1to9Lesson?.completeLesson?.();
+                }
+
+                return;
+            }
+
+            root.innerHTML = (
+                '<section class="lesson-completion lesson-completion--retry" aria-label="Final check result">'
+                + '<div class="lesson-completion__result">'
+                + '<div><h2>Practise once more</h2><p>Review the questions you missed, then have another go.</p></div>'
+                + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
+                + '</div>'
+                + '<div class="lesson-completion__actions">'
+                + '<button class="lesson-completion__review-button" type="button">Review mistakes</button>'
+                + '<button class="lesson-completion__practice-button" type="button">Back to practice</button>'
+                + '</div>'
+                + (state.showMistakes
+                    ? `<div class="lesson-completion__mistakes"><h3>Review your answers</h3><div class="practice-review__list">${missedQuestionsHtml()}</div></div>`
+                    : '')
+                + '</section>'
+            );
+
+            root.querySelector('.lesson-completion__review-button')
+                ?.addEventListener('click', () => {
+                    state.showMistakes = true;
+                    renderReview();
+                });
+            root.querySelector('.lesson-completion__practice-button')
+                ?.addEventListener('click', () => {
+                    state.index = 0;
+                    state.answers = [];
+                    state.showMistakes = false;
+                    state.resetOnReturn = true;
+                    window.Maths1to9Lesson?.goToSection?.('question-bank', {
+                        moveFocus: true
+                    });
+                });
         }
 
         function render() {
@@ -667,6 +809,17 @@
             const complete = question.type === 'misconception' ? Boolean(answer.decision && answer.reason) : question.type === 'order' ? answer.order.length === question.values.length : answer.value.trim() !== '';
             window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: 'Next question', disabled: !complete, onClick: () => { const correct = isCorrect(question, answer); window.Maths1to9Lesson?.recordAssessment?.({ questionType: 'place-value', questionId: `final-check-${state.index + 1}`, correct }); state.index += 1; render(); }});
         }
+
+        document.addEventListener('maths1to9:section-change', (event) => {
+            if (
+                state.resetOnReturn
+                && event.detail?.sectionId === 'comparison'
+            ) {
+                state.resetOnReturn = false;
+                render();
+            }
+        });
+
         render();
     }
 
