@@ -1333,6 +1333,10 @@ a {
     border-left-color: var(--success);
 }
 
+.practice-review-item.is-recovered {
+    border-left-color: var(--primary);
+}
+
 .practice-review-item.is-incorrect {
     border-left-color: var(--accent);
 }

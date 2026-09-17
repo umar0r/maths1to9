@@ -486,10 +486,29 @@
         powerOfTen: generatePowerOfTenQuestion
     };
 
-    function createQuestionBag() {
-        const otherTypes = Object.keys(generators).filter(
+    function createQuestionBag(focusTypes = []) {
+        const allTypes = Object.keys(generators);
+        const otherTypes = allTypes.filter(
             (type) => type !== 'order'
         );
+
+        const focused = [...new Set(focusTypes)].filter(
+            (type) => allTypes.includes(type)
+        );
+
+        if (focused.length > 0) {
+            const targeted = [];
+
+            while (targeted.length < 10) {
+                // Two questions on a weak skill, then one mixed question.
+                const choices = targeted.length % 3 === 2
+                    ? allTypes
+                    : focused;
+                targeted.push(randomItem(choices));
+            }
+
+            return shuffle(targeted);
+        }
 
         // pop() is used to select the next question, so keep ordering last:
         // every new Practice cycle begins with the hands-on ordering task.
@@ -715,7 +734,8 @@
             questions: [],
             currentIndex: -1,
             completionDispatched: false,
-            reviewing: false
+            reviewing: false,
+            focusTypes: []
         };
 
         function addQuestion() {
@@ -735,7 +755,10 @@
                 checked: false,
                 answered: false,
                 lastAnswer: '',
-                correct: false
+                correct: false,
+                attempts: 0,
+                firstAttemptCorrect: null,
+                awaitingRetry: false
             });
 
             state.currentIndex = state.questions.length - 1;
@@ -745,8 +768,10 @@
             return state.questions[state.currentIndex];
         }
 
-        function correctCount() {
-            return state.questions.filter((entry) => entry.answered && entry.correct).length;
+        function firstTryCorrectCount() {
+            return state.questions.filter(
+                (entry) => entry.firstAttemptCorrect === true
+            ).length;
         }
 
         function sessionProgress() {
@@ -769,7 +794,7 @@
             const practiceSection = document.getElementById('lesson-section-question-bank');
             badge.hidden = Boolean(practiceSection?.hidden);
             badge.innerHTML = (
-                `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}; ${correctCount()} correct" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
+                `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}; ${firstTryCorrectCount()} correct first try" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
                 + `<span>${sessionProgress()}<small>/${sessionLength}</small></span>`
                 + '</div>'
             );
@@ -785,14 +810,14 @@
             if (option === entry.selected) {
                 return 'is-incorrect';
             }
-            if (option === entry.question.answer) {
+            if (option === entry.question.answer && !entry.awaitingRetry) {
                 return 'is-correct-answer';
             }
             return '';
         }
 
         function reviewHtml() {
-            const score = correctCount();
+            const score = firstTryCorrectCount();
             const ready = score >= readyScore;
             const summary = ready
                 ? "You're ready"
@@ -808,10 +833,20 @@
                 const answerText = entry.question.interaction === 'order-tiles'
                     ? entry.lastAnswer.replaceAll(' → ', ' < ')
                     : entry.lastAnswer;
+                const status = entry.firstAttemptCorrect
+                    ? 'Correct first try'
+                    : entry.correct
+                        ? 'Correct after retry'
+                        : 'Practise';
+                const statusClass = entry.firstAttemptCorrect
+                    ? 'is-correct'
+                    : entry.correct
+                        ? 'is-recovered'
+                        : 'is-incorrect';
 
                 return (
-                    `<article class="practice-review-item ${entry.correct ? 'is-correct' : 'is-incorrect'}">`
-                    + `<p class="practice-review-item__number">${entry.correct ? 'Correct' : 'Practise'} · Question ${index + 1}</p>`
+                    `<article class="practice-review-item ${statusClass}">`
+                    + `<p class="practice-review-item__number">${status} · Question ${index + 1}</p>`
                     + `<h3>${escapeHtml(questionText)}</h3>`
                     + `<p>Your answer: <strong>${escapeHtml(answerText)}</strong></p>`
                     + (entry.correct ? '' : `<p>Answer: <strong>${escapeHtml(entry.question.interaction === 'order-tiles' ? entry.question.correctOrder.join(' < ') : entry.question.answer)}</strong></p>`)
@@ -837,9 +872,21 @@
                 root.innerHTML = reviewHtml();
                 updateHeaderProgress();
                 window.Maths1to9Lesson?.setSectionAction?.('question-bank', {
-                    label: 'Practise again',
+                    label: firstTryCorrectCount() >= readyScore
+                        ? 'Continue to Check'
+                        : 'Practise weak areas',
                     disabled: false,
-                    onClick: restart
+                    onClick: () => {
+                        if (firstTryCorrectCount() >= readyScore) {
+                            if (!state.completionDispatched) {
+                                state.completionDispatched = true;
+                                completeSection('question-bank');
+                            }
+                            window.Maths1to9Lesson?.goToSection?.('comparison');
+                            return;
+                        }
+                        restart(true);
+                    }
                 });
                 return;
             }
@@ -893,7 +940,9 @@
                 ? `<div class="interactive-equation">${escapeHtml(question.display)}</div>`
                 : '';
 
-            const feedbackHtml = entry.checked
+            const feedbackHtml = entry.awaitingRetry
+                ? '<div class="question-feedback is-visible is-incorrect"><strong>Not quite.</strong> Check the place values and try a different answer.</div>'
+                : entry.checked
                 ? (
                     isOrdering
                     ? (
@@ -913,10 +962,16 @@
                 )
                 : '';
 
-            const action = entry.checked ? 'next' : 'check';
+            const action = entry.awaitingRetry
+                ? 'retry'
+                : entry.checked
+                    ? 'next'
+                    : 'check';
             const actionLabel = action === 'next'
                 ? 'Continue'
-                : 'Check answer';
+                : action === 'retry'
+                    ? 'Try again'
+                    : 'Check answer';
             const actionDisabled = action === 'check' && (
                 isOrdering
                     ? entry.order.length !== question.values.length
@@ -992,13 +1047,33 @@
                             entry.lastAnswer = entry.selected;
                             entry.correct =
                                 entry.selected === question.answer;
+                            entry.attempts += 1;
 
-                            window.Maths1to9Lesson?.recordAssessment?.({
-                                questionType: entry.assessmentType,
-                                questionId: entry.questionId,
-                                correct: entry.correct
-                            });
+                            if (entry.attempts === 1) {
+                                entry.firstAttemptCorrect = entry.correct;
+                            }
 
+                            entry.awaitingRetry = (
+                                entry.attempts === 1 && !entry.correct
+                            );
+
+                            if (entry.attempts === 1) {
+                                window.Maths1to9Lesson?.recordAssessment?.({
+                                    questionType: entry.assessmentType,
+                                    questionId: entry.questionId,
+                                    correct: entry.correct
+                                });
+                            }
+
+                            render();
+                            return;
+                        }
+
+                        if (action === 'retry') {
+                            entry.selected = '';
+                            entry.order = [];
+                            entry.checked = false;
+                            entry.awaitingRetry = false;
                             render();
                             return;
                         }
@@ -1007,10 +1082,6 @@
                             state.currentIndex += 1;
                         } else {
                             state.reviewing = true;
-                            if (!state.completionDispatched) {
-                                state.completionDispatched = true;
-                                completeSection('question-bank');
-                            }
                         }
 
                         render();
@@ -1019,8 +1090,13 @@
 
         }
 
-        function restart() {
-            state.bag = createQuestionBag();
+        function restart(targeted = false) {
+            const missedTypes = state.questions
+                .filter((entry) => !entry.firstAttemptCorrect)
+                .map((entry) => entry.assessmentType);
+
+            state.focusTypes = targeted ? missedTypes : [];
+            state.bag = createQuestionBag(state.focusTypes);
             state.questions = [];
             state.currentIndex = -1;
             state.reviewing = false;
