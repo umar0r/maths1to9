@@ -1060,6 +1060,25 @@ a {
     border-left: 3px solid var(--accent);
 }
 
+/* The fixed divider is the decimal point: every number row shows that
+ * point between ones and tenths, even while the digits move around it. */
+.place-value-cell--digit.place-value-cell--decimal-start {
+    position: relative;
+}
+
+.place-value-cell--digit.place-value-cell--decimal-start::before {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: -8px;
+    color: var(--text);
+    content: '.';
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+    transform: translateY(-36%);
+}
+
 .place-value-method__card {
     padding: 0;
     background: transparent;
