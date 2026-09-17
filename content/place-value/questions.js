@@ -1017,14 +1017,21 @@
                 : entry.checked
                     ? 'next'
                     : 'check';
+            const orderingSlotCount = isOrdering
+                ? question.values.length
+                : 0;
+            const orderingHasEmptySlots = isOrdering
+                && entry.order.length !== orderingSlotCount;
             const actionLabel = action === 'next'
                 ? 'Continue'
                 : action === 'retry'
                     ? 'Try again'
-                    : 'Check answer';
+                    : orderingHasEmptySlots
+                        ? `Place all ${orderingSlotCount} to check`
+                        : 'Check answer';
             const actionDisabled = action === 'check' && (
                 isOrdering
-                    ? entry.order.length !== question.values.length
+                    ? orderingHasEmptySlots
                     : entry.selected === ''
             );
 

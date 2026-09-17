@@ -894,7 +894,15 @@ a {
     letter-spacing: 0.01em;
 }
 
-.lesson-controls .button--primary:hover {
+.lesson-controls .button--primary:disabled {
+    opacity: 1;
+    background: #5a6d84;
+    color: #ffffff;
+    border-color: #5a6d84;
+    box-shadow: 0 3px 0 #3d4d61;
+}
+
+.lesson-controls .button--primary:not(:disabled):hover {
     background: var(--success);
     color: #ffffff;
     filter: brightness(1.06);
@@ -902,7 +910,7 @@ a {
     box-shadow: 0 5px 0 var(--success-dark);
 }
 
-.lesson-controls .button--primary:active {
+.lesson-controls .button--primary:not(:disabled):active {
     transform: translateY(3px);
     box-shadow: 0 1px 0 var(--success-dark);
 }
