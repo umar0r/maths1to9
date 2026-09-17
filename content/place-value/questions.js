@@ -955,16 +955,21 @@
                         .join('')}
                 </div>
                 <div class="ordering-row" aria-label="Order decimals from smallest to largest">
-                    <span class="ordering-row__label">Smallest</span>
-                    <span class="ordering-row__arrow" aria-hidden="true">→</span>
                     <div class="ordering-slots">
                         ${question.values.map((value, index) => {
                             const placed = entry.order[index];
-                            return `<div class="ordering-slot ${placed ? 'is-filled' : ''}" data-order-slot="${index}">${placed ? `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(placed)}" data-order-source="slot">${escapeHtml(placed)}</button>` : `<span>${index + 1}</span>`}</div>`;
+                            const caption = index === 0
+                                ? 'smallest'
+                                : index === question.values.length - 1
+                                    ? 'largest'
+                                    : '';
+                            const slot = `<div class="ordering-slot ${placed ? 'is-filled' : ''}" data-order-slot="${index}">${placed ? `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(placed)}" data-order-source="slot">${escapeHtml(placed)}</button>` : '<span aria-hidden="true"></span>'}</div>`;
+                            const sign = index < question.values.length - 1
+                                ? '<span class="ordering-row__inequality" aria-hidden="true">&lt;</span>'
+                                : '';
+                            return `<div class="ordering-slot-group">${slot}<span class="ordering-row__caption">${caption}</span></div>${sign}`;
                         }).join('')}
                     </div>
-                    <span class="ordering-row__arrow" aria-hidden="true">→</span>
-                    <span class="ordering-row__label">Largest</span>
                 </div>
             ` : '';
 

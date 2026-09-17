@@ -1517,14 +1517,23 @@ a {
     margin: 8px 0 24px;
 }
 
-.ordering-row__label {
-    color: var(--text-muted);
-    font-weight: 800;
+.ordering-slots {
+    align-items: flex-start;
+    justify-content: center;
 }
 
-.ordering-row__arrow {
-    color: var(--text-muted);
-    font-size: 1.25rem;
+.ordering-slot-group {
+    display: grid;
+    grid-template-rows: 56px auto;
+    gap: 6px;
+}
+
+.ordering-row__inequality {
+    display: grid;
+    min-height: 56px;
+    place-items: center;
+    color: var(--text-soft);
+    font-size: 1.35rem;
     font-weight: 800;
 }
 
@@ -1541,6 +1550,15 @@ a {
 
 .ordering-slot.is-filled {
     border: 0;
+}
+
+.ordering-row__caption {
+    min-height: 1.2em;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
 }
 
 .ordering-slot .ordering-tile {
