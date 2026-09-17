@@ -784,7 +784,8 @@
                 correct: false,
                 attempts: 0,
                 firstAttemptCorrect: null,
-                awaitingRetry: false
+                awaitingRetry: false,
+                announcement: ''
             });
 
             state.currentIndex = state.questions.length - 1;
@@ -948,13 +949,13 @@
             )).join('') : '';
 
             const orderingHtml = isOrdering ? `
-                <div class="ordering-tile-bank" aria-label="Unordered decimals">
+                <div class="ordering-tile-bank" aria-label="Numbers to order">
                     ${question.values
                         .filter((value) => !entry.order.includes(value))
                         .map((value) => `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(value)}" data-order-source="pool">${escapeHtml(value)}</button>`)
                         .join('')}
                 </div>
-                <div class="ordering-row" aria-label="Order decimals from smallest to largest">
+                <div class="ordering-row" aria-label="Order numbers from smallest to largest">
                     <div class="ordering-slots">
                         ${question.values.map((value, index) => {
                             const placed = entry.order[index];
@@ -963,7 +964,9 @@
                                 : index === question.values.length - 1
                                     ? 'largest'
                                     : '';
-                            const slot = `<div class="ordering-slot ${placed ? 'is-filled' : ''}" data-order-slot="${index}">${placed ? `<button class="ordering-tile" type="button" draggable="true" data-order-tile="${escapeHtml(placed)}" data-order-source="slot">${escapeHtml(placed)}</button>` : '<span aria-hidden="true"></span>'}</div>`;
+                            const slot = placed
+                                ? `<button class="ordering-slot is-filled" type="button" draggable="true" data-order-slot="${index}" data-order-tile="${escapeHtml(placed)}" data-order-source="slot" aria-label="${escapeHtml(placed)} in position ${index + 1}. Press to return it to the number pool.">${escapeHtml(placed)}</button>`
+                                : `<button class="ordering-slot" type="button" data-order-slot="${index}" aria-label="Empty position ${index + 1}"><span class="ordering-slot__placeholder">${index === entry.order.length ? 'Tap a number' : ''}</span></button>`;
                             const sign = index < question.values.length - 1
                                 ? '<span class="ordering-row__inequality" aria-hidden="true">&lt;</span>'
                                 : '';
@@ -971,6 +974,7 @@
                         }).join('')}
                     </div>
                 </div>
+                <div class="ordering-announcement" aria-live="polite">${escapeHtml(entry.announcement || '')}</div>
             ` : '';
 
             const displayHtml = question.display
@@ -1029,24 +1033,35 @@
             updateHeaderProgress();
 
             if (isOrdering) {
-                root.querySelectorAll('[data-order-tile]').forEach((tile) => {
+                root.querySelectorAll('[data-order-source="pool"]').forEach((tile) => {
                     tile.addEventListener('click', () => {
                         if (entry.checked) return;
                         const value = tile.dataset.orderTile;
-                        if (tile.dataset.orderSource === 'slot') {
-                            entry.order = entry.order.filter((item) => item !== value);
-                        } else if (entry.order.length < question.values.length) {
+                        if (entry.order.length < question.values.length) {
+                            entry.announcement = `${value} placed in position ${entry.order.length + 1}.`;
                             entry.order.push(value);
                         }
                         render();
                     });
+                });
 
+                root.querySelectorAll('[data-order-tile]').forEach((tile) => {
                     tile.addEventListener('dragstart', (event) => {
                         event.dataTransfer?.setData('text/plain', tile.dataset.orderTile);
                     });
                 });
 
                 root.querySelectorAll('[data-order-slot]').forEach((slot) => {
+                    slot.addEventListener('click', () => {
+                        if (entry.checked) return;
+                        const slotIndex = Number(slot.dataset.orderSlot);
+                        const value = entry.order[slotIndex];
+                        if (!value) return;
+                        entry.order.splice(slotIndex, 1);
+                        entry.announcement = `${value} returned to the number pool.`;
+                        render();
+                    });
+
                     slot.addEventListener('dragover', (event) => event.preventDefault());
                     slot.addEventListener('drop', (event) => {
                         event.preventDefault();
@@ -1057,6 +1072,7 @@
                         if (currentIndex !== -1) entry.order.splice(currentIndex, 1);
                         const destination = Math.min(Number(slot.dataset.orderSlot), entry.order.length);
                         entry.order.splice(destination, 0, value);
+                        entry.announcement = `${value} placed in position ${destination + 1}.`;
                         render();
                     });
                 });
