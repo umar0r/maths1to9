@@ -949,7 +949,14 @@
                 + '</label>'
             )).join('') : '';
 
+            const orderingTileWidth = isOrdering
+                ? Math.min(172, Math.max(92, Math.ceil(
+                    Math.max(...question.values.map((value) => value.length)) * 10 + 36
+                )))
+                : 0;
+
             const orderingHtml = isOrdering ? `
+                <div class="ordering-interaction" style="--ordering-tile-width: ${orderingTileWidth}px">
                 <div class="ordering-tile-bank" aria-label="Numbers to order">
                     ${question.values
                         .filter((value) => !entry.order.includes(value))
@@ -976,6 +983,7 @@
                     </div>
                 </div>
                 <div class="ordering-announcement" aria-live="polite">${escapeHtml(entry.announcement || '')}</div>
+                </div>
             ` : '';
 
             const displayHtml = question.display

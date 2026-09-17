@@ -27,7 +27,7 @@ $pageTitle = 'Place value';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=11">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=12">
 </head>
 
 <body
@@ -68,7 +68,7 @@ $pageTitle = 'Place value';
 
     <script src="../../assets/js/progress.js"></script>
     <script src="./interactive.js?v=12"></script>
-    <script src="./questions.js?v=28"></script>
+    <script src="./questions.js?v=29"></script>
     <script src="../../assets/js/lesson-engine.js?v=19"></script>
 </body>
 </html>
