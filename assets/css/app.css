@@ -1268,6 +1268,151 @@ a {
     letter-spacing: -0.01em;
 }
 
+.practice-session-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 24px;
+}
+
+.practice-progress-ring {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    place-items: center;
+    background: conic-gradient(
+        var(--primary) var(--practice-progress),
+        var(--border) 0
+    );
+    border-radius: 50%;
+}
+
+.practice-progress-ring::before {
+    grid-area: 1 / 1;
+    width: 42px;
+    height: 42px;
+    background: var(--surface);
+    border-radius: 50%;
+    content: '';
+}
+
+.practice-progress-ring span {
+    z-index: 1;
+    grid-area: 1 / 1;
+    color: var(--primary-dark);
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.practice-progress-ring small {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+}
+
+.practice-session-status__text {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.practice-session-status__text strong {
+    color: var(--text);
+}
+
+.practice-review__score {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: var(--background-deep);
+    border-radius: var(--radius-medium);
+}
+
+.practice-review__score.is-ready {
+    background: var(--success-background);
+}
+
+.practice-progress-ring--complete {
+    width: 76px;
+    height: 76px;
+}
+
+.practice-progress-ring--complete::before {
+    width: 60px;
+    height: 60px;
+}
+
+.practice-progress-ring--complete span {
+    font-size: 1.15rem;
+}
+
+.practice-review__score h2,
+.practice-review__score p,
+.practice-review__title,
+.practice-review-item h3,
+.practice-review-item p {
+    margin-top: 0;
+}
+
+.practice-review__score h2 {
+    margin-bottom: 4px;
+    font-size: 1.5rem;
+}
+
+.practice-review__score p {
+    margin-bottom: 0;
+    color: var(--text-soft);
+}
+
+.practice-review__title {
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+}
+
+.practice-review__list {
+    display: grid;
+    gap: 12px;
+}
+
+.practice-review-item {
+    padding: 16px 18px;
+    border-left: 4px solid var(--border-dark);
+    background: var(--surface);
+}
+
+.practice-review-item.is-correct {
+    border-left-color: var(--success);
+}
+
+.practice-review-item.is-incorrect {
+    border-left-color: var(--accent);
+}
+
+.practice-review-item__number {
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.practice-review-item h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.practice-review-item p:not(.practice-review-item__number) {
+    margin-bottom: 6px;
+}
+
+.practice-review-item__explanation {
+    color: var(--text-soft);
+}
+
 /* Multiple Choice Button Tiles ------------------------------------------ */
 
 .question-options {

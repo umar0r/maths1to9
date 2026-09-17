@@ -663,16 +663,26 @@
         render();
     }
 
-    /* ---------- infinite practice ---------- */
+    /* ---------- finite practice session ---------- */
 
-    function mountInfinitePractice(root) {
+    function mountPracticeSession(root) {
         gateSection('question-bank');
+
+        const sessionLength = Math.max(
+            1,
+            Number(root.dataset.sessionLength) || 10
+        );
+        const readyScore = Math.min(
+            sessionLength,
+            Math.max(1, Number(root.dataset.readyScore) || 8)
+        );
 
         const state = {
             bag: createQuestionBag(),
             questions: [],
             currentIndex: -1,
-            completionDispatched: false
+            completionDispatched: false,
+            reviewing: false
         };
 
         function addQuestion() {
@@ -702,12 +712,27 @@
             return state.questions[state.currentIndex];
         }
 
-        function answeredCount() {
-            return state.questions.filter((entry) => entry.answered).length;
-        }
-
         function correctCount() {
             return state.questions.filter((entry) => entry.answered && entry.correct).length;
+        }
+
+        function sessionProgress() {
+            return Math.min(state.currentIndex + 1, sessionLength);
+        }
+
+        function sessionStatusHtml() {
+            const progress = Math.round((sessionProgress() / sessionLength) * 100);
+            return (
+                '<div class="practice-session-status">'
+                + `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
+                + `<span>${sessionProgress()}<small>/${sessionLength}</small></span>`
+                + '</div>'
+                + '<p class="practice-session-status__text">'
+                + `<strong>Question ${sessionProgress()} of ${sessionLength}</strong>`
+                + `<span>${correctCount()} correct</span>`
+                + '</p>'
+                + '</div>'
+            );
         }
 
         function optionClass(option, entry) {
@@ -726,114 +751,58 @@
             return '';
         }
 
-function historyHtml() {
-    const previous = state.questions
-        .map((entry, index) => ({
-            entry,
-            index
-        }))
-        .filter(({ entry, index }) => (
-            entry.answered
-            && index !== state.currentIndex
-        ))
-        .reverse();
+        function reviewHtml() {
+            const score = correctCount();
+            const ready = score >= readyScore;
+            const summary = ready
+                ? "You're ready"
+                : 'Practise once more';
+            const detail = ready
+                ? `You got ${score} out of ${sessionLength} correct.`
+                : `You got ${score} out of ${sessionLength} correct. Aim for ${readyScore} to be ready.`;
+            const answers = state.questions.map((entry, index) => {
+                const questionText = [
+                    entry.question.prompt,
+                    entry.question.display
+                ].filter(Boolean).join(' ');
+                const answerText = entry.question.interaction === 'order-tiles'
+                    ? entry.lastAnswer.replaceAll(' → ', ' < ')
+                    : entry.lastAnswer;
 
-    if (previous.length === 0) {
-        return '';
-    }
+                return (
+                    `<article class="practice-review-item ${entry.correct ? 'is-correct' : 'is-incorrect'}">`
+                    + `<p class="practice-review-item__number">${entry.correct ? 'Correct' : 'Practise'} · Question ${index + 1}</p>`
+                    + `<h3>${escapeHtml(questionText)}</h3>`
+                    + `<p>Your answer: <strong>${escapeHtml(answerText)}</strong></p>`
+                    + (entry.correct ? '' : `<p>Answer: <strong>${escapeHtml(entry.question.interaction === 'order-tiles' ? entry.question.correctOrder.join(' < ') : entry.question.answer)}</strong></p>`)
+                    + `<p class="practice-review-item__explanation">${escapeHtml(entry.question.explanation)}</p>`
+                    + '</article>'
+                );
+            }).join('');
 
-    const cards = previous.map(({
-        entry,
-        index
-    }) => {
-        const questionText = [
-            entry.question.prompt,
-            entry.question.display
-        ]
-            .filter(Boolean)
-            .join(' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        const resultClass = entry.correct
-            ? 'is-correct'
-            : 'is-incorrect';
-
-        const resultText = entry.correct
-            ? 'Correct'
-            : 'Wrong';
-
-        const correctAnswerHtml = entry.correct
-            ? ''
-            : `
-                <p>
-                    Correct answer:
-                    <strong>
-                        ${escapeHtml(
-                            entry.question.answer
-                        )}
-                    </strong>
-                </p>
-            `;
-
-        return `
-            <article class="worked-example">
-                <p class="worked-example__number">
-                    Question ${index + 1}
-                    · ${resultText}
-                </p>
-
-                <h3 class="worked-example__title">
-                    ${escapeHtml(questionText)}
-                </h3>
-
-                <div
-                    class="
-                        question-feedback
-                        is-visible
-                        ${resultClass}
-                    "
-                >
-                    <p>
-                        Your answer:
-                        <strong>
-                            ${escapeHtml(
-                                entry.lastAnswer
-                            )}
-                        </strong>
-                    </p>
-
-                    ${correctAnswerHtml}
-                </div>
-
-                <div class="question-answer-row">
-                    <button
-                        class="button"
-                        type="button"
-                        data-history-index="${index}"
-                    >
-                        Open question
-                    </button>
-                </div>
-            </article>
-        `;
-    }).join('');
-
-    return `
-        <details class="question-history">
-            <summary class="button">
-                Previous questions
-                (${previous.length})
-            </summary>
-
-            <div class="worked-example-list">
-                ${cards}
-            </div>
-        </details>
-    `;
-}
+            return (
+                '<section class="practice-review" aria-label="Practice review">'
+                + `<div class="practice-review__score ${ready ? 'is-ready' : ''}">`
+                + `<div class="practice-progress-ring practice-progress-ring--complete" style="--practice-progress: ${Math.round((score / sessionLength) * 100)}%"><span>${score}<small>/${sessionLength}</small></span></div>`
+                + `<div><h2>${summary}</h2><p>${detail}</p></div>`
+                + '</div>'
+                + '<h3 class="practice-review__title">Review your answers</h3>'
+                + `<div class="practice-review__list">${answers}</div>`
+                + '</section>'
+            );
+        }
 
         function render() {
+            if (state.reviewing) {
+                root.innerHTML = reviewHtml();
+                window.Maths1to9Lesson?.setSectionAction?.('question-bank', {
+                    label: 'Practise again',
+                    disabled: false,
+                    onClick: restart
+                });
+                return;
+            }
+
             const entry = currentEntry();
             const question = entry.question;
             const isOrdering = question.interaction === 'order-tiles';
@@ -903,14 +872,10 @@ function historyHtml() {
                 )
                 : '';
 
-            const action = entry.checked
-                ? (correct ? 'next' : 'retry')
-                : 'check';
+            const action = entry.checked ? 'next' : 'check';
             const actionLabel = action === 'next'
                 ? 'Continue'
-                : action === 'retry'
-                    ? 'Try again'
-                    : 'Check answer';
+                : 'Check answer';
             const actionDisabled = action === 'check' && (
                 isOrdering
                     ? entry.order.length !== question.values.length
@@ -918,7 +883,8 @@ function historyHtml() {
             );
 
             root.innerHTML = (
-                '<article class="question-card question-card--bare">'
+                sessionStatusHtml()
+                + '<article class="question-card question-card--bare">'
                 + `<p class="question-prompt">${escapeHtml(question.prompt)}</p>`
                 + displayHtml
                 + (isOrdering
@@ -991,48 +957,43 @@ function historyHtml() {
                                 correct: entry.correct
                             });
 
-                            if (
-                                entry.correct
-                                && !state.completionDispatched
-                            ) {
+                            render();
+                            return;
+                        }
+
+                        if (state.currentIndex < sessionLength - 1) {
+                            state.currentIndex += 1;
+                        } else {
+                            state.reviewing = true;
+                            if (!state.completionDispatched) {
                                 state.completionDispatched = true;
                                 completeSection('question-bank');
                             }
-
-                            render();
-                            return;
-                        }
-
-                        if (action === 'retry') {
-                            entry.selected = '';
-                            entry.checked = false;
-                            render();
-                            return;
-                        }
-
-                        if (
-                            state.currentIndex <
-                            state.questions.length - 1
-                        ) {
-                            state.currentIndex += 1;
-                        } else {
-                            addQuestion();
                         }
 
                         render();
                     }
                 });
 
-            root.querySelectorAll('[data-history-index]').forEach((button) => {
-                button.addEventListener('click', () => {
-                    state.currentIndex = Number(button.dataset.historyIndex);
-                    render();
-                });
-            });
-
         }
 
-        addQuestion();
+        function restart() {
+            state.bag = createQuestionBag();
+            state.questions = [];
+            state.currentIndex = -1;
+            state.reviewing = false;
+            state.completionDispatched = false;
+            while (state.questions.length < sessionLength) {
+                addQuestion();
+            }
+            state.currentIndex = 0;
+            render();
+        }
+
+        while (state.questions.length < sessionLength) {
+            addQuestion();
+        }
+        state.currentIndex = 0;
         render();
     }
 
@@ -1059,7 +1020,7 @@ function historyHtml() {
 
         if (practiceRoot && !practiceRoot.dataset.mounted) {
             practiceRoot.dataset.mounted = 'true';
-            mountInfinitePractice(practiceRoot);
+            mountPracticeSession(practiceRoot);
         }
     }
 

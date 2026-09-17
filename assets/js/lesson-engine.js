@@ -1614,6 +1614,18 @@
         questionsRoot.dataset.lessonModule =
             'questions';
 
+        if (Number.isFinite(Number(questionBank.session_length))) {
+            questionsRoot.dataset.sessionLength = String(
+                Number(questionBank.session_length)
+            );
+        }
+
+        if (Number.isFinite(Number(questionBank.ready_score))) {
+            questionsRoot.dataset.readyScore = String(
+                Number(questionBank.ready_score)
+            );
+        }
+
         container.append(questionsRoot);
     }
 
