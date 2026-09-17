@@ -2215,6 +2215,90 @@ noscript p {
     }
 }
 
+/* Ordering questions stay tap-friendly without making the page scroll. */
+@media (max-width: 600px) {
+    .ordering-interaction {
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    .ordering-tile-bank {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .ordering-tile {
+        width: 100%;
+        min-height: 48px;
+        padding: 8px 6px;
+        font-size: clamp(0.76rem, 3.2vw, 0.9rem);
+    }
+
+    .ordering-row {
+        max-width: 100%;
+        margin: 8px 0 20px;
+    }
+
+    .ordering-slots {
+        display: flex;
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+
+    .ordering-slot-group {
+        min-width: 0;
+        flex: 1 1 0;
+    }
+
+    .ordering-slot {
+        width: 100%;
+        min-height: 48px;
+        font-size: clamp(0.72rem, 2.8vw, 0.86rem);
+    }
+
+    .ordering-row__inequality {
+        min-height: 48px;
+        flex: 0 0 12px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 460px) {
+    .ordering-slots {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ordering-slot-group {
+        display: grid;
+        width: 100%;
+        grid-template-rows: auto 48px auto;
+        flex: none;
+        gap: 4px;
+    }
+
+    .ordering-slot {
+        grid-row: 2;
+    }
+
+    .ordering-row__caption {
+        min-height: 0;
+        grid-row: 3;
+        text-align: left;
+    }
+
+    .ordering-slot-group:first-child .ordering-row__caption {
+        grid-row: 1;
+    }
+
+    .ordering-row__inequality {
+        display: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
