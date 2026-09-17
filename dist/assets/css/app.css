@@ -1483,6 +1483,7 @@ a {
 }
 
 .ordering-tile {
+    box-sizing: border-box;
     width: var(--ordering-tile-width, 92px);
     min-height: 56px;
     padding: 12px 18px;
@@ -1538,6 +1539,7 @@ a {
 
 .ordering-slot {
     display: grid;
+    box-sizing: border-box;
     width: var(--ordering-tile-width, 92px);
     min-height: 56px;
     padding: 0;

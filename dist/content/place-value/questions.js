@@ -950,8 +950,8 @@
             )).join('') : '';
 
             const orderingTileWidth = isOrdering
-                ? Math.min(172, Math.max(92, Math.ceil(
-                    Math.max(...question.values.map((value) => value.length)) * 10 + 36
+                ? Math.min(196, Math.max(112, Math.ceil(
+                    Math.max(...question.values.map((value) => value.length)) * 13 + 44
                 )))
                 : 0;
 
