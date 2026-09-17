@@ -358,7 +358,7 @@
 
         return makeQuestion({
             type: 'Order decimals',
-            prompt: 'Put these decimals in order from smallest to largest.',
+            prompt: 'Put these numbers in order from smallest to largest.',
             interaction: 'order-tiles',
             values: shuffle(values.map((item) => item.display)),
             correctOrder,
