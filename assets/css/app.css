@@ -1012,6 +1012,10 @@ a {
     min-width: 900px;
 }
 
+.place-value-scroll-hint {
+    display: none;
+}
+
 .place-value-row {
     display: grid;
     grid-template-columns: 120px repeat(9, minmax(78px, 1fr));
@@ -2087,6 +2091,43 @@ noscript p {
     .question-options {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
+    }
+
+    .place-value-scroll-hint {
+        display: block;
+        margin: 14px 0 8px;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .place-value-chart--slider {
+        min-width: 654px !important;
+    }
+
+    .place-value-chart--slider .place-value-row {
+        grid-template-columns: 78px repeat(var(--place-value-column-count), minmax(64px, 1fr)) !important;
+    }
+
+    .place-value-chart--slider .place-value-cell {
+        min-height: 50px;
+        padding: 6px 4px;
+    }
+
+    .place-value-chart--slider .place-value-cell--heading {
+        min-height: 46px;
+        font-size: 0.68rem;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .place-value-chart--slider .place-value-cell--row-label {
+        font-size: 0.76rem;
+        padding-left: 8px;
+    }
+
+    .place-value-chart--slider .place-value-cell--digit {
+        font-size: 1.2rem;
     }
 }
 

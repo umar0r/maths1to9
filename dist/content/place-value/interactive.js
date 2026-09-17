@@ -571,10 +571,11 @@
                     <strong>One place right: ÷10 →</strong>
                 </p>
 
+                <p class="place-value-scroll-hint">Swipe the table to see every place-value column.</p>
                 <div class="place-value-chart-wrapper">
                     <div
-                        class="place-value-chart"
-                        style="min-width: ${chartWidth}px;"
+                        class="place-value-chart place-value-chart--slider"
+                        style="min-width: ${chartWidth}px; --place-value-column-count: ${columns.length};"
                     >
                         <div
                             class="place-value-row"
@@ -774,8 +775,9 @@
                     <p class="place-value-method__prompt">${escapeHtml(example.question || example.prompt || 'Drag the numbers into the correct columns.')}</p>
                     ${example.question && example.prompt ? `<p class="interactive-explanation">${escapeHtml(example.prompt)}</p>` : ''}
                     <p class="interactive-explanation"><strong>← One place left: ×10</strong>&nbsp;&nbsp; <strong>One place right: ÷10 →</strong></p>
+                    <p class="place-value-scroll-hint">Swipe the table to see every place-value column.</p>
                     <div class="place-value-chart-wrapper">
-                        <div class="place-value-chart" style="min-width: ${chartWidth}px;">
+                        <div class="place-value-chart place-value-chart--slider" style="min-width: ${chartWidth}px; --place-value-column-count: ${columns.length};">
                             <div class="place-value-row" style="grid-template-columns: ${rowTemplate};">
                                 <div class="place-value-cell place-value-cell--heading"></div>
                                 ${columns.map((column, index) => `<div class="place-value-cell place-value-cell--heading ${isDecimalStart(index) ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</div>`).join('')}
