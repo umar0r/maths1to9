@@ -647,7 +647,20 @@
                 body = `<div class="ordering-tile-bank">${question.values.filter((value) => !answer.order.includes(value)).map((value) => `<button class="ordering-tile" type="button" data-final-tile="${escapeHtml(value)}">${escapeHtml(value)}</button>`).join('')}</div><div class="ordering-row"><div class="ordering-slots">${question.values.map((value, index) => `<button class="ordering-slot ${answer.order[index] ? 'is-filled' : ''}" type="button" data-final-slot="${index}">${escapeHtml(answer.order[index] || '')}</button>`).join('')}</div></div>`;
             }
             root.innerHTML = `<article class="question-card question-card--bare"><p class="final-check-count">Question ${state.index + 1} of ${questions.length}</p><p class="question-prompt">${escapeHtml(question.prompt)}</p>${body}</article>`;
-            root.querySelector('.final-check-input')?.addEventListener('input', (event) => { answer.value = event.target.value; state.answers[state.index] = answer; render(); });
+            root.querySelector('.final-check-input')?.addEventListener('input', (event) => {
+                answer.value = event.target.value;
+                state.answers[state.index] = answer;
+                window.Maths1to9Lesson?.setSectionAction?.('comparison', {
+                    label: 'Next question',
+                    disabled: answer.value.trim() === '',
+                    onClick: () => {
+                        const correct = isCorrect(question, answer);
+                        window.Maths1to9Lesson?.recordAssessment?.({ questionType: 'place-value', questionId: `final-check-${state.index + 1}`, correct });
+                        state.index += 1;
+                        render();
+                    }
+                });
+            });
             root.querySelectorAll('[data-final-choice]').forEach((button) => button.addEventListener('click', () => { if (!answer.decision) answer.decision = button.dataset.finalChoice; else answer.reason = button.dataset.finalChoice; state.answers[state.index] = answer; render(); }));
             root.querySelectorAll('[data-final-tile]').forEach((button) => button.addEventListener('click', () => { answer.order.push(button.dataset.finalTile); state.answers[state.index] = answer; render(); }));
             root.querySelectorAll('[data-final-slot]').forEach((button) => button.addEventListener('click', () => { const value = answer.order[Number(button.dataset.finalSlot)]; if (value) { answer.order = answer.order.filter((item) => item !== value); state.answers[state.index] = answer; render(); } }));
