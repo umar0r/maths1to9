@@ -56,6 +56,7 @@
     const elements = {
         progressText: null,
         progressBar: null,
+        progressWrapper: null,
         navigation: null,
         sectionActionButton: null,
         nextButton: null,
@@ -666,6 +667,8 @@
             'div',
             'lesson-progress'
         );
+
+        elements.progressWrapper = progressWrapper;
 
         elements.progressText = createElement(
             'p',
@@ -1908,6 +1911,11 @@
     function updateProgress() {
         const currentGroup = findNavigationGroup(
             state.currentIndex
+        );
+
+        elements.progressWrapper?.classList.toggle(
+            'lesson-progress--practice',
+            currentGroup?.id === 'practice'
         );
 
         if (

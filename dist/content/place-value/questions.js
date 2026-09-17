@@ -149,6 +149,34 @@
         return `${parts.whole}.${parts.decimal.padEnd(places, '0')}`;
     }
 
+    const DIGIT_WORDS = [
+        'zero', 'one', 'two', 'three', 'four',
+        'five', 'six', 'seven', 'eight', 'nine'
+    ];
+
+    function digitValueWords(digit, exponent) {
+        const word = DIGIT_WORDS[digit];
+        const tensWords = [
+            'zero', 'ten', 'twenty', 'thirty', 'forty',
+            'fifty', 'sixty', 'seventy', 'eighty', 'ninety'
+        ];
+        const names = {
+            3: 'thousand',
+            2: 'hundred',
+            1: 'ten',
+            0: '',
+            '-1': 'tenth',
+            '-2': 'hundredth',
+            '-3': 'thousandth'
+        };
+        const place = names[String(exponent)] || '';
+
+        if (exponent === 0) return word;
+        if (exponent === 1) return tensWords[digit];
+        if (exponent > 0) return `${word} ${place}`;
+        return `${word} ${place}${digit === 1 ? '' : 's'}`;
+    }
+
     const PLACE_NAMES_AFTER_POINT = ['tenths', 'hundredths', 'thousandths', 'ten-thousandths'];
 
     function comparisonExplanation(left, right) {
@@ -235,24 +263,23 @@
             '-3': 'thousandths'
         };
 
-        function valueAt(placeExponent) {
-            if (placeExponent >= 0) {
-                return addCommas(String(digit * (10 ** placeExponent)));
-            }
-            return formatScaledInteger(digit, Math.abs(placeExponent), true);
-        }
+        const answer = digitValueWords(digit, exponent);
+        const wordOptions = [...new Set([
+            answer,
+            digitValueWords(digit, Math.max(-3, exponent - 1)),
+            digitValueWords(digit, Math.min(3, exponent + 1)),
+            DIGIT_WORDS[digit]
+        ])];
 
-        const answer = valueAt(exponent);
+        for (let place = -3; wordOptions.length < 4 && place <= 3; place += 1) {
+            const option = digitValueWords(digit, place);
+            if (!wordOptions.includes(option)) wordOptions.push(option);
+        }
 
         return makeQuestion({
             type: 'Digit value',
-            prompt: `In ${number}, what is the value of the digit ${digit}?`,
-            options: uniqueOptions(answer, [
-                valueAt(exponent + 1),
-                valueAt(exponent - 1),
-                valueAt(exponent + 2),
-                String(digit)
-            ]),
+            prompt: `In ${number}, which value is represented by the digit ${digit}?`,
+            options: wordOptions,
             answer,
             explanation: (
                 `${digit} is in the ${placeNames[String(exponent)]} column. `
@@ -720,17 +747,24 @@
             return Math.min(state.currentIndex + 1, sessionLength);
         }
 
-        function sessionStatusHtml() {
+        function updateHeaderProgress() {
             const progress = Math.round((sessionProgress() / sessionLength) * 100);
-            return (
-                '<div class="practice-session-status">'
-                + `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
+            const header = document.querySelector('.lesson-header__inner');
+            if (!header) return;
+
+            let badge = document.getElementById('practice-session-progress');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'practice-session-progress';
+                badge.className = 'lesson-header__practice-progress';
+                header.append(badge);
+            }
+
+            const practiceSection = document.getElementById('lesson-section-question-bank');
+            badge.hidden = Boolean(practiceSection?.hidden);
+            badge.innerHTML = (
+                `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}; ${correctCount()} correct" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
                 + `<span>${sessionProgress()}<small>/${sessionLength}</small></span>`
-                + '</div>'
-                + '<p class="practice-session-status__text">'
-                + `<strong>Question ${sessionProgress()} of ${sessionLength}</strong>`
-                + `<span>${correctCount()} correct</span>`
-                + '</p>'
                 + '</div>'
             );
         }
@@ -795,6 +829,7 @@
         function render() {
             if (state.reviewing) {
                 root.innerHTML = reviewHtml();
+                updateHeaderProgress();
                 window.Maths1to9Lesson?.setSectionAction?.('question-bank', {
                     label: 'Practise again',
                     disabled: false,
@@ -883,8 +918,7 @@
             );
 
             root.innerHTML = (
-                sessionStatusHtml()
-                + '<article class="question-card question-card--bare">'
+                '<article class="question-card question-card--bare">'
                 + `<p class="question-prompt">${escapeHtml(question.prompt)}</p>`
                 + displayHtml
                 + (isOrdering
@@ -893,6 +927,8 @@
                 + feedbackHtml
                 + '</article>'
             );
+
+            updateHeaderProgress();
 
             if (isOrdering) {
                 root.querySelectorAll('[data-order-tile]').forEach((tile) => {
@@ -994,6 +1030,14 @@
             addQuestion();
         }
         state.currentIndex = 0;
+
+        document.addEventListener('maths1to9:section-change', (event) => {
+            const badge = document.getElementById('practice-session-progress');
+            if (badge) {
+                badge.hidden = event.detail?.sectionId !== 'question-bank';
+            }
+        });
+
         render();
     }
 
