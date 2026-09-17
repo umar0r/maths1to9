@@ -606,8 +606,137 @@
 
     /* ---------- fixed comparison activity ---------- */
 
+    /* Keep the Final Check's five familiar skills, while varying the values
+       each time a student starts a new Check attempt. */
+    function createFinalCheckQuestions() {
+        const hundreds = randomInt(1, 9);
+        const ones = randomInt(1, 9);
+        const tenths = randomInt(1, 9);
+        const hundredths = randomInt(1, 9);
+        const composedNumber = `${hundreds}0${ones}.${tenths}${hundredths}`;
+
+        const smallerTenths = randomInt(2, 7);
+        const smallerHundredths = randomInt(1, 9);
+        const smallerDecimal = `0.${smallerTenths}${smallerHundredths}`;
+        const largerDecimal = `0.${smallerTenths + 1}`;
+        const misconceptionReason = (
+            `No. ${largerDecimal} = ${largerDecimal}0, and `
+            + `${largerDecimal}0 > ${smallerDecimal}.`
+        );
+
+        const whole = randomInt(2, 4);
+        const orderingTenths = randomInt(1, 7);
+        const orderingHundredths = randomInt(1, 8);
+        const orderingThousandths = randomInt(1, 9);
+        const laterHundredths = randomInt(1, 8);
+        const orderAnswer = [
+            `${whole}.${orderingTenths}${orderingHundredths}`,
+            `${whole}.${orderingTenths}${orderingHundredths}${orderingThousandths}`,
+            `${whole}.${orderingTenths + 1}`,
+            `${whole}.${orderingTenths + 1}${laterHundredths}`
+        ];
+        const orderValues = shuffle(orderAnswer);
+
+        let dividedInput = randomInt(120, 980);
+
+        while (dividedInput % 10 === 0) {
+            dividedInput = randomInt(120, 980);
+        }
+
+        let originalDigits = randomInt(101, 999);
+
+        while (originalDigits % 10 === 0) {
+            originalDigits = randomInt(101, 999);
+        }
+
+        const originalNumber = (
+            `${Math.floor(originalDigits / 10)}.${originalDigits % 10}`
+        );
+        const multipliedResult = addCommas(String(originalDigits * 10));
+
+        return [
+            {
+                type: 'number',
+                prompt: (
+                    `A number has ${hundreds} hundreds, ${ones} ones, `
+                    + `${tenths} tenths and ${hundredths} hundredths. `
+                    + 'What is the number?'
+                ),
+                answer: composedNumber,
+                explanation: (
+                    `There are no tens, so the number is ${hundreds} hundreds, `
+                    + `0 tens, ${ones} ones, ${tenths} tenths and `
+                    + `${hundredths} hundredths: ${composedNumber}.`
+                )
+            },
+            {
+                type: 'misconception',
+                prompt: (
+                    `Aisha says: “${smallerDecimal} is greater than `
+                    + `${largerDecimal} because ${smallerTenths}${smallerHundredths} `
+                    + `is greater than ${smallerTenths + 1}.” Is Aisha correct?`
+                ),
+                decision: 'No',
+                reason: misconceptionReason,
+                reasons: [
+                    misconceptionReason,
+                    'No. A number with more decimal digits is always smaller.',
+                    `Yes. ${smallerTenths}${smallerHundredths} is greater than ${smallerTenths + 1}.`,
+                    'Yes. Hundredths are worth more than tenths.'
+                ],
+                answer: misconceptionReason,
+                explanation: (
+                    `Write ${largerDecimal} as ${largerDecimal}0. `
+                    + `Then compare ${largerDecimal}0 with ${smallerDecimal}.`
+                )
+            },
+            {
+                type: 'order',
+                prompt: (
+                    'Four pupils recorded these long-jump distances. Put the '
+                    + `distances in order from shortest to longest: ${orderValues.join(' m, ')} m.`
+                ),
+                values: orderValues,
+                answer: orderAnswer,
+                explanation: (
+                    'Write the distances with three decimal places: '
+                    + `${orderAnswer.map((value) => padDecimal(value, 3)).join(', ')}.`
+                )
+            },
+            {
+                type: 'number',
+                prompt: (
+                    `A machine divides its input by 10. The input is `
+                    + `${dividedInput}. What is the output?`
+                ),
+                answer: formatScaledInteger(dividedInput, 1),
+                explanation: (
+                    'Each digit is worth one tenth as much, so '
+                    + `${dividedInput} becomes ${formatScaledInteger(dividedInput, 1)}.`
+                )
+            },
+            {
+                type: 'number',
+                prompt: (
+                    `A number is multiplied by 100. The result is `
+                    + `${multipliedResult}. What was the original number?`
+                ),
+                answer: originalNumber,
+                explanation: (
+                    `Work backwards by dividing by 100. ${multipliedResult} ÷ 100 = `
+                    + `${originalNumber}.`
+                )
+            }
+        ];
+    }
+
     function mountFinalCheck(root, questions) {
         gateSection('comparison');
+        const refreshQuestions = () => {
+            questions.splice(0, questions.length, ...createFinalCheckQuestions());
+        };
+
+        refreshQuestions();
         const state = {
             index: 0,
             answers: [],
@@ -769,6 +898,7 @@
                     state.answers = [];
                     state.showMistakes = false;
                     state.resetOnReturn = true;
+                    refreshQuestions();
                     window.Maths1to9Lesson?.goToSection?.('question-bank', {
                         moveFocus: true
                     });
