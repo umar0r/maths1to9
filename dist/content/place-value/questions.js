@@ -367,7 +367,9 @@
         const names = Math.random() < 0.5
             ? ['Zara', 'Maya']
             : ['Maya', 'Zara'];
-        const times = [shorter, longer];
+        const times = Math.random() < 0.5
+            ? [shorter, longer]
+            : [longer, shorter];
         const shorterName = names[times.indexOf(shorter)];
 
         return makeQuestion({
