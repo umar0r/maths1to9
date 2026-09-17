@@ -318,6 +318,19 @@ a {
     right: 0;
 }
 
+.practice-progress-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.practice-progress-label {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 .lesson-header__stage-progress {
     position: absolute;
     top: 12px;
@@ -375,7 +388,7 @@ a {
 }
 
 .lesson-header--compact .lesson-header__title {
-    max-width: calc(100% - 64px);
+    max-width: calc(100% - 128px);
     margin: 0;
     font-size: clamp(1.2rem, 2.6vw, 1.55rem);
     line-height: 1.15;
@@ -397,10 +410,6 @@ a {
 
 .lesson-header--compact .practice-progress-ring span {
     font-size: 0.75rem;
-}
-
-.lesson-header--compact .practice-progress-ring small {
-    font-size: 0.55rem;
 }
 
 .lesson-header--compact + .lesson-navigation {

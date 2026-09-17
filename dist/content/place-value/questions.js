@@ -800,12 +800,15 @@
             ).length;
         }
 
-        function sessionProgress() {
-            return Math.min(state.currentIndex + 1, sessionLength);
+        function completedQuestionCount() {
+            return state.questions.filter((entry) => (
+                entry.checked && !entry.awaitingRetry
+            )).length;
         }
 
         function updateHeaderProgress() {
-            const progress = Math.round((sessionProgress() / sessionLength) * 100);
+            const completed = completedQuestionCount();
+            const progress = Math.round((completed / sessionLength) * 100);
             const header = document.querySelector('.lesson-header__inner');
             if (!header) return;
 
@@ -820,8 +823,11 @@
             const practiceSection = document.getElementById('lesson-section-question-bank');
             badge.hidden = Boolean(practiceSection?.hidden);
             badge.innerHTML = (
-                `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="Question ${sessionProgress()} of ${sessionLength}; ${firstTryCorrectCount()} correct first try" aria-valuemin="1" aria-valuemax="${sessionLength}" aria-valuenow="${sessionProgress()}">`
-                + `<span>${sessionProgress()}<small>/${sessionLength}</small></span>`
+                '<div class="practice-progress-summary">'
+                + `<span class="practice-progress-label">${completed} of ${sessionLength}</span>`
+                + `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}">`
+                + `<span>${completed}</span>`
+                + '</div>'
                 + '</div>'
             );
         }
