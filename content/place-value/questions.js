@@ -918,7 +918,8 @@
             if (ready) {
                 root.innerHTML = (
                     '<section class="lesson-completion" aria-label="Place value complete">'
-                    + '<div class="lesson-completion__result">'
+                    + '<div class="lesson-completion__result lesson-completion__result--success">'
+                    + '<span class="lesson-completion__celebration" aria-hidden="true">★</span>'
                     + '<div><h2>Place value complete</h2><p>Nice work — you’re ready to move on.</p></div>'
                     + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
                     + '</div>'
