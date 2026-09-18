@@ -382,91 +382,6 @@
             .join('');
     }
 
-    function renderCoach() {
-        if (state.phase === 'complete') {
-            return `
-                <div class="order-coach__meta">
-                    <span>
-                        Complete
-                    </span>
-
-                    <span>
-                        ${steps.length} of ${steps.length} steps
-                    </span>
-                </div>
-
-                <h3 class="order-coach__title">
-                    You followed BIDMAS correctly
-                </h3>
-
-                <p class="order-coach__text">
-                    <strong>BIDMAS:</strong>
-                    Brackets first, then indices, then division and
-                    multiplication from left to right, followed by
-                    addition and subtraction from left to right.
-                    <br><br>
-                    <strong>Result:</strong>
-                    ${escapeHtml(example.original)}
-                    = ${escapeHtml(example.answer)}.
-                </p>
-            `;
-        }
-
-        const step = getCurrentStep();
-
-        let actionLabel = 'Your move:';
-        let actionText = step.instruction;
-        let nextText = '';
-
-        if (state.phase === 'select-answer') {
-            actionLabel = 'Calculate:';
-            actionText = step.answerInstruction;
-        }
-
-        if (state.phase === 'correct') {
-            actionLabel = 'What changed:';
-            actionText = step.explanation;
-            nextText = step.successExplanation;
-        }
-
-        return `
-            <div class="order-coach__meta">
-                <span>
-                    Step ${state.stepIndex + 1} of ${steps.length}
-                </span>
-
-                <span>
-                    ${escapeHtml(
-                        stages.find(stage => {
-                            return stage.id === step.stage;
-                        })?.shortLabel ?? ''
-                    )}
-                </span>
-            </div>
-
-            <h3 class="order-coach__title">
-                ${escapeHtml(step.heading)}
-            </h3>
-
-            <p class="order-coach__text">
-                <strong>BIDMAS:</strong>
-                ${escapeHtml(step.bidmasExplanation)}
-                <br><br>
-                <strong>${escapeHtml(actionLabel)}</strong>
-                ${escapeHtml(actionText)}
-                ${
-                    nextText
-                        ? `
-                            <br><br>
-                            <strong>Next:</strong>
-                            ${escapeHtml(nextText)}
-                        `
-                        : ''
-                }
-            </p>
-        `;
-    }
-
 function getExpressionText(step) {
     return [
         step.before,
@@ -630,95 +545,6 @@ function renderCurrentExpression() {
             `;
         }
 
-    function renderWorkingArea() {
-        if (state.phase === 'complete') {
-            return `
-                <div class="order-result">
-                    <span class="order-result__label">
-                        Final answer
-                    </span>
-
-                    <div class="order-result__box is-correct">
-                        ${escapeHtml(example.answer)}
-                    </div>
-                </div>
-            `;
-        }
-
-        const step = getCurrentStep();
-
-        if (state.phase === 'select-operation') {
-            return `
-                <div class="order-working">
-                    <span class="order-working__arrow">
-                        ↓
-                    </span>
-
-                    <p class="order-working__instruction">
-                        Select the highlighted operation first
-                    </p>
-                </div>
-            `;
-        }
-
-        if (state.phase === 'select-answer') {
-            return `
-                <div class="order-working">
-                    <span class="order-working__arrow">
-                        ↓
-                    </span>
-
-                    <div class="order-operation-card">
-                        <span class="order-operation-card__label">
-                            Calculate
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(step.operation)}
-                        </strong>
-                    </div>
-
-                    <span class="order-working__arrow">
-                        ↓
-                    </span>
-
-                    <div
-                        class="order-result__box is-drop-zone"
-                        data-drop-zone
-                    >
-                        Drop or click an answer
-                    </div>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="order-working">
-                <span class="order-working__arrow">
-                    ↓
-                </span>
-
-                <div class="order-operation-card">
-                    <span class="order-operation-card__label">
-                        ${escapeHtml(step.operation)}
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(step.answer)}
-                    </strong>
-                </div>
-
-                <span class="order-working__arrow">
-                    ↓
-                </span>
-
-                <div class="order-result__box is-correct">
-                    ${escapeHtml(step.answer)}
-                </div>
-            </div>
-        `;
-    }
-
     function renderAnswerBank() {
         if (state.phase === 'complete') {
             return '';
@@ -793,87 +619,30 @@ function renderCurrentExpression() {
     }
 
     function render() {
+        const step = getCurrentStep();
         root.innerHTML = `
             <div class="order-interactive">
-                <div class="order-interactive__header">
-                    <div>
-                        <p class="order-interactive__eyebrow">
-                            Guided practice
-                        </p>
-
-                        <h3 class="order-interactive__heading">
-                            Evaluate the expression
-                        </h3>
-                    </div>
-
-                    <button
-                        class="order-button order-button--secondary"
-                        type="button"
-                        data-action="restart"
-                    >
-                        Restart
-                    </button>
-                </div>
-
-                <div
-                    class="order-progress"
-                    aria-label="Order of operations"
-                >
-                    ${renderProgress()}
-                </div>
-
-                <p class="order-progress__note">
-                    Division and multiplication have equal priority.
-                    Addition and subtraction have equal priority.
-                    Work from left to right.
-                </p>
-
-                <section
-                    class="order-coach"
-                    aria-live="polite"
-                >
-                    ${renderCoach()}
-                </section>
-
-                <section class="order-board">
-                    ${renderEquationStack()}
-
-                    ${renderWorkingArea()}
-                </section>
-
-                ${renderAnswerBank()}
+                <div class="order-progress" aria-label="Order of operations">${renderProgress()}</div>
+                ${state.phase === 'complete' ? '' : `<p class="order-coach__text">${escapeHtml(state.phase === 'correct' ? step.successExplanation : step.bidmasExplanation)}</p>`}
+                ${renderEquationStack()}
+                ${state.phase === 'select-operation' ? `<p>${escapeHtml(step.instruction)}</p>` : ''}
+                ${state.phase === 'select-answer' ? `<p>${escapeHtml(step.answerInstruction)}</p><div class="ooo-answer-target" data-drop-zone>Drop or click an answer</div>${renderAnswerBank()}` : ''}
                 ${renderFeedback()}
             </div>
         `;
-
         const api = window.Maths1to9Lesson;
-        api?.clearSectionAction?.('interactive');
-
-        if (state.phase === 'correct') {
-            const isFinalStep =
-                state.stepIndex === steps.length - 1;
-
+        if (state.phase === 'complete') {
+            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', {
+                detail: { sectionId: 'interactive' }
+            }));
+            api?.clearSectionAction?.('interactive');
+        } else {
             api?.setSectionAction?.('interactive', {
-                label: isFinalStep
-                    ? 'Finish example'
-                    : 'Next operation',
-                disabled: false,
+                label: 'Continue',
+                disabled: state.phase !== 'correct',
                 onClick: continueToNextStep
             });
-        } else if (state.phase === 'complete') {
-            document.dispatchEvent(
-                new CustomEvent('maths1to9:section-complete', {
-                    detail: { sectionId: 'interactive' }
-                })
-            );
-
-            api?.setSectionAction?.('interactive', {
-                label: 'Try again',
-                disabled: false,
-                onClick: restart
-            });
         }
-
     }
 
     function selectOperation() {
@@ -938,15 +707,6 @@ function renderCurrentExpression() {
         render();
     }
 
-    function restart() {
-        state.stepIndex = 0;
-        state.phase = 'select-operation';
-        state.feedback = '';
-        state.feedbackType = '';
-
-        render();
-    }
-
     root.addEventListener('click', event => {
         const actionElement =
             event.target.closest('[data-action]');
@@ -959,16 +719,6 @@ function renderCurrentExpression() {
 
             if (action === 'select-operation') {
                 selectOperation();
-                return;
-            }
-
-            if (action === 'continue') {
-                continueToNextStep();
-                return;
-            }
-
-            if (action === 'restart') {
-                restart();
                 return;
             }
         }

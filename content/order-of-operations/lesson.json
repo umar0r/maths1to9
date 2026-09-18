@@ -68,7 +68,8 @@
   "interactive": {
     "eyebrow": "Try it",
     "title": "Complete the calculation map",
-    "intro": "Choose which operation should be completed next, then calculate it. The full expression will remain visible while each completed step is added to the map."
+    "intro": "Choose which operation should be completed next, then calculate it. The full expression will remain visible while each completed step is added to the map.",
+    "hide_heading": true
   },
   "worked_examples": [
     {
@@ -116,6 +117,60 @@
   "question_bank": {
     "eyebrow": "Question bank",
     "title": "Practise order of operations",
-    "intro": "Choose a difficulty and generate a new set of questions involving brackets, indices, equal-priority operations and mixed calculations."
+    "intro": "Choose a difficulty and generate a new set of questions involving brackets, indices, equal-priority operations and mixed calculations.",
+    "session_length": 10,
+    "ready_score": 8,
+    "hide_heading": true
+  },
+  "section_order": [
+    "explanation",
+    "method",
+    "worked-examples",
+    "interactive",
+    "question-bank",
+    "comparison"
+  ],
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn",
+      "sections": [
+        "explanation",
+        "method",
+        "worked-examples"
+      ]
+    },
+    {
+      "id": "try-it",
+      "label": "Step by step",
+      "sections": [
+        "interactive"
+      ]
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "sections": [
+        "question-bank"
+      ]
+    },
+    {
+      "id": "check",
+      "label": "Check",
+      "sections": [
+        "comparison"
+      ]
+    }
+  ],
+  "comparison": {
+    "title": "Check",
+    "hide_eyebrow": true,
+    "questions": [
+      "multiplyBeforeAdd",
+      "brackets",
+      "firstOperationQuestion",
+      "errorSpotting",
+      "divideMultiplyLeftToRight"
+    ]
   }
 }

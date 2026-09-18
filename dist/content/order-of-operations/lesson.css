@@ -1,0 +1,90 @@
+/* Local presentation only: the shared engine and Place Value remain unchanged. */
+body[data-lesson-id="order-of-operations"] .lesson-header__stage-progress,
+body[data-lesson-id="order-of-operations"] .lesson-eyebrow,
+body[data-lesson-id="order-of-operations"] #lesson-section-worked-examples > .lesson-section__title,
+body[data-lesson-id="order-of-operations"] #lesson-section-comparison > .lesson-section__title,
+body[data-lesson-id="order-of-operations"] #lesson-section-question-bank > .lesson-intro,
+body[data-lesson-id="order-of-operations"] .order-answer-bank__header {
+    display: none;
+}
+body[data-lesson-id="order-of-operations"] .lesson-navigation {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+body[data-lesson-id="order-of-operations"] .ooo-expression,
+body[data-lesson-id="order-of-operations"] .order-equation-line__expression,
+body[data-lesson-id="order-of-operations"] .question-prompt,
+body[data-lesson-id="order-of-operations"] .worked-example__title {
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.ooo-expression { margin: 1rem 0 1.5rem; font-weight: 800; }
+body[data-lesson-id="order-of-operations"] .worked-example,
+body[data-lesson-id="order-of-operations"] .order-interactive,
+body[data-lesson-id="order-of-operations"] .order-equation-stack,
+body[data-lesson-id="order-of-operations"] .order-equation-line--current,
+body[data-lesson-id="order-of-operations"] .order-answer-bank {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    min-width: 0;
+}
+body[data-lesson-id="order-of-operations"] .order-equation-line--current { padding: 1rem 0; }
+body[data-lesson-id="order-of-operations"] .order-equation-line__expression { min-width: 0; flex-wrap: wrap; }
+body[data-lesson-id="order-of-operations"] .order-stage.is-active { color: var(--primary); background: #edf2ff; border-color: #b9c7ff; }
+body[data-lesson-id="order-of-operations"] .order-expression__target.is-ready { color: var(--primary); background: #edf2ff; border-color: #b9c7ff; animation: none; }
+body[data-lesson-id="order-of-operations"] .question-options { min-width: 0; }
+body[data-lesson-id="order-of-operations"] .question-option { min-width: 0; overflow-wrap: anywhere; }
+body[data-lesson-id="order-of-operations"] .practice-progress-ring span { font-size: .8rem; }
+body[data-lesson-id="order-of-operations"] .practice-review__score { display: block; }
+body[data-lesson-id="order-of-operations"] .ooo-stage-complete::before { content: '✓'; color: #fff; background: #20864c; border-color: #20864c; }
+.ooo-check-position { color: var(--text-muted); font-size: .85rem; }
+.ooo-next-lesson { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+@media (max-width: 480px) {
+    body[data-lesson-id="order-of-operations"] .order-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body[data-lesson-id="order-of-operations"] .order-equation-line { gap: .25rem; }
+    body[data-lesson-id="order-of-operations"] .lesson-completion__result { padding: 1rem; gap: .75rem; }
+    body[data-lesson-id="order-of-operations"] .question-options { grid-template-columns: 1fr; }
+    body[data-lesson-id="order-of-operations"] .lesson-completion__celebration { opacity: .15; }
+}
+@media (prefers-reduced-motion: reduce) {
+    body[data-lesson-id="order-of-operations"] *,
+    body[data-lesson-id="order-of-operations"] *::before,
+    body[data-lesson-id="order-of-operations"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+body[data-lesson-id="order-of-operations"] .lesson-section {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+body[data-lesson-id="order-of-operations"] .order-equation-line__expression,
+body[data-lesson-id="order-of-operations"] .order-expression__target {
+    font-family: inherit;
+}
+.ooo-expression--hint [data-first] { background: #edf2ff; color: var(--primary); border-radius: .25rem; }
+body[data-lesson-id="order-of-operations"] .order-equation-line { font-family: inherit; }
+body[data-lesson-id="order-of-operations"] .lesson-controls .button--primary:not(:disabled),
+body[data-lesson-id="order-of-operations"] .ooo-next-lesson .button {
+    min-width: 180px;
+    padding: 14px 24px;
+    background: var(--primary);
+    color: #fff;
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #2449a8;
+    font-weight: 900;
+    text-align: center;
+    text-decoration: none;
+}
+body[data-lesson-id="order-of-operations"] .lesson-navigation--stages .lesson-navigation__button.ooo-stage-complete::before {
+    background: var(--success);
+    border-color: var(--success);
+    box-shadow: none;
+}
+body[data-lesson-id="order-of-operations"] .lesson-navigation--stages .lesson-navigation__button.ooo-stage-complete { color: var(--success-dark); }
+body[data-lesson-id="order-of-operations"] .lesson-recommendation-card + .lesson-recommendation-card { margin-top: 12px; }
+.ooo-answer-target { padding: .75rem; margin-bottom: 1rem; border: 1px dashed var(--border-dark); border-radius: .5rem; text-align: center; color: var(--text-muted); }
+.ooo-answer-target.is-drag-over { border-color: var(--primary); background: #edf2ff; }

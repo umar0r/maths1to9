@@ -34,14 +34,10 @@
 
     /*
      * Wraps the operation that should be completed first.
-     * It is only highlighted after the pupil selects Show hint.
+     * It is only highlighted after an incorrect Practice answer.
      */
     function first(text) {
-        return `
-            <span data-first>
-                ${text}
-            </span>
-        `;
+        return `<span data-first>${text}</span>`;
     }
 
     function options(correct, wrongOptions) {
@@ -284,11 +280,15 @@
 
             wrong: [
                 [
-                    dividend /
-                    (
-                        divisor *
-                        multiplier
-                    ),
+                    Math.round(
+                        (
+                            dividend /
+                            (
+                                divisor *
+                                multiplier
+                            )
+                        ) * 100
+                    ) / 100,
 
                     'You multiplied first. ' +
                     'Division and multiplication have ' +
@@ -918,17 +918,25 @@
      * Error-spotting question.
      */
     function errorSpotting() {
+        const divisor = r(2, 4);
+        const quotient = r(2, 6);
+        const leftToRightAnswer = r(2, 4);
+        const dividend = divisor * quotient;
+        // Both the correct method and Amir's method give positive integers.
+        const minuend = dividend + divisor * leftToRightAnswer;
+        const correctAnswer = minuend - quotient;
+        const ignoredSubtractionAnswer = minuend / divisor;
         const answer =
-            'Amir is wrong: the answer is 21.';
+            `Amir is wrong: the answer is ${correctAnswer}.`;
 
         return {
             prompt:
-                'Amir says 24 − 6 ÷ 2 = 9 because ' +
+                `Amir says ${minuend} − ${dividend} ÷ ${divisor} = ${leftToRightAnswer} because ` +
                 'you always work from left to right. ' +
                 'Which statement is correct?',
 
             expression:
-                `24 − ${first('6 ÷ 2')}`,
+                `${minuend} − ${first(`${dividend} ÷ ${divisor}`)}`,
 
             correctLabel: answer,
 
@@ -940,7 +948,7 @@
                 },
                 {
                     label:
-                        'Amir is correct: the answer is 9.',
+                        `Amir is correct: the answer is ${leftToRightAnswer}.`,
 
                     correct: false,
 
@@ -950,13 +958,13 @@
                 },
                 {
                     label:
-                        'Amir is wrong: the answer is 12.',
+                        `Amir is wrong: the answer is ${ignoredSubtractionAnswer}.`,
 
                     correct: false,
 
                     feedback:
-                        'Complete 6 ÷ 2 first, then ' +
-                        'subtract from 24.'
+                        `Complete ${dividend} ÷ ${divisor} first, then ` +
+                        `subtract from ${minuend}.`
                 },
                 {
                     label:
@@ -975,7 +983,8 @@
                 'completed before subtraction.',
 
             explanation:
-                '6 ÷ 2 = 3, then 24 − 3 = 21.'
+                `${dividend} ÷ ${divisor} = ${quotient}, then ` +
+                `${minuend} − ${quotient} = ${correctAnswer}.`
         };
     }
 
@@ -995,770 +1004,204 @@
         errorSpotting
     };
 
-    /*
-     * Questions progress internally.
-     *
-     * Nothing on the page calls these levels or displays
-     * a made-up difficulty rating.
-     */
-    function pool(questionNumber) {
-        if (questionNumber <= 4) {
-            return [
-                'multiplyBeforeAdd',
-                'divideBeforeSubtract'
-            ];
-        }
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
 
-        if (questionNumber <= 8) {
-            return [
-                'multiplyBeforeAdd',
-                'divideBeforeSubtract',
-                'divideMultiplyLeftToRight',
-                'addSubtractLeftToRight'
-            ];
-        }
-
-        if (questionNumber <= 12) {
-            return [
-                'divideMultiplyLeftToRight',
-                'addSubtractLeftToRight',
-                'brackets',
-                'firstOperationQuestion'
-            ];
-        }
-
-        if (questionNumber <= 17) {
-            return [
-                'brackets',
-                'powers',
-                'roots',
-                'firstOperationQuestion'
-            ];
-        }
-
-        if (questionNumber <= 23) {
-            return [
-                'powers',
-                'roots',
-                'hiddenMultiplication',
-                'reciprocal'
-            ];
-        }
-
-        /*
-         * After the introduction sequence, all question
-         * types can appear indefinitely.
-         */
-        return Object.keys(generators);
-    }
-
-    function addStyles() {
-        if (
-            document.getElementById(
-                'ooo-question-styles'
-            )
-        ) {
-            return;
-        }
-
-        const style =
-            document.createElement('style');
-
-        style.id =
-            'ooo-question-styles';
-
-        style.textContent = `
-            .ooo-expression {
-                margin: 1rem 0;
-                padding: 1rem;
-                border: 1px solid #d9d9d9;
-                background: #ffffff;
-                font-size: clamp(1.35rem, 3vw, 2rem);
-                line-height: 1.6;
-                text-align: center;
-            }
-
-            .ooo-expression [data-first] {
-                border-radius: 0.3rem;
-                transition:
-                    background-color 160ms ease,
-                    color 160ms ease,
-                    box-shadow 160ms ease;
-            }
-
-            .ooo-expression
-            [data-first].is-highlighted {
-                padding: 0.08em 0.18em;
-                background: #e8edff;
-                color: #244fd8;
-                box-shadow:
-                    0 0 0 2px #b9c7ff;
-            }
-
-            .ooo-hint {
-                display: none;
-                margin: 0.75rem 0;
-                padding: 0.85rem 1rem;
-                border-left:
-                    4px solid #5575e7;
-                background: #f3f6ff;
-            }
-
-            .ooo-hint.is-visible {
-                display: block;
-            }
-        `;
-
-        document.head.append(style);
-    }
-
-    function mount(root) {
-        if (
-            !root ||
-            mounted.has(root)
-        ) {
-            return;
-        }
-
+    function mountJourney() {
+        const root = document.getElementById(ROOT_ID);
+        const checkRoot = document.getElementById('order-of-operations-comparison');
+        const api = window.Maths1to9Lesson;
+        if (!root || !checkRoot || !api || mounted.has(root)) return;
         mounted.add(root);
-        addStyles();
+        const lesson = api.getLesson();
+        const sessionLength = lesson.question_bank.session_length;
+        const readyScore = lesson.question_bank.ready_score;
+        let run = 0;
+        let practice;
+        let check;
+        let ready = false;
+        let lessonCompleted = false;
+        const badge = document.createElement('div');
+        badge.className = 'lesson-header__practice-progress';
+        document.querySelector('.lesson-header__inner').append(badge);
+        api.gateSection('question-bank');
+        api.gateSection('comparison');
 
-        const state = {
-            running: false,
-            number: 0,
-            checked: 0,
-            correct: 0,
-            previous: '',
-            run: 0
-        };
-
-        root.innerHTML = `
-            <div class="question-bank-controls">
-                <button
-                    class="button button--primary"
-                    type="button"
-                    data-start
-                >
-                    Start practice
-                </button>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-stop
-                    disabled
-                >
-                    Stop practice
-                </button>
-            </div>
-
-            <p
-                data-score
-                aria-live="polite"
-            >
-                Select Start practice to begin.
-            </p>
-
-            <div
-                class="question-list"
-                data-list
-            ></div>
-        `;
-
-        const start =
-            root.querySelector(
-                '[data-start]'
-            );
-
-        const stop =
-            root.querySelector(
-                '[data-stop]'
-            );
-
-        const score =
-            root.querySelector(
-                '[data-score]'
-            );
-
-        const list =
-            root.querySelector(
-                '[data-list]'
-            );
-
-        function updateScore() {
-            score.textContent =
-                `Checked: ${state.checked} | ` +
-                `Correct: ${state.correct}`;
+        function makeEntry(type) {
+            return { type, question: generators[type](), selected: null, attempts: 0,
+                firstCorrect: false, firstAnswer: null, done: false, retry: false };
         }
-
-        function chooseGenerator() {
-            const names =
-                pool(state.number + 1);
-
-            let name =
-                pick(names);
-
-            if (
-                names.length > 1 &&
-                name === state.previous
-            ) {
-                const currentIndex =
-                    names.indexOf(name);
-
-                name =
-                    names[
-                        (
-                            currentIndex + 1
-                        ) % names.length
-                    ];
+        function newPractice() {
+            run += 1;
+            // Mix the existing bank without changing its expressions or difficulty.
+            const types = shuffle(Object.keys(generators));
+            practice = { index: 0, review: false, entries: types.slice(0, sessionLength).map(makeEntry) };
+        }
+        function newCheck() {
+            check = { index: 0, review: false, entries: lesson.comparison.questions.map(makeEntry) };
+        }
+        function updateProgress() {
+            const completed = practice.entries.filter(entry => entry.done).length;
+            badge.hidden = api.getCurrentSection().id !== 'question-bank' || practice.review;
+            badge.innerHTML = `<div class="practice-progress-ring" style="--practice-progress:${completed * 100 / sessionLength}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}"><span>${completed}/${sessionLength}</span></div>`;
+            const checkButton = document.querySelector('[data-stage-index="3"]');
+            if (checkButton && !ready) {
+                checkButton.disabled = true;
+                checkButton.classList.add('lesson-navigation__button--locked');
             }
-
-            state.previous = name;
-
-            return name;
         }
-
-        function addQuestion() {
-            if (!state.running) {
+        function reviews(entries, firstTry) {
+            return entries.map((entry, index) => ({ entry, index }))
+                .filter(({ entry }) => firstTry ? !entry.firstCorrect : !entry.question.answers[entry.selected]?.correct)
+                .map(({ entry, index }) => `<article class="practice-review-item">
+                    <p>Question ${index + 1}${firstTry && entry.question.answers[entry.selected]?.correct ? ' · Correct after a retry' : ''}</p>
+                    <h3>${escapeHtml(entry.question.prompt)}</h3>
+                    <div class="ooo-expression">${entry.question.expression}</div>
+                    <p>Your ${firstTry ? 'first ' : ''}answer: <strong>${escapeHtml(entry.question.answers[firstTry ? entry.firstAnswer : entry.selected]?.label ?? '')}</strong></p>
+                    <p>Correct answer: <strong>${escapeHtml(entry.question.correctLabel)}</strong></p>
+                    <p>${escapeHtml(entry.question.explanation)}</p>
+                </article>`).join('');
+        }
+        function backToPractice() {
+            ready = false;
+            newPractice();
+            newCheck();
+            renderPractice();
+            renderCheck();
+            api.goToSection('question-bank');
+            updateProgress();
+        }
+        function renderPractice() {
+            updateProgress();
+            if (practice.review) {
+                const score = practice.entries.filter(entry => entry.firstCorrect).length;
+                ready = score >= readyScore;
+                root.innerHTML = `<section class="practice-review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><h2>${ready ? 'You’re ready' : 'Keep practising'}</h2><p>${score}/${sessionLength} correct first try.${ready ? '' : ` Aim for ${readyScore}/${sessionLength} before Check.`}</p></div>${reviews(practice.entries, true)}</section>`;
+                api.setSectionAction('question-bank', { label: ready ? 'Continue' : 'Back to practice', onClick: () => {
+                    if (ready) {
+                        api.completeSection('question-bank');
+                        api.goToSection('comparison', { unlock: true });
+                    } else backToPractice();
+                }});
+                updateProgress();
                 return;
             }
-
-            const generatorName =
-                chooseGenerator();
-
-            const question =
-                generators[generatorName]();
-
-            state.number += 1;
-
-            const questionNumber =
-                state.number;
-            const questionId =
-                `question-bank:${state.run}:${questionNumber}`;
-
-            const card =
-                document.createElement(
-                    'article'
-                );
-
-            card.className =
-                'question-card';
-
-            card.innerHTML = `
-                <p class="question-number">
-                    Question ${questionNumber}
-                </p>
-
-                <p class="question-prompt"></p>
-
-                <div class="ooo-expression"></div>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-hint-button
-                >
-                    Show hint
-                </button>
-
-                <p
-                    class="ooo-hint"
-                    data-hint
-                    aria-live="polite"
-                ></p>
-
-                <div
-                    class="question-options"
-                    data-options
-                    role="radiogroup"
-                ></div>
-
-                <p
-                    class="question-feedback"
-                    data-feedback
-                    aria-live="polite"
-                ></p>
-            `;
-
-            card.querySelector(
-                '.question-prompt'
-            ).textContent =
-                question.prompt;
-
-            card.querySelector(
-                '.ooo-expression'
-            ).innerHTML =
-                question.expression;
-
-            const hintButton =
-                card.querySelector(
-                    '[data-hint-button]'
-                );
-
-            const hint =
-                card.querySelector(
-                    '[data-hint]'
-                );
-
-            const optionBox =
-                card.querySelector(
-                    '[data-options]'
-                );
-
-            const check =
-                document.createElement('button');
-
-            check.type = 'button';
-            check.textContent = 'Check answer';
-
-            const next =
-                document.createElement('button');
-
-            next.type = 'button';
-            next.textContent = 'Next question';
-            next.disabled = true;
-
-            const feedback =
-                card.querySelector(
-                    '[data-feedback]'
-                );
-
-            const optionElements = [];
-
-            const radioName =
-                `order-question-${questionNumber}`;
-
-            hint.textContent =
-                question.hint;
-
-            optionBox.setAttribute(
-                'aria-label',
-                `Answers for question ` +
-                `${questionNumber}`
-            );
-
-            question.answers.forEach(
-                (answer) => {
-                    const label =
-                        document.createElement(
-                            'label'
-                        );
-
-                    label.className =
-                        'question-option';
-
-                    const input =
-                        document.createElement(
-                            'input'
-                        );
-
-                    input.type =
-                        'radio';
-
-                    input.name =
-                        radioName;
-
-                    input.value =
-                        answer.label;
-
-                    const text =
-                        document.createElement(
-                            'span'
-                        );
-
-                    text.textContent =
-                        answer.label;
-
-                    label.append(
-                        input,
-                        text
-                    );
-
-                    optionBox.append(label);
-
-                    optionElements.push({
-                        label,
-                        input,
-                        answer
-                    });
-                }
-            );
-
-            let marked = false;
-            let previousResult = null;
-            let nextAdded = false;
-
-            function showFooterAction(button) {
-                window.Maths1to9Lesson
-                    ?.useButtonAsSectionAction?.(
-                        'question-bank',
-                        button
-                    );
-            }
-
-            function clearMarks() {
-                optionElements.forEach(
-                    ({ label }) => {
-                        label.classList.remove(
-                            'is-correct',
-                            'is-incorrect',
-                            'is-correct-answer'
-                        );
-                    }
-                );
-            }
-
-            function removePreviousMark() {
-                if (!marked) {
-                    return;
-                }
-
-                state.checked -= 1;
-
-                if (previousResult) {
-                    state.correct -= 1;
-                }
-
-                marked = false;
-                previousResult = null;
-
-                next.disabled = true;
-
-                updateScore();
-            }
-
-            hintButton.addEventListener(
-                'click',
-                () => {
-                    const visible =
-                        hint.classList.toggle(
-                            'is-visible'
-                        );
-
-                    card.querySelectorAll(
-                        '[data-first]'
-                    ).forEach(
-                        (part) => {
-                            part.classList.toggle(
-                                'is-highlighted',
-                                visible
-                            );
+            renderQuestion(root, practice, false);
+        }
+        function renderQuestion(host, session, assessment) {
+            const entry = session.entries[session.index];
+            const q = entry.question;
+            const sectionId = assessment ? 'comparison' : 'question-bank';
+            const locked = entry.done || entry.retry;
+            host.innerHTML = `<article class="ooo-question">
+                ${assessment ? `<p class="ooo-check-position">Check · ${session.index + 1} of ${session.entries.length}</p>` : ''}
+                <h3 class="question-prompt">${escapeHtml(q.prompt)}</h3>
+                <div class="ooo-expression ${entry.retry ? 'ooo-expression--hint' : ''}">${q.expression}</div>
+                <div class="question-options" role="radiogroup" aria-label="Choose your answer">${q.answers.map((answer, index) => `<label class="question-option"><input type="radio" name="ooo-${sectionId}" value="${index}" ${entry.selected === index ? 'checked' : ''} ${locked ? 'disabled' : ''}><span>${escapeHtml(answer.label)}</span></label>`).join('')}</div>
+                ${!assessment && locked ? `<p class="question-feedback is-visible ${entry.done && q.answers[entry.selected].correct ? 'is-correct' : 'is-incorrect'}" role="status">${escapeHtml(entry.retry ? q.hint : q.explanation)}</p>` : ''}
+            </article>`;
+            const setAction = () => api.setSectionAction(sectionId, {
+                label: assessment ? (session.index === session.entries.length - 1 ? 'Review answers' : 'Next question')
+                    : entry.retry ? 'Try again' : entry.done ? (session.index === session.entries.length - 1 ? 'Review answers' : 'Next question') : 'Check answer',
+                disabled: entry.selected === null,
+                onClick: () => {
+                    if (entry.retry) {
+                        entry.retry = false;
+                        entry.selected = null;
+                    } else if (entry.done) {
+                        session.index += 1;
+                        session.review = session.index === session.entries.length;
+                    } else {
+                        const correct = q.answers[entry.selected].correct;
+                        entry.attempts += 1;
+                        if (entry.attempts === 1) {
+                            entry.firstCorrect = correct;
+                            entry.firstAnswer = entry.selected;
+                            // Preserve first-attempt evidence: a retry must not overwrite it.
+                            api.recordAssessment({ questionType: entry.type,
+                                questionId: `${sectionId}:${run}:${session.index + 1}`, correct });
                         }
-                    );
-
-                    hintButton.textContent =
-                        visible
-                            ? 'Hide hint'
-                            : 'Show hint';
-                }
-            );
-
-            optionElements.forEach(
-                ({ input }) => {
-                    input.addEventListener(
-                        'change',
-                        () => {
-                            clearMarks();
-                            removePreviousMark();
-
-                            feedback.className =
-                                'question-feedback';
-
-                            feedback.textContent =
-                                '';
-
-                            showFooterAction(check);
+                        entry.retry = !assessment && !correct && entry.attempts < 2;
+                        entry.done = !entry.retry;
+                        if (assessment) {
+                            session.index += 1;
+                            session.review = session.index === session.entries.length;
                         }
-                    );
+                    }
+                    if (assessment) renderCheck(); else renderPractice();
                 }
-            );
-
-            check.addEventListener(
-                'click',
-                () => {
-                    const selected =
-                        optionElements.find(
-                            ({ input }) =>
-                                input.checked
-                        );
-
-                    clearMarks();
-
-                    if (!selected) {
-                        feedback.className =
-                            'question-feedback ' +
-                            'is-visible is-incorrect';
-
-                        feedback.textContent =
-                            'Choose an answer first.';
-
-                        return;
-                    }
-
-                    const isCorrect =
-                        selected.answer.correct;
-
-                    window.Maths1to9Lesson?.recordAssessment?.({
-                        questionType: generatorName,
-                        questionId,
-                        correct: isCorrect
-                    });
-
-                    if (!marked) {
-                        state.checked += 1;
-
-                        if (isCorrect) {
-                            state.correct += 1;
-                        }
-                    } else if (
-                        previousResult !==
-                        isCorrect
-                    ) {
-                        state.correct +=
-                            isCorrect ? 1 : -1;
-                    }
-
-                    marked = true;
-
-                    previousResult =
-                        isCorrect;
-
-                    next.disabled =
-                        false;
-
-                    next.textContent = isCorrect
-                        ? 'Next question'
-                        : 'Try again';
-
-                    showFooterAction(next);
-
-                    updateScore();
-
-                    if (isCorrect) {
-                        selected.label.classList.add(
-                            'is-correct'
-                        );
-
-                        feedback.className =
-                            'question-feedback ' +
-                            'is-visible is-correct';
-
-                        feedback.textContent =
-                            `Correct. ` +
-                            `${question.explanation}`;
-
-                        return;
-                    }
-
-                    selected.label.classList.add(
-                        'is-incorrect'
-                    );
-
-                    const correctOption =
-                        optionElements.find(
-                            ({ answer }) =>
-                                answer.correct
-                        );
-
-                    correctOption?.label.classList.add(
-                        'is-correct-answer'
-                    );
-
-                    feedback.className =
-                        'question-feedback ' +
-                        'is-visible is-incorrect';
-
-                    feedback.textContent =
-                        `${selected.answer.feedback} ` +
-                        `The correct answer is ` +
-                        `${question.correctLabel}. ` +
-                        `${question.explanation}`;
-                }
-            );
-
-            next.addEventListener(
-                'click',
-                () => {
-                    if (previousResult === false) {
-                        optionElements.forEach(
-                            ({ input }) => {
-                                input.checked = false;
-                            }
-                        );
-
-                        clearMarks();
-                        removePreviousMark();
-
-                        feedback.className =
-                            'question-feedback';
-
-                        feedback.textContent = '';
-
-                        showFooterAction(check);
-
-                        return;
-                    }
-
-                    if (
-                        nextAdded ||
-                        !state.running
-                    ) {
-                        return;
-                    }
-
-                    nextAdded = true;
-
-                    next.disabled =
-                        true;
-
-                    next.textContent =
-                        'Question added';
-
-                    addQuestion();
-                }
-            );
-
-            showFooterAction(check);
-
-            list.append(card);
-
-            requestAnimationFrame(
-                () => {
-                    card.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
-            );
+            });
+            host.querySelectorAll('input').forEach(input => input.addEventListener('change', () => {
+                entry.selected = Number(input.value);
+                setAction();
+            }));
+            setAction();
         }
-
-        start.addEventListener(
-            'click',
-            () => {
-                state.running = true;
-                state.number = 0;
-                state.checked = 0;
-                state.correct = 0;
-                state.previous = '';
-                state.run += 1;
-
-                list.replaceChildren();
-
-                start.disabled = true;
-                stop.disabled = false;
-
-                updateScore();
-                addQuestion();
+        function renderCheck() {
+            if (!check.review) {
+                renderQuestion(checkRoot, check, true);
+                return;
             }
-        );
-
-        stop.addEventListener(
-            'click',
-            () => {
-                window.Maths1to9Lesson
-                    ?.clearSectionAction?.(
-                        'question-bank'
-                    );
-
-                if (!state.running) {
-                    return;
-                }
-
-                state.running = false;
-
-                start.disabled = false;
-                start.textContent =
-                    'Start again';
-
-                stop.disabled = true;
-
-                const percentage =
-                    state.checked === 0
-                        ? 0
-                        : Math.round(
-                            (
-                                state.correct /
-                                state.checked
-                            ) * 100
-                        );
-
-                score.textContent =
-                    `Practice stopped: ` +
-                    `${state.correct}/` +
-                    `${state.checked} correct ` +
-                    `(${percentage}%).`;
+            const score = check.entries.filter(entry => entry.firstCorrect).length;
+            const passed = score >= 4;
+            checkRoot.innerHTML = `<section class="lesson-completion">
+                <div class="lesson-completion__result ${passed ? 'lesson-completion__result--success' : ''}">
+                    ${passed ? '<span class="lesson-completion__celebration" aria-hidden="true">★</span>' : ''}
+                    <div><h2>${passed ? 'Order of operations complete' : 'Practise once more'}</h2><p>${passed ? 'Nice work — you’re ready to move on.' : 'Review your answers, then have another go.'}</p></div>
+                    <p class="lesson-completion__score">${score}<small>/5</small></p>
+                </div>
+                ${passed ? '<div class="lesson-completion__recommendations"></div><a class="lesson-completion__all-lessons" href="../../">View all lessons</a><div class="ooo-next-lesson"></div>' : reviews(check.entries, false)}
+            </section>`;
+            if (!passed) {
+                api.setSectionAction('comparison', { label: 'Back to practice', onClick: backToPractice });
+                return;
             }
-        );
-    }
-
-    /*
-     * Makes the bank available to the lesson engine.
-     */
-    window.Maths1to9QuestionBanks ??= {};
-
-    window.Maths1to9QuestionBanks[
-        'order-of-operations'
-    ] = mount;
-
-    function tryMount(root = null) {
-        const target =
-            root ||
-            document.getElementById(
-                ROOT_ID
-            );
-
-        if (target) {
-            mount(target);
+            api.clearSectionAction('comparison');
+            api.completeSection('comparison');
+            if (!lessonCompleted) {
+                lessonCompleted = true;
+                api.completeLesson();
+            }
+            document.querySelector('[data-stage-index="3"]')?.classList.add('ooo-stage-complete');
+            window.Maths1to9Recommendations.getForLesson('order-of-operations').then(lessons => {
+                const container = checkRoot.querySelector('.lesson-completion__recommendations');
+                if (!container) return;
+                container.innerHTML = lessons.map((item, index) => `${index === 0 ? '<h3>Up next</h3>' : index === 1 ? '<h3>More lessons to try</h3>' : ''}<a class="lesson-recommendation-card" href="${escapeHtml(item.url)}"><span class="lesson-recommendation-card__title">${escapeHtml(item.title)}</span><span>${escapeHtml(item.subtitle || '')}</span></a>`).join('');
+                if (lessons.length) checkRoot.querySelector('.ooo-next-lesson').innerHTML = `<a class="button button--primary" href="${escapeHtml(lessons[0].url)}">Start next lesson</a>`;
+            }).catch(() => {
+                const container = checkRoot.querySelector('.lesson-completion__recommendations');
+                if (container) container.textContent = 'Explore all lessons to choose what to learn next.';
+            });
         }
-    }
 
-    /*
-     * Mount immediately if the lesson has already rendered.
-     */
-    if (
-        document.readyState ===
-        'loading'
-    ) {
-        document.addEventListener(
-            'DOMContentLoaded',
-            () => tryMount()
-        );
-    } else {
-        tryMount();
-    }
-
-    /*
-     * Mount after lesson-engine.js finishes rendering.
-     */
-    document.addEventListener(
-        'maths1to9:lesson-rendered',
-        (event) => {
-            tryMount(
-                event.detail?.questionsRoot ||
-                null
-            );
+        // The existing worked examples, revealed one line at a time by the footer.
+        const examplesRoot = document.querySelector('#lesson-section-worked-examples .worked-example-list');
+        let exampleIndex = 0;
+        let visibleSteps = 1;
+        api.gateSection('worked-examples');
+        function renderExample() {
+            const example = lesson.worked_examples[exampleIndex];
+            const finished = visibleSteps > example.steps.length;
+            examplesRoot.innerHTML = `<article class="worked-example"><h3 class="question-prompt">${escapeHtml(example.title)}</h3><ol class="worked-example__steps">${example.steps.slice(0, visibleSteps).map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol>${finished ? `<p class="ooo-expression">${escapeHtml(example.answer)}</p>` : ''}</article>`;
+            api.setSectionAction('worked-examples', { label: 'Continue', onClick: () => {
+                if (!finished) visibleSteps += 1;
+                else if (exampleIndex < lesson.worked_examples.length - 1) { exampleIndex += 1; visibleSteps = 1; }
+                else { api.completeSection('worked-examples'); api.goToSection('interactive', { unlock: true }); return; }
+                renderExample();
+            }});
         }
-    );
-
-    /*
-     * Final fallback in case the questions container is
-     * inserted after this script without the custom event.
-     */
-    const observer =
-        new MutationObserver(
-            () => tryMount()
-        );
-
-    observer.observe(
-        document.documentElement,
-        {
-            childList: true,
-            subtree: true
-        }
-    );
-
-    window.setTimeout(
-        () => observer.disconnect(),
-        15000
-    );
+        newPractice();
+        newCheck();
+        renderExample();
+        renderPractice();
+        renderCheck();
+        document.addEventListener('maths1to9:section-change', () => {
+            if (api.getCurrentSection().id === 'comparison' && !ready && !lessonCompleted) {
+                api.goToSection('question-bank');
+            }
+            updateProgress();
+        });
+    }
+    document.addEventListener('maths1to9:lesson-rendered', mountJourney);
 })();
