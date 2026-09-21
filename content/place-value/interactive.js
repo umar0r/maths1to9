@@ -406,268 +406,69 @@
     }
 
     function mountSingleNumber(root) {
-        const originalNumber = String(
-            root.dataset.number || '4270'
-        ).replace(/[^0-9]/g, '');
-
-        const columns = parseJsonData(
-            root.dataset.columns
-        );
-
+        const number = root.dataset.number || '107389.4828';
+        const columns = parseJsonData(root.dataset.columns);
+        const digits = number.replace('.', '').split('');
         const onesIndex = findOnesIndex(columns);
-
-        if (
-            originalNumber === ''
-            || !Array.isArray(columns)
-            || columns.length === 0
-            || onesIndex === -1
-        ) {
-            root.textContent =
-                'The place-value interactive could not be loaded.';
+        if (onesIndex < 0 || digits.length !== columns.length) {
+            root.textContent = 'The place-value table could not be loaded.';
             return;
         }
 
-        const bounds = getMovementBounds(
-            [originalNumber],
-            columns,
-            onesIndex
-        );
-
-        const originalStart = bounds.starts[0];
-
-        gateSection('interactive');
-
-        const state = {
-            offset: 0,
-            dragging: false,
-            pointerId: null,
-            startX: 0,
-            distance: 0,
-            completed: false
+        const placeValue = (index) => {
+            const exponent = onesIndex - index;
+            return exponent >= 0 ? String(10 ** exponent) : (10 ** exponent).toFixed(-exponent);
         };
-
-        function isDecimalStart(index) {
-            return index === onesIndex + 1;
-        }
-
-        function render() {
-            if (!state.completed && state.offset !== 0) {
-                state.completed = true;
-                completeSection('interactive');
-            }
-
-            const displayedCells = getDisplayCells(
-                originalNumber,
-                state.offset,
-                columns.length,
-                onesIndex,
-                originalStart
-            );
-
-            const displayedNumber =
-                getDisplayedNumber(
-                    displayedCells,
-                    onesIndex
-                );
-            const hasDecimal = displayedCells
-                .slice(onesIndex + 1)
-                .some(Boolean);
-
-            const original = addThousandsSeparators(
-                originalNumber
-                    .replace(/^0+(?=\d)/, '')
-                    || '0'
-            );
-
-            const places = Math.abs(state.offset);
-            const factor = 10 ** places;
-            const direction = state.offset > 0 ? 'right' : 'left';
-            const movement = places === 1 ? 'place' : 'places';
-            const scale = addThousandsSeparators(factor);
-            const numberJourney = Array.from(
-                { length: places + 1 },
-                (_, step) => formatCalculationNumber(
-                    shiftWholeNumber(
-                        originalNumber,
-                        state.offset > 0 ? step : -step
-                    )
-                )
-            ).join(' → ');
-            const calculationNumber = formatCalculationNumber(
-                displayedNumber
-            );
-
-            let resultPanel = `
-                <p class="place-value-scaling-result__prompt">
-                    Move the digits to see how their values change.
-                </p>
-            `;
-
-            if (places > 0 && direction === 'right') {
-                const fractionalNames = {
-                    1: 'one tenth',
-                    2: 'one hundredth',
-                    3: 'one thousandth',
-                    4: 'one ten-thousandth'
-                };
-                const valueDescription = fractionalNames[places]
-                    ? `${fractionalNames[places]} as much`
-                    : `1/${scale} as much`;
-                const changeDescription = places === 1
-                    ? 'The number has been divided by 10.'
-                    : `Each move divides its value by 10, so ${places} moves divide the number by ${scale}.`;
-
-                resultPanel = `
-                    <p class="place-value-scaling-result__explanation">
-                        You moved every digit ${places} ${movement} to the right.
-                        Each digit is worth ${valueDescription}. ${changeDescription}
-                    </p>
-                    <p class="place-value-scaling-result__journey">
-                        ${escapeHtml(numberJourney)}
-                    </p>
-                    <p class="place-value-scaling-result__equation">
-                        ${escapeHtml(original)} ÷ ${escapeHtml(scale)} =
-                        ${escapeHtml(calculationNumber)}
-                    </p>
-                    ${displayedNumber !== calculationNumber
-                        ? `<p class="place-value-scaling-result__note">
-                            ${escapeHtml(displayedNumber)} has the same value as
-                            ${escapeHtml(calculationNumber)}.
-                        </p>`
-                        : ''}
-                `;
-            }
-
-            if (places > 0 && direction === 'left') {
-                const valueDescription = places === 1
-                    ? '10 times as much'
-                    : '100 times as much';
-
-                resultPanel = `
-                    <p class="place-value-scaling-result__explanation">
-                        Each digit has moved ${places} ${movement} to the left,
-                        so each digit is worth ${valueDescription}. The number has
-                        been multiplied by ${scale}.
-                    </p>
-                    <p class="place-value-scaling-result__journey">
-                        ${escapeHtml(numberJourney)}
-                    </p>
-                    <p class="place-value-scaling-result__equation">
-                        ${escapeHtml(original)} × ${escapeHtml(scale)} =
-                        ${escapeHtml(calculationNumber)}
-                    </p>
-                `;
-            }
-
-            const rowTemplate = (
-                `120px repeat(${columns.length}, `
-                + 'minmax(90px, 1fr))'
-            );
-
-            const chartWidth =
-                120 + (columns.length * 110);
-
-            root.innerHTML = `
-                <p class="interactive-explanation">
-                    <strong>← One place left: ×10</strong>
-                    &nbsp;&nbsp;
-                    <strong>One place right: ÷10 →</strong>
-                </p>
-
-                <p class="place-value-scroll-hint">Swipe the table to see every place-value column.</p>
-                <div class="place-value-chart-wrapper">
-                    <div
-                        class="place-value-chart place-value-chart--slider"
-                        style="min-width: ${chartWidth}px; --place-value-column-count: ${columns.length};"
-                    >
-                        <div
-                            class="place-value-row"
-                            style="grid-template-columns: ${rowTemplate};"
-                        >
-                            <div class="place-value-cell place-value-cell--heading"></div>
-
-                            ${columns.map((column, index) => `
-                                <div class="place-value-cell place-value-cell--heading ${
-                                    isDecimalStart(index)
-                                        ? 'place-value-cell--decimal-start'
-                                        : ''
-                                }">
-                                    ${escapeHtml(column)}
-                                </div>
-                            `).join('')}
-                        </div>
-
-                        <div
-                            class="place-value-row ${hasDecimal ? 'place-value-row--has-decimal' : ''}"
-                            data-role="single-digit-row"
-                            role="slider"
-                            tabindex="0"
-                            aria-label="Drag the digits right to divide by 10, or left to multiply by 10"
-                            aria-valuemin="${bounds.minimumOffset}"
-                            aria-valuemax="${bounds.maximumOffset}"
-                            aria-valuenow="${state.offset}"
-                            style="
-                                grid-template-columns: ${rowTemplate};
-                                cursor: grab;
-                                touch-action: pan-y;
-                                user-select: none;
-                            "
-                        >
-                            <div class="place-value-cell place-value-cell--row-label">
-                                Number
-                            </div>
-
-                            ${displayedCells.map((digit, index) => `
-                                <div class="place-value-cell place-value-cell--digit ${
-                                    isDecimalStart(index)
-                                        ? 'place-value-cell--decimal-start'
-                                        : ''
-                                }">
-                                    ${isDecimalStart(index) && hasDecimal
-                                        ? '<span class="place-value-decimal-marker" aria-hidden="true">.</span>'
-                                        : ''}
-                                    <span
-                                        data-role="single-movable-digit"
-                                        style="
-                                            display: inline-block;
-                                            will-change: transform;
-                                        "
-                                    >
-                                        ${escapeHtml(digit)}
-                                    </span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="place-value-scaling-result" aria-live="polite">
-                    ${resultPanel}
-                </div>
-            `;
-
-            createDragController({
-                root,
-                state,
-                minimumOffset:
-                    bounds.minimumOffset,
-                maximumOffset:
-                    bounds.maximumOffset,
-                getRows: () => [
-                    root.querySelector(
-                        '[data-role="single-digit-row"]'
-                    )
-                ].filter(Boolean),
-                getMovableDigits: () => (
-                    root.querySelectorAll(
-                        '[data-role="single-movable-digit"]'
-                    )
-                ),
-                render
+        const digitValue = (index) => {
+            const exponent = onesIndex - index;
+            return exponent >= 0
+                ? String(Number(digits[index]) * 10 ** exponent)
+                : (Number(digits[index]) * 10 ** exponent).toFixed(-exponent);
+        };
+        const format = (value) => {
+            const [whole, fraction] = value.split('.');
+            return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction ? '.' + fraction : '');
+        };
+        root.innerHTML = `
+            <p class="place-value-explorer__number">${escapeHtml(number)}</p>
+            <p class="place-value-scroll-hint">Swipe the table to explore every digit.</p>
+            <div class="place-value-chart-wrapper" tabindex="0" role="region" aria-label="Place-value table; scroll to see every column">
+                <table class="place-value-explorer">
+                    <caption class="place-value-explorer__caption">The digits of ${escapeHtml(number)}</caption>
+                    <thead><tr>${columns.map((column, index) => `
+                        <th scope="col" class="${index === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</th>
+                    `).join('')}</tr></thead>
+                    <tbody><tr>${digits.map((digit, index) => `
+                        <td class="${index === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">
+                            ${index === onesIndex + 1 ? '<span class="place-value-explorer__point" aria-hidden="true">.</span>' : ''}
+                            <button type="button" data-digit-index="${index}" aria-pressed="false" aria-label="${digit} in the ${escapeHtml(columns[index].toLowerCase())} column">${digit}</button>
+                        </td>
+                    `).join('')}</tr></tbody>
+                </table>
+            </div>
+            <div class="place-value-scaling-result" aria-live="polite" aria-atomic="true" data-digit-detail></div>
+            <p class="place-value-explorer__note">The decimal point separates whole-number places from decimal places. Each place to the right is worth one tenth as much.</p>
+            <p class="place-value-explorer__note">Say this number as: <strong>one hundred and seven thousand, three hundred and eighty-nine point four eight two eight.</strong></p>
+        `;
+        const buttons = Array.from(root.querySelectorAll('[data-digit-index]'));
+        const detail = root.querySelector('[data-digit-detail]');
+        function selectDigit(index) {
+            buttons.forEach((button, i) => {
+                button.setAttribute('aria-pressed', String(i === index));
+                button.closest('td').classList.toggle('is-selected', i === index);
             });
+            detail.innerHTML = `
+                <p class="place-value-scaling-result__explanation">The digit <strong>${digits[index]}</strong> is in the <strong>${escapeHtml(columns[index].toLowerCase())}</strong> column.</p>
+                <p class="place-value-scaling-result__equation">${digits[index]} × ${format(placeValue(index))} = <strong>${format(digitValue(index))}</strong></p>
+                ${digits[index] === '0' ? '<p class="place-value-scaling-result__note">The zero holds this place. It contributes 0 to the number.</p>' : ''}
+            `;
         }
-
-        render();
+        buttons.forEach((button, index) => {
+            ['mouseenter', 'focus', 'click'].forEach((event) => {
+                button.addEventListener(event, () => selectDigit(index));
+            });
+        });
+        selectDigit(onesIndex);
     }
 
     function mountProductScaling(root) {

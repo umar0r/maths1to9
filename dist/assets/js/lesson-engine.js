@@ -320,8 +320,30 @@
                 render(container) {
                     renderWorkedExamples(
                         container,
-                        lesson.worked_examples
+                        lesson.worked_examples,
+                        lesson.worked_examples_title
                     );
+                }
+            });
+        }
+
+        if (isObject(lesson.summary) && hasItems(lesson.summary.points)) {
+            sections.push({
+                id: 'summary',
+                label: 'Summary',
+                className: 'lesson-summary',
+                render(container) {
+                    appendSectionHeading(container, lesson.summary, 'Summary', 'Key reminders', 'summary');
+                    const list = createElement('ol', 'lesson-steps');
+                    for (const point of safeArray(lesson.summary.points).filter(isObject)) {
+                        const item = createElement('li', 'lesson-step');
+                        item.append(
+                            createElement('h3', 'lesson-step__title', normaliseText(point.title)),
+                            createElement('p', 'lesson-step__text', normaliseText(point.text))
+                        );
+                        list.append(item);
+                    }
+                    container.append(list);
                 }
             });
         }
@@ -1430,11 +1452,12 @@
 
     function renderWorkedExamples(
         container,
-        workedExamples
+        workedExamples,
+        title
     ) {
         const headingData = {
             eyebrow: 'Worked examples',
-            title: 'See the method in action'
+            title: normaliseText(title) || 'See the method in action'
         };
 
         appendSectionHeading(

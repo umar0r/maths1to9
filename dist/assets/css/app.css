@@ -3265,3 +3265,17 @@ noscript p {
     text-align: center;
     line-height: 1.4;
 }
+
+/* Digit explorer in the place-value Learn section. */
+.place-value-explorer__number { margin: 0 0 20px; text-align: center; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; letter-spacing: .06em; }
+.place-value-explorer { width: 100%; min-width: 780px; table-layout: fixed; border-collapse: collapse; }
+.place-value-explorer__caption { padding: 10px; color: var(--text-soft); font-size: .85rem; }
+.place-value-explorer th { background: var(--background-deep); color: var(--text-soft); font-size: .8rem; padding: 14px 5px; overflow-wrap: anywhere; }
+.place-value-explorer th, .place-value-explorer td { border-right: 1px solid var(--border); text-align: center; }
+.place-value-explorer td { position: relative; padding: 10px 5px; border-top: 1px solid var(--border); }
+.place-value-explorer td.is-selected { background: #edf3ff; }
+.place-value-explorer button { width: 100%; min-height: 52px; border: 2px solid transparent; border-radius: 10px; background: transparent; color: var(--text); font: inherit; font-size: 1.7rem; font-weight: 800; cursor: pointer; }
+.place-value-explorer button[aria-pressed="true"] { color: #245ad4; border-color: #316cf4; background: #fff; }
+.place-value-explorer button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.place-value-explorer__point { position: absolute; left: -6px; bottom: 20px; font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+.place-value-explorer__note { color: var(--text-soft); margin: 20px 0 0; }

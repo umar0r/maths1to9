@@ -5,39 +5,59 @@
   "subtitle": "See how a digit's position changes its value.",
   "section_order": [
     "explanation",
-    "worked-examples",
-    "method",
     "interactive",
+    "method",
     "product-interactive",
     "question-bank",
+    "summary",
     "comparison"
   ],
   "navigation_stages": [
     {
       "id": "learn",
       "label": "Learn",
-      "sections": ["explanation", "worked-examples"]
+      "sections": [
+        "explanation",
+        "interactive"
+      ]
     },
     {
       "id": "try-it",
       "label": "Step by step",
-      "sections": ["method", "interactive", "product-interactive"]
+      "sections": [
+        "method",
+        "product-interactive"
+      ]
     },
     {
       "id": "practice",
       "label": "Practice",
-      "sections": ["question-bank"]
+      "sections": [
+        "question-bank"
+      ]
+    },
+    {
+      "id": "summary",
+      "label": "Summary",
+      "sections": [
+        "summary"
+      ]
     },
     {
       "id": "check",
       "label": "Check",
-      "sections": ["comparison"]
+      "sections": [
+        "comparison"
+      ]
     }
   ],
   "assessment": {
     "question_types": {
       "digitValue": "place-value",
-      "compare": ["order-numbers", "inequality-symbols"],
+      "compare": [
+        "order-numbers",
+        "inequality-symbols"
+      ],
       "order": "order-numbers",
       "scaledProduct": "place-value",
       "powerOfTen": "place-value"
@@ -70,13 +90,14 @@
     }
   },
   "interactive": {
-    "hide_heading": true,
-    "prominent_intro": true,
-    "eyebrow": "",
-    "title": "Divide by 10",
-    "intro": "Drag every digit one place to the right. Watch what happens to its value.",
-    "number": "4270",
+    "hide_heading": false,
+    "prominent_intro": false,
+    "eyebrow": "Explore the digits",
+    "title": "One number, different place values",
+    "intro": "Start with a single digit: the 9 is worth 9 ones. Hover over or click any digit to find its place and value.",
+    "number": "107389.4828",
     "columns": [
+      "Hundred-thousands",
       "Ten-thousands",
       "Thousands",
       "Hundreds",
@@ -95,31 +116,67 @@
       {
         "question": "Given that 89 × 54 = 4,806, work out 8.9 × 5.4.",
         "prompt": "Drag both numbers one place to the right.",
-        "factors": ["89", "54"],
+        "factors": [
+          "89",
+          "54"
+        ],
         "product": "4806",
-        "minimum_offsets": [0, 0],
-        "maximum_offsets": [1, 1],
-        "target_offsets": [1, 1],
+        "minimum_offsets": [
+          0,
+          0
+        ],
+        "maximum_offsets": [
+          1,
+          1
+        ],
+        "target_offsets": [
+          1,
+          1
+        ],
         "complete_message": "Each number is 10 times smaller, so the answer is 10 × 10 = 100 times smaller. You divided both numbers by 10, so divide the original answer by 100."
       },
       {
         "question": "Given that 89 × 54 = 4,806, work out 890 × 5.4.",
         "prompt": "Drag 89 one place left and 54 one place right.",
-        "factors": ["89", "54"],
+        "factors": [
+          "89",
+          "54"
+        ],
         "product": "4806",
-        "minimum_offsets": [-1, 0],
-        "maximum_offsets": [0, 1],
-        "target_offsets": [-1, 1],
+        "minimum_offsets": [
+          -1,
+          0
+        ],
+        "maximum_offsets": [
+          0,
+          1
+        ],
+        "target_offsets": [
+          -1,
+          1
+        ],
         "complete_message": "89 → 890 is ×10 and 54 → 5.4 is ÷10. The changes cancel out, so the product stays the same."
       },
       {
         "question": "Given that 89 × 54 = 4,806, work out 0.89 × 0.54.",
         "prompt": "Drag both numbers two places to the right.",
-        "factors": ["89", "54"],
+        "factors": [
+          "89",
+          "54"
+        ],
         "product": "4806",
-        "minimum_offsets": [0, 0],
-        "maximum_offsets": [2, 2],
-        "target_offsets": [2, 2],
+        "minimum_offsets": [
+          0,
+          0
+        ],
+        "maximum_offsets": [
+          2,
+          2
+        ],
+        "target_offsets": [
+          2,
+          2
+        ],
         "complete_message": "89 → 0.89 is ÷100 and 54 → 0.54 is ÷100. Together, the product is divided by 10,000."
       }
     ],
@@ -143,8 +200,16 @@
       {
         "step": "1. Locate",
         "number": "670",
-        "columns": ["Hundreds", "Tens", "Ones"],
-        "digits": ["6", "7", "0"],
+        "columns": [
+          "Hundreds",
+          "Tens",
+          "Ones"
+        ],
+        "digits": [
+          "6",
+          "7",
+          "0"
+        ],
         "prompt": "Which digit is in the tens column?",
         "correct_index": 1,
         "correct_feedback": "Correct. The digit 7 is in the tens column. Its value is 7 × 10 = 70.",
@@ -153,8 +218,16 @@
       {
         "step": "2. Name the column",
         "number": "670",
-        "columns": ["Hundreds", "Tens", "Ones"],
-        "digits": ["6", "7", "0"],
+        "columns": [
+          "Hundreds",
+          "Tens",
+          "Ones"
+        ],
+        "digits": [
+          "6",
+          "7",
+          "0"
+        ],
         "prompt": "Which digit is in the ones column?",
         "correct_index": 2,
         "correct_feedback": "Correct. The digit 0 is in the ones column. Its value is 0 × 1 = 0.",
@@ -163,8 +236,16 @@
       {
         "step": "2. Name the column",
         "number": "670",
-        "columns": ["Hundreds", "Tens", "Ones"],
-        "digits": ["6", "7", "0"],
+        "columns": [
+          "Hundreds",
+          "Tens",
+          "Ones"
+        ],
+        "digits": [
+          "6",
+          "7",
+          "0"
+        ],
         "prompt": "Which digit is in the hundreds column?",
         "correct_index": 0,
         "correct_feedback": "Correct. The digit 6 is in the hundreds column. Its value is 6 × 100 = 600.",
@@ -173,8 +254,22 @@
       {
         "step": "3. Decimals",
         "number": "46.275",
-        "columns": ["Tens", "Ones", ".", "Tenths", "Hundredths", "Thousandths"],
-        "digits": ["4", "6", ".", "2", "7", "5"],
+        "columns": [
+          "Tens",
+          "Ones",
+          ".",
+          "Tenths",
+          "Hundredths",
+          "Thousandths"
+        ],
+        "digits": [
+          "4",
+          "6",
+          ".",
+          "2",
+          "7",
+          "5"
+        ],
         "prompt": "Which digit is in the tens column?",
         "correct_index": 0,
         "correct_feedback": "Correct. The digit 4 is in the tens column. Its value is 4 × 10 = 40.",
@@ -183,8 +278,22 @@
       {
         "step": "3. Decimals",
         "number": "46.275",
-        "columns": ["Tens", "Ones", ".", "Tenths", "Hundredths", "Thousandths"],
-        "digits": ["4", "6", ".", "2", "7", "5"],
+        "columns": [
+          "Tens",
+          "Ones",
+          ".",
+          "Tenths",
+          "Hundredths",
+          "Thousandths"
+        ],
+        "digits": [
+          "4",
+          "6",
+          ".",
+          "2",
+          "7",
+          "5"
+        ],
         "prompt": "Which digit is in the hundredths column?",
         "correct_index": 4,
         "correct_feedback": "Correct. The digit 7 is in the hundredths column. Its value is 7 × 0.01 = 0.07.",
@@ -192,38 +301,32 @@
       }
     ]
   },
-  "worked_examples": [
-    {
-      "eyebrow": "Worked example 1",
-      "title": "What is the value of the 7 in 46.275?",
-      "reveal_steps": true,
-      "steps": [
-        "Look at the digits after the decimal point: 2, 7 and 5.",
-        "2 is in the tenths place.",
-        "7 is in the hundredths place.",
-        "Seven hundredths is 0.07."
-      ],
-      "step_callouts": [
-        "",
-        "",
-        "7 → hundredths place",
-        ""
-      ],
-      "answer": "The value of the 7 is 0.07."
-    },
-    {
-      "eyebrow": "Worked example 2",
-      "title": "Put 3.4, 3.35 and 3.402 in order from smallest to largest.",
-      "reveal_steps": true,
-      "steps": [
-        "Line up the decimal points.",
-        "Add placeholder zeros: 3.400, 3.350 and 3.402.",
-        "Adding zeros to the end of a decimal does not change its value. 3.4 = 3.400 and 3.35 = 3.350.",
-        "Compare the digits from left to right.",
-        "3.35 < 3.4 < 3.402"
-      ]
-    }
-  ],
+  "summary": {
+    "eyebrow": "Summary",
+    "title": "Place value — key reminders",
+    "points": [
+      {
+        "title": "A digit’s position determines its value.",
+        "text": "In 46.275, the 7 represents 7 hundredths = 0.07."
+      },
+      {
+        "title": "Zero holds an empty place.",
+        "text": "In 306, there are 3 hundreds, 0 tens and 6 ones."
+      },
+      {
+        "title": "To compare and order decimals,",
+        "text": "line up the decimal points, add trailing zeros if helpful, and compare from left to right: 3.350 < 3.400 < 3.402."
+      },
+      {
+        "title": "Multiplying by 10, 100 or 1,000",
+        "text": "moves every digit 1, 2 or 3 places left in the place-value chart. Dividing moves them right. The decimal point stays fixed."
+      },
+      {
+        "title": "Use known calculations by tracking both factors.",
+        "text": "If each factor is divided by 10, the product is divided by 100: 89 × 54 = 4,806 → 8.9 × 5.4 = 48.06."
+      }
+    ]
+  },
   "comparison": {
     "eyebrow": "Final check",
     "title": "Final check",
@@ -240,15 +343,30 @@
         "prompt": "Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?",
         "decision": "No",
         "reason": "No. 0.7 = 0.70, and 0.70 > 0.67.",
-        "reasons": ["No. 0.7 = 0.70, and 0.70 > 0.67.", "No. A number with more decimal digits is always smaller.", "Yes. 67 > 7.", "Yes. Hundredths are worth more than tenths."],
+        "reasons": [
+          "No. 0.7 = 0.70, and 0.70 > 0.67.",
+          "No. A number with more decimal digits is always smaller.",
+          "Yes. 67 > 7.",
+          "Yes. Hundredths are worth more than tenths."
+        ],
         "answer": "No. 0.7 = 0.70, and 0.70 > 0.67.",
         "explanation": "Write 0.7 as 0.70. Seven tenths is greater than six tenths."
       },
       {
         "type": "order",
         "prompt": "Four pupils recorded these long-jump distances. Put the distances in order from shortest to longest: 2.8 m, 2.75 m, 2.805 m and 2.79 m.",
-        "values": ["2.8", "2.75", "2.805", "2.79"],
-        "answer": ["2.75", "2.79", "2.8", "2.805"],
+        "values": [
+          "2.8",
+          "2.75",
+          "2.805",
+          "2.79"
+        ],
+        "answer": [
+          "2.75",
+          "2.79",
+          "2.8",
+          "2.805"
+        ],
         "explanation": "Write the distances as 2.800, 2.750, 2.805 and 2.790."
       },
       {
