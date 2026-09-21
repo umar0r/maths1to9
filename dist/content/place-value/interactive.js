@@ -451,11 +451,19 @@
                 ${renderTable(0, digits.length, 'The digits of ' + number)}
             </div>
             <div class="place-value-explorer__mobile">
-                <p class="place-value-explorer__tap-hint">Tap a digit to see its value below.</p>
-                ${renderTable(0, onesIndex - 2, 'Whole number · thousands')}
-                ${renderTable(onesIndex - 2, onesIndex + 1, 'Whole number · hundreds, tens and ones')}
-                ${renderTable(onesIndex + 1, onesIndex + 3, 'Decimal places · tenths and hundredths')}
-                ${renderTable(onesIndex + 3, digits.length, 'Decimal places · thousandths and smaller')}
+                <p class="place-value-explorer__tap-hint">Tap a row to explore its place value.</p>
+                <div class="place-value-vertical">
+                    <div class="place-value-vertical__head" aria-hidden="true"><span>Place</span><span>Digit</span><span>Value</span></div>
+                    ${digits.map((digit, index) => `
+                        ${index === onesIndex + 1 ? '<p class="place-value-vertical__divider">Decimal point</p>' : ''}
+                        <button type="button" class="place-value-vertical__row" data-digit-index="${index}" aria-pressed="false" aria-label="${digit} in the ${escapeHtml(columns[index].toLowerCase())} column, value ${format(digitValue(index))}">
+                            <span>${escapeHtml(columns[index])}</span>
+                            <strong>${digit}</strong>
+                            <span>${format(digitValue(index))}</span>
+                            <span class="place-value-vertical__explanation" hidden>${digit} × ${format(placeValue(index))} = ${format(digitValue(index))}${digit === '0' ? '. Zero holds this place.' : ''}</span>
+                        </button>
+                    `).join('')}
+                </div>
             </div>
             <div class="place-value-scaling-result" aria-live="polite" aria-atomic="true" data-digit-detail></div>
             <p class="place-value-explorer__note">The decimal point separates whole-number places from decimal places. Each place to the right is worth one tenth as much.</p>
@@ -467,7 +475,9 @@
             buttons.forEach((button) => {
                 const i = Number(button.dataset.digitIndex);
                 button.setAttribute('aria-pressed', String(i === index));
-                button.closest('td').classList.toggle('is-selected', i === index);
+                button.closest('td')?.classList.toggle('is-selected', i === index);
+                const explanation = button.querySelector('.place-value-vertical__explanation');
+                if (explanation) explanation.hidden = i !== index;
             });
             detail.innerHTML = `
                 <p class="place-value-scaling-result__explanation">The digit <strong>${digits[index]}</strong> is in the <strong>${escapeHtml(columns[index].toLowerCase())}</strong> column.</p>

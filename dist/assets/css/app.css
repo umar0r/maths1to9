@@ -3284,13 +3284,19 @@ noscript p {
 @media (max-width: 900px) {
     .place-value-explorer__desktop { display: none; }
     .place-value-explorer__mobile { display: grid; gap: 12px; }
-    .place-value-explorer__mobile .place-value-explorer { min-width: 0; }
-    .place-value-explorer__mobile .place-value-chart-wrapper { overflow: visible; }
-    .place-value-explorer__mobile th { padding: 10px 4px; font-size: .75rem; }
-    .place-value-explorer__mobile td { padding: 5px; }
-    .place-value-explorer__mobile button { min-height: 48px; font-size: 1.5rem; }
-    .place-value-explorer__mobile .place-value-explorer__caption { padding: 8px; font-size: .8rem; text-align: left; }
     .place-value-explorer__tap-hint { margin: 0; color: var(--text-soft); font-size: .9rem; }
     .place-value-explorer__number { font-size: clamp(1.35rem, 6vw, 2.6rem); letter-spacing: .02em; overflow-wrap: anywhere; }
-    #place-value-interactive .place-value-scaling-result { padding: 14px 10px; }
+    #place-value-interactive .place-value-scaling-result { display: none; }
+    .place-value-vertical { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .place-value-vertical__head, .place-value-vertical__row { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(64px, .7fr); align-items: center; gap: 6px; padding: 10px; text-align: left; }
+    .place-value-vertical__head { background: var(--background-deep); color: var(--text-soft); font-size: .75rem; font-weight: 800; }
+    .place-value-vertical__head span:nth-child(2), .place-value-vertical__row strong { text-align: center; }
+    .place-value-vertical__head span:last-child, .place-value-vertical__row > span:nth-child(3) { text-align: right; }
+    .place-value-vertical__row { width: 100%; min-height: 52px; border: 0; border-top: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: .8rem; cursor: pointer; }
+    .place-value-vertical__row > span:first-child { overflow-wrap: anywhere; }
+    .place-value-vertical__row strong { font-size: 1.3rem; }
+    .place-value-vertical__row[aria-pressed="true"] { background: #edf3ff; color: #245ad4; box-shadow: inset 3px 0 #316cf4; }
+    .place-value-vertical__row:focus-visible { outline: 2px solid #316cf4; outline-offset: -3px; }
+    .place-value-vertical__explanation { grid-column: 1 / -1; padding-top: 4px; font-weight: 700; }
+    .place-value-vertical__divider { margin: 0; padding: 6px 10px; border-top: 2px solid var(--accent); background: #fff6ed; color: var(--text-soft); font-size: .75rem; font-weight: 700; }
 }
