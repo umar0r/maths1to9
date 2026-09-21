@@ -3279,3 +3279,18 @@ noscript p {
 .place-value-explorer button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .place-value-explorer__point { position: absolute; left: -6px; bottom: 20px; font-size: 1.8rem; font-weight: 800; color: var(--accent); }
 .place-value-explorer__note { color: var(--text-soft); margin: 20px 0 0; }
+
+.place-value-explorer__mobile { display: none; }
+@media (max-width: 900px) {
+    .place-value-explorer__desktop { display: none; }
+    .place-value-explorer__mobile { display: grid; gap: 12px; }
+    .place-value-explorer__mobile .place-value-explorer { min-width: 0; }
+    .place-value-explorer__mobile .place-value-chart-wrapper { overflow: visible; }
+    .place-value-explorer__mobile th { padding: 10px 4px; font-size: .75rem; }
+    .place-value-explorer__mobile td { padding: 5px; }
+    .place-value-explorer__mobile button { min-height: 48px; font-size: 1.5rem; }
+    .place-value-explorer__mobile .place-value-explorer__caption { padding: 8px; font-size: .8rem; text-align: left; }
+    .place-value-explorer__tap-hint { margin: 0; color: var(--text-soft); font-size: .9rem; }
+    .place-value-explorer__number { font-size: clamp(1.35rem, 6vw, 2.6rem); letter-spacing: .02em; overflow-wrap: anywhere; }
+    #place-value-interactive .place-value-scaling-result { padding: 14px 10px; }
+}

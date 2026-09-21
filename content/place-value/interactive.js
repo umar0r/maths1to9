@@ -429,22 +429,33 @@
             const [whole, fraction] = value.split('.');
             return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction ? '.' + fraction : '');
         };
-        root.innerHTML = `
-            <p class="place-value-explorer__number">${escapeHtml(number)}</p>
-            <p class="place-value-scroll-hint">Swipe the table to explore every digit.</p>
-            <div class="place-value-chart-wrapper" tabindex="0" role="region" aria-label="Place-value table; scroll to see every column">
+        const renderTable = (start, end, caption) => `
+            <div class="place-value-chart-wrapper">
                 <table class="place-value-explorer">
-                    <caption class="place-value-explorer__caption">The digits of ${escapeHtml(number)}</caption>
-                    <thead><tr>${columns.map((column, index) => `
-                        <th scope="col" class="${index === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</th>
+                    <caption class="place-value-explorer__caption">${escapeHtml(caption)}</caption>
+                    <thead><tr>${columns.slice(start, end).map((column, offset) => `
+                        <th scope="col" class="${start + offset === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">${escapeHtml(column)}</th>
                     `).join('')}</tr></thead>
-                    <tbody><tr>${digits.map((digit, index) => `
-                        <td class="${index === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">
+                    <tbody><tr>${digits.slice(start, end).map((digit, offset) => {
+                        const index = start + offset;
+                        return `<td class="${index === onesIndex + 1 ? 'place-value-cell--decimal-start' : ''}">
                             ${index === onesIndex + 1 ? '<span class="place-value-explorer__point" aria-hidden="true">.</span>' : ''}
                             <button type="button" data-digit-index="${index}" aria-pressed="false" aria-label="${digit} in the ${escapeHtml(columns[index].toLowerCase())} column">${digit}</button>
-                        </td>
-                    `).join('')}</tr></tbody>
+                        </td>`;
+                    }).join('')}</tr></tbody>
                 </table>
+            </div>`;
+        root.innerHTML = `
+            <p class="place-value-explorer__number">${escapeHtml(number)}</p>
+            <div class="place-value-explorer__desktop">
+                ${renderTable(0, digits.length, 'The digits of ' + number)}
+            </div>
+            <div class="place-value-explorer__mobile">
+                <p class="place-value-explorer__tap-hint">Tap a digit to see its value below.</p>
+                ${renderTable(0, onesIndex - 2, 'Whole number · thousands')}
+                ${renderTable(onesIndex - 2, onesIndex + 1, 'Whole number · hundreds, tens and ones')}
+                ${renderTable(onesIndex + 1, onesIndex + 3, 'Decimal places · tenths and hundredths')}
+                ${renderTable(onesIndex + 3, digits.length, 'Decimal places · thousandths and smaller')}
             </div>
             <div class="place-value-scaling-result" aria-live="polite" aria-atomic="true" data-digit-detail></div>
             <p class="place-value-explorer__note">The decimal point separates whole-number places from decimal places. Each place to the right is worth one tenth as much.</p>
@@ -453,7 +464,8 @@
         const buttons = Array.from(root.querySelectorAll('[data-digit-index]'));
         const detail = root.querySelector('[data-digit-detail]');
         function selectDigit(index) {
-            buttons.forEach((button, i) => {
+            buttons.forEach((button) => {
+                const i = Number(button.dataset.digitIndex);
                 button.setAttribute('aria-pressed', String(i === index));
                 button.closest('td').classList.toggle('is-selected', i === index);
             });
@@ -463,7 +475,8 @@
                 ${digits[index] === '0' ? '<p class="place-value-scaling-result__note">The zero holds this place. It contributes 0 to the number.</p>' : ''}
             `;
         }
-        buttons.forEach((button, index) => {
+        buttons.forEach((button) => {
+            const index = Number(button.dataset.digitIndex);
             ['mouseenter', 'focus', 'click'].forEach((event) => {
                 button.addEventListener(event, () => selectDigit(index));
             });
