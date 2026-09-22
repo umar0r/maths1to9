@@ -937,12 +937,12 @@
             if (ready) {
                 root.innerHTML = (
                     '<section class="lesson-completion" aria-label="Place value complete">'
+                    + summaryHtml()
                     + '<div class="lesson-completion__result lesson-completion__result--success">'
                     + '<span class="lesson-completion__celebration" aria-hidden="true">★</span>'
                     + '<div><h2>Place value complete</h2><p>Nice work — you’re ready to move on.</p></div>'
                     + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
                     + '</div>'
-                    + summaryHtml()
                     + '<div class="lesson-completion__recommendations" aria-live="polite">'
                     + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
                     + '</div>'
@@ -1002,9 +1002,9 @@
             const summary = JSON.parse(root.dataset.summary || '{}');
             if (!Array.isArray(summary.points) || summary.points.length === 0) return '';
             return `<section class="final-check-summary" aria-label="Key reminders">
-                <h3>${escapeHtml(summary.title || 'Place value — key reminders')}</h3>
+                <h2 class="lesson-section__title">${escapeHtml(summary.title || 'Place value — key reminders')}</h2>
                 <ol class="lesson-steps">${summary.points.map((point) => `
-                    <li class="lesson-step"><h4 class="lesson-step__title">${escapeHtml(point.title)}</h4><p class="lesson-step__text">${escapeHtml(point.text)}</p></li>
+                    <li class="lesson-step"><h3 class="lesson-step__title">${escapeHtml(point.title)}</h3><p class="lesson-step__text">${escapeHtml(point.text)}</p></li>
                 `).join('')}</ol>
             </section>`;
         }

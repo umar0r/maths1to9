@@ -3300,3 +3300,9 @@ noscript p {
     .place-value-vertical__explanation { grid-column: 1 / -1; padding-top: 4px; font-weight: 700; }
     .place-value-vertical__divider { margin: 0; padding: 6px 10px; border-top: 2px solid var(--accent); background: #fff6ed; color: var(--text-soft); font-size: .75rem; font-weight: 700; }
 }
+
+/* Match the final reminders to the lesson's normal reading size. */
+#place-value-comparison .final-check-summary { margin-bottom: 32px; }
+#place-value-comparison .final-check-summary .lesson-step__title { font-size: 1.15rem; }
+#place-value-comparison .final-check-summary .lesson-step__text { font-size: 1.1rem; line-height: 1.6; }
+#place-value-comparison .lesson-completion__result p:not(.lesson-completion__score) { font-size: 1.1rem; line-height: 1.6; }
