@@ -814,6 +814,7 @@
             index: 0,
             answers: [],
             showMistakes: false,
+            summarySeen: false,
             lessonCompleted: false,
             resetOnReturn: false
         };
@@ -928,7 +929,7 @@
                     + '<div class="lesson-completion__recommendations" aria-live="polite">'
                     + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
                     + '</div>'
-                    + '<a class="lesson-completion__all-lessons" href="../../">View all lessons</a>'
+                    + '<a class="lesson-completion__all-lessons" href="../../index.php">View all lessons</a>'
                     + '</section>'
                 );
 
@@ -971,6 +972,7 @@
                     state.index = 0;
                     state.answers = [];
                     state.showMistakes = false;
+                    state.summarySeen = false;
                     state.resetOnReturn = true;
                     refreshQuestions();
                     window.Maths1to9Lesson?.goToSection?.('question-bank', {
@@ -979,8 +981,34 @@
                 });
         }
 
+        function renderSummary() {
+            const summary = JSON.parse(root.dataset.summary || '{}');
+            if (!Array.isArray(summary.points) || summary.points.length === 0) {
+                renderReview();
+                return;
+            }
+            removeCheckIntroduction();
+            root.innerHTML = `<div class="final-check-summary">
+                <p class="lesson-eyebrow">Check · Key reminders</p>
+                <h2 tabindex="-1">${escapeHtml(summary.title || 'Place value — key reminders')}</h2>
+                <ol class="lesson-steps">${summary.points.map((point) => `
+                    <li class="lesson-step"><h3 class="lesson-step__title">${escapeHtml(point.title)}</h3><p class="lesson-step__text">${escapeHtml(point.text)}</p></li>
+                `).join('')}</ol>
+            </div>`;
+            root.querySelector('h2').focus();
+            window.Maths1to9Lesson?.setSectionAction?.('comparison', {
+                label: 'See results',
+                disabled: false,
+                onClick: () => { state.summarySeen = true; renderReview(); }
+            });
+        }
+
         function render() {
-            if (state.index >= questions.length) { renderReview(); return; }
+            if (state.index >= questions.length) {
+                if (state.summarySeen) renderReview();
+                else renderSummary();
+                return;
+            }
             const question = questions[state.index];
             const answer = state.answers[state.index] || { value: '', decision: '', reason: '', order: [] };
             let body = '';

@@ -1412,6 +1412,8 @@
                 safeArray(comparison.questions)
             );
 
+        comparisonRoot.dataset.summary = JSON.stringify(comparison.summary || {});
+
         container.append(comparisonRoot);
     }
 

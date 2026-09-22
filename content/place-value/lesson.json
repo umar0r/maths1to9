@@ -9,7 +9,6 @@
     "method",
     "product-interactive",
     "question-bank",
-    "summary",
     "comparison"
   ],
   "navigation_stages": [
@@ -34,13 +33,6 @@
       "label": "Practice",
       "sections": [
         "question-bank"
-      ]
-    },
-    {
-      "id": "summary",
-      "label": "Summary",
-      "sections": [
-        "summary"
       ]
     },
     {
@@ -301,32 +293,6 @@
       }
     ]
   },
-  "summary": {
-    "eyebrow": "Summary",
-    "title": "Place value — key reminders",
-    "points": [
-      {
-        "title": "A digit’s position determines its value.",
-        "text": "In 46.275, the 7 represents 7 hundredths = 0.07."
-      },
-      {
-        "title": "Zero holds an empty place.",
-        "text": "In 306, there are 3 hundreds, 0 tens and 6 ones."
-      },
-      {
-        "title": "To compare and order decimals,",
-        "text": "line up the decimal points, add trailing zeros if helpful, and compare from left to right: 3.350 < 3.400 < 3.402."
-      },
-      {
-        "title": "Multiplying by 10, 100 or 1,000",
-        "text": "moves every digit 1, 2 or 3 places left in the place-value chart. Dividing moves them right. The decimal point stays fixed."
-      },
-      {
-        "title": "Use known calculations by tracking both factors.",
-        "text": "If each factor is divided by 10, the product is divided by 100: 89 × 54 = 4,806 → 8.9 × 5.4 = 48.06."
-      }
-    ]
-  },
   "comparison": {
     "eyebrow": "Final check",
     "title": "Final check",
@@ -381,7 +347,33 @@
         "answer": "42.7",
         "explanation": "Work backwards by dividing by 100. 4,270 ÷ 100 = 42.7."
       }
-    ]
+    ],
+    "summary": {
+      "eyebrow": "Summary",
+      "title": "Place value — key reminders",
+      "points": [
+        {
+          "title": "A digit’s position determines its value.",
+          "text": "In 46.275, the 7 represents 7 hundredths = 0.07."
+        },
+        {
+          "title": "Zero holds an empty place.",
+          "text": "In 306, there are 3 hundreds, 0 tens and 6 ones."
+        },
+        {
+          "title": "To compare and order decimals,",
+          "text": "line up the decimal points, add trailing zeros if helpful, and compare from left to right: 3.350 < 3.400 < 3.402."
+        },
+        {
+          "title": "Multiplying by 10, 100 or 1,000",
+          "text": "moves every digit 1, 2 or 3 places left in the place-value chart. Dividing moves them right. The decimal point stays fixed."
+        },
+        {
+          "title": "Use known calculations by tracking both factors.",
+          "text": "If each factor is divided by 10, the product is divided by 100: 89 × 54 = 4,806 → 8.9 × 5.4 = 48.06."
+        }
+      ]
+    }
   },
   "question_bank": {
     "hide_heading": true,
