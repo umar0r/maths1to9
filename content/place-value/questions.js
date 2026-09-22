@@ -52,6 +52,20 @@
         })[character]);
     }
 
+    // Compare exact decimal values without floating-point rounding or accepting
+    // partial numbers. Only correctly grouped thousands separators are allowed.
+    function normaliseDecimalAnswer(value) {
+        const text = String(value ?? '').trim();
+        if (!/^[+-]?(?:(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d*)?|\.\d+)$/.test(text)) return null;
+        const negative = text.startsWith('-');
+        const unsigned = text.replace(/^[+-]/, '').replace(/,/g, '');
+        const [whole = '', fraction = ''] = unsigned.split('.');
+        const integer = whole.replace(/^0+/, '') || '0';
+        const decimal = fraction.replace(/0+$/, '');
+        const sign = negative && (integer !== '0' || decimal !== '') ? '-' : '';
+        return sign + integer + (decimal ? '.' + decimal : '');
+    }
+
     function addCommas(value) {
         const parts = String(value).split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -826,7 +840,10 @@
             if (question.type === 'order') {
                 return answer.order.join('|') === question.answer.join('|');
             }
-            return String(answer.value || '').trim() === question.answer;
+            if (question.type !== 'number') return String(answer.value ?? '').trim() === question.answer;
+            const actual = normaliseDecimalAnswer(answer.value);
+            const expected = normaliseDecimalAnswer(question.answer);
+            return actual !== null && expected !== null && actual === expected;
         }
 
         function removeCheckIntroduction() {
