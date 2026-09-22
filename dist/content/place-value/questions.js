@@ -828,7 +828,6 @@
             index: 0,
             answers: [],
             showMistakes: false,
-            summarySeen: false,
             lessonCompleted: false,
             resetOnReturn: false
         };
@@ -943,6 +942,7 @@
                     + '<div><h2>Place value complete</h2><p>Nice work — you’re ready to move on.</p></div>'
                     + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
                     + '</div>'
+                    + summaryHtml()
                     + '<div class="lesson-completion__recommendations" aria-live="polite">'
                     + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
                     + '</div>'
@@ -973,6 +973,7 @@
                 + '<button class="lesson-completion__review-button" type="button">Review mistakes</button>'
                 + '<button class="lesson-completion__practice-button" type="button">Back to practice</button>'
                 + '</div>'
+                + summaryHtml()
                 + (state.showMistakes
                     ? `<div class="lesson-completion__mistakes"><h3>Review your answers</h3><div class="practice-review__list">${missedQuestionsHtml()}</div></div>`
                     : '')
@@ -989,7 +990,6 @@
                     state.index = 0;
                     state.answers = [];
                     state.showMistakes = false;
-                    state.summarySeen = false;
                     state.resetOnReturn = true;
                     refreshQuestions();
                     window.Maths1to9Lesson?.goToSection?.('question-bank', {
@@ -998,32 +998,20 @@
                 });
         }
 
-        function renderSummary() {
+        function summaryHtml() {
             const summary = JSON.parse(root.dataset.summary || '{}');
-            if (!Array.isArray(summary.points) || summary.points.length === 0) {
-                renderReview();
-                return;
-            }
-            removeCheckIntroduction();
-            root.innerHTML = `<div class="final-check-summary">
-                <p class="lesson-eyebrow">Check · Key reminders</p>
-                <h2 tabindex="-1">${escapeHtml(summary.title || 'Place value — key reminders')}</h2>
+            if (!Array.isArray(summary.points) || summary.points.length === 0) return '';
+            return `<section class="final-check-summary" aria-label="Key reminders">
+                <h3>${escapeHtml(summary.title || 'Place value — key reminders')}</h3>
                 <ol class="lesson-steps">${summary.points.map((point) => `
-                    <li class="lesson-step"><h3 class="lesson-step__title">${escapeHtml(point.title)}</h3><p class="lesson-step__text">${escapeHtml(point.text)}</p></li>
+                    <li class="lesson-step"><h4 class="lesson-step__title">${escapeHtml(point.title)}</h4><p class="lesson-step__text">${escapeHtml(point.text)}</p></li>
                 `).join('')}</ol>
-            </div>`;
-            root.querySelector('h2').focus();
-            window.Maths1to9Lesson?.setSectionAction?.('comparison', {
-                label: 'See results',
-                disabled: false,
-                onClick: () => { state.summarySeen = true; renderReview(); }
-            });
+            </section>`;
         }
 
         function render() {
             if (state.index >= questions.length) {
-                if (state.summarySeen) renderReview();
-                else renderSummary();
+                renderReview();
                 return;
             }
             const question = questions[state.index];
