@@ -13,6 +13,7 @@
         {"folder":"calculating-with-decimals","title":"Calculating with decimals","subtitle":"Use the four operations accurately with decimal numbers.","skills":["decimal-add-subtract","decimal-multiply-divide"]},
         {"folder":"order-of-operations","title":"Order of operations","subtitle":"Choose the correct calculation to do next.","skills":["order-of-operations","inverse-operations"]},
         {"folder":"rounding-and-significant-figures","title":"Rounding and significant figures","subtitle":"Round numbers to a requested degree of accuracy.","skills":["round-decimal-places","round-significant-figures","round-in-context"]},
+        {"folder":"significant-figures","title":"Significant figures","subtitle":"Round from the first non-zero digit and keep the correct accuracy.","skills":["round-significant-figures"]},
         {"folder":"estimation","title":"Estimation","subtitle":"Use rounded values to predict and check an answer.","skills":["estimate-calculations","check-with-estimation"]},
         {"folder":"truncation-and-error-intervals","title":"Truncation and error intervals","subtitle":"Describe the possible values hidden by rounding or truncation.","skills":["understand-truncation","write-error-intervals","limits-of-accuracy"]},
         {"folder":"fractions-introduction","title":"Understanding fractions","subtitle":"Interpret, compare and order fractions.","skills":["interpret-fractions","compare-fractions","mixed-and-improper-fractions"]},

@@ -43,7 +43,31 @@
         button.dataset.stageProgress = String(Math.round(fraction * 100));
         button.setAttribute('aria-label', `${button.textContent.trim()}, ${Math.round(fraction * 100)}% complete`);
     }
-    window.Maths1to9LessonEngine = { createRouter, updateStageProgress };
+    // Activities have stable, lesson-local IDs. Repeated IDs count only once.
+    // Custom renderers can derive these from their saved slide/answer state.
+    function calculateScore(activities) {
+        const unique = new Map(activities.map(activity => [activity.id, activity]));
+        let learningPoints = 0, explorationPoints = 0, answerPoints = 0;
+        let maximumPoints = 0, answered = 0, correctFirstTry = 0;
+        for (const activity of unique.values()) {
+            if (activity.kind === 'answer') {
+                maximumPoints += 10;
+                if (!activity.completed) continue;
+                answered++;
+                if (activity.firstCorrect) { correctFirstTry++; answerPoints += 10; }
+                else if (activity.correct) answerPoints += 5;
+            } else {
+                maximumPoints += 5;
+                if (!activity.completed) continue;
+                if (activity.kind === 'explore') explorationPoints += 5;
+                else learningPoints += 5;
+            }
+        }
+        return { points: learningPoints + explorationPoints + answerPoints,
+            maximumPoints, learningPoints, explorationPoints, answerPoints,
+            answered, correctFirstTry };
+    }
+    window.Maths1to9LessonEngine = { createRouter, updateStageProgress, calculateScore };
 })();
 
 (() => {

@@ -1,0 +1,429 @@
+{
+  "id": "significant-figures-01",
+  "slug": "significant-figures",
+  "title": "Significant figures",
+  "subtitle": "Start at the first non-zero digit, then round with confidence.",
+  "navigation_stages": [
+    {
+      "id": "0",
+      "label": "Learn"
+    },
+    {
+      "id": "1",
+      "label": "Step by step"
+    },
+    {
+      "id": "2",
+      "label": "Practise"
+    },
+    {
+      "id": "3",
+      "label": "Check"
+    }
+  ],
+  "learn": [
+    {
+      "id": "learn",
+      "title": "What is a significant figure?",
+      "paragraphs": [
+        "A significant figure is a digit that tells you something about how accurate a number is. To count them, start at the first digit that isn't a zero, then count from left to right.",
+        "For example, in 0.00283, the first significant figure is 2. The zeros before it don't count, so the significant figures here are 2, 8 and 3.",
+        "In your GCSE, you might be asked to round a number or a measurement to a certain number of significant figures. Let's see how it works."
+      ],
+      "equation": "0.00283 → 2, 8, 3",
+      "note": "You'll recognise the rounding rule: the next digit still decides whether we round up."
+    },
+    {
+      "id": "rounding-rule",
+      "title": "One big idea",
+      "paragraphs": [
+        "Start counting at the first non-zero digit. Count along to the significant figure you need. That's the last digit you'll keep.",
+        "Now check the digit right after it. If it's 5 or more, round up. If it's 4 or less, leave your digit as it is.",
+        "Fill any remaining whole-number places with zeros to keep the number the right size. If there are extra decimal digits after the place you're rounding to, leave them out."
+      ],
+      "digits": [
+        [
+          "",
+          "0"
+        ],
+        [
+          "",
+          "·"
+        ],
+        [
+          "Leading zero",
+          "0"
+        ],
+        [
+          "1st",
+          "2"
+        ],
+        [
+          "2nd · keep",
+          "8"
+        ],
+        [
+          "3rd · look",
+          "3"
+        ]
+      ],
+      "target": 4,
+      "decider": 5,
+      "equation": "0.0283 ≈ 0.028  (2 significant figures)",
+      "note": "Watch which digit you're rounding. Here, the second significant figure is 8. It's the digit after 8, which is 3, that decides whether 8 changes."
+    },
+    {
+      "id": "leading-zeros",
+      "title": "Leading zeros don't count",
+      "paragraphs": [
+        "0.0047 has two significant figures: 4 and 7. The zeros at the start are just holding the place value, so we don't count them.",
+        "We still need those starting zeros in the answer. Without them, we'd have a much bigger number!"
+      ],
+      "equation": "0.0047 ≈ 0.005  (1 significant figure)"
+    },
+    {
+      "id": "zeros-between-digits",
+      "title": "Zeros sandwiched between digits do count",
+      "paragraphs": [
+        "305 has three significant figures. That zero sits between 3 and 5, so it counts too.",
+        "In 30,560, the first three significant figures are 3, 0 and 5. The next digit is 6, so 5 rounds up to 6."
+      ],
+      "equation": "30,560 ≈ 30,600  (3 significant figures)"
+    },
+    {
+      "id": "significant-figures",
+      "title": "Significant figures or decimal places?",
+      "paragraphs": [
+        "It's easy to mix these up. Decimal places count from the decimal point; significant figures start at the first digit that isn't zero.",
+        "0.0283 has four decimal places, but only three significant figures. To 1 significant figure, it's 0.03. To 2 significant figures, it's 0.028."
+      ],
+      "equation": "0.0283 ≈ 0.03  (1 significant figure)",
+      "note": "Before you start counting, check what the question asks for: significant figures or decimal places?"
+    },
+    {
+      "id": "place-value-zeros",
+      "title": "Keep the number the right size",
+      "paragraphs": [
+        "Let's round 5,480,217 to 2 significant figures. The first two are 5 and 4. The next digit is 8, so 4 rounds up to 5.",
+        "Now fill the remaining places with zeros. They keep the number the right size: our answer is still about five and a half million."
+      ],
+      "equation": "5,480,217 ≈ 5,500,000",
+      "note": "Writing just 55 would give a very different number! We need those zeros to make 5,500,000."
+    },
+    {
+      "id": "trailing-zeros",
+      "title": "Sometimes you need a zero at the end",
+      "paragraphs": [
+        "15.03 rounds to 15.0 at 3 significant figures. That final zero matters: it shows we've kept three significant figures.",
+        "Starting zeros don't count, but zeros at the end after a decimal point do, once you've reached the first non-zero digit."
+      ],
+      "equation": "15.03 ≈ 15.0  (3 significant figures)",
+      "note": "15 and 15.0 have the same value. Here, we write 15.0 to show the accuracy the question asks for."
+    },
+    {
+      "id": "carrying",
+      "title": "Take care when rounding a 9",
+      "paragraphs": [
+        "To round 9.96 to 2 significant figures, we keep both 9s. The next digit is 6, so we need to round up. This carries into the next column, giving 10.",
+        "For this answer, write 10. Adding a decimal zero to make 10.0 would show three significant figures."
+      ],
+      "equation": "9.96 ≈ 10  (2 significant figures)",
+      "note": "Go back to the original number each time you round. Rounding an already-rounded answer can give a different result."
+    }
+  ],
+  "guided": [
+    {
+      "number": "0.0283",
+      "accuracy": "1 significant figure",
+      "target": 3,
+      "decider": 4,
+      "answer": "0.03",
+      "options": [
+        "0.02",
+        "0.03",
+        "0.1"
+      ],
+      "prompt": "Round 0.0283 to 1 significant figure.",
+      "target_help": "The first significant figure is 2. Start counting there.",
+      "decider_help": "The digit right after the one we're keeping is 8. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 8, so we round 2 up to 3. That gives us 0.03.",
+      "significant_figures": 1,
+      "places": 2
+    },
+    {
+      "number": "0.0283",
+      "accuracy": "2 significant figures",
+      "target": 4,
+      "decider": 5,
+      "answer": "0.028",
+      "options": [
+        "0.028",
+        "0.029",
+        "0.03"
+      ],
+      "prompt": "Round 0.0283 to 2 significant figures.",
+      "target_help": "The first two significant figures are 2 and 8, so 8 is the one we need.",
+      "decider_help": "The digit right after the one we're keeping is 3. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 3, so 8 stays as it is. Our answer is 0.028.",
+      "significant_figures": 2,
+      "places": 3
+    },
+    {
+      "number": "5480217",
+      "accuracy": "2 significant figures",
+      "target": 1,
+      "decider": 2,
+      "answer": "5500000",
+      "options": [
+        "5,400,000",
+        "5,500,000",
+        "55"
+      ],
+      "prompt": "Round 5480217 to 2 significant figures.",
+      "target_help": "The first two significant figures are 5 and 4, so we stop at 4.",
+      "decider_help": "The digit right after the one we're keeping is 8. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 8, so 4 rounds up to 5. Fill the remaining places with zeros to keep the number the right size: 5,500,000.",
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "number": "147921",
+      "accuracy": "1 significant figure",
+      "target": 0,
+      "decider": 1,
+      "answer": "100000",
+      "options": [
+        "100,000",
+        "150,000",
+        "200,000"
+      ],
+      "prompt": "Round 147921 to 1 significant figure.",
+      "target_help": "The first significant figure is 1. That’s the only one we need to keep.",
+      "decider_help": "The digit right after the one we're keeping is 4. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 4, so 1 stays put. Fill the remaining places with zeros to get 100,000.",
+      "significant_figures": 1,
+      "places": 0
+    },
+    {
+      "number": "147921",
+      "accuracy": "2 significant figures",
+      "target": 1,
+      "decider": 2,
+      "answer": "150000",
+      "options": [
+        "140,000",
+        "150,000",
+        "148,000"
+      ],
+      "prompt": "Round 147921 to 2 significant figures.",
+      "target_help": "The first two significant figures are 1 and 4, so we stop at 4.",
+      "decider_help": "The digit right after the one we're keeping is 7. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 7, so 4 rounds up to 5. With zeros in the remaining places, we get 150,000.",
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "number": "30560",
+      "accuracy": "3 significant figures",
+      "target": 2,
+      "decider": 3,
+      "answer": "30600",
+      "options": [
+        "30,500",
+        "30,600",
+        "31,000"
+      ],
+      "prompt": "Round 30560 to 3 significant figures.",
+      "target_help": "Count 3, 0 and 5. The zero counts because it sits between two non-zero digits.",
+      "decider_help": "The digit right after the one we're keeping is 6. That's the one that tells us whether to round up.",
+      "explanation": "The next digit is 6, so 5 rounds up to 6. Keep zeros in the tens and ones places to give 30,600.",
+      "significant_figures": 3,
+      "places": 0
+    }
+  ],
+  "practice": [
+    {
+      "prompt": "Round 0.006784 to 2 significant figures.",
+      "answer": "0.0068",
+      "explanation": "The first two significant figures are 6 and 7. The next digit is 8, so 7 rounds up to 8. That gives us 0.0068.",
+      "skill": "round-significant-figures",
+      "options": [
+        "0.0067",
+        "0.0068",
+        "0.01"
+      ],
+      "significant_figures": 2,
+      "places": 4
+    },
+    {
+      "prompt": "Round 83 to 1 significant figure.",
+      "answer": "80",
+      "explanation": "The next digit is 3, so 8 stays as it is. Put a zero in the ones place to give 80.",
+      "skill": "round-significant-figures",
+      "options": [
+        "80",
+        "90",
+        "8"
+      ],
+      "significant_figures": 1,
+      "places": 0
+    },
+    {
+      "prompt": "Round 650 to 1 significant figure.",
+      "answer": "700",
+      "explanation": "The next digit is 5, so we round up. Our 6 hundreds become 7 hundreds: 700.",
+      "skill": "round-significant-figures",
+      "options": [
+        "600",
+        "650",
+        "700"
+      ],
+      "significant_figures": 1,
+      "places": 0
+    },
+    {
+      "prompt": "Round 7,462 to 2 significant figures.",
+      "answer": "7500",
+      "explanation": "We keep 7 and 4. The next digit is 6, so 4 rounds up to 5. Fill the last two places with zeros to give 7,500.",
+      "skill": "round-significant-figures",
+      "options": [
+        "7,400",
+        "7,500",
+        "75"
+      ],
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "prompt": "Round 0.0047 to 1 significant figure.",
+      "answer": "0.005",
+      "explanation": "Start at 4: that's the first significant figure. The next digit is 7, so we round up to 0.005.",
+      "skill": "round-significant-figures",
+      "options": [
+        "0.004",
+        "0.005",
+        "0.0"
+      ],
+      "significant_figures": 1,
+      "places": 3
+    },
+    {
+      "prompt": "Round 305 to 2 significant figures.",
+      "answer": "310",
+      "explanation": "The zero counts: it's the second significant figure. The next digit is 5, so that zero rounds up to 1, giving 310.",
+      "skill": "round-significant-figures",
+      "options": [
+        "300",
+        "310",
+        "30"
+      ],
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "prompt": "Round 15.03 to 3 significant figures.",
+      "answer": "15.0",
+      "explanation": "The third significant figure is 0. The next digit is 3, so it stays as it is. Keep the zero in 15.0 to show all three significant figures.",
+      "skill": "round-significant-figures",
+      "options": [
+        "15",
+        "15.0",
+        "15.1"
+      ],
+      "places": 1,
+      "significant_figures": 3
+    },
+    {
+      "prompt": "Round 9,644 to 2 significant figures.",
+      "answer": "9600",
+      "explanation": "The next digit after 9 and 6 is 4, so 6 stays put. Fill the last two places with zeros to give 9,600.",
+      "skill": "round-significant-figures",
+      "options": [
+        "9,600",
+        "9,700",
+        "96"
+      ],
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "prompt": "Round 9.96 to 2 significant figures.",
+      "answer": "10",
+      "explanation": "The next digit is 6, so we round up. This carries through both 9s and gives us 10.",
+      "skill": "round-significant-figures",
+      "options": [
+        "9.9",
+        "10",
+        "9.10"
+      ],
+      "places": 0,
+      "significant_figures": 2
+    },
+    {
+      "prompt": "Round 2.449 to 2 significant figures.",
+      "answer": "2.4",
+      "explanation": "Look at the original number: the digit after 2 and 4 is another 4. So we keep 2.4. Rounding to 2.45 first could lead us to the wrong answer.",
+      "skill": "round-significant-figures",
+      "options": [
+        "2.4",
+        "2.5",
+        "2.45"
+      ],
+      "significant_figures": 2,
+      "places": 1
+    }
+  ],
+  "check": [
+    {
+      "prompt": "Round 0.00726 to 2 significant figures.",
+      "answer": "0.0073",
+      "explanation": "Start at 7. The first two significant figures are 7 and 2. The next digit is 6, so 2 rounds up to 3, giving 0.0073.",
+      "skill": "round-significant-figures",
+      "significant_figures": 2,
+      "places": 4
+    },
+    {
+      "prompt": "Round 147,921 to 2 significant figures.",
+      "answer": "150000",
+      "explanation": "The next digit is 7, so 4 rounds up to 5. With zeros in the remaining places, we get 150,000.",
+      "skill": "round-significant-figures",
+      "significant_figures": 2,
+      "places": 0
+    },
+    {
+      "prompt": "Round 30,560 to 3 significant figures.",
+      "answer": "30600",
+      "explanation": "The next digit is 6, so 5 rounds up to 6. Keep zeros in the tens and ones places to give 30,600.",
+      "skill": "round-significant-figures",
+      "significant_figures": 3,
+      "places": 0
+    },
+    {
+      "prompt": "Round 9,644 to 1 significant figure.",
+      "answer": "10000",
+      "explanation": "The first significant figure is 9 and the next digit is 6, so we round up. This carries into the next column and gives 10,000.",
+      "skill": "round-significant-figures",
+      "significant_figures": 1,
+      "places": 0
+    },
+    {
+      "prompt": "Round 15.03 to 3 significant figures.",
+      "answer": "15.0",
+      "explanation": "The third significant figure is 0. The next digit is 3, so it stays as it is. Keep the zero in 15.0 to show all three significant figures.",
+      "skill": "round-significant-figures",
+      "places": 1,
+      "significant_figures": 3
+    },
+    {
+      "prompt": "Amir says: “0.0283 to 2 significant figures is 0.03.” Which explanation is correct?",
+      "answer": "Start at 2, keep 2 and 8, then use 3: the answer is 0.028.",
+      "options": [
+        "Start at 2, keep 2 and 8, then use 3: the answer is 0.028.",
+        "Count two digits after the decimal point: the answer is 0.03.",
+        "Leading zeros count, so the answer is 0.00."
+      ],
+      "explanation": "Start counting at 2, the first digit that isn't zero. We need 2 and 8, then we check the 3. It's less than 5, so our answer is 0.028.",
+      "skill": "round-significant-figures"
+    }
+  ]
+}
