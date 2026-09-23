@@ -856,6 +856,11 @@ a {
     opacity: 0.65;
 }
 
+/* Fill the existing connectors; preserve the journey's dots and spacing. */
+.lesson-navigation--stages .lesson-navigation__button[data-stage-progress]:not(:last-child)::after {
+    background: linear-gradient(to right, var(--success) var(--stage-fill, 0%), var(--border) var(--stage-fill, 0%));
+}
+
 @media (max-width: 520px) {
     .lesson-navigation--stages {
         width: min(100% - 32px, var(--page-width));

@@ -12,6 +12,8 @@
  *   setUserId(id)                -> switch user (re-reads progress)
  *   getLessonProgress(slug)      -> Promise<record|null>
  *   getAllProgress()             -> Promise<record[]>
+ *   saveLessonProgress(slug, record) -> Promise<void> (custom lesson state)
+ *   getScoreSummary()            -> Promise<{userId, points, completedLessons, lessons}>
  *   getSkillProgress(skillId)    -> Promise<record|null>
  *   getAllSkillProgress()        -> Promise<record[]>
  *   recordSkillAttempt(detail)   -> Promise<record|null>
@@ -828,6 +830,35 @@
 
         getAllProgress() {
             return store.adapter.list(store.userId);
+        },
+
+        // Self-contained lessons save their slide and answer state through the
+        // same user-scoped adapter as the shared lesson engine. Scores are a
+        // snapshot, never an increment, so reloads cannot award points twice.
+        async saveLessonProgress(slug, record) {
+            if (typeof slug !== 'string' || !slug || !record) return;
+            const snapshot = JSON.parse(JSON.stringify({
+                ...record, slug, updatedAt: new Date().toISOString()
+            }));
+            await store.adapter.save(store.userId, slug, snapshot);
+            document.dispatchEvent(new CustomEvent('maths1to9:progress-saved', {
+                detail: { slug }
+            }));
+        },
+
+        // Future profiles can read this without knowing individual lesson UIs.
+        async getScoreSummary() {
+            const lessons = await store.adapter.list(store.userId);
+            return {
+                userId: store.userId,
+                points: lessons.reduce((total, lesson) => total +
+                    (Number.isFinite(lesson.score?.points)
+                        ? Math.max(0, lesson.score.points) : 0), 0),
+                completedLessons: lessons.filter(lesson => lesson.finished).length,
+                lessons: lessons.map(({ slug, title, score, finished }) => ({
+                    slug, title, score: score ?? null, finished: finished === true
+                }))
+            };
         },
 
         saveCurrentLesson,

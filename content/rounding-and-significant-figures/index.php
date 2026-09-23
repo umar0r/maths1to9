@@ -1,3 +1,10 @@
+<?php
+
+declare(strict_types=1);
+
+$lessonId = 'rounding-and-significant-figures';
+$pageTitle = 'Rounding';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +16,8 @@
     >
 
     <title>
-        Place value        | Maths1to9
+        <?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?>
+        | Maths1to9
     </title>
 
     <link
@@ -20,20 +28,22 @@
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=28">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
-    data-lesson-id="place-value"
+    data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
     data-lesson-src="./lesson.json"
+    data-lesson-renderer="custom"
 >
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="site-logo" href="../../">
+            <a class="site-logo" href="../../index.php">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
             </a>
 
-            <a class="site-header__back" href="../../">
+            <a class="site-header__back" href="../../index.php">
                 All lessons
             </a>
         </div>
@@ -59,9 +69,7 @@
     </noscript>
 
     <script src="../../assets/js/progress.js"></script>
-    <script src="../../assets/js/lesson-recommendations.js?v=1"></script>
-    <script src="./interactive.js?v=20"></script>
-    <script src="./questions.js?v=39"></script>
     <script src="../../assets/js/lesson-engine.js?v=23"></script>
+    <script src="./lesson.js?v=4"></script>
 </body>
 </html>

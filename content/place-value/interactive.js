@@ -539,6 +539,7 @@
         }
 
         function renderExample() {
+            window.Maths1to9Lesson?.setSectionProgress?.('product-interactive', exampleIndex, examples.length);
             const example = examples[exampleIndex];
             const bounds = getMovementBounds(example.factors, columns, onesIndex);
             const minimumOffsets = example.factors.map((factor, index) => {
@@ -725,6 +726,7 @@
         }
 
         function render() {
+            window.Maths1to9Lesson?.setSectionProgress?.('method', exampleIndex, examples.length);
             const example = examples[exampleIndex];
             const columns = example.columns;
             const digits = example.digits;

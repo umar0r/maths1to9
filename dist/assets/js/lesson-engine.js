@@ -1,6 +1,59 @@
+/* Shared journey behaviour for both engine-rendered and custom lessons.
+ * Routes select views only: handlers must not award points for navigation.
+ */
+(() => {
+    'use strict';
+    function createRouter() {
+        const routes = new Map();
+        let started = false;
+        let navigating = false;
+        function readHash() {
+            try { return decodeURIComponent(window.location.hash.slice(1)); }
+            catch { return ''; }
+        }
+        function openHash() {
+            const route = routes.get(readHash());
+            if (!route) return false;
+            navigating = true;
+            try { route(); } finally { navigating = false; }
+            return true;
+        }
+        return {
+            register(id, handler, aliases = []) {
+                [id, ...aliases].forEach(key => routes.set(key, handler));
+            },
+            start() {
+                if (!started) window.addEventListener('hashchange', openHash);
+                started = true;
+                return openHash();
+            },
+            sync(id, { replace = false } = {}) {
+                if (!started || navigating || readHash() === id) return;
+                const url = new URL(window.location.href);
+                url.hash = id;
+                window.history[replace ? 'replaceState' : 'pushState'](null, '', url);
+            },
+            hasHash() { return routes.has(readHash()); },
+            destroy() { window.removeEventListener('hashchange', openHash); }
+        };
+    }
+    function updateStageProgress(button, completed, total) {
+        const fraction = total > 0 ? Math.max(0, Math.min(1, completed / total)) : 0;
+        button.style.setProperty('--stage-fill', `${fraction * 100}%`);
+        button.dataset.stageProgress = String(Math.round(fraction * 100));
+        button.setAttribute('aria-label', `${button.textContent.trim()}, ${Math.round(fraction * 100)}% complete`);
+    }
+    window.Maths1to9LessonEngine = { createRouter, updateStageProgress };
+})();
+
 (() => {
     'use strict';
 
+    if (document.body.dataset.lessonRenderer === 'custom') return;
+
+    const initialHash = window.location.hash;
+    const router = window.Maths1to9LessonEngine.createRouter();
+    const activityProgress = new Map();
     const app = document.getElementById('lesson-app');
 
     if (!app) {
@@ -94,6 +147,14 @@
              */
             listenForSectionGating();
 
+            state.sections.forEach((section, index) => {
+                router.register(section.id, () => showSection(index, { unlock: true }));
+            });
+            state.navigationGroups.forEach(group => {
+                const aliases = [group.label.toLowerCase().replace(/\s+/g, '-')];
+                if (group.id === 'practice') aliases.push('practise');
+                router.register(group.id, () => showSection(group.firstIndex, { unlock: true }), aliases);
+            });
             exposeLessonApi();
             mountLessonInteractive();
 
@@ -125,6 +186,7 @@
                 moveFocus: false,
                 emitEvent: true
             });
+            if (!router.start()) router.sync(state.sections[state.currentIndex].id, { replace: true });
         } catch (error) {
             console.error(error);
 
@@ -1816,6 +1878,7 @@
         }
 
         state.completedSections.add(id);
+        updateProgress();
         updateControls();
 
         return true;
@@ -1841,6 +1904,9 @@
         if (!isSectionComplete(state.currentIndex)) {
             return;
         }
+
+        state.completedSections.add(state.sections[state.currentIndex].id);
+        updateProgress();
 
         if (state.currentIndex < lastIndex) {
             const nextIndex =
@@ -1955,6 +2021,7 @@
 
         updateProgress();
         updateControls();
+        router.sync(state.sections[index].id);
 
         const activeSection =
             state.sectionElements[index];
@@ -1983,8 +2050,17 @@
     }
 
     function updateProgress() {
-        // Progress is communicated by the stage navigation. Individual
-        // activities can add their own focused progress indicator.
+        state.navigationButtons.forEach((button, index) => {
+            const group = state.navigationGroups[index];
+            const completed = group.sectionIndexes.reduce((sum, sectionIndex) => {
+                const id = state.sections[sectionIndex].id;
+                if (state.completedSections.has(id)) return sum + 1;
+                if (activityProgress.has(id)) return sum + activityProgress.get(id);
+                return sum;
+            }, 0);
+            window.Maths1to9LessonEngine.updateStageProgress(button, completed, group.sectionIndexes.length);
+            button.classList.toggle('lesson-navigation__button--complete', completed === group.sectionIndexes.length);
+        });
     }
 
     function updateHeaderMode(currentGroup) {
@@ -2308,6 +2384,17 @@
 
     function exposeLessonApi() {
         window.Maths1to9Lesson = {
+            registerHashRoute(id, handler, aliases = []) {
+                router.register(id, handler, aliases);
+            },
+
+            setSlideHash(id, options) { router.sync(id, options); },
+
+            setSectionProgress(sectionId, completed, total) {
+                activityProgress.set(sectionId, total > 0 ? Math.max(0, Math.min(1, completed / total)) : 0);
+                updateProgress();
+            },
+
             getLesson() {
                 return state.lesson;
             },
@@ -2375,6 +2462,8 @@
             },
 
             restoreProgress(progress) {
+                // An explicit deep link takes precedence over a saved resume point.
+                if (initialHash && router.hasHash()) return false;
                 if (!isObject(progress)) {
                     return false;
                 }

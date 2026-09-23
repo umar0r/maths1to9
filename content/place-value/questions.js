@@ -1009,7 +1009,22 @@
             </section>`;
         }
 
+        window.Maths1to9Lesson?.registerHashRoute?.('summary', () => {
+            window.Maths1to9Lesson.goToSection('comparison', { unlock: true });
+            removeCheckIntroduction();
+            root.innerHTML = summaryHtml();
+            state.resetOnReturn = true;
+            window.Maths1to9Lesson.setSectionAction('comparison', {
+                label: 'Continue', disabled: false,
+                onClick: () => { state.resetOnReturn = false; render(); }
+            });
+        });
+
         function render() {
+            window.Maths1to9Lesson?.setSectionProgress?.('comparison', state.index, questions.length);
+            if (window.Maths1to9Lesson?.getCurrentSection?.().id === 'comparison') {
+                window.Maths1to9Lesson?.setSlideHash?.('comparison');
+            }
             if (state.index >= questions.length) {
                 renderReview();
                 return;
@@ -1268,6 +1283,7 @@
 
         function updateHeaderProgress() {
             const completed = completedQuestionCount();
+            window.Maths1to9Lesson?.setSectionProgress?.('question-bank', completed, sessionLength);
             const progress = Math.round((completed / sessionLength) * 100);
             const header = document.querySelector('.lesson-header__inner');
             if (!header) return;
