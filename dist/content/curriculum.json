@@ -9,7 +9,7 @@
       "description": "Build confidence with numbers, calculations, fractions and accuracy.",
       "lessons": [
         {"folder":"place-value","title":"Place value and ordering","subtitle":"Understand what each digit is worth and put numbers in order.","skills":["place-value","order-numbers","inequality-symbols"]},
-        {"folder":"negative-numbers","title":"Negative numbers","subtitle":"Order and calculate with numbers below zero.","skills":["order-negative-numbers","calculate-negative-numbers"]},
+        {"folder":"negative-numbers","title":"Subtracting negative numbers","subtitle":"Rewrite subtracting a negative as adding a positive.","skills":["calculate-negative-numbers"]},
         {"folder":"calculating-with-decimals","title":"Calculating with decimals","subtitle":"Use the four operations accurately with decimal numbers.","skills":["decimal-add-subtract","decimal-multiply-divide"]},
         {"folder":"order-of-operations","title":"Order of operations","subtitle":"Choose the correct calculation to do next.","skills":["order-of-operations","inverse-operations"]},
         {"folder":"rounding-and-significant-figures","title":"Rounding and significant figures","subtitle":"Round numbers to a requested degree of accuracy.","skills":["round-decimal-places","round-significant-figures","round-in-context"]},
@@ -70,7 +70,7 @@
         {"folder":"sharing-in-a-ratio","title":"Sharing in a ratio","subtitle":"Use the total number of parts to divide an amount fairly.","skills":["share-part-part-ratio","share-part-whole-ratio"]},
         {"folder":"ratio-problems","title":"Solving ratio problems","subtitle":"Use ratio to compare, scale, mix and find missing amounts.","skills":["ratio-missing-amounts","ratio-contexts","best-buys"]},
         {"folder":"proportion-and-unitary-method","title":"Proportion and the unitary method","subtitle":"Find the value of one unit, then scale to what is needed.","skills":["equality-of-ratios","unitary-method","proportion-contexts"]},
-        {"folder":"percentages-of-amounts","title":"Percentages of amounts","subtitle":"Find common and non-calculator percentages of quantities.","skills":["percentage-as-operator","percentage-of-amount"]},
+        {"folder":"percentages-of-amounts","title":"Percentages of amounts","subtitle":"Understand parts per hundred and find percentages using fractions, mental methods and multipliers.","skills":["percentage-as-operator","percentage-of-amount"]},
         {"folder":"percentage-change","title":"Percentage change","subtitle":"Calculate and interpret percentage increases and decreases.","skills":["percentage-increase-decrease","express-change-percentage"]},
         {"folder":"percentage-multipliers","title":"Percentage multipliers","subtitle":"Use one multiplication to apply percentage change.","skills":["decimal-multipliers","repeated-percentage-change"]},
         {"folder":"reverse-percentages","title":"Reverse percentages","subtitle":"Work backwards from a changed amount to the original.","skills":["original-value-percentages"]},

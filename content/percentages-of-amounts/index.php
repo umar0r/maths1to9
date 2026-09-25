@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-$lessonId = 'negative-numbers';
-$pageTitle = 'Subtracting negative numbers';
+$lessonId = 'percentages-of-amounts';
+$pageTitle = 'Percentages of amounts';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,8 +27,8 @@ $pageTitle = 'Subtracting negative numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=28">
+    <link rel="stylesheet" href="./lesson.css?v=6">
 </head>
 
 <body
@@ -69,8 +69,7 @@ $pageTitle = 'Subtracting negative numbers';
     </noscript>
 
     <script src="../../assets/js/progress.js"></script>
-
     <script src="../../assets/js/lesson-engine.js?v=26"></script>
-    <script src="./lesson.js?v=1"></script>
+    <script src="./lesson.js?v=12"></script>
 </body>
 </html>

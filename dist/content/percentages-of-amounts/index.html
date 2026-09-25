@@ -1,10 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
-$lessonId = 'negative-numbers';
-$pageTitle = 'Subtracting negative numbers';
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,8 +9,7 @@ $pageTitle = 'Subtracting negative numbers';
     >
 
     <title>
-        <?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?>
-        | Maths1to9
+        Percentages of amounts        | Maths1to9
     </title>
 
     <link
@@ -27,23 +19,23 @@ $pageTitle = 'Subtracting negative numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=28">
+    <link rel="stylesheet" href="./lesson.css?v=6">
 </head>
 
 <body
-    data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
+    data-lesson-id="percentages-of-amounts"
     data-lesson-src="./lesson.json"
     data-lesson-renderer="custom"
 >
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="site-logo" href="../../index.php">
+            <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
             </a>
 
-            <a class="site-header__back" href="../../index.php">
+            <a class="site-header__back" href="../../">
                 All lessons
             </a>
         </div>
@@ -69,8 +61,7 @@ $pageTitle = 'Subtracting negative numbers';
     </noscript>
 
     <script src="../../assets/js/progress.js"></script>
-
     <script src="../../assets/js/lesson-engine.js?v=26"></script>
-    <script src="./lesson.js?v=1"></script>
+    <script src="./lesson.js?v=12"></script>
 </body>
 </html>

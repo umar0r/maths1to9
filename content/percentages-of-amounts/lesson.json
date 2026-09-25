@@ -1,0 +1,495 @@
+{
+  "id": "percentages-of-amounts-01",
+  "slug": "percentages-of-amounts",
+  "title": "Percentages of amounts",
+  "subtitle": "See parts per hundred, then find a percentage of any amount.",
+  "navigation_stages": [
+    {
+      "id": "0",
+      "label": "Learn"
+    },
+    {
+      "id": "1",
+      "label": "Step by step"
+    },
+    {
+      "id": "2",
+      "label": "Practise"
+    },
+    {
+      "id": "3",
+      "label": "Check"
+    }
+  ],
+  "learn": [
+    {
+      "id": "learn",
+      "title": "What does a percentage mean?",
+      "paragraphs": [
+        "Per cent means out of 100. A percentage tells us how many equal parts out of a hundred we have.",
+        "100% is the whole amount, 50% is half, and 0% is none. The whole amount can be any size."
+      ],
+      "equation": "37% = 37/100 = 0.37"
+    },
+    {
+      "id": "same-amount",
+      "title": "The same amount, three ways",
+      "paragraphs": [
+        "Fractions, decimals and percentages can describe the same share. Divide a percentage by 100 to write it as a decimal.",
+        "To write a percentage as a fraction, put it over 100 and simplify. To turn a decimal into a percentage, multiply by 100."
+      ],
+      "equation": "50% = 1/2 = 0.5   ·   20% = 1/5 = 0.2",
+      "note": "5% = 0.05, not 0.5. One fifth is 20%, not 5%."
+    },
+    {
+      "id": "colour-a-percentage",
+      "title": "Colour three quarters",
+      "paragraphs": [
+        "This circle has 20 equal sectors. Each sector is 5% of the whole. Tap a sector to colour it; tap it again to clear it.",
+        "Colour 75% of the circle, then check your answer."
+      ],
+      "equation": "75% = 75/100 = 3/4 = 0.75",
+      "colour": 75
+    },
+    {
+      "id": "use-a-fraction",
+      "title": "Use a familiar fraction",
+      "paragraphs": [
+        "To find a fraction of an amount, divide by the denominator, then multiply by the numerator. For 75% = 3/4, divide the whole amount by 4, then multiply by 3.",
+        "A box contains 32 pencils. Three quarters of them are blue. How many are blue?"
+      ],
+      "equation": "75% of 32 = 32 ÷ 4 × 3 = 24",
+      "note": "Compare the actual amounts, not just the percentages. Here, 75% of 32 is 24. But 60% of 50 is 30 (10% is 5, so 60% is 6 × 5). The smaller percentage gives the larger amount because the wholes are different."
+    },
+    {
+      "id": "building-blocks",
+      "title": "Build from 10% and 1%",
+      "paragraphs": [
+        "To find 10%, divide by 10. To find 1%, divide by 100. For 5%, halve the 10% amount.",
+        "Find 35% of £80: 10% is £8, so 30% is £24. Another 5% is £4. Add the parts."
+      ],
+      "equation": "35% of £80 = £24 + £4 = £28",
+      "note": "Choose the simplest pieces for the numbers. For 26% of 180, use 25% + 1%: 180 ÷ 4 = 45 and 180 ÷ 100 = 1.8. Add them to get 46.8. You do not always need to start with 10%."
+    },
+    {
+      "id": "one-percent",
+      "title": "Small parts are useful",
+      "paragraphs": [
+        "Find 12% of 350 g. First find 10%: 350 ÷ 10 = 35 g. Then find 1%: 350 ÷ 100 = 3.5 g.",
+        "12% is 10% + 2%, so add 35 g and twice 3.5 g."
+      ],
+      "equation": "12% of 350 g = 35 g + 7 g = 42 g",
+      "note": "For a comparison question, calculate each percentage of its own whole, then compare the results. Show both calculations and finish with a sentence saying which amount is greater."
+    },
+    {
+      "id": "multipliers",
+      "title": "Of means multiply",
+      "paragraphs": [
+        "For any percentage, divide it by 100 and multiply by the whole amount. A calculator makes this useful for awkward percentages.",
+        "For 23% of 450, the multiplier is 0.23."
+      ],
+      "equation": "23% of 450 = 0.23 × 450 = 103.5",
+      "note": "Finding 25% of an amount uses 0.25. Increasing or decreasing an amount is a different question, covered in a later lesson."
+    },
+    {
+      "id": "over-100",
+      "title": "More than the whole",
+      "paragraphs": [
+        "Percentages can be greater than 100%. 150% is one whole and another half.",
+        "For positive amounts, less than 100% gives a smaller amount; more than 100% gives a larger amount."
+      ],
+      "equation": "150% of 46 = 1.5 × 46 = 69",
+      "note": "Always identify the whole amount before calculating a percentage."
+    }
+  ],
+  "guided": [
+    {
+      "prompt": "Find 75% of 56.",
+      "steps": [
+        {
+          "prompt": "Shade 75% of the bar. How many quarters is that?",
+          "answer": "3/4",
+          "explanation": "75/100 simplifies to 3/4.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "1/4",
+            "3/4",
+            "1/5"
+          ],
+          "grid": {
+            "percent": 75,
+            "whole": 56,
+            "mode": "fraction",
+            "parts": 4
+          }
+        },
+        {
+          "prompt": "Shade just one quarter of 56. What is it worth?",
+          "answer": "14",
+          "explanation": "56 ÷ 4 = 14.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "7",
+            "14",
+            "28"
+          ],
+          "grid": {
+            "percent": 25,
+            "whole": 56,
+            "mode": "amount",
+            "parts": 4
+          }
+        },
+        {
+          "prompt": "Now shade three quarters of 56. What is the total?",
+          "answer": "42",
+          "explanation": "3 × 14 = 42, so 75% of 56 is 42.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "14",
+            "42",
+            "75"
+          ],
+          "grid": {
+            "percent": 75,
+            "whole": 56,
+            "mode": "amount",
+            "parts": 4
+          }
+        }
+      ],
+      "whole": 56,
+      "percent": 75,
+      "split": 70,
+      "rows": [
+        {
+          "percent": 10,
+          "calculation": "56 ÷ 10",
+          "answer": "5.6",
+          "label": "Find 10%",
+          "start": 0
+        },
+        {
+          "percent": 70,
+          "calculation": "5.6 × 7",
+          "answer": "39.2",
+          "label": "Build 70%",
+          "start": 0
+        },
+        {
+          "percent": 1,
+          "calculation": "56 ÷ 100",
+          "answer": "0.56",
+          "label": "Find 1%",
+          "start": 70
+        },
+        {
+          "percent": 5,
+          "calculation": "0.56 × 5",
+          "answer": "2.8",
+          "label": "Build 5%",
+          "start": 70
+        },
+        {
+          "percent": 75,
+          "calculation": "39.2 + 2.8",
+          "answer": "42",
+          "label": "Add 70% and 5%",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "prompt": "Find 35% of £120.",
+      "steps": [
+        {
+          "prompt": "Find 10% of £120.",
+          "answer": "12",
+          "explanation": "120 ÷ 10 = 12.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "1.2",
+            "12",
+            "30"
+          ]
+        },
+        {
+          "prompt": "Find 5% of £120.",
+          "answer": "6",
+          "explanation": "Halve £12 to get £6.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "5",
+            "6",
+            "24"
+          ]
+        },
+        {
+          "prompt": "Add 30% and 5%.",
+          "answer": "42",
+          "explanation": "3 × £12 + £6 = £42.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "36",
+            "42",
+            "48"
+          ]
+        }
+      ],
+      "whole": 120,
+      "percent": 35,
+      "split": 30
+    },
+    {
+      "prompt": "Find 17% of 240 kg.",
+      "steps": [
+        {
+          "prompt": "Find 1% of 240 kg.",
+          "answer": "2.4",
+          "explanation": "240 ÷ 100 = 2.4.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "2.4",
+            "17",
+            "24"
+          ]
+        },
+        {
+          "prompt": "Find 7% of 240 kg.",
+          "answer": "16.8",
+          "explanation": "7 × 2.4 = 16.8.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "7.4",
+            "16.8",
+            "168"
+          ]
+        },
+        {
+          "prompt": "Add 10% and 7%.",
+          "answer": "40.8",
+          "explanation": "24 + 16.8 = 40.8 kg.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "26.4",
+            "40.8",
+            "57"
+          ]
+        }
+      ],
+      "whole": 240,
+      "percent": 17,
+      "split": 10,
+      "rows": [
+        {
+          "percent": 10,
+          "calculation": "240 ÷ 10",
+          "answer": "24",
+          "label": "Find 10%",
+          "start": 0
+        },
+        {
+          "percent": 1,
+          "calculation": "240 ÷ 100",
+          "answer": "2.4",
+          "label": "Find 1%",
+          "start": 10
+        },
+        {
+          "percent": 7,
+          "calculation": "2.4 × 7",
+          "answer": "16.8",
+          "label": "Build 7%",
+          "start": 10
+        },
+        {
+          "percent": 17,
+          "calculation": "24 + 16.8",
+          "answer": "40.8",
+          "label": "Add 10% and 7%",
+          "start": 0
+        }
+      ]
+    },
+    {
+      "prompt": "Find 8% of £65 using a multiplier.",
+      "steps": [
+        {
+          "prompt": "Which decimal is 8%?",
+          "answer": "0.08",
+          "explanation": "8 ÷ 100 = 0.08.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "0.08",
+            "0.8",
+            "8"
+          ]
+        },
+        {
+          "prompt": "Which calculation finds 8% of £65?",
+          "answer": "0.08 × 65",
+          "explanation": "Of means multiply.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "0.08 × 65",
+            "0.8 × 65",
+            "65 ÷ 0.08"
+          ]
+        },
+        {
+          "prompt": "Calculate the amount in pounds.",
+          "answer": "5.2",
+          "explanation": "0.08 × 65 = 5.2, so the amount is £5.20.",
+          "skill": "percentage-of-amount",
+          "options": [
+            "0.52",
+            "5.2",
+            "52"
+          ]
+        }
+      ],
+      "whole": 65,
+      "percent": 8,
+      "split": 8
+    }
+  ],
+  "practice": [
+    {
+      "prompt": "Write 7% as a decimal.",
+      "answer": "0.07",
+      "explanation": "7 ÷ 100 = 0.07.",
+      "skill": "decimal-percentage-conversion",
+      "options": [
+        "0.7",
+        "0.07",
+        "7"
+      ]
+    },
+    {
+      "prompt": "Write 0.65 as a percentage. Enter the number only.",
+      "answer": "65",
+      "explanation": "0.65 × 100 = 65%.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Which fraction equals 40%?",
+      "answer": "2/5",
+      "explanation": "40/100 simplifies to 2/5.",
+      "skill": "percentage-of-amount",
+      "options": [
+        "2/5",
+        "4/5",
+        "1/4"
+      ]
+    },
+    {
+      "prompt": "Find 25% of 64.",
+      "answer": "16",
+      "explanation": "64 ÷ 4 = 16.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 15% of £40. Enter pounds.",
+      "answer": "6",
+      "explanation": "10% is £4 and 5% is £2: together £6.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 1% of 900.",
+      "answer": "9",
+      "explanation": "900 ÷ 100 = 9.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 45% of 60.",
+      "answer": "27",
+      "explanation": "40% is 24 and 5% is 3. Add them to get 27.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 99% of 500.",
+      "answer": "495",
+      "explanation": "Subtract 1%: 500 − 5 = 495.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 150% of 30.",
+      "answer": "45",
+      "explanation": "One whole and a half: 30 + 15 = 45.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Use a calculator: find 6% of £145. Enter pounds.",
+      "answer": "8.7",
+      "explanation": "0.06 × 145 = £8.70.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "40% of 35 club members cycle to school. How many cycle?",
+      "answer": "14",
+      "explanation": "0.4 × 35 = 14.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "A full battery holds 3200 mAh. How much charge is 85%, in mAh?",
+      "answer": "2720",
+      "explanation": "0.85 × 3200 = 2720 mAh.",
+      "skill": "percentage-of-amount"
+    }
+  ],
+  "check": [
+    {
+      "prompt": "Write 4% as a decimal.",
+      "answer": "0.04",
+      "explanation": "4 ÷ 100 = 0.04.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Write 0.125 as a percentage. Enter the number only.",
+      "answer": "12.5",
+      "explanation": "0.125 × 100 = 12.5%.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 75% of 44.",
+      "answer": "33",
+      "explanation": "44 ÷ 4 × 3 = 33.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 35% of 160.",
+      "answer": "56",
+      "explanation": "30% is 48 and 5% is 8: 48 + 8 = 56.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Use a multiplier to find 18% of 650.",
+      "answer": "117",
+      "explanation": "0.18 × 650 = 117.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Find 125% of 72.",
+      "answer": "90",
+      "explanation": "1.25 × 72 = 90.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "A £90 coat has 20% off. How many pounds are taken off?",
+      "answer": "18",
+      "explanation": "The question asks for the discount: 0.2 × 90 = £18.",
+      "skill": "percentage-of-amount"
+    },
+    {
+      "prompt": "Which statement explains 3% correctly?",
+      "answer": "3% = 0.03 because 3 ÷ 100 = 0.03.",
+      "explanation": "Per cent means out of 100.",
+      "skill": "percentage-of-amount",
+      "options": [
+        "3% = 0.3 because 3 ÷ 10 = 0.3.",
+        "3% = 0.03 because 3 ÷ 100 = 0.03.",
+        "3% = 3 because the number stays the same."
+      ]
+    }
+  ]
+}

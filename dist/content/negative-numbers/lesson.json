@@ -1,170 +1,37 @@
 {
   "id": "negative-numbers-01",
   "slug": "negative-numbers",
-  "title": "Negative numbers",
-  "subtitle": "Compare them, move on a number line, and calculate with them.",
-  "assessment": {
-    "question_types": {
-      "order": "order-negative-numbers",
-      "temperature": "calculate-negative-numbers",
-      "addSubtract": "calculate-negative-numbers",
-      "multiplyDivide": "calculate-negative-numbers",
-      "substitution": "calculate-negative-numbers"
-    }
-  },
-  "explanation": {
-    "eyebrow": "Learn",
-    "title": "Negative numbers are below zero",
-    "paragraphs": [
-      "A temperature of −2°C is 2 degrees below zero.",
-      "A temperature of −7°C is 7 degrees below zero.",
-      "The further below zero the temperature is, the colder it is. So −7°C is colder than −2°C.",
-      "On a number line, numbers increase as you move right and decrease as you move left.",
-      "That is why −7 is smaller than −2."
-    ]
-  },
-  "comparison": {
-    "eyebrow": "Check",
-    "title": "Which number is greater?",
-    "intro": "Choose > or <. The number further right on the number line is greater.",
-    "questions": [
-      {
-        "left": -5,
-        "right": -3,
-        "answer": "<",
-        "explanation": "−5 is further left than −3, so −5 is smaller."
-      },
-      {
-        "left": -2,
-        "right": 1,
-        "answer": "<",
-        "explanation": "−2 is left of zero. 1 is right of zero. So −2 is smaller."
-      },
-      {
-        "left": 0,
-        "right": -4,
-        "answer": ">",
-        "explanation": "0 is to the right of −4, so 0 is greater."
-      },
-      {
-        "left": -7,
-        "right": -10,
-        "answer": ">",
-        "explanation": "−7 is to the right of −10, so −7 is greater."
-      },
-      {
-        "left": -1,
-        "right": -8,
-        "answer": ">",
-        "explanation": "−1 is closer to zero and sits to the right of −8, so −1 is greater."
-      },
-      {
-        "left": -6,
-        "right": 6,
-        "answer": "<",
-        "explanation": "−6 is left of zero. 6 is right of zero. So −6 is smaller."
-      }
-    ]
-  },
-  "interactive": {
-    "eyebrow": "Explore",
-    "title": "Move on the number line",
-    "intro": "Drag the counter. Moving right makes the number greater. Moving left makes the number smaller.",
-    "start": -3,
-    "min": -10,
-    "max": 10
-  },
-  "sign_interactive": {
-    "eyebrow": "Explore",
-    "title": "What do the signs change?",
-    "intro": "Tap one sign at a time. For addition and subtraction, watch which way you move. For multiplication and division, watch whether the answer is positive or negative.",
-    "addsub": {
-      "first": 7,
-      "second": 4
-    },
-    "muldiv": {
-      "first": 6,
-      "second": 3
-    }
-  },
-  "method": {
-    "eyebrow": "Method",
-    "title": "Add and subtract on a number line",
-    "intro": "Use four steps: Understand → Start → Move → Read.",
-    "steps": [
-      {
-        "title": "Understand",
-        "text": "Decide which way the second number makes you move. Adding a positive moves right. Subtracting a positive moves left. Adding a negative moves left. Subtracting a negative moves right."
-      },
-      {
-        "title": "Start",
-        "text": "Find the first number on the number line. In 5 − (−3), start at 5."
-      },
-      {
-        "title": "Move",
-        "text": "Subtracting −3 means reverse a move of 3 to the left. Move 3 places right instead."
-      },
-      {
-        "title": "Read",
-        "text": "Read the number you land on. You land on 8, so 5 − (−3) = 8."
-      }
-    ]
-  },
-  "worked_examples": [
+  "title": "Subtracting negative numbers",
+  "subtitle": "Rewrite subtracting a negative as adding a positive.",
+  "learning_goal": "Learn how to subtract a negative number by rewriting it as addition.",
+  "rule": "a − (−b) = a + b",
+  "navigation_stages": [
     {
-      "title": "Work out −3 + 7",
-      "steps": [
-        "Start at −3 on the number line.",
-        "You are adding positive 7, so move 7 places right.",
-        "Count through zero and stop at 4.",
-        "So −3 + 7 = 4."
-      ],
-      "answer": "−3 + 7 = 4"
+      "id": "learn",
+      "label": "Learn"
     },
     {
-      "title": "Work out 5 − (−3)",
-      "steps": [
-        "Start at 5 on the number line.",
-        "A negative 3 points left.",
-        "Subtracting reverses that direction, so move 3 places right.",
-        "You land on 8. This is why 5 − (−3) has the same result as 5 + 3."
-      ],
-      "answer": "5 − (−3) = 8"
+      "id": "step-by-step",
+      "label": "Step by Step"
     },
     {
-      "title": "Work out −6 × (−4)",
-      "steps": [
-        "First find the size of the answer: 6 × 4 = 24.",
-        "Each negative sign reverses the sign of the answer.",
-        "There are two negative signs, so the sign is reversed twice.",
-        "Two reversals return to positive, so the answer is 24."
-      ],
-      "answer": "−6 × (−4) = 24"
+      "id": "practise",
+      "label": "Practise"
     },
     {
-      "title": "Work out 24 ÷ (−3)",
-      "steps": [
-        "First find the size of the answer: 24 ÷ 3 = 8.",
-        "There is one negative sign.",
-        "One negative reverses the sign of the answer.",
-        "So the answer is −8."
-      ],
-      "answer": "24 ÷ (−3) = −8"
-    },
-    {
-      "title": "Work out 3r − q when r = −3 and q = 2",
-      "steps": [
-        "Replace r with −3 and q with 2: 3 × (−3) − 2.",
-        "Multiply first. One negative gives a negative answer, so 3 × (−3) = −9.",
-        "The calculation is now −9 − 2.",
-        "Start at −9 and move 2 places left. You land on −11."
-      ],
-      "answer": "3r − q = −11"
+      "id": "check",
+      "label": "Check"
     }
   ],
-  "question_bank": {
-    "eyebrow": "Practice",
-    "title": "Practise negative numbers",
-    "intro": "Begin by comparing negative numbers. Then practise moving on a number line, calculating with signs, and using negative values in algebra."
+  "renderer": "custom",
+  "mastery": {
+    "question_ids": [
+      "check-1",
+      "check-2",
+      "check-3",
+      "check-4"
+    ],
+    "reasoning_question": "check-5",
+    "explanations": "self-assessed against model answers"
   }
 }
