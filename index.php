@@ -282,7 +282,7 @@ if ($uncategorisedLessons !== []) {
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="./assets/css/app.css">
+    <link rel="stylesheet" href="./assets/css/app.css?v=28">
     <link rel="stylesheet" href="./assets/css/home.css">
 </head>
 
