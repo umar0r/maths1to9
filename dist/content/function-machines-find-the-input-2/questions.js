@@ -217,7 +217,10 @@
             .map((operation, index) => calculation(problem.values[index], operation))
             .join(', then ');
 
-        const wrongInput = problem.input + 1;
+        // Keep the alternative input different while preserving whole-number division.
+        const inputOffset = problem.operations.reduce((offset, operation) =>
+            operation.type === 'divide' ? offset * operation.value : offset, 1);
+        const wrongInput = problem.input + inputOffset;
         let wrongCurrent = wrongInput;
         const wrongParts = problem.operations.map((operation) => {
             const text = calculation(wrongCurrent, operation);
