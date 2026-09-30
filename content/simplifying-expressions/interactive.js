@@ -417,10 +417,12 @@
 
         const collectedFamilies = new Set();
         let draggedId = '';
+        let selectedTile = null;
 
         root.innerHTML = `
             <article class="question-card">
                 <p><strong>Terms</strong></p>
+                <p>Select a term, then choose its tray below. You can also drag terms into trays.</p>
 
                 <div
                     class="question-options"
@@ -431,6 +433,7 @@
                             class="button"
                             type="button"
                             draggable="true"
+                            aria-pressed="false"
                             data-sort-term="${escapeAttribute(term.id)}"
                             data-family="${escapeAttribute(term.family)}"
                         >
@@ -449,6 +452,12 @@
                         <p>
                             <strong>${escapeHtml(tray.label)}</strong>
                         </p>
+
+                        <button
+                            class="button"
+                            type="button"
+                            data-place-family="${escapeAttribute(tray.family)}"
+                        >Place selected term in ${escapeHtml(tray.label)}</button>
 
                         <div
                             class="question-options"
@@ -483,6 +492,7 @@
                 return;
             }
 
+            selectTile(null);
             draggedId = tile.dataset.sortTerm || '';
 
             event.dataTransfer?.setData(
@@ -519,44 +529,73 @@
                     `[data-sort-term="${cssEscape(id)}"]`
                 );
 
-                if (!tile) {
-                    return;
-                }
-
-                const family = tile.dataset.family || '';
-                const trayFamily = tray.dataset.sortTray || '';
-
-                if (family !== trayFamily) {
-                    feedback.className =
-                        'question-feedback is-visible is-incorrect';
-                    feedback.textContent =
-                        `${tile.textContent.trim()} does not belong in ${trayFamily === 'number' ? 'the numbers tray' : `the ${trayFamily} tray`}.`;
-
-                    animateElement(
-                        tray,
-                        [
-                            {transform: 'translateX(0)'},
-                            {transform: 'translateX(-7px)'},
-                            {transform: 'translateX(7px)'},
-                            {transform: 'translateX(0)'}
-                        ],
-                        260
-                    );
-
-                    return;
-                }
-
-                const trayBody = tray.querySelector('[data-tray-body]');
-                trayBody.append(tile);
-
-                feedback.className = 'question-feedback';
-                feedback.textContent = '';
-
-                updateCollectButton(trayFamily);
+                placeTile(tile, tray);
             });
         });
 
+        function selectTile(tile) {
+            selectedTile = tile;
+            root.querySelectorAll('[data-sort-term]').forEach((item) => {
+                item.setAttribute('aria-pressed', String(item === tile));
+                item.classList.toggle('button--primary', item === tile);
+            });
+        }
+
+        function placeTile(tile, tray) {
+            if (!tile || tile.disabled || collectedFamilies.has(tray.dataset.sortTray)) {
+                return;
+            }
+
+            const family = tile.dataset.family || '';
+            const trayFamily = tray.dataset.sortTray || '';
+
+            if (family !== trayFamily) {
+                feedback.className =
+                    'question-feedback is-visible is-incorrect';
+                feedback.textContent =
+                    `${tile.textContent.trim()} does not belong in ${trayFamily === 'number' ? 'the numbers tray' : `the ${trayFamily} tray`}.`;
+
+                animateElement(
+                    tray,
+                    [
+                        {transform: 'translateX(0)'},
+                        {transform: 'translateX(-7px)'},
+                        {transform: 'translateX(7px)'},
+                        {transform: 'translateX(0)'}
+                    ],
+                    260
+                );
+
+                return;
+            }
+
+            selectTile(null);
+            const trayBody = tray.querySelector('[data-tray-body]');
+            trayBody.append(tile);
+
+            feedback.className = 'question-feedback';
+            feedback.textContent = '';
+
+            updateCollectButton(trayFamily);
+        }
+
         root.addEventListener('click', (event) => {
+            const tile = event.target.closest('[data-sort-term]');
+            if (tile && !tile.disabled) {
+                selectTile(selectedTile === tile ? null : tile);
+                return;
+            }
+            const placeButton = event.target.closest('[data-place-family]');
+            if (placeButton) {
+                if (selectedTile) {
+                    placeTile(selectedTile, placeButton.closest('[data-sort-tray]'));
+                } else {
+                    feedback.className = 'question-feedback is-visible';
+                    feedback.textContent = 'Select a term first, then choose its tray.';
+                }
+                return;
+            }
+
             const collectButton = event.target.closest(
                 '[data-collect-family]'
             );
@@ -564,6 +603,10 @@
             if (!collectButton) {
                 return;
             }
+
+            if (collectButton.disabled || collectButton.hidden) return;
+            collectButton.disabled = true;
+            selectTile(null);
 
             const family = collectButton.dataset.collectFamily || '';
             const tray = root.querySelector(
@@ -621,6 +664,7 @@
                 `;
 
                 collectButton.hidden = true;
+                tray.querySelector('[data-place-family]').disabled = true;
                 collectedFamilies.add(family);
 
                 if (collectedFamilies.size !== trays.length) {
@@ -701,6 +745,7 @@
         }
 
         let draggedId = '';
+        let selectedTile = null;
         let pairsMade = 0;
         let finished = false;
 
@@ -718,6 +763,8 @@
                     Green tiles are +${escapeHtml(letter)}.
                     Red tiles are −${escapeHtml(letter)}.
                 </p>
+
+                <p>Select a tile, then select a tile with the opposite sign to make a zero pair. You can also drag one onto the other.</p>
 
                 <div
                     class="question-options"
@@ -743,10 +790,11 @@
         tileArea.addEventListener('dragstart', (event) => {
             const tile = event.target.closest('[data-algebra-tile]');
 
-            if (!tile || finished) {
+            if (!tile || tile.disabled || tile.dataset.pairing || finished) {
                 return;
             }
 
+            selectTile(null);
             draggedId = tile.dataset.algebraTile || '';
 
             event.dataTransfer?.setData(
@@ -799,7 +847,29 @@
                 `[data-algebra-tile="${cssEscape(id)}"]`
             );
 
-            if (!source || !target || source === target) {
+            pairTiles(source, target);
+        });
+
+        function selectTile(tile) {
+            selectedTile = tile;
+            tileArea.querySelectorAll('[data-algebra-tile]').forEach((item) => {
+                item.setAttribute('aria-pressed', String(item === tile));
+                item.classList.toggle('button--primary', item === tile);
+            });
+        }
+
+        tileArea.addEventListener('click', (event) => {
+            const tile = event.target.closest('[data-algebra-tile]');
+            if (!tile || tile.disabled || tile.dataset.pairing || finished) return;
+            if (!selectedTile || selectedTile === tile) {
+                selectTile(selectedTile === tile ? null : tile);
+            } else {
+                pairTiles(selectedTile, tile);
+            }
+        });
+
+        function pairTiles(source, target) {
+            if (finished || !source || !target || source === target || source.disabled || target.disabled || source.dataset.pairing || target.dataset.pairing) {
                 return;
             }
 
@@ -810,6 +880,14 @@
                     'A zero pair needs one positive tile and one negative tile.';
                 return;
             }
+
+            selectTile(null);
+            source.dataset.pairing = 'true';
+            target.dataset.pairing = 'true';
+            source.setAttribute('aria-disabled', 'true');
+            target.setAttribute('aria-disabled', 'true');
+            source.draggable = false;
+            target.draggable = false;
 
             const sourceAnimation = animateElement(
                 source,
@@ -866,6 +944,10 @@
                 }
 
                 finished = true;
+                tileArea.querySelectorAll('[data-algebra-tile]').forEach((tile) => {
+                    tile.disabled = true;
+                    tile.draggable = false;
+                });
 
                 const remainingPositive = tileArea.querySelectorAll(
                     '[data-sign="1"]'
@@ -896,7 +978,8 @@
                     'The positive and negative tiles formed zero pairs, leaving five positive m tiles.'
                 );
             });
-        });
+
+        }
     }
 
     function renderAlgebraTile(tile, letter) {
@@ -910,6 +993,7 @@
                 class="button"
                 type="button"
                 draggable="true"
+                aria-pressed="false"
                 data-algebra-tile="${escapeAttribute(tile.id)}"
                 data-sign="${tile.sign}"
                 aria-label="${positive ? 'positive' : 'negative'} ${escapeAttribute(letter)} tile"
