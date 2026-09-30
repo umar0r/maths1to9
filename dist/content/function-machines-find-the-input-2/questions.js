@@ -88,12 +88,8 @@
 
     function uniqueOptions(correct, alternatives) {
         const all = [correct, ...alternatives]
-            .map(String)
+            .map(item => String(item).trim())
             .filter((item, index, items) => items.indexOf(item) === index);
-
-        while (all.length < 3) {
-            all.push(`${correct} `);
-        }
 
         return shuffle(all.slice(0, 3));
     }
@@ -177,7 +173,12 @@
             prompt: 'Which number do you start with?',
             options: uniqueOptions(
                 formatNumber(problem.output),
-                [formatNumber(problem.input), formatNumber(problem.operations[0].value)]
+                [
+                    formatNumber(problem.input),
+                    formatNumber(problem.operations[0].value),
+                    formatNumber(problem.output + 1),
+                    formatNumber(problem.output + 2)
+                ]
             ),
             answer: formatNumber(problem.output),
             feedback: `Start with ${formatNumber(problem.output)} because it is the output.`,
