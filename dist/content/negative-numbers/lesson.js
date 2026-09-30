@@ -11,9 +11,33 @@ const equation = (a,b) => `${signed(a)} − (−${b})`;
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalise = s => String(s).replace(/−/g,'-').replace(/\s/g,'').replace(/[()]/g,'');
 let state = {stage:0, answers:{}, learned:false}, queue = Promise.resolve();
+function scoringActivities() {
+ const current = [
+  {id:'learn',kind:'learn',completed:state.learned},
+  ...['guided-1','guided-2','guided-3','guided-4'].map(id=>({id,kind:'guided',completed:state.answers[id]?.done&&state.answers[id]?.correct})),
+  ...[...practice,...checkQuestions].map(q=>{
+   const a=state.answers[q.id];
+   return {id:q.id,kind:'answer',completed:a?.done===true,correct:a?.correct===true,
+    firstCorrect:a?.firstCorrect===true&&(!q.explain||a?.explanationCorrect===true)};
+  })
+ ];
+ // Merge into saved activities so a retry cannot erase earned points or first attempts.
+ const tracker=engine.createScoreTracker([...(state.scoreActivities||[]),...current]);
+ state.scoreActivities=tracker.export();
+ return state.scoreActivities;
+}
+function refreshScore(score) {
+ const badge=app.querySelector('.rounding-score');
+ if(!badge)return;
+ badge.setAttribute('aria-label',`${score.points} of ${score.maximumPoints} points earned`);
+ badge.querySelector('span').textContent=score.points;
+ badge.querySelector('.practice-progress-ring').style.setProperty('--practice-progress',`${score.points/score.maximumPoints*100}%`);
+}
 function save() {
+ const scoreActivities=scoringActivities(), score=engine.calculateScore(scoreActivities);
+ refreshScore(score);
  const answers = Object.entries(state.answers).filter(([id])=>id!=='extra').map(([,answer])=>answer);
- const snapshot = JSON.parse(JSON.stringify({title:'Subtracting negative numbers',pathname:location.pathname,totalSections:4,currentSectionId:ids[state.stage],currentSectionIndex:state.stage,highestUnlockedIndex:3,finished:checkQuestions.every(q=>state.answers[q.id]?.done),completionPercent:Math.round((answers.filter(a=>a.done).length + Number(state.learned))/22*100),negativeSubtractionState:state}));
+ const snapshot = JSON.parse(JSON.stringify({title:'Subtracting negative numbers',score,scoreActivities,pathname:location.pathname,totalSections:4,currentSectionId:ids[state.stage],currentSectionIndex:state.stage,highestUnlockedIndex:3,finished:checkQuestions.every(q=>state.answers[q.id]?.done),completionPercent:Math.round((answers.filter(a=>a.done).length + Number(state.learned))/22*100),negativeSubtractionState:state}));
  queue = queue.catch(()=>{}).then(()=>store.saveLessonProgress('negative-numbers',snapshot));
 }
 const practice = [
@@ -137,7 +161,7 @@ function updateResult() {
 }
 function show(stage) {
  state.stage=stage;router.sync(ids[stage]);
- app.innerHTML=`<header class="negative-header"><p>Learning goal</p><h1>Subtracting negative numbers</h1><p>Learn how to subtract a negative number by rewriting it as addition.</p>${stage===0?'<p class="negative-equation">a − (−b) = a + b</p>':''}</header><nav class="negative-nav" aria-label="Lesson stages">${stages.map((label,i)=>`<button class="button" data-stage="${i}" aria-pressed="${i===stage}">${label}</button>`).join('')}</nav><section data-panel aria-label="${stages[stage]}"></section><div class="negative-nav">${stage>0?'<button class="button" data-back>Back</button>':''}${stage<3?`<button class="button" data-next>Continue to ${stages[stage+1]}</button>`:''}</div>`;
+ app.innerHTML=`<header class="negative-header"><div class="negative-header__copy"><p>Learning goal</p><h1>Subtracting negative numbers</h1><p>Learn how to subtract a negative number by rewriting it as addition.</p>${stage===0?'<p class="negative-equation">a − (−b) = a + b</p>':''}</div><div class="rounding-score" aria-live="polite"><div class="practice-progress-ring"><span>0</span></div></div></header><nav class="negative-nav" aria-label="Lesson stages">${stages.map((label,i)=>`<button class="button" data-stage="${i}" aria-pressed="${i===stage}">${label}</button>`).join('')}</nav><section data-panel aria-label="${stages[stage]}"></section><div class="negative-nav">${stage>0?'<button class="button" data-back>Back</button>':''}${stage<3?`<button class="button" data-next>Continue to ${stages[stage+1]}</button>`:''}</div>`;
  app.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>show(Number(b.dataset.stage)));
  app.querySelector('[data-back]')?.addEventListener('click',()=>show(stage-1));app.querySelector('[data-next]')?.addEventListener('click',()=>show(stage+1));
  if(stage===0)renderLearn();else if(stage===1)renderGuided();else {

@@ -1,4 +1,7 @@
-.negative-header { margin: 2rem 0; }
+.negative-header { margin: 2rem 0; display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
+.negative-header__copy { min-width:0; }
+.negative-header .rounding-score { flex-shrink:0; }
+.negative-header .practice-progress-ring { width:72px; height:72px; font-size:1.2rem; }
 .negative-nav { display:flex; flex-wrap:wrap; gap:.6rem; margin:1.5rem 0; }
 .negative-nav [aria-pressed="true"] { background:#155e75; color:white; }
 .negative-card { padding:clamp(1rem,3vw,2rem); margin:1.2rem 0; border:1px solid #cbd5e1; border-radius:16px; background:white; }
