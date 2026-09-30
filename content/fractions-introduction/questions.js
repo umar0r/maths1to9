@@ -379,7 +379,7 @@
         const feedback = {
             '<': `${fr(an, ad)} is smaller, so the sign should open towards ${fr(bn, bd)}.`,
             '>': `${fr(an, ad)} is larger, so the sign should open towards ${fr(an, ad)}.`,
-            '=': 'These fractions are only equal if they have the same value after using a common denominator.'
+            '=': `${fr(an, ad)} and ${fr(bn, bd)} have the same value, so use the equals sign (=).`
         };
 
         const common = ad * bd;
@@ -391,7 +391,7 @@
 
             wrong: ['<', '>', '=']
                 .filter((symbol) => symbol !== correct)
-                .map((symbol) => [symbol, feedback[symbol]]),
+                .map((symbol) => [symbol, feedback[correct]]),
 
             hint: `Use the common denominator ${common}: ${fr(an * bd, common)} and ${fr(bn * ad, common)}.`,
             explanation: `${fr(an, ad)} = ${fr(an * bd, common)} and ${fr(bn, bd)} = ${fr(bn * ad, common)}, so ${fr(an, ad)} ${correct} ${fr(bn, bd)}.`
