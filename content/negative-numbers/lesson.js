@@ -18,7 +18,7 @@ function save() {
 }
 const practice = [
  ...[[6,2],[-5,4],[9,7],[-12,8]].map(([a,b],i)=>({id:`rewrite-${i}`,title:`A${i+1}. Rewrite only`,prompt:equation(a,b),answer:`${signed(a)} + ${b}`,feedback:`${equation(a,b)} = ${signed(a)} + ${b}. Keep the starting number unchanged.`})),
- ...[[4,5],[7,8],[-3,6],[-9,4],[-5,12],[-11,11]].map(([a,b],i)=>({id:`calculate-${i}`,title:`B${i+1}. Calculate`,prompt:equation(a,b),answer:String(a+b),feedback:`${equation(a,b)} = ${signed(a)} + ${b} = ${signed(a+b)}.`})),
+ ...[[4,5],[7,8],[-3,6],[-9,4],[-5,12],[-11,11]].map(([a,b],i)=>({id:`calculate-${i}`,title:`B${i+1}. Calculate`,prompt:equation(a,b),answer:signed(a+b),feedback:`${equation(a,b)} = ${signed(a)} + ${b} = ${signed(a+b)}.`})),
  {id:'sam',title:'C. Find the mistake',prompt:'Sam writes: −8 − (−3) = 8 + 3 = 11. What has Sam done wrong?',explain:true,answer:'−5',feedback:'Sam incorrectly changed the starting number from −8 to 8. Only subtracting −3 changes to adding 3. Correct working: −8 − (−3) = −8 + 3 = −5.'}
 ];
 const guided = [
