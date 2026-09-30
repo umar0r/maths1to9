@@ -72,6 +72,6 @@ $pageTitle = 'Indices basics';
     <script src="./learn.js?v=4"></script>
     <script src="./questions.js?v=7"></script>
     <script src="./interactive.js?v=4"></script>
-    <script src="../../assets/js/lesson-engine.js?v=26"></script>
+    <script src="../../assets/js/lesson-engine.js?v=30"></script>
 </body>
 </html>

@@ -32,7 +32,7 @@ $pageTitle = 'Simplifying expressions';
 
     <script src="../../assets/js/progress.js" defer></script>
     <script src="./interactive.js?v=11" defer></script>
-    <script src="../../assets/js/lesson-engine.js?v=10" defer></script>
+    <script src="../../assets/js/lesson-engine.js?v=30" defer></script>
 </head>
 
 <body

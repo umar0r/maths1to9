@@ -199,6 +199,6 @@ $pageTitle = 'Function machines: find the input';
 
     <script src="./interactive.js?v=10"></script>
     <script src="./questions.js?v=12"></script>
-    <script src="../../assets/js/lesson-engine.js?v=10"></script>
+    <script src="../../assets/js/lesson-engine.js?v=30"></script>
 </body>
 </html>
