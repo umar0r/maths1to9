@@ -2037,6 +2037,12 @@
     }
 
     function handlePrimaryAction() {
+        if (state.finished) {
+            const allLessons = document.querySelector('.site-header__back');
+            window.location.assign(allLessons?.href || new URL('../../', window.location.href).href);
+            return;
+        }
+
         const section = state.sections[state.currentIndex];
         const action = state.sectionActions.get(section?.id);
 
@@ -2201,11 +2207,15 @@
         const showSectionAction = Boolean(sectionAction) && !state.finished;
         // Keep one primary action throughout the lesson, including completion.
         elements.sectionActionButton.remove();
-        elements.nextButton.disabled = showSectionAction ? sectionAction.disabled : !complete;
+        elements.nextButton.disabled = state.finished
+            ? false
+            : showSectionAction ? sectionAction.disabled : !complete;
         elements.controlButtonGroup.append(elements.nextButton);
         elements.controlButtonGroup.hidden = false;
 
-        elements.nextButton.textContent = showSectionAction ? sectionAction.label : 'Continue';
+        elements.nextButton.textContent = state.finished
+            ? 'All lessons'
+            : showSectionAction ? sectionAction.label : 'Continue';
 
         if (state.finished) {
             elements.status.textContent =
