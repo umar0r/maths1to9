@@ -202,8 +202,11 @@
         const dividend =
             divisor * quotient;
 
-        const firstNumber =
-            quotient + r(6, 20);
+        // Keep the subtract-first distractor exact, within the same question range.
+        const firstNumber = divisor * r(
+            Math.ceil((quotient + 6) / divisor),
+            Math.floor((quotient + 20) / divisor)
+        );
 
         const answer =
             firstNumber - quotient;
