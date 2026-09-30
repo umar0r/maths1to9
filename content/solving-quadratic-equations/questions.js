@@ -244,7 +244,7 @@
                 ]
             ],
             explanation:
-                `Two numbers multiply to ${q.c} and add to ${q.b}. ` +
+                `Two numbers multiply to ${signed(q.c)} and add to ${signed(q.b)}. ` +
                 `So ${factors(r1, r2)} = 0, giving ${bothRoots(r1, r2)}.`
         });
     }
@@ -309,7 +309,7 @@
                 ]
             ],
             explanation:
-                `Find two numbers that multiply to ${q.c} and add to ${q.b}. ` +
+                `Find two numbers that multiply to ${signed(q.c)} and add to ${signed(q.b)}. ` +
                 `Then ${factors(r1, r2)} = 0, so ${bothRoots(r1, r2)}.`
         });
     }
@@ -471,7 +471,7 @@
                 ],
                 [
                     'The brackets should both be minus.',
-                    `The numbers must multiply to ${item.c} and add to ${item.b}. ` +
+                    `The numbers must multiply to ${signed(item.c)} and add to ${signed(item.b)}. ` +
                     `That needs ${signed(m)} and ${signed(n)}.`
                 ],
                 [
@@ -480,7 +480,7 @@
                 ]
             ],
             explanation:
-                `Two numbers must multiply to ${item.c} and add to ${item.b}: ` +
+                `Two numbers must multiply to ${signed(item.c)} and add to ${signed(item.b)}: ` +
                 `${signed(m)} and ${signed(n)}. So ${item.quad} = ${rightFact}.`
         });
     }

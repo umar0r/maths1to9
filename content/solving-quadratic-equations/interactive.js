@@ -951,7 +951,7 @@
                         rule:
                             'For x² + bx + c, find two numbers that multiply to c and add to b.',
                         hint:
-                            `Find two integers that multiply to ${c} and add to ${b}.`,
+                            `Find two integers that multiply to ${formatNumber(c)} and add to ${formatNumber(b)}.`,
                         success:
                             'Correct. Multiplying the brackets would recreate the original quadratic.'
                     },
@@ -1160,7 +1160,8 @@
                     .replaceAll('\\boxed', '')
                     .replaceAll('{', '')
                     .replaceAll('}', '')
-                    .replaceAll('^2', '²');
+                    .replaceAll('^2', '²')
+                    .replaceAll('-', '−');
             }
 
             function animateWrong(element) {
@@ -1231,7 +1232,7 @@
             }
 
             function formatNumber(value) {
-                return value < 0 ? `-${Math.abs(value)}` : String(value);
+                return value < 0 ? `−${Math.abs(value)}` : String(value);
             }
 
             function formatSignedValue(value) {

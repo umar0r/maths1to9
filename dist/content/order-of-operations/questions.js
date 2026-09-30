@@ -40,8 +40,12 @@
         return `<span data-first>${text}</span>`;
     }
 
+    function formatNumber(value) {
+        return String(value).replace(/-(?=\d)/g, '−');
+    }
+
     function options(correct, wrongOptions) {
-        const correctLabel = String(correct);
+        const correctLabel = formatNumber(correct);
 
         const uniqueOptions = new Map([
             [
@@ -56,7 +60,7 @@
 
         wrongOptions.forEach(
             ([value, feedback]) => {
-                const label = String(value);
+                const label = formatNumber(value);
 
                 if (!uniqueOptions.has(label)) {
                     uniqueOptions.set(label, {
@@ -75,14 +79,14 @@
         let step = 1;
 
         const moneyMatch =
-            correctLabel.match(
+            String(correct).match(
                 /^£(-?\d+(?:\.\d+)?)$/
             );
 
         const numericCorrect =
             moneyMatch
                 ? Number(moneyMatch[1])
-                : Number(correctLabel);
+                : Number(correct);
 
         const prefix =
             moneyMatch ? '£' : '';
@@ -92,7 +96,7 @@
             Number.isFinite(numericCorrect)
         ) {
             const label =
-                `${prefix}${numericCorrect + step}`;
+                `${prefix}${formatNumber(numericCorrect + step)}`;
 
             if (!uniqueOptions.has(label)) {
                 uniqueOptions.set(label, {
@@ -125,10 +129,10 @@
         return {
             prompt,
             expression,
-            correctLabel: String(correct),
+            correctLabel: formatNumber(correct),
             answers: options(correct, wrong),
-            hint,
-            explanation
+            hint: formatNumber(hint),
+            explanation: formatNumber(explanation)
         };
     }
 

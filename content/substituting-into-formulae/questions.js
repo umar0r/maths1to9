@@ -79,7 +79,7 @@
 
     function formatNumber(value) {
         return String(value).replace(
-            '-',
+            /-(?=\d)/g,
             '−'
         );
     }
@@ -132,7 +132,7 @@
             correct,
             ...distractors
         ].forEach((value) => {
-            const text = String(value);
+            const text = formatNumber(value);
 
             if (!unique.includes(text)) {
                 unique.push(text);
@@ -358,9 +358,9 @@
             substituted:
                 `y = ${x}² + ${coefficient} × ${x}`,
             answer:
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
             options: makeOptions(
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
                 [
                     `y = ${x + coefficient * x}`,
                     `y = ${x * x + coefficient}`,
@@ -405,9 +405,9 @@
             substituted:
                 `y = ${x} × (2 × ${x} − 1)`,
             answer:
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
             options: makeOptions(
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
                 [
                     `y = ${inside}`,
                     `y = ${2 * x * x - 1}`,
@@ -505,9 +505,9 @@
             substituted:
                 `m = ${coefficient} × (${formatNumber(n)}) + ${constant}`,
             answer:
-                `m = ${answer}`,
+                `m = ${formatNumber(answer)}`,
             options: makeOptions(
-                `m = ${answer}`,
+                `m = ${formatNumber(answer)}`,
                 [
                     `m = ${coefficient * Math.abs(n) + constant}`,
                     `m = ${coefficient + n + constant}`,
@@ -561,9 +561,9 @@
                 `y = (${formatNumber(x)})² + `
                 + `${coefficient} × (${formatNumber(x)})`,
             answer:
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
             options: makeOptions(
-                `y = ${answer}`,
+                `y = ${formatNumber(answer)}`,
                 [
                     `y = ${-(x * x) + coefficient * x}`,
                     `y = ${x * x + coefficient * Math.abs(x)}`,
