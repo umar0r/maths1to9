@@ -460,6 +460,15 @@
             if (next) {
                 next.disabled = !value || slideIndex === slides.length - 1;
             }
+            if (slideIndex === slides.length - 1) {
+                window.Maths1to9Lesson.clearSectionAction('explanation');
+            } else {
+                window.Maths1to9Lesson.setSectionAction('explanation', {
+                    label: 'Next idea',
+                    disabled: !value,
+                    onClick: () => next?.click()
+                });
+            }
         }
 
         function render() {
@@ -478,6 +487,7 @@
             );
 
             const stage = root.querySelector('.fi-learn__stage');
+            setReady(false);
             slides[slideIndex](stage, setReady);
 
             if (slideIndex === slides.length - 1) {

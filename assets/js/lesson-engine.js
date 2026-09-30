@@ -2189,10 +2189,6 @@
     }
 
     function updateControls() {
-        const isLast =
-            state.currentIndex ===
-            state.sections.length - 1;
-
         const complete =
             isSectionComplete(state.currentIndex);
 
@@ -2203,25 +2199,13 @@
             state.sectionActions.get(section?.id);
 
         const showSectionAction = Boolean(sectionAction) && !state.finished;
-        const showForward = complete && !(isLast && state.finished);
-        const showPrimaryButton = showSectionAction || showForward;
-
+        // Keep one primary action throughout the lesson, including completion.
         elements.sectionActionButton.remove();
+        elements.nextButton.disabled = showSectionAction ? sectionAction.disabled : !complete;
+        elements.controlButtonGroup.append(elements.nextButton);
+        elements.controlButtonGroup.hidden = false;
 
-        if (showPrimaryButton) {
-            elements.nextButton.disabled = showSectionAction
-                ? sectionAction.disabled
-                : false;
-            elements.controlButtonGroup.append(elements.nextButton);
-        } else {
-            elements.nextButton.remove();
-        }
-
-        elements.controlButtonGroup.hidden = !showPrimaryButton;
-
-        elements.nextButton.textContent = showSectionAction
-            ? sectionAction.label
-            : 'Continue';
+        elements.nextButton.textContent = showSectionAction ? sectionAction.label : 'Continue';
 
         if (state.finished) {
             elements.status.textContent =

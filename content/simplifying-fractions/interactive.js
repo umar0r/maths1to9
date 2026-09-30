@@ -547,6 +547,15 @@
             if (next) {
                 next.disabled = !value || slideIndex === slides.length - 1;
             }
+            if (slideIndex === slides.length - 1) {
+                window.Maths1to9Lesson.clearSectionAction('explanation');
+            } else {
+                window.Maths1to9Lesson.setSectionAction('explanation', {
+                    label: 'Next idea',
+                    disabled: !value,
+                    onClick: () => next?.click()
+                });
+            }
         }
 
         function render() {
@@ -565,6 +574,7 @@
             );
 
             const stage = root.querySelector('.fraction-learn__stage');
+            setReady(false);
             slides[slideIndex](stage, setReady);
 
             if (slideIndex === slides.length - 1) {
@@ -888,7 +898,18 @@
                 + '</div>'
             );
 
-            root.querySelector('[data-method-next]')?.addEventListener('click', () => {
+            const next = root.querySelector('[data-method-next]');
+            if (current === steps.length - 1) {
+                window.Maths1to9Lesson.clearSectionAction('method');
+            } else {
+                window.Maths1to9Lesson.setSectionAction('method', {
+                    label: 'Next step',
+                    disabled: false,
+                    onClick: () => next.click()
+                });
+            }
+
+            next?.addEventListener('click', () => {
                 if (current < highestRevealed) {
                     current += 1;
                 } else if (highestRevealed < steps.length - 1) {
