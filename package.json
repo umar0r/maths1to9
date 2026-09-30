@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "node tests/runner/run-all.cjs --unit",
+    "test:ui": "node tests/runner/run-all.cjs --ui",
+    "test:all": "node tests/runner/run-all.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

@@ -21,6 +21,30 @@ for(const q of [...lesson.guided,...lesson.practice,...lesson.check]) {
     assert(context.matches(q,q.answer),q.prompt);
     if(q.options) assert.equal(q.options.filter(value=>context.matches(q,value)).length,1,q.prompt);
 }
+// Learning, exploration and each guided decision contribute exactly once.
+const scoring = vm.createContext({window:{}});
+const coreSource = fs.readFileSync(path.join(root, 'assets/js/lesson-engine.js'), 'utf8');
+vm.runInContext(coreSource.slice(0, coreSource.indexOf("\n(() => {\n    'use strict';\n\n    if (document.body")), scoring);
+vm.runInContext('const engine = window.Maths1to9LessonEngine;', scoring);
+vm.runInContext(`
+    const data = {learn:[{}, {explore:true}], guided:[{}], practice:[{}], check:[]};
+    const slides = [{type:'learn',id:'learn'}, {type:'learn',id:'number-line',item:{explore:true}}, {type:'guided'}, {type:'practice'}, {type:'review'}, {type:'summary'}];
+    const state = {completed:{},answers:{},interactions:{}};
+` + source.slice(source.indexOf('    const scores ='), source.indexOf('    function refreshScore('))
+  + source.slice(source.indexOf('    function slideCompletion('), source.indexOf('    function reviewHtml(')), scoring);
+const score = code => vm.runInContext(code + '; scores().points', scoring);
+assert.equal(score(''),0);
+assert.equal(score('state.completed[0] = true'),5);
+assert.equal(score('state.completed[0] = true'),5,'Revisiting does not earn more');
+assert.equal(score("state.interactions['number-line'] = true"),10);
+assert.equal(score("state.interactions['number-line'] = true"),10,'Repeated slider input does not earn more');
+assert.equal(score('state.answers[2] = {guidedStep:0,guidedChecked:true}'),15);
+assert.equal(score('state.answers[2] = {guidedStep:1,guidedChecked:false}'),15,'Continue preserves guided points');
+assert.equal(score('state.answers[2] = {guidedStep:2,guidedChecked:true,done:true}'),25);
+assert.equal(score('state.answers[3] = {done:true,firstCorrect:true}'),35);
+assert.equal(score('state.completed[4]=true;state.completed[5]=true'),45);
+assert.equal(score('state.completed[1]=true'),50);
+assert.equal(vm.runInContext('scores().maximumPoints',scoring),50);
 const storage = new Map();
 const localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k),key:i=>[...storage.keys()][i],get length(){return storage.size;}};
 const sandbox = vm.createContext({window:{localStorage,crypto:{randomUUID:()=> 'test-id'}},document:{addEventListener(){},dispatchEvent(){}},CustomEvent:class{constructor(type,init){this.type=type;this.detail=init.detail;}},console});
