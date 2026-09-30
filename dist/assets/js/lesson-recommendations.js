@@ -9,6 +9,7 @@
     'use strict';
 
     let cataloguePromise = null;
+    let publishedRoutesPromise = null;
 
     function normaliseText(value) {
         return typeof value === 'string' ? value.trim() : '';
@@ -16,7 +17,7 @@
 
     function normalisePath(pathname) {
         return decodeURIComponent(String(pathname || ''))
-            .replace(/index\.php$/, '')
+            .replace(/index\.(?:php|html)$/, '')
             .replace(/\/+$/, '/');
     }
 
@@ -116,17 +117,33 @@
         ));
     }
 
-    async function routeExists(lesson) {
-        try {
-            const response = await fetch(
-                new URL('lesson.json', lessonUrl(lesson.folder)),
-                { cache: 'no-store' }
+    async function loadPublishedRoutes() {
+        if (!publishedRoutesPromise) {
+            // The homepage lists only lessons with an entry point. Use the
+            // same published list on PHP and static builds instead of probing
+            // lesson.json for every planned entry in the curriculum.
+            const homeUrl = new URL(
+                document.querySelector('.site-header__back')?.getAttribute('href') || '../../',
+                window.location.href
             );
-
-            return response.ok;
-        } catch {
-            return false;
+            publishedRoutesPromise = fetch(homeUrl, { cache: 'no-store' })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Published lessons could not be loaded.');
+                    }
+                    return response.text();
+                })
+                .then((html) => {
+                    const home = new DOMParser().parseFromString(html, 'text/html');
+                    return new Set(
+                        [...home.querySelectorAll('.lesson-list a.lesson-card[href]')]
+                            .map((link) => new URL(link.getAttribute('href'), homeUrl))
+                            .filter((url) => url.origin === homeUrl.origin)
+                            .map((url) => normalisePath(url.pathname))
+                    );
+                });
         }
+        return publishedRoutesPromise;
     }
 
     async function getForLesson(currentFolder) {
@@ -141,8 +158,9 @@
             return [];
         }
 
-        const [catalogue, allSkillRecords, allLessonRecords] = await Promise.all([
+        const [catalogue, publishedRoutes, allSkillRecords, allLessonRecords] = await Promise.all([
             loadCatalogue(),
+            loadPublishedRoutes(),
             progressApi.getAllSkillProgress(),
             progressApi.getAllProgress()
         ]);
@@ -168,6 +186,7 @@
         const candidates = withState
             .filter((lesson) => (
                 lesson.folder !== currentFolder
+                && publishedRoutes.has(normalisePath(new URL(lessonUrl(lesson.folder)).pathname))
                 && !lesson.state.secure
                 && prerequisitesAreSecure(lesson, byFolder)
             ))
@@ -199,22 +218,10 @@
                 return left.categoryIndex - right.categoryIndex
                     || left.lessonIndex - right.lessonIndex;
             });
-        const recommendations = [];
-
-        for (const candidate of candidates) {
-            if (await routeExists(candidate)) {
-                recommendations.push({
-                    ...candidate,
-                    url: lessonUrl(candidate.folder)
-                });
-            }
-
-            if (recommendations.length === 3) {
-                break;
-            }
-        }
-
-        return recommendations;
+        return candidates.slice(0, 3).map((candidate) => ({
+            ...candidate,
+            url: lessonUrl(candidate.folder)
+        }));
     }
 
     window.Maths1to9Recommendations = { getForLesson };
