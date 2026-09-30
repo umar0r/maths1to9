@@ -27,7 +27,7 @@ $pageTitle = 'Writing algebraic expressions';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=28">
 </head>
 
 <body
