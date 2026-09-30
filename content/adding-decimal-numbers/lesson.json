@@ -1,0 +1,25 @@
+{
+  "id": "adding-decimal-numbers-01",
+  "slug": "adding-decimal-numbers",
+  "title": "Adding decimal numbers",
+  "subtitle": "Line up the decimal points, then add column by column.",
+  "renderer": "custom",
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn"
+    },
+    {
+      "id": "try-it",
+      "label": "Try it"
+    },
+    {
+      "id": "practice",
+      "label": "Practice"
+    },
+    {
+      "id": "check",
+      "label": "Check"
+    }
+  ]
+}
