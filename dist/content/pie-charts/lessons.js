@@ -1,8 +1,53 @@
 (() => {
     'use strict';
 
-    mountLearnSection();
-    mountMethodSection();
+    const store = window.Maths1to9Progress;
+    const engine = window.Maths1to9LessonEngine;
+    let lessonState = {
+        learn: { stepIndex: 0, selectedAnswer: '', answerChecked: false },
+        method: { stepIndex: 0 },
+        currentSection: 'learn'
+    };
+    let tracker;
+    let saveQueue = Promise.resolve();
+
+    function saveProgress() {
+        const score = tracker.getScore();
+        const activities = tracker.export();
+        const badge = document.querySelector('.rounding-score');
+        badge.setAttribute('aria-label', `${score.points} of ${score.maximumPoints} points earned`);
+        badge.querySelector('span').textContent = score.points;
+        badge.querySelector('.practice-progress-ring').style.setProperty('--practice-progress', `${score.points / score.maximumPoints * 100}%`);
+        const snapshot = JSON.parse(JSON.stringify({
+            title: 'Pie charts', pathname: location.pathname,
+            currentSectionId: lessonState.currentSection,
+            currentSectionIndex: lessonState.currentSection === 'method' ? 1 : 0,
+            highestUnlockedIndex: 1, totalSections: 2,
+            finished: lessonState.learn.answerChecked && lessonState.method.stepIndex === 4,
+            completionPercent: Math.round(activities.filter(activity => activity.completed).length / activities.length * 100),
+            score, scoreActivities: activities, pieChartState: lessonState
+        }));
+        saveQueue = saveQueue.catch(() => {}).then(() => store.saveLessonProgress('pie-charts', snapshot));
+    }
+
+    async function init() {
+        let saved;
+        try {
+            saved = await store.getLessonProgress('pie-charts');
+        } catch (error) {
+            console.warn('Progress could not be restored.', error);
+        }
+        if (saved?.pieChartState) lessonState = saved.pieChartState;
+        tracker = engine.createScoreTracker(saved?.scoreActivities || []);
+        for (let index = 0; index < 6; index++) tracker.record({ id: `learn-${index}`, kind: 'learn', completed: false });
+        for (let index = 0; index < 5; index++) tracker.record({ id: `method-${index}`, kind: 'learn', completed: false });
+        tracker.record({ id: 'red-circle', kind: 'answer', completed: false });
+        mountLearnSection();
+        mountMethodSection();
+        saveProgress();
+    }
+
+    init();
 
     function mountLearnSection() {
         const root = document.getElementById('pie-chart-lesson');
@@ -11,11 +56,7 @@
             return;
         }
 
-        const state = {
-            stepIndex: 0,
-            selectedAnswer: '',
-            answerChecked: false
-        };
+        const state = lessonState.learn;
 
         const steps = [
             {
@@ -138,13 +179,17 @@
             const checkButton = root.querySelector('#check-answer');
 
             continueButton?.addEventListener('click', () => {
+                tracker.record({ id: `learn-${state.stepIndex}`, kind: 'learn' });
                 state.stepIndex += 1;
+                lessonState.currentSection = 'learn';
+                saveProgress();
                 render();
             });
 
             root.querySelectorAll('input[name="red-circle-answer"]').forEach(input => {
                 input.addEventListener('change', event => {
                     state.selectedAnswer = event.target.value;
+                    saveProgress();
                 });
             });
 
@@ -158,15 +203,20 @@
                     return;
                 }
 
+                tracker.record({ id: 'red-circle', kind: 'answer', correct: state.selectedAnswer === 'One half' });
+                lessonState.currentSection = 'learn';
+
                 if (state.selectedAnswer !== 'One half') {
                     feedback.style.display = 'block';
                     feedback.className = 'question-feedback is-incorrect';
                     feedback.textContent =
                         'Not quite. Count the red friends: 2 out of 4.';
+                    saveProgress();
                     return;
                 }
 
                 state.answerChecked = true;
+                saveProgress();
                 render();
                 colourHalfRed(root);
             });
@@ -182,9 +232,7 @@
             return;
         }
 
-        const state = {
-            stepIndex: 0
-        };
+        const state = lessonState.method;
 
         const steps = [
             {
@@ -361,7 +409,13 @@
             `;
 
             root.querySelector('#method-next')?.addEventListener('click', () => {
+                tracker.record({ id: `method-${state.stepIndex}`, kind: 'learn' });
                 state.stepIndex += 1;
+                if (state.stepIndex === steps.length - 1) {
+                    tracker.record({ id: `method-${state.stepIndex}`, kind: 'learn' });
+                }
+                lessonState.currentSection = 'method';
+                saveProgress();
                 render();
             });
 

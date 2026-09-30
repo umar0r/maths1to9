@@ -28,10 +28,12 @@ $pageTitle = 'Pie charts';
         href="../../assets/css/app.css"
     >
 
-    <script src="./lessons.js" defer></script>
+    <script src="../../assets/js/progress.js" defer></script>
+    <script src="../../assets/js/lesson-engine.js?v=30" defer></script>
+    <script src="./lessons.js?v=2" defer></script>
 </head>
 
-<body>
+<body data-lesson-id="pie-charts" data-lesson-renderer="custom">
     <header class="lesson-header">
         <div class="lesson-header__inner">
             <a
@@ -44,6 +46,9 @@ $pageTitle = 'Pie charts';
             <h1 class="lesson-header__title">
                 Pie charts
             </h1>
+            <div class="lesson-header__practice-progress rounding-score" aria-label="0 of 65 points earned" aria-live="polite">
+                <div class="practice-progress-ring" style="--practice-progress:0%"><span>0</span></div>
+            </div>
         </div>
     </header>
 
