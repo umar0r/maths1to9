@@ -1284,27 +1284,6 @@
         function updateHeaderProgress() {
             const completed = completedQuestionCount();
             window.Maths1to9Lesson?.setSectionProgress?.('question-bank', completed, sessionLength);
-            const progress = Math.round((completed / sessionLength) * 100);
-            const header = document.querySelector('.lesson-header__inner');
-            if (!header) return;
-
-            let badge = document.getElementById('practice-session-progress');
-            if (!badge) {
-                badge = document.createElement('div');
-                badge.id = 'practice-session-progress';
-                badge.className = 'lesson-header__practice-progress';
-                header.append(badge);
-            }
-
-            const practiceSection = document.getElementById('lesson-section-question-bank');
-            badge.hidden = Boolean(practiceSection?.hidden);
-            badge.innerHTML = (
-                '<div class="practice-progress-summary">'
-                + `<div class="practice-progress-ring" style="--practice-progress: ${progress}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}">`
-                + `<span>${completed}</span>`
-                + '</div>'
-                + '</div>'
-            );
         }
 
         function optionClass(option, entry) {
@@ -1601,7 +1580,7 @@
                                 entry.attempts === 1 && !entry.correct
                             );
 
-                            if (entry.attempts === 1) {
+                            {
                                 window.Maths1to9Lesson?.recordAssessment?.({
                                     questionType: entry.assessmentType,
                                     questionId: entry.questionId,

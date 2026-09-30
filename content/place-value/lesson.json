@@ -382,5 +382,11 @@
     "eyebrow": "Practice",
     "title": "Practise place value",
     "intro": "Answer one question at a time. The questions continue for as long as you want to practise."
-  }
+  },
+  "score_activities": [
+    {
+      "id": "place-value:explore",
+      "kind": "explore"
+    }
+  ]
 }

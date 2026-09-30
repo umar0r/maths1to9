@@ -435,6 +435,8 @@
                     ? engineProgress.highestUnlockedIndex
                     : 0,
             finished: engineProgress.finished === true,
+            score: engineProgress.score,
+            scoreActivities: engineProgress.scoreActivities,
             ...extra
         });
 

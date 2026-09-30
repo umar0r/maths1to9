@@ -637,6 +637,7 @@
                     ${hasMoved ? `<div class="interactive-equation" aria-live="polite">${escapeHtml(`${displayedFactors[0]} × ${displayedFactors[1]} = ${displayedProduct}`)}</div>` : ''}
                 `;
 
+                if (hasReachedTarget()) window.Maths1to9Lesson?.setSectionProgress?.('product-interactive', exampleIndex + 1, examples.length);
                 setContinue(!hasReachedTarget(), () => {
                     if (exampleIndex === examples.length - 1) {
                         window.Maths1to9Lesson?.clearSectionAction?.('product-interactive');
@@ -838,6 +839,7 @@
                         'place-value-method__feedback is-correct';
                     feedback.hidden = false;
 
+                    window.Maths1to9Lesson?.setSectionProgress?.('method', exampleIndex + 1, examples.length);
                     setContinue(false, () => {
                         if (exampleIndex === examples.length - 1) {
                             window.Maths1to9Lesson
@@ -877,6 +879,12 @@
         if (singleRoot && !singleRoot.dataset.mounted) {
             singleRoot.dataset.mounted = 'true';
             mountSingleNumber(singleRoot);
+            const awardExploration = () => window.Maths1to9Lesson?.recordActivity?.({id:'place-value:explore', kind:'explore'});
+            singleRoot.addEventListener('click', awardExploration);
+            singleRoot.addEventListener('keydown', event => {
+                if (['ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key)) awardExploration();
+            });
+            singleRoot.addEventListener('pointerup', awardExploration);
         }
 
         const productRoot = document.getElementById(

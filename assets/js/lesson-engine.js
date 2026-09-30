@@ -67,7 +67,48 @@
             maximumPoints, learningPoints, explorationPoints, answerPoints,
             answered, correctFirstTry };
     }
-    window.Maths1to9LessonEngine = { createRouter, updateStageProgress, calculateScore };
+    function normaliseScoreId(id, reservedAnswerIds) {
+        const legacyId = id.replace(/^answer:[^:]+:(question-bank:|final-check-)/, 'answer:$1');
+        const fixedSlot = legacyId
+            .replace(/^answer:question-bank:[^:]+:(\d+)$/, 'answer:question-bank:$1')
+            .replace(/^answer:comparison:(?:[^:]+:)?(\d+)$/, 'answer:final-check-$1');
+        // Three-part IDs can also mean question + step. Only fold them into
+        // a fixed slot when the lesson explicitly reserves that destination.
+        return reservedAnswerIds.has(fixedSlot) ? fixedSlot : legacyId;
+    }
+    function createScoreTracker(saved = [], onChange = () => {}, reservedAnswerIds = []) {
+        const reserved = new Set(reservedAnswerIds);
+        const activities = new Map();
+        for (const item of Array.isArray(saved) ? saved : []) {
+            // Earlier saves included the generated question type in the ID.
+            // A practice slot remains the same activity even if its type changes on reload.
+            const id = normaliseScoreId(item.id, reserved);
+            const old = activities.get(id);
+            activities.set(id, {...item, id, completed:Boolean(old?.completed || item.completed),
+                ...(item.kind === 'answer' ? {firstCorrect:old?.completed ? old.firstCorrect : item.firstCorrect,
+                    correct:Boolean(old?.correct || item.correct)} : {})});
+        }
+        return {
+            record({id, kind = 'learn', completed = true, correct}) {
+                if (typeof id !== 'string' || !id || !['learn','guided','review','explore','answer'].includes(kind)) return false;
+                id = normaliseScoreId(id, reserved);
+                const old = activities.get(id);
+                const next = kind === 'answer'
+                    ? {id, kind, completed: Boolean(old?.completed || completed),
+                        firstCorrect: old?.completed ? old.firstCorrect : correct === true,
+                        correct: Boolean(old?.correct || correct)}
+                    : {id, kind, completed: Boolean(old?.completed || completed)};
+                if (JSON.stringify(old) === JSON.stringify(next)) return false;
+                activities.set(id, next);
+                onChange(this.getScore());
+                return true;
+            },
+            has(id) { return activities.has(normaliseScoreId(id, reserved)); },
+            getScore() { return calculateScore([...activities.values()]); },
+            export() { return [...activities.values()].map(item => ({...item})); }
+        };
+    }
+    window.Maths1to9LessonEngine = { createRouter, updateStageProgress, calculateScore, createScoreTracker };
 })();
 
 (() => {
@@ -78,6 +119,7 @@
     const initialHash = window.location.hash;
     const router = window.Maths1to9LessonEngine.createRouter();
     const activityProgress = new Map();
+    let scoreTracker;
     const app = document.getElementById('lesson-app');
 
     if (!app) {
@@ -149,6 +191,19 @@
 
             state.lesson = lesson;
             state.slug = getLessonSlug(lesson);
+            const savedScore = await window.Maths1to9Progress?.getLessonProgress?.(state.slug);
+            const reservedAnswerIds = [];
+            for (let i = 1; i <= (Number(lesson.question_bank?.session_length) || 0); i++) {
+                reservedAnswerIds.push(`answer:question-bank:${i}`);
+            }
+            safeArray(lesson.comparison?.questions).forEach((_, i) => {
+                reservedAnswerIds.push(`answer:final-check-${i + 1}`);
+            });
+            scoreTracker = window.Maths1to9LessonEngine.createScoreTracker(savedScore?.scoreActivities, score => {
+                updateScoreHeader();
+                document.dispatchEvent(new CustomEvent('maths1to9:score-change', {detail:{slug:state.slug, score}}));
+                window.Maths1to9Progress?.saveCurrentLesson?.();
+            }, reservedAnswerIds);
             state.sections = createSectionDefinitions(lesson);
             state.navigationGroups = createNavigationGroups(
                 lesson,
@@ -160,6 +215,35 @@
                     'The lesson does not contain any displayable sections.'
                 );
             }
+
+            // Reserve the full lesson before rendering: navigation never earns points.
+            state.sections.forEach(section => {
+                scoreTracker.record({id:`section:${section.id}`, completed:false});
+            });
+            const guidedTotals = {
+                method: safeArray(lesson.method?.guided_examples).length,
+                'product-interactive': safeArray(lesson.product_interactive?.examples).length
+            };
+            for (const [id, total] of Object.entries(guidedTotals)) {
+                for (let step = 0; step < total; step++) {
+                    scoreTracker.record({id:`step:${id}:${step}`, kind:'guided', completed:false});
+                }
+            }
+            const practiceTotal = Number(lesson.question_bank?.session_length) || 0;
+            for (let i = 1; i <= practiceTotal; i++) {
+                scoreTracker.record({id:`answer:question-bank:${i}`, kind:'answer', completed:false});
+            }
+            safeArray(lesson.comparison?.questions).forEach((_, i) => {
+                scoreTracker.record({id:`answer:final-check-${i + 1}`, kind:'answer', completed:false});
+            });
+            safeArray(lesson.score_activities).forEach(activity => {
+                scoreTracker.record({...activity, completed:false});
+            });
+            scoreTracker.export().forEach(activity => {
+                if (activity.completed && activity.id.startsWith('section:')) {
+                    state.completedSections.add(activity.id.slice(8));
+                }
+            });
 
             injectV2Styles();
             renderLesson();
@@ -1902,6 +1986,7 @@
         }
 
         state.completedSections.add(id);
+        scoreTracker.record({id:`section:${id}`, kind:'learn'});
         updateProgress();
         updateControls();
 
@@ -1930,6 +2015,7 @@
         }
 
         state.completedSections.add(state.sections[state.currentIndex].id);
+        scoreTracker.record({id:`section:${state.sections[state.currentIndex].id}`, kind:'learn'});
         updateProgress();
 
         if (state.currentIndex < lastIndex) {
@@ -2087,49 +2173,19 @@
         });
     }
 
-    function updateHeaderMode(currentGroup) {
-        const hasJourney = safeArray(
-            state.lesson.navigation_stages
-        ).length > 0;
-        const isCompact = (
-            hasJourney
-            && currentGroup !== null
-            && currentGroup.id !== 'learn'
-        );
+    function updateScoreHeader() {
+        const ring = elements.headerStageProgress;
+        if (!ring || !scoreTracker) return;
+        const score = scoreTracker.getScore();
+        ring.hidden = false;
+        ring.style.setProperty('--stage-progress', `${score.maximumPoints ? score.points / score.maximumPoints * 100 : 0}%`);
+        ring.setAttribute('aria-label', `${score.points} of ${score.maximumPoints} points earned`);
+        ring.querySelector('span').textContent = String(score.points);
+    }
 
-        elements.header?.classList.toggle(
-            'lesson-header--compact',
-            isCompact
-        );
-
-        const stageProgress = elements.headerStageProgress;
-        if (!stageProgress) {
-            return;
-        }
-
-        const stageIndex = state.navigationGroups.indexOf(
-            currentGroup
-        );
-        const showStageProgress = isCompact && currentGroup.id !== 'practice';
-
-        stageProgress.hidden = !showStageProgress;
-
-        if (!showStageProgress) {
-            return;
-        }
-
-        const stageNumber = stageIndex + 1;
-        const totalStages = state.navigationGroups.length;
-
-        stageProgress.style.setProperty(
-            '--stage-progress',
-            `${Math.round((stageNumber / totalStages) * 100)}%`
-        );
-        stageProgress.setAttribute(
-            'aria-label',
-            `${currentGroup.label}, stage ${stageNumber} of ${totalStages}`
-        );
-        stageProgress.querySelector('span').textContent = String(stageNumber);
+    function updateHeaderMode() {
+        elements.header?.classList.add('lesson-header--compact', 'lesson-header--earned-points');
+        updateScoreHeader();
     }
 
     function updateControls() {
@@ -2302,6 +2358,14 @@
             return false;
         }
 
+        const scoreId = `answer:${questionId}`;
+        const hasFixedAssessment = Number(state.lesson.question_bank?.session_length) > 0 ||
+            safeArray(state.lesson.comparison?.questions).length > 0;
+        if (hasFixedAssessment && !scoreTracker.has(scoreId)) {
+            console.warn(`Lesson "${state.slug}": answer "${questionId}" has no reserved score slot.`);
+        }
+        scoreTracker.record({id:scoreId, kind:'answer', correct:detail.correct});
+
         const stableQuestionId =
             `${state.slug}:${assessmentSessionId}:${questionId}`;
 
@@ -2415,9 +2479,24 @@
             setSlideHash(id, options) { router.sync(id, options); },
 
             setSectionProgress(sectionId, completed, total) {
-                activityProgress.set(sectionId, total > 0 ? Math.max(0, Math.min(1, completed / total)) : 0);
+                if (findSectionIndex(sectionId) === -1 || !Number.isFinite(total) || !Number.isFinite(completed)) return;
+                // Assessed questions earn answer points, not a second guided-step award.
+                if (!['question-bank', 'comparison'].includes(sectionId)) {
+                    for (let step = 0; step < total; step++) {
+                        scoreTracker.record({id:`step:${sectionId}:${step}`, kind:'guided', completed:step < Math.floor(completed)});
+                    }
+                }
+                const savedCompleted = scoreTracker.export().filter(activity => activity.completed && (
+                    activity.id.startsWith(`step:${sectionId}:`) ||
+                    (sectionId === 'question-bank' && activity.id.startsWith('answer:question-bank:')) ||
+                    (sectionId === 'comparison' && activity.id.startsWith('answer:final-check-'))
+                )).length;
+                activityProgress.set(sectionId, total > 0 ? Math.max(0, Math.min(1, Math.max(completed, savedCompleted) / total)) : 0);
                 updateProgress();
             },
+
+            recordActivity(activity) { return scoreTracker.record(activity); },
+            getScore() { return scoreTracker.getScore(); },
 
             getLesson() {
                 return state.lesson;
@@ -2448,6 +2527,8 @@
 
             getProgress() {
                 return {
+                    score: scoreTracker.getScore(),
+                    scoreActivities: scoreTracker.export(),
                     currentSectionId:
                         state.sections[
                             state.currentIndex
@@ -3907,6 +3988,7 @@
             '.lx2-step--done{opacity:.55;}',
             '.lx2-notes{margin:.4rem 0 .4rem 1.1rem;padding:0;}',
             '.lx2-continue{font:inherit;border:none;border-radius:8px;padding:.5rem 1rem;background:var(--color-accent,#2563eb);color:#fff;cursor:pointer;margin-top:.6rem;}',
+            '.lesson-header--earned-points .lesson-header__practice-progress{display:none!important;}',
             '.lx2-badge{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--color-accent,#2563eb);margin:.75rem 0 .1rem;}',
             '.lx2-stage{border-top:1px dashed rgba(0,0,0,.15);padding-top:.35rem;margin-top:.6rem;}',
             '.lx2-stage.is-done .lx2-option,.lx2-stage.is-done .lx2-continue,.lx2-stage.is-done .lx2-tap,.lx2-stage.is-done .lx2-chip--value{pointer-events:none;opacity:.7;}',
