@@ -122,6 +122,7 @@
     }
   ],
   "question_bank": {
+    "session_length": 10,
     "eyebrow": "Practice",
     "title": "Write the expression",
     "intro": "Use stories about games, football, food and money. Start with the letter, then follow each change."

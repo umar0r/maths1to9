@@ -107,6 +107,7 @@
         }
     ],
     "question_bank": {
+        "session_length": 10,
         "eyebrow": "Practice",
         "title": "Practise reading, classifying and ordering fractions",
         "intro": "Answer one question at a time. Decide what each number means before you choose."

@@ -5,12 +5,6 @@
 
     const mounted = new WeakSet();
 
-    /*
-     * How many questions must be checked before the lesson's
-     * "Finish lesson" button unlocks.
-     */
-    const QUESTIONS_TO_COMPLETE = 5;
-
     function gateSection(sectionId) {
         document.dispatchEvent(
             new CustomEvent('maths1to9:section-gate', {
@@ -523,6 +517,7 @@
         mounted.add(root);
         injectStyles();
         gateSection('question-bank');
+        const sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
 
         const state = {
             running: false,
@@ -530,7 +525,7 @@
             checked: 0,
             correct: 0,
             previous: '',
-            run: 0
+            finished: false
         };
 
         root.innerHTML = `
@@ -588,7 +583,7 @@
         }
 
         function addQuestion() {
-            if (!state.running) {
+            if (!state.running || state.number >= sessionLength) {
                 return;
             }
 
@@ -599,7 +594,7 @@
 
             const questionNumber = state.number;
             const questionId =
-                `question-bank:${state.run}:${questionNumber}`;
+                `question-bank:${questionNumber}`;
 
             const card = document.createElement('article');
 
@@ -607,7 +602,7 @@
 
             card.innerHTML = `
                 <p class="question-number">
-                    Question ${questionNumber}
+                    Question ${questionNumber} of ${sessionLength}
                 </p>
 
                 <p class="question-prompt"></p>
@@ -765,6 +760,10 @@
                 }
 
                 if (phase === 'correct') {
+                    if (questionNumber === sessionLength) {
+                        window.Maths1to9Lesson.completeLesson();
+                        return;
+                    }
                     setAction('Next question', false);
                     addQuestion();
 
@@ -804,7 +803,7 @@
 
                 updateScore();
 
-                if (state.checked >= QUESTIONS_TO_COMPLETE) {
+                if (state.correct === sessionLength) {
                     completeSection('question-bank');
                 }
 
@@ -817,7 +816,7 @@
                         input.disabled = true;
                     });
 
-                    setAction('Next question', true);
+                    setAction(questionNumber === sessionLength ? 'Finish lesson' : 'Next question', true);
 
                     feedback.className =
                         'question-feedback ' +
@@ -844,7 +843,7 @@
 
             setAction('Check answer', false);
 
-            list.append(card);
+            list.replaceChildren(card);
 
             card.scrollIntoView({
                 behavior: 'smooth',
@@ -853,12 +852,12 @@
         }
 
         start.addEventListener('click', () => {
+            if (state.finished) return;
             state.running = true;
             state.number = 0;
             state.checked = 0;
             state.correct = 0;
             state.previous = '';
-            state.run += 1;
 
             list.replaceChildren();
 
@@ -868,6 +867,19 @@
             updateScore();
             addQuestion();
         });
+
+        function finishPractice() {
+            if (state.finished) return;
+            state.finished = true;
+            state.running = false;
+            start.disabled = true;
+            stop.disabled = true;
+            window.Maths1to9Lesson.clearSectionAction('question-bank');
+            list.innerHTML = '<article class="question-card"><p class="question-prompt">Practice complete</p>' +
+                `<p>You completed ${sessionLength} questions. Your progress has been saved.</p>` +
+                '<p><a class="button button--primary" href="../../index.php">Back to all lessons</a></p></article>';
+        }
+        document.addEventListener('maths1to9:lesson-complete', finishPractice);
 
         stop.addEventListener('click', () => {
             window.Maths1to9Lesson

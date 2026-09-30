@@ -24,12 +24,6 @@
     const SECTION_ID = 'question-bank';
     const mounted = new WeakSet();
 
-    /*
-     * The lesson's "Finish lesson" button stays locked until this
-     * many different questions have been checked.
-     */
-    const QUESTIONS_TO_COMPLETE = 3;
-
     const MINUS = '−';
     const TIMES = '×';
 
@@ -582,11 +576,9 @@
         mounted.add(root);
         root.dataset.mounted = 'true';
         gateSection(SECTION_ID);
+        const sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
 
         const state = {
-            run:
-                `${Date.now().toString(36)}-` +
-                Math.random().toString(36).slice(2, 8),
             number: 0,
             answered: 0,
             correct: 0,
@@ -619,6 +611,7 @@
         }
 
         function addQuestion() {
+            if (state.finished || state.number >= sessionLength) return;
             state.number += 1;
 
             const type = nextType();
@@ -627,7 +620,7 @@
                 type,
                 question: generators[type](),
                 questionId:
-                    `${SECTION_ID}:${state.run}:${state.number}`,
+                    `${SECTION_ID}:${state.number}`,
                 selected: '',
                 checked: false,
                 correct: false,
@@ -706,7 +699,7 @@
 
             root.innerHTML =
                 '<article class="question-card">' +
-                `<p class="question-number">Question ${state.number} ` +
+                `<p class="question-number">Question ${state.number} of ${sessionLength} ` +
                 `· ${state.correct} correct from ${state.answered} answered</p>` +
                 `<p class="lesson-eyebrow">${escapeHtml(question.type)}</p>` +
                 `<p class="question-prompt">${escapeHtml(question.prompt)}</p>` +
@@ -736,7 +729,7 @@
                 : 'check';
 
             const label = phase === 'next'
-                ? 'Next question'
+                ? (state.number === sessionLength ? 'Finish lesson' : 'Next question')
                 : phase === 'retry'
                     ? 'Try again'
                     : 'Check answer';
@@ -780,15 +773,7 @@
                             correct: entry.correct
                         });
 
-                        /*
-                         * "Finish lesson" unlocks only after enough
-                         * different questions have been checked, right
-                         * or wrong.
-                         */
-                        if (
-                            !state.completed &&
-                            state.answered >= QUESTIONS_TO_COMPLETE
-                        ) {
+                        if (!state.completed && state.correct === sessionLength) {
                             state.completed = true;
                             completeSection(SECTION_ID);
                         }
@@ -804,6 +789,10 @@
                         return;
                     }
 
+                    if (state.number === sessionLength) {
+                        window.Maths1to9Lesson.completeLesson();
+                        return;
+                    }
                     addQuestion();
                 }
             });
@@ -845,7 +834,7 @@
                 'Your progress has been saved.</p>' +
                 practisedHtml +
                 '<p><a class="button button--primary" ' +
-                'href="../../">Back to all lessons</a></p>' +
+                'href="../../index.php">Back to all lessons</a></p>' +
                 '</article>';
         }
 

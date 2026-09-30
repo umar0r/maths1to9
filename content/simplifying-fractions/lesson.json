@@ -93,6 +93,7 @@
     }
   ],
   "question_bank": {
+    "session_length": 10,
     "eyebrow": "Practice",
     "title": "Practise equivalent and simplifying fractions",
     "intro": "Answer one question at a time. Simplify fully and check that the numerator and denominator have no common divisor greater than 1."
