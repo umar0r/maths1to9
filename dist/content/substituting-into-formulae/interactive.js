@@ -384,14 +384,12 @@
             }
 
             function render() {
-                removeBackButton();
                 root.replaceChildren();
 
                 root.append(methodTrail(), workingSoFar());
 
                 if (state.finished) {
                     root.append(feedback(state.successMessage));
-                    removeBackButton();
                     return;
                 }
 
@@ -437,7 +435,6 @@
                 }
 
                 root.append(card);
-                removeBackButton();
             }
 
             render();
