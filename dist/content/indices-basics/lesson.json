@@ -1,0 +1,164 @@
+{
+  "id": "indices-basics-01",
+  "slug": "indices-basics",
+  "title": "Indices basics",
+  "subtitle": "Understand what powers mean and how to calculate them.",
+  "assessment": {
+    "question_types": {
+      "identify-parts": "positive-integer-powers",
+      "expand-power": "positive-integer-powers",
+      "calculate-power": "positive-integer-powers",
+      "write-notation": "positive-integer-powers",
+      "apply-power": "positive-integer-powers"
+    }
+  },
+  "section_order": [
+    "explanation",
+    "worked-examples",
+    "interactive",
+    "question-bank",
+    "comparison"
+  ],
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn",
+      "sections": [
+        "explanation",
+        "worked-examples"
+      ]
+    },
+    {
+      "id": "try-it",
+      "label": "Step by step",
+      "sections": [
+        "interactive"
+      ]
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "sections": [
+        "question-bank"
+      ]
+    },
+    {
+      "id": "check",
+      "label": "Check",
+      "sections": [
+        "comparison"
+      ]
+    }
+  ],
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "What does an index tell us?",
+    "paragraphs": [
+      "An index is the small raised number next to a base. It tells you how many copies of the base to multiply together. An index is also called an exponent.",
+      "In 4³, the base is 4 and the index is 3. Write three 4s, then multiply them together.",
+      "We read 4³ as “four to the power of three” or “four cubed”. It means 4 × 4 × 4, not 4 × 3.",
+      "An index of 2 is called “squared”: 6² = 6 × 6 = 36. An index of 3 is called “cubed”: 3³ = 3 × 3 × 3 = 27."
+    ],
+    "key_points": [
+      "The base tells you which number to repeat.",
+      "The index tells you how many copies to multiply together.",
+      "The value is the result of the multiplication.",
+      "Squared means two copies; cubed means three. Do not multiply the base by the index."
+    ]
+  },
+  "interactive": {
+    "eyebrow": "Step by step",
+    "title": "Build a power one factor at a time",
+    "intro": "Grow 2 into a power by adding one factor at a time, then check what you've built."
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Worked example 1",
+      "title": "Calculate 5²",
+      "steps": [
+        "5² has base 5 and index 2.",
+        "5² = 5 × 5 (two 5s multiplied together).",
+        "5 × 5 = 25."
+      ],
+      "answer": "5² = 25"
+    },
+    {
+      "eyebrow": "Worked example 2",
+      "title": "Calculate 2³",
+      "steps": [
+        "2³ has base 2 and index 3.",
+        "2³ = 2 × 2 × 2 (three 2s multiplied together).",
+        "2 × 2 × 2 = 8."
+      ],
+      "answer": "2³ = 8"
+    },
+    {
+      "eyebrow": "Worked example 3",
+      "title": "Calculate 10³",
+      "steps": [
+        "10³ has base 10 and index 3.",
+        "10³ = 10 × 10 × 10 (three 10s multiplied together).",
+        "10 × 10 × 10 = 1000."
+      ],
+      "answer": "10³ = 1000"
+    },
+    {
+      "eyebrow": "Common mistake",
+      "title": "4³ is not 4 × 3",
+      "steps": [
+        "The index 3 means three 4s multiplied together, not \"4 times 3\".",
+        "4³ = 4 × 4 × 4.",
+        "4 × 4 × 4 = 64, not 12."
+      ],
+      "answer": "4³ = 64"
+    },
+    {
+      "eyebrow": "Squared",
+      "title": "Why 6² is \"six squared\"",
+      "steps": [
+        "6² = 6 × 6 (two 6s multiplied together).",
+        "6 × 6 = 36.",
+        "\"Squared\" just names a power of 2. It does not mean ×2."
+      ],
+      "answer": "6² = 36"
+    },
+    {
+      "eyebrow": "Cubed",
+      "title": "Why 3³ is \"three cubed\"",
+      "steps": [
+        "3³ = 3 × 3 × 3 (three 3s multiplied together).",
+        "3 × 3 × 3 = 27.",
+        "\"Cubed\" just names a power of 3. It does not mean ×3."
+      ],
+      "answer": "3³ = 27"
+    },
+    {
+      "eyebrow": "Reverse it",
+      "title": "Write 8 × 8 using an index",
+      "steps": [
+        "Count how many times 8 appears: twice.",
+        "Two factors of 8 means an index of 2.",
+        "8 × 8 = 8²."
+      ],
+      "answer": "8 × 8 = 8²"
+    }
+  ],
+  "question_bank": {
+    "eyebrow": "Practice",
+    "title": "Practise indices",
+    "intro": "Identify the base and index, expand powers, calculate values, and convert both ways.",
+    "completion_target": 8
+  },
+  "comparison": {
+    "title": "Check what you’ve learned",
+    "hide_eyebrow": true,
+    "questions": [
+      "identify-parts",
+      "expand-power",
+      "calculate-power",
+      "write-notation",
+      "apply-power"
+    ]
+  },
+  "worked_examples_title": "See it worked out"
+}
