@@ -744,6 +744,7 @@
         return [
             {
                 type: 'number',
+                assessmentType: 'digitValue',
                 prompt: (
                     `A number has ${hundreds} hundreds, ${ones} ones, `
                     + `${tenths} tenths and ${hundredths} hundredths. `
@@ -758,6 +759,7 @@
             },
             {
                 type: 'misconception',
+                assessmentType: 'compare',
                 prompt: (
                     `Aisha says: “${smallerDecimal} is greater than `
                     + `${largerDecimal} because ${smallerTenths}${smallerHundredths} `
@@ -779,6 +781,7 @@
             },
             {
                 type: 'order',
+                assessmentType: 'order',
                 prompt: (
                     'Four pupils recorded these long-jump distances. Put the '
                     + `distances in order from shortest to longest: ${orderValues.join(' m, ')} m.`
@@ -792,6 +795,7 @@
             },
             {
                 type: 'number',
+                assessmentType: 'powerOfTen',
                 prompt: (
                     `A machine divides its input by 10. The input is `
                     + `${dividedInput}. What is the output?`
@@ -804,6 +808,7 @@
             },
             {
                 type: 'number',
+                assessmentType: 'powerOfTen',
                 prompt: (
                     `A number is multiplied by 100. The result is `
                     + `${multipliedResult}. What was the original number?`
@@ -1049,7 +1054,7 @@
                     disabled: answer.value.trim() === '',
                     onClick: () => {
                         const correct = isCorrect(question, answer);
-                        window.Maths1to9Lesson?.recordAssessment?.({ questionType: 'place-value', questionId: `final-check-${state.index + 1}`, correct });
+                        window.Maths1to9Lesson?.recordAssessment?.({ questionType: question.assessmentType, questionId: `final-check-${state.index + 1}`, correct });
                         state.index += 1;
                         render();
                     }
@@ -1059,7 +1064,7 @@
             root.querySelectorAll('[data-final-tile]').forEach((button) => button.addEventListener('click', () => { answer.order.push(button.dataset.finalTile); state.answers[state.index] = answer; render(); }));
             root.querySelectorAll('[data-final-slot]').forEach((button) => button.addEventListener('click', () => { const value = answer.order[Number(button.dataset.finalSlot)]; if (value) { answer.order = answer.order.filter((item) => item !== value); state.answers[state.index] = answer; render(); } }));
             const complete = question.type === 'misconception' ? Boolean(answer.decision && answer.reason) : question.type === 'order' ? answer.order.length === question.values.length : answer.value.trim() !== '';
-            window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: 'Next question', disabled: !complete, onClick: () => { const correct = isCorrect(question, answer); window.Maths1to9Lesson?.recordAssessment?.({ questionType: 'place-value', questionId: `final-check-${state.index + 1}`, correct }); state.index += 1; render(); }});
+            window.Maths1to9Lesson?.setSectionAction?.('comparison', { label: 'Next question', disabled: !complete, onClick: () => { const correct = isCorrect(question, answer); window.Maths1to9Lesson?.recordAssessment?.({ questionType: question.assessmentType, questionId: `final-check-${state.index + 1}`, correct }); state.index += 1; render(); }});
         }
 
         document.addEventListener('maths1to9:section-change', (event) => {

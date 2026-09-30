@@ -2352,9 +2352,13 @@
         if (
             questionType === '' ||
             questionId === '' ||
-            typeof detail.correct !== 'boolean' ||
-            skillIds.length === 0
+            typeof detail.correct !== 'boolean'
         ) {
+            return false;
+        }
+
+        if (skillIds.length === 0) {
+            console.warn(`Lesson "${state.slug}": answer type "${questionType}" has no skill mapping; answer "${questionId}" was not recorded.`);
             return false;
         }
 
