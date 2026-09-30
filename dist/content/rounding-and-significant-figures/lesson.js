@@ -211,7 +211,7 @@
     }
     async function init() {
         try {
-            const response=await fetch('./lesson.json');
+            const response=await fetch('./lesson.json?v=2');
             if(!response.ok) throw new Error('Lesson unavailable');
             data=await response.json();
             slides=[...data.learn.map(item=>({type:'learn',stage:0,item})),...data.guided.map((item,i)=>({type:'guided',stage:1,item,number:i+1})),...data.practice.map((item,i)=>({type:'practice',stage:2,item,number:i+1})),{type:'review',stage:2},...data.check.map((item,i)=>({type:'check',stage:3,item,number:i+1})),{type:'summary',stage:3},{type:'finish',stage:3}];

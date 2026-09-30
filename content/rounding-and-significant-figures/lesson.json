@@ -131,7 +131,7 @@
       "prompt": "Round 367 to the nearest 10.",
       "target_help": "The tens digit is the place to keep.",
       "decider_help": "The ones digit is immediately to its right.",
-      "explanation": "7 is at least 5. Increase 6 tens to 7 tens and replace the ones with 0."
+      "explanation": "7 is at least 5. Increase 6 tens to 7 tens and replace the ones with 0. The rounded answer is 370."
     },
     {
       "number": "642",
@@ -147,7 +147,7 @@
       "prompt": "Round 642 to the nearest 100.",
       "target_help": "The hundreds digit is the place to keep.",
       "decider_help": "Look at the tens digit, immediately to the right.",
-      "explanation": "4 is less than 5. Keep 6 hundreds and replace the tens and ones with zeros."
+      "explanation": "4 is less than 5. Keep 6 hundreds and replace the tens and ones with zeros. The rounded answer is 600."
     },
     {
       "number": "4382",
@@ -163,7 +163,7 @@
       "prompt": "Round 4382 to the nearest 1,000.",
       "target_help": "Keep the digit in the thousands column.",
       "decider_help": "The hundreds digit decides which thousand is nearest.",
-      "explanation": "3 is less than 5. Keep 4 thousands and replace the other digits with zeros."
+      "explanation": "3 is less than 5. Keep 4 thousands and replace the other digits with zeros. The rounded answer is 4,000."
     },
     {
       "number": "4.276",
@@ -179,7 +179,7 @@
       "prompt": "Round 4.276 to 2 decimal places.",
       "target_help": "Two decimal places means keeping the hundredths digit.",
       "decider_help": "Look at the thousandths digit, one place to the right.",
-      "explanation": "6 is at least 5. Increase the hundredths from 7 to 8, then leave out the thousandths."
+      "explanation": "6 is at least 5. Increase the hundredths from 7 to 8, then leave out the thousandths. The rounded answer is 4.28."
     },
     {
       "number": "0.004782",
@@ -218,7 +218,7 @@
     {
       "prompt": "Round 83 to the nearest 10.",
       "answer": "80",
-      "explanation": "The ones digit is 3, so keep 8 tens and replace the ones with 0.",
+      "explanation": "The ones digit is 3, so keep 8 tens and replace the ones with 0. The rounded answer is 80.",
       "skill": "round-decimal-places",
       "options": [
         "80",
@@ -229,7 +229,7 @@
     {
       "prompt": "Round 650 to the nearest 100.",
       "answer": "700",
-      "explanation": "650 is halfway between 600 and 700. The tens digit is 5, so round up.",
+      "explanation": "650 is halfway between 600 and 700. The tens digit is 5, so round up. The rounded answer is 700.",
       "skill": "round-decimal-places",
       "options": [
         "600",
@@ -240,7 +240,7 @@
     {
       "prompt": "Round 4,382 to the nearest 1,000.",
       "answer": "4000",
-      "explanation": "The hundreds digit is 3, so keep 4 thousands.",
+      "explanation": "The hundreds digit is 3, so keep 4 thousands. The rounded answer is 4,000.",
       "skill": "round-decimal-places",
       "options": [
         "4,000",
@@ -251,7 +251,7 @@
     {
       "prompt": "Round 6.73 to 1 decimal place.",
       "answer": "6.7",
-      "explanation": "Keep the tenths digit, 7. The hundredths digit is 3, so it stays 7.",
+      "explanation": "Keep the tenths digit, 7. The hundredths digit is 3, so it stays 7. The rounded answer is 6.7.",
       "skill": "round-decimal-places",
       "options": [
         "6.7",
@@ -262,7 +262,7 @@
     {
       "prompt": "Round 2.856 to 2 decimal places.",
       "answer": "2.86",
-      "explanation": "The thousandths digit is 6, so the hundredths digit increases from 5 to 6.",
+      "explanation": "The thousandths digit is 6, so the hundredths digit increases from 5 to 6. The rounded answer is 2.86.",
       "skill": "round-decimal-places",
       "options": [
         "2.85",
@@ -284,7 +284,7 @@
     {
       "prompt": "Round 7,462 to 2 significant figures.",
       "answer": "7500",
-      "explanation": "Keep 7 and 4. The next digit is 6, so increase 4 to 5, then use zeros.",
+      "explanation": "Keep 7 and 4. The next digit is 6, so increase 4 to 5, then use zeros. The rounded answer is 7,500.",
       "skill": "round-significant-figures",
       "options": [
         "7,400",
@@ -295,7 +295,7 @@
     {
       "prompt": "Round 0.00638 to 2 significant figures.",
       "answer": "0.0064",
-      "explanation": "The first two significant figures are 6 and 3. The next digit is 8, so increase 3 to 4.",
+      "explanation": "The first two significant figures are 6 and 3. The next digit is 8, so increase 3 to 4. The rounded answer is 0.0064.",
       "skill": "round-significant-figures",
       "options": [
         "0.0063",
@@ -336,14 +336,14 @@
     {
       "prompt": "Round 5.465 to 2 decimal places.",
       "answer": "5.47",
-      "explanation": "The deciding digit is 5, so the hundredths digit increases from 6 to 7.",
+      "explanation": "The deciding digit is 5, so the hundredths digit increases from 6 to 7. The rounded answer is 5.47.",
       "skill": "round-decimal-places",
       "places": 2
     },
     {
       "prompt": "Round 0.00726 to 2 significant figures.",
       "answer": "0.0073",
-      "explanation": "Start counting at 7. Keep 7 and 2; the next digit is 6, so round up.",
+      "explanation": "Start counting at 7. Keep 7 and 2; the next digit is 6, so round up. The rounded answer is 0.0073.",
       "skill": "round-significant-figures"
     },
     {
