@@ -18,15 +18,30 @@
     let writeQueue = Promise.resolve();
     const entry = () => state.answers[state.slide] || (state.answers[state.slide] = {value:'', attempts:0, done:false});
     const scores = () => {
-        const assessed = slides.map((slide, i) => ({slide, answer:state.answers[i]}))
-            .filter(({slide, answer}) => ['practice','check'].includes(slide.type) && answer?.done);
-        return {
-            points: assessed.reduce((sum, {answer}) => sum + (answer.firstCorrect ? 10 : answer.correct ? 5 : 0), 0),
-            maximumPoints: (data.practice.length + data.check.length) * 10,
-            correctFirstTry: assessed.filter(({answer}) => answer.firstCorrect).length,
-            answered: assessed.length
-        };
+        const activities = [];
+        slides.forEach((slide, i) => {
+            const id = slide.id || `slide-${i}`;
+            const answer = state.answers[i];
+            if (['practice','check'].includes(slide.type)) {
+                activities.push({id, kind:'answer', completed:answer?.done,
+                    firstCorrect:answer?.firstCorrect, correct:answer?.correct});
+            } else if (['learn','review','summary'].includes(slide.type)) {
+                activities.push({id, kind:'learn', completed:state.completed[i]});
+            } else if (slide.type === 'guided') {
+                const completed = Math.round(slideCompletion(i) * 3);
+                for (let step = 0; step < 3; step++) activities.push({id:`${id}:${step}`, kind:'guided', completed:step < completed});
+            }
+            if (slide.item?.explore) activities.push({id:`${id}:explore`, kind:'explore', completed:state.interactions?.[slide.id]});
+        });
+        return engine.calculateScore(activities);
     };
+    function refreshScore() {
+        const score = scores();
+        const badge = app.querySelector('.rounding-score');
+        badge.setAttribute('aria-label', `${score.points} points earned`);
+        badge.querySelector('.practice-progress-ring').style.setProperty('--practice-progress', `${score.points / score.maximumPoints * 100}%`);
+        badge.querySelector('span').textContent = score.points;
+    }
     function save() {
         const slide = slides[state.slide];
         const snapshot = JSON.parse(JSON.stringify({
@@ -154,7 +169,7 @@
         else if(['practice','check'].includes(slide.type)) body=questionHtml(slide);
         else if(slide.type==='review') body=reviewHtml('practice');
         else if(slide.type==='summary') body=summaryHtml();
-        else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished ? 'Lesson complete' : 'Keep learning'}</p><h2 class="lesson-section__title">${state.finished ? 'Rounding complete ★' : 'Your rounding journey'}</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><h3>What you've learnt</h3><p class="lesson-copy">You can find the deciding digit, round whole numbers and decimals, count significant figures and handle a carry.</p>${note('10 points for a correct first answer; 5 for a practice answer corrected after feedback. Your points and lesson progress are saved in this browser.')}<h3 style="margin-top:28px">More to learn</h3><div class="rounding-links"><a href="../place-value/">Place value<small>Strengthen your understanding of each digit.</small></a><a href="../order-of-operations/">Order of operations<small>Build confidence with multi-step calculations.</small></a></div>`;
+        else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished ? 'Lesson complete' : 'Keep learning'}</p><h2 class="lesson-section__title">${state.finished ? 'Rounding complete ★' : 'Your rounding journey'}</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><h3>What you've learnt</h3><p class="lesson-copy">You can find the deciding digit, round whole numbers and decimals, count significant figures and handle a carry.</p>${note('Earn 5 points for each learning or review slide you finish, each guided step you solve, and exploring the number line. Answers earn 10 points first try, or 5 after practice feedback. Your progress is saved in this browser.')}<h3 style="margin-top:28px">More to learn</h3><div class="rounding-links"><a href="../place-value/">Place value<small>Strengthen your understanding of each digit.</small></a><a href="../order-of-operations/">Order of operations<small>Build confidence with multi-step calculations.</small></a></div>`;
         app.innerHTML=`<header class="lesson-header lesson-header--compact rounding-header"><div class="lesson-header__inner"><h1 class="lesson-header__title">Rounding</h1><div class="rounding-score" aria-label="${score.points} points earned"><div class="practice-progress-ring" style="--practice-progress:${score.points/score.maximumPoints*100}%"><span>${score.points}</span></div></div></div></header><nav class="lesson-navigation lesson-navigation--stages" aria-label="Lesson sections"><div class="lesson-navigation__buttons">${data.navigation_stages.map((stage,i) => `<button class="lesson-navigation__button ${stageProgress[i].completed===stageProgress[i].total?'lesson-navigation__button--complete':''}" type="button" data-stage="${i}" data-stage-number="${i+1}" aria-pressed="${i===slide.stage}" ${i>slides[state.highest].stage?'disabled':''}>${escape(stage.label)}</button>`).join('')}</div></nav><section id="rounding-card" class="lesson-section" tabindex="-1"><p class="lesson-eyebrow">${slide.type==='summary'?'Summary':escape(data.navigation_stages[slide.stage].label)}</p>${body}</section><footer class="lesson-controls"><div class="button-group"><button id="rounding-action" class="button button--primary" type="button">Continue</button></div></footer>`;
         app.querySelectorAll('[data-stage]').forEach((button, i) => {
             engine.updateStageProgress(button, stageProgress[i].completed, stageProgress[i].total);
@@ -179,7 +194,7 @@
                 const marker=app.querySelector('#line-marker'); marker.textContent=n; marker.style.left=`${(n-60)*10}%`;
                 app.querySelector('#line-result').textContent=`${n} ≈ ${rounded}${n===65?' · Halfway: round up':n===60||n===70?' · Already a multiple of 10':''}`;
             };
-            updateLine(); app.querySelector('#number-slider').addEventListener('input', event => {state.explore=Number(event.target.value); updateLine(); save();});
+            updateLine(); app.querySelector('#number-slider').addEventListener('input', event => {state.explore=Number(event.target.value); state.interactions[slide.id] = true; updateLine(); refreshScore(); save();});
         }
         if(focus) {app.querySelector('#rounding-card').focus({preventScroll:true}); window.scrollTo({top:0,behavior:'instant'});}
     }
@@ -226,6 +241,7 @@
             const saved=await store.getLessonProgress(slug);
             const candidate=saved?.roundingState;
             state=candidate?.version===1 && Number.isInteger(candidate.slide) && candidate.slide>=0 && candidate.slide<slides.length && Number.isInteger(candidate.highest) && candidate.highest>=candidate.slide && candidate.highest<slides.length && candidate.answers && typeof candidate.answers==='object' ? candidate : {version:1,slide:0,highest:0,answers:{},explore:67,finished:false};
+            state.interactions ||= {};
             // Migrate earlier saves without losing earned scores.
             if (!state.completed) state.completed = Object.fromEntries(slides.map((slide, i) => [i, i < state.highest && !['guided','practice','check'].includes(slide.type)]));
             slides.forEach((slide, i) => {
@@ -245,6 +261,7 @@
                 }, aliases);
             });
             if (!router.start()) { render(); router.sync(slides[state.slide].id, {replace:true}); }
+            save();
         } catch(error) {
             app.innerHTML='<div class="lesson-loading">This lesson could not load. Please refresh to try again.</div>';
             console.error(error);
