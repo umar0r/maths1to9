@@ -10,6 +10,7 @@
       "lessons": [
         {"folder":"place-value","title":"Place value and ordering","subtitle":"Understand what each digit is worth and put numbers in order.","skills":["place-value","order-numbers","inequality-symbols"]},
         {"folder":"negative-numbers","title":"Subtracting negative numbers","subtitle":"Rewrite subtracting a negative as adding a positive.","skills":["calculate-negative-numbers"]},
+        {"folder":"adding-decimal-numbers","title":"Adding decimal numbers","subtitle":"Line up the decimal points, then add column by column.","skills":["decimal-add-subtract"]},
         {"folder":"calculating-with-decimals","title":"Calculating with decimals","subtitle":"Use the four operations accurately with decimal numbers.","skills":["decimal-add-subtract","decimal-multiply-divide"]},
         {"folder":"order-of-operations","title":"Order of operations","subtitle":"Choose the correct calculation to do next.","skills":["order-of-operations","inverse-operations"]},
         {"folder":"rounding-and-significant-figures","title":"Rounding and significant figures","subtitle":"Round numbers to a requested degree of accuracy.","skills":["round-decimal-places","round-significant-figures","round-in-context"]},
@@ -22,6 +23,7 @@
         {"folder":"adding-and-subtracting-fractions","title":"Adding and subtracting fractions","subtitle":"Build common denominators before combining fractions.","skills":["add-subtract-same-denominator","add-subtract-different-denominators","add-subtract-mixed-numbers"]},
         {"folder":"multiplying-and-dividing-fractions","title":"Multiplying and dividing fractions","subtitle":"Multiply straight across or use the reciprocal to divide.","skills":["multiply-fractions","divide-fractions"]},
         {"folder":"fractions-decimals-percentages","title":"Fractions, decimals and percentages","subtitle":"Write the same value in three different forms.","skills":["fraction-decimal-conversion","decimal-percentage-conversion","fraction-percentage-conversion"]},
+        {"folder":"indices-basics","title":"Indices basics","subtitle":"Understand bases, indices and repeated multiplication.","skills":["positive-integer-powers"]},
         {"folder":"powers-roots-and-indices","title":"Powers, roots and indices","subtitle":"Read, recognise and calculate powers and roots.","skills":["positive-integer-powers","square-cube-roots","recognise-power-sequences"]},
         {"folder":"laws-of-indices","title":"Laws of indices","subtitle":"Use index laws to simplify and calculate.","skills":["multiply-divide-indices","power-of-a-power","zero-and-negative-indices"]},
         {"folder":"factors-multiples-and-primes","title":"Factors, multiples and primes","subtitle":"Recognise how whole numbers are built and related.","skills":["factors-and-multiples","prime-numbers","common-factors-multiples"]},
