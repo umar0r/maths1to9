@@ -12,3 +12,6 @@ content/_ss/
 .vscode/
 .idea/
 *.DS_Store
+
+# Node / test tooling
+node_modules/
