@@ -1,0 +1,185 @@
+.prime-learn {
+    max-width: 58rem;
+    margin-inline: auto;
+}
+.prime-learn h3 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+}
+.prime-learn p { line-height: 1.6; }
+.prime-tree {
+    display: block;
+    width: 100%;
+    max-width: 30rem;
+    margin: 1rem auto;
+    height: auto;
+}
+.prime-tree-edges line { stroke: #788391; stroke-width: 3; }
+.prime-tree-node text { font: 600 25px Nunito, sans-serif; fill: #172b3b; }
+.prime-tree-node circle { fill: #ecfdf3; stroke: #15803d; stroke-width: 3; }
+.prime-tree-node.is-split { opacity: .35; }
+.prime-tree-node.is-collected circle { fill: #bbf7d0; stroke-width: 5; }
+.prime-tree-node.is-collected { animation: prime-collect .3s ease-out; }
+.prime-match-2 text { fill: #155e75; }
+.prime-match-3 text { fill: #6b21a8; }
+.prime-match-5 text { fill: #9a3412; }
+.prime-learn-key { font-size: .9rem; }
+.prime-learn-key::before {
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: .5rem;
+    vertical-align: -.15rem;
+    border: 2px solid #15803d;
+    border-radius: 50%;
+    background: #ecfdf3;
+}
+.prime-learn-note { color: #526171; }
+.prime-learn-maths {
+    font-size: clamp(1rem, 2.5vw, 1.45rem);
+    text-align: center;
+    overflow-x: auto;
+    padding-block: .75rem;
+}
+.prime-learn-trees { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@keyframes prime-collect { from { opacity: .5; } to { opacity: 1; } }
+@media (max-width: 600px) {
+    .prime-learn-trees { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .prime-learn *, .prime-learn *::before { animation: none !important; transition: none !important; }
+}
+
+/* Only the bespoke Learn screens supply headings for this lesson. */
+body[data-lesson-id='prime-factor-decomposition'] #lesson-section-explanation > .lesson-section__title {
+    display: none;
+}
+.prime-learn h3 { margin-bottom: .5rem; }
+.prime-learn p { margin-block: .5rem; }
+.prime-tree { margin-block: .5rem; }
+.prime-tree-note rect { fill: #fff; stroke: #cbd5e1; stroke-width: 1; }
+.prime-tree-note line { stroke: #64748b; stroke-width: 1.5; }
+.prime-tree-note text { font: 600 20px Nunito, sans-serif; fill: #334155; }
+.prime-tree-node.prime-match-2 circle { fill: #155e75; stroke: #155e75; }
+.prime-tree-node.prime-match-3 circle { fill: #6b21a8; stroke: #6b21a8; }
+.prime-tree-node.prime-match-5 circle { fill: #9a3412; stroke: #9a3412; }
+.prime-tree-node[class*='prime-match-'] text { fill: #fff; }
+.prime-learn-collected { min-height: 7rem; }
+.prime-learn-collected .prime-learn-maths { font-size: 1.1rem; padding-block: .15rem; margin-block: .25rem; }
+@media (min-width: 601px) {
+    .prime-learn[data-screen='1'] .prime-tree,
+    .prime-learn[data-screen='2'] .prime-tree { max-width: 20rem; }
+}
+@media (min-width: 900px) {
+    .prime-learn[data-screen='2'] {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        column-gap: 1.5rem;
+        align-items: center;
+    }
+    .prime-learn[data-screen='2'] > h3,
+    .prime-learn[data-screen='2'] > p { grid-column: 1 / -1; }
+    .prime-learn[data-screen='2'] > .prime-tree { grid-column: 1; max-width: 26rem; }
+    .prime-learn[data-screen='2'] > .prime-learn-collected { grid-column: 2; min-width: 0; }
+}
+
+.prime-try { width: 100%; }
+.prime-try p { margin-block: .75rem; }
+.prime-try-tree { position: relative; max-width: 30rem; margin: .5rem auto; }
+.prime-try-tree > .prime-tree { margin: 0; }
+
+/* SVG draws every digit and circle identically. Transparent HTML buttons
+   provide 44px keyboard/touch targets without changing their visual sizes. */
+.prime-tree-tap {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: max(44px, 10.77%);
+    aspect-ratio: 1;
+    padding: 0;
+    font-size: 0;
+    color: transparent;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+}
+.prime-tree-tap:disabled { opacity: 1; }
+.prime-tree-tap:focus-visible { outline: 3px solid #155e75; outline-offset: 3px; }
+.prime-tree-tap.is-composite:hover { background: rgb(14 165 233 / .12); }
+.prime-try-tree .prime-tree-node.is-picked { opacity: .4; }
+.prime-tree-empty { fill: #fff; stroke: #526171; stroke-width: 2; stroke-dasharray: 5 4; }
+.prime-split-panel { padding: .75rem; background: #f1f5f9; border-radius: .75rem; }
+.prime-split-panel > p { margin-top: 0; }
+.prime-split-inputs { display: flex; align-items: center; justify-content: center; gap: .5rem; min-width: 0; }
+.prime-split-inputs input { width: 4.5rem; min-width: 0; min-height: 44px; padding: .35rem; text-align: center; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
+.prime-split-inputs input:focus { outline: 3px solid #155e75; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+    .prime-try *, .prime-try *::before { animation: none !important; transition: none !important; }
+}
+.prime-collected-answer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem; }
+.prime-collected-item { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; }
+.prime-collected-answer button, .prime-answer-builder button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: .4rem .6rem;
+    border: 2px solid #64748b;
+    border-radius: .5rem;
+    background: #fff;
+    color: #172b3b;
+    font: inherit;
+}
+.prime-collected-answer button:focus-visible, .prime-answer-builder button:focus-visible,
+.prime-answer-builder input:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
+.prime-count-table { display: grid; gap: .5rem; max-width: 32rem; }
+.prime-count-row, .prime-count-headings {
+    display: grid;
+    grid-template-columns: minmax(44px, 70px) minmax(110px, 1fr) 44px;
+    gap: .5rem;
+    align-items: center;
+    padding: .5rem;
+    border: 1px solid #cbd5e1;
+    border-left-width: 4px;
+    border-radius: .5rem;
+    background: #f8fafc;
+    min-width: 0;
+}
+.prime-count-headings { border-color: transparent; background: transparent; font-size: .9rem; padding-block: 0; }
+.prime-count-table.is-fixed .prime-count-row { grid-template-columns: 44px minmax(0, 1fr); }
+.prime-count-row > label { display: grid; gap: .25rem; min-width: 0; font-size: .9rem; }
+.prime-count-table.is-fixed .prime-count-row > label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.prime-count-row input {
+    width: 70px;
+    min-width: 44px;
+    height: 44px;
+    padding: .25rem;
+    border: 2px solid #64748b;
+    border-radius: .4rem;
+    text-align: center;
+    font: inherit;
+    font-size: 1rem;
+}
+.prime-count-row[data-prime='2'] { border-left-color: #155e75; }
+.prime-count-row[data-prime='3'] { border-left-color: #6b21a8; }
+.prime-count-row[data-prime='7'] { border-left-color: #92400e; }
+.prime-count-remove { width: 44px; height: 44px; padding: 0 !important; }
+.prime-count-add-line { display: block; margin-top: .75rem; }
+.prime-builder-preview { display: block; width: 100%; min-width: 0; margin-top: .75rem; }
+.prime-builder-preview, .prime-try-maths { overflow-x: auto; max-width: 100%; padding-block: .5rem; }
+.prime-count-tiles { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem; margin-block: 1rem; }
+.prime-count-tiles > span { font-size: .9rem; }
+.prime-number-tile { display: grid; place-items: center; min-width: 36px; min-height: 44px; padding: .25rem; border-radius: .5rem; background: #edf2f7; color: #172b3b; }
+.prime-number-tile.is-matched,
+.prime-count-tiles.is-coloured .prime-number-tile[data-prime='3'] { background: #6b21a8; color: #fff; }
+.prime-count-tiles.is-coloured .prime-number-tile[data-prime='2'] { background: #155e75; color: #fff; }
+.prime-count-tiles.is-coloured .prime-number-tile[data-prime='7'] { background: #92400e; color: #fff; }
+.prime-count-row[data-prime='2'] .prime-count-prime-tile { background: #155e75; color: #fff; }
+.prime-count-row[data-prime='3'] .prime-count-prime-tile { background: #6b21a8; color: #fff; }
+.prime-count-row[data-prime='7'] .prime-count-prime-tile { background: #92400e; color: #fff; }
+.prime-count-prime-tile { min-width: 0; padding: 0; }
+.prime-example-pair { display: inline-flex; align-items: center; gap: .25rem; position: relative; }
+.prime-example-pair-label { position: absolute; top: 100%; left: 0; width: 100%; padding-top: .25rem; text-align: center; white-space: nowrap; font-size: .9rem; }
+.prime-count-tiles:has(.prime-example-pair) { padding-bottom: 1.75rem; }
+
+.prime-check-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-block: 1.25rem; }
+.prime-check-options .button { white-space: normal; height: auto; min-height: 44px; }
+@media (max-width: 620px) { .prime-check-options { grid-template-columns: 1fr; } }

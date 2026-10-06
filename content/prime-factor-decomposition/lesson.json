@@ -1,0 +1,203 @@
+{
+    "id": "prime-factor-decomposition",
+    "slug": "prime-factor-decomposition",
+    "title": "Prime factor decomposition",
+    "subtitle": "Write a number as a product of prime factors, using powers for repeated factors.",
+    "assessment": {
+        "question_types": {
+            "prime-index-form": [
+                "prime-factor-decomposition",
+                "prime-factor-index-form"
+            ],
+            "product-meaning": [
+                "prime-factor-decomposition"
+            ],
+            "finished-tree": [
+                "prime-factor-decomposition"
+            ],
+            "power-meaning": [
+                "prime-factor-index-form"
+            ],
+            "index-form": [
+                "prime-factor-index-form"
+            ]
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Prime factors and powers",
+        "hide_eyebrow": true
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Build a tree for 84",
+        "intro": "Write 84 as a product of prime factors."
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise prime factor decomposition",
+        "intro": "",
+        "session_length": 5
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you’ve learned",
+        "intro": "",
+        "questions": [
+            {
+                "type": "product-meaning",
+                "prompt": "A finished tree for 60 has end numbers 2, 2, 3 and 5. Which answer writes 60 as a product of prime factors?",
+                "options": [
+                    "2, 2, 3, 5",
+                    "2 + 2 + 3 + 5",
+                    "2 × 2 × 3 × 5",
+                    "4 × 3 × 5"
+                ],
+                "answer": 2,
+                "feedback": [
+                    "This is a list. A product uses ×.",
+                    "This adds the numbers. A product multiplies them.",
+                    "Right. A product uses ×, and every factor is prime.",
+                    "These multiply to 60, but 4 isn't prime. Split it into 2 × 2."
+                ]
+            },
+            {
+                "type": "finished-tree",
+                "prompt": "Amir writes 90 = 9 × 2 × 5. He says he's finished because the numbers multiply to 90. Is he right?",
+                "options": [
+                    "Yes. The numbers multiply to 90.",
+                    "Yes. 9, 2 and 5 are all prime.",
+                    "No. 9 isn't prime, so split it into 3 × 3."
+                ],
+                "answer": 2,
+                "feedback": [
+                    "Multiplying to 90 isn't enough. Every factor must be prime, and 9 isn't.",
+                    "9 isn't prime: 9 = 3 × 3.",
+                    "Right. 90 = 2 × 3² × 5."
+                ]
+            },
+            {
+                "type": "power-meaning",
+                "prompt": "45 = 3² × 5. What does 3² mean?",
+                "options": [
+                    "3 × 2",
+                    "3 + 3",
+                    "3 × 3",
+                    "2 × 2 × 2"
+                ],
+                "answer": 2,
+                "feedback": [
+                    "3 × 2 = 6. The small 2 means two 3s multiplied together.",
+                    "3 + 3 = 6. A power multiplies. It doesn't add.",
+                    "Right. Two 3s: 3 × 3 × 5 = 45.",
+                    "That's 2³. In 3² the 3 is repeated, not the 2."
+                ]
+            },
+            {
+                "type": "index-form",
+                "prompt": "The prime factors of 28 are 2, 2 and 7. Which answer is in index form?",
+                "options": [
+                    "2 × 7",
+                    "2 × 2 × 7",
+                    "2² × 7",
+                    "4 × 7"
+                ],
+                "answer": 2,
+                "feedback": [
+                    "One 2 is missing. 2 × 7 = 14, not 28.",
+                    "These are the right primes, but the question asks for index form. Write 2 × 2 as 2².",
+                    "Right. Two 2s make 2², and 7 appears once.",
+                    "This makes 28, but 4 isn't prime. Split it into 2 × 2."
+                ]
+            }
+        ],
+        "summary": {
+            "title": "What you've learnt",
+            "points": [
+                {
+                    "title": "Split until every end is prime.",
+                    "text": "Keep splitting any number that isn't prime."
+                },
+                {
+                    "title": "Multiply every prime.",
+                    "text": "Include repeats, like both 2s in 60."
+                },
+                {
+                    "title": "Count the repeats.",
+                    "text": "Two 2s make 2². The count is the small number."
+                }
+            ]
+        }
+    },
+    "learn_screens": [
+        {
+            "title": "Grow a factor tree",
+            "text": "Split 60 into two numbers that multiply to make 60. Keep splitting until every end number is prime.",
+            "finished": "Every end number is prime, so the tree is finished.",
+            "key": "green circle = prime, finished.",
+            "split_button": "Next split",
+            "next_button": "Next"
+        },
+        {
+            "title": "Collect every prime",
+            "text": "Multiply all the circled numbers. Include both 2s.",
+            "note": "Already split. Don't include them.",
+            "ordered_text": "Smallest to largest makes repeats easy to spot.",
+            "collect_button": "Collect",
+            "order_button": "Put in order",
+            "next_button": "Next",
+            "collected_maths": "60 = 2 \\times 3 \\times 2 \\times 5",
+            "ordered_maths": "60 = 2 \\times 2 \\times 3 \\times 5"
+        },
+        {
+            "title": "Group the repeats",
+            "text": "Count the 2s. There are two 2s, so write 2². The small number is the count.",
+            "underbrace_maths": "60 = \\underbrace{2 \\times 2}_{2^2} \\times 3 \\times 5",
+            "answer_maths": "\\boxed{60 = 2^2 \\times 3 \\times 5}",
+            "example_maths": "3^2 = 3 \\times 3 = 9",
+            "example_text": "It does not mean 3 × 2.",
+            "next_button": "Next"
+        },
+        {
+            "title": "Start a different way",
+            "text": "You can start with any pair that multiplies to 60 (not 1 × 60). Both trees end with the same primes.",
+            "answer_maths": "\\boxed{60 = 2^2 \\times 3 \\times 5}"
+        }
+    ]
+}
