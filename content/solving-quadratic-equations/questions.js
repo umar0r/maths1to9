@@ -885,7 +885,7 @@
                 'Your progress has been saved.</p>' +
                 practisedHtml +
                 '<p><a class="button button--primary" ' +
-                'href="../../index.php">Back to all lessons</a></p>' +
+                'href="../../">Back to all lessons</a></p>' +
                 '</article>';
         }
 

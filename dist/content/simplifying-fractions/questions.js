@@ -1541,7 +1541,7 @@
             window.Maths1to9Lesson.clearSectionAction('question-bank');
             list.innerHTML = '<article class="question-card"><p class="question-prompt">Practice complete</p>' +
                 `<p>You completed ${sessionLength} questions. Your progress has been saved.</p>` +
-                '<p><a class="button button--primary" href="../../index.php">Back to all lessons</a></p></article>';
+                '<p><a class="button button--primary" href="../../">Back to all lessons</a></p></article>';
         }
         document.addEventListener('maths1to9:lesson-complete', finishPractice);
 
