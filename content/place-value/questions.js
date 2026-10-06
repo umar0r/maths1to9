@@ -951,7 +951,7 @@
                     + '<div class="lesson-completion__recommendations" aria-live="polite">'
                     + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
                     + '</div>'
-                    + '<a class="lesson-completion__all-lessons" href="../../index.php">View all lessons</a>'
+                    + '<a class="lesson-completion__all-lessons" href="../../">View all lessons</a>'
                     + '</section>'
                 );
 

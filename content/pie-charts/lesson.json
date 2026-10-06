@@ -1,0 +1,7 @@
+{
+  "id": "pie-charts",
+  "slug": "pie-charts",
+  "title": "Pie charts",
+  "subtitle": "Read pie charts and turn frequencies into angles.",
+  "renderer": "custom"
+}

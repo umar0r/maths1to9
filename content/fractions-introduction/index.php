@@ -70,7 +70,7 @@ $pageTitle = 'Understanding fractions';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=12"></script>
+    <script src="./questions.js?v=16"></script>
     <script src="./interactive.js?v=11"></script>
 
     <!-- Shared lesson renderer; loaded last -->

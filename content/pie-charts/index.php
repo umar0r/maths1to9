@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+$lessonId = 'pie-charts';
 $pageTitle = 'Pie charts';
 ?>
 <!DOCTYPE html>
@@ -33,7 +34,7 @@ $pageTitle = 'Pie charts';
     <script src="./lessons.js?v=2" defer></script>
 </head>
 
-<body data-lesson-id="pie-charts" data-lesson-renderer="custom">
+<body data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>" data-lesson-renderer="custom">
     <header class="lesson-header">
         <div class="lesson-header__inner">
             <a
