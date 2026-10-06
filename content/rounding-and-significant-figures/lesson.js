@@ -61,7 +61,7 @@
     }
     function advance() {
         if (state.slide === slides.length - 1) {
-            save().then(() => location.assign('../../index.php'));
+            save().then(() => location.assign('../../'));
             return;
         }
         state.completed[state.slide] = true;
