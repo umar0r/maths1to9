@@ -95,8 +95,7 @@
     }
 
     /*
-     * Wraps the part of the expression that the hint
-     * highlights, mirroring the shared hint behaviour.
+     * Wraps the first part of an expression.
      */
     function first(text) {
         return `<span data-first>${text}</span>`;
@@ -283,8 +282,8 @@
             ],
 
             hint:
-                `${bottom} ÷ ${b} = ${k}. ` +
-                `So the missing top is ${a} × ${k}.`,
+                'Work out the multiplier from the original denominator to the new denominator. ' +
+                'Multiply the numerator by the same number.',
 
             explanation:
                 `The denominators are linked by × ${k}, ` +
@@ -389,7 +388,7 @@
             ],
 
             hint:
-                `${top} and ${bottom} both divide by ${k}.`,
+                'Find a whole number that divides both the numerator and denominator.',
 
             explanation:
                 `${top} ÷ ${k} = ${a} and ${bottom} ÷ ${k} = ${b}. ` +
@@ -459,8 +458,7 @@
 
             hint:
                 `Divide by a common divisor, then check the ` +
-                'new fraction. You may need more than one step. ' +
-                `Dividing by ${k} does it in one.`,
+                'new fraction. You may need more than one step.',
 
             explanation:
                 `${top} ÷ ${k} = ${a} and ${bottom} ÷ ${k} = ${b}. ` +
@@ -885,11 +883,11 @@
             ],
 
             hint:
-                `${shaded} of the ${total} parts are shaded. ` +
-                `Both numbers divide by ${k}.`,
+                'Count the shaded parts and all the equal parts. ' +
+                'Then find a common divisor for those two numbers.',
 
             explanation:
-                `${shaded} out of ${total} parts are shaded. ` +
+                `${shaded} out of ${total} parts ${shaded === 1 ? 'is' : 'are'} shaded. ` +
                 `${shaded} ÷ ${k} = ${a} and ${total} ÷ ${k} = ${b}, ` +
                 `so the answer is ${answer}.`
         });
@@ -1109,38 +1107,12 @@
                 color: #444444;
             }
 
-            .esf-expression [data-first] {
-                border-radius: 0.3rem;
-                transition:
-                    background-color 160ms ease,
-                    color 160ms ease,
-                    box-shadow 160ms ease;
-            }
-
-            .esf-expression [data-first].is-highlighted {
-                padding: 0.08em 0.18em;
-                background: #e8edff;
-                color: #244fd8;
-                box-shadow: 0 0 0 2px #b9c7ff;
-            }
-
-            .esf-hint {
-                display: none;
-                margin: 0.75rem 0;
-                padding: 0.85rem 1rem;
-                border-left: 4px solid #5575e7;
-                background: #f3f6ff;
-            }
-
-            .esf-hint.is-visible {
-                display: block;
-            }
         `;
 
         document.head.append(style);
     }
 
-    function mount(root) {
+    async function mount(root) {
         if (!root || mounted.has(root)) {
             return;
         }
@@ -1150,7 +1122,11 @@
         gateSection('question-bank');
         const sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
 
-        const state = {
+        const lessonSlug = window.Maths1to9Lesson.getLesson().slug;
+        const progress = window.Maths1to9Progress;
+        const saved = await progress?.getLessonActivityState?.(lessonSlug, 'question-bank');
+        const state = saved?.contentVersion === 1 ? saved : {
+            contentVersion: 1,
             running: false,
             number: 0,
             checked: 0,
@@ -1160,36 +1136,17 @@
         };
 
         root.innerHTML = `
-            <div class="question-bank-controls">
-                <button
-                    class="button button--primary"
-                    type="button"
-                    data-start
-                >
-                    Start practice
-                </button>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-stop
-                    disabled
-                >
-                    Stop practice
-                </button>
-            </div>
-
-            <p data-score aria-live="polite">
-                Select Start practice to begin.
-            </p>
+            <p data-score aria-live="polite"></p>
 
             <div class="question-list" data-list></div>
         `;
 
-        const start = root.querySelector('[data-start]');
-        const stop = root.querySelector('[data-stop]');
         const score = root.querySelector('[data-score]');
         const list = root.querySelector('[data-list]');
+
+        function save() {
+            return progress?.saveLessonActivityState?.(lessonSlug, 'question-bank', state);
+        }
 
         function updateScore() {
             score.textContent =
@@ -1217,15 +1174,18 @@
             return name;
         }
 
-        function addQuestion() {
-            if (!state.running || state.number >= sessionLength) {
+        function addQuestion(restoring = false) {
+            if (!state.running || (!restoring && state.number >= sessionLength)) {
                 return;
             }
 
-            const generatorName = chooseGenerator();
-            const question = generators[generatorName]();
+            const generatorName = restoring ? state.current.generatorName : chooseGenerator();
+            const question = restoring ? state.current.question : generators[generatorName]();
 
-            state.number += 1;
+            if (!restoring) {
+                state.number += 1;
+                state.current = { generatorName, question };
+            }
 
             const questionNumber = state.number;
             const questionId =
@@ -1243,20 +1203,6 @@
                 <p class="question-prompt"></p>
 
                 <div class="esf-expression"></div>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-hint-button
-                >
-                    Show hint
-                </button>
-
-                <p
-                    class="esf-hint"
-                    data-hint
-                    aria-live="polite"
-                ></p>
 
                 <div
                     class="question-options"
@@ -1277,10 +1223,6 @@
             card.querySelector('.esf-expression')
                 .innerHTML = question.expression;
 
-            const hintButton =
-                card.querySelector('[data-hint-button]');
-
-            const hint = card.querySelector('[data-hint]');
             const optionBox = card.querySelector('[data-options]');
             const action = document.createElement('button');
             action.type = 'button';
@@ -1292,8 +1234,6 @@
 
             const radioName =
                 `esf-question-${questionNumber}`;
-
-            hint.textContent = question.hint;
 
             optionBox.setAttribute(
                 'aria-label',
@@ -1328,9 +1268,19 @@
              *   wrong     — "Try again", resets the question
              *   correct   — "Next question", adds the next card
              */
-            let phase = 'answering';
-            let marked = false;
-            let previousResult = null;
+            let hintShown = state.current.hintShown || false;
+            let phase = state.current.phase || 'answering';
+            let marked = state.current.marked || false;
+            let previousResult = state.current.previousResult ?? null;
+
+            function saveQuestion() {
+                Object.assign(state.current, {
+                    hintShown, phase, marked, previousResult,
+                    selected: optionElements.findIndex(({ input }) => input.checked),
+                    feedbackText: feedback.firstChild?.textContent || ''
+                });
+                save();
+            }
 
             function setAction(label, enabled) {
                 action.textContent = label;
@@ -1343,6 +1293,14 @@
                     );
             }
 
+            function appendHint() {
+                if (hintShown && question.hint) {
+                    const hintLine = document.createElement('span');
+                    hintLine.textContent = question.hint;
+                    feedback.append(document.createElement('br'), hintLine);
+                }
+            }
+
             function clearMarks() {
                 optionElements.forEach(({ label }) => {
                     label.classList.remove(
@@ -1353,22 +1311,6 @@
                 });
             }
 
-            hintButton.addEventListener('click', () => {
-                const visible =
-                    hint.classList.toggle('is-visible');
-
-                card.querySelectorAll('[data-first]')
-                    .forEach((part) => {
-                        part.classList.toggle(
-                            'is-highlighted',
-                            visible
-                        );
-                    });
-
-                hintButton.textContent =
-                    visible ? 'Hide hint' : 'Show hint';
-            });
-
             optionElements.forEach(({ input }) => {
                 input.addEventListener('change', () => {
                     if (phase === 'correct') {
@@ -1377,11 +1319,9 @@
 
                     clearMarks();
 
-                    feedback.className = 'question-feedback';
-                    feedback.textContent = '';
-
                     phase = 'answering';
                     setAction('Check answer', true);
+                    saveQuestion();
                 });
             });
 
@@ -1397,11 +1337,9 @@
 
                     clearMarks();
 
-                    feedback.className = 'question-feedback';
-                    feedback.textContent = '';
-
                     phase = 'answering';
                     setAction('Check answer', false);
+                    saveQuestion();
 
                     return;
                 }
@@ -1502,10 +1440,34 @@
                     feedback.textContent =
                         selected.answer.feedback ||
                         'Not quite. Try another option.';
+                    hintShown = true;
+                    appendHint();
                 }
+                saveQuestion();
             });
 
-            setAction('Check answer', false);
+            if (restoring) {
+                const selected = optionElements[state.current.selected];
+                if (selected) selected.input.checked = true;
+                if (phase === 'correct') {
+                    selected?.label.classList.add('is-correct');
+                    optionElements.forEach(({ input }) => { input.disabled = true; });
+                    feedback.className = 'question-feedback is-visible is-correct';
+                    feedback.textContent = `Correct. ${question.explanation}`;
+                    setAction(questionNumber === sessionLength ? 'Finish lesson' : 'Next question', true);
+                } else {
+                    if (hintShown) {
+                        feedback.className = 'question-feedback is-visible is-incorrect';
+                        feedback.textContent = state.current.feedbackText || '';
+                        appendHint();
+                    }
+                    if (phase === 'wrong') selected?.label.classList.add('is-incorrect');
+                    setAction(phase === 'wrong' ? 'Try again' : 'Check answer', phase === 'wrong' || !!selected);
+                }
+            } else {
+                setAction('Check answer', false);
+            }
+            saveQuestion();
 
             list.replaceChildren(card);
 
@@ -1515,29 +1477,11 @@
             });
         }
 
-        start.addEventListener('click', () => {
-            if (state.finished) return;
-            state.running = true;
-            state.number = 0;
-            state.checked = 0;
-            state.correct = 0;
-            state.previous = '';
-
-            list.replaceChildren();
-
-            start.disabled = true;
-            stop.disabled = false;
-
-            updateScore();
-            addQuestion();
-        });
-
-        function finishPractice() {
-            if (state.finished) return;
+        function finishPractice(restoring = false) {
+            if (state.finished && restoring !== true) return;
             state.finished = true;
             state.running = false;
-            start.disabled = true;
-            stop.disabled = true;
+            save();
             window.Maths1to9Lesson.clearSectionAction('question-bank');
             list.innerHTML = '<article class="question-card"><p class="question-prompt">Practice complete</p>' +
                 `<p>You completed ${sessionLength} questions. Your progress has been saved.</p>` +
@@ -1545,33 +1489,20 @@
         }
         document.addEventListener('maths1to9:lesson-complete', finishPractice);
 
-        stop.addEventListener('click', () => {
-            window.Maths1to9Lesson
-                ?.clearSectionAction?.('question-bank');
-
-            if (!state.running) {
+        function startPractice() {
+            if (window.Maths1to9Lesson.getCurrentSection().id !== 'question-bank') return;
+            if (state.finished) {
+                finishPractice(true);
                 return;
             }
-
-            state.running = false;
-
-            start.disabled = false;
-            start.textContent = 'Start again';
-
-            stop.disabled = true;
-
-            const percentage =
-                state.checked === 0
-                    ? 0
-                    : Math.round(
-                        (state.correct / state.checked) * 100
-                    );
-
-            score.textContent =
-                `Practice stopped: ` +
-                `${state.correct}/${state.checked} correct ` +
-                `(${percentage}%).`;
-        });
+            if (list.children.length) return;
+            state.running = true;
+            updateScore();
+            if (state.correct === sessionLength) completeSection('question-bank');
+            addQuestion(!!state.current);
+        }
+        document.addEventListener('maths1to9:section-change', startPractice);
+        startPractice();
     }
 
     /*
