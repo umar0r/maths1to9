@@ -1,0 +1,13 @@
+.lesson-header__inner { justify-content: space-between; gap: 16px; }
+.lesson-header--compact .lesson-header__title { max-width: calc(100% - 60px); }
+.fraction-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 24px 0; }
+.fraction-options .button { white-space: normal; height: auto; text-align: left; }
+.fraction-options [aria-pressed="true"] { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
+.fraction-equation { padding: 20px; background: var(--surface-soft); border-radius: 14px; font-size: 1.25rem; font-weight: 800; margin: 20px 0; }
+.fraction { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; line-height: 1.2; margin: 0 5px; }
+.fraction > span:first-child { border-bottom: 2px solid currentColor; padding: 0 7px 3px; }
+.fraction > span:last-child { padding-top: 3px; }
+#feedback { font-weight: 700; color: var(--primary-dark); }
+@media(max-width:520px) { .fraction-options { grid-template-columns: 1fr; } }
+
+.rounding-score { flex-shrink: 0; color: var(--primary-dark); font-weight: 800; }

@@ -366,6 +366,8 @@
      * Store state
      * ------------------------------------------------------------------ */
 
+    const lessonActivityStates = new Map();
+
     const hasLocalStorage = storageAvailable();
 
     const store = {
@@ -427,7 +429,9 @@
         const engineProgress =
             window.Maths1to9Lesson?.getProgress?.() ?? {};
 
+        const previous = await store.adapter.load(store.userId, detail.slug);
         const record = buildRecord(detail, {
+            activityStates: lessonActivityStates.get(detail.slug) ?? previous?.activityStates ?? {},
             highestUnlockedIndex:
                 Number.isInteger(
                     engineProgress.highestUnlockedIndex
@@ -787,11 +791,10 @@
                 await store.adapter.remove(store.userId, activeSlug);
             }
 
-            window.Maths1to9Lesson?.goToSection?.(0, {
-                moveFocus: true
-            });
-
+            lessonActivityStates.delete(activeSlug);
             notice.remove();
+            // Reset mounted activities and the engine score tracker as well.
+            window.location.replace(window.location.pathname);
         });
 
         notice.append(message, restart);
@@ -828,6 +831,21 @@
 
         getLessonProgress(slug) {
             return store.adapter.load(store.userId, slug);
+        },
+
+        async getLessonActivityState(slug, sectionId) {
+            if (!lessonActivityStates.has(slug)) {
+                const record = await store.adapter.load(store.userId, slug);
+                lessonActivityStates.set(slug, record?.activityStates ?? {});
+            }
+            return lessonActivityStates.get(slug)[sectionId];
+        },
+
+        saveLessonActivityState(slug, sectionId, value) {
+            const states = lessonActivityStates.get(slug) ?? {};
+            states[sectionId] = JSON.parse(JSON.stringify(value));
+            lessonActivityStates.set(slug, states);
+            return saveCurrentLesson();
         },
 
         getAllProgress() {

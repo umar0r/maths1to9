@@ -263,6 +263,16 @@
                 if (group.id === 'practice') aliases.push('practise');
                 router.register(group.id, () => showSection(group.firstIndex, { unlock: true }), aliases);
             });
+            // #summary opens Check on its end-of-lesson summary, for lessons that
+            // draw one. Like every hash link it only changes the view: it never
+            // completes the questions or awards points.
+            const comparisonIndex = findSectionIndex('comparison');
+            if (comparisonIndex !== -1) {
+                router.register('summary', () => {
+                    showSection(comparisonIndex, { unlock: true });
+                    setComparisonView('summary');
+                });
+            }
             exposeLessonApi();
             mountLessonInteractive();
 
@@ -2054,10 +2064,27 @@
         handleNext();
     }
 
+    /*
+     * Which view of Check is showing: 'summary' after the #summary link,
+     * otherwise the questions. Kept on the Check root as data-view so a
+     * lesson that mounts late still sees it; maths1to9:comparison-view
+     * tells a mounted lesson to redraw.
+     */
+    function setComparisonView(view) {
+        const root = document.getElementById(`${state.slug}-comparison`);
+        if (!root || (root.dataset.view || '') === (view || '')) return;
+        if (view) root.dataset.view = view;
+        else delete root.dataset.view;
+        document.dispatchEvent(new CustomEvent('maths1to9:comparison-view', {
+            detail: { slug: state.slug, view: view || 'questions' }
+        }));
+    }
+
     function showSection(
         index,
         options = {}
     ) {
+        setComparisonView(null);
         const {
             moveFocus = true,
             emitEvent = true,

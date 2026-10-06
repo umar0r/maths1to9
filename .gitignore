@@ -15,3 +15,11 @@ content/_ss/
 
 # Node / test tooling
 node_modules/
+
+# Local Claude Code settings and worktrees
+.claude/
+
+# Reference material and review notes (kept locally, not published)
+GCSE_mathematics_subject_content_and_assessment_objectives.pdf
+docs/factors-review/
+docs/indices-basics-review-notes.md

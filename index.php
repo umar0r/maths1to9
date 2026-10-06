@@ -282,7 +282,7 @@ if ($uncategorisedLessons !== []) {
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="./assets/css/app.css?v=28">
+    <link rel="stylesheet" href="./assets/css/app.css?v=30">
     <link rel="stylesheet" href="./assets/css/home.css">
 </head>
 
@@ -484,7 +484,7 @@ if ($uncategorisedLessons !== []) {
             <p>Interactive GCSE maths for grades 1–9.</p>
         </div>
     </footer>
-    <script src="./assets/js/progress.js" defer></script>
+    <script src="./assets/js/progress.js?v=2" defer></script>
     <script src="./assets/js/home-progress.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,25 @@
+
+.factors-counters {display:grid;grid-template-columns:repeat(4,18px);gap:7px;margin:20px 0}
+.factors-counter {width:18px;height:18px;border-radius:50%;background:var(--primary)}
+.factors-first-figure {margin:20px 0}
+.factors-arrangements {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:24px 0}
+.factors-arrangements figure {margin:0;padding:22px 12px;background:var(--surface-soft);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:145px;gap:20px}
+.factors-small-grid {display:grid;gap:4px}
+.factors-small-grid .factors-counter {width:12px;height:12px}
+.factors-arrangements figcaption {font-size:1.15rem;font-weight:800}
+.factors-rainbow {margin:24px 0 12px;padding:18px;background:var(--surface-soft);border-radius:14px}
+.factors-rainbow figcaption {font-weight:800}
+.factors-rainbow svg {display:block;width:100%;max-height:180px;margin-top:10px}
+.factors-rainbow text {font-family:inherit;font-size:26px;font-weight:800;fill:var(--text)}
+.factors-board {padding:18px 12px;margin:16px 0;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.factors-board svg {display:block;width:100%;height:auto;margin:0 auto;overflow:visible}
+.factors-dot {fill:var(--primary)}
+.factors-leftover {fill:#d47700;stroke:#754200;stroke-width:1.5}
+.factors-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.factors-options button {white-space:normal;height:auto}
+@media(max-width:620px){.factors-options{grid-template-columns:1fr}.factors-arrangements{grid-template-columns:1fr}.factors-arrangements figure{min-height:100px;padding:16px}.factors-rainbow{padding:12px}}
+.factors-options--rows {grid-template-columns:repeat(6,minmax(0,1fr))}
+.lesson-section .factors-options--rows > .button {padding:12px 6px;white-space:nowrap}
+.factors-explorer__todo {color:var(--text-muted);font-weight:700}
+.factors-explorer__done {font-weight:800}
+@media(max-width:620px){.factors-options--rows{grid-template-columns:repeat(3,minmax(0,1fr))}}

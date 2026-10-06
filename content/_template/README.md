@@ -52,6 +52,17 @@ and older lessons that predate gating keep working unchanged.
 Practice completes after `QUESTIONS_TO_COMPLETE` checked questions
 (default 5), which unlocks "Finish lesson".
 
+## Hash links
+
+Every section opens from its hash (`#explanation`, `#interactive`,
+`#comparison`, …) and every stage from its id (`#learn`, `#practice`, …).
+`#summary` opens Check on its end-of-lesson summary. The engine sets
+`data-view="summary"` on the `<slug>-comparison` root and fires
+`maths1to9:comparison-view` on `document`; a lesson that draws its own
+summary shows it while that view is set (see `content/factors/questions.js`).
+Lessons that don't handle it simply show Check. Hash links only change the
+view: they never complete questions or award points.
+
 ## Skill assessment
 
 Map each stable Practice generator name to the skill it genuinely
@@ -109,3 +120,13 @@ exist, implement the same four methods (`load` / `save` / `remove` /
 `Maths1to9Progress.use(serverAdapter, userId)` — nothing else changes.
 The homepage reads the same records to show Continue / Completed badges
 on lesson cards (`assets/js/home-progress.js`).
+
+### Points and progress
+
+Use the shared lesson engine's default earned-points circle. It stays visible in every section and fills against the lesson's planned score. Follow `docs/lesson-scoring.md` for stable activity IDs, planned custom activities, guided-step completion and assessment attempts. Do not replace the circle with a section number. Navigation alone must never award points.
+
+## New lesson specification
+
+Read and follow [the lesson specification](../../docs/lesson-specification.md)
+before creating a lesson. It defines the current four-section structure,
+four-option questions, shared score-circle markup and delivery checks.

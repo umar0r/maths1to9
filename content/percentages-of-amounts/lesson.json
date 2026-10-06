@@ -358,7 +358,7 @@
       "prompt": "Write 7% as a decimal.",
       "answer": "0.07",
       "explanation": "7 ÷ 100 = 0.07.",
-      "skill": "decimal-percentage-conversion",
+      "skill": "percentage-of-amount",
       "options": [
         "0.7",
         "0.07",

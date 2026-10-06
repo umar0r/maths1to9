@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+$lessonId = 'pie-charts';
 $pageTitle = 'Pie charts';
 ?>
 <!DOCTYPE html>
@@ -25,15 +26,15 @@ $pageTitle = 'Pie charts';
     >
     <link
         rel="stylesheet"
-        href="../../assets/css/app.css?v=28"
+        href="../../assets/css/app.css?v=30"
     >
 
-    <script src="../../assets/js/progress.js" defer></script>
-    <script src="../../assets/js/lesson-engine.js?v=30" defer></script>
+    <script src="../../assets/js/progress.js?v=2" defer></script>
+    <script src="../../assets/js/lesson-engine.js?v=31" defer></script>
     <script src="./lessons.js?v=2" defer></script>
 </head>
 
-<body data-lesson-id="pie-charts" data-lesson-renderer="custom">
+<body data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>" data-lesson-renderer="custom">
     <header class="lesson-header">
         <div class="lesson-header__inner">
             <a
