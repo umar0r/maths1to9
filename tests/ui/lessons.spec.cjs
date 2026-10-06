@@ -20,9 +20,11 @@ async function walk(page, onScreen) {
     let stuck = 0;
     for (let step = 0; step < MAX_STEPS; step++) {
         const state = await screen(page);
+        // Leaving the lesson (e.g. the final "All lessons" button) ends the walk;
+        // check this first so the homepage is never judged as a lesson screen.
+        if (!/\/content\//.test(page.url())) return { finished: true, state };
         await onScreen(state);
         const main = page.locator(`${MAIN_ACTION}:visible`).first();
-        if (!/\/content\//.test(page.url())) return { finished: true, state };
         const signature = `${state.hash}|${state.heading}|${state.scores[0]?.text}|${state.mainActions[0]?.text}`;
         stuck = signature === lastSignature ? stuck + 1 : 0;
         lastSignature = signature;
