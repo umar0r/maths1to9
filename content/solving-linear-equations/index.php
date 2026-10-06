@@ -27,7 +27,7 @@ $pageTitle = 'Solving linear equations';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=28">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=30">
 </head>
 
 <body
@@ -66,8 +66,8 @@ $pageTitle = 'Solving linear equations';
         </div>
     </noscript>
 
-    <script src="../../assets/js/progress.js"></script>
+    <script src="../../assets/js/progress.js?v=2"></script>
     <script src="./interactive.js?v=10"></script>
-    <script src="../../assets/js/lesson-engine.js?v=30"></script>
+    <script src="../../assets/js/lesson-engine.js?v=31"></script>
 </body>
 </html>

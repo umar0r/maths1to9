@@ -1530,7 +1530,10 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 20px 0 24px;
+    padding: 24px 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-medium);
+    background: var(--surface-soft);
 }
 
 .lesson-completion__result--success {
@@ -1617,6 +1620,22 @@ a {
 .lesson-completion__mistakes h3 {
     margin: 0 0 12px;
     font-size: 1.1rem;
+}
+
+/* Space each end-of-lesson block apart: result, summary, next lessons. */
+.lesson-completion .final-check-summary {
+    margin-top: 40px;
+}
+
+/* Keep "what happens next" visibly apart from the result above it. */
+.lesson-completion__recommendations {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+}
+
+.lesson-completion__recommendations .lesson-completion__next-title {
+    font-size: 1.25rem;
 }
 
 .lesson-completion__more-title {
@@ -2338,7 +2357,12 @@ noscript p {
     .lesson-completion__result {
         align-items: flex-start;
         gap: 16px;
-        padding-top: 4px;
+        padding: 20px;
+    }
+
+    .lesson-completion__recommendations {
+        margin-top: 32px;
+        padding-top: 24px;
     }
 
     .lesson-completion__result--success {

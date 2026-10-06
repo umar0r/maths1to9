@@ -25,11 +25,11 @@ $pageTitle = 'Pie charts';
     >
     <link
         rel="stylesheet"
-        href="../../assets/css/app.css?v=28"
+        href="../../assets/css/app.css?v=30"
     >
 
-    <script src="../../assets/js/progress.js" defer></script>
-    <script src="../../assets/js/lesson-engine.js?v=30" defer></script>
+    <script src="../../assets/js/progress.js?v=2" defer></script>
+    <script src="../../assets/js/lesson-engine.js?v=31" defer></script>
     <script src="./lessons.js?v=2" defer></script>
 </head>
 

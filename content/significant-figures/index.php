@@ -27,7 +27,7 @@ $pageTitle = 'Significant figures';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=28">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=30">
     <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
@@ -68,8 +68,8 @@ $pageTitle = 'Significant figures';
         </div>
     </noscript>
 
-    <script src="../../assets/js/progress.js"></script>
-    <script src="../../assets/js/lesson-engine.js?v=30"></script>
+    <script src="../../assets/js/progress.js?v=2"></script>
+    <script src="../../assets/js/lesson-engine.js?v=31"></script>
     <script src="./lesson.js?v=8"></script>
 </body>
 </html>
