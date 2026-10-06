@@ -1,0 +1,173 @@
+{
+    "id": "highest-common-factor",
+    "slug": "highest-common-factor",
+    "title": "Highest common factor",
+    "subtitle": "Match prime factors to find the HCF.",
+    "assessment": {
+        "question_types": {
+            "hcf-prime-match": "find-hcf"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Find the biggest shared factor",
+        "hide_eyebrow": true
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Match the shared primes",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise highest common factor",
+        "intro": "",
+        "session_length": 5
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you\u2019ve learned",
+        "intro": "",
+        "questions": [
+            {
+                "type": "hcf-prime-match",
+                "prompt": "36 = 2 \u00d7 2 \u00d7 3 \u00d7 3, 60 = 2 \u00d7 2 \u00d7 3 \u00d7 5. Maya says the HCF is 6 because both contain a 2 and a 3. Is she right?",
+                "options": [
+                    "Yes. 6 divides both 36 and 60.",
+                    "No. Both have two 2s, so the HCF is 2 \u00d7 2 \u00d7 3 = 12.",
+                    "No. The HCF is 2 \u00d7 2 \u00d7 3 \u00d7 3 = 36.",
+                    "No. The HCF is 2 \u00d7 2 \u00d7 3 \u00d7 3 \u00d7 5 = 180."
+                ],
+                "feedback": [
+                    "6 is a common factor, but not the highest. Both numbers have two 2s.",
+                    "Right. Both numbers share every prime in this product.",
+                    "36 doesn't divide 60.",
+                    "180 uses every factor. The HCF can't be bigger than either number."
+                ],
+                "answer": 1
+            },
+            {
+                "type": "hcf-prime-match",
+                "prompt": "24 = 2 \u00d7 2 \u00d7 2 \u00d7 3, 40 = 2 \u00d7 2 \u00d7 2 \u00d7 5. Sam puts 2, 2, 2 and 3 in the overlap. What should he do?",
+                "options": [
+                    "Take out the 3. HCF = 2 \u00d7 2 \u00d7 2 = 8.",
+                    "Take out a 2. HCF = 2 \u00d7 2 \u00d7 3 = 12.",
+                    "Nothing. HCF = 2 \u00d7 2 \u00d7 2 \u00d7 3 = 24.",
+                    "Swap the 3 for the 5. HCF = 2 \u00d7 2 \u00d7 2 \u00d7 5 = 40."
+                ],
+                "feedback": [
+                    "40 has no 3.",
+                    "40 has three 2s too, and 12 doesn't divide 40.",
+                    "24 doesn't divide 40. 40 has no 3.",
+                    "40 doesn't divide 24. 24 has no 5."
+                ],
+                "answer": 0
+            },
+            {
+                "type": "hcf-prime-match",
+                "prompt": "16 = 2 \u00d7 2 \u00d7 2 \u00d7 2, 25 = 5 \u00d7 5. Leah says nothing is in the overlap, so the HCF is 0. What is the HCF?",
+                "options": [
+                    "0",
+                    "1",
+                    "There isn't one.",
+                    "400"
+                ],
+                "feedback": [
+                    "0 isn't a factor of anything. 1 divides every number.",
+                    "No shared primes, but 1 divides both.",
+                    "1 is always a common factor.",
+                    "16 \u00d7 25 is a common multiple, not a factor."
+                ],
+                "answer": 1
+            },
+            {
+                "type": "hcf-prime-match",
+                "prompt": "20 = 2 \u00d7 2 \u00d7 5, 30 = 2 \u00d7 3 \u00d7 5. Amir says the shared primes are 2 and 5, so the HCF is 2 + 5 = 7. What is the HCF?",
+                "options": [
+                    "7",
+                    "10",
+                    "20",
+                    "60"
+                ],
+                "feedback": [
+                    "7 doesn't divide 20. Multiply the shared primes.",
+                    "2 \u00d7 5 = 10.",
+                    "20 uses both 2s, but 30 has only one. 20 doesn't divide 30.",
+                    "That uses every factor. Use the shared ones only."
+                ],
+                "answer": 1
+            }
+        ],
+        "summary": {
+            "title": "What you've learnt",
+            "points": [
+                {
+                    "title": "Match the same prime in both numbers, as many times as both have it.",
+                    "text": ""
+                },
+                {
+                    "title": "Multiply the matches, using each match once.",
+                    "text": ""
+                },
+                {
+                    "title": "No matches: the HCF is 1.",
+                    "text": ""
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        }
+    ]
+}

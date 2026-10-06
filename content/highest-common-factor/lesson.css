@@ -1,0 +1,20 @@
+body[data-lesson-id='highest-common-factor'] #lesson-section-explanation > .lesson-section__title {display:none}
+.hcf-learn,.hcf-model{max-width:40rem;margin-inline:auto}
+.hcf-venn{position:relative;height:230px;max-width:440px;margin:1rem auto}
+.hcf-circle{position:absolute;top:10px;width:64%;height:210px;border:2px solid #54758c;border-radius:50%;background:rgb(14 165 233 / .06)}
+.hcf-circle-left{left:0}.hcf-circle-right{right:0}
+.hcf-label{position:absolute;top:20px}.hcf-label.left{left:20%}.hcf-label.right{right:20%}
+.hcf-zone{position:absolute;top:75px;width:26%;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-content:center;min-height:95px}
+.hcf-zone.left{left:5%}.hcf-zone.right{right:5%}.hcf-zone.shared{left:37%;width:26%}
+.hcf-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:10px;min-height:44px}
+.hcf-tile{display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:4px;border:2px solid #64748b;background:#f1f5f9;border-radius:10px;font:700 1.1rem Nunito,sans-serif;color:#172b3b}
+.hcf-tile.is-shared{background:#dcfce7;border-color:#15803d;animation:hcf-slide .3s ease-out}
+.hcf-tile.is-selected,.hcf-options .is-selected{outline:3px solid #0369a1;outline-offset:2px;background:#e0f2fe}
+.hcf-tile.is-largest{box-shadow:0 0 0 3px #15803d}
+.hcf-tile:focus-visible{outline:3px solid #0369a1;outline-offset:3px}
+.hcf-formula{margin-block:4px;overflow-x:auto}.hcf-options,.prime-check-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-block:16px}
+.prime-check-options .button{white-space:normal;height:auto;min-height:44px}.hcf-input{display:flex;align-items:center;gap:10px;margin-block:16px}.hcf-input input{width:100px;min-height:44px;font:inherit;border:2px solid #64748b;border-radius:8px;padding:8px}
+@keyframes hcf-slide{from{transform:translateY(40px);opacity:.2}to{transform:translateY(0);opacity:1}}
+.is-shaking{animation:hcf-shake .25s}@keyframes hcf-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media(max-width:620px){.prime-check-options{grid-template-columns:1fr}.hcf-venn{height:230px}.hcf-zone .hcf-tile{min-width:36px;min-height:40px}}
+@media(prefers-reduced-motion:reduce){.hcf-model *,.is-shaking{animation:none!important}}
