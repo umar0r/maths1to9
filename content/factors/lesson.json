@@ -1,0 +1,146 @@
+{
+  "id": "factors-01",
+  "slug": "factors",
+  "title": "Factors",
+  "subtitle": "Find every factor of a number using factor pairs.",
+  "assessment": {
+    "question_types": {
+      "all-factors": "factors-and-multiples",
+      "is-factor": "factors-and-multiples",
+      "square-factor": "factors-and-multiples",
+      "check-factors": "factors-and-multiples",
+      "check-missing": "factors-and-multiples"
+    }
+  },
+  "section_order": [
+    "explanation",
+    "worked-examples",
+    "interactive",
+    "question-bank",
+    "comparison"
+  ],
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn",
+      "sections": [
+        "explanation",
+        "worked-examples"
+      ]
+    },
+    {
+      "id": "try-it",
+      "label": "Step by step",
+      "sections": [
+        "interactive"
+      ]
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "sections": [
+        "question-bank"
+      ]
+    },
+    {
+      "id": "check",
+      "label": "Check",
+      "sections": [
+        "comparison"
+      ]
+    }
+  ],
+  "explanation": {
+    "eyebrow": "Learn",
+    "title": "What is a factor?",
+    "paragraphs": [
+      "A factor of a number divides it exactly, with no remainder.",
+      "3 × 4 = 12, so 3 and 4 are a factor pair of 12.",
+      "The factors of 12 are 1, 2, 3, 4, 6 and 12."
+    ],
+    "key_points": [
+      "1 and the number itself are always factors."
+    ]
+  },
+  "worked_examples": [
+    {
+      "eyebrow": "Learn",
+      "title": "Factors come in pairs",
+      "steps": [
+        "Factors come in pairs.",
+        "When the pairs meet in the middle, you have found them all."
+      ]
+    }
+  ],
+  "interactive": {
+    "eyebrow": "Step by step",
+    "title": "Make equal rows",
+    "intro": "Put 24 counters into equal rows. Every way that works gives a factor pair."
+  },
+  "question_bank": {
+    "hide_heading": true,
+    "eyebrow": "Practice",
+    "title": "Practise factors",
+    "intro": "Find factors, check exact division and recognise equal pairs.",
+    "session_length": 7,
+    "ready_score": 5
+  },
+  "comparison": {
+    "eyebrow": "Check",
+    "title": "Check what you have learned",
+    "questions": [
+      {
+        "prompt": "Which list contains every factor of 28?",
+        "options": [
+          "1, 2, 4, 7, 14, 28",
+          "1, 2, 7, 14, 28",
+          "1, 2, 4, 7, 14, 21, 28",
+          "1, 2, 4, 7, 14"
+        ],
+        "answer": 0,
+        "explanation": "Pairs: 1 and 28, 2 and 14, 4 and 7. Test 3 and 5: both leave remainders. At 6, 28 ÷ 6 = 4 remainder 4. Since 6 is bigger than 4, stop. The factors are 1, 2, 4, 7, 14, 28.",
+        "type": "check-factors"
+      },
+      {
+        "prompt": "Sam says the factors of 16 are 1, 2, 8 and 16. What has he missed?",
+        "options": [
+          "3",
+          "4",
+          "6",
+          "Nothing"
+        ],
+        "answer": 1,
+        "explanation": "Sam missed 4 because 4 × 4 = 16. Record the equal pair and list 4 once. The complete list is 1, 2, 4, 8, 16.",
+        "type": "check-missing"
+      }
+    ],
+    "summary": {
+      "title": "What you’ve learnt",
+      "points": [
+        {
+          "title": "Find factors using equal rows.",
+          "text": "If no counters are left over, the two numbers form a factor pair."
+        },
+        {
+          "title": "Find every pair.",
+          "text": "Test the numbers in order until the pairs meet in the middle."
+        },
+        {
+          "title": "List each factor once.",
+          "text": "For 16, the pair 4 × 4 gives just one 4 in the list."
+        }
+      ]
+    }
+  },
+  "score_activities": [
+    {
+      "id": "factors:row-explorer",
+      "kind": "explore"
+    },
+    {
+      "id": "factors:all-factors-24",
+      "kind": "guided"
+    }
+  ],
+  "worked_examples_title": "Factors come in pairs"
+}

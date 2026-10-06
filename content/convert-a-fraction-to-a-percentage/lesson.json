@@ -1,0 +1,25 @@
+{
+  "id": "convert-a-fraction-to-a-percentage-01",
+  "slug": "convert-a-fraction-to-a-percentage",
+  "title": "Convert a fraction to a percentage",
+  "subtitle": "Divide the numerator by the denominator, then multiply by 100.",
+  "renderer": "custom",
+  "navigation_stages": [
+    {
+      "id": "learn",
+      "label": "Learn"
+    },
+    {
+      "id": "try-it",
+      "label": "Try it"
+    },
+    {
+      "id": "practice",
+      "label": "Practice"
+    },
+    {
+      "id": "check",
+      "label": "Check"
+    }
+  ]
+}
