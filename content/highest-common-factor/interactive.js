@@ -40,13 +40,17 @@
             }
         }
         nodes.forEach(node => {
-            const expression = /\d+(?: × \d+)+(?: = \d+)?/g;
+            const expression = /\b(?:(?:HCF|LCM|\d+) = )?\d+(?: [×÷+] \d+)+(?: = \d+)*|\b(?:HCF|LCM) = \d+(?: = \d+)*/g;
             const fragment = document.createDocumentFragment();
             let end = 0;
             for (const match of node.textContent.matchAll(expression)) {
                 fragment.append(node.textContent.slice(end, match.index));
                 const span = element('span');
-                window.katex.render(match[0].replaceAll(' × ', ' \\times '), span, {
+                const latex = match[0]
+                    .replace(/\b(HCF|LCM)\b/g, '\\mathrm{$1}')
+                    .replaceAll(' × ', ' \\times ')
+                    .replaceAll(' ÷ ', ' \\div ');
+                window.katex.render(latex, span, {
                     throwOnError: false
                 });
                 fragment.append(span);
@@ -424,7 +428,7 @@
                 });
                 root.append(row);
             });
-            root.append(element('p', '6 is the largest common factor. HCF of 12 and 18 = 6.'));
+            root.append(element('p', '6 is the largest common factor. The HCF of 12 and 18 is 6.'));
         }
         function renderPrimeDiagram() {
             const pair = state.screen === 3 ? [8, 15] : [24, 36];
@@ -457,7 +461,7 @@
         function render() {
             root.replaceChildren();
             const titles = ['What HCF means', 'Match the prime factors', 'Multiply the overlap', 'No matches'];
-            root.append(element('p', `Screen ${state.screen + 1} of 4`), element('h3', titles[state.screen]));
+            root.append(element('h3', titles[state.screen]));
             if (state.screen === 0) renderFactorLists();
             else renderPrimeDiagram();
             renderMaths(root);

@@ -1,3 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * CHANGE: slug and title. The slug must match:
+ *   - "slug" in lesson.json
+ *   - SLUG in interactive.js
+ *   - ROOT_ID prefix in questions.js
+ */
+$lessonId = 'lowest-common-multiple';
+$pageTitle = 'Lowest common multiple';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +22,8 @@
     >
 
     <title>
-        Highest common factor        | Maths1to9
+        <?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?>
+        | Maths1to9
     </title>
 
     <link
@@ -21,11 +35,11 @@
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="./lesson.css?v=4">
 </head>
 
 <body
-    data-lesson-id="highest-common-factor"
+    data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
     data-lesson-src="./lesson.json"
 >
     <header class="site-header">
@@ -68,7 +82,7 @@
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=4"></script>
+    <script src="./interactive.js?v=5"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=31"></script>

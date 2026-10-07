@@ -31,6 +31,7 @@
         {"folder":"factors-multiples-and-primes","title":"Factors, multiples and primes","subtitle":"Recognise how whole numbers are built and related.","skills":["factors-and-multiples","prime-numbers","common-factors-multiples"]},
         {"folder":"prime-factor-decomposition","title":"Prime factor decomposition","subtitle":"Write a number as a product of prime factors.","skills":["prime-factor-decomposition","prime-factor-index-form"]},
         {"folder":"highest-common-factor","title":"Highest common factor","subtitle":"Match prime factors to find the HCF.","skills":["find-hcf"]},
+        {"folder":"lowest-common-multiple","title":"Lowest common multiple","subtitle":"Use the prime factor Venn diagram to find the LCM.","skills":["find-lcm"]},
         {"folder":"hcf-and-lcm","title":"Highest common factor and lowest common multiple","subtitle":"Use common prime factors to find the HCF and LCM.","skills":["find-hcf","find-lcm","hcf-lcm-problems"]},
         {"folder":"standard-form","title":"Standard form","subtitle":"Write, compare and calculate with very large and small numbers.","skills":["write-standard-form","compare-standard-form","calculate-standard-form","calculator-standard-form"]}
       ]

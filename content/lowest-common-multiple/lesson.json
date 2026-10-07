@@ -1,0 +1,173 @@
+{
+    "id": "lowest-common-multiple",
+    "slug": "lowest-common-multiple",
+    "title": "Lowest common multiple",
+    "subtitle": "Use the prime factor Venn diagram to find the LCM.",
+    "assessment": {
+        "question_types": {
+            "lcm-prime-match": "find-lcm"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Find the smallest shared multiple",
+        "hide_eyebrow": true
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Find the LCM",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise lowest common multiple",
+        "intro": "",
+        "session_length": 5
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you\u2019ve learned",
+        "intro": "",
+        "questions": [
+            {
+                "type": "lcm-prime-match",
+                "prompt": "12 = 2 \u00d7 2 \u00d7 3, 18 = 2 \u00d7 3 \u00d7 3. Jo says the LCM is 12 \u00d7 18 = 216. Is she right?",
+                "options": [
+                    "Yes. 216 is a multiple of both.",
+                    "No. The LCM is 2 \u00d7 2 \u00d7 3 \u00d7 3 = 36.",
+                    "No. The LCM is 2 \u00d7 3 = 6.",
+                    "No. The LCM is 18, the bigger number."
+                ],
+                "feedback": [
+                    "216 is a common multiple, but not the lowest. 12 \u00d7 18 uses the shared 2 and 3 twice.",
+                    "The overlap 2, 3 once, plus 2 from 12 and 3 from 18.",
+                    "That's the HCF: the overlap only.",
+                    "18 isn't a multiple of 12."
+                ],
+                "answer": 1
+            },
+            {
+                "type": "lcm-prime-match",
+                "prompt": "20 = 2 \u00d7 2 \u00d7 5, 30 = 2 \u00d7 3 \u00d7 5. Ben multiplies the overlap and gets 10. Has he found the LCM?",
+                "options": [
+                    "Yes. 10 is the LCM.",
+                    "No. Multiply every tile: 2 \u00d7 5 \u00d7 2 \u00d7 3 = 60.",
+                    "No. The LCM is 20 \u00d7 30 = 600.",
+                    "No. The LCM is 2 \u00d7 5 \u00d7 3 = 30."
+                ],
+                "feedback": [
+                    "10 is the HCF. The LCM must be a multiple of both numbers, so it can't be smaller than either.",
+                    "Right. Multiply the overlap once and both sides.",
+                    "600 is a common multiple, but not the lowest. It uses the shared 2 and 5 twice.",
+                    "That leaves out 20's extra 2. 30 isn't a multiple of 20."
+                ],
+                "answer": 1
+            },
+            {
+                "type": "lcm-prime-match",
+                "prompt": "8 = 2 \u00d7 2 \u00d7 2, 12 = 2 \u00d7 2 \u00d7 3. Priya multiplies the overlap and 12's side: 2 \u00d7 2 \u00d7 3 = 12. What is the LCM?",
+                "options": [
+                    "12",
+                    "24",
+                    "96",
+                    "4"
+                ],
+                "feedback": [
+                    "12 isn't a multiple of 8. Include the 2 on 8's side.",
+                    "2 \u00d7 2 \u00d7 2 \u00d7 3 = 24. 24 \u00f7 8 = 3 and 24 \u00f7 12 = 2.",
+                    "That's 8 \u00d7 12. It uses the shared 2, 2 twice.",
+                    "That's the HCF: the overlap only."
+                ],
+                "answer": 1
+            },
+            {
+                "type": "lcm-prime-match",
+                "prompt": "9 = 3 \u00d7 3, 10 = 2 \u00d7 5. Nothing is in the overlap. What is the LCM?",
+                "options": [
+                    "1",
+                    "19",
+                    "45",
+                    "90"
+                ],
+                "feedback": [
+                    "1 is the HCF. The LCM must be a multiple of both numbers.",
+                    "You added 9 + 10. Multiply every tile.",
+                    "That leaves out the 2. 45 isn't a multiple of 10.",
+                    "Nothing shared, so multiply every tile: 3 \u00d7 3 \u00d7 2 \u00d7 5 = 90."
+                ],
+                "answer": 3
+            }
+        ],
+        "summary": {
+            "title": "What you've learnt",
+            "points": [
+                {
+                    "title": "Match the prime factors into the Venn diagram, as for the HCF.",
+                    "text": ""
+                },
+                {
+                    "title": "HCF: multiply the overlap. LCM: multiply every tile.",
+                    "text": ""
+                },
+                {
+                    "title": "Don't just multiply the two numbers: that uses the overlap twice.",
+                    "text": ""
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        }
+    ]
+}
