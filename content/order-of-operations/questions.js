@@ -4,8 +4,9 @@
     const ROOT_ID = 'order-of-operations-questions';
     const mounted = new WeakSet();
 
+    let randomSource = Math.random;
     const r = (min, max) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+        Math.floor(randomSource() * (max - min + 1)) + min;
 
     const pick = (items) =>
         items[r(0, items.length - 1)];
@@ -1023,12 +1024,16 @@
         mounted.add(root);
         const store = window.Maths1to9Progress;
         let saved = await store.getLessonActivityState('order-of-operations', 'journey');
-        if (saved?.contentVersion !== 1) saved = {
-            contentVersion: 1, lesson: api.getLesson(), run: 0,
+        if (![1, 2].includes(saved?.contentVersion)) saved = {
+            contentVersion: 2, run: 0,
             practice: null, check: null, ready: false, lessonCompleted: false,
             exampleIndex: 0, visibleSteps: 1, examplesFinished: false
         };
-        const lesson = saved.lesson;
+        const lesson = api.getLesson();
+        // Version 1 sessions keep their generated questions until their next
+        // explicit retry; static lesson content never belongs in progress.
+        saved.contentVersion = 2;
+        delete saved.lesson;
         const sessionLength = lesson.question_bank.session_length;
         const readyScore = lesson.question_bank.ready_score;
         saved.practiceHistory ??= [];
@@ -1044,10 +1049,26 @@
         api.gateSection('question-bank');
         api.gateSection('comparison');
 
-        function makeEntry(type) {
-            return { type, question: generators[type](), selected: null, attempts: 0,
-                firstCorrect: false, firstAnswer: null, done: false, retry: false };
+        function hydrateEntry(entry) {
+            if (entry.question) return entry;
+            let seed = entry.seed;
+            const previous = randomSource;
+            randomSource = () => {
+                seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+                return seed / 4294967296;
+            };
+            let question;
+            try { question = generators[entry.type](); }
+            finally { randomSource = previous; }
+            Object.defineProperty(entry, 'question', { value: question, enumerable: false });
+            return entry;
         }
+        function makeEntry(type) {
+            return hydrateEntry({ type, seed: Math.floor(Math.random() * 4294967296), selected: null, attempts: 0,
+                firstCorrect: false, firstAnswer: null, done: false, retry: false });
+        }
+        [practice, check, ...saved.practiceHistory, ...saved.checkHistory].filter(Boolean)
+            .forEach(session => session.entries.forEach(hydrateEntry));
         function newPractice() {
             run += 1;
             // Mix the existing bank without changing its expressions or difficulty.
@@ -1068,6 +1089,7 @@
             }
         }
         function reviews(entries) {
+            entries.forEach(hydrateEntry);
             return `<ol class="retained-results">${entries.map(entry => {
                 const answer = entry.question.answers[entry.selected];
                 const status = entry.firstCorrect ? '✓' : answer?.correct ? '2nd try' : 'Incorrect';
