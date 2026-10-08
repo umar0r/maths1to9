@@ -514,7 +514,7 @@
         );
     }
 
-    function mountLearnGraphics() {
+    async function mountLearnGraphics() {
         const section = document.getElementById('lesson-section-explanation');
         if (!section || section.dataset.visualMounted === 'true') {
             return;
@@ -538,8 +538,25 @@
 
         gateSection('explanation');
 
-        let slideIndex = 0;
+        const progress = window.Maths1to9Progress;
+        let work = await progress.getLessonActivityState(SLUG, 'explanation');
+        if (work?.contentVersion !== 1) work = { contentVersion: 1, slideIndex: 0, actions: [] };
+        let slideIndex = work.slideIndex;
         let slideReady = false;
+        let replaying = false;
+        function saveLearn() {
+            work.slideIndex = slideIndex;
+            progress.saveLessonActivityState(SLUG, 'explanation', work);
+        }
+        root.addEventListener('click', event => {
+            const button = event.target.closest('button');
+            if (!button || replaying || button.hasAttribute('data-learn-next')) return;
+            const attribute = [...button.attributes].find(attribute => attribute.name.startsWith('data-'));
+            if (!attribute) return;
+            work.actions[slideIndex] ??= [];
+            work.actions[slideIndex].push({ attribute: attribute.name, value: attribute.value });
+            saveLearn();
+        }, true);
 
         function setReady(value) {
             slideReady = value;
@@ -576,6 +593,16 @@
             const stage = root.querySelector('.fraction-learn__stage');
             setReady(false);
             slides[slideIndex](stage, setReady);
+            replaying = true;
+            const actions = work.actions[slideIndex] || [];
+            actions.forEach((action, index) => {
+                const singleChoice = ['data-hook', 'data-hook-answer', 'data-group-size'].includes(action.attribute);
+                if (singleChoice && actions.slice(index + 1).some(later => later.attribute === action.attribute)) return;
+                const button = [...stage.querySelectorAll('button')].find(button => button.getAttribute(action.attribute) === action.value);
+                if (button) button.click();
+            });
+            replaying = false;
+            saveLearn();
 
             if (slideIndex === slides.length - 1) {
                 completeSection('explanation');
@@ -822,7 +849,7 @@
         setReady(true);
     }
 
-    function mountMethodGraphics() {
+    async function mountMethodGraphics() {
         const section = document.getElementById('lesson-section-method');
         if (!section || section.dataset.visualMounted === 'true') {
             return;
@@ -871,10 +898,14 @@
 
         gateSection('method');
 
-        let current = 0;
-        let highestRevealed = 0;
+        const progress = window.Maths1to9Progress;
+        let work = await progress.getLessonActivityState(SLUG, 'method');
+        if (work?.contentVersion !== 1) work = { contentVersion: 1, current: 0, highestRevealed: 0 };
+        let { current, highestRevealed } = work;
 
         function render() {
+            Object.assign(work, { current, highestRevealed });
+            progress.saveLessonActivityState(SLUG, 'method', work);
             if (highestRevealed === steps.length - 1) {
                 completeSection('method');
             }
@@ -946,7 +977,7 @@
         });
     }
 
-    function mountTryIt(root) {
+    async function mountTryIt(root) {
         if (!root || root.dataset.mounted === 'true') {
             return;
         }
@@ -985,8 +1016,14 @@
 
         gateSection('interactive');
 
-        let index = 0;
-        let selected = '';
+        const progress = window.Maths1to9Progress;
+        let state = await progress.getLessonActivityState(SLUG, 'interactive');
+        if (state?.contentVersion !== 1) state = { contentVersion: 1, index: 0, selected: '', phase: 'answering', answers: [] };
+        let { index, selected } = state;
+        function save() {
+            Object.assign(state, { index, selected, phase });
+            progress.saveLessonActivityState(SLUG, 'interactive', state);
+        }
 
         /*
          * One action button, three phases:
@@ -994,9 +1031,16 @@
          *   wrong     — "Try again", resets the question
          *   correct   — "Continue", advances (hidden on the last question)
          */
-        let phase = 'answering';
+        let phase = state.phase;
 
         function render() {
+            save();
+            if (index === questions.length - 1 && phase === 'correct') {
+                root.innerHTML = questions.map((question, i) => `<article class="retained-try-example"><h3>${question.title}</h3><p>${question.prompt}</p>${visualFraction(question.numerator, question.denominator, { width: 560, height: 145, groupSize: question.divisor ?? (question.mode === 'divisor' ? 5 : 6), showGroups: true })}<p><strong>${question.answer}</strong> ${state.answers[i]?.firstCorrect ? '✓' : '2nd try'}</p></article>`).join('');
+                completeSection('interactive');
+                window.Maths1to9Lesson.clearSectionAction('interactive');
+                return;
+            }
             const question = questions[index];
             const groupSize = question.divisor ?? (question.mode === 'divisor' ? 5 : 1);
             const grouped = question.mode !== 'full';
@@ -1065,7 +1109,11 @@
 
             function handleAction() {
                 if (phase === 'answering') {
-                    phase = selected === question.answer ? 'correct' : 'wrong';
+                    const correct = selected === question.answer;
+                    const answer = state.answers[index] ??= { firstCorrect: correct, attempts: [] };
+                    answer.selected = selected;
+                    answer.attempts.push({ selected, correct });
+                    phase = correct ? 'correct' : 'wrong';
                 } else if (phase === 'wrong') {
                     selected = '';
                     phase = 'answering';
