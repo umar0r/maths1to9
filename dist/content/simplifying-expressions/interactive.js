@@ -8,6 +8,7 @@
     ];
 
     let lessonData = null;
+    let replayingWork = false;
     let interactiveRoot = null;
 
     window.Maths1to9Interactives ??= {};
@@ -60,7 +61,7 @@
         }
     }
 
-    function enhanceLearn(lesson) {
+    async function enhanceLearn(lesson) {
         const section = document.querySelector(
             '[data-lesson-section="explanation"]'
         );
@@ -69,20 +70,34 @@
             return;
         }
 
-        const interactives = lesson.explanation?.interactives;
+        let interactives = lesson.explanation?.interactives;
 
         if (!Array.isArray(interactives) || interactives.length === 0) {
             return;
         }
 
         section.dataset.interactivesMounted = 'true';
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(SLUG, 'explanation');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, interactives, currentIndex: 0, finished: false,
+            widgets: interactives.map(() => ({ actions: [], firstCorrect: true, phase: 'answer', feedback: '', feedbackClass: '' }))
+        };
+        interactives = state.interactives;
+        let restoringWork = true;
+        function save() {
+            if (restoringWork) return;
+            store.saveLessonActivityState(SLUG, 'explanation', state);
+        }
+        const replayTasks = [];
+
 
         const host = document.createElement('div');
         host.className = 'worked-example-list';
 
         const cards = [];
         const completed = new Set();
-        let currentIndex = 0;
+        let currentIndex = state.currentIndex;
 
         document.dispatchEvent(
             new CustomEvent('maths1to9:section-gate', {
@@ -126,11 +141,13 @@
                 }
 
                 completed.add(index);
+                state.widgets[index].phase = 'correct';
 
                 feedbackRoot.className =
                     'question-feedback is-visible is-correct';
                 feedbackRoot.textContent = message;
 
+                save();
                 updateFooterAction();
             };
 
@@ -157,12 +174,74 @@
                 );
             }
 
+            // Record semantic widget actions, not generated HTML. Replaying them
+            // against the frozen activity restores its own visual and handlers.
+            const widget = state.widgets[index];
+            const selectorFor = element => {
+                if (!element) return '';
+                for (const attribute of ['data-paint-index', 'data-sort-term', 'data-place-family', 'data-collect-family', 'data-algebra-tile', 'data-sort-tray']) {
+                    if (element.hasAttribute(attribute)) return `[${attribute}="${cssEscape(element.getAttribute(attribute))}"]`;
+                }
+                return '';
+            };
+            function record(action) {
+                if (restoringWork || state.finished) return;
+                widget.actions.push(action);
+                save();
+                window.setTimeout(() => {
+                    widget.feedback = feedbackRoot.textContent;
+                    widget.feedbackClass = feedbackRoot.className;
+                    if (feedbackRoot.classList.contains('is-incorrect')) {
+                        widget.firstCorrect = false;
+                        widget.phase = 'wrong';
+                    }
+                    save();
+                }, 0);
+            }
+            widgetRoot.addEventListener('click', event => {
+                const target = event.target.closest('button');
+                if (target?.disabled) return;
+                const selector = selectorFor(target);
+                if (selector) record({ type: 'click', selector });
+            }, true);
+            widgetRoot.addEventListener('drop', event => {
+                const target = event.target.closest('[data-sort-tray], [data-algebra-tile]');
+                const selector = selectorFor(target);
+                const source = event.dataTransfer?.getData('text/plain');
+                if (selector && source) record({ type: 'drop', selector, source });
+            }, true);
+            replayTasks.push(async () => {
+                for (const action of widget.actions) {
+                    const target = widgetRoot.querySelector(action.selector);
+                    if (!target) continue;
+                    if (action.type === 'click') target.click();
+                    else {
+                        const source = widgetRoot.querySelector(`[data-sort-term="${cssEscape(action.source)}"], [data-algebra-tile="${cssEscape(action.source)}"]`);
+                        const transfer = new DataTransfer();
+                        transfer.setData('text/plain', action.source);
+                        source?.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: transfer }));
+                        target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: transfer }));
+                    }
+                    // Settle the activity's completion promises without replaying animation.
+                    await new Promise(resolve => window.setTimeout(resolve, 0));
+                }
+                widget.feedback = feedbackRoot.textContent;
+                widget.feedbackClass = feedbackRoot.className;
+                if (feedbackRoot.classList.contains('is-incorrect')) {
+                    widget.firstCorrect = false;
+                    widget.phase = 'wrong';
+                }
+
+            });
+
             cards.push(card);
             host.append(card);
         });
 
         function showCard(index) {
             currentIndex = index;
+            state.currentIndex = index;
+            save();
 
             cards.forEach((card, cardIndex) => {
                 card.hidden = cardIndex !== currentIndex;
@@ -190,6 +269,9 @@
             feedback.textContent =
                 'Learn complete. Like terms have matching letter parts and powers.';
 
+            state.finished = true;
+            save();
+            cards.forEach(card => { card.hidden = false; card.querySelectorAll('button').forEach(button => { button.disabled = true; }); });
             window.Maths1to9Lesson
                 ?.clearSectionAction?.('explanation');
 
@@ -201,6 +283,7 @@
         }
 
         function updateFooterAction() {
+            if (restoringWork) return;
             const api = window.Maths1to9Lesson;
 
             if (!completed.has(currentIndex)) {
@@ -217,8 +300,14 @@
             });
         }
 
-        showCard(0);
         section.append(host);
+        replayingWork = true;
+        for (const replay of replayTasks) await replay();
+        replayingWork = false;
+        restoringWork = false;
+        showCard(state.currentIndex);
+        if (state.finished) advanceExample();
+
     }
 
     function mountPaintAndMerge(
@@ -1032,6 +1121,7 @@
     }
 
     function animateElement(element, keyframes, duration) {
+        if (replayingWork) return Promise.resolve();
         if (
             element &&
             typeof element.animate === 'function'
@@ -1377,12 +1467,12 @@
         section.append(heading, list);
     }
 
-    function mountQuickCheck(root, interactive) {
+    async function mountQuickCheck(root, interactive) {
         if (!root || root.dataset.mounted === 'true') {
             return;
         }
 
-        const terms = Array.isArray(interactive.terms)
+        let terms = Array.isArray(interactive.terms)
             ? interactive.terms
             : [];
 
@@ -1392,8 +1482,18 @@
 
         root.dataset.mounted = 'true';
 
-        const selected = new Set();
-        let phase = 'a';
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(SLUG, 'interactive');
+        if (state?.contentVersion !== 1) state = { contentVersion: 1, interactive, selected: [], phase: 'a', answers: [], feedback: '', firstCorrect: true };
+        interactive = state.interactive;
+        terms = interactive.terms;
+        const selected = new Set(state.selected);
+        let phase = state.phase;
+        function save() {
+            state.phase = phase;
+            state.selected = [...selected];
+            store.saveLessonActivityState(SLUG, 'interactive', state);
+        }
 
         document.dispatchEvent(
             new CustomEvent('maths1to9:section-gate', {
@@ -1406,6 +1506,7 @@
         }
 
         function render() {
+            save();
             const finished = phase === 'finished';
             const prompt =
                 phase === 'a'
@@ -1478,6 +1579,11 @@
                 </article>
             `;
 
+            if (state.feedback) {
+                const feedback = root.querySelector('[data-feedback]');
+                feedback.textContent = state.feedback;
+                feedback.className = 'question-feedback is-visible is-incorrect';
+            }
             if (finished) {
                 document.dispatchEvent(
                     new CustomEvent(
@@ -1496,7 +1602,12 @@
                     const term = terms[index];
                     const feedback = root.querySelector('[data-feedback]');
 
-                    if (!term || term.family !== expectedFamily()) {
+                    const correct = Boolean(term && term.family === expectedFamily());
+                    state.answers.push({ phase, selected: index, text: term?.text || '', correct });
+                    if (!correct) {
+                        state.firstCorrect = false;
+                        state.feedback = 'Those terms do not have the same letter part.';
+                        save();
                         feedback.className =
                             'question-feedback is-visible is-incorrect';
                         feedback.textContent =
@@ -1504,6 +1615,7 @@
                         return;
                     }
 
+                    state.feedback = '';
                     if (selected.has(index)) {
                         selected.delete(index);
                     } else {
@@ -1535,6 +1647,12 @@
             });
         }
 
+        document.addEventListener('maths1to9:lesson-complete', () => {
+            if (phase !== 'finished') return;
+            state.lessonFinished = true;
+            save();
+        });
+        if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
         render();
     }
 
