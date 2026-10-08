@@ -112,7 +112,7 @@ function mountQuestions(list) {
    a.value=value;a.reason=new FormData(form).get('reason')||'';
    if(a.firstCorrect===undefined)a.firstCorrect=correct;
    a.history=a.history||[];a.history.push({value,reason:a.reason,correct});
-   a.feedback=correct?q.feedback:`Not quite. ${q.feedback}`;
+   a.feedback=correct?q.feedback:(q.id.startsWith('check-')?'Review your answer. ':'Not quite. ')+q.feedback;
    feedback.textContent=a.feedback;
    if(q.explain){a.numericCorrect=correct;a.awaitingReview=true;mountReview();save();}
    else {a.done=true;a.correct=correct;save();show(state.stage);}
@@ -125,7 +125,7 @@ function mountGuidedLine(root,start,amount,id,needsOperation=false) {
  if(state.answers[id]?.done){line.phase='done';line.position=start+amount;line.jumps=amount;line.operationReady=true;}
  function render(){
   const done=line.phase==='done';
-  root.innerHTML=`<p class="negative-equation">${equation(start,amount)}</p>${needsOperation?`<p>Step 1: subtracting −6 becomes −2 <span data-operation>${line.operationReady?'+':'<button class="button" data-op="+">+</button><button class="button" data-op="−">−</button><button class="button" data-op="×">×</button>'}</span> 6.</p>`:''}<p>${done?'Completed':line.phase==='move'?`Move the marker ${amount} spaces to the right, one space at a time.`:`Drag the marker to ${signed(start)}.`}</p>${lineHtml(id,line.position)}<div data-direction ${line.phase==='direction'?'':'hidden'}><p>You are subtracting −${amount}. Which direction should you move?</p><button class="button" data-dir="left">Left</button><button class="button" data-dir="right">Right</button></div><p>${line.jumps?Array.from({length:line.jumps+1},(_,i)=>signed(start+i)).join(' → '):''}</p><p role="status">${escape(done?`${equation(start,amount)} = ${signed(start)} + ${amount} = ${signed(start+amount)}.`:line.feedback)}</p>`;
+  root.innerHTML=`<p class="negative-equation">${equation(start,amount)}</p>${needsOperation?`<p>Step 1: subtracting −6 becomes −2 <span data-operation>${line.operationReady?'+':'<button class="button" data-op="+">+</button><button class="button" data-op="−">−</button><button class="button" data-op="×">×</button>'}</span> 6.</p>`:''}<p>${done?'Completed':line.phase==='move'?`Move the marker ${amount} spaces to the right, one space at a time.`:`Drag the marker to ${signed(start)}.`}</p>${lineHtml(id,line.position)}<div data-direction ${line.phase==='direction'?'':'hidden'}><p>You are subtracting −${amount}. Which direction should you move?</p><button class="button" data-dir="left">Left</button><button class="button" data-dir="right">Right</button></div><p data-jump-trail>${line.jumps?Array.from({length:line.jumps+1},(_,i)=>signed(start+i)).join(' → '):''}</p><p role="status">${escape(done?`${equation(start,amount)} = ${signed(start)} + ${amount} = ${signed(start+amount)}.`:line.feedback)}</p>`;
   const input=root.querySelector('input');
   input.disabled=!line.operationReady||done||line.phase==='direction';
   function update(){save();render();}
@@ -135,6 +135,7 @@ function mountGuidedLine(root,start,amount,id,needsOperation=false) {
    update();
   });
   mountLine(root,n=>{
+   const previousPhase=line.phase;
    if(line.phase==='start'){
     line.position=n;
     if(n===start)line.phase='direction';
@@ -145,7 +146,13 @@ function mountGuidedLine(root,start,amount,id,needsOperation=false) {
      if(line.jumps===amount){line.phase='done';state.answers[id]={done:true,correct:true};if(id==='learn-line')state.learned=true;}
     }
    }
-   update();
+   save();
+   if(line.phase!==previousPhase){render();return;}
+   input.value=line.position;
+   root.querySelector('.negative-marker').style.left=`${(line.position+10)*5}%`;
+   root.querySelector('[data-position]').textContent=`Marker: ${signed(line.position)}`;
+   root.querySelector('[data-jump-trail]').textContent=line.jumps?Array.from({length:line.jumps+1},(_,i)=>signed(start+i)).join(' → '):'';
+   root.querySelector('[role=status]').textContent=line.feedback;
   });
   root.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{
    if(b.dataset.dir==='left')line.feedback='Not quite. Subtracting a negative number becomes addition, so move to the right.';
