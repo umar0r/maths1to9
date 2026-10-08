@@ -143,6 +143,8 @@
         }
         if(!answer.lines?.every(value=>value.trim()))return;
         answer.lineChecks=example.rows.map((row,i)=>matches(row,answer.lines[i]));
+        answer.history ||= [];
+        answer.history.push({lines:[...answer.lines],correct:answer.lineChecks.every(Boolean)});
         answer.done=answer.lineChecks.every(Boolean);
         if(answer.done){answer.guidedStep=2;answer.guidedChecked=true;}
         save();render();
@@ -155,13 +157,36 @@
         return state.completed[index] || answer?.done || (slide.type === 'finish' && state.finished) ? 1 : 0;
     }
     function reviewHtml(type) {
-        const records = slides.map((slide,i) => ({slide,answer:state.answers[i]})).filter(r => r.slide.type===type && r.answer?.done);
+        const records = slides.map((slide, i) => ({ slide, answer: state.answers[i] }))
+            .filter(record => record.slide.type === type && record.answer?.done);
         if (!records.length) return '<p class="lesson-copy">Complete the questions to see your answers and score here.</p>';
-        const score = records.filter(r => r.answer?.firstCorrect).length;
-        return `<div class="practice-review__score is-ready"><div class="practice-progress-ring" style="--practice-progress:${score/records.length*100}%"><span>${score}<small>/${records.length}</small></span></div><div><h2 class="lesson-section__title">${score>=records.length*.8?"You're ready":'Keep building your confidence'}</h2><p>You got ${score} out of ${records.length} correct first try.</p></div></div><h3>Review your answers</h3>${records.map(({slide,answer},i) => `<div class="rounding-review ${answer?.firstCorrect?'':'retry'}"><small>${answer?.firstCorrect?'CORRECT FIRST TRY':answer?.correct?'CORRECT AFTER PRACTICE':'REVIEW THIS ONE'} · QUESTION ${i+1}</small><p><strong>${escape(slide.item.prompt)}</strong></p><p>Your ${answer?.firstCorrect?'answer':'first answer'}: <strong>${escape(answer?.firstAnswer)}</strong></p>${!answer?.firstCorrect?`<p>Correct answer: <strong>${escape(slide.item.answer)}</strong></p>`:''}<p class="lesson-copy">${escape(slide.item.explanation)}</p></div>`).join('')}`;
+        const score = records.filter(record => record.answer.firstCorrect).length;
+        const rows = records.map(({ slide, answer }) => {
+            const status = answer.firstCorrect ? '✓' : answer.correct ? '2nd try' : 'Incorrect';
+            return `<li><div class="retained-result"><span>${escape(slide.item.prompt)}</span><span class="retained-result__answer"><strong>${escape(answer.value)}</strong><span>${status}</span></span></div>${answer.firstCorrect ? '' : `<p class="retained-result__explanation">${escape(slide.item.explanation)}</p>`}</li>`;
+        }).join('');
+        return `<div class="practice-review__score is-ready"><div class="practice-progress-ring" style="--practice-progress:${score / records.length * 100}%"><span>${score}<small>/${records.length}</small></span></div><div><h2 class="lesson-section__title">${score >= records.length * .8 ? "You're ready" : 'Keep building your confidence'}</h2><p>You got ${score} out of ${records.length} correct first try.</p></div></div><ol class="retained-results">${rows}</ol>`;
     }
     function summaryHtml() {
-        return `<h2 class="lesson-section__title">Percentages — key reminders</h2>${note('Per cent means out of 100. Divide by 100 for a decimal multiplier. To find a percentage of an amount, multiply by that decimal. Use 10%, 1% or familiar fractions when they make the calculation easier. More than 100% means more than the whole.')} ${reviewHtml('check')}`;
+        return `${reviewHtml('check')}<h2 class="lesson-section__title">Percentages — key reminders</h2>${note('Per cent means out of 100. Divide by 100 for a decimal multiplier. To find a percentage of an amount, multiply by that decimal. Use 10%, 1% or familiar fractions when they make the calculation easier. More than 100% means more than the whole.')} `;
+    }
+    function guidedComplete() {
+        return slides.filter(slide => slide.type === 'guided').every(slide => state.answers[slides.indexOf(slide)]?.done);
+    }
+    function completedGuidedHtml() {
+        const current = state.slide;
+        const html = slides.map((slide, i) => {
+            if (slide.type !== 'guided') return '';
+            state.slide = i;
+            const answer = entry();
+            const status = answer.history?.some(attempt => !attempt.correct) ? '2nd try' : '✓';
+            return `<article class="retained-try-example">${slide.item.rows ? completedWorkingHtml(slide.item, answer) : guidedHtml(slide)}<p>${status}</p></article>`;
+        }).join('');
+        state.slide = current;
+        return html;
+    }
+    function completedWorkingHtml(example, answer) {
+        return `<h2>${escape(example.prompt)}</h2><div class="percentage-working"><div class="percentage-lines">${example.rows.map((row, i) => `<div class="percentage-line"><strong>${escape(row.label)}</strong><p>${row.percent}%: ${escape(row.calculation)} = ${escape(answer.lines?.[i] || row.answer)}</p></div>`).join('')}</div><figure class="percentage-model"><figcaption>${example.percent}% of ${example.whole}</figcaption><div class="working-grid" aria-hidden="true">${Array.from({length:100}, (_, i) => `<span class="${i < example.percent ? i < example.split ? 'is-blue' : 'is-gold' : ''}"></span>`).join('')}</div></figure></div>`;
     }
     function render(focus=false) {
         const slide = slides[state.slide], score = scores();
@@ -171,8 +196,8 @@
         });
         let body = '';
         if(slide.type==='learn') body=learnHtml(slide.item);
-        else if(slide.type==='guided') body=guidedHtml(slide);
-        else if(['practice','check'].includes(slide.type)) body=questionHtml(slide);
+        else if(slide.type==='guided') body=guidedComplete()?completedGuidedHtml():guidedHtml(slide);
+        else if(['practice','check'].includes(slide.type)) body=slides.filter(item=>item.type===slide.type).every(item=>state.answers[slides.indexOf(item)]?.done)?(slide.type==='practice'?reviewHtml('practice'):summaryHtml()):questionHtml(slide);
         else if(slide.type==='review') body=reviewHtml('practice');
         else if(slide.type==='summary') body=summaryHtml();
         else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished?'Lesson complete':'Keep learning'}</p><h2 class="lesson-section__title">Percentages of amounts</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><p class="lesson-copy">You have explored parts per hundred, equivalent fractions and decimals, and percentages of amounts.</p><h3>Later percentage lessons</h3><ol class="lesson-copy"><li>Expressing one amount as a percentage of another</li><li>Percentage increase and decrease</li><li>Reverse percentages</li><li>Simple interest</li><li>Repeated percentage change and compound interest</li></ol>${note('Your progress is saved in this browser. Continue returns to all lessons.')}`;
@@ -203,7 +228,11 @@
         app.querySelector('#rounding-answer')?.addEventListener('input', event => { entry().value=event.target.value; save(); updateAction(); });
         app.querySelector('#rounding-answer')?.addEventListener('keydown', event => { if(event.key==='Enter' && !app.querySelector('#rounding-action').disabled) {event.preventDefault(); act();} });
         app.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => {
-            const index=slides.findIndex(s => s.stage===Number(button.dataset.stage));
+            let index=slides.findIndex(s => s.stage===Number(button.dataset.stage));
+            const stage = Number(button.dataset.stage);
+            if ([2, 3].includes(stage) && slides.filter(slide => slide.type === (stage === 2 ? 'practice' : 'check')).every(slide => state.answers[slides.indexOf(slide)]?.done)) {
+                index = slides.findIndex(slide => slide.type === (stage === 2 ? 'review' : 'summary'));
+            }
             state.slide=index; state.highest=Math.max(state.highest,index); save(); render(true);
         }));
         if(slide.item?.explore) {
@@ -232,12 +261,20 @@
     function act() {
         const slide=slides[state.slide];
         if(slide.item?.colour && !state.colourDone) { state.colourDone=(state.coloured||[]).length===15; state.colourFeedback=true; save(); render(); app.querySelector('#rounding-action').focus(); return; }
+        if (slide.type === 'guided' && guidedComplete()) {
+            state.completed[state.slide] = true;
+            state.slide = slides.findIndex(item => item.type === 'practice');
+            state.highest = Math.max(state.highest, state.slide);
+            save(); render(true); return;
+        }
         if (slide.type === 'guided') { actGuided(); return; }
         if(!['guided','practice','check'].includes(slide.type)||entry().done) {advance();return;}
         const answer=entry();
         if(!answer.value.trim()) return;
         const correct=matches(slide.item,answer.value);
         if(answer.attempts===0) {answer.firstCorrect=correct; answer.firstAnswer=answer.value;}
+        answer.history ??= [];
+        answer.history.push({ value: answer.value, correct });
         answer.attempts++; answer.correct=correct; answer.done=correct||slide.type==='check'; answer.feedback=!correct;
         if(slide.type!=='guided') store.recordSkillAttempt({lessonSlug:slug,skillId:slide.item.skill,questionId:`${slug}:v1:${slide.type}:${slide.number}`,correct});
         save();
@@ -257,8 +294,10 @@
                     : slide.type === 'review' ? 'practice-review' : slide.type === 'finish' ? 'complete' : 'summary';
             });
             const saved=await store.getLessonProgress(slug);
-            const candidate=saved?.percentageState;
+            let candidate=saved?.percentageState;
+            if (candidate?.contentVersion !== undefined && candidate.contentVersion !== 1) candidate = null;
             state=candidate?.version===1 && Number.isInteger(candidate.slide) && candidate.slide>=0 && candidate.slide<slides.length && Number.isInteger(candidate.highest) && candidate.highest>=candidate.slide && candidate.highest<slides.length && candidate.answers && typeof candidate.answers==='object' ? candidate : {version:1,slide:0,highest:0,answers:{},explore:67,finished:false};
+            state.contentVersion = 1;
             state.interactions ||= {};
             // Migrate earlier saves without losing earned scores.
             if (!state.completed) state.completed = Object.fromEntries(slides.map((slide, i) => [i, i < state.highest && !['guided','practice','check'].includes(slide.type)]));
