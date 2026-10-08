@@ -28,7 +28,7 @@ $pageTitle = 'Subtracting negative numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
@@ -71,6 +71,6 @@ $pageTitle = 'Subtracting negative numbers';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <script src="../../assets/js/lesson-engine.js?v=31"></script>
-    <script src="./lesson.js?v=3"></script>
+    <script src="./lesson.js?v=4"></script>
 </body>
 </html>
