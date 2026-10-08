@@ -822,20 +822,28 @@
         ];
     }
 
-    function mountFinalCheck(root, questions) {
+    async function mountFinalCheck(root, questions) {
         gateSection('comparison');
         const refreshQuestions = () => {
             questions.splice(0, questions.length, ...createFinalCheckQuestions());
         };
 
         refreshQuestions();
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState('place-value', 'comparison');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, questions,
             index: 0,
             answers: [],
             showMistakes: false,
             lessonCompleted: false,
             resetOnReturn: false
         };
+
+        questions = state.questions;
+        function save() {
+            store.saveLessonActivityState('place-value', 'comparison', state);
+        }
 
         function isCorrect(question, answer) {
             if (question.type === 'misconception') {
@@ -934,73 +942,18 @@
 
         function renderReview() {
             const score = state.answers.filter((answer, index) => isCorrect(questions[index], answer)).length;
-            const ready = score >= 4;
-
-            removeCheckIntroduction();
-            window.Maths1to9Lesson?.clearSectionAction?.('comparison');
-
-            if (ready) {
-                root.innerHTML = (
-                    '<section class="lesson-completion" aria-label="Place value complete">'
-                    + summaryHtml()
-                    + '<div class="lesson-completion__result lesson-completion__result--success">'
-                    + '<span class="lesson-completion__celebration" aria-hidden="true">★</span>'
-                    + '<div><h2>Place value complete</h2><p>Nice work — you’re ready to move on.</p></div>'
-                    + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
-                    + '</div>'
-                    + '<div class="lesson-completion__recommendations" aria-live="polite">'
-                    + '<p class="lesson-completion__loading">Finding your next lesson…</p>'
-                    + '</div>'
-                    + '<a class="lesson-completion__all-lessons" href="../../">View all lessons</a>'
-                    + '</section>'
-                );
-
-                renderRecommendations(
-                    root.querySelector('.lesson-completion__recommendations')
-                );
-
-                if (!state.lessonCompleted) {
-                    state.lessonCompleted = true;
-                    completeSection('comparison');
-                    window.Maths1to9Lesson?.completeLesson?.();
-                }
-
-                return;
-            }
-
-            root.innerHTML = (
-                '<section class="lesson-completion lesson-completion--retry" aria-label="Final check result">'
-                + '<div class="lesson-completion__result">'
-                + '<div><h2>Practise once more</h2><p>Review the questions you missed, then have another go.</p></div>'
-                + `<p class="lesson-completion__score">${score}<small>/${questions.length}</small></p>`
-                + '</div>'
-                + '<div class="lesson-completion__actions">'
-                + '<button class="lesson-completion__review-button" type="button">Review mistakes</button>'
-                + '<button class="lesson-completion__practice-button" type="button">Back to practice</button>'
-                + '</div>'
-                + summaryHtml()
-                + (state.showMistakes
-                    ? `<div class="lesson-completion__mistakes"><h3>Review your answers</h3><div class="practice-review__list">${missedQuestionsHtml()}</div></div>`
-                    : '')
-                + '</section>'
-            );
-
-            root.querySelector('.lesson-completion__review-button')
-                ?.addEventListener('click', () => {
-                    state.showMistakes = true;
-                    renderReview();
-                });
-            root.querySelector('.lesson-completion__practice-button')
-                ?.addEventListener('click', () => {
-                    state.index = 0;
-                    state.answers = [];
-                    state.showMistakes = false;
-                    state.resetOnReturn = true;
-                    refreshQuestions();
-                    window.Maths1to9Lesson?.goToSection?.('question-bank', {
-                        moveFocus: true
-                    });
-                });
+            const rows = state.answers.map((answer, index) => {
+                const question = questions[index];
+                const correct = isCorrect(question, answer);
+                const value = question.type === 'order' ? answer.order.join(' < ') : question.type === 'misconception' ? answer.reason : answer.value;
+                return `<li><div class="retained-result"><span>${escapeHtml(question.prompt)}</span><span class="retained-result__answer"><strong>${escapeHtml(value)}</strong><span>${correct ? '✓' : 'Incorrect'}</span></span></div>${correct ? '' : `<p class="retained-result__explanation">${escapeHtml(question.explanation)}</p>`}</li>`;
+            }).join('');
+            root.innerHTML = `<ol class="retained-results">${rows}</ol><h3>Check complete</h3><p>${score}/${questions.length} correct.</p>${summaryHtml()}`;
+            state.lessonCompleted = true;
+            save();
+            window.Maths1to9Lesson.clearSectionAction('comparison');
+            completeSection('comparison');
+            window.Maths1to9Lesson.completeLesson();
         }
 
         function summaryHtml() {
@@ -1026,6 +979,7 @@
         });
 
         function render() {
+            save();
             window.Maths1to9Lesson?.setSectionProgress?.('comparison', state.index, questions.length);
             if (window.Maths1to9Lesson?.getCurrentSection?.().id === 'comparison') {
                 window.Maths1to9Lesson?.setSlideHash?.('comparison');
@@ -1049,6 +1003,7 @@
             root.querySelector('.final-check-input')?.addEventListener('input', (event) => {
                 answer.value = event.target.value;
                 state.answers[state.index] = answer;
+                save();
                 window.Maths1to9Lesson?.setSectionAction?.('comparison', {
                     label: 'Next question',
                     disabled: answer.value.trim() === '',
@@ -1222,10 +1177,10 @@
 
     /* ---------- finite practice session ---------- */
 
-    function mountPracticeSession(root) {
+    async function mountPracticeSession(root) {
         gateSection('question-bank');
 
-        const sessionLength = Math.max(
+        let sessionLength = Math.max(
             1,
             Number(root.dataset.sessionLength) || 10
         );
@@ -1234,7 +1189,10 @@
             Math.max(1, Number(root.dataset.readyScore) || 8)
         );
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState('place-value', 'question-bank');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, sessionLength,
             bag: createQuestionBag(),
             questions: [],
             currentIndex: -1,
@@ -1242,6 +1200,11 @@
             reviewing: false,
             focusTypes: []
         };
+
+        sessionLength = state.sessionLength;
+        function save() {
+            store.saveLessonActivityState('place-value', 'question-bank', state);
+        }
 
         function addQuestion() {
             if (state.bag.length === 0) {
@@ -1308,79 +1271,24 @@
         }
 
         function reviewHtml() {
-            const score = firstTryCorrectCount();
-            const ready = score >= readyScore;
-            const summary = ready
-                ? "You're ready"
-                : 'Practise once more';
-            const detail = ready
-                ? `You got ${score} out of ${sessionLength} correct.`
-                : `You got ${score} out of ${sessionLength} correct. Aim for ${readyScore} to be ready.`;
-            const answers = state.questions.map((entry, index) => {
-                const questionText = [
-                    entry.question.prompt,
-                    entry.question.display
-                ].filter(Boolean).join(' ');
-                const answerText = entry.question.interaction === 'order-tiles'
-                    ? entry.lastAnswer.replaceAll(' → ', ' < ')
-                    : entry.lastAnswer;
-                const status = entry.firstAttemptCorrect
-                    ? 'Correct first try'
-                    : entry.correct
-                        ? 'Correct after retry'
-                        : 'Practise';
-                const statusClass = entry.firstAttemptCorrect
-                    ? 'is-correct'
-                    : entry.correct
-                        ? 'is-recovered'
-                        : 'is-incorrect';
-
-                return (
-                    `<article class="practice-review-item ${statusClass}">`
-                    + `<p class="practice-review-item__number">${status} · Question ${index + 1}</p>`
-                    + `<h3>${escapeHtml(questionText)}</h3>`
-                    + `<p>Your answer: <strong>${escapeHtml(answerText)}</strong></p>`
-                    + (entry.correct ? '' : `<p>Answer: <strong>${escapeHtml(entry.question.interaction === 'order-tiles' ? entry.question.correctOrder.join(' < ') : entry.question.answer)}</strong></p>`)
-                    + `<p class="practice-review-item__explanation">${escapeHtml(entry.question.explanation)}</p>`
-                    + '</article>'
-                );
+            const rows = state.questions.map(entry => {
+                const question = [entry.question.prompt, entry.question.display].filter(Boolean).join(' ');
+                const answer = entry.lastAnswer.replaceAll(' → ', ' < ');
+                const status = entry.firstAttemptCorrect ? '✓' : entry.correct ? '2nd try' : 'Incorrect';
+                return `<li><div class="retained-result"><span>${escapeHtml(question)}</span><span class="retained-result__answer"><strong>${escapeHtml(answer)}</strong><span>${status}</span></span></div>${entry.firstAttemptCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(entry.question.explanation)}</p>`}</li>`;
             }).join('');
-
-            return (
-                '<section class="practice-review" aria-label="Practice review">'
-                + `<div class="practice-review__score ${ready ? 'is-ready' : ''}">`
-                + `<div class="practice-progress-ring practice-progress-ring--complete" style="--practice-progress: ${Math.round((score / sessionLength) * 100)}%"><span>${score}<small>/${sessionLength}</small></span></div>`
-                + `<div><h2>${summary}</h2><p>${detail}</p></div>`
-                + '</div>'
-                + '<h3 class="practice-review__title">Review your answers</h3>'
-                + `<div class="practice-review__list">${answers}</div>`
-                + '</section>'
-            );
+            return `<h3>Your practice results</h3><ol class="retained-results">${rows}</ol><p>${firstTryCorrectCount()}/${sessionLength} correct first try.</p>`;
         }
 
         function render() {
+            save();
             if (state.reviewing) {
                 root.innerHTML = reviewHtml();
                 updateHeaderProgress();
-                window.Maths1to9Lesson?.setSectionAction?.('question-bank', {
-                    label: firstTryCorrectCount() >= readyScore
-                        ? 'Continue to Check'
-                        : 'Practise weak areas',
-                    disabled: false,
-                    onClick: () => {
-                        if (firstTryCorrectCount() >= readyScore) {
-                            if (!state.completionDispatched) {
-                                state.completionDispatched = true;
-                                completeSection('question-bank');
-                            }
-                            window.Maths1to9Lesson?.goToSection?.('comparison', {
-                                unlock: true
-                            });
-                            return;
-                        }
-                        restart(true);
-                    }
-                });
+                state.completionDispatched = true;
+                save();
+                completeSection('question-bank');
+                window.Maths1to9Lesson.clearSectionAction('question-bank');
                 return;
             }
 
@@ -1576,6 +1484,8 @@
                             entry.correct =
                                 entry.selected === question.answer;
                             entry.attempts += 1;
+                            entry.answerHistory ??= [];
+                            entry.answerHistory.push({ selected: entry.selected, correct: entry.correct });
 
                             if (entry.attempts === 1) {
                                 entry.firstAttemptCorrect = entry.correct;
@@ -1618,28 +1528,11 @@
 
         }
 
-        function restart(targeted = false) {
-            const missedTypes = state.questions
-                .filter((entry) => !entry.firstAttemptCorrect)
-                .map((entry) => entry.assessmentType);
-
-            state.focusTypes = targeted ? missedTypes : [];
-            state.bag = createQuestionBag(state.focusTypes);
-            state.questions = [];
-            state.currentIndex = -1;
-            state.reviewing = false;
-            state.completionDispatched = false;
-            while (state.questions.length < sessionLength) {
-                addQuestion();
-            }
-            state.currentIndex = 0;
-            render();
-        }
-
+        const freshSession = state.questions.length === 0;
         while (state.questions.length < sessionLength) {
             addQuestion();
         }
-        state.currentIndex = 0;
+        if (freshSession) state.currentIndex = 0;
 
         document.addEventListener('maths1to9:section-change', (event) => {
             const badge = document.getElementById('practice-session-progress');
