@@ -785,6 +785,15 @@
                 ? (isCorrect ? 'next' : 'retry')
                 : 'check';
 
+            if (state.completed && phase === 'next') {
+                const more = document.createElement('button');
+                more.type = 'button';
+                more.className = 'button';
+                more.textContent = 'Keep practising';
+                more.addEventListener('click', addQuestion);
+                root.append(more);
+            }
+
             const label = phase === 'next'
                 ? (state.completed ? 'Finish lesson' : 'Next question')
                 : phase === 'retry'

@@ -71,7 +71,6 @@
 
             injectStyles();
             renderShell();
-            root.querySelectorAll('[data-action="new-problem"]').forEach(button => button.remove());
             if (!currentProblem) {
                 restoring = false;
                 loadNewProblem('rearrange');
@@ -307,6 +306,10 @@
             }
 
             function loadNewProblem(forcedType = null) {
+                if (currentProblem && !restoring) {
+                    state.history ??= [];
+                    state.history.push({ problem: structuredClone(currentProblem), stepIndex: currentStepIndex, answers: structuredClone(state.answers), finished: state.finished });
+                }
                 currentProblem = createProblem(forcedType);
                 state.options = [];
                 state.answers = [];
@@ -538,7 +541,6 @@
                 state.phase = 'answer';
                 renderCurrentStep();
                 save();
-                save();
 
                 if (hasGsap && !restoring) {
                     window.gsap.fromTo(
@@ -595,7 +597,31 @@
                     })
                 );
 
-                window.Maths1to9Lesson.clearSectionAction('interactive');
+                showFooterAction('Try another example', 'new-problem', () => loadNewProblem());
+                let history = root.querySelector('.quadratic-history');
+                if (!history) {
+                    history = document.createElement('details');
+                    history.className = 'quadratic-history';
+                    root.append(history);
+                }
+                history.hidden = !(state.history || []).length;
+                history.innerHTML = '<summary>Earlier examples</summary>';
+                (state.history || []).forEach(entry => {
+                    const board = document.createElement('article');
+                    board.className = 'quadratic-working';
+                    const original = document.createElement('div');
+                    board.append(original);
+                    renderMath(original, entry.problem.steps[0].before, true);
+                    const count = entry.finished ? entry.problem.steps.length : entry.stepIndex;
+                    entry.problem.steps.slice(0, count).forEach((step, index) => {
+                        const row = document.createElement('div');
+                        row.className = 'quadratic-working__row';
+                        row.innerHTML = `<div class="quadratic-working__number">${index + 1}</div><div class="quadratic-working__content"><p class="quadratic-working__reason">${escapeHtml(step.reason)}</p><div class="quadratic-working__math"></div></div>`;
+                        renderMath(row.querySelector('.quadratic-working__math'), step.after, true);
+                        board.append(row);
+                    });
+                    history.append(board);
+                });
 
                 updateMethodBar('complete');
 
