@@ -39,6 +39,7 @@
         // Preserve E1 sessions and answers while adding trees to their saved state.
         state.trees ??= state.order.map(n => logic.createTree(n));
         state.split ??= { nodeId: null, inputs: ['', ''], phase: 'answer', feedback: '', tone: 'is-correct' };
+        state.history ??= [];
         let builder;
         let feedback;
         const save = () => progress.saveLessonActivityState(SLUG, sectionId, state);
@@ -132,6 +133,9 @@
                 if (!builder.isComplete()) return;
                 const result = logic.markAnswer(state.order[state.index], builder.getEntries(), { indexForm: true });
                 const correct = result.status === 'correct';
+                const entry = state.history[state.index] ??= { firstCorrect: correct, attempts: [] };
+                entry.builder = structuredClone(state.builder);
+                entry.attempts.push({ builder: structuredClone(state.builder), correct });
                 state.phase = correct ? 'correct' : 'wrong';
                 state.feedback = result.message;
                 // Every Check is an assessed attempt; retries retain this slot ID.
@@ -145,6 +149,39 @@
             render();
         }
         function render() {
+            if (state.finished) {
+                root.innerHTML = '<h3>Your practice results</h3>';
+                const list = document.createElement('ol');
+                list.className = 'retained-results';
+                state.order.forEach((number, index) => {
+                    const entry = state.history[index];
+                    const row = document.createElement('li');
+                    const line = document.createElement('div');
+                    line.className = 'retained-result';
+                    const question = document.createElement('span');
+                    question.textContent = `Write ${number} as a product of prime factors.`;
+                    const result = document.createElement('span');
+                    result.className = 'retained-result__answer';
+                    const answer = document.createElement('strong');
+                    answer.dataset.primeMaths = `${number} = ${logic.toLatex(entry?.builder ? entry.builder.map(row => ({ base: Number(row.prime), power: Number(row.count) })) : logic.toIndexForm(logic.primeFactors(number)))}`;
+                    result.append(answer, entry?.firstCorrect === true ? ' ✓' : entry?.firstCorrect === false ? ' 2nd try' : ' Correct');
+                    line.append(question, result);
+                    row.append(line);
+                    if (entry?.firstCorrect === false) {
+                        const explanation = document.createElement('p');
+                        explanation.className = 'retained-result__explanation';
+                        explanation.textContent = 'Split every composite factor. Count each repeated prime and write its count as a power.';
+                        row.append(explanation);
+                    }
+                    list.append(row);
+                });
+                root.append(list);
+                logic.renderMaths(root);
+                save();
+                dispatch('complete');
+                api.clearSectionAction(sectionId);
+                return;
+            }
             root.replaceChildren();
             const card = document.createElement('article');
             card.className = 'question-card question-card--bare';
@@ -281,6 +318,17 @@
         } else section.setAttribute('aria-label', 'Prime factor decomposition result');
     }
 
+    function retainedRows(state) {
+        const rows = state.questions.filter(question => question.firstCorrect !== undefined || state.finished).map(question => {
+            const selected = question.finalSelected ?? question.answer;
+            const answer = question.options[selected];
+            const status = question.firstCorrect === true ? '✓' : question.firstCorrect === false ? '2nd try' : 'Correct';
+            const explanation = question.explanation || question.feedback?.[question.answer] || '';
+            return `<li><div class="retained-result"><span>${escape(question.prompt)}</span><span class="retained-result__answer"><strong>${escape(answer)}</strong><span>${status}</span></span></div>${question.firstCorrect === false ? `<p class="retained-result__explanation">${escape(explanation)}</p>` : ''}</li>`;
+        }).join('');
+        return `<ol class="retained-results">${rows}</ol>`;
+    }
+
     function renderCheckEnding(root, state, api) {
         const score = state.questions.filter(q => q.firstCorrect === true).length;
         const ready = score === state.questions.length;
@@ -292,6 +340,7 @@
                 <div><h2>${ready ? 'Congratulations!' : 'A little more practice will help'}</h2><p>${ready ? 'You’ve completed Prime factor decomposition and you’re ready to move on.' : 'You can choose another lesson below if you want to move on.'}</p><p>${score} of ${state.questions.length} Check questions correct first time.</p></div>
                 <p class="lesson-completion__score">${score}<small>/${state.questions.length}</small></p>
             </div>
+            ${state.finished ? retainedRows(state) : ''}
             ${`<section class="final-check-summary" aria-label="What you’ve learnt"><h2 class="lesson-section__title">${escape(summary.title)}</h2><ol class="lesson-steps">${summary.points.map(point => `<li class="lesson-step"><h3 class="lesson-step__title">${escape(point.title)}</h3><p class="lesson-step__text">${escape(point.text)}</p></li>`).join('')}</ol></section>`}
             <div class="lesson-completion__recommendations" aria-live="polite"><p>Finding your next lesson…</p></div>
         </section>`;
@@ -354,6 +403,9 @@
             } else {
                 if (state.selected === null) return;
                 const correct = state.selected === question.answer;
+                question.finalSelected = state.selected;
+                question.attempts ??= [];
+                question.attempts.push({ selected: state.selected, correct });
                 if (question.firstCorrect === undefined) question.firstCorrect = correct;
                 state.phase = correct ? 'correct' : 'wrong';
                 api.recordAssessment({ questionType: question.type, questionId: `comparison:${state.index + 1}`, correct });
