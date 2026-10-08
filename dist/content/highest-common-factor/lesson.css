@@ -18,3 +18,10 @@ body[data-lesson-id='highest-common-factor'] #lesson-section-explanation > .less
 .is-shaking{animation:hcf-shake .25s}@keyframes hcf-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 @media(max-width:620px){.prime-check-options{grid-template-columns:1fr}.hcf-venn{height:230px}.hcf-zone .hcf-tile{min-width:36px;min-height:40px}}
 @media(prefers-reduced-motion:reduce){.hcf-model *,.is-shaking{animation:none!important}}
+
+.lesson-revision-list { display: grid; gap: 1.5rem; padding-left: 0; list-style: none; }
+.lesson-revision-item { padding-block: 1rem; border-top: 1px solid #cbd5e1; min-width: 0; }
+.lesson-revision-item > h3 { margin-top: 0; }
+.lesson-revision-accuracy { display: block; color: #526171; font-size: .9rem; }
+
+.hcf-answer-line { font-size: clamp(.85rem, 3.7vw, 1.1rem); }

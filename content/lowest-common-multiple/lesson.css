@@ -50,3 +50,8 @@ body[data-lesson-id='lowest-common-multiple'] [role='group'] .button.is-rejected
     .lcm-zone .is-flashing { animation: none; outline: 3px solid #d97706; outline-offset: 2px; }
     .lcm-multiples .lcm-tile { animation: none; }
 }
+
+.lesson-revision-list { display: grid; gap: 1.5rem; padding-left: 0; list-style: none; }
+.lesson-revision-item { padding-block: 1rem; border-top: 1px solid #cbd5e1; min-width: 0; }
+.lesson-revision-item > h3 { margin-top: 0; }
+.lesson-revision-accuracy { display: block; color: #526171; font-size: .9rem; }

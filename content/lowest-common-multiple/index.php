@@ -35,7 +35,7 @@ $pageTitle = 'Lowest common multiple';
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="./lesson.css?v=4">
+    <link rel="stylesheet" href="./lesson.css?v=5">
 </head>
 
 <body
@@ -82,7 +82,7 @@ $pageTitle = 'Lowest common multiple';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=5"></script>
+    <script src="./interactive.js?v=6"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=31"></script>

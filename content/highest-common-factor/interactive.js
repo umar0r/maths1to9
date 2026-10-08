@@ -302,10 +302,49 @@
             label.append(input);
             root.append(label);
         }
+        function completedAnswer(question) {
+            const answer = product(question.overlap);
+            let latex = `\\mathrm{HCF} = ${answer}`;
+            if (question.overlap.length > 0) {
+                const factors = question.overlap.join(' \\times ');
+                latex = `\\mathrm{HCF} = \\textcolor{#15803d}{${factors}} = ${answer}`;
+            }
+            const paragraph = element('p', '', 'hcf-answer-line');
+            window.katex.render(latex, paragraph, { throwOnError: false });
+            return paragraph;
+        }
+        function renderCompletedWork() {
+            const heading = guided ? 'Your completed examples' : 'Your practice results';
+            root.append(element('h3', heading));
+            const answers = api.getProgress().scoreActivities;
+            const list = element(guided ? 'div' : 'ol', '', 'lesson-revision-list');
+            state.order.forEach((pair, index) => {
+                const question = state.items[index];
+                const card = element(guided ? 'article' : 'li', '', 'lesson-revision-item');
+                card.append(element(guided ? 'h3' : 'strong', `${pair[0]} and ${pair[1]}`));
+                if (guided) {
+                    // Clear transient feedback on a copy; saved attempts stay unchanged.
+                    const completed = {
+                        ...question, stage: 'answer', phase: 'correct',
+                        flashZones: [], shake: false, highlightSides: true
+                    };
+                    card.append(drawDiagram(completed, null));
+                }
+                card.append(completedAnswer(question));
+                if (!guided) {
+                    const activity = answers.find(answer => answer.id === `answer:question-bank:${index + 1}`);
+                    let accuracy = 'Corrected';
+                    if (activity?.firstCorrect === true) accuracy = '✓ Right first time';
+                    card.append(element('span', accuracy, 'lesson-revision-accuracy'));
+                }
+                list.append(card);
+            });
+            root.append(list);
+        }
         function render() {
             root.replaceChildren();
             if (state.finished) {
-                root.append(element('h3', guided ? 'Both examples complete' : 'Five questions complete'));
+                renderCompletedWork();
                 dispatch('complete');
                 api.clearSectionAction(sectionId);
                 reportProgress();
