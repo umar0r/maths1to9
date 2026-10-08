@@ -45,3 +45,8 @@
     margin: 8px 0 0;
     color: var(--text-muted);
 }
+
+/* This result owns its two retry actions; there is no footer continuation. */
+body:has(#lesson-section-comparison:not([hidden]) .lesson-completion--retry) .lesson-controls .button--primary {
+    display: none;
+}

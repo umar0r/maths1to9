@@ -28,7 +28,7 @@ $pageTitle = 'Place value';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
