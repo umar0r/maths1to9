@@ -276,7 +276,7 @@
         `;
     }
 
-    function mountTryIt(root) {
+    async function mountTryIt(root) {
         if (!root || root.dataset.mounted === 'true') {
             return;
         }
@@ -284,37 +284,81 @@
         root.dataset.mounted = 'true';
         gateSection(TRY_SECTION_ID);
 
-        const config = parseConfig(root);
+        const store = window.Maths1to9Progress;
+        const slug = 'function-machines-find-the-input';
+        let state = await store.getLessonActivityState(slug, TRY_SECTION_ID);
+        if (state?.contentVersion !== 1) {
+            const config = parseConfig(root);
+            config.steps = (config.steps || []).map(step => ({
+                ...step, options: shuffle(step.options || [])
+            }));
+            state = {
+                contentVersion: 1, config, answers: [],
+                stepIndex: 0, selected: '', correct: false, wrong: false,
+                startValue: '', solvedRows: []
+            };
+        }
+        // Keep the question snapshot with the pupil's answers.
+        const config = state.config;
         const steps = Array.isArray(config.steps) ? config.steps : [];
         const operations = Array.isArray(config.operations)
             ? config.operations.map((operation) => operation.label)
             : [];
         const completion = config.completion || {};
 
-        const state = {
-            stepIndex: 0,
-            selected: '',
-            correct: false,
-            wrong: false,
-            startValue: '',
-            solvedRows: []
-        };
+        function save() {
+            store.saveLessonActivityState(slug, TRY_SECTION_ID, state);
+        }
 
-        function visibleValues() {
-            const values = ['?', '?', String(config.output)];
+        function answerHistoryHtml() {
+            return `<ol>${state.answers.map((answer, index) => `
+                <li>
+                    <p>${escapeHtml(steps[index].prompt)}</p>
+                    <p>Your answer: ${escapeHtml(answer.selected)}</p>
+                    <p>${answer.firstCorrect ? '✓ Right first time' : 'Corrected'}</p>
+                </li>
+            `).join('')}</ol>`;
+        }
 
-            if (state.solvedRows.length >= 1) {
-                values[1] = String(config.middle_values?.[0] ?? 7);
+        function advanceStep() {
+            const step = steps[state.stepIndex];
+            if (!state.correct || !step) return;
+            if (step.start_value) state.startValue = step.start_value;
+            if (step.machine_operation) {
+                state.solvedRows.push({
+                    machine: step.machine_operation,
+                    reverse: step.reverse_operation,
+                    working: step.calculation
+                });
             }
+            state.stepIndex += 1;
+            state.selected = '';
+            state.correct = false;
+            state.wrong = false;
+            render();
+        }
 
-            if (state.solvedRows.length >= 2) {
-                values[0] = String(config.input);
-            }
-
-            return values;
+        function updateAction() {
+            let label = 'Choose an answer';
+            if (state.correct) label = 'Continue';
+            else if (state.wrong) label = 'Try again';
+            window.Maths1to9Lesson.setSectionAction(TRY_SECTION_ID, {
+                label,
+                disabled: !state.correct && !state.wrong,
+                onClick: () => {
+                    if (state.correct) advanceStep();
+                    else {
+                        state.selected = '';
+                        state.wrong = false;
+                        render();
+                    }
+                }
+            });
         }
 
         function finish() {
+            save();
+            window.Maths1to9Lesson.clearSectionAction(TRY_SECTION_ID);
             root.innerHTML = `
                 <article class="worked-example">
                     <p class="worked-example__number">${escapeHtml(completion.eyebrow || 'Try it complete')}</p>
@@ -327,6 +371,7 @@
                         ariaLabel: 'Completed backwards function machine'
                     })}
                     ${reverseTable(state.solvedRows)}
+                    ${answerHistoryHtml()}
                     <div class="question-feedback is-visible is-correct">
                         <strong>Check:</strong> ${escapeHtml(completion.check || '')}
                     </div>
@@ -338,6 +383,7 @@
         }
 
         function render() {
+            save();
             const step = steps[state.stepIndex];
             if (!step) {
                 finish();
@@ -345,11 +391,12 @@
             }
 
             const currentRow = step.machine_operation ? step : null;
-            const options = shuffle(step.options || []).map((option) => `
+            const options = (step.options || []).map((option) => `
                 <button
                     class="button${state.selected === option && state.correct ? ' button--primary' : ''}"
                     type="button"
                     data-answer="${escapeHtml(option)}"
+                    aria-pressed="${state.selected === option}"
                     ${state.correct ? 'disabled' : ''}
                 >
                     ${escapeHtml(option)}
@@ -395,6 +442,7 @@
                 });
             }
 
+            updateAction();
             root.querySelectorAll('[data-answer]').forEach((button) => {
                 button.addEventListener('click', () => {
                     if (state.correct) {
@@ -405,31 +453,13 @@
                     state.selected = selected;
                     state.correct = selected === step.answer;
                     state.wrong = !state.correct;
+                    const answer = state.answers[state.stepIndex] ??= {
+                        selected: '', firstCorrect: state.correct, attempts: []
+                    };
+                    answer.selected = selected;
+                    answer.phase = state.correct ? 'correct' : 'wrong';
+                    answer.attempts.push({ selected, correct: state.correct });
                     render();
-
-                    if (!state.correct) {
-                        return;
-                    }
-
-                    window.setTimeout(() => {
-                        if (step.start_value) {
-                            state.startValue = step.start_value;
-                        }
-
-                        if (step.machine_operation) {
-                            state.solvedRows.push({
-                                machine: step.machine_operation,
-                                reverse: step.reverse_operation,
-                                working: step.calculation
-                            });
-                        }
-
-                        state.stepIndex += 1;
-                        state.selected = '';
-                        state.correct = false;
-                        state.wrong = false;
-                        render();
-                    }, 700);
                 });
             });
 
