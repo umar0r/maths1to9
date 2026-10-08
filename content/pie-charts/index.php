@@ -31,7 +31,7 @@ $pageTitle = 'Pie charts';
 
     <script src="../../assets/js/progress.js?v=2" defer></script>
     <script src="../../assets/js/lesson-engine.js?v=31" defer></script>
-    <script src="./lessons.js?v=2" defer></script>
+    <script src="./lessons.js?v=3" defer></script>
 </head>
 
 <body data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>" data-lesson-renderer="custom">

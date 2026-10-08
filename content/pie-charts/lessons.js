@@ -4,6 +4,7 @@
     const store = window.Maths1to9Progress;
     const engine = window.Maths1to9LessonEngine;
     let lessonState = {
+        contentVersion: 1,
         learn: { stepIndex: 0, selectedAnswer: '', answerChecked: false },
         method: { stepIndex: 0 },
         currentSection: 'learn'
@@ -37,7 +38,7 @@
         } catch (error) {
             console.warn('Progress could not be restored.', error);
         }
-        if (saved?.pieChartState) lessonState = saved.pieChartState;
+        if (saved?.pieChartState && (!saved.pieChartState.contentVersion || saved.pieChartState.contentVersion === 1)) lessonState = {...lessonState, ...saved.pieChartState, contentVersion: 1};
         tracker = engine.createScoreTracker(saved?.scoreActivities || []);
         for (let index = 0; index < 6; index++) tracker.record({ id: `learn-${index}`, kind: 'learn', completed: false });
         for (let index = 0; index < 5; index++) tracker.record({ id: `method-${index}`, kind: 'learn', completed: false });
@@ -172,6 +173,7 @@
 
             bindLearnControls();
             animateLearnVisual(step.type);
+            if (state.answerChecked) colourHalfRed(root);
         }
 
         function bindLearnControls() {
@@ -200,9 +202,13 @@
                     feedback.style.display = 'block';
                     feedback.className = 'question-feedback is-incorrect';
                     feedback.textContent = 'Choose an answer first.';
+                    state.feedback = feedback.textContent;
+                    saveProgress();
                     return;
                 }
 
+                state.attempts = state.attempts || [];
+                state.attempts.push(state.selectedAnswer);
                 tracker.record({ id: 'red-circle', kind: 'answer', correct: state.selectedAnswer === 'One half' });
                 lessonState.currentSection = 'learn';
 
@@ -211,6 +217,7 @@
                     feedback.className = 'question-feedback is-incorrect';
                     feedback.textContent =
                         'Not quite. Count the red friends: 2 out of 4.';
+                    state.feedback = feedback.textContent;
                     saveProgress();
                     return;
                 }
@@ -218,7 +225,7 @@
                 state.answerChecked = true;
                 saveProgress();
                 render();
-                colourHalfRed(root);
+
             });
         }
 
@@ -680,6 +687,9 @@
             'The whole circle'
         ];
 
+        if (state.answerChecked) {
+            return `<p>2 out of 4: <strong>One half</strong> ${state.attempts?.length > 1 ? '2nd try' : '✓'}</p>${state.attempts?.length > 1 ? '<p>2 out of 4 is one half, so half of the circle is red.</p>' : ''}`;
+        }
         return `
             <div style="max-width: 600px; margin: 12px auto 0;">
                 <div class="question-options" role="radiogroup" aria-label="How much of the circle is red?">
@@ -705,13 +715,13 @@
 
                 <p
                     id="answer-feedback"
-                    class="question-feedback${state.answerChecked ? ' is-correct' : ''}"
+                    class="question-feedback${state.answerChecked ? ' is-correct' : state.feedback ? ' is-incorrect' : ''}"
                     aria-live="polite"
-                    style="${state.answerChecked ? '' : 'display: none;'}"
+                    style="${state.answerChecked || state.feedback ? 'display: block;' : 'display: none;'}"
                 >
                     ${state.answerChecked
                         ? 'Correct. 2 out of 4 is one half, so half of the circle is red.'
-                        : ''}
+                        : escapeHtml(state.feedback || '')}
                 </p>
             </div>
         `;
