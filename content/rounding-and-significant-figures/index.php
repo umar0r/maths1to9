@@ -70,6 +70,6 @@ $pageTitle = 'Rounding';
 
     <script src="../../assets/js/progress.js?v=2"></script>
     <script src="../../assets/js/lesson-engine.js?v=31"></script>
-    <script src="./lesson.js?v=8"></script>
+    <script src="./lesson.js?v=9"></script>
 </body>
 </html>

@@ -176,15 +176,12 @@
         return `<h3>${escape(question.prompt)}</h3><div class="guided-number" aria-label="Digits of ${escape(question.number)}">${digits}</div><div class="interactive-equation">${escape(question.number)} ≈ ${escape(question.answer)}</div>`;
     }
     function completedGuidedHtml() {
-        const current = state.slide;
         const html = slides.map((slide, i) => {
             if (slide.type !== 'guided') return '';
-            state.slide = i;
-            const answer = entry();
-            const status = answer.history?.some(attempt => !attempt.correct) ? '2nd try' : '✓';
+            const answer = state.answers[i];
+            const status = answer.history ? (answer.history.some(attempt => !attempt.correct) ? '2nd try' : '✓') : '';
             return `<article class="retained-try-example">${completedNumberHtml(slide.item)}<p>${status}</p></article>`;
         }).join('');
-        state.slide = current;
         return html;
     }
     function render(focus=false) {
