@@ -3,7 +3,7 @@
 
     window.Maths1to9Interactives ??= {};
 
-    window.Maths1to9Interactives['algebraic-expressions'] = function mount(root) {
+    window.Maths1to9Interactives['algebraic-expressions'] = async function mount(root) {
         if (!root || root.dataset.mounted) return;
         root.dataset.mounted = 'true';
 
@@ -43,9 +43,17 @@
                 explanation: 'Josh has 2p + 30 songs: double Miguel’s number, then add 30.'
             }
         ];
-        let stepIndex = 0;
-        const expressions = [];
-        const working = [];
+        const slug = 'algebraic-expressions';
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(slug, 'interactive');
+        if (state?.contentVersion !== 1) {
+            state = { contentVersion: 1, steps, stepIndex: 0, answers: [] };
+        }
+        // Use the saved question text alongside its answers after content edits.
+        const savedSteps = state.steps;
+        function save() {
+            store.saveLessonActivityState(slug, 'interactive', state);
+        }
 
         function element(tag, className, text) {
             const node = document.createElement(tag);
@@ -57,43 +65,59 @@
         function render(moveFocus = false) {
             root.replaceChildren();
             const card = element('article', 'question-card', '');
-            const finished = stepIndex === steps.length;
-            card.append(element('p', 'lesson-eyebrow', finished ? 'Expression complete' : `Step ${stepIndex + 1} of ${steps.length}`));
-            const heading = element('h3', 'question-prompt', finished ? 'Josh has 2p + 30 songs.' : steps[stepIndex].prompt);
+            const finished = state.stepIndex === savedSteps.length;
+            card.append(element('p', 'lesson-eyebrow', finished ? 'Expression complete' : `Step ${state.stepIndex + 1} of ${savedSteps.length}`));
+            const heading = element('h3', 'question-prompt', finished ? 'Josh has 2p + 30 songs.' : savedSteps[state.stepIndex].prompt);
             heading.tabIndex = -1;
             card.append(heading);
 
-            if (expressions.length) {
-                card.append(element('p', 'interactive-equation', expressions.join(' → ')));
+            if (state.stepIndex > 0) {
                 const list = document.createElement('ol');
-                working.forEach(text => list.append(element('li', '', text)));
+                savedSteps.slice(0, state.stepIndex).forEach((step, index) => {
+                    const answer = state.answers[index];
+                    const item = document.createElement('li');
+                    item.append(element('p', '', step.prompt));
+                    item.append(element('p', 'interactive-equation', `Your answer: ${answer.selected}`));
+                    item.append(element('p', '', step.explanation));
+                    item.append(element('p', '', answer.firstCorrect ? '✓ Right first time' : 'Corrected'));
+                    list.append(item);
+                });
                 card.append(list);
             }
 
             if (!finished) {
-                const step = steps[stepIndex];
+                const step = savedSteps[state.stepIndex];
                 const choices = element('div', 'question-options', '');
                 const feedback = element('p', 'question-feedback', '');
                 feedback.setAttribute('role', 'status');
+                const answer = state.answers[state.stepIndex] ??= {
+                    selected: '', phase: 'answer', firstCorrect: null, attempts: []
+                };
+                if (answer.phase === 'wrong') {
+                    feedback.className = 'question-feedback is-visible is-incorrect';
+                    feedback.textContent = step.choices.find(choice => choice[0] === answer.selected)?.[1] || '';
+                }
                 for (const [label, message] of step.choices) {
                     const button = element('button', 'button', label);
                     button.type = 'button';
+                    button.setAttribute('aria-pressed', String(answer.selected === label));
                     button.addEventListener('click', () => {
-                        if (steps[stepIndex] !== step) return;
-                        if (label !== step.answer) {
+                        if (savedSteps[state.stepIndex] !== step) return;
+                        const correct = label === step.answer;
+                        answer.selected = label;
+                        answer.phase = correct ? 'correct' : 'wrong';
+                        if (answer.firstCorrect === null) answer.firstCorrect = correct;
+                        answer.attempts.push({ selected: label, correct });
+                        save();
+                        if (!correct) {
                             feedback.className = 'question-feedback is-visible is-incorrect';
                             feedback.textContent = message;
+                            render();
                             return;
                         }
-                        expressions.push(step.answer);
-                        working.push(step.explanation);
-                        stepIndex += 1;
+                        state.stepIndex += 1;
                         render(true);
-                        if (stepIndex === steps.length) {
-                            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', {
-                                detail: { sectionId: 'interactive' }
-                            }));
-                        }
+
                     });
                     choices.append(button);
                 }
@@ -101,6 +125,12 @@
             }
 
             root.append(card);
+            save();
+            if (finished) {
+                document.dispatchEvent(new CustomEvent('maths1to9:section-complete', {
+                    detail: { sectionId: 'interactive' }
+                }));
+            }
             if (moveFocus) heading.focus({ preventScroll: true });
         }
 

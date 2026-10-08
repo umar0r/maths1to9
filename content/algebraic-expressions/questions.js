@@ -568,7 +568,7 @@
         return Object.keys(generators);
     }
 
-    function mount(root) {
+    async function mount(root) {
         if (!root || mounted.has(root)) {
             return;
         }
@@ -576,9 +576,13 @@
         mounted.add(root);
         root.dataset.mounted = 'true';
         gateSection(SECTION_ID);
-        const sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
+        let sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        const slug = 'algebraic-expressions';
+        let state = await store.getLessonActivityState(slug, SECTION_ID);
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, history: [], sessionLength,
             number: 0,
             answered: 0,
             correct: 0,
@@ -590,6 +594,13 @@
             lastType: '',
             entry: null
         };
+
+        sessionLength = state.sessionLength;
+
+        function save() {
+            if (state.entry) state.history[state.number - 1] = state.entry;
+            store.saveLessonActivityState(slug, SECTION_ID, state);
+        }
 
         function nextType() {
             const upcoming = state.number;
@@ -625,7 +636,7 @@
                 checked: false,
                 correct: false,
                 countedAnswer: false,
-                countedCorrect: false
+                countedCorrect: false, firstCorrect: null, attempts: []
             };
 
             render();
@@ -633,8 +644,10 @@
 
         function render() {
             if (state.finished) {
+                renderSummary();
                 return;
             }
+            save();
 
             const entry = state.entry;
             const question = entry.question;
@@ -748,6 +761,8 @@
                         entry.checked = true;
                         entry.correct =
                             entry.selected === question.answerLabel;
+                        if (entry.firstCorrect === null) entry.firstCorrect = entry.correct;
+                        entry.attempts.push({ selected: entry.selected, correct: entry.correct });
 
                         if (!entry.countedAnswer) {
                             state.answered += 1;
@@ -790,6 +805,7 @@
                     }
 
                     if (state.number === sessionLength) {
+                        finishPractice();
                         window.Maths1to9Lesson.completeLesson();
                         return;
                     }
@@ -810,32 +826,39 @@
             }
 
             state.finished = true;
+            save();
             window.Maths1to9Lesson?.clearSectionAction?.(SECTION_ID);
             renderSummary();
         }
 
         function renderSummary() {
-            const practised = Object.keys(state.practised);
-            const practisedHtml = practised.length > 0
-                ? '<aside class="lesson-key-points">' +
-                  '<h3>What you practised</h3><ul>' +
-                  practised
-                      .map((name) => `<li>${escapeHtml(name)}</li>`)
-                      .join('') +
-                  '</ul></aside>'
-                : '';
-
-            root.innerHTML =
-                '<article class="question-card">' +
-                '<p class="question-number">Practice complete</p>' +
-                `<p class="question-prompt">You checked ${state.answered} ` +
-                `question${state.answered === 1 ? '' : 's'} and got ` +
-                `${state.firstTryCorrect} right on the first try. ` +
-                'Your progress has been saved.</p>' +
-                practisedHtml +
-                '<p><a class="button button--primary" ' +
-                'href="../../">Back to all lessons</a></p>' +
-                '</article>';
+            save();
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.textContent = 'Your practice results';
+            const list = document.createElement('ol');
+            list.className = 'worked-example-list';
+            state.history.forEach(entry => {
+                const item = document.createElement('li');
+                item.className = 'worked-example';
+                for (const text of [
+                    entry.question.prompt,
+                    entry.question.display || '',
+                    `Your answer: ${entry.selected}`,
+                    `Correct answer: ${entry.question.answerLabel}`,
+                    entry.firstCorrect ? '✓ Right first time' : 'Corrected',
+                    entry.question.explanation
+                ]) {
+                    const paragraph = document.createElement('p');
+                    paragraph.textContent = text;
+                    item.append(paragraph);
+                }
+                list.append(item);
+            });
+            root.append(heading, list);
+            window.Maths1to9Lesson.clearSectionAction(SECTION_ID);
+            completeSection(SECTION_ID);
+            window.Maths1to9Lesson.completeLesson();
         }
 
         document.addEventListener(
@@ -843,7 +866,8 @@
             finishPractice
         );
 
-        addQuestion();
+        if (state.entry || state.finished) render();
+        else addQuestion();
     }
 
     function mountAll() {
