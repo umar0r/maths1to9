@@ -614,7 +614,7 @@
         return Object.keys(generators);
     }
 
-    function mount(root) {
+    async function mount(root) {
         if (!root || mounted.has(root)) {
             return;
         }
@@ -623,7 +623,10 @@
         root.dataset.mounted = 'true';
         gateSection(SECTION_ID);
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState('solving-quadratic-equations', SECTION_ID);
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, history: [],
             run:
                 `${Date.now().toString(36)}-` +
                 Math.random().toString(36).slice(2, 8),
@@ -638,6 +641,11 @@
             lastType: '',
             entry: null
         };
+
+        function save() {
+            if (state.entry) state.history[state.number - 1] = state.entry;
+            store.saveLessonActivityState('solving-quadratic-equations', SECTION_ID, state);
+        }
 
         function nextType() {
             const upcoming = state.number;
@@ -672,14 +680,16 @@
                 checked: false,
                 correct: false,
                 countedAnswer: false,
-                countedCorrect: false
+                countedCorrect: false, firstCorrect: null, attempts: []
             };
 
             render();
         }
 
         function render() {
+            save();
             if (state.finished) {
+                renderSummary();
                 return;
             }
 
@@ -776,7 +786,7 @@
                 : 'check';
 
             const label = phase === 'next'
-                ? 'Next question'
+                ? (state.completed ? 'Finish lesson' : 'Next question')
                 : phase === 'retry'
                     ? 'Try again'
                     : 'Check answer';
@@ -795,6 +805,8 @@
                         entry.checked = true;
                         entry.correct =
                             entry.selected === question.answerLabel;
+                        if (entry.firstCorrect === null) entry.firstCorrect = entry.correct;
+                        entry.attempts.push({ selected: entry.selected, correct: entry.correct });
 
                         if (!entry.countedAnswer) {
                             state.answered += 1;
@@ -844,7 +856,10 @@
                         return;
                     }
 
-                    addQuestion();
+                    if (state.completed) {
+                        finishPractice();
+                        window.Maths1to9Lesson.completeLesson();
+                    } else addQuestion();
                 }
             });
         }
@@ -861,32 +876,18 @@
             }
 
             state.finished = true;
+            save();
             window.Maths1to9Lesson?.clearSectionAction?.(SECTION_ID);
             renderSummary();
         }
 
         function renderSummary() {
-            const practised = Object.keys(state.practised);
-            const practisedHtml = practised.length > 0
-                ? '<aside class="lesson-key-points">' +
-                  '<h3>What you practised</h3><ul>' +
-                  practised
-                      .map((name) => `<li>${escapeHtml(name)}</li>`)
-                      .join('') +
-                  '</ul></aside>'
-                : '';
-
-            root.innerHTML =
-                '<article class="question-card">' +
-                '<p class="question-number">Practice complete</p>' +
-                `<p class="question-prompt">You checked ${state.answered} ` +
-                `question${state.answered === 1 ? '' : 's'} and got ` +
-                `${state.firstTryCorrect} right on the first try. ` +
-                'Your progress has been saved.</p>' +
-                practisedHtml +
-                '<p><a class="button button--primary" ' +
-                'href="../../">Back to all lessons</a></p>' +
-                '</article>';
+            save();
+            const rows = state.history.map(entry => `<li><div class="retained-result"><span>${escapeHtml([entry.question.prompt, entry.question.display].filter(Boolean).join(' '))}</span><span class="retained-result__answer"><strong>${escapeHtml(entry.selected)}</strong><span>${entry.firstCorrect ? '✓' : '2nd try'}</span></span></div>${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(entry.question.explanation)}</p>`}</li>`).join('');
+            root.innerHTML = `<h3>Your practice results</h3><ol class="retained-results">${rows}</ol>`;
+            window.Maths1to9Lesson.clearSectionAction(SECTION_ID);
+            completeSection(SECTION_ID);
+            window.Maths1to9Lesson.completeLesson();
         }
 
         document.addEventListener(
@@ -894,7 +895,8 @@
             finishPractice
         );
 
-        addQuestion();
+        if (state.entry || state.finished) render();
+        else addQuestion();
     }
 
     function mountAll() {

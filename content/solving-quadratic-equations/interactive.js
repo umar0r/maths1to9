@@ -4,16 +4,27 @@
     window.Maths1to9Interactives ??= {};
 
     window.Maths1to9Interactives['solving-quadratic-equations'] =
-        function mountSolvingQuadraticsInteractive(root) {
-            if (!root) {
+        async function mountSolvingQuadraticsInteractive(root) {
+            if (!root || root.dataset.mounted) {
                 return;
             }
 
+            root.dataset.mounted = 'true';
+            const store = window.Maths1to9Progress;
+            let state = await store.getLessonActivityState('solving-quadratic-equations', 'interactive');
+            if (state?.contentVersion !== 1) state = { contentVersion: 1, problem: null, stepIndex: 0, options: [], answers: [], phase: 'answer', feedback: '', feedbackType: '', finished: false };
+            let restoring = true;
+            function save() {
+                if (restoring) return;
+                state.problem = currentProblem;
+                state.stepIndex = currentStepIndex;
+                store.saveLessonActivityState('solving-quadratic-equations', 'interactive', state);
+            }
             const hasKatex = typeof window.katex !== 'undefined';
             const hasGsap = typeof window.gsap !== 'undefined';
 
-            let currentProblem = null;
-            let currentStepIndex = 0;
+            let currentProblem = state.problem;
+            let currentStepIndex = state.stepIndex;
             let locked = false;
 
             const OPTION_LABELS = {
@@ -60,7 +71,34 @@
 
             injectStyles();
             renderShell();
-            loadNewProblem('rearrange');
+            root.querySelectorAll('[data-action="new-problem"]').forEach(button => button.remove());
+            if (!currentProblem) {
+                restoring = false;
+                loadNewProblem('rearrange');
+            } else {
+                const savedIndex = currentStepIndex;
+                const savedPhase = state.phase;
+                for (let index = 0; index < savedIndex; index += 1) {
+                    currentStepIndex = index;
+                    revealStep();
+                }
+                currentStepIndex = savedIndex;
+                renderCurrentStep();
+                if (savedPhase === 'correct' || state.finished) {
+                    checkOption(root.querySelector('[data-correct="true"]'));
+                } else {
+                    const answers = state.answers[currentStepIndex]?.attempts || [];
+                    answers.filter(answer => !answer.correct).forEach(answer => {
+                        root.querySelectorAll('[data-option]').forEach(button => {
+                            if (button.textContent.trim().endsWith(answer.selected)) button.classList.add('quadratic-option--incorrect');
+                        });
+                    });
+                    if (state.feedback) showFeedback(state.feedback, state.feedbackType);
+                }
+                if (state.finished) showCompletedState();
+                restoring = false;
+                save();
+            }
 
             function renderShell() {
                 root.innerHTML = `
@@ -270,6 +308,10 @@
 
             function loadNewProblem(forcedType = null) {
                 currentProblem = createProblem(forcedType);
+                state.options = [];
+                state.answers = [];
+                state.phase = 'answer';
+                state.finished = false;
                 currentStepIndex = 0;
                 locked = false;
 
@@ -277,8 +319,9 @@
                 working.innerHTML = '';
 
                 renderCurrentStep();
+                save();
 
-                if (hasGsap) {
+                if (hasGsap && !restoring) {
                     window.gsap.fromTo(
                         root.querySelector('.quadratic-workspace'),
                         {
@@ -333,7 +376,7 @@
             function renderOptions(correctAction) {
                 const optionsElement = getElement('options');
 
-                const answers = shuffle([
+                const answers = state.options[currentStepIndex] ??= shuffle([
                     {
                         action: correctAction,
                         label: OPTION_LABELS[correctAction],
@@ -373,6 +416,14 @@
                 }
 
                 const isCorrect = option.dataset.correct === 'true';
+                if (!restoring) {
+                    const answer = state.answers[currentStepIndex] ??= { firstCorrect: isCorrect, attempts: [] };
+                    const selected = option.querySelector('span:last-child').textContent;
+                    answer.selected = selected;
+                    answer.attempts.push({ selected, correct: isCorrect });
+                    state.phase = isCorrect ? 'correct' : 'wrong';
+                    save();
+                }
 
                 if (!isCorrect) {
                     option.classList.add('quadratic-option--incorrect');
@@ -443,7 +494,7 @@
                     true
                 );
 
-                if (hasGsap) {
+                if (hasGsap && !restoring) {
                     const timeline = window.gsap.timeline();
 
                     timeline
@@ -484,9 +535,12 @@
                 }
 
                 currentStepIndex += 1;
+                state.phase = 'answer';
                 renderCurrentStep();
+                save();
+                save();
 
-                if (hasGsap) {
+                if (hasGsap && !restoring) {
                     window.gsap.fromTo(
                         '.quadratic-question',
                         {
@@ -503,6 +557,8 @@
             }
 
             function showCompletedState() {
+                state.finished = true;
+                save();
                 const { root1, root2 } = currentProblem;
 
                 getElement('explanation-title').textContent =
@@ -539,15 +595,11 @@
                     })
                 );
 
-                showFooterAction(
-                    'Try another example',
-                    'new-problem',
-                    () => loadNewProblem()
-                );
+                window.Maths1to9Lesson.clearSectionAction('interactive');
 
                 updateMethodBar('complete');
 
-                if (hasGsap) {
+                if (hasGsap && !restoring) {
                     window.gsap.fromTo(
                         '.quadratic-complete',
                         {
@@ -591,6 +643,11 @@
             }
 
             function showFeedback(message, type) {
+                if (!restoring) {
+                    state.feedback = message;
+                    state.feedbackType = type;
+                    save();
+                }
                 const feedback = getElement('feedback');
 
                 feedback.className =
@@ -600,6 +657,11 @@
             }
 
             function clearFeedback() {
+                if (!restoring) {
+                    state.feedback = '';
+                    state.feedbackType = '';
+                    save();
+                }
                 const feedback = getElement('feedback');
 
                 feedback.className = 'quadratic-feedback';
@@ -1675,7 +1737,7 @@
             return function destroy() {
                 root.removeEventListener('click', handleClick);
 
-                if (hasGsap) {
+                if (hasGsap && !restoring) {
                     window.gsap.killTweensOf(
                         root.querySelectorAll('*')
                     );
