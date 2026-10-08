@@ -72,17 +72,23 @@
             card.append(heading);
 
             if (state.stepIndex > 0) {
-                const list = document.createElement('ol');
+                const chain = element('div', 'interactive-equation expression-chain', '');
+                chain.setAttribute('aria-label', 'The growing expression');
                 savedSteps.slice(0, state.stepIndex).forEach((step, index) => {
+                    if (index > 0) {
+                        const arrow = element('span', 'expression-chain__arrow', '→');
+                        arrow.setAttribute('aria-hidden', 'true');
+                        chain.append(arrow);
+                    }
                     const answer = state.answers[index];
-                    const item = document.createElement('li');
-                    item.append(element('p', '', step.prompt));
-                    item.append(element('p', 'interactive-equation', `Your answer: ${answer.selected}`));
-                    item.append(element('p', '', step.explanation));
-                    item.append(element('p', '', answer.firstCorrect ? '✓ Right first time' : 'Corrected'));
-                    list.append(item);
+                    const term = element('span', 'expression-chain__term', '');
+                    term.append(element('span', '', answer.selected));
+                    const status = element('small', 'expression-chain__status', answer.firstCorrect ? '✓' : '2nd try');
+                    status.setAttribute('aria-label', answer.firstCorrect ? 'Right first time' : 'Corrected');
+                    term.append(status);
+                    chain.append(term);
                 });
-                card.append(list);
+                card.append(chain);
             }
 
             if (!finished) {

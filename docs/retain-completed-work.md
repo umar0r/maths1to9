@@ -17,12 +17,16 @@ reference.
    feedback, same main button.
 3. **A finished section shows the work, read-only.** Never an empty card with
    just "complete":
-   - Try it: each example as the pupil finished it (diagram, steps, answer).
-   - Practice: the questions in order, the pupil's final answer, the correct
-     answer, and a ✓ for right first time.
-   - Check: each question with the pupil's answer and ✓ for right first time,
-     then the summary.
-   Continue stays the only button.
+   - Try it: each example as the pupil finished it, using the activity's own
+     visual (diagram, tree, machine, the expression built step by step). Keep
+     that visual; don't replace it with a list of text.
+   - Practice: one compact row per question: the question, the answer, and ✓
+     for right first time or "2nd try" if corrected. Don't repeat the answer
+     as "Your answer" and "Correct answer"; after a correction they're the
+     same. Show the explanation only for corrected questions.
+   - Check: the same compact rows, then the summary.
+   Continue stays the only button. Keep it short: a finished section is for a
+   quick look back, not a wall of text.
 4. **Revisiting never changes the score.** No points are awarded again and no
    new Practice session is generated for a finished section. Only the existing
    "Start over" resets a lesson.

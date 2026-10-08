@@ -310,16 +310,6 @@
             store.saveLessonActivityState(slug, TRY_SECTION_ID, state);
         }
 
-        function answerHistoryHtml() {
-            return `<ol>${state.answers.map((answer, index) => `
-                <li>
-                    <p>${escapeHtml(steps[index].prompt)}</p>
-                    <p>Your answer: ${escapeHtml(answer.selected)}</p>
-                    <p>${answer.firstCorrect ? '✓ Right first time' : 'Corrected'}</p>
-                </li>
-            `).join('')}</ol>`;
-        }
-
         function advanceStep() {
             const step = steps[state.stepIndex];
             if (!state.correct || !step) return;
@@ -371,7 +361,6 @@
                         ariaLabel: 'Completed backwards function machine'
                     })}
                     ${reverseTable(state.solvedRows)}
-                    ${answerHistoryHtml()}
                     <div class="question-feedback is-visible is-correct">
                         <strong>Check:</strong> ${escapeHtml(completion.check || '')}
                     </div>

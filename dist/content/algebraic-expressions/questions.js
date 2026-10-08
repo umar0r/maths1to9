@@ -837,21 +837,28 @@
             const heading = document.createElement('h3');
             heading.textContent = 'Your practice results';
             const list = document.createElement('ol');
-            list.className = 'worked-example-list';
+            list.className = 'retained-results';
             state.history.forEach(entry => {
                 const item = document.createElement('li');
-                item.className = 'worked-example';
-                for (const text of [
-                    entry.question.prompt,
-                    entry.question.display || '',
-                    `Your answer: ${entry.selected}`,
-                    `Correct answer: ${entry.question.answerLabel}`,
-                    entry.firstCorrect ? '✓ Right first time' : 'Corrected',
-                    entry.question.explanation
-                ]) {
-                    const paragraph = document.createElement('p');
-                    paragraph.textContent = text;
-                    item.append(paragraph);
+                const row = document.createElement('div');
+                row.className = 'retained-result';
+                const question = document.createElement('span');
+                question.textContent = [entry.question.prompt, entry.question.display].filter(Boolean).join(' ');
+                const answer = document.createElement('strong');
+                answer.textContent = entry.selected;
+                const status = document.createElement('span');
+                status.textContent = entry.firstCorrect ? '✓' : '2nd try';
+                status.setAttribute('aria-label', entry.firstCorrect ? 'Right first time' : 'Corrected');
+                const result = document.createElement('span');
+                result.className = 'retained-result__answer';
+                result.append(answer, status);
+                row.append(question, result);
+                item.append(row);
+                if (!entry.firstCorrect) {
+                    const explanation = document.createElement('p');
+                    explanation.className = 'retained-result__explanation';
+                    explanation.textContent = entry.question.explanation;
+                    item.append(explanation);
                 }
                 list.append(item);
             });

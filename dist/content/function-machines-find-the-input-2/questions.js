@@ -375,15 +375,6 @@
             store.saveLessonActivityState(slug, SECTION_ID, state);
         }
 
-        function answersHtml(steps, answers) {
-            return `<ol>${answers.map((answer, index) => `
-                <li>
-                    <p>${escapeHtml(steps[index].prompt)}</p>
-                    <p>Your answer: ${escapeHtml(answer.selected)}</p>
-                </li>
-            `).join('')}</ol>`;
-        }
-
         function advanceStep() {
             const step = state.steps[state.stepIndex];
             if (!state.correct || !step) return;
@@ -434,17 +425,16 @@
         function summariesHtml() {
             if (state.summaries.length === 0) return '';
             return `
-                <ol class="worked-example-list">
+                <ol class="retained-results">
                     ${state.summaries.map(summary => `
-                        <li class="worked-example" style="min-width:0;">
-                            <p class="worked-example__number">${escapeHtml(summary.label)}</p>
+                        <li>
+                            <div class="retained-result">
+                                <span>Find the input</span>
+                                <span class="retained-result__answer"><strong>${escapeHtml(summary.input)}</strong>
+                                <span aria-label="${summary.firstCorrect ? 'Right first time' : 'Corrected'}">${summary.firstCorrect ? '✓' : '2nd try'}</span></span>
+                            </div>
                             ${machineGraphic(summary.problem, summary.solvedRows)}
-                            ${reverseTable(summary.solvedRows)}
-                            ${answersHtml(summary.steps, summary.answers)}
-                            <p>Your answer: input = ${escapeHtml(summary.input)}</p>
-                            <p>Correct answer: input = ${escapeHtml(summary.input)}</p>
-                            <p>${summary.firstCorrect ? '✓ Right first time' : 'Corrected'}</p>
-                            <p>${escapeHtml(summary.check)}</p>
+                            ${summary.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(summary.check)}</p>`}
                         </li>
                     `).join('')}
                 </ol>
