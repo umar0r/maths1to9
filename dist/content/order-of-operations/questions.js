@@ -4,8 +4,9 @@
     const ROOT_ID = 'order-of-operations-questions';
     const mounted = new WeakSet();
 
+    let randomSource = Math.random;
     const r = (min, max) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+        Math.floor(randomSource() * (max - min + 1)) + min;
 
     const pick = (items) =>
         items[r(0, items.length - 1)];
@@ -1015,30 +1016,59 @@
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[char]);
 
-    function mountJourney() {
+    async function mountJourney() {
         const root = document.getElementById(ROOT_ID);
         const checkRoot = document.getElementById('order-of-operations-comparison');
         const api = window.Maths1to9Lesson;
         if (!root || !checkRoot || !api || mounted.has(root)) return;
         mounted.add(root);
+        const store = window.Maths1to9Progress;
+        let saved = await store.getLessonActivityState('order-of-operations', 'journey');
+        if (![1, 2].includes(saved?.contentVersion)) saved = {
+            contentVersion: 2, run: 0,
+            practice: null, check: null, ready: false, lessonCompleted: false,
+            exampleIndex: 0, visibleSteps: 1, examplesFinished: false
+        };
         const lesson = api.getLesson();
+        // Version 1 sessions keep their generated questions until their next
+        // explicit retry; static lesson content never belongs in progress.
+        saved.contentVersion = 2;
+        delete saved.lesson;
         const sessionLength = lesson.question_bank.session_length;
         const readyScore = lesson.question_bank.ready_score;
-        let run = 0;
-        let practice;
-        let check;
-        let ready = false;
-        let lessonCompleted = false;
+        saved.practiceHistory ??= [];
+        saved.checkHistory ??= [];
+        let { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps } = saved;
+        function save() {
+            Object.assign(saved, { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps });
+            store.saveLessonActivityState('order-of-operations', 'journey', saved);
+        }
         const badge = document.createElement('div');
         badge.className = 'lesson-header__practice-progress';
         document.querySelector('.lesson-header__inner').append(badge);
         api.gateSection('question-bank');
         api.gateSection('comparison');
 
-        function makeEntry(type) {
-            return { type, question: generators[type](), selected: null, attempts: 0,
-                firstCorrect: false, firstAnswer: null, done: false, retry: false };
+        function hydrateEntry(entry) {
+            if (entry.question) return entry;
+            let seed = entry.seed;
+            const previous = randomSource;
+            randomSource = () => {
+                seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+                return seed / 4294967296;
+            };
+            let question;
+            try { question = generators[entry.type](); }
+            finally { randomSource = previous; }
+            Object.defineProperty(entry, 'question', { value: question, enumerable: false });
+            return entry;
         }
+        function makeEntry(type) {
+            return hydrateEntry({ type, seed: Math.floor(Math.random() * 4294967296), selected: null, attempts: 0,
+                firstCorrect: false, firstAnswer: null, done: false, retry: false });
+        }
+        [practice, check, ...saved.practiceHistory, ...saved.checkHistory].filter(Boolean)
+            .forEach(session => session.entries.forEach(hydrateEntry));
         function newPractice() {
             run += 1;
             // Mix the existing bank without changing its expressions or difficulty.
@@ -1053,25 +1083,26 @@
             badge.hidden = api.getCurrentSection().id !== 'question-bank' || practice.review;
             badge.innerHTML = `<div class="practice-progress-ring" style="--practice-progress:${completed * 100 / sessionLength}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}"><span>${completed}/${sessionLength}</span></div>`;
             const checkButton = document.querySelector('[data-stage-index="3"]');
-            if (checkButton && !ready) {
-                checkButton.disabled = true;
-                checkButton.classList.add('lesson-navigation__button--locked');
+            if (checkButton) {
+                checkButton.disabled = !ready;
+                checkButton.classList.toggle('lesson-navigation__button--locked', !ready);
             }
         }
-        function reviews(entries, firstTry) {
-            return entries.map((entry, index) => ({ entry, index }))
-                .filter(({ entry }) => firstTry ? !entry.firstCorrect : !entry.question.answers[entry.selected]?.correct)
-                .map(({ entry, index }) => `<article class="practice-review-item">
-                    <p>Question ${index + 1}${firstTry && entry.question.answers[entry.selected]?.correct ? ' · Correct after a retry' : ''}</p>
-                    <h3>${escapeHtml(entry.question.prompt)}</h3>
-                    <div class="ooo-expression">${entry.question.expression}</div>
-                    <p>Your ${firstTry ? 'first ' : ''}answer: <strong>${escapeHtml(entry.question.answers[firstTry ? entry.firstAnswer : entry.selected]?.label ?? '')}</strong></p>
-                    <p>Correct answer: <strong>${escapeHtml(entry.question.correctLabel)}</strong></p>
-                    <p>${escapeHtml(entry.question.explanation)}</p>
-                </article>`).join('');
+        function reviews(entries) {
+            entries.forEach(hydrateEntry);
+            return `<ol class="retained-results">${entries.map(entry => {
+                const answer = entry.question.answers[entry.selected];
+                const status = entry.firstCorrect ? '✓' : answer?.correct ? '2nd try' : 'Incorrect';
+                return `<li><div class="retained-result"><span>${escapeHtml(entry.question.prompt)} ${entry.question.expression}</span>
+                    <span class="retained-result__answer"><strong>${escapeHtml(answer?.label || '')}</strong><span>${status}</span></span></div>
+                    ${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(entry.question.explanation)}</p>`}</li>`;
+            }).join('')}</ol>`;
         }
         function backToPractice() {
+            saved.practiceHistory.push(structuredClone(practice));
+            if (check.review) saved.checkHistory.push(structuredClone(check));
             ready = false;
+            lessonCompleted = false;
             newPractice();
             newCheck();
             renderPractice();
@@ -1079,12 +1110,17 @@
             api.goToSection('question-bank');
             updateProgress();
         }
+        function previousResults(history, title) {
+            return history.length ? `<details class="retained-history"><summary>${title}</summary>${history.map((session, index) => `<h3>Session ${index + 1}</h3>${reviews(session.entries)}`).join('')}</details>` : '';
+        }
         function renderPractice() {
+            save();
             updateProgress();
             if (practice.review) {
                 const score = practice.entries.filter(entry => entry.firstCorrect).length;
                 ready = score >= readyScore;
-                root.innerHTML = `<section class="practice-review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><h2>${ready ? 'You’re ready' : 'Keep practising'}</h2><p>${score}/${sessionLength} correct first try.${ready ? '' : ` Aim for ${readyScore}/${sessionLength} before Check.`}</p></div>${reviews(practice.entries, true)}</section>`;
+                save();
+                root.innerHTML = `<section class="practice-review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><h2>${ready ? 'You’re ready' : 'Keep practising'}</h2><p>${score}/${sessionLength} correct first try.${ready ? '' : ` Aim for ${readyScore}/${sessionLength} before Check.`}</p></div>${reviews(practice.entries)}${previousResults(saved.practiceHistory, "Earlier practice")}</section>`;
                 api.setSectionAction('question-bank', { label: ready ? 'Continue' : 'Back to practice', onClick: () => {
                     if (ready) {
                         api.completeSection('question-bank');
@@ -1141,11 +1177,13 @@
             });
             host.querySelectorAll('input').forEach(input => input.addEventListener('change', () => {
                 entry.selected = Number(input.value);
+                save();
                 setAction();
             }));
             setAction();
         }
         function renderCheck() {
+            save();
             if (!check.review) {
                 renderQuestion(checkRoot, check, true);
                 return;
@@ -1158,7 +1196,7 @@
                     <div><h2>${passed ? 'Order of operations complete' : 'Practise once more'}</h2><p>${passed ? 'Nice work — you’re ready to move on.' : 'Review your answers, then have another go.'}</p></div>
                     <p class="lesson-completion__score">${score}<small>/5</small></p>
                 </div>
-                ${passed ? '<div class="lesson-completion__recommendations"></div><a class="lesson-completion__all-lessons" href="../../">View all lessons</a><div class="ooo-next-lesson"></div>' : reviews(check.entries, false)}
+                ${reviews(check.entries)}${previousResults(saved.checkHistory, 'Earlier checks')}${passed ? '<div class="lesson-completion__recommendations"></div><a class="lesson-completion__all-lessons" href="../../">View all lessons</a><div class="ooo-next-lesson"></div>' : ''}
             </section>`;
             if (!passed) {
                 api.setSectionAction('comparison', { label: 'Back to practice', onClick: backToPractice });
@@ -1168,6 +1206,7 @@
             api.completeSection('comparison');
             if (!lessonCompleted) {
                 lessonCompleted = true;
+                save();
                 api.completeLesson();
             }
             document.querySelector('[data-stage-index="3"]')?.classList.add('ooo-stage-complete');
@@ -1184,22 +1223,30 @@
 
         // The existing worked examples, revealed one line at a time by the footer.
         const examplesRoot = document.querySelector('#lesson-section-worked-examples .worked-example-list');
-        let exampleIndex = 0;
-        let visibleSteps = 1;
         api.gateSection('worked-examples');
         function renderExample() {
+            save();
+            if (saved.examplesFinished) {
+                examplesRoot.innerHTML = lesson.worked_examples.map(example => `<article class="worked-example"><h3>${escapeHtml(example.title)}</h3><ol>${example.steps.map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol><p class="ooo-expression">${escapeHtml(example.answer)}</p></article>`).join('');
+                api.completeSection('worked-examples');
+                api.clearSectionAction('worked-examples');
+                return;
+            }
             const example = lesson.worked_examples[exampleIndex];
             const finished = visibleSteps > example.steps.length;
             examplesRoot.innerHTML = `<article class="worked-example"><h3 class="question-prompt">${escapeHtml(example.title)}</h3><ol class="worked-example__steps">${example.steps.slice(0, visibleSteps).map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol>${finished ? `<p class="ooo-expression">${escapeHtml(example.answer)}</p>` : ''}</article>`;
             api.setSectionAction('worked-examples', { label: 'Continue', onClick: () => {
                 if (!finished) visibleSteps += 1;
                 else if (exampleIndex < lesson.worked_examples.length - 1) { exampleIndex += 1; visibleSteps = 1; }
-                else { api.completeSection('worked-examples'); api.goToSection('interactive', { unlock: true }); return; }
+                else { saved.examplesFinished = true; renderExample(); api.completeSection('worked-examples'); api.goToSection('interactive', { unlock: true }); return; }
                 renderExample();
             }});
         }
-        newPractice();
-        newCheck();
+        if (!practice) newPractice();
+        if (!check) newCheck();
+        ready = practice.review && practice.entries.filter(entry => entry.firstCorrect).length >= readyScore;
+        lessonCompleted = ready && check.review && check.entries.filter(entry => entry.firstCorrect).length >= 4;
+        if (lessonCompleted) api.completeLesson();
         renderExample();
         renderPractice();
         renderCheck();

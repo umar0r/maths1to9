@@ -1135,6 +1135,10 @@
             finished: false
         };
 
+        state.history ??= [];
+        // Older progress contains only the current card. Keep that card; do
+        // not invent first-attempt evidence for answers it did not retain.
+        if (state.current) state.history[state.number - 1] ??= structuredClone(state.current);
         root.innerHTML = `
             <p data-score aria-live="polite"></p>
 
@@ -1279,6 +1283,7 @@
                     selected: optionElements.findIndex(({ input }) => input.checked),
                     feedbackText: feedback.firstChild?.textContent || ''
                 });
+                state.history[questionNumber - 1] = structuredClone(state.current);
                 save();
             }
 
@@ -1366,6 +1371,9 @@
                 clearMarks();
 
                 const isCorrect = selected.answer.correct;
+                state.current.firstCorrect ??= isCorrect;
+                state.current.attempts ??= [];
+                state.current.attempts.push({ selected: selected.input.value, correct: isCorrect });
 
                 /*
                  * The lesson engine maps the generator name to
@@ -1481,13 +1489,41 @@
             if (state.finished && restoring !== true) return;
             state.finished = true;
             state.running = false;
+            score.hidden = true;
             save();
             window.Maths1to9Lesson.clearSectionAction('question-bank');
-            list.innerHTML = '<article class="question-card"><p class="question-prompt">Practice complete</p>' +
-                `<p>You completed ${sessionLength} questions. Your progress has been saved.</p>` +
-                '<p><a class="button button--primary" href="../../">Back to all lessons</a></p></article>';
+            list.innerHTML = '<h3>Your practice results</h3><ol class="retained-results">' + state.history.filter(Boolean).map(entry => {
+                const question = entry.question;
+                const answer = question.answers[entry.selected];
+                const correct = answer?.correct;
+                const status = entry.firstCorrect === true ? '✓' : entry.firstCorrect === false && correct ? '2nd try' : correct ? 'Correct' : 'Incorrect';
+                const row = document.createElement('li');
+                const line = document.createElement('div');
+                line.className = 'retained-result';
+                const prompt = document.createElement('span');
+                prompt.textContent = question.prompt;
+                const expression = document.createElement('span');
+                expression.innerHTML = question.expression || '';
+                prompt.append(' ', expression);
+                const result = document.createElement('span');
+                result.className = 'retained-result__answer';
+                const value = document.createElement('strong');
+                value.textContent = answer?.label || '';
+                result.append(value, ' ' + status);
+                line.append(prompt, result);
+                row.append(line);
+                if (entry.firstCorrect === false) {
+                    const explanation = document.createElement('p');
+                    explanation.className = 'retained-result__explanation';
+                    explanation.textContent = question.explanation;
+                    row.append(explanation);
+                }
+                return row.outerHTML;
+            }).join('') + '</ol>' + (state.history.filter(Boolean).length < state.number ? '<p>Earlier questions were not retained by the previous version.</p>' : '');
+            completeSection('question-bank');
+            window.Maths1to9Lesson.completeLesson();
         }
-        document.addEventListener('maths1to9:lesson-complete', finishPractice);
+        document.addEventListener('maths1to9:lesson-complete', () => finishPractice());
 
         function startPractice() {
             if (window.Maths1to9Lesson.getCurrentSection().id !== 'question-bank') return;

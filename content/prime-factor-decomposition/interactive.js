@@ -167,6 +167,12 @@
             state.stage = logic.isFinished(state.tree) ? 'collect' : 'tree';
             if (state.stage === 'collect') { state.phase = 'answer'; state.message = ''; }
         }
+        state.contentVersion = 1;
+        state.answers ??= {};
+        function recordAttempt(key, answer, correct) {
+            const entry = state.answers[key] ??= { firstCorrect: correct, attempts: [] };
+            entry.attempts.push({ answer, correct });
+        }
         state.collected ??= [];
         state.builder ??= null;
         state.collectFinished ??= false;
@@ -278,6 +284,7 @@
                 } else {
                     if (!state.collected.length) return;
                     setResult(logic.markAnswer(84, state.collected.map(({ value }) => ({ base: value, power: 1 })), { indexForm: false }));
+                    recordAttempt('collect', structuredClone(state.collected), state.phase === 'correct');
                     if (state.phase === 'correct') state.collectFinished = true;
                     reportProgress();
                 }
@@ -288,6 +295,7 @@
                 if (!builder.isComplete()) return;
                 const entries = builder.getEntries();
                 setResult(logic.markAnswer(84, entries, { indexForm: true }));
+                recordAttempt('group', structuredClone(entries), state.phase === 'correct');
                 state.wrongPrime = state.phase === 'wrong'
                     ? firstWrongPrime(entries, logic.toIndexForm(logic.primeFactors(84))) : null;
                 if (state.phase === 'correct') {
@@ -305,6 +313,7 @@
             const a = initial ? 7 : Number(state.inputs[0]);
             const b = Number(state.inputs[1]);
             const result = logic.checkSplit(node.value, a, b);
+            recordAttempt(`tree:${node.id}`, [a, b], result.ok);
             if (!result.ok) {
                 state.phase = 'wrong';
                 state.message = logic.feedback(result.reason, { n: node.value });
@@ -465,7 +474,10 @@
                     });
                     if (state.groupFinished) container.querySelectorAll('input, button').forEach(element => { element.disabled = true; });
                     feedback();
-                    if (state.groupFinished) maths('\\boxed{84 = 2^2 \\times 3 \\times 7}');
+                    if (state.groupFinished) {
+                        maths('\\boxed{84 = 2^2 \\times 3 \\times 7}');
+                        article.prepend(drawTree(state.tree));
+                    }
                 }
             } else {
                 const initial = firstSplit();
@@ -521,7 +533,7 @@
         render();
     };
 
-    function mountLearn(event) {
+    async function mountLearn(event) {
         if (event.detail?.slug !== SLUG) return;
         const section = document.getElementById('lesson-section-explanation');
         if (!section || section.querySelector('.prime-learn')) return;
@@ -530,11 +542,14 @@
         const restoredComplete = api.getProgress().scoreActivities.some(activity =>
             activity.id === 'section:explanation' && activity.completed
         );
-        let screen = restoredComplete ? 3 : 0;
-        let splits = restoredComplete ? 3 : 0;
-        let collection = restoredComplete ? 2 : 0;
+        const progress = window.Maths1to9Progress;
+        let work = await progress.getLessonActivityState(SLUG, 'explanation');
+        if (work?.contentVersion !== 1) work = { contentVersion: 1, screen: restoredComplete ? 3 : 0, splits: restoredComplete ? 3 : 0, collection: restoredComplete ? 2 : 0, collectedPaths: restoredComplete ? ['root-0-0', 'root-0-1', 'root-1-0', 'root-1-1'] : [] };
+        let screen = work.screen;
+        let splits = work.splits;
+        let collection = work.collection;
         let collecting = false;
-        let collectedPaths = restoredComplete ? ['root-0-0', 'root-0-1', 'root-1-0', 'root-1-1'] : [];
+        let collectedPaths = work.collectedPaths;
         const leafPaths = ['root-0-0', 'root-0-1', 'root-1-0', 'root-1-1'];
         const primeValues = [2, 3, 2, 5];
         const root = document.createElement('article');
@@ -599,6 +614,8 @@
             addPrime();
         }
         function render(moveFocus = false) {
+            Object.assign(work, { screen, splits, collection, collectedPaths });
+            progress.saveLessonActivityState(SLUG, 'explanation', work);
             root.replaceChildren();
             const data = screens[screen];
             root.dataset.screen = String(screen + 1);
@@ -664,6 +681,7 @@
             if (moveFocus) heading.focus({ preventScroll: true });
         }
         render();
+        if (screen === 1 && collection === 0 && collectedPaths.length) collect();
     }
 
     document.addEventListener('maths1to9:lesson-rendered', mountLearn);

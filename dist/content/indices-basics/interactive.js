@@ -58,7 +58,7 @@
      * render because building is a free interaction, not a single choice.
      */
     window.Maths1to9Interactives[slug] =
-        function mountIndicesBuilder(root) {
+        async function mountIndicesBuilder(root) {
             if (!root || root.dataset.mounted) {
                 return;
             }
@@ -70,7 +70,7 @@
             const BASE = 2;
             const MAX_INDEX = 6;
 
-            const choiceSteps = [
+            const defaultChoiceSteps = [
                 {
                     id: 'squared-grid',
                     prompt:
@@ -114,7 +114,10 @@
                 }
             ];
 
-            const state = {
+            const store = window.Maths1to9Progress;
+            let state = await store.getLessonActivityState(slug, 'interactive');
+            if (state?.contentVersion !== 1) state = {
+                contentVersion: 1, choiceSteps: defaultChoiceSteps, answers: [],
                 phase: 'build',
                 buildIndex: 1,
                 buildChecked: false,
@@ -124,6 +127,17 @@
                 errorMessage: '',
                 finished: false
             };
+
+            const choiceSteps = state.choiceSteps;
+            function save() {
+                store.saveLessonActivityState(slug, 'interactive', state);
+            }
+            function recordAnswer(index, selected, correct) {
+                const answer = state.answers[index] ??= { firstCorrect: correct, attempts: [] };
+                answer.selected = selected;
+                answer.phase = correct ? 'correct' : 'wrong';
+                answer.attempts.push({ selected, correct });
+            }
 
             function currentValue(index) {
                 return BASE ** index;
@@ -212,6 +226,7 @@
 
                         chip.type = 'button';
                         chip.addEventListener('click', () => {
+                            recordAnswer(0, choice.label, Boolean(choice.correct));
                             if (choice.correct) {
                                 state.buildChecked = true;
                                 state.buildError = '';
@@ -286,7 +301,13 @@
                 if (state.finished) {
                     const card = createElement('article', 'question-card question-card--bare');
 
-                    card.append(feedback(state.successMessage));
+                    card.append(createElement('p', 'lx2-formula', `2${sup(state.buildIndex)} = ${Array(state.buildIndex).fill(BASE).join(' × ')} = ${currentValue(state.buildIndex)}`));
+                    card.append(squaredGrid());
+                    card.append(createElement('p', 'lx2-formula', '6² = 36'));
+                    card.append(createElement('p', 'lx2-formula', '4³ = 4 × 4 × 4 = 64'));
+                    const statuses = state.answers.map(answer => answer.firstCorrect ? '✓' : '2nd try');
+                    card.append(createElement('p', '', statuses.join(' · ')));
+
 
                     return card;
                 }
@@ -330,6 +351,7 @@
                     chip.type = 'button';
                     chip.disabled = state.choiceCorrect === true;
                     chip.addEventListener('click', () => {
+                        recordAnswer(state.choiceStep + 1, choice.label, Boolean(choice.correct));
                         if (choice.correct) {
                             advanceChoice();
                         } else {
@@ -350,6 +372,7 @@
             }
 
             function render() {
+                save();
                 const api = window.Maths1to9Lesson;
                 api?.setSectionAction?.('interactive', {
                     label: 'Continue', disabled: true, onClick() {}
@@ -366,6 +389,7 @@
                             state.successMessage = '';
                             if (state.choiceStep === choiceSteps.length - 1) {
                                 state.finished = true;
+                                render();
                                 completeSection('interactive');
                                 api.clearSectionAction('interactive');
                                 api.goToSection('question-bank', { unlock: true });
@@ -376,6 +400,7 @@
                         }
                     });
                 } else if (state.finished) {
+                    completeSection('interactive');
                     api?.clearSectionAction?.('interactive');
                 }
             }

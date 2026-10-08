@@ -28,6 +28,7 @@ $pageTitle = 'Equivalent and simplifying fractions';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
+    <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
 <body
@@ -70,8 +71,8 @@ $pageTitle = 'Equivalent and simplifying fractions';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./questions.js?v=16"></script>
+    <script src="./interactive.js?v=12"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=31"></script>

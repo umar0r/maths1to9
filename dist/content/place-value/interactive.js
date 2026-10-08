@@ -405,9 +405,11 @@
         });
     }
 
-    function mountSingleNumber(root) {
-        const number = root.dataset.number || '107389.4828';
-        const columns = parseJsonData(root.dataset.columns);
+    async function mountSingleNumber(root) {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState('place-value', 'interactive');
+        if (state?.contentVersion !== 1) state = { contentVersion: 1, number: root.dataset.number || '107389.4828', columns: parseJsonData(root.dataset.columns), selected: null };
+        const { number, columns } = state;
         const digits = number.replace('.', '').split('');
         const onesIndex = findOnesIndex(columns);
         if (onesIndex < 0 || digits.length !== columns.length) {
@@ -472,6 +474,8 @@
         const buttons = Array.from(root.querySelectorAll('[data-digit-index]'));
         const detail = root.querySelector('[data-digit-detail]');
         function selectDigit(index) {
+            state.selected = index;
+            store.saveLessonActivityState('place-value', 'interactive', state);
             buttons.forEach((button) => {
                 const i = Number(button.dataset.digitIndex);
                 button.setAttribute('aria-pressed', String(i === index));
@@ -491,10 +495,10 @@
                 button.addEventListener(event, () => selectDigit(index));
             });
         });
-        selectDigit(onesIndex);
+        selectDigit(state.selected ?? onesIndex);
     }
 
-    function mountProductScaling(root) {
+    async function mountProductScaling(root) {
         const asArray = (value) => (
             Array.isArray(value) ? value : []
         );
@@ -528,7 +532,35 @@
         }
 
         gateSection('product-interactive');
-        let exampleIndex = 0;
+        const store = window.Maths1to9Progress;
+        let saved = await store.getLessonActivityState('place-value', 'product-interactive');
+        if (saved?.contentVersion !== 1) saved = { contentVersion: 1, examples, columns, exampleIndex: 0, states: [], finished: false };
+        examples.splice(0, examples.length, ...saved.examples);
+        columns.splice(0, columns.length, ...saved.columns);
+        let exampleIndex = saved.exampleIndex;
+        let reviewing = false;
+        function save() {
+            if (reviewing) return;
+            saved.exampleIndex = exampleIndex;
+            store.saveLessonActivityState('place-value', 'product-interactive', saved);
+        }
+        function renderFinished() {
+            reviewing = true;
+            const charts = [];
+            for (let index = 0; index < examples.length; index += 1) {
+                exampleIndex = index;
+                renderExample();
+                const chart = document.createElement('article');
+                chart.innerHTML = root.innerHTML;
+                chart.querySelectorAll('[role="slider"]').forEach(row => { row.setAttribute('role', 'img'); row.removeAttribute('tabindex'); });
+                charts.push(chart);
+            }
+            exampleIndex = saved.exampleIndex;
+            reviewing = false;
+            root.replaceChildren(...charts);
+            window.Maths1to9Lesson.clearSectionAction('product-interactive');
+            completeSection('product-interactive');
+        }
 
         function setContinue(disabled, onClick) {
             window.Maths1to9Lesson?.setSectionAction?.('product-interactive', {
@@ -558,7 +590,7 @@
                 const configured = Number(asArray(example.target_offsets)[index]);
                 return Number.isFinite(configured) ? configured : 0;
             });
-            const state = {
+            const state = saved.states[exampleIndex] ??= {
                 offsets: example.factors.map(() => 0),
                 draggingIndex: null,
                 pointerId: null,
@@ -585,6 +617,7 @@
             }
 
             function render() {
+                save();
                 const displayedRows = example.factors.map((factor, index) => getDisplayCells(
                     factor,
                     state.offsets[index],
@@ -640,6 +673,9 @@
                 if (hasReachedTarget()) window.Maths1to9Lesson?.setSectionProgress?.('product-interactive', exampleIndex + 1, examples.length);
                 setContinue(!hasReachedTarget(), () => {
                     if (exampleIndex === examples.length - 1) {
+                        saved.finished = true;
+                        save();
+                        renderFinished();
                         window.Maths1to9Lesson?.clearSectionAction?.('product-interactive');
                         completeSection('product-interactive');
                         return;
@@ -698,10 +734,11 @@
             render();
         }
 
-        renderExample();
+        if (saved.finished) renderFinished();
+        else renderExample();
     }
 
-    function mountGuidedMethod(root) {
+    async function mountGuidedMethod(root) {
         const examples = parseJsonData(
             root.dataset.guidedMethod
         ).filter((example) => (
@@ -716,7 +753,46 @@
 
         gateSection('method');
 
-        let exampleIndex = 0;
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState('place-value', 'method');
+        if (state?.contentVersion !== 1) state = { contentVersion: 1, examples, exampleIndex: 0, answers: [], finished: false };
+        examples.splice(0, examples.length, ...state.examples);
+        let exampleIndex = state.exampleIndex;
+        let restoring = false;
+        function save() {
+            state.exampleIndex = exampleIndex;
+            store.saveLessonActivityState('place-value', 'method', state);
+        }
+        function render() {
+            const charts = [];
+            const indices = state.finished ? examples.map((example, index) => index) : [exampleIndex];
+            for (const index of indices) {
+                exampleIndex = index;
+                renderCurrent();
+                const answer = state.answers[index];
+                if (answer) {
+                    restoring = true;
+                    root.querySelector(`[data-digit-index="${answer.selected}"]`)?.click();
+                    restoring = false;
+                }
+                if (state.finished) {
+                    const chart = root.firstElementChild.cloneNode(true);
+                    chart.querySelectorAll('button').forEach(button => {
+                        const digit = document.createElement('span');
+                        digit.className = button.className;
+                        digit.textContent = button.textContent;
+                        button.replaceWith(digit);
+                    });
+                    charts.push(chart);
+                }
+            }
+            if (state.finished) {
+                root.replaceChildren(...charts);
+                window.Maths1to9Lesson.clearSectionAction('method');
+                completeSection('method');
+            }
+            save();
+        }
 
         function setContinue(disabled, onClick) {
             window.Maths1to9Lesson?.setSectionAction?.('method', {
@@ -726,7 +802,7 @@
             });
         }
 
-        function render() {
+        function renderCurrent() {
             window.Maths1to9Lesson?.setSectionProgress?.('method', exampleIndex, examples.length);
             const example = examples[exampleIndex];
             const columns = example.columns;
@@ -809,6 +885,13 @@
                         button.dataset.digitIndex
                     );
 
+                    if (!restoring) {
+                        const answer = state.answers[exampleIndex] ??= { firstCorrect: selectedIndex === correctIndex, attempts: [] };
+                        answer.selected = selectedIndex;
+                        answer.phase = selectedIndex === correctIndex ? 'correct' : 'wrong';
+                        answer.attempts.push(selectedIndex);
+                        save();
+                    }
                     if (selectedIndex !== correctIndex) {
                         button.classList.add('is-wrong');
                         feedback.textContent = example.incorrect_feedback ||
@@ -845,12 +928,8 @@
                             window.Maths1to9Lesson
                                 ?.clearSectionAction?.('method');
                             completeSection('method');
-                            root.innerHTML = `
-                                <p class="place-value-method__complete">
-                                    You can now identify a digit, name its
-                                    column and find its value.
-                                </p>
-                            `;
+                            state.finished = true;
+                            render();
                             return;
                         }
 

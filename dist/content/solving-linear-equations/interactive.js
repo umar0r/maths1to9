@@ -4,7 +4,7 @@
     window.Maths1to9Interactives ??= {};
 
     window.Maths1to9Interactives['solving-linear-equations'] =
-        function mountSolvingLinearEquationsInteractive(root) {
+        async function mountSolvingLinearEquationsInteractive(root) {
             if (!root || root.dataset.linearEquationsMounted === 'true') {
                 return;
             }
@@ -120,10 +120,18 @@
                 }
             ];
 
-            const state = {
+            const store = window.Maths1to9Progress;
+            let state = await store.getLessonActivityState('solving-linear-equations', 'interactive');
+            if (state?.contentVersion !== 1) state = {
+                contentVersion: 1, examples, answers: [],
                 exampleIndex: 0,
                 stepIndex: 0
             };
+
+            examples.splice(0, examples.length, ...state.examples);
+            function save() {
+                store.saveLessonActivityState('solving-linear-equations', 'interactive', state);
+            }
 
             function escapeHtml(value) {
                 return String(value).replace(/[&<>"']/g, character => ({
@@ -453,22 +461,19 @@
             }
 
             function renderFinished() {
-                return `
-                    <div class="linear-finished">
-                        <article class="lesson-card">
-                            <p class="lesson-card__eyebrow">Guided try complete</p>
-                            <h3>You solved all four equations</h3>
-                            <p>
-                                Each time you used the same two moves.
-                                First you subtracted the fixed amount from both sides.
-                                Then you divided both sides by the cost of each one.
-                            </p>
-                        </article>
-                    </div>
-                `;
+                return `<div class="linear-finished">${examples.map(example => `
+                    <article>
+                        ${renderContextCard(example)}
+                        <section class="linear-equation-board" aria-label="Completed equation working">
+                            <p class="linear-equation-history">${escapeHtml(equationText(example, 0))}</p>
+                            <p class="linear-equation-history">${escapeHtml(equationText(example, 4))}</p>
+                            <p class="linear-equation-history">${escapeHtml(equationText(example, 6))} ✓</p>
+                        </section>
+                    </article>`).join('')}</div>`;
             }
 
             function render() {
+                save();
                 if (state.exampleIndex >= examples.length) {
                     root.innerHTML = renderFinished();
                     window.Maths1to9Lesson
@@ -530,6 +535,13 @@
             }
 
             function advanceGuided() {
+                if (state.exampleIndex >= examples.length) return;
+                state.answers.push({
+                    exampleIndex: state.exampleIndex,
+                    stepIndex: state.stepIndex,
+                    selected: completedEquationText(currentExample(), state.stepIndex),
+                    firstCorrect: true, phase: 'correct'
+                });
                 const steps = stepData(currentExample());
 
                 if (state.stepIndex < steps.length - 1) {
@@ -602,6 +614,12 @@
                 document.head.append(style);
             }
 
+            document.addEventListener('maths1to9:lesson-complete', () => {
+                if (state.exampleIndex < examples.length) return;
+                state.lessonFinished = true;
+                save();
+            });
+            if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
             render();
         };
 })();

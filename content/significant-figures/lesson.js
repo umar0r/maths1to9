@@ -129,6 +129,8 @@
             if (!answer.value) return;
             const expected = answer.guidedStep === 0 ? question.target : question.decider;
             const correct = answer.guidedStep < 2 ? answer.value === String(expected) : matches(question, answer.value);
+            answer.history ??= [];
+            answer.history.push({ step: answer.guidedStep, value: answer.value, correct });
             answer.guidedChecked = correct;
             answer.feedback = !correct;
             answer.done = correct && answer.guidedStep === 2;
@@ -143,19 +145,44 @@
         return state.completed[index] || answer?.done || (slide.type === 'finish' && state.finished) ? 1 : 0;
     }
     function reviewHtml(type) {
-        const records = slides.map((slide,i) => ({slide,answer:state.answers[i]})).filter(r => r.slide.type===type && r.answer?.done);
+        const records = slides.map((slide, i) => ({ slide, answer: state.answers[i] }))
+            .filter(record => record.slide.type === type && record.answer?.done);
         if (!records.length) return '<p class="lesson-copy">Complete the questions to see your answers and score here.</p>';
-        const score = records.filter(r => r.answer?.firstCorrect).length;
-        return `<div class="practice-review__score is-ready"><div class="practice-progress-ring" style="--practice-progress:${score/records.length*100}%"><span>${score}<small>/${records.length}</small></span></div><div><h2 class="lesson-section__title">${score>=records.length*.8?"You're ready":'Keep building your confidence'}</h2><p>You got ${score} out of ${records.length} correct first try.</p></div></div><h3>Review your answers</h3>${records.map(({slide,answer},i) => `<div class="rounding-review ${answer?.firstCorrect?'':'retry'}"><small>${answer?.firstCorrect?'CORRECT FIRST TRY':answer?.correct?'CORRECT AFTER PRACTICE':'REVIEW THIS ONE'} · QUESTION ${i+1}</small><p><strong>${escape(slide.item.prompt)}</strong></p><p>Your ${answer?.firstCorrect?'answer':'first answer'}: <strong>${escape(answer?.firstAnswer)}</strong></p>${!answer?.firstCorrect?`<p>Correct answer: <strong>${escape(slide.item.answer)}</strong></p>`:''}<p class="lesson-copy">${escape(slide.item.explanation)}</p></div>`).join('')}`;
+        const score = records.filter(record => record.answer.firstCorrect).length;
+        const rows = records.map(({ slide, answer }) => {
+            const status = answer.firstCorrect ? '✓' : answer.correct ? '2nd try' : 'Incorrect';
+            return `<li><div class="retained-result"><span>${escape(slide.item.prompt)}</span><span class="retained-result__answer"><strong>${escape(answer.value)}</strong><span>${status}</span></span></div>${answer.firstCorrect ? '' : `<p class="retained-result__explanation">${escape(slide.item.explanation)}</p>`}</li>`;
+        }).join('');
+        return `<div class="practice-review__score is-ready"><div class="practice-progress-ring" style="--practice-progress:${score / records.length * 100}%"><span>${score}<small>/${records.length}</small></span></div><div><h2 class="lesson-section__title">${score >= records.length * .8 ? "You're ready" : 'Keep building your confidence'}</h2><p>You got ${score} out of ${records.length} correct first try.</p></div></div><ol class="retained-results">${rows}</ol>`;
     }
     function summaryHtml() {
-        return `<h2 class="lesson-section__title">Significant figures — key reminders</h2><ol class="lesson-steps">${[
+        return `${reviewHtml('check')}<h2 class="lesson-section__title">Significant figures — key reminders</h2><ol class="lesson-steps">${[
             ['Start at the first non-zero digit.','In 0.0283, the significant figures are 2, 8 and 3.'],
             ['Count along to the digit you need.','The zero in 305 sits between 3 and 5, so it counts too.'],
             ['Look at the next digit.','If it’s 4 or less, your digit stays as it is. If it’s 5 or more, round up.'],
             ['Keep the zeros you need.','5,480,217 to 2 significant figures is 5,500,000. 15.03 to 3 significant figures is 15.0.'],
             ['Check for a carry.','9,644 to 1 significant figure is 10,000. Always round from the original number.']
-        ].map(([title,text]) => `<li class="lesson-step"><h3 class="lesson-step__title">${title}</h3><p class="lesson-step__text">${text}</p></li>`).join('')}</ol>${reviewHtml('check')}`;
+        ].map(([title,text]) => `<li class="lesson-step"><h3 class="lesson-step__title">${title}</h3><p class="lesson-step__text">${text}</p></li>`).join('')}</ol>`;
+    }
+    function guidedComplete() {
+        return slides.filter(slide => slide.type === 'guided').every(slide => state.answers[slides.indexOf(slide)]?.done);
+    }
+    function completedNumberHtml(question) {
+        const digits = [...question.number].map((digit, index) => {
+            if (digit === '.') return '<span class="guided-decimal">.</span>';
+            const marked = index === question.target ? 'target' : index === question.decider ? 'decider' : '';
+            return `<div class="guided-digit ${marked}"><span>${digit}</span>${marked ? `<small>${marked === 'target' ? 'Keep' : 'Look here'}</small>` : ''}</div>`;
+        }).join('');
+        return `<h3>${escape(question.prompt)}</h3><div class="guided-number" aria-label="Digits of ${escape(question.number)}">${digits}</div><div class="interactive-equation">${escape(question.number)} ≈ ${escape(question.answer)}</div>`;
+    }
+    function completedGuidedHtml() {
+        const html = slides.map((slide, i) => {
+            if (slide.type !== 'guided') return '';
+            const answer = state.answers[i];
+            const status = answer.history ? (answer.history.some(attempt => !attempt.correct) ? '2nd try' : '✓') : '';
+            return `<article class="retained-try-example">${completedNumberHtml(slide.item)}<p>${status}</p></article>`;
+        }).join('');
+        return html;
     }
     function render(focus=false) {
         const slide = slides[state.slide], score = scores();
@@ -165,8 +192,8 @@
         });
         let body = '';
         if(slide.type==='learn') body=learnHtml(slide.item);
-        else if(slide.type==='guided') body=guidedHtml(slide);
-        else if(['practice','check'].includes(slide.type)) body=questionHtml(slide);
+        else if(slide.type==='guided') body=guidedComplete()?completedGuidedHtml():guidedHtml(slide);
+        else if(['practice','check'].includes(slide.type)) body=slides.filter(item=>item.type===slide.type).every(item=>state.answers[slides.indexOf(item)]?.done)?(slide.type==='practice'?reviewHtml('practice'):summaryHtml()):questionHtml(slide);
         else if(slide.type==='review') body=reviewHtml('practice');
         else if(slide.type==='summary') body=summaryHtml();
         else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished ? 'Lesson complete' : 'Keep learning'}</p><h2 class="lesson-section__title">${state.finished ? 'Significant figures complete ★' : 'Your significant figures journey'}</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><h3>What you've learnt</h3><p class="lesson-copy">You’ve practised where to start counting, when to round up and which zeros to keep. You’ve also seen what happens when rounding a 9 carries into the next column.</p>${note('Earn 5 points for each learning or review slide you finish and each guided step you solve. Answers earn 10 points first try, or 5 after practice feedback. Your progress is saved in this browser.')}<h3 style="margin-top:28px">More to learn</h3><div class="rounding-links"><a href="../place-value/">Place value<small>Strengthen your understanding of each digit.</small></a><a href="../rounding-and-significant-figures/">Rounding<small>Revisit whole numbers and decimal places.</small></a></div>`;
@@ -185,7 +212,11 @@
         app.querySelector('#rounding-answer')?.addEventListener('input', event => { entry().value=event.target.value; save(); updateAction(); });
         app.querySelector('#rounding-answer')?.addEventListener('keydown', event => { if(event.key==='Enter' && !app.querySelector('#rounding-action').disabled) {event.preventDefault(); act();} });
         app.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => {
-            const index=slides.findIndex(s => s.stage===Number(button.dataset.stage));
+            let index=slides.findIndex(s => s.stage===Number(button.dataset.stage));
+            const stage = Number(button.dataset.stage);
+            if ([2, 3].includes(stage) && slides.filter(slide => slide.type === (stage === 2 ? 'practice' : 'check')).every(slide => state.answers[slides.indexOf(slide)]?.done)) {
+                index = slides.findIndex(slide => slide.type === (stage === 2 ? 'review' : 'summary'));
+            }
             if(index<=state.highest) {state.slide=index; save(); render(true);}
         }));
         if(slide.item?.explore) {
@@ -213,12 +244,20 @@
     }
     function act() {
         const slide=slides[state.slide];
+        if (slide.type === 'guided' && guidedComplete()) {
+            state.completed[state.slide] = true;
+            state.slide = slides.findIndex(item => item.type === 'practice');
+            state.highest = Math.max(state.highest, state.slide);
+            save(); render(true); return;
+        }
         if (slide.type === 'guided') { actGuided(); return; }
         if(!['guided','practice','check'].includes(slide.type)||entry().done) {advance();return;}
         const answer=entry();
         if(!answer.value.trim()) return;
         const correct=matches(slide.item,answer.value);
         if(answer.attempts===0) {answer.firstCorrect=correct; answer.firstAnswer=answer.value;}
+        answer.history ??= [];
+        answer.history.push({ value: answer.value, correct });
         answer.attempts++; answer.correct=correct; answer.done=correct||slide.type==='check'; answer.feedback=!correct;
         if(slide.type!=='guided') store.recordSkillAttempt({lessonSlug:slug,skillId:slide.item.skill,questionId:`${slug}:v1:${slide.type}:${slide.number}`,correct});
         save();
@@ -238,8 +277,10 @@
                     : slide.type === 'review' ? 'practice-review' : slide.type === 'finish' ? 'complete' : 'summary';
             });
             const saved=await store.getLessonProgress(slug);
-            const candidate=saved?.roundingState;
+            let candidate=saved?.roundingState;
+            if (candidate?.contentVersion !== undefined && candidate.contentVersion !== 1) candidate = null;
             state=candidate?.version===1 && Number.isInteger(candidate.slide) && candidate.slide>=0 && candidate.slide<slides.length && Number.isInteger(candidate.highest) && candidate.highest>=candidate.slide && candidate.highest<slides.length && candidate.answers && typeof candidate.answers==='object' ? candidate : {version:1,slide:0,highest:0,answers:{},explore:67,finished:false};
+            state.contentVersion = 1;
             state.interactions ||= {};
             // Migrate earlier saves without losing earned scores.
             if (!state.completed) state.completed = Object.fromEntries(slides.map((slide, i) => [i, i < state.highest && !['guided','practice','check'].includes(slide.type)]));

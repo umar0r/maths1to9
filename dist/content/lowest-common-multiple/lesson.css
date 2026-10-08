@@ -1,0 +1,57 @@
+body[data-lesson-id='lowest-common-multiple'] #lesson-section-explanation > .lesson-section__title {display:none}
+.lcm-learn,.lcm-model{max-width:40rem;margin-inline:auto}
+.lcm-venn{position:relative;height:230px;max-width:440px;margin:1rem auto}
+.lcm-circle{position:absolute;top:10px;width:64%;height:210px;border:2px solid #54758c;border-radius:50%;background:rgb(14 165 233 / .06)}
+.lcm-circle-left{left:0}.lcm-circle-right{right:0}
+.lcm-label{position:absolute;top:20px}.lcm-label.left{left:20%}.lcm-label.right{right:20%}
+.lcm-zone{position:absolute;top:75px;width:26%;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-content:center;min-height:95px}
+.lcm-zone.left{left:5%}.lcm-zone.right{right:5%}.lcm-zone.shared{left:37%;width:26%}
+.lcm-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:10px;min-height:44px}
+.lcm-tile{display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:4px;border:2px solid #64748b;background:#f1f5f9;border-radius:10px;font:700 1.1rem Nunito,sans-serif;color:#172b3b}
+.lcm-tile.is-shared{background:#dcfce7;border-color:#15803d;animation:lcm-slide .3s ease-out}
+.lcm-tile.is-selected,.lcm-options .is-selected{outline:3px solid #0369a1;outline-offset:2px;background:#e0f2fe}
+.lcm-tile.is-largest{box-shadow:0 0 0 3px #15803d}
+.lcm-tile:focus-visible{outline:3px solid #0369a1;outline-offset:3px}
+.lcm-formula{margin-block:4px;overflow-x:auto}.lcm-options,.prime-check-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-block:16px}
+.prime-check-options .button{white-space:normal;height:auto;min-height:44px}.lcm-input{display:flex;align-items:center;gap:10px;margin-block:16px}.lcm-input input{width:100px;min-height:44px;font:inherit;border:2px solid #64748b;border-radius:8px;padding:8px}
+@keyframes lcm-slide{from{transform:translateY(40px);opacity:.2}to{transform:translateY(0);opacity:1}}
+.is-shaking{animation:lcm-shake .25s}@keyframes lcm-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media(max-width:620px){.prime-check-options{grid-template-columns:1fr}.lcm-venn{height:230px}.lcm-zone .lcm-tile{min-width:36px;min-height:40px}}
+@media(prefers-reduced-motion:reduce){.lcm-model *,.is-shaking{animation:none!important}}
+
+.lcm-duplicate-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 620px) { .lcm-duplicate-rows { grid-template-columns: 1fr; } }
+
+.lcm-tile.is-lcm-side { border-color: #0369a1; box-shadow: 0 0 0 2px #0369a1; background: #e0f2fe; }
+
+.lcm-answers { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; font-size: clamp(.85rem, 3.7vw, 1.1rem); }
+.lcm-answers p { margin-block: .25rem; }
+
+/* Each wrong choice stays crossed out for the rest of its question. */
+body[data-lesson-id='lowest-common-multiple'] [role='group'] .button.is-rejected {
+    color: #64748b;
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    box-shadow: none;
+    opacity: 1;
+}
+.lcm-wrong-mark { font-weight: 800; margin-left: .4rem; }
+.lcm-tile-bar { border: 2px solid #cbd5e1; border-radius: 12px; padding: .75rem; margin-top: 1rem; }
+.lcm-tile-bar p { margin-top: 0; overflow-x: auto; }
+.lcm-bar-tiles { display: flex; flex-wrap: wrap; gap: .5rem; }
+.lcm-tile.is-picked { opacity: .35; }
+.lcm-tile-bar .lcm-tile:disabled { opacity: 1; }
+.lcm-answer-line { font-size: clamp(.75rem, 3.2vw, 1.1rem); }
+.lcm-multiples .lcm-tile { animation: lcm-land .25s ease-out; }
+.lcm-zone .is-flashing { animation: lcm-flash .45s ease-in-out 3; }
+@keyframes lcm-land { from { transform: translateY(-12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes lcm-flash { 50% { outline: 4px solid #d97706; outline-offset: 3px; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+    .lcm-zone .is-flashing { animation: none; outline: 3px solid #d97706; outline-offset: 2px; }
+    .lcm-multiples .lcm-tile { animation: none; }
+}
+
+.lesson-revision-list { display: grid; gap: 1.5rem; padding-left: 0; list-style: none; }
+.lesson-revision-item { padding-block: 1rem; border-top: 1px solid #cbd5e1; min-width: 0; }
+.lesson-revision-item > h3 { margin-top: 0; }
+.lesson-revision-accuracy { display: block; color: #526171; font-size: .9rem; }

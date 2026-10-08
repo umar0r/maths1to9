@@ -119,6 +119,9 @@
         if (state?.kind !== 'row-explorer' || state.version !== 1) state = freshState();
         dispatch('gate');
 
+        state.contentVersion = 1;
+        state.attempts ??= [];
+
         function explored() {
             return MUST_TRY.every(rows => state.tried.includes(rows));
         }
@@ -162,6 +165,12 @@
         function render() {
             progress.saveLessonActivityState(slug, 'interactive', state);
             const oldPositions = counterCentres(root);
+            if (state.finished) {
+                root.innerHTML = `<article class="question-card question-card--bare factors-explorer">${board(state.rows)}${rainbow(pairsFound(state.tried))}<p>${question.prompt}</p><p><strong>${question.correct}</strong> ${state.firstCorrect === true ? '✓' : state.firstCorrect === false ? '2nd try' : 'Correct'}</p></article>`;
+                dispatch('complete');
+                api.clearSectionAction('interactive');
+                return;
+            }
             root.innerHTML = `<article class="question-card question-card--bare factors-explorer">${state.stage==='explore' ? renderExplore() : renderQuestion()}</article>`;
             animateCounters(root, oldPositions);
 
@@ -194,10 +203,14 @@
                             state.phase = 'answer';
                             state.selected = null;
                         } else if (state.options[state.selected] === question.correct) {
+                            state.attempts.push({ selected: state.options[state.selected], correct: true });
+                            state.firstCorrect ??= true;
                             state.phase = 'correct';
                             state.finished = true;
                             api.recordActivity({id:'factors:all-factors-24', kind:'guided'});
                         } else {
+                            state.attempts.push({ selected: state.options[state.selected], correct: false });
+                            state.firstCorrect ??= false;
                             state.phase = 'wrong';
                         }
                         render();

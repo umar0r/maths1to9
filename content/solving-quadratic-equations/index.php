@@ -29,6 +29,7 @@ $pageTitle = 'Solving quadratic equations';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
+    <link rel="stylesheet" href="./lesson.css?v=1">
 
     <!-- Lesson-specific styles -->
 
@@ -85,8 +86,8 @@ $pageTitle = 'Solving quadratic equations';
     <script src="../../vendor/gsap/gsap.min.js"></script>
 
     <!-- Lesson-specific behaviour -->
-    <script src="./questions.js?v=12"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./questions.js?v=14"></script>
+    <script src="./interactive.js?v=13"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=31"></script>

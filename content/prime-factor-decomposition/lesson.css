@@ -183,3 +183,11 @@ body[data-lesson-id='prime-factor-decomposition'] #lesson-section-explanation > 
 .prime-check-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-block: 1.25rem; }
 .prime-check-options .button { white-space: normal; height: auto; min-height: 44px; }
 @media (max-width: 620px) { .prime-check-options { grid-template-columns: 1fr; } }
+
+.retained-results { list-style: none; padding: 0; }
+.retained-results > li { padding: .8rem 0; border-bottom: 1px solid var(--color-border, #ddd); }
+.retained-result { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.retained-result__answer { display: flex; gap: .7rem; flex-shrink: 0; }
+.retained-result__explanation { margin: .4rem 0 0; font-size: .9rem; }
+.retained-try-example { margin-bottom: 2rem; }
+@media (max-width: 480px) { .retained-result { flex-wrap: wrap; } }

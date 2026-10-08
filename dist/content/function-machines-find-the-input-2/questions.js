@@ -350,27 +350,64 @@
         });
     }
 
-    function mountPractice(root) {
+    async function mountPractice(root) {
         if (!root || root.dataset.mounted === 'true') return;
 
         root.dataset.mounted = 'true';
         gateSection(SECTION_ID);
 
-        const config = parseConfig(root);
-        const target = Number(config.completion_target) || DEFAULT_TARGET;
-        const state = {
-            questionNumber: 1,
-            completed: 0,
-            problem: null,
-            steps: [],
-            stepIndex: 0,
-            selected: '',
-            correct: false,
-            wrong: false,
-            startValue: '',
-            solvedRows: [],
-            summaries: []
-        };
+        const store = window.Maths1to9Progress;
+        const slug = 'function-machines-find-the-input';
+        let state = await store.getLessonActivityState(slug, SECTION_ID);
+        if (state?.contentVersion !== 1) {
+            const config = parseConfig(root);
+            state = {
+                contentVersion: 1,
+                target: Number(config.completion_target) || DEFAULT_TARGET,
+                questionNumber: 1, completed: 0, problem: null, steps: [],
+                stepIndex: 0, selected: '', correct: false, wrong: false,
+                startValue: '', solvedRows: [], summaries: [], answers: []
+            };
+        }
+        const target = state.target;
+
+        function save() {
+            store.saveLessonActivityState(slug, SECTION_ID, state);
+        }
+
+        function advanceStep() {
+            const step = state.steps[state.stepIndex];
+            if (!state.correct || !step) return;
+            if (step.startValue) state.startValue = step.startValue;
+            if (step.row) state.solvedRows.push(step.row);
+            if (state.stepIndex === state.steps.length - 1) {
+                completeCurrentQuestion();
+                return;
+            }
+            state.stepIndex += 1;
+            state.selected = '';
+            state.correct = false;
+            state.wrong = false;
+            render();
+        }
+
+        function updateAction() {
+            let label = 'Choose an answer';
+            if (state.correct) label = 'Continue';
+            else if (state.wrong) label = 'Try again';
+            window.Maths1to9Lesson.setSectionAction(SECTION_ID, {
+                label,
+                disabled: !state.correct && !state.wrong,
+                onClick: () => {
+                    if (state.correct) advanceStep();
+                    else {
+                        state.selected = '';
+                        state.wrong = false;
+                        render();
+                    }
+                }
+            });
+        }
 
         function newQuestion() {
             state.problem = buildProblem(state.questionNumber);
@@ -381,28 +418,32 @@
             state.wrong = false;
             state.startValue = '';
             state.solvedRows = [];
+            state.answers = [];
             render();
         }
 
         function summariesHtml() {
             if (state.summaries.length === 0) return '';
             return `
-                <details class="question-history">
-                    <summary>Completed questions (${state.summaries.length})</summary>
-                    <div class="worked-example-list">
-                        ${state.summaries.slice().reverse().map((summary) => `
-                            <article class="worked-example">
-                                <p class="worked-example__number">${escapeHtml(summary.label)}</p>
-                                <h3 class="worked-example__title">Input = ${escapeHtml(summary.input)}</h3>
-                                <p>${escapeHtml(summary.check)}</p>
-                            </article>
-                        `).join('')}
-                    </div>
-                </details>
+                <ol class="retained-results">
+                    ${state.summaries.map(summary => `
+                        <li>
+                            <div class="retained-result">
+                                <span>Find the input</span>
+                                <span class="retained-result__answer"><strong>${escapeHtml(summary.input)}</strong>
+                                <span aria-label="${summary.firstCorrect ? 'Right first time' : 'Corrected'}">${summary.firstCorrect ? '✓' : '2nd try'}</span></span>
+                            </div>
+                            ${machineGraphic(summary.problem, summary.solvedRows)}
+                            ${summary.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(summary.check)}</p>`}
+                        </li>
+                    `).join('')}
+                </ol>
             `;
         }
 
         function finishPractice() {
+            save();
+            window.Maths1to9Lesson.clearSectionAction(SECTION_ID);
             root.innerHTML = `
                 <article class="worked-example">
                     <p class="worked-example__number">Practice complete</p>
@@ -423,7 +464,12 @@
             state.summaries.push({
                 label: `Question ${state.questionNumber}`,
                 input: formatNumber(state.problem.input),
-                check: `Check: ${check}.`
+                check: `Check: ${check}.`,
+                problem: state.problem,
+                steps: state.steps,
+                answers: state.answers,
+                solvedRows: state.solvedRows,
+                firstCorrect: state.answers.every(answer => answer.firstCorrect)
             });
             state.completed += 1;
             state.questionNumber += 1;
@@ -436,6 +482,7 @@
         }
 
         function render() {
+            save();
             if (state.completed >= target) {
                 finishPractice();
                 return;
@@ -448,6 +495,7 @@
                     class="button${state.selected === option && state.correct ? ' button--primary' : ''}"
                     type="button"
                     data-answer="${escapeHtml(option)}"
+                    aria-pressed="${state.selected === option}"
                     ${state.correct ? 'disabled' : ''}
                 >
                     ${escapeHtml(option)}
@@ -486,6 +534,7 @@
                 });
             }
 
+            updateAction();
             root.querySelectorAll('[data-answer]').forEach((button) => {
                 button.addEventListener('click', () => {
                     if (state.correct) return;
@@ -493,6 +542,12 @@
                     state.selected = selected;
                     state.correct = selected === step.answer;
                     state.wrong = !state.correct;
+                    const answer = state.answers[state.stepIndex] ??= {
+                        selected: '', firstCorrect: state.correct, attempts: []
+                    };
+                    answer.selected = selected;
+                    answer.phase = state.correct ? 'correct' : 'wrong';
+                    answer.attempts.push({ selected, correct: state.correct });
 
                     window.Maths1to9Lesson?.recordAssessment?.({
                         questionType: step.assessmentType,
@@ -503,33 +558,20 @@
                     });
 
                     render();
-
-                    if (!state.correct) {
-                        return;
-                    }
-
-                    window.setTimeout(() => {
-                        if (step.startValue) state.startValue = step.startValue;
-                        if (step.row) state.solvedRows.push(step.row);
-
-                        const lastStep = state.stepIndex === state.steps.length - 1;
-                        if (lastStep) {
-                            completeCurrentQuestion();
-                            return;
-                        }
-
-                        state.stepIndex += 1;
-                        state.selected = '';
-                        state.correct = false;
-                        state.wrong = false;
-                        render();
-                    }, 700);
                 });
             });
 
         }
 
-        newQuestion();
+        document.addEventListener('maths1to9:lesson-complete', () => {
+            if (state.completed < target) return;
+            state.lessonFinished = true;
+            save();
+        });
+
+        if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
+        if (state.problem) render();
+        else newQuestion();
     }
 
     function mountAll() {

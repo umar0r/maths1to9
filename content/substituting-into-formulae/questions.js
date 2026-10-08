@@ -634,7 +634,7 @@
         divisionQuestion
     ];
 
-    function mountPractice(root) {
+    async function mountPractice(root) {
         if (!root || root.dataset.mounted) {
             return;
         }
@@ -643,7 +643,10 @@
 
         gateSection('question-bank');
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(slug, 'question-bank');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, firstCorrect: null, attempts: [],
             questionIndex: 0,
             question: null,
             questionId: '',
@@ -657,7 +660,25 @@
             history: []
         };
 
+        function save() {
+            store.saveLessonActivityState(slug, 'question-bank', state);
+        }
+
+        function renderSummary() {
+            save();
+            const rows = state.history.map(entry => {
+                const question = entry.question;
+                return `<li><div class="retained-result"><span>${escapeHtml([question.prompt, question.formula, question.context].filter(Boolean).join(' '))}</span><span class="retained-result__answer"><strong>${escapeHtml(entry.answer)}</strong><span>${entry.firstCorrect ? '✓' : '2nd try'}</span></span></div>${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(question.explanation)}</p>`}</li>`;
+            }).join('');
+            root.innerHTML = `<h3>Your practice results</h3><ol class="retained-results">${rows}</ol>`;
+            completeSection('question-bank');
+            window.Maths1to9Lesson.clearSectionAction('question-bank');
+        }
+
         function newQuestion() {
+            if (state.completed) return;
+            state.firstCorrect = null;
+            state.attempts = [];
             const generator =
                 state.questionIndex <
                 generators.length
@@ -1054,6 +1075,11 @@
         }
 
         function render() {
+            save();
+            if (state.completed) {
+                renderSummary();
+                return;
+            }
             const action =
                 actionConfig();
 
@@ -1277,6 +1303,9 @@
                         'check-replace'
                     ) {
                         const correct = replacementCorrect();
+                        if (state.firstCorrect === null) state.firstCorrect = correct;
+                        if (!correct) state.firstCorrect = false;
+                        state.attempts.push({ phase: 'replace', placements: [...state.placements], correct });
 
                         window.Maths1to9Lesson?.recordAssessment?.({
                             questionType: 'replace-values',
@@ -1345,10 +1374,10 @@
                         action ===
                         'check-answer'
                     ) {
-                        if (
-                            state.selectedAnswer ===
-                            state.question.answer
-                        ) {
+                        const correct = state.selectedAnswer === state.question.answer;
+                        if (!correct) state.firstCorrect = false;
+                        state.attempts.push({ phase: 'calculate', selected: state.selectedAnswer, correct });
+                        if (correct) {
                             state.phase =
                                 'complete';
 
@@ -1359,6 +1388,10 @@
                             state.correctCount += 1;
 
                             state.history.push({
+                                question: state.question,
+                                placements: [...state.placements],
+                                attempts: state.attempts,
+                                firstCorrect: state.firstCorrect,
                                 label:
                                     state.question.label,
                                 formula:
@@ -1418,7 +1451,14 @@
             );
         }
 
-        newQuestion();
+        document.addEventListener('maths1to9:lesson-complete', () => {
+            if (!state.completed) return;
+            state.lessonFinished = true;
+            save();
+        });
+        if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
+        if (state.question || state.completed) render();
+        else newQuestion();
     }
 
     function mountAll() {

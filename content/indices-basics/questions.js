@@ -256,7 +256,17 @@
         'apply-power': applyPowerQuestion
     };
 
-    function mountPractice(root) {
+    function resultsHtml(history) {
+        return `<ol class="retained-results">${history.map(entry => {
+            const correct = entry.selected === entry.question.answer;
+            const status = entry.firstCorrect ? '✓' : correct ? '2nd try' : 'Incorrect';
+            return `<li><div class="retained-result"><span>${escapeHtml(entry.question.prompt)}</span>
+                <span class="retained-result__answer"><strong>${escapeHtml(entry.selected)}</strong><span>${status}</span></span></div>
+                ${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(entry.question.explanation)}</p>`}</li>`;
+        }).join('')}</ol>`;
+    }
+
+    async function mountPractice(root) {
         if (!root || root.dataset.mounted) {
             return;
         }
@@ -265,7 +275,10 @@
 
         gateSection('question-bank');
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(slug, 'question-bank');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, history: [], firstCorrect: null,
             questionIndex: 0,
             question: null,
             questionId: '',
@@ -345,13 +358,20 @@
             }
 
             return {
-                label: 'Next question',
+                label: state.selectedAnswer === state.question.answer ? 'Next question' : 'Try again',
                 disabled: false,
                 action: 'next'
             };
         }
 
         function render() {
+            store.saveLessonActivityState(slug, 'question-bank', state);
+            if (state.completed) {
+                root.innerHTML = '<h3>Your practice results</h3>' + resultsHtml(state.history);
+                completeSection('question-bank');
+                window.Maths1to9Lesson.clearSectionAction('question-bank');
+                return;
+            }
             root.innerHTML = `
                 <article class="question-card question-card--bare">
                     <p class="question-number">
@@ -422,6 +442,12 @@
                         correct
                     });
 
+                    if (state.firstCorrect === null) state.firstCorrect = correct;
+                    const index = state.questionIndex - 1;
+                    const saved = state.history[index] ??= { question: state.question, attempts: [] };
+                    saved.selected = state.selectedAnswer;
+                    saved.firstCorrect = state.firstCorrect;
+                    saved.attempts.push({ selected: state.selectedAnswer, correct });
                     state.phase = 'feedback';
                     state.feedback = state.question.explanation;
 
@@ -439,12 +465,20 @@
                 }
 
                 if (action === 'next') {
+                    if (state.selectedAnswer !== state.question.answer) {
+                        state.selectedAnswer = '';
+                        state.phase = 'answer';
+                        state.feedback = '';
+                        render();
+                        return;
+                    }
                     newQuestion();
                 }
             });
         }
 
-        newQuestion();
+        if (state.question) render();
+        else newQuestion();
     }
 
     /*
@@ -453,7 +487,7 @@
      * once each in order. It completes after the last one, whatever
      * the result — like a real exit ticket, not a mastery gate.
      */
-    function mountComparison(root) {
+    async function mountComparison(root) {
         if (!root || root.dataset.mounted) {
             return;
         }
@@ -472,7 +506,10 @@
 
         types = types.filter((type) => generatorsByType[type]);
 
-        const state = {
+        const store = window.Maths1to9Progress;
+        let state = await store.getLessonActivityState(slug, 'comparison');
+        if (state?.contentVersion !== 1) state = {
+            contentVersion: 1, history: [], firstCorrect: null, types,
             index: 0,
             question: types.length > 0 ? generatorsByType[types[0]]() : null,
             selectedAnswer: '',
@@ -482,12 +519,15 @@
             finished: false
         };
 
+        types = state.types;
+
         function nextQuestion() {
             state.index += 1;
             state.question = generatorsByType[types[state.index]]();
             state.selectedAnswer = '';
             state.phase = 'answer';
             state.feedback = '';
+            state.firstCorrect = null;
 
             render();
         }
@@ -537,6 +577,7 @@
         }
 
         function render() {
+            store.saveLessonActivityState(slug, 'comparison', state);
             if (types.length === 0) {
                 root.innerHTML = '';
                 completeSection('comparison');
@@ -546,6 +587,7 @@
             if (state.finished) {
                 root.innerHTML = `
                     <article class="question-card question-card--bare">
+                        ${resultsHtml(state.history)}
                         <p class="lesson-eyebrow">Check complete</p>
                         <h3 class="question-prompt">
                             ${state.correctCount} out of ${types.length} correct
@@ -557,6 +599,7 @@
                     </article>
                 `;
 
+                completeSection('comparison');
                 window.Maths1to9Lesson?.clearSectionAction?.('comparison');
 
                 return;
@@ -620,6 +663,12 @@
                         correct
                     });
 
+                    if (state.firstCorrect === null) state.firstCorrect = correct;
+                    const index = state.index;
+                    const saved = state.history[index] ??= { question: state.question, attempts: [] };
+                    saved.selected = state.selectedAnswer;
+                    saved.firstCorrect = state.firstCorrect;
+                    saved.attempts.push({ selected: state.selectedAnswer, correct });
                     state.phase = 'feedback';
                     state.feedback = state.question.explanation;
 
@@ -643,6 +692,12 @@
             });
         }
 
+        document.addEventListener('maths1to9:lesson-complete', () => {
+            if (!state.finished) return;
+            state.lessonFinished = true;
+            store.saveLessonActivityState(slug, 'comparison', state);
+        });
+        if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
         render();
     }
 

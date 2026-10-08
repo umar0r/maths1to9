@@ -4,8 +4,8 @@
     window.Maths1to9Interactives ??= {};
 
     window.Maths1to9Interactives['order-of-operations'] =
-        function mountOrderOfOperationsInteractive(root) {
-            if (!root) {
+        async function mountOrderOfOperationsInteractive(root) {
+            if (!root || root.dataset.mounted) {
                 return;
             }
 
@@ -22,7 +22,8 @@
      * Division/multiplication and addition/subtraction are
      * completed from left to right.
      */
-    const example = {
+    root.dataset.mounted = 'true';
+    const defaultExample = {
         original: '18 ÷ (3 + 3) + 2³ × 4 − 5',
         answer: '30'
     };
@@ -61,7 +62,7 @@
      * Everything else is plain text, so the student physically
      * cannot select an operation out of order.
      */
-    const steps = [
+    const defaultSteps = [
         {
             stage: 'brackets',
 
@@ -294,7 +295,10 @@
         }
     ];
 
-    const state = {
+    const store = window.Maths1to9Progress;
+    let state = await store.getLessonActivityState('order-of-operations', 'interactive');
+    if (state?.contentVersion !== 1) state = {
+        contentVersion: 1, steps: defaultSteps, example: defaultExample, answers: [],
         stepIndex: 0,
 
         /*
@@ -315,6 +319,9 @@
         feedback: '',
         feedbackType: ''
     };
+
+    const steps = state.steps;
+    const example = state.example;
 
     function escapeHtml(value) {
         return String(value).replace(
@@ -619,6 +626,7 @@ function renderCurrentExpression() {
     }
 
     function render() {
+        store.saveLessonActivityState('order-of-operations', 'interactive', state);
         const step = getCurrentStep();
         root.innerHTML = `
             <div class="order-interactive">
@@ -663,6 +671,11 @@ function renderCurrentExpression() {
         }
 
         const step = getCurrentStep();
+        const correct = String(answer) === step.answer;
+        const saved = state.answers[state.stepIndex] ??= { firstCorrect: correct, attempts: [] };
+        saved.selected = String(answer);
+        saved.phase = correct ? 'correct' : 'wrong';
+        saved.attempts.push({ selected: String(answer), correct });
 
         if (String(answer) !== step.answer) {
             state.feedbackType = 'incorrect';

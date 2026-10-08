@@ -1,0 +1,47 @@
+.retained-results {
+    list-style: none;
+    counter-reset: result;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.retained-results > li {
+    counter-increment: result;
+    min-width: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.retained-result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+}
+
+.retained-result::before {
+    content: counter(result) ".";
+    color: var(--text-muted);
+}
+
+.retained-result > :first-child {
+    flex: 1 1 160px;
+}
+
+.retained-result__answer {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.retained-result__answer > :last-child {
+    white-space: nowrap;
+}
+
+.retained-result__explanation {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+}

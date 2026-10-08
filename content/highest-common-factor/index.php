@@ -35,7 +35,7 @@ $pageTitle = 'Highest common factor';
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
@@ -82,7 +82,7 @@ $pageTitle = 'Highest common factor';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=2"></script>
+    <script src="./interactive.js?v=5"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=31"></script>

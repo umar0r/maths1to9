@@ -42,6 +42,10 @@ User instructions take precedence. Add future agreed requirements here.
   activities earn 5 once. Record every assessed attempt with stable IDs.
 - Preserve first-attempt accuracy, score, position and completion on reload.
   Repeated clicks, revisits and reloads must not award duplicate points.
+- Keep the pupil's work. Save every answer (what they chose or typed, right
+  first time, phase) so a reload returns to the same question in the same
+  state. A finished section shows the completed work read-only, never an empty
+  "complete" card. See `docs/retain-completed-work.md`.
 - Report assessed skills through the shared progress API.
 
 ## Delivery and verification
