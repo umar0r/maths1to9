@@ -1030,6 +1030,9 @@
         };
         const lesson = saved.lesson;
         const sessionLength = lesson.question_bank.session_length;
+        const readyScore = lesson.question_bank.ready_score;
+        saved.practiceHistory ??= [];
+        saved.checkHistory ??= [];
         let { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps } = saved;
         function save() {
             Object.assign(saved, { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps });
@@ -1059,9 +1062,9 @@
             badge.hidden = api.getCurrentSection().id !== 'question-bank' || practice.review;
             badge.innerHTML = `<div class="practice-progress-ring" style="--practice-progress:${completed * 100 / sessionLength}%" role="progressbar" aria-label="${completed} of ${sessionLength} questions complete" aria-valuemin="0" aria-valuemax="${sessionLength}" aria-valuenow="${completed}"><span>${completed}/${sessionLength}</span></div>`;
             const checkButton = document.querySelector('[data-stage-index="3"]');
-            if (checkButton && !ready) {
-                checkButton.disabled = true;
-                checkButton.classList.add('lesson-navigation__button--locked');
+            if (checkButton) {
+                checkButton.disabled = !ready;
+                checkButton.classList.toggle('lesson-navigation__button--locked', !ready);
             }
         }
         function reviews(entries) {
@@ -1073,16 +1076,35 @@
                     ${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(entry.question.explanation)}</p>`}</li>`;
             }).join('')}</ol>`;
         }
+        function backToPractice() {
+            saved.practiceHistory.push(structuredClone(practice));
+            if (check.review) saved.checkHistory.push(structuredClone(check));
+            ready = false;
+            lessonCompleted = false;
+            newPractice();
+            newCheck();
+            renderPractice();
+            renderCheck();
+            api.goToSection('question-bank');
+            updateProgress();
+        }
+        function previousResults(history, title) {
+            return history.length ? `<details class="retained-history"><summary>${title}</summary>${history.map((session, index) => `<h3>Session ${index + 1}</h3>${reviews(session.entries)}`).join('')}</details>` : '';
+        }
         function renderPractice() {
             save();
             updateProgress();
             if (practice.review) {
                 const score = practice.entries.filter(entry => entry.firstCorrect).length;
-                ready = true;
+                ready = score >= readyScore;
                 save();
-                root.innerHTML = `<section class="practice-review"><h3>Your practice results</h3>${reviews(practice.entries)}<p>${score}/${sessionLength} correct first try.</p></section>`;
-                api.completeSection('question-bank');
-                api.clearSectionAction('question-bank');
+                root.innerHTML = `<section class="practice-review"><div class="practice-review__score ${ready ? 'is-ready' : ''}"><h2>${ready ? 'You’re ready' : 'Keep practising'}</h2><p>${score}/${sessionLength} correct first try.${ready ? '' : ` Aim for ${readyScore}/${sessionLength} before Check.`}</p></div>${reviews(practice.entries)}${previousResults(saved.practiceHistory, "Earlier practice")}</section>`;
+                api.setSectionAction('question-bank', { label: ready ? 'Continue' : 'Back to practice', onClick: () => {
+                    if (ready) {
+                        api.completeSection('question-bank');
+                        api.goToSection('comparison', { unlock: true });
+                    } else backToPractice();
+                }});
                 updateProgress();
                 return;
             }
@@ -1145,8 +1167,19 @@
                 return;
             }
             const score = check.entries.filter(entry => entry.firstCorrect).length;
-            checkRoot.innerHTML = `<section class="lesson-completion">${reviews(check.entries)}
-                <h3>Check complete</h3><p>${score}/${check.entries.length} correct first try.</p></section>`;
+            const passed = score >= 4;
+            checkRoot.innerHTML = `<section class="lesson-completion">
+                <div class="lesson-completion__result ${passed ? 'lesson-completion__result--success' : ''}">
+                    ${passed ? '<span class="lesson-completion__celebration" aria-hidden="true">★</span>' : ''}
+                    <div><h2>${passed ? 'Order of operations complete' : 'Practise once more'}</h2><p>${passed ? 'Nice work — you’re ready to move on.' : 'Review your answers, then have another go.'}</p></div>
+                    <p class="lesson-completion__score">${score}<small>/5</small></p>
+                </div>
+                ${reviews(check.entries)}${previousResults(saved.checkHistory, 'Earlier checks')}${passed ? '<div class="lesson-completion__recommendations"></div><a class="lesson-completion__all-lessons" href="../../">View all lessons</a><div class="ooo-next-lesson"></div>' : ''}
+            </section>`;
+            if (!passed) {
+                api.setSectionAction('comparison', { label: 'Back to practice', onClick: backToPractice });
+                return;
+            }
             api.clearSectionAction('comparison');
             api.completeSection('comparison');
             if (!lessonCompleted) {
@@ -1154,6 +1187,16 @@
                 save();
                 api.completeLesson();
             }
+            document.querySelector('[data-stage-index="3"]')?.classList.add('ooo-stage-complete');
+            window.Maths1to9Recommendations.getForLesson('order-of-operations').then(lessons => {
+                const container = checkRoot.querySelector('.lesson-completion__recommendations');
+                if (!container) return;
+                container.innerHTML = lessons.map((item, index) => `${index === 0 ? '<h3>Up next</h3>' : index === 1 ? '<h3>More lessons to try</h3>' : ''}<a class="lesson-recommendation-card" href="${escapeHtml(item.url)}"><span class="lesson-recommendation-card__title">${escapeHtml(item.title)}</span><span>${escapeHtml(item.subtitle || '')}</span></a>`).join('');
+                if (lessons.length) checkRoot.querySelector('.ooo-next-lesson').innerHTML = `<a class="button button--primary" href="${escapeHtml(lessons[0].url)}">Start next lesson</a>`;
+            }).catch(() => {
+                const container = checkRoot.querySelector('.lesson-completion__recommendations');
+                if (container) container.textContent = 'Explore all lessons to choose what to learn next.';
+            });
         }
 
         // The existing worked examples, revealed one line at a time by the footer.
@@ -1179,6 +1222,8 @@
         }
         if (!practice) newPractice();
         if (!check) newCheck();
+        ready = practice.review && practice.entries.filter(entry => entry.firstCorrect).length >= readyScore;
+        lessonCompleted = ready && check.review && check.entries.filter(entry => entry.firstCorrect).length >= 4;
         if (lessonCompleted) api.completeLesson();
         renderExample();
         renderPractice();
