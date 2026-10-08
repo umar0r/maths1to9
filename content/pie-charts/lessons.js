@@ -225,7 +225,6 @@
                 state.answerChecked = true;
                 saveProgress();
                 render();
-
             });
         }
 
@@ -688,7 +687,7 @@
         ];
 
         if (state.answerChecked) {
-            return `<p>2 out of 4: <strong>One half</strong> ${state.attempts?.length > 1 ? '2nd try' : '✓'}</p>${state.attempts?.length > 1 ? '<p>2 out of 4 is one half, so half of the circle is red.</p>' : ''}`;
+            return `<p>2 out of 4: <strong>One half</strong> ${state.attempts ? (state.attempts.length > 1 ? '2nd try' : '✓') : ''}</p>${state.attempts?.length > 1 ? '<p>2 out of 4 is one half, so half of the circle is red.</p>' : ''}`;
         }
         return `
             <div style="max-width: 600px; margin: 12px auto 0;">
