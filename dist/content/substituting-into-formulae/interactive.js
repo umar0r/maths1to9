@@ -47,7 +47,7 @@
      * - A wrong decision stays on the step and explains the error.
      */
     window.Maths1to9Interactives[slug] =
-        function mountSubstitutionWalkthrough(root) {
+        async function mountSubstitutionWalkthrough(root) {
             if (!root || root.dataset.mounted) {
                 return;
             }
@@ -166,13 +166,27 @@
                 }
             ];
 
-            const state = {
+            const store = window.Maths1to9Progress;
+            let state = await store.getLessonActivityState(slug, 'interactive');
+            if (state?.contentVersion !== 1) state = {
+                contentVersion: 1, steps, answers: [],
                 step: 0,
                 successMessage: '',
                 errorMessage: '',
                 tileSelected: false,
                 finished: false
             };
+
+            steps.splice(0, steps.length, ...state.steps);
+            function save() {
+                store.saveLessonActivityState(slug, 'interactive', state);
+            }
+            function recordAnswer(selected, correct) {
+                const answer = state.answers[state.step] ??= { firstCorrect: correct, attempts: [] };
+                answer.selected = selected;
+                answer.phase = correct ? 'correct' : 'wrong';
+                answer.attempts.push({ selected, correct });
+            }
 
             function currentStep() {
                 return steps[state.step];
@@ -184,7 +198,8 @@
                     : currentStep().methodIndex;
             }
 
-            function advance() {
+            function advance(selected = '4') {
+                recordAnswer(selected, true);
                 state.successMessage = currentStep().success;
                 state.errorMessage = '';
                 state.tileSelected = false;
@@ -199,7 +214,8 @@
                 render();
             }
 
-            function fail(message) {
+            function fail(message, selected) {
+                recordAnswer(selected, false);
                 state.errorMessage = message;
                 state.successMessage = '';
                 render();
@@ -311,9 +327,9 @@
 
                     chip.addEventListener('click', () => {
                         if (choice.correct) {
-                            advance();
+                            advance(choice.label);
                         } else {
-                            fail(choice.feedback);
+                            fail(choice.feedback, choice.label);
                         }
                     });
 
@@ -384,11 +400,13 @@
             }
 
             function render() {
+                save();
                 root.replaceChildren();
 
                 root.append(methodTrail(), workingSoFar());
 
                 if (state.finished) {
+                    completeSection('interactive');
                     root.append(feedback(state.successMessage));
                     return;
                 }

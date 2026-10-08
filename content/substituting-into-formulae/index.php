@@ -29,6 +29,7 @@ $pageTitle = 'Substituting into formulae';
     >
 
     <link rel="stylesheet" href="../../assets/css/app.css?v=30">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
@@ -68,8 +69,8 @@ $pageTitle = 'Substituting into formulae';
     </noscript>
 
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="./questions.js?v=11"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./questions.js?v=12"></script>
+    <script src="./interactive.js?v=12"></script>
     <script src="../../assets/js/lesson-engine.js?v=31"></script>
 </body>
 </html>
