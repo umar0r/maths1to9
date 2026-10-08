@@ -25,12 +25,19 @@ reference.
      as "Your answer" and "Correct answer"; after a correction they're the
      same. Show the explanation only for corrected questions.
    - Check: the same compact rows, then the summary.
-   Continue stays the only button. Keep it short: a finished section is for a
-   quick look back, not a wall of text.
-4. **Revisiting never changes the score.** No points are awarded again and no
-   new Practice session is generated for a finished section. Only the existing
-   "Start over" resets a lesson.
-5. **Content changes don't break saved work.** Keep a `contentVersion` in the
+   Keep the lesson's existing end-of-section controls (see rule 4). Keep it
+   short: a finished section is for a quick look back, not a wall of text.
+4. **Keep each lesson's own end-of-section flow.** Retention must not remove
+   what a lesson does when a section ends: a "ready" score, "Keep practising"
+   / "Practise once more", "Back to practice", the end-of-lesson completion
+   screen, next-lesson recommendations and the All lessons link. When the
+   pupil chooses to practise again, start a new session and keep the earlier
+   session's results; only a revisit on its own must not start one.
+5. **Revisiting never changes the score.** No points are awarded again simply by
+   revisiting saved work, and a revisit never generates a new Practice session.
+   An explicit practise-again action starts a new session and retains earlier
+   results; only the existing "Start over" resets the whole lesson.
+6. **Content changes don't break saved work.** Keep a `contentVersion` in the
    saved state, as `prime-factor-decomposition` does. When content changes,
    either upgrade the saved state or start that section again; never show a
    saved answer against a different question.
