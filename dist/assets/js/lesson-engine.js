@@ -3,6 +3,40 @@
  */
 (() => {
     'use strict';
+    function escapeHtml(value) {
+        const entities = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return String(value ?? '').replace(/[&<>"']/g, character => entities[character]);
+    }
+
+    function shuffle(array, random = Math.random) {
+        const result = [...array];
+        for (let index = result.length - 1; index > 0; index--) {
+            const other = randomInt(0, index, random);
+            [result[index], result[other]] = [result[other], result[index]];
+        }
+        return result;
+    }
+
+    function seededRandom(seed) {
+        return () => {
+            seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+            return seed / 4294967296;
+        };
+    }
+
+    function randomInt(min, max, random = Math.random) {
+        if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min > max) {
+            throw new RangeError('randomInt requires ordered integer bounds.');
+        }
+        return min + Math.floor(random() * (max - min + 1));
+    }
+
     function createRouter() {
         const routes = new Map();
         let started = false;
@@ -108,7 +142,16 @@
             export() { return [...activities.values()].map(item => ({...item})); }
         };
     }
-    window.Maths1to9LessonEngine = { createRouter, updateStageProgress, calculateScore, createScoreTracker };
+    window.Maths1to9LessonEngine = {
+        createRouter,
+        updateStageProgress,
+        calculateScore,
+        createScoreTracker,
+        escapeHtml,
+        shuffle,
+        seededRandom,
+        randomInt
+    };
 })();
 
 (() => {
