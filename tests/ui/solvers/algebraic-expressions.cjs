@@ -26,7 +26,19 @@ function story(prompt) {
 }
 
 module.exports = async function solve(page) {
-    if (await section(page) !== 'question-bank') return false;
+    const where = await section(page);
+    if (where === 'interactive') {
+        const container = page.locator('[data-lesson-section="interactive"]');
+        const prompt = await container.locator('.question-prompt').innerText();
+        let match, expression;
+        if ((match = prompt.match(/has ([a-z]) \w+\. What expression do you start with/))) expression = match[1];
+        else if ((match = prompt.match(/has (twice|\w+ times) as many.*What does ([a-z]) become/))) expression = `${times(match[1].split(' ')[0])}${match[2]}`;
+        else if ((match = prompt.match(/has (\d+) more.*What does (\d*[a-z]) become/))) expression = `${match[2]} + ${match[1]}`;
+        else return false; // Completed expression: let the main button advance.
+        await container.getByRole('button', {name:expression, exact:true}).click();
+        return true;
+    }
+    if (where !== 'question-bank') return false;
     const main = page.locator('.lesson-controls button:visible').first();
     if (await main.isEnabled().catch(() => false)) return false;
     const prompt = await page.locator('main .question-prompt:visible, main legend:visible, main h3:visible').first().innerText().catch(() => '');

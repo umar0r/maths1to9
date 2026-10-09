@@ -34,10 +34,10 @@ for (const lesson of ['algebraic-expressions', 'fractions-introduction', 'simpli
             expect(answers.every(a=>a.completed && a.correct)).toBe(true);
             expect(answers.filter(a=>a.firstCorrect)).toHaveLength(retry ? 9 : 10);
             await main.click();
-            await expect(page.getByRole('link', {name:'Back to all lessons', exact:true})).toBeVisible();
+            await expect(page.locator(MAIN_ACTION).filter({hasText:/^All lessons$/})).toBeVisible();
             expect(await page.evaluate(() => window.Maths1to9Lesson.getProgress().finished)).toBe(true);
             expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().answerPoints)).toBe(retry ? 95 : 100);
-            await page.getByRole('link', {name:'Back to all lessons', exact:true}).click();
+            await page.locator(MAIN_ACTION).filter({hasText:/^All lessons$/}).click();
             await expect(page).not.toHaveURL(/\/content\//);
             await page.goto(`content/${lesson}/#question-bank`, {waitUntil:'networkidle'});
             expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints)).toBe(maximum);
@@ -47,18 +47,20 @@ for (const lesson of ['algebraic-expressions', 'fractions-introduction', 'simpli
 }
 
 for (const lesson of ['fractions-introduction', 'simplifying-fractions']) {
-    test(`${lesson}: stopping and restarting does not add score slots`, async ({page}) => {
+    test(`${lesson}: leaving and returning does not add score slots`, async ({page}) => {
         const solve = require(`./solvers/${lesson}.cjs`);
         await page.goto(`content/${lesson}/#question-bank`, {waitUntil:'networkidle'});
         const maximum = await page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints);
         for (let run = 0; run < 2; run++) {
-            await page.locator('[data-start]').click();
+            if (run > 0) await page.goto(`content/${lesson}/#question-bank`, {waitUntil:'networkidle'});
             await solve(page, {});
             await page.locator(`${MAIN_ACTION}:visible`).click();
             await expect(page.locator(`${MAIN_ACTION}:visible`)).toHaveText('Next question');
             expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints)).toBe(maximum);
-            expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().answered)).toBe(1);
-            await page.locator('[data-stop]').click();
+            expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().answered)).toBe(run + 1);
+            await page.locator(`${MAIN_ACTION}:visible`).click();
+            await page.locator('.site-header__back').click();
+            await expect(page).not.toHaveURL(/\/content\//);
         }
     });
 }

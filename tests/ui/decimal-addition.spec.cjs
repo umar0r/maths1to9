@@ -37,8 +37,8 @@ test('decimal addition journey, retry, scoring and four anchors',async({page})=>
  await page.goto('/content/adding-decimal-numbers/');
  const next=()=>page.getByRole('button',{name:'Continue',exact:true}).click();
  const left=()=>page.getByRole('button',{name:'Move second number left'}).click();
- await expect(page.locator('.rounding-score')).toContainText('0');
- await expect(page.locator('nav a')).toHaveCount(4);
+ expect(Number(await page.locator('.rounding-score span').innerText())).toBe(0);
+ await expect(page.locator('nav [data-stage]')).toHaveCount(4);
  await next();await left();await next();
  await page.locator('#guided-input').fill('0');await next();
  for(const digit of ['5','7','0','1']){await page.locator('#guided-input').fill(digit);await next();}
@@ -47,17 +47,19 @@ test('decimal addition journey, retry, scoring and four anchors',async({page})=>
  for(const digit of ['5','8','4']){await page.locator('#guided-input').fill(digit);await next();}
  await next();
  for(const [i,v] of [[2,'16.78'],[3,'3.55'],[4,'11.24'],[5,'9.150']]){
- await left();await page.locator(`#value-${i}`).fill(v);await next();await expect(page.locator('.rounding-note')).toContainText('Correct');await next();}
+ await left();await page.locator(`#value-${i}`).fill(v);await next();if(i<5)await expect(page.locator('.rounding-note')).toContainText('Correct');else {await expect(page.locator('.retained-results > li')).toHaveCount(4);await expect(page.locator('.retained-results > li').last()).toContainText(v);}await next();}
  await expect(page).toHaveURL(/#check$/);
  await expect(page.locator('#reason-review')).toHaveCount(0);
  for(const [i,v] of [[6,'6.14'],[7,'2.55']]){await page.locator(`[data-move="${i},-1"]`).click();await page.locator(`#value-${i}`).fill(v);}
  await page.locator('#reason').fill('8 is tenths and 4 is hundredths. Line up decimal points so equal place values are added.');await next();
  await page.locator('#reason-review').check();await next();
- await expect(page.locator('#result')).toContainText('You’re ready');
- await expect(page.locator('.rounding-score')).toContainText('85');
- await page.reload();await expect(page.locator('#result')).toContainText('You’re ready');
- await page.locator('nav a[href="#practice"]').click();
- await expect(page.locator('#value-5')).toBeEnabled();
+ await expect(page.locator('.lesson-section:has(> .retained-results)')).toContainText('You’re ready');
+ expect(Number(await page.locator('.rounding-score span').innerText())).toBe(85);
+ await page.reload();await expect(page.locator('.lesson-section:has(> .retained-results)')).toContainText('You’re ready');
+ await page.locator('nav [data-stage="2"]').click();
+ await expect(page).toHaveURL(/#practice$/);
+ await expect(page.locator('.retained-results > li')).toHaveCount(4);
+ await expect(page.locator('#value-5')).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Continue',exact:true})).toHaveCount(1);
  expect(errors).toEqual([]);
 });
@@ -82,10 +84,10 @@ test('final check withholds answers and allows a corrected retry',async({page})=
  await expect(page.locator('.lesson-section')).not.toContainText('6.14');
  await page.getByRole('button',{name:'Continue',exact:true}).click();
  await page.getByRole('button',{name:'Continue',exact:true}).click();
- await expect(page.locator('#result')).toContainText('Practise once more');
+ await expect(page.locator('.lesson-section:has(> .retained-results)')).toContainText('Practise once more');
  await page.locator('#retry-check').click();
  for(const [i,v] of [[6,'6.14'],[7,'2.55']]){await page.locator(`[data-move="${i},-1"]`).click();await page.locator(`#value-${i}`).fill(v);}
  await page.locator('#reason').fill('8 is tenths, 4 is hundredths. Line up decimal points.');
  await page.getByRole('button',{name:'Continue',exact:true}).click();await page.locator('#reason-review').check();await page.getByRole('button',{name:'Continue',exact:true}).click();
- await expect(page.locator('#result')).toContainText('You’re ready');expect(Number(await page.locator('.rounding-score span').innerText()) - before).toBe(15);
+ await expect(page.locator('.lesson-section:has(> .retained-results)')).toContainText('You’re ready');expect(Number(await page.locator('.rounding-score span').innerText()) - before).toBe(15);
 });
