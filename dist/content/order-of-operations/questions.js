@@ -1023,6 +1023,18 @@
         if (!root || !checkRoot || !api || mounted.has(root)) return;
         mounted.add(root);
         const store = window.Maths1to9Progress;
+        let ready = false;
+        let lessonCompleted = false;
+        let restored = false;
+        function guardCheck() {
+            if (!restored) return;
+            if (api.getCurrentSection().id === 'comparison' && !ready && !lessonCompleted) {
+                api.goToSection('question-bank');
+            }
+            updateProgress();
+        }
+        document.addEventListener('maths1to9:section-change', guardCheck);
+        api.gateSection('comparison');
         let saved = await store.getLessonActivityState('order-of-operations', 'journey');
         if (![1, 2].includes(saved?.contentVersion)) saved = {
             contentVersion: 2, run: 0,
@@ -1038,7 +1050,7 @@
         const readyScore = lesson.question_bank.ready_score;
         saved.practiceHistory ??= [];
         saved.checkHistory ??= [];
-        let { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps } = saved;
+        let { run, practice, check, exampleIndex, visibleSteps } = saved;
         function save() {
             Object.assign(saved, { run, practice, check, ready, lessonCompleted, exampleIndex, visibleSteps });
             store.saveLessonActivityState('order-of-operations', 'journey', saved);
@@ -1250,12 +1262,8 @@
         renderExample();
         renderPractice();
         renderCheck();
-        document.addEventListener('maths1to9:section-change', () => {
-            if (api.getCurrentSection().id === 'comparison' && !ready && !lessonCompleted) {
-                api.goToSection('question-bank');
-            }
-            updateProgress();
-        });
+        restored = true;
+        guardCheck();
     }
     document.addEventListener('maths1to9:lesson-rendered', mountJourney);
 })();
