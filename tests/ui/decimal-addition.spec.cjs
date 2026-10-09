@@ -1,4 +1,37 @@
 const {test,expect}=require('@playwright/test');
+
+async function reachDecimalStage(page, target) {
+ await page.goto('/content/adding-decimal-numbers/');
+ const next = () => page.getByRole('button', {name:'Continue', exact:true}).click();
+ const left = () => page.getByRole('button', {name:'Move second number left'}).click();
+ await next();
+ await left();
+ await next();
+ await page.locator('#guided-input').fill('0');
+ await next();
+ for (const digit of ['5','7','0','1']) {
+  await page.locator('#guided-input').fill(digit);
+  await next();
+ }
+ await page.locator('#guided-input').selectOption('aligned');
+ await next();
+ await next();
+ await left();
+ await next();
+ for (const digit of ['5','8','4']) {
+  await page.locator('#guided-input').fill(digit);
+  await next();
+ }
+ await next();
+ if (target === 'practice') return;
+ for (const [i, value] of [[2,'16.78'],[3,'3.55'],[4,'11.24'],[5,'9.150']]) {
+  await left();
+  await page.locator(`#value-${i}`).fill(value);
+  await next();
+  await next();
+ }
+}
+
 test('decimal addition journey, retry, scoring and four anchors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/content/adding-decimal-numbers/');
@@ -30,18 +63,20 @@ test('decimal addition journey, retry, scoring and four anchors',async({page})=>
 });
 test('mobile keyboard alignment and supported feedback',async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.goto('/content/adding-decimal-numbers/#practice');
+ await reachDecimalStage(page, 'practice');
+ const before = Number(await page.locator('.rounding-score span').innerText());
  await page.locator('#value-2').fill('16.78');await page.getByRole('button',{name:'Continue',exact:true}).click();
  await expect(page.locator('#feedback')).toContainText('decimal points');
  await page.locator('.movable').focus();await page.keyboard.press('ArrowLeft');
  await page.getByRole('button',{name:'Continue',exact:true}).click();
  await expect(page.locator('.rounding-note')).toContainText('Correct');
- await expect(page.locator('.rounding-score')).toContainText('5');
+ expect(Number(await page.locator('.rounding-score span').innerText()) - before).toBe(5);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/decimal-addition-mobile.png',fullPage:true});
 });
 test('final check withholds answers and allows a corrected retry',async({page})=>{
- await page.goto('/content/adding-decimal-numbers/#check');
+ await reachDecimalStage(page, 'check');
+ const before = Number(await page.locator('.rounding-score span').innerText());
  for(const i of [6,7])await page.locator(`#value-${i}`).fill('1');
  await page.locator('#reason').fill('Line up the last digits.');
  await expect(page.locator('.lesson-section')).not.toContainText('6.14');
@@ -52,5 +87,5 @@ test('final check withholds answers and allows a corrected retry',async({page})=
  for(const [i,v] of [[6,'6.14'],[7,'2.55']]){await page.locator(`[data-move="${i},-1"]`).click();await page.locator(`#value-${i}`).fill(v);}
  await page.locator('#reason').fill('8 is tenths, 4 is hundredths. Line up decimal points.');
  await page.getByRole('button',{name:'Continue',exact:true}).click();await page.locator('#reason-review').check();await page.getByRole('button',{name:'Continue',exact:true}).click();
- await expect(page.locator('#result')).toContainText('You’re ready');await expect(page.locator('.rounding-score')).toContainText('15');
+ await expect(page.locator('#result')).toContainText('You’re ready');expect(Number(await page.locator('.rounding-score span').innerText()) - before).toBe(15);
 });
