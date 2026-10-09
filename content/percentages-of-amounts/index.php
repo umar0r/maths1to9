@@ -70,6 +70,6 @@ $pageTitle = 'Percentages of amounts';
 
     <script src="../../assets/js/progress.js?v=2"></script>
     <script src="../../assets/js/lesson-engine.js?v=32"></script>
-    <script src="./lesson.js?v=15"></script>
+    <script src="./lesson.js?v=16"></script>
 </body>
 </html>
