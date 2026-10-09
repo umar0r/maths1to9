@@ -70,6 +70,6 @@ $pageTitle = 'Convert a fraction to a percentage';
 
     <script src="../../assets/js/progress.js?v=2"></script>
     <script src="../../assets/js/lesson-engine.js?v=32"></script>
-    <script src="./lesson.js?v=4"></script>
+    <script src="./lesson.js?v=6"></script>
 </body>
 </html>
