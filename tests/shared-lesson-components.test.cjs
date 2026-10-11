@@ -696,7 +696,7 @@ test('repeat Practice assessments freeze first-session points while retaining di
     assert.equal(tracker.export().length, 2);
 });
 
-async function setFixture(restored, isCheck = false) {
+async function setFixture(restored, isCheck = false, lastSection = false) {
     const fixture = resultsFixture();
     const container = fixture.node('div');
     const id = isCheck ? 'comparison' : 'question-bank';
@@ -718,7 +718,7 @@ async function setFixture(restored, isCheck = false) {
             return section;
         },
         getLesson: () => ({ question_bank: {} }),
-        getSections: () => [{ id: 'question-bank' }, { id: 'comparison' }],
+        getSections: () => lastSection ? [{ id: 'question-bank' }] : [{ id: 'question-bank' }, { id: 'comparison' }],
         getCurrentSection: () => ({ id }), setSlideHash() {}, registerHashRoute() {}, goToSection: () => true,
         setSectionProgress() {}, setSectionBack(key, value) { back = value; },
         setSectionAction(key, value) { action = value; }, clearSectionAction() { action = null; },
@@ -844,4 +844,13 @@ test('seeded Practice keeps its skill evidence identity through reloads and chan
     assert.equal(id('hcf', 'page-one', 'question-bank:2:1', { session: 2, seed: 12 }), id('hcf', 'page-two', 'question-bank:2:1', { session: 2, seed: 12 }));
     assert.equal(id('old', 'page-one', 'question-bank:1'), 'old:page-one:question-bank:1');
     assert.equal(id('check', 'page-one', 'final-check-1', state), 'check:page-one:final-check-1');
+});
+
+test('finished question sets say All lessons only when no section follows', async () => {
+    for (const lastSection of [false, true]) {
+        const set = await setFixture(undefined, false, lastSection);
+        set.finishQuestion();
+        set.finishQuestion();
+        assert.equal(set.action.label, lastSection ? 'All lessons' : 'Continue');
+    }
 });

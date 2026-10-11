@@ -475,9 +475,19 @@ Maths1to9Lesson.runQuestionSet('question-bank', {
 - Shows "Question 2 of 5", reports progress with `setSectionProgress`, and
   dispatches `maths1to9:section-complete` when the last question is
   answered correctly.
-- Finished: the score panel, then the results list, with Continue as the
-  only main button. On Check, the lesson's summary and the existing
-  end-of-lesson screen follow it as today (`#summary` still works).
+- Finished: the score panel, then the results list, with one main button.
+  It says **Continue** when another section follows. When the set is the
+  lesson's last section (algebraic-expressions has no Check, so its
+  Practice is last), it says **All lessons** and goes to the homepage, as
+  every lesson's last button does. Never a "Continue" that leaves the
+  lesson. (Corrected 2026-10-11.) On Check, the lesson's summary and the
+  existing end-of-lesson screen follow it as today (`#summary` still
+  works).
+- Per-question labels come from the shared card (Check → Try again →
+  Continue), replacing a lesson's own "Check answer" / "Next question" /
+  "Finish lesson". Tests that check those labels may be updated to the
+  card's labels for lessons moved onto the card; nothing else in them
+  changes.
 - Revisiting a finished set shows the same results. It never starts a new
   session on its own.
 

@@ -70,7 +70,7 @@ $pageTitle = 'Subtracting negative numbers';
 
     <script src="../../assets/js/progress.js?v=2"></script>
 
-    <script src="../../assets/js/lesson-engine.js?v=40"></script>
+    <script src="../../assets/js/lesson-engine.js?v=41"></script>
     <script src="./lesson.js?v=6"></script>
 </body>
 </html>

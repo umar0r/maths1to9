@@ -695,12 +695,12 @@
                     renderResults(results, rows(earlier));
                     container.append(details);
                 }
+                const sections = api.getSections();
+                const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
                 api.setSectionAction(sectionId, {
-                    label: 'Continue', onClick: () => {
+                    label: next ? 'Continue' : 'All lessons', onClick: () => {
                         if (config.onContinue) config.onContinue();
                         else {
-                            const sections = api.getSections();
-                            const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
                             if (next) api.continueSection();
                             else {
                                 api.completeLesson();
