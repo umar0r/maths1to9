@@ -269,6 +269,77 @@
             export() { return [...activities.values()].map(item => ({...item})); }
         };
     }
+    function resultText(tag, value, className = '') {
+        const node = document.createElement(tag);
+        node.className = className;
+        if (value && typeof value === 'object' && typeof value.latex === 'string') {
+            if (window.katex?.render) {
+                window.katex.render(value.latex, node, { throwOnError: false });
+            } else {
+                node.textContent = value.latex;
+            }
+        } else {
+            node.textContent = String(value ?? '');
+        }
+        return node;
+    }
+
+    function renderResults(container, rows, options = {}) {
+        container.replaceChildren();
+        if (options.heading) {
+            container.append(resultText('h3', options.heading));
+        }
+        const list = document.createElement('ol');
+        list.className = 'retained-results';
+        for (const row of rows) {
+            const item = document.createElement('li');
+            const line = document.createElement('div');
+            line.className = 'retained-result';
+            line.append(resultText('strong', row.prompt));
+            const answer = document.createElement('div');
+            answer.className = 'retained-result__answer';
+            answer.append(resultText('span', row.answer));
+            let mark = null;
+            if (row.firstCorrect === true) {
+                mark = resultText('span', '✓');
+                mark.setAttribute('aria-label', 'Right first time');
+            } else if (row.firstCorrect === false) {
+                const corrected = row.correct === true;
+                mark = resultText('span', corrected ? '2nd try' : 'Incorrect');
+                mark.setAttribute('aria-label', corrected ? 'Corrected' : 'Incorrect');
+            }
+            if (mark) answer.append(mark);
+            line.append(answer);
+            item.append(line);
+            if (row.visual) item.append(row.visual);
+            if (row.firstCorrect !== true && row.explanation) {
+                item.append(resultText('p', row.explanation, 'retained-result__explanation'));
+            }
+            list.append(item);
+        }
+        container.append(list);
+    }
+
+    function renderScorePanel(container, options) {
+        const { correct, total, readyScore, readyText = "You're ready",
+            notReadyText = 'Keep practising' } = options;
+        container.replaceChildren();
+        const panel = document.createElement('div');
+        panel.className = 'lesson-score-panel';
+        const ring = document.createElement('div');
+        ring.className = 'practice-progress-ring';
+        ring.style.setProperty('--practice-progress', `${total > 0 ? correct / total * 100 : 0}%`);
+        ring.setAttribute('aria-label', `${correct} out of ${total} right first time`);
+        ring.append(resultText('span', `${correct}/${total}`));
+        panel.append(ring);
+        const message = document.createElement('div');
+        message.append(resultText('p', `You got ${correct} out of ${total} right first time.`));
+        if (typeof readyScore === 'number') {
+            message.append(resultText('strong', correct >= readyScore ? readyText : notReadyText));
+        }
+        panel.append(message);
+        container.append(panel);
+    }
     window.Maths1to9LessonEngine = {
         createRouter,
         updateStageProgress,
@@ -279,7 +350,9 @@
         seededRandom,
         randomInt,
         createSectionState,
-        createBackNavigation
+        createBackNavigation,
+        renderResults,
+        renderScorePanel
     };
 })();
 

@@ -3366,3 +3366,7 @@ noscript p {
 }
 .lesson-back[hidden] { display: none; }
 .lesson-back:focus-visible { outline: 3px solid var(--primary, #2563eb); outline-offset: 2px; }
+
+.lesson-score-panel { display: flex; align-items: center; gap: 1rem; margin-block: 1rem; }
+.lesson-score-panel p { margin: 0; }
+.retained-result__answer { flex-wrap: wrap; }

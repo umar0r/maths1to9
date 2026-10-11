@@ -298,3 +298,91 @@ test('HCF Learn upgrades legacy position and completed matches without resetting
     }
     assert.equal(upgrade({ screen: 3 }, 99), null);
 });
+
+// A small DOM fixture checks the helpers' generated structure without starting
+// the standard lesson renderer. Real layout and KaTeX are checked in the pilots.
+function resultsFixture(katex) {
+    class Node {
+        constructor(tag) {
+            this.tagName = tag;
+            this.children = [];
+            this.attributes = {};
+            this.textContent = '';
+            this.style = { setProperty: (key, value) => { this.attributes[key] = value; } };
+        }
+        append(...nodes) { this.children.push(...nodes); }
+        replaceChildren(...nodes) { this.children = nodes; }
+        setAttribute(key, value) { this.attributes[key] = value; }
+    }
+    const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag) };
+    const fixtureWindow = { katex };
+    vm.runInNewContext(source, { window: fixtureWindow, document });
+    return { ...fixtureWindow.Maths1to9LessonEngine, node: tag => new Node(tag) };
+}
+
+test('shared results render all four marks and explanations only when not right first time', () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    fixture.renderResults(container, [
+        { prompt: 'One', answer: '1', firstCorrect: true, correct: true, explanation: 'Hidden' },
+        { prompt: 'Two', answer: '2', firstCorrect: false, correct: true, explanation: 'Correction' },
+        { prompt: 'Three', answer: '4', firstCorrect: false, correct: false, explanation: 'Review' },
+        { prompt: 'Old save', answer: '5', firstCorrect: null, correct: true }
+    ], { heading: 'Results' });
+    assert.equal(container.children[0].textContent, 'Results');
+    const rows = container.children[1].children;
+    const answer = row => row.children[0].children[1];
+    assert.equal(answer(rows[0]).children[1].textContent, '✓');
+    assert.equal(answer(rows[0]).children[1].attributes['aria-label'], 'Right first time');
+    assert.equal(rows[0].children.length, 1);
+    assert.equal(answer(rows[1]).children[1].textContent, '2nd try');
+    assert.equal(answer(rows[1]).children[1].attributes['aria-label'], 'Corrected');
+    assert.equal(rows[1].children[1].textContent, 'Correction');
+    assert.equal(answer(rows[2]).children[1].textContent, 'Incorrect');
+    assert.equal(answer(rows[2]).children[1].attributes['aria-label'], 'Incorrect');
+    assert.equal(answer(rows[3]).children.length, 1);
+    assert.equal(rows[3].children.length, 1);
+});
+
+test('shared results render whole maths, keep supplied visuals and replace rather than duplicate work', () => {
+    const calls = [];
+    const fixture = resultsFixture({ render: (latex, node) => { calls.push(latex); node.textContent = latex; } });
+    const container = fixture.node('div');
+    const visual = fixture.node('svg');
+    fixture.renderResults(container, [{ prompt: { latex: '24 = 2^3 \\times 3' }, answer: { latex: '\\mathrm{HCF} = 12' }, visual }]);
+    assert.deepEqual(calls, ['24 = 2^3 \\times 3', '\\mathrm{HCF} = 12']);
+    assert.equal(container.children.length, 1);
+    assert.equal(container.children[0].children[0].children[1], visual);
+    fixture.renderResults(container, []);
+    assert.equal(container.children.length, 1);
+    assert.equal(container.children[0].children.length, 0);
+});
+
+test('shared results safely render text and maths without KaTeX', () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    fixture.renderResults(container, [{ prompt: '<img onerror=bad>', answer: { latex: '2 \\times 3 = 6' } }]);
+    const line = container.children[0].children[0].children[0];
+    assert.equal(line.children[0].textContent, '<img onerror=bad>');
+    assert.equal(line.children[1].children[0].textContent, '2 \\times 3 = 6');
+});
+
+test('shared score panel uses exact counts, optional readiness and configurable messages', () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    fixture.renderScorePanel(container, { correct: 4, total: 5 });
+    let panel = container.children[0];
+    assert.equal(panel.children[0].children[0].textContent, '4/5');
+    assert.equal(panel.children[0].attributes['--practice-progress'], '80%');
+    assert.equal(panel.children[1].children[0].textContent, 'You got 4 out of 5 right first time.');
+    assert.equal(panel.children[1].children.length, 1);
+    fixture.renderScorePanel(container, { correct: 4, total: 5, readyScore: 4 });
+    assert.equal(container.children[0].children[1].children[1].textContent, "You're ready");
+    fixture.renderScorePanel(container, { correct: 3, total: 5, readyScore: 4 });
+    assert.equal(container.children[0].children[1].children[1].textContent, 'Keep practising');
+    fixture.renderScorePanel(container, { correct: 0, total: 0, readyScore: 1, notReadyText: 'Try more' });
+    assert.equal(container.children[0].children[0].attributes['--practice-progress'], '0%');
+    assert.equal(container.children[0].children[1].children[1].textContent, 'Try more');
+    fixture.renderScorePanel(container, { correct: 1, total: 1, readyScore: 1, readyText: 'Ready for Check' });
+    assert.equal(container.children[0].children[1].children[1].textContent, 'Ready for Check');
+});

@@ -33,7 +33,7 @@ $pageTitle = 'Prime factor decomposition';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=32">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=33">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
     <link rel="stylesheet" href="./lesson.css?v=11">
 </head>
@@ -87,6 +87,6 @@ $pageTitle = 'Prime factor decomposition';
     <script src="./interactive.js?v=20"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=35"></script>
+    <script src="../../assets/js/lesson-engine.js?v=36"></script>
 </body>
 </html>

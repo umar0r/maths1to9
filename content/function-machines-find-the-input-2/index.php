@@ -28,7 +28,7 @@ $pageTitle = 'Function machines: find the input';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=32">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=33">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -200,6 +200,6 @@ $pageTitle = 'Function machines: find the input';
 
     <script src="./interactive.js?v=12"></script>
     <script src="./questions.js?v=14"></script>
-    <script src="../../assets/js/lesson-engine.js?v=35"></script>
+    <script src="../../assets/js/lesson-engine.js?v=36"></script>
 </body>
 </html>
