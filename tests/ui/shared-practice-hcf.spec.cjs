@@ -29,12 +29,17 @@ async function hcfQuestion(page, wrong = false) {
         await input.fill('0');
         await input.press('Enter');
         await expect(main(page)).toHaveText('Try again');
+        const assessed = await skillCount(page, 'find-hcf');
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(main(page)).toHaveText('Try again');
+        await expect.poll(() => skillCount(page, 'find-hcf')).toBe(assessed);
         await main(page).click();
     }
     await input.fill(String(a));
     await input.press('Enter');
     await expect(main(page)).toHaveText('Continue');
     await main(page).click();
+    if (wrong) await expect.poll(() => skillCount(page, 'find-hcf')).toBe(1);
 }
 async function skillCount(page, skill) {
     const record = await page.evaluate(skill => window.Maths1to9Progress.getSkillProgress(skill), skill);

@@ -87,6 +87,6 @@ $pageTitle = 'Prime factor decomposition';
     <script src="./interactive.js?v=20"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=39"></script>
+    <script src="../../assets/js/lesson-engine.js?v=40"></script>
 </body>
 </html>

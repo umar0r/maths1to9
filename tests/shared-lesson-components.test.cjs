@@ -834,3 +834,14 @@ test('HCF Practice upgrades old tiles, phases, position and first-session marks'
     assert.equal(upgrade({ order, items }, 99, api), null);
     assert.equal(upgrade({}, 0, api), null);
 });
+
+test('seeded Practice keeps its skill evidence identity through reloads and changes it for new sessions', () => {
+    const id = window.Maths1to9LessonEngine.assessmentEvidenceId;
+    const state = { session: 2, items: [{ type: 'algebra', seed: 123 }] };
+    assert.equal(id('algebra', 'page-one', 'question-bank:2:1', state), id('algebra', 'page-two', 'question-bank:2:1', state));
+    assert.notEqual(id('algebra', 'page-one', 'question-bank:2:1', state), id('algebra', 'page-one', 'question-bank:3:1', { session: 3, items: [{ type: 'algebra', seed: 456 }] }));
+    assert.notEqual(id('algebra', 'page-one', 'question-bank:2:1', state), id('algebra', 'page-one', 'question-bank:2:1', { session: 2, items: [{ type: 'algebra', seed: 999 }] }));
+    assert.equal(id('hcf', 'page-one', 'question-bank:2:1', { session: 2, seed: 12 }), id('hcf', 'page-two', 'question-bank:2:1', { session: 2, seed: 12 }));
+    assert.equal(id('old', 'page-one', 'question-bank:1'), 'old:page-one:question-bank:1');
+    assert.equal(id('check', 'page-one', 'final-check-1', state), 'check:page-one:final-check-1');
+});

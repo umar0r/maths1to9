@@ -564,6 +564,15 @@
     }
 
 
+    function assessmentEvidenceId(slug, pageSession, questionId, practice) {
+        const match = questionId.match(/^question-bank:(\d+):(\d+)$/);
+        if (match && practice?.session === Number(match[1])) {
+            const seed = practice.seed ?? practice.items?.[Number(match[2]) - 1]?.seed;
+            if (Number.isInteger(seed)) return `${slug}:practice:${seed}:${questionId}`;
+        }
+        return `${slug}:${pageSession}:${questionId}`;
+    }
+
     function questionSetId(sectionId, session, index) {
         return sectionId === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
     }
@@ -745,6 +754,7 @@
         tidyNumber,
         createQuestion,
         questionSetId,
+        assessmentEvidenceId,
         archivePractice,
         runQuestionSet
     };
@@ -3073,8 +3083,12 @@
         }
         scoreTracker.record({id:scoreId, kind:'answer', correct:detail.correct});
 
-        const stableQuestionId =
-            `${state.slug}:${assessmentSessionId}:${questionId}`;
+        // Seeded Practice keeps one skill-evidence identity across page reloads.
+        // Other lesson banks retain their existing per-page assessment identities.
+        const practice = state.sectionStates?.get('question-bank')?.state;
+        const stableQuestionId = practice
+            ? window.Maths1to9LessonEngine.assessmentEvidenceId(state.slug, assessmentSessionId, questionId, practice)
+            : `${state.slug}:${assessmentSessionId}:${questionId}`;
 
         [...new Set(skillIds)].forEach((skillId) => {
             document.dispatchEvent(
