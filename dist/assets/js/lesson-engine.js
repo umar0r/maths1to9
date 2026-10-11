@@ -37,6 +37,87 @@
         return min + Math.floor(random() * (max - min + 1));
     }
 
+    function jsonState(value, key) {
+        const ancestors = new Set();
+        function check(item) {
+            if (item === null || typeof item === 'string' || typeof item === 'boolean') return;
+            if (typeof item === 'number' && Number.isFinite(item)) return;
+            if (typeof item !== 'object' || ancestors.has(item)) fail();
+            const prototype = Object.getPrototypeOf(item);
+            if (!Array.isArray(item) && prototype !== null &&
+                Object.getPrototypeOf(prototype) !== null) fail();
+            if (Object.getOwnPropertySymbols(item).length) fail();
+            ancestors.add(item);
+            if (Array.isArray(item)) {
+                for (let index = 0; index < item.length; index++) {
+                    if (!Object.hasOwn(item, index)) fail();
+                    check(item[index]);
+                }
+            } else {
+                for (const child of Object.values(item)) check(child);
+            }
+            ancestors.delete(item);
+        }
+        function fail() {
+            throw new TypeError(`Section state "${key}" must contain only plain JSON values.`);
+        }
+        check(value);
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    // The standard lesson API supplies its slug; dependencies also allow isolated tests.
+    async function createSectionState(slug, key, options, store = window.Maths1to9Progress,
+        schedule = callback => window.requestAnimationFrame(callback)) {
+        const { version, initial, upgrade } = options;
+        if (!Number.isSafeInteger(version) || version < 1 || typeof initial !== 'function') {
+            throw new TypeError(`Section state "${key}" requires a positive version and initial().`);
+        }
+        const saved = await store.getLessonActivityState(slug, key);
+        const wrapped = saved?.sharedState === 1;
+        const current = wrapped && saved.version === version;
+        let restored;
+        if (current) restored = saved.data;
+        else if (saved != null && upgrade) {
+            restored = upgrade(wrapped ? saved.data : saved, wrapped ? saved.version : 0);
+        }
+        let data = jsonState(restored == null ? initial() : restored, key);
+        let pending = null;
+        let scheduled = false;
+        function write(snapshot) {
+            return store.saveLessonActivityState(slug, key, { sharedState: 1, version, data: snapshot });
+        }
+        // Persist conversion immediately, including an intentionally fresh replacement.
+        if (saved != null && !current) await write(jsonState(data, key));
+        function queueSave() {
+            pending = jsonState(data, key);
+            if (scheduled) return;
+            scheduled = true;
+            schedule(() => {
+                scheduled = false;
+                const snapshot = pending;
+                pending = null;
+                write(snapshot);
+            });
+        }
+        return {
+            get state() { return data; },
+            update(change) {
+                const previous = jsonState(data, key);
+                try {
+                    change(data);
+                    queueSave();
+                } catch (error) {
+                    data = previous;
+                    throw error;
+                }
+            },
+            reset() {
+                data = jsonState(initial(), key);
+                queueSave();
+            }
+        };
+    }
+
     function createRouter() {
         const routes = new Map();
         let started = false;
@@ -150,7 +231,8 @@
         escapeHtml,
         shuffle,
         seededRandom,
-        randomInt
+        randomInt,
+        createSectionState
     };
 })();
 
@@ -2540,6 +2622,10 @@
 
     function exposeLessonApi() {
         window.Maths1to9Lesson = {
+            useSectionState(key, options) {
+                return window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
+            },
+
             registerHashRoute(id, handler, aliases = []) {
                 router.register(id, handler, aliases);
             },

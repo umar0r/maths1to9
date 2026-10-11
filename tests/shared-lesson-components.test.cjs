@@ -56,3 +56,87 @@ test('shared randomInt includes both bounds and handles negative and singleton r
     assert.throws(() => randomInt(5, 2), /ordered integer bounds/);
     assert.throws(() => randomInt(0.5, 2), /ordered integer bounds/);
 });
+
+const { createSectionState } = window.Maths1to9LessonEngine;
+function stateStore(saved) {
+    const writes = [];
+    const frames = [];
+    const store = {
+        async getLessonActivityState(slug, key) { return saved; },
+        saveLessonActivityState(slug, key, value) {
+            saved = JSON.parse(JSON.stringify(value));
+            writes.push({ slug, key, value: saved });
+        }
+    };
+    return { store, writes, frames, schedule: callback => frames.push(callback),
+        flush() { frames.splice(0).forEach(callback => callback()); } };
+}
+const stateOptions = { version: 2, initial: () => ({ screen: 0, items: [] }) };
+
+test('section state restores every storage format and writes conversions once', async () => {
+    for (const example of [
+        { saved: undefined, screen: 0, from: undefined, writes: 0 },
+        { saved: { sharedState: 1, version: 2, data: { screen: 3 } }, screen: 3, from: undefined, writes: 0 },
+        { saved: { sharedState: 1, version: 1, data: { screen: 4 } }, screen: 4, from: 1, writes: 1 },
+        { saved: { screen: 5 }, screen: 5, from: 0, writes: 1 }
+    ]) {
+        const harness = stateStore(example.saved);
+        const calls = [];
+        const options = { ...stateOptions, upgrade(saved, from) { calls.push(from); return saved; } };
+        const section = await createSectionState('pilot', 'interactive', options, harness.store, harness.schedule);
+        assert.equal(section.state.screen, example.screen);
+        assert.deepEqual(calls, example.from === undefined ? [] : [example.from]);
+        assert.equal(harness.writes.length, example.writes);
+        if (example.writes) {
+            const again = await createSectionState('pilot', 'interactive', options, harness.store, harness.schedule);
+            assert.equal(again.state.screen, example.screen);
+            assert.equal(calls.length, 1);
+            assert.deepEqual(harness.writes[0], { slug: 'pilot', key: 'interactive', value: {
+                sharedState: 1, version: 2, data: { screen: example.screen }
+            } });
+        }
+    }
+});
+
+test('section state falls back to initial on missing or declined upgrade', async () => {
+    for (const upgrade of [undefined, () => null]) {
+        const harness = stateStore({ screen: 9 });
+        const section = await createSectionState('pilot', 'learn', { ...stateOptions, upgrade }, harness.store, harness.schedule);
+        assert.equal(section.state.screen, 0);
+        assert.equal(harness.writes.length, 1);
+    }
+});
+
+test('section state batches updates, restores exact answer phases, and resets', async () => {
+    const harness = stateStore();
+    const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+    section.update(state => { state.items.push({ value: '18', phase: 'wrong', firstCorrect: false }); });
+    section.update(state => { state.screen = 1; });
+    assert.equal(harness.frames.length, 1);
+    assert.equal(harness.writes.length, 0);
+    harness.flush();
+    const restored = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+    assert.equal(JSON.stringify(restored.state), JSON.stringify(section.state));
+    restored.update(state => { state.items[0].phase = 'correct'; state.items[0].value = '72'; });
+    harness.flush();
+    assert.equal(restored.state.items[0].firstCorrect, false);
+    restored.update(state => { state.screen = 2; });
+    restored.reset();
+    harness.flush();
+    assert.equal(JSON.stringify(harness.writes.at(-1).value.data), JSON.stringify(stateOptions.initial()));
+    assert.equal(harness.writes.length, 3);
+});
+
+test('section state rejects non-JSON values with the storage key in the error', async () => {
+    for (const invalid of [undefined, NaN, Infinity, () => {}, new Map(), new Date(), { nested: undefined }, [, 1], Symbol('x'), 1n]) {
+        const harness = stateStore();
+        const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+        assert.throws(() => section.update(state => { state.invalid = invalid; }), /interactive.*plain JSON/);
+        assert.equal(harness.frames.length, 0);
+        assert.equal(section.state.invalid, undefined);
+    }
+    const harness = stateStore();
+    const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+    assert.throws(() => section.update(state => { state.cycle = state; }), /interactive.*plain JSON/);
+    await assert.rejects(createSectionState('pilot', 'learn', { version: 1, initial: () => ({ bad: undefined }) }, harness.store), /learn.*plain JSON/);
+});
