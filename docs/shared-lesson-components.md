@@ -276,6 +276,19 @@ The engine decides what the button does, in this order:
   does (`setSlideHash` with `replace: true` inside a section; `goToSection`
   already handles sections). Never use `history.back()`; it could leave the
   lesson.
+- **A link to a screen the pupil can't open yet** (for example
+  `#hcf-check-1` on a fresh start) opens the furthest screen reached, as
+  now, and replaces the address with that screen's hash (`replace: true`),
+  so the address always matches what is shown. (Added 2026-10-11: HCF kept
+  `#hcf-check-1` in the address while showing Learn.)
+- **Finished lessons.** With the back button on, the engine no longer turns
+  the main button into "All lessons" on every screen once the lesson is
+  finished, because that would replace Next while the pupil looks back. So
+  a lesson that turns the back button on must set **All lessons** itself as
+  the main action on its last screen (its summary), as HCF does in
+  `questions.js`. Check this for every lesson that turns it on: finish the
+  lesson, reload, go back a few screens, return to the end, and the last
+  button must say All lessons and reach the homepage.
 
 Pilot: HCF Learn (four screens, saved under `'learn'`), then turn the back
 button on for HCF and check Learn → Try it → Practice → Check and back again.

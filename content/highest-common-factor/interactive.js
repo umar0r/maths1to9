@@ -224,7 +224,10 @@
         }
         for (let screen = 0; screen <= state.order.length; screen++) {
             api.registerHashRoute(`hcf-${sectionId}-${screen + 1}`, () => {
-                api.goToSection(sectionId, { moveFocus: false });
+                if (!api.goToSection(sectionId, { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
+                }
                 showScreen(Math.min(screen, state.furthestScreen));
             });
         }
@@ -477,7 +480,10 @@
         render();
         const requested = initialScreenHash.match(new RegExp(`^#hcf-${sectionId}-(\\d+)$`));
         if (requested) {
-            api.goToSection(sectionId, { unlock: true, moveFocus: false });
+            if (!api.goToSection(sectionId, { moveFocus: false })) {
+                document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                return;
+            }
             showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
         }
     }

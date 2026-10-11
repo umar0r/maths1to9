@@ -95,7 +95,10 @@ const initialScreenHash = window.location.hash;
         }
         for (let screen = 0; screen <= state.questions.length; screen++) {
             api.registerHashRoute(`hcf-check-${screen + 1}`, () => {
-                api.goToSection(sectionId, { moveFocus: false });
+                if (!api.goToSection(sectionId, { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
+                }
                 showScreen(Math.min(screen, state.furthestScreen));
             });
         }
@@ -217,7 +220,10 @@ const initialScreenHash = window.location.hash;
         render();
         const requested = initialScreenHash.match(/^#hcf-check-(\d+)$/);
         if (requested) {
-            api.goToSection(sectionId, { unlock: true, moveFocus: false });
+            if (!api.goToSection(sectionId, { moveFocus: false })) {
+                document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                return;
+            }
             showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
         }
     }
