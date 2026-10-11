@@ -365,13 +365,13 @@ const card = Maths1to9Lesson.createQuestion(container, {
     input: 'choice',                        // or 'number'
     options: [
         { label: '60', correct: true, feedback: '2 × 3 × 2 × 5 = 60.' },
-        { label: '6', feedback: "That's the HCF: the overlap only.", hint: 'hcf' },
+        { label: '6', feedback: "That's the HCF: the overlap only.", hint: 'The HCF uses only the overlap.' },
         { label: '360', feedback: "That's 12 × 30. It uses the overlap twice." }
     ],
     // for input: 'number'
     // answer: '72',
     // exact: false,
-    // rules: [{ value: '6', feedback: "That's the HCF.", hint: 'hcf' }, …],
+    // rules: [{ value: '6', feedback: "That's the HCF.", hint: 'The HCF uses only the overlap.' }, …],
     // fallback: 'Multiply every tile: 2 × 3 × 3 × 2 × 2.',
     readOnly: false,              // true: show the finished card, no input
     onFeedback: (result) => {},   // optional: lesson flashes its own visual
@@ -429,6 +429,8 @@ Then:
 
 ### Saving, going back and finished cards
 
+- `hint` is the hint text itself, shown under the feedback (clarified 2026-10-11).
+- Cards save into the section state opened with `useSectionState(sectionId, …)`, so for a section with cards the storage key must be the section id. `upgrade` only sees saves under that key, so if a lesson's old saves use a different key, stop and ask before moving that section onto cards.
 - Saves its own state (selection, rejected options, typed value, phase,
   `firstCorrect`, `correct`) inside the section state from step 2, under its
   `questionId`. A reload restores the exact phase, feedback and main button.
