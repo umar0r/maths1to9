@@ -3383,3 +3383,14 @@ noscript p {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+.question-card-options { display: flex; flex-direction: column; gap: .75rem; }
+.lesson-section .question-card-options > .button.is-rejected {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    border-color: var(--border);
+    opacity: .65;
+    box-shadow: none;
+}
+.question-hint { display: block; margin-top: .3rem; }
+.question-answer-label { display: flex; flex-direction: column; gap: .5rem; }

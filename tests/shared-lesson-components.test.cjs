@@ -308,11 +308,15 @@ function resultsFixture(katex) {
             this.children = [];
             this.attributes = {};
             this.textContent = '';
+            this.dataset = {};
+            this.events = {};
             this.style = { setProperty: (key, value) => { this.attributes[key] = value; } };
         }
         append(...nodes) { this.children.push(...nodes); }
         replaceChildren(...nodes) { this.children = nodes; }
         setAttribute(key, value) { this.attributes[key] = value; }
+        addEventListener(name, action) { this.events[name] = action; }
+        focus() { this.focused = true; }
     }
     const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag) };
     const fixtureWindow = { katex };
@@ -412,4 +416,184 @@ test('shared result marks and score rings expose hidden words instead of generic
     assert.equal(ring.children[0].attributes['aria-hidden'], 'true');
     assert.equal(ring.children[1].className, 'visually-hidden');
     assert.equal(ring.children[1].textContent, '3 out of 5 right first time');
+});
+
+function questionFixture(config, restored) {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    const section = {
+        state: restored || {},
+        writes: 0,
+        update(change) { change(this.state); this.writes++; }
+    };
+    const assessments = [];
+    const feedback = [];
+    let continued = 0;
+    let action;
+    const api = {
+        setSectionAction(id, next) { assert.equal(id, 'comparison'); action = next; },
+        clearSectionAction(id) { assert.equal(id, 'comparison'); action = null; },
+        recordAssessment(record) { assessments.push(record); }
+    };
+    const options = { sectionId: 'comparison', questionId: 'stable-1', questionType: 'test',
+        scored: true, input: 'choice', prompt: 'Choose a number',
+        options: [{ label: '2', feedback: 'Wrong', hint: 'Look again' },
+            { label: '4', correct: true, feedback: 'Right' }, { label: '6', feedback: 'Too big' }],
+        onContinue: () => { assert.equal(action, null); continued++; },
+        onFeedback: result => feedback.push(result), ...config };
+    const card = fixture.createQuestion(container, options, section, api);
+    return { fixture, container, section, assessments, feedback, card,
+        get action() { return action; }, get continued() { return continued; },
+        click(index) { container.children[0].children[1].children[index].events.click(); },
+        type(value) {
+            const input = container.children[0].children[1].children[0];
+            input.value = value;
+            input.events.input();
+            return input;
+        },
+        reload(overrides = {}) {
+            const restoredOptions = { ...options, ...overrides };
+            delete restoredOptions.onContinue;
+            delete restoredOptions.onFeedback;
+            return questionFixture(restoredOptions, JSON.parse(JSON.stringify(section.state)));
+        }
+    };
+}
+
+test('shared question choice cycle retains rejected choices and immutable firstCorrect across reloads', () => {
+    let harness = questionFixture();
+    assert.equal(harness.action.label, 'Check');
+    assert.equal(harness.action.disabled, true);
+    harness.click(0);
+    assert.equal(harness.action.disabled, false);
+    assert.equal(harness.container.children[0].children[1].attributes.role, 'group');
+    harness = harness.reload();
+    assert.equal(harness.section.state.cards['stable-1'].selected, 0);
+    harness.action.onClick();
+    assert.equal(harness.action.label, 'Try again');
+    assert.equal(harness.card.result().firstCorrect, false);
+    assert.equal(harness.feedback[0].hint, 'Look again');
+    assert.equal(harness.assessments.length, 1);
+    assert.equal(harness.assessments[0].questionId, 'stable-1');
+    harness = harness.reload();
+    assert.equal(harness.action.label, 'Try again');
+    assert.equal(harness.assessments.length, 0);
+    harness.action.onClick();
+    const choices = harness.container.children[0].children[1].children;
+    assert.equal(choices[0].disabled, true);
+    assert.match(choices[0].className, /is-rejected/);
+    assert.equal(choices[0].children[0].textContent, ' ×');
+    assert.equal(choices[1].disabled, false);
+    harness.click(0);
+    assert.equal(harness.section.state.cards['stable-1'].selected, null);
+    harness.click(1);
+    harness.action.onClick();
+    assert.equal(harness.card.result().firstCorrect, false);
+    assert.equal(harness.card.result().correct, true);
+    assert.equal(harness.card.result().answer, '4');
+    assert.equal(harness.assessments.length, 1);
+    assert.equal(harness.assessments[0].questionId, 'stable-1');
+    harness = harness.reload();
+    assert.equal(harness.action.label, 'Continue');
+    assert.equal(harness.assessments.length, 0);
+    harness.action.onClick();
+    assert.equal(harness.continued, 1);
+    assert.equal(harness.action, null);
+});
+
+test('shared question records each Check once with one stable score slot and no points for read-only views', () => {
+    const harness = questionFixture();
+    const tracker = window.Maths1to9LessonEngine.createScoreTracker([{ id: 'answer:stable-1', kind: 'answer', completed: false }]);
+    harness.click(0);
+    harness.action.onClick();
+    harness.action.onClick();
+    harness.click(1);
+    harness.action.onClick();
+    assert.equal(harness.assessments.length, 2);
+    for (const record of harness.assessments) tracker.record({ id: `answer:${record.questionId}`, kind: 'answer', correct: record.correct });
+    assert.equal(tracker.getScore().maximumPoints, 10);
+    assert.equal(tracker.getScore().points, 5);
+    const review = harness.reload({ readOnly: true });
+    assert.equal(review.action, null);
+    assert.equal(review.assessments.length, 0);
+    assert.equal(review.card.result().firstCorrect, false);
+    assert.equal(review.card.result().answer, '4');
+    assert.equal(review.container.children[0].children[1].children[0].textContent, '2nd try');
+    assert.equal(tracker.getScore().points, 5);
+});
+
+test('shared unscored questions retain firstCorrect without recording assessments', () => {
+    const harness = questionFixture({ scored: false });
+    harness.click(1);
+    harness.action.onClick();
+    assert.equal(harness.card.result().firstCorrect, true);
+    assert.equal(harness.assessments.length, 0);
+});
+
+test('shared typed-number tidying accepts GCSE numeric forms and rejects malformed commas and non-numbers', () => {
+    const tidy = window.Maths1to9LessonEngine.tidyNumber;
+    for (const [input, expected] of [
+        [' 1\u2009250\u00a0', '1250'], ['−.5', '-0.5'], ['–5', '-5'], ['—5', '-5'],
+        ['.5', '0.5'], ['1,250', '1250'], ['12,500.5', '12500.5'], ['1,250,000', '1250000'],
+        ['15.0', '15.0'], ['5.', '5.']
+    ]) assert.equal(tidy(input), expected, input);
+    for (const input of ['', ' ', '1,25', '12,50.5', '1,2500', '1.2.3', '5kg', '1/2', '1e3', '+5', 'Infinity']) {
+        assert.equal(tidy(input), null, input);
+    }
+});
+
+test('shared number input keeps its node and restores invalid feedback without an attempt', () => {
+    let harness = questionFixture({ input: 'number', answer: '0.5', feedback: 'Correct' });
+    const input = harness.type('hello');
+    assert.equal(input, harness.container.children[0].children[1].children[0]);
+    input.events.keydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(harness.assessments.length, 0);
+    assert.equal(harness.card.result().firstCorrect, null);
+    assert.equal(harness.action.label, 'Check');
+    assert.equal(harness.container.children[0].children[2].textContent, 'Type a number, like 12 or 0.5.');
+    harness = harness.reload();
+    assert.equal(harness.section.state.cards['stable-1'].invalid, true);
+    assert.equal(harness.container.children[0].children[2].textContent, 'Type a number, like 12 or 0.5.');
+    harness.type('.5').events.keydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(harness.card.result().answer, '0.5');
+    assert.equal(harness.card.result().firstCorrect, true);
+    assert.equal(harness.assessments.length, 1);
+    assert.equal(harness.action.label, 'Continue');
+});
+
+test('shared number retry clears input and checks misconception rules in order', () => {
+    const harness = questionFixture({ input: 'number', answer: '72',
+        rules: [{ value: '6', feedback: 'First rule', hint: 'overlap' },
+            { value: '6.0', feedback: 'Second rule' }], fallback: 'Use every tile' });
+    harness.type('6.0');
+    harness.action.onClick();
+    assert.equal(harness.card.result().explanation, 'First rule');
+    assert.equal(harness.feedback[0].hint, 'overlap');
+    harness.action.onClick();
+    assert.equal(harness.section.state.cards['stable-1'].value, '');
+    assert.equal(harness.action.disabled, true);
+    harness.type('7');
+    harness.action.onClick();
+    assert.equal(harness.card.result().explanation, 'Use every tile');
+    harness.action.onClick();
+    harness.type('72.0');
+    harness.action.onClick();
+    assert.equal(harness.card.result().correct, true);
+    assert.equal(harness.card.result().firstCorrect, false);
+    assert.equal(harness.assessments.length, 3);
+});
+
+test('shared number exact mode distinguishes 15 from 15.0 while default mode does not', () => {
+    const exact = questionFixture({ input: 'number', answer: '15.0', exact: true });
+    exact.type('15');
+    exact.action.onClick();
+    assert.equal(exact.card.result().correct, false);
+    exact.action.onClick();
+    exact.type('15.0');
+    exact.action.onClick();
+    assert.equal(exact.card.result().correct, true);
+    const numeric = questionFixture({ input: 'number', answer: '15.0' });
+    numeric.type('15');
+    numeric.action.onClick();
+    assert.equal(numeric.card.result().correct, true);
 });

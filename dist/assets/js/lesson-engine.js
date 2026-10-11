@@ -345,6 +345,224 @@
         panel.append(message);
         container.append(panel);
     }
+    function tidyNumber(value) {
+        let text = String(value).replace(/\s/g, '').replace(/[−–—]/g, '-');
+        if (/^-?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text)) {
+            text = text.replaceAll(',', '');
+        }
+        text = text.replace(/^(-?)\./, (point, sign) => `${sign}0.`);
+        if (!/^-?\d+(?:\.\d*)?$/.test(text) || !Number.isFinite(Number(text))) return null;
+        return text;
+    }
+
+    function appendResultMark(container, row) {
+        if (row.firstCorrect !== true && row.firstCorrect !== false) return;
+        const visible = row.firstCorrect ? '✓' : row.correct ? '2nd try' : 'Incorrect';
+        const spoken = row.firstCorrect ? 'Right first time' : row.correct ? 'Corrected' : 'Incorrect';
+        const mark = resultText('span', visible);
+        mark.setAttribute('aria-hidden', 'true');
+        container.append(mark, resultText('span', spoken, 'visually-hidden'));
+    }
+
+    // The lesson opens a versioned section first; every card lives in its cards map.
+    // Dependencies are explicit so the cycle can also be tested without the engine UI.
+    function createQuestion(container, config, section, api) {
+        const { sectionId, questionId } = config;
+        if (!section?.state || !sectionId || !questionId) {
+            throw new TypeError('createQuestion requires an opened section state and stable ids.');
+        }
+        if (config.input !== 'choice' && config.input !== 'number') {
+            throw new TypeError('createQuestion input must be choice or number.');
+        }
+        if (!section.state.cards?.[questionId]) {
+            section.update(state => {
+                state.cards ??= {};
+                state.cards[questionId] = {
+                    selected: null, rejected: [], value: '', phase: 'answer',
+                    firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
+                };
+            });
+        }
+        const saved = section.state.cards[questionId];
+        const options = config.options || [];
+        let released = false;
+        function matches(value, expected) {
+            const answer = tidyNumber(expected);
+            return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
+        }
+        function result() {
+            const answer = config.input === 'choice' ? options[saved.selected]?.label ?? '' : saved.value;
+            return {
+                prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
+                correct: saved.correct, explanation: saved.feedback
+            };
+        }
+        const article = document.createElement('article');
+        article.className = 'question-card question-card--bare';
+        const heading = resultText('h3', config.prompt, 'question-prompt');
+        heading.dataset.screenHeading = '';
+        article.append(heading);
+        container.replaceChildren(article);
+        if (config.readOnly) {
+            api.clearSectionAction(sectionId);
+            const row = result();
+            const answer = resultText('p', row.answer, 'retained-result__answer');
+            appendResultMark(answer, row);
+            article.append(answer);
+            if (saved.feedback) {
+                const feedbackClass = saved.correct === true ? 'is-correct' : 'is-incorrect';
+                article.append(resultText('p', saved.feedback, `question-feedback is-visible ${feedbackClass}`));
+            }
+            return { result };
+        }
+        const buttons = [];
+        let input;
+        if (config.input === 'choice') {
+            const group = document.createElement('div');
+            group.className = 'question-card-options';
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', 'Choose an answer');
+            options.forEach((option, index) => {
+                const button = resultText('button', option.label, 'button');
+                button.type = 'button';
+                button.addEventListener('click', () => {
+                    if (saved.phase !== 'answer' || saved.rejected.includes(index) || released) return;
+                    section.update(() => { saved.selected = index; });
+                    section.update(() => { saved.invalid = false; });
+                    update();
+                });
+                buttons.push({ button, rejectionMark: false });
+                group.append(button);
+            });
+            article.append(group);
+        } else {
+            const label = resultText('label', config.inputLabel || 'Your answer', 'question-answer-label');
+            input = document.createElement('input');
+            input.type = 'text';
+            input.inputMode = 'decimal';
+            input.autocomplete = 'off';
+            input.value = saved.value;
+            input.addEventListener('input', () => {
+                if (saved.phase !== 'answer' || released) return;
+                section.update(() => { saved.value = input.value; });
+                section.update(() => { saved.invalid = false; });
+                update();
+            });
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter' && saved.phase === 'answer' && saved.value.trim() !== '') {
+                    event.preventDefault();
+                    act();
+                }
+            });
+            label.append(input);
+            article.append(label);
+        }
+        const feedback = document.createElement('p');
+        feedback.setAttribute('role', 'status');
+        article.append(feedback);
+        function setAction() {
+            api.setSectionAction(sectionId, {
+                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
+                disabled: saved.phase === 'answer' && (config.input === 'choice'
+                    ? saved.selected === null : saved.value.trim() === ''),
+                onClick: act
+            });
+        }
+        function update() {
+            for (const [index, item] of buttons.entries()) {
+                const { button } = item;
+                const selected = saved.selected === index;
+                const rejected = saved.rejected.includes(index);
+                button.className = 'button';
+                if (selected) {
+                    button.className += saved.phase === 'correct' ? ' is-correct'
+                        : saved.phase === 'wrong' ? ' is-incorrect' : ' is-selected';
+                }
+                if (rejected) button.className += ' is-rejected';
+                button.disabled = saved.phase !== 'answer' || rejected;
+                button.setAttribute('aria-pressed', String(selected));
+                if (rejected && !item.rejectionMark) {
+                    const cross = resultText('span', ' ×');
+                    cross.setAttribute('aria-hidden', 'true');
+                    button.append(cross, resultText('span', ' Incorrect option', 'visually-hidden'));
+                    item.rejectionMark = true;
+                }
+            }
+            if (input) {
+                input.value = saved.value;
+                input.disabled = saved.phase !== 'answer';
+            }
+            const shown = saved.invalid || saved.phase !== 'answer';
+            feedback.className = 'question-feedback';
+            if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
+            feedback.replaceChildren();
+            if (saved.invalid) feedback.textContent = 'Type a number, like 12 or 0.5.';
+            else if (shown) {
+                feedback.append(resultText('span', saved.feedback));
+                if (saved.hint) feedback.append(resultText('span', saved.hint, 'question-hint'));
+            }
+            setAction();
+        }
+        function act() {
+            if (released) return;
+            if (saved.phase === 'correct') {
+                released = true;
+                api.clearSectionAction(sectionId);
+                config.onContinue?.();
+                return;
+            }
+            if (saved.phase === 'wrong') {
+                section.update(() => {
+                    saved.phase = 'answer';
+                    saved.selected = null;
+                    saved.value = '';
+                    saved.feedback = '';
+                    saved.hint = null;
+                });
+                update();
+                if (input) input.focus();
+                return;
+            }
+            let correct;
+            let response;
+            let value;
+            if (config.input === 'choice') {
+                if (saved.selected === null || saved.rejected.includes(saved.selected)) return;
+                response = options[saved.selected];
+                correct = response.correct === true;
+            } else {
+                value = tidyNumber(saved.value);
+                if (value === null) {
+                    section.update(() => { saved.invalid = true; });
+                    update();
+                    return;
+                }
+                correct = matches(value, config.answer);
+                response = correct ? { feedback: config.feedback || '' }
+                    : (config.rules || []).find(rule => matches(value, rule.value)) || { feedback: config.fallback || '' };
+            }
+            section.update(() => {
+                if (saved.firstCorrect === null) saved.firstCorrect = correct;
+                saved.correct = correct;
+                saved.phase = correct ? 'correct' : 'wrong';
+                saved.feedback = response.feedback || '';
+                saved.hint = response.hint || null;
+                if (value !== undefined) saved.value = value;
+                if (!correct && config.input === 'choice') saved.rejected.push(saved.selected);
+            });
+            if (config.scored === true) {
+                api.recordAssessment({ questionType: config.questionType, questionId, correct });
+            }
+            update();
+            const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
+            if (config.input === 'choice') outcome.option = saved.selected;
+            else outcome.value = value;
+            config.onFeedback?.(outcome);
+        }
+        update();
+        return { result };
+    }
+
     window.Maths1to9LessonEngine = {
         createRouter,
         updateStageProgress,
@@ -357,7 +575,9 @@
         createSectionState,
         createBackNavigation,
         renderResults,
-        renderScorePanel
+        renderScorePanel,
+        tidyNumber,
+        createQuestion
     };
 })();
 
@@ -411,6 +631,7 @@
          * the section the pupil is viewing.
          */
         sectionActions: new Map(),
+        sectionStates: new Map(),
         backNavigation: null,
 
         /*
@@ -2793,8 +3014,15 @@
                 updateControls();
             },
 
-            useSectionState(key, options) {
-                return window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
+            async useSectionState(key, options) {
+                const section = await window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
+                state.sectionStates.set(key, section);
+                return section;
+            },
+
+            createQuestion(container, config) {
+                return window.Maths1to9LessonEngine.createQuestion(container, config,
+                    state.sectionStates.get(config.sectionId), window.Maths1to9Lesson);
             },
 
             registerHashRoute(id, handler, aliases = []) {
