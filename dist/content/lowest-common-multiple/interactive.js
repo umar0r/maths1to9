@@ -245,12 +245,27 @@
             }));
         }
         dispatch('gate');
-        let state = await store.getLessonActivityState(SLUG, sectionId);
-        if (!state) {
-            state = {
+        function initialState() {
+            return {
                 index: 0, order: guided ? [[12, 30], [18, 24]] : pickSession(),
                 items: [], finished: false
             };
+        }
+        let sectionState;
+        let state;
+        if (guided) {
+            sectionState = await api.useSectionState(sectionId, {
+                version: 1,
+                initial: initialState,
+                upgrade(saved, fromVersion) {
+                    // Version 0 has the same questions and state fields, without a wrapper.
+                    if (fromVersion === 0) return saved;
+                    throw new Error('Unsupported saved LCM Try it version.');
+                }
+            });
+            state = sectionState.state;
+        } else {
+            state = await store.getLessonActivityState(SLUG, sectionId) || initialState();
         }
 
         if (guided && state.items[0]?.stage === 'answer') {
@@ -263,7 +278,12 @@
         }
 
         function save() {
-            store.saveLessonActivityState(SLUG, sectionId, state);
+            if (sectionState) {
+                // The activity mutates its state while drawing; validate and queue that snapshot.
+                sectionState.update(() => {});
+            } else {
+                store.saveLessonActivityState(SLUG, sectionId, state);
+            }
         }
         function reportProgress() {
             let completed = state.index;
