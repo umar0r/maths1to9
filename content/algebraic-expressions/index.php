@@ -27,8 +27,8 @@ $pageTitle = 'Writing algebraic expressions';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=30">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
@@ -68,8 +68,8 @@ $pageTitle = 'Writing algebraic expressions';
     </noscript>
 
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="./questions.js?v=14"></script>
+    <script src="./questions.js?v=15"></script>
     <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=31"></script>
+    <script src="../../assets/js/lesson-engine.js?v=41"></script>
 </body>
 </html>

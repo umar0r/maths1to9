@@ -10,7 +10,7 @@ const signed = n => String(n).replace('-', '−');
 const equation = (a,b) => `${signed(a)} − (−${b})`;
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalise = s => String(s).replace(/−/g,'-').replace(/\s/g,'').replace(/[()]/g,'');
-let state = {contentVersion:1, stage:0, answers:{}, learned:false}, queue = Promise.resolve();
+let state = {contentVersion:1, stage:0, highest:0, positions:{1:0,2:0,3:0}, answers:{}, learned:false}, queue = Promise.resolve();
 function scoringActivities() {
  const current = [
   {id:'learn',kind:'learn',completed:state.learned},
@@ -36,8 +36,9 @@ function refreshScore(score) {
 function save() {
  const scoreActivities=scoringActivities(), score=engine.calculateScore(scoreActivities);
  refreshScore(score);
+ updateMainAction();
  const answers = Object.entries(state.answers).filter(([id])=>id!=='extra').map(([,answer])=>answer);
- const snapshot = JSON.parse(JSON.stringify({title:'Subtracting negative numbers',score,scoreActivities,pathname:location.pathname,totalSections:4,currentSectionId:ids[state.stage],currentSectionIndex:state.stage,highestUnlockedIndex:3,finished:checkQuestions.every(q=>state.answers[q.id]?.done),completionPercent:Math.round((answers.filter(a=>a.done).length + Number(state.learned))/22*100),negativeSubtractionState:state}));
+ const snapshot = JSON.parse(JSON.stringify({title:'Subtracting negative numbers',score,scoreActivities,pathname:location.pathname,totalSections:4,currentSectionId:ids[state.stage],currentSectionIndex:state.stage,highestUnlockedIndex:state.highest,finished:checkQuestions.every(q=>state.answers[q.id]?.done),completionPercent:Math.round((answers.filter(a=>a.done).length + Number(state.learned))/22*100),negativeSubtractionState:state}));
  queue = queue.catch(()=>{}).then(()=>store.saveLessonProgress('negative-numbers',snapshot));
 }
 const practice = [
@@ -79,43 +80,55 @@ function resultRows(list) {
 function questionHtml(q) {
  const a=state.answers[q.id]||{};
  if(a.done&&a.correct)return card(q.title,`<p class="negative-equation">${escape(q.prompt)} = ${escape(a.value)}</p><p>${a.firstCorrect&&(!q.explain||a.explanationCorrect)?'✓':'2nd try'}</p>`);
- return card(q.title,`<form data-question="${q.id}"><p class="${q.prompt.length<45?'negative-equation':''}">${escape(q.prompt)}</p>${q.explain?`<label>Your explanation<textarea name="reason" required>${escape(a.reason||'')}</textarea></label>`:''}${q.options?`<div class="negative-options">${q.options.map(o=>`<label><input type="radio" name="answer" value="${escape(o)}" required ${a.value===o?'checked':''}> ${escape(o)}</label>`).join('')}</div>`:`<label>${q.explain?'Correct answer':'Your answer'} <input type="text" name="answer" autocomplete="off" required value="${escape(a.value||'')}"> ${q.unit||''}</label>`}${q.hint?`<details><summary>Show a hint</summary><p>${q.hint}</p></details>`:''}<div class="negative-feedback" role="status">${escape(a.feedback||'')}</div><button class="button" type="submit" ${a.awaitingReview?'disabled':''}>${a.done?'Check again':'Check answer'}</button><div data-self></div></form>`);
+ return card(q.title,`<form data-question="${q.id}"><p class="${q.prompt.length<45?'negative-equation':''}">${escape(q.prompt)}</p>${q.explain?`<label>Your explanation<textarea name="reason" required>${escape(a.reason||'')}</textarea></label>`:''}${q.options?`<div class="negative-options">${q.options.map(o=>`<label><input type="radio" name="answer" value="${escape(o)}" required ${a.value===o?'checked':''}> ${escape(o)}</label>`).join('')}</div>`:`<label>${q.explain?'Correct answer':'Your answer'} <input type="text" name="answer" autocomplete="off" required value="${escape(a.value||'')}"> ${q.unit||''}</label>`}${q.hint?`<details><summary>Show a hint</summary><p>${q.hint}</p></details>`:''}<div class="negative-feedback" role="status">${escape(a.feedback||'')}</div><div data-self></div></form>`);
 }
 function mountQuestions(list) {
  list.forEach(q=>{
   const form=app.querySelector(`[data-question="${q.id}"]`);
   if(!form)return;
-  const feedback=form.querySelector('[role=status]');
   const a=state.answers[q.id]||(state.answers[q.id]={});
-  function mountReview(){
-   if(!a.awaitingReview)return;
-   form.querySelector('[type=submit]').disabled=true;
-   form.querySelector('[data-self]').innerHTML='<p>Compare your explanation with the model answer above. Did it explain the same mistake or reasoning?</p><button type="button" class="button" data-review="yes">My explanation matches</button><button type="button" class="button" data-review="no">I need to review it</button>';
-   form.querySelectorAll('[data-review]').forEach(b=>b.onclick=()=>{
-    const matches=b.dataset.review==='yes';
-    if(a.explanationCorrect===undefined)a.explanationCorrect=matches;
-    a.done=true;a.correct=a.numericCorrect&&matches;a.awaitingReview=false;
-    a.feedback=a.correct?'Explanation self-checked.':'Review the model explanation before moving on. '+q.feedback;
-    save();show(state.stage);
+  if(a.awaitingReview) {
+   form.querySelector('[data-self]').innerHTML=`<p>Compare your explanation with the model answer above. Did it explain the same mistake or reasoning?</p><div role="group" aria-label="Check your explanation"><button type="button" class="button${a.reviewChoice==='yes'?' is-selected':''}" data-review="yes" aria-pressed="${a.reviewChoice==='yes'}">My explanation matches</button><button type="button" class="button${a.reviewChoice==='no'?' is-selected':''}" data-review="no" aria-pressed="${a.reviewChoice==='no'}">I need to review it</button></div>`;
+   form.querySelectorAll('[data-review]').forEach(button=>button.onclick=()=>{
+    a.reviewChoice=button.dataset.review;
+    form.querySelectorAll('[data-review]').forEach(option=>{
+     option.classList.toggle('is-selected',option===button);
+     option.setAttribute('aria-pressed',String(option===button));
+    });
+    save();
    });
   }
-  mountReview();
+  form.querySelectorAll('input, textarea').forEach(input=>input.disabled=a.phase==='wrong'||a.awaitingReview);
   form.addEventListener('input',()=>{
    a.value=new FormData(form).get('answer')||'';
    a.reason=new FormData(form).get('reason')||'';
    save();
   });
+  form.querySelector('input[type="text"]')?.addEventListener('keydown',event=>{
+   if(event.key==='Enter'){event.preventDefault();if(!app.querySelector('[data-main-action]').disabled)form.requestSubmit();}
+  });
   form.addEventListener('submit',event=>{
    event.preventDefault();
-   const value=new FormData(form).get('answer');
-   const correct=normalise(value)===normalise(q.answer);
-   a.value=value;a.reason=new FormData(form).get('reason')||'';
-   if(a.firstCorrect===undefined)a.firstCorrect=correct;
-   a.history=a.history||[];a.history.push({value,reason:a.reason,correct});
-   a.feedback=correct?q.feedback:(q.id.startsWith('check-')?'Review your answer. ':'Not quite. ')+q.feedback;
-   feedback.textContent=a.feedback;
-   if(q.explain){a.numericCorrect=correct;a.awaitingReview=true;mountReview();save();}
-   else {a.done=true;a.correct=correct;save();show(state.stage);}
+   if(a.phase==='wrong')return;
+   if(a.awaitingReview) {
+    if(!a.reviewChoice)return;
+    const matches=a.reviewChoice==='yes';
+    if(a.explanationCorrect===undefined)a.explanationCorrect=matches;
+    a.done=true;a.correct=a.numericCorrect&&matches;a.awaitingReview=false;
+    a.phase=a.correct?'correct':'wrong';
+    a.feedback=a.correct?'Explanation self-checked.':'Review the model explanation before moving on. '+q.feedback;
+   } else {
+    if(!form.reportValidity())return;
+    const value=new FormData(form).get('answer');
+    const correct=normalise(value)===normalise(q.answer);
+    a.value=value;a.reason=new FormData(form).get('reason')||'';
+    if(a.firstCorrect===undefined)a.firstCorrect=correct;
+    a.history=a.history||[];a.history.push({value,reason:a.reason,correct});
+    a.feedback=correct?q.feedback:(q.id.startsWith('check-')?'Review your answer. ':'Not quite. ')+q.feedback;
+    if(q.explain){a.numericCorrect=correct;a.awaitingReview=true;a.phase='review';delete a.reviewChoice;}
+    else {a.done=true;a.correct=correct;a.phase=correct?'correct':'wrong';}
+   }
+   save();show(state.stage);
   });
  });
 }
@@ -174,10 +187,15 @@ function renderLearn() {
  start.oninput=animate;amount.oninput=animate;app.querySelector('[data-animate]').onclick=animate;
  app.querySelectorAll('[data-example]').forEach(b=>b.onclick=()=>{const [a,c]=b.dataset.example.split(',');start.value=a;amount.max=10-Number(a);amount.value=c;animate();});const restoredPosition=state.explore.position;update();move(restoredPosition);
 }
-function renderGuided() {
+function renderGuided(position) {
  app.querySelector('[data-panel]').innerHTML=questionHtml(guided[0])+card('2. Complete each step','<div data-guided-line></div>')+card('3. Spot what changes',`<p>Click the two minus signs that need to change. Keep the starting number unchanged.</p><p class="negative-equation"><button class="button" data-sign="start" aria-label="Minus sign of starting number">−</button>7 <button class="button" data-sign="operation" aria-label="Subtraction sign" aria-pressed="false">−</button> (<button class="button" data-sign="number" aria-label="Minus sign of negative three" aria-pressed="false">−</button>3)</p><p data-sign-feedback role="status"></p>`)+questionHtml(guided[1]);
- mountQuestions(guided);mountGuidedLine(app.querySelector('[data-guided-line]'),-2,6,'guided-2',true);
- state.signs=state.signs||{selected:[],feedback:''};const selected=new Set(state.signs.selected);app.querySelector('[data-sign-feedback]').textContent=state.signs.feedback;app.querySelectorAll('[data-sign]').forEach(b=>{b.setAttribute('aria-pressed',selected.has(b.dataset.sign));b.disabled=!!state.answers['guided-3']?.done;});app.querySelectorAll('[data-sign]').forEach(b=>b.onclick=()=>{
+ const panel=app.querySelector('[data-panel]');
+ const cards=[...panel.children];
+ if(position<4)cards.forEach((item,index)=>{if(index!==position)item.remove();});
+ mountQuestions(position<4?guided.filter((_,index)=>(index===0?0:3)===position):guided);
+ const line=app.querySelector('[data-guided-line]');
+ if(line)mountGuidedLine(line,-2,6,'guided-2',true);
+ state.signs=state.signs||{selected:[],feedback:''};const selected=new Set(state.signs.selected);const signFeedback=app.querySelector('[data-sign-feedback]');if(signFeedback)signFeedback.textContent=state.signs.feedback;app.querySelectorAll('[data-sign]').forEach(b=>{b.setAttribute('aria-pressed',selected.has(b.dataset.sign));b.disabled=!!state.answers['guided-3']?.done;});app.querySelectorAll('[data-sign]').forEach(b=>b.onclick=()=>{
  const feedback=app.querySelector('[data-sign-feedback]');
  if(b.dataset.sign==='start'){feedback.textContent='The starting number stays at −7. Only subtracting −3 changes to adding 3.';state.signs.feedback=feedback.textContent;save();return;}
  selected.has(b.dataset.sign)?selected.delete(b.dataset.sign):selected.add(b.dataset.sign);b.setAttribute('aria-pressed',selected.has(b.dataset.sign));
@@ -195,21 +213,91 @@ function updateResult() {
  result.innerHTML=`<h2>${score} out of 4</h2><p>${score===4?'You’re ready.':score===3?'Review your mistake, then try one more question.':'Return to the interactive number line and practise again.'}</p><p>Based on first attempts, including your self-assessed explanation. GCSE reasoning: ${state.answers['check-5'].correct?'completed correctly':'review the model answer'}.</p>${score===3?'<div data-extra></div>':score<3?'<button class="button" data-return>Return to Learn</button>':''}<p class="negative-note">Subtracting a negative becomes adding a positive.<br>−8 − (−3) = −8 + 3<br>The starting number remains unchanged.</p><button class="button" data-retry>Try the Check again</button>`;
  if(score===3){const q={id:'extra',title:'One more question',prompt:'−10 − (−6)',answer:'−4',feedback:'−10 − (−6) = −10 + 6 = −4.'};result.querySelector('[data-extra]').innerHTML=questionHtml(q);mountQuestions([q]);}
  result.querySelector('[data-return]')?.addEventListener('click',()=>show(0));
- result.querySelector('[data-retry]').onclick=()=>{state.checkHistory=state.checkHistory||[];state.checkHistory.push(JSON.parse(JSON.stringify(checkQuestions.map(q=>({question:q.id,...state.answers[q.id]})))));checkQuestions.forEach(q=>delete state.answers[q.id]);save();show(3);};
+ result.querySelector('[data-retry]').onclick=()=>{state.checkHistory=state.checkHistory||[];state.checkHistory.push(JSON.parse(JSON.stringify(checkQuestions.map(q=>({question:q.id,...state.answers[q.id]})))));checkQuestions.forEach(q=>delete state.answers[q.id]);state.positions[3]=0;save();show(3);};
 }
-function show(stage) {
+function activeQuestion() {
+ const position=state.positions[state.stage];
+ if(state.stage===1)return position===0?guided[0]:position===3?guided[1]:null;
+ if(state.stage===2)return practice[position];
+ if(state.stage===3) {
+  if(position<checkQuestions.length)return checkQuestions[position];
+  const firstCorrect=checkQuestions.slice(0,4).filter(q=>state.answers[q.id]?.firstCorrect&&(!q.explain||state.answers[q.id]?.explanationCorrect)).length;
+  if(firstCorrect===3&&(!state.answers.extra?.done||!state.answers.extra?.correct))return {id:'extra',title:'One more question',prompt:'−10 − (−6)',answer:'−4',feedback:'−10 − (−6) = −10 + 6 = −4.'};
+ }
+ return null;
+ return null;
+}
+function updateMainAction() {
+ const button=app.querySelector('[data-main-action]');
+ if(!button)return;
+ const question=activeQuestion();
+ const answer=question?state.answers[question.id]||{}:null;
+ button.textContent='Continue';
+ button.disabled=false;
+ if(answer) {
+  if(answer.awaitingReview){button.textContent='Check answer';button.disabled=!answer.reviewChoice;}
+  else if(answer.phase==='wrong'){button.textContent='Try again';}
+  else if(!answer.done||!answer.correct){button.textContent='Check answer';button.disabled=!answer.value?.trim()||(question.explain&&!answer.reason?.trim());}
+ } else if(state.stage===0)button.disabled=!state.learned;
+ else if(state.stage===1&&state.positions[1]===1)button.disabled=!state.answers['guided-2']?.done;
+ else if(state.stage===1&&state.positions[1]===2)button.disabled=!state.answers['guided-3']?.done;
+ else if(state.stage===3)button.textContent='All lessons';
+}
+function act() {
+ const question=activeQuestion();
+ if(question) {
+  const answer=state.answers[question.id]||{};
+  if(answer.phase==='wrong') {
+   answer.phase='answer';answer.done=false;answer.correct=false;
+   save();show(state.stage);return;
+  }
+  if(answer.awaitingReview||!answer.done||!answer.correct) {
+   app.querySelector(`[data-question="${question.id}"]`)?.requestSubmit();return;
+  }
+ }
+ if(state.stage===0)show(1,true);
+ else if(state.stage===3&&state.positions[3]>=checkQuestions.length)queue.then(()=>location.assign('../../'));
+ else {
+  const length=state.stage===1?4:state.stage===2?practice.length:checkQuestions.length;
+  if(state.positions[state.stage]<length) {
+   state.positions[state.stage]++;
+   show(state.stage);
+  } else show(state.stage+1,true);
+ }
+}
+function show(stage, unlock = false) {
+ if(unlock)state.highest=Math.max(state.highest,stage);
+ const requested=stage;
+ stage=Math.min(stage,state.highest);
  state.stage=stage;router.sync(ids[stage]);
- app.innerHTML=`<header class="negative-header"><div class="negative-header__copy"><p>Learning goal</p><h1>Subtracting negative numbers</h1><p>Learn how to subtract a negative number by rewriting it as addition.</p>${stage===0?'<p class="negative-equation">a − (−b) = a + b</p>':''}</div><div class="rounding-score" aria-live="polite"><div class="practice-progress-ring"><span>0</span></div></div></header><nav class="negative-nav" aria-label="Lesson stages">${stages.map((label,i)=>`<button class="button" data-stage="${i}" aria-pressed="${i===stage}">${label}</button>`).join('')}</nav><section data-panel aria-label="${stages[stage]}"></section><div class="negative-nav">${stage>0?'<button class="button" data-back>Back</button>':''}${stage<3?`<button class="button" data-next>Continue to ${stages[stage+1]}</button>`:''}</div>`;
- app.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>show(Number(b.dataset.stage)));
- app.querySelector('[data-back]')?.addEventListener('click',()=>show(stage-1));app.querySelector('[data-next]')?.addEventListener('click',()=>show(stage+1));
- if(stage===0)renderLearn();else if(stage===1)renderGuided();else {
+ if(requested>state.highest)queueMicrotask(()=>router.sync(ids[state.stage],{replace:true}));
+ app.innerHTML=`<header class="negative-header"><div class="negative-header__copy"><p>Learning goal</p><h1>Subtracting negative numbers</h1><p>Learn how to subtract a negative number by rewriting it as addition.</p>${stage===0?'<p class="negative-equation">a − (−b) = a + b</p>':''}</div><div class="rounding-score" aria-live="polite"><div class="practice-progress-ring"><span>0</span></div></div></header><nav class="negative-nav" aria-label="Lesson stages">${stages.map((label,i)=>`<button class="button" data-stage="${i}" ${i>state.highest?'disabled':''} aria-pressed="${i===stage}">${label}</button>`).join('')}</nav><section data-panel aria-label="${stages[stage]}"></section><footer class="lesson-controls"><div class="button-group">${stage>0?'<button class="button" data-back>Back</button>':''}<button class="button button--primary" type="button" data-main-action>Continue</button></div></footer>`;
+ app.querySelectorAll('[data-stage]').forEach(button=>button.onclick=()=>show(Number(button.dataset.stage)));
+ app.querySelector('[data-back]')?.addEventListener('click',()=>{
+  if(state.positions[stage]>0){state.positions[stage]--;show(stage);}
+  else show(stage-1);
+ });
+ app.querySelector('[data-main-action]').onclick=act;
+ if(stage===0)renderLearn();
+ else if(stage===1)renderGuided(state.positions[1]);
+ else {
   const list=stage===2?practice:checkQuestions;
-  app.querySelector('[data-panel]').innerHTML=`<h2>${stages[stage]}</h2><p>${stage===2?'Rewrite without calculating in A. Calculate in B. Explain the mistake in C.':'Complete without hints or a number line.'}</p>`+(list.every(q=>state.answers[q.id]?.done&&(stage===3||state.answers[q.id]?.correct))?resultRows(list):list.map(questionHtml).join(''))+(stage===3?'<article class="negative-card" data-result aria-live="polite"></article>'+checkHistoryHtml():'');mountQuestions(list);updateResult();
+  const question=list[state.positions[stage]];
+  app.querySelector('[data-panel]').innerHTML=`<h2>${stages[stage]}</h2><p>${stage===2?'Rewrite without calculating in A. Calculate in B. Explain the mistake in C.':'Complete without hints or a number line.'}</p>`+(question?questionHtml(question):resultRows(list))+(stage===3&&!question?'<article class="negative-card" data-result aria-live="polite"></article>'+checkHistoryHtml():'');
+  mountQuestions(question?[question]:[]);updateResult();
  }
  save();
+ updateMainAction();
 }
 (async()=>{
- try { const saved=await store.getLessonProgress('negative-numbers');if(saved?.negativeSubtractionState&&(!saved.negativeSubtractionState.contentVersion||saved.negativeSubtractionState.contentVersion===1))state={...state,...saved.negativeSubtractionState,contentVersion:1}; }catch(error){console.warn('Progress could not be restored.',error);}
+ try { const saved=await store.getLessonProgress('negative-numbers');if(saved?.negativeSubtractionState&&(!saved.negativeSubtractionState.contentVersion||saved.negativeSubtractionState.contentVersion===1))state={...state,...saved.negativeSubtractionState,positions:saved.negativeSubtractionState.positions,highest:saved.negativeSubtractionState.highest,contentVersion:1}; }catch(error){console.warn('Progress could not be restored.',error);}
+ if(!Number.isInteger(state.highest))state.highest=Math.max(0,state.stage||0,state.learned?1:0,
+  practice.some(q=>state.answers[q.id]?.value)||['guided-1','guided-2','guided-3','guided-4'].every(id=>state.answers[id]?.done)?2:0,
+  checkQuestions.some(q=>state.answers[q.id]?.value||state.answers[q.id]?.done)?3:0);
+ if(!state.positions) {
+  const firstPending=list=>{const index=list.findIndex(q=>!state.answers[q.id]?.done);return index<0?list.length:index;};
+  state.positions={1:firstPending([{id:'guided-1'},{id:'guided-2'},{id:'guided-3'},{id:'guided-4'}]),2:firstPending(practice),3:firstPending(checkQuestions)};
+ }
  ids.forEach((id,i)=>router.register(id,()=>show(i),i===1?['try-it','method']:i===2?['practice']:i===3?['comparison']:['explanation','interactive']));
  if(!router.start())show(Math.max(0,Math.min(3,state.stage||0)));
 })();

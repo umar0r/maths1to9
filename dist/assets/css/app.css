@@ -3335,3 +3335,76 @@ noscript p {
 #place-value-comparison .final-check-summary .lesson-step__title { font-size: 1.15rem; }
 #place-value-comparison .final-check-summary .lesson-step__text { font-size: 1.1rem; line-height: 1.6; }
 #place-value-comparison .lesson-completion__result p:not(.lesson-completion__score) { font-size: 1.1rem; line-height: 1.6; }
+
+/* Read-only completed work; lessons opt in through these classes. */
+.retained-results { list-style: none; padding: 0; }
+.retained-results > li { padding: .8rem 0; border-bottom: 1px solid var(--color-border, #ddd); }
+.retained-result { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.retained-result__answer { display: flex; gap: .7rem; flex-shrink: 1; min-width: 0; }
+.retained-result__explanation { margin: .4rem 0 0; font-size: .9rem; }
+.retained-try-example { margin-bottom: 2rem; }
+@media (max-width: 480px) { .retained-result { flex-wrap: wrap; } }
+.retained-result svg { max-width: 11rem; max-height: 5rem; height: auto; vertical-align: middle; }
+.retained-results { margin-block: .5rem; }
+
+.retained-result strong { min-width: 0; overflow-wrap: anywhere; }
+.retained-result__answer > span { white-space: nowrap; }
+
+/* Opt-in screen navigation, separate from the main action. */
+.lesson-back {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+.lesson-back[hidden] { display: none; }
+.lesson-back:focus-visible { outline: 3px solid var(--primary, #2563eb); outline-offset: 2px; }
+
+.lesson-score-panel { display: flex; align-items: center; gap: 1rem; margin-block: 1rem; }
+.lesson-score-panel p { margin: 0; }
+.retained-result__answer { flex-wrap: wrap; }
+
+/* Accessible text that stays available to screen readers. */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.question-card-options { display: flex; flex-direction: column; gap: .75rem; }
+.lesson-section .question-card-options > .button.is-rejected {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    border-color: var(--border);
+    opacity: .65;
+    box-shadow: none;
+}
+.question-hint { display: block; margin-top: .3rem; }
+.question-answer-label { display: flex; flex-direction: column; gap: .5rem; }
+
+/* Secondary in-page actions share Back's quiet treatment. */
+.lesson-secondary-action {
+    background: transparent;
+    border: 0;
+    color: var(--muted, #526174);
+    cursor: pointer;
+    font: inherit;
+    min-height: 44px;
+    padding: .5rem .75rem;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+.lesson-secondary-action:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

@@ -3,6 +3,7 @@
     "slug": "highest-common-factor",
     "title": "Highest common factor",
     "subtitle": "Match prime factors to find the HCF.",
+    "navigation": { "back_button": true },
     "assessment": {
         "question_types": {
             "hcf-prime-match": "find-hcf"

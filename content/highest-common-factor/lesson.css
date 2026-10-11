@@ -12,11 +12,11 @@ body[data-lesson-id='highest-common-factor'] #lesson-section-explanation > .less
 .hcf-tile.is-selected,.hcf-options .is-selected{outline:3px solid #0369a1;outline-offset:2px;background:#e0f2fe}
 .hcf-tile.is-largest{box-shadow:0 0 0 3px #15803d}
 .hcf-tile:focus-visible{outline:3px solid #0369a1;outline-offset:3px}
-.hcf-formula{margin-block:4px;overflow-x:auto}.hcf-options,.prime-check-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-block:16px}
-.prime-check-options .button{white-space:normal;height:auto;min-height:44px}.hcf-input{display:flex;align-items:center;gap:10px;margin-block:16px}.hcf-input input{width:100px;min-height:44px;font:inherit;border:2px solid #64748b;border-radius:8px;padding:8px}
+.hcf-formula{margin-block:4px;overflow-x:auto}.hcf-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-block:16px}
+.hcf-input{display:flex;align-items:center;gap:10px;margin-block:16px}.hcf-input input{width:100px;min-height:44px;font:inherit;border:2px solid #64748b;border-radius:8px;padding:8px}
 @keyframes hcf-slide{from{transform:translateY(40px);opacity:.2}to{transform:translateY(0);opacity:1}}
 .is-shaking{animation:hcf-shake .25s}@keyframes hcf-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-@media(max-width:620px){.prime-check-options{grid-template-columns:1fr}.hcf-venn{height:230px}.hcf-zone .hcf-tile{min-width:36px;min-height:40px}}
+@media(max-width:620px){.hcf-venn{height:230px}.hcf-zone .hcf-tile{min-width:36px;min-height:40px}}
 @media(prefers-reduced-motion:reduce){.hcf-model *,.is-shaking{animation:none!important}}
 
 .lesson-revision-list { display: grid; gap: 1.5rem; padding-left: 0; list-style: none; }

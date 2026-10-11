@@ -27,7 +27,7 @@ $pageTitle = 'Factors';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=30">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
     <link rel="stylesheet" href="./lesson.css?v=10">
 </head>
 
@@ -71,6 +71,6 @@ $pageTitle = 'Factors';
     <script src="../../assets/js/lesson-recommendations.js?v=2"></script>
     <script src="./questions.js?v=13"></script>
     <script src="./interactive.js?v=9"></script>
-    <script src="../../assets/js/lesson-engine.js?v=31"></script>
+    <script src="../../assets/js/lesson-engine.js?v=41"></script>
 </body>
 </html>

@@ -245,12 +245,27 @@
             }));
         }
         dispatch('gate');
-        let state = await store.getLessonActivityState(SLUG, sectionId);
-        if (!state) {
-            state = {
+        function initialState() {
+            return {
                 index: 0, order: guided ? [[12, 30], [18, 24]] : pickSession(),
                 items: [], finished: false
             };
+        }
+        let sectionState;
+        let state;
+        if (guided) {
+            sectionState = await api.useSectionState(sectionId, {
+                version: 1,
+                initial: initialState,
+                upgrade(saved, fromVersion) {
+                    // Version 0 has the same questions and state fields, without a wrapper.
+                    if (fromVersion === 0) return saved;
+                    return null;
+                }
+            });
+            state = sectionState.state;
+        } else {
+            state = await store.getLessonActivityState(SLUG, sectionId) || initialState();
         }
 
         if (guided && state.items[0]?.stage === 'answer') {
@@ -263,7 +278,12 @@
         }
 
         function save() {
-            store.saveLessonActivityState(SLUG, sectionId, state);
+            if (sectionState) {
+                // The activity mutates its state while drawing; validate and queue that snapshot.
+                sectionState.save();
+            } else {
+                store.saveLessonActivityState(SLUG, sectionId, state);
+            }
         }
         function reportProgress() {
             let completed = state.index;
@@ -357,21 +377,48 @@
             label.append(input);
             root.append(label);
         }
-        function completedAnswer(question) {
+        function completedExpression(question) {
             const entries = diagramEntries(question);
             const factors = colouredFactors(entries);
             const answer = product(entries.map(entry => entry.value));
-            return mathsLine(`\\mathrm{LCM} = ${factors} = ${answer}`, 'lcm-answer-line');
+            return `\\mathrm{LCM} = ${factors} = ${answer}`;
+        }
+        function completedAnswer(question) {
+            return mathsLine(completedExpression(question), 'lcm-answer-line');
         }
         function renderCompletedWork() {
-            const heading = guided ? 'Your completed examples' : 'Your practice results';
+            if (!guided) {
+                const assessments = api.getProgress().scoreActivities;
+                const rows = state.order.map((pair, index) => {
+                    const question = state.items[index];
+                    const assessment = assessments.find(item => item.id === `answer:question-bank:${index + 1}`);
+                    return {
+                        prompt: `${pair[0]} and ${pair[1]}`,
+                        answer: { latex: completedExpression(question) },
+                        firstCorrect: assessment?.firstCorrect ?? null,
+                        correct: true,
+                        explanation: 'Use every tile once, including both sides.'
+                    };
+                });
+                const score = element('div');
+                const results = element('div');
+                root.append(score, results);
+                window.Maths1to9LessonEngine.renderScorePanel(score, {
+                    correct: rows.filter(row => row.firstCorrect === true).length,
+                    total: rows.length,
+                    readyScore: api.getLesson().question_bank.ready_score
+                });
+                window.Maths1to9LessonEngine.renderResults(results, rows, { heading: 'Your practice results' });
+                return;
+            }
+
+            const heading = 'Your completed examples';
             root.append(element('h3', heading));
-            const answers = api.getProgress().scoreActivities;
-            const list = element(guided ? 'div' : 'ol', '', 'lesson-revision-list');
+            const list = element('div', '', 'lesson-revision-list');
             state.order.forEach((pair, index) => {
                 const question = state.items[index];
-                const card = element(guided ? 'article' : 'li', '', 'lesson-revision-item');
-                card.append(element(guided ? 'h3' : 'strong', `${pair[0]} and ${pair[1]}`));
+                const card = element('article', '', 'lesson-revision-item');
+                card.append(element('h3', `${pair[0]} and ${pair[1]}`));
                 if (guided) {
                     // Clear transient feedback on a copy; saved attempts stay unchanged.
                     const completed = {
@@ -381,12 +428,6 @@
                     card.append(drawDiagram(completed, null));
                 }
                 card.append(completedAnswer(question));
-                if (!guided) {
-                    const activity = answers.find(answer => answer.id === `answer:question-bank:${index + 1}`);
-                    let accuracy = 'Corrected';
-                    if (activity?.firstCorrect === true) accuracy = '✓ Right first time';
-                    card.append(element('span', accuracy, 'lesson-revision-accuracy'));
-                }
                 list.append(card);
             });
             root.append(list);

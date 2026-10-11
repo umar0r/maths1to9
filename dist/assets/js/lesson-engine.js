@@ -3,6 +3,167 @@
  */
 (() => {
     'use strict';
+    function escapeHtml(value) {
+        const entities = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return String(value ?? '').replace(/[&<>"']/g, character => entities[character]);
+    }
+
+    function shuffle(array, random = Math.random) {
+        const result = [...array];
+        for (let index = result.length - 1; index > 0; index--) {
+            const other = randomInt(0, index, random);
+            [result[index], result[other]] = [result[other], result[index]];
+        }
+        return result;
+    }
+
+    function seededRandom(seed) {
+        return () => {
+            seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+            return seed / 4294967296;
+        };
+    }
+
+    function randomInt(min, max, random = Math.random) {
+        if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min > max) {
+            throw new RangeError('randomInt requires ordered integer bounds.');
+        }
+        return min + Math.floor(random() * (max - min + 1));
+    }
+
+    function jsonState(value, key) {
+        const ancestors = new Set();
+        function check(item) {
+            if (item === null || typeof item === 'string' || typeof item === 'boolean') return;
+            if (typeof item === 'number' && Number.isFinite(item)) return;
+            if (typeof item !== 'object' || ancestors.has(item)) fail();
+            const prototype = Object.getPrototypeOf(item);
+            if (!Array.isArray(item) && prototype !== null &&
+                Object.getPrototypeOf(prototype) !== null) fail();
+            if (Object.getOwnPropertySymbols(item).length) fail();
+            ancestors.add(item);
+            if (Array.isArray(item)) {
+                for (let index = 0; index < item.length; index++) {
+                    if (!Object.hasOwn(item, index)) fail();
+                    check(item[index]);
+                }
+            } else {
+                for (const child of Object.values(item)) check(child);
+            }
+            ancestors.delete(item);
+        }
+        function fail() {
+            throw new TypeError(`Section state "${key}" must contain only plain JSON values.`);
+        }
+        check(value);
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    // The standard lesson API supplies its slug; dependencies also allow isolated tests.
+    async function createSectionState(slug, key, options, store = window.Maths1to9Progress,
+        schedule = callback => window.requestAnimationFrame(callback),
+        lifecycle = { window, document }) {
+        const { version, initial, upgrade } = options;
+        if (!Number.isSafeInteger(version) || version < 1 || typeof initial !== 'function') {
+            throw new TypeError(`Section state "${key}" requires a positive version and initial().`);
+        }
+        const saved = await store.getLessonActivityState(slug, key);
+        const wrapped = saved?.sharedState === 1;
+        const current = wrapped && saved.version === version;
+        let restored;
+        if (current) restored = saved.data;
+        else if (saved != null && upgrade) {
+            restored = upgrade(wrapped ? saved.data : saved, wrapped ? saved.version : 0);
+        }
+        const data = jsonState(restored == null ? initial() : restored, key);
+        let pending = null;
+        let scheduled = null;
+        function write(snapshot) {
+            return store.saveLessonActivityState(slug, key, { sharedState: 1, version, data: snapshot });
+        }
+        // Persist conversion immediately, including an intentionally fresh replacement.
+        if (saved != null && !current) await write(jsonState(data, key));
+        function flush() {
+            if (pending === null) return;
+            const snapshot = pending;
+            pending = null;
+            scheduled = null;
+            return write(snapshot);
+        }
+        function queueSave() {
+            pending = jsonState(data, key);
+            if (lifecycle.document.hidden) {
+                flush();
+                return;
+            }
+            if (scheduled) return;
+            const frame = {};
+            scheduled = frame;
+            schedule(() => {
+                // A hide event may already have flushed this frame's snapshot.
+                if (scheduled === frame) flush();
+            });
+        }
+        function replaceState(snapshot) {
+            if (!data || typeof data !== 'object' || !snapshot || typeof snapshot !== 'object' ||
+                Array.isArray(data) !== Array.isArray(snapshot)) {
+                throw new TypeError(`Section state "${key}" must keep the same object or array type.`);
+            }
+            for (const property of Object.keys(data)) delete data[property];
+            if (Array.isArray(data)) data.length = 0;
+            Object.assign(data, snapshot);
+        }
+        lifecycle.window.addEventListener?.('pagehide', flush);
+        lifecycle.document.addEventListener?.('visibilitychange', () => {
+            if (lifecycle.document.hidden) flush();
+        });
+        return {
+            get state() { return data; },
+            save: queueSave,
+            update(change) {
+                const previous = jsonState(data, key);
+                try {
+                    change(data);
+                    queueSave();
+                } catch (error) {
+                    replaceState(previous);
+                    throw error;
+                }
+            },
+            reset() {
+                replaceState(jsonState(initial(), key));
+                queueSave();
+            }
+        };
+    }
+
+    function createBackNavigation({ enabled, current, previous, focus }) {
+        const handlers = new Map();
+        return {
+            set(id, handler) {
+                if (handler === null) handlers.delete(id);
+                else if (typeof handler?.onClick === 'function') handlers.set(id, handler);
+            },
+            available() {
+                const section = current();
+                return enabled && (handlers.has(section.id) || section.index > 0);
+            },
+            async back() {
+                if (!this.available()) return;
+                const handler = handlers.get(current().id);
+                if (handler) await handler.onClick();
+                else await previous();
+                focus();
+            }
+        };
+    }
+
     function createRouter() {
         const routes = new Map();
         let started = false;
@@ -108,7 +269,495 @@
             export() { return [...activities.values()].map(item => ({...item})); }
         };
     }
-    window.Maths1to9LessonEngine = { createRouter, updateStageProgress, calculateScore, createScoreTracker };
+    function resultText(tag, value, className = '') {
+        const node = document.createElement(tag);
+        node.className = className;
+        if (value && typeof value === 'object' && typeof value.latex === 'string') {
+            if (window.katex?.render) {
+                window.katex.render(value.latex, node, { throwOnError: false });
+            } else {
+                node.textContent = value.latex;
+            }
+        } else {
+            node.textContent = String(value ?? '');
+        }
+        return node;
+    }
+
+    function renderResults(container, rows, options = {}) {
+        container.replaceChildren();
+        if (options.heading) {
+            container.append(resultText('h3', options.heading));
+        }
+        const list = document.createElement('ol');
+        list.className = 'retained-results';
+        for (const row of rows) {
+            const item = document.createElement('li');
+            const line = document.createElement('div');
+            line.className = 'retained-result';
+            line.append(resultText('strong', row.prompt));
+            const answer = document.createElement('div');
+            answer.className = 'retained-result__answer';
+            answer.append(resultText('span', row.answer));
+            let mark = null;
+            if (row.firstCorrect === true) {
+                mark = resultText('span', '✓');
+                mark.setAttribute('aria-hidden', 'true');
+            } else if (row.firstCorrect === false) {
+                const corrected = row.correct === true;
+                mark = resultText('span', corrected ? '2nd try' : 'Incorrect');
+                mark.setAttribute('aria-hidden', 'true');
+            }
+            if (mark) {
+                const spokenMark = row.firstCorrect === true ? 'Right first time'
+                    : row.correct === true ? 'Corrected' : 'Incorrect';
+                answer.append(mark, resultText('span', spokenMark, 'visually-hidden'));
+            }
+            line.append(answer);
+            item.append(line);
+            if (row.visual) item.append(row.visual);
+            if (row.firstCorrect !== true && row.explanation) {
+                item.append(resultText('p', row.explanation, 'retained-result__explanation'));
+            }
+            list.append(item);
+        }
+        container.append(list);
+    }
+
+    function renderScorePanel(container, options) {
+        const { correct, total, readyScore, readyText = "You're ready",
+            notReadyText = 'Keep practising' } = options;
+        container.replaceChildren();
+        const panel = document.createElement('div');
+        panel.className = 'lesson-score-panel';
+        const ring = document.createElement('div');
+        ring.className = 'practice-progress-ring';
+        ring.style.setProperty('--practice-progress', `${total > 0 ? correct / total * 100 : 0}%`);
+        const visibleCount = resultText('span', `${correct}/${total}`);
+        visibleCount.setAttribute('aria-hidden', 'true');
+        ring.append(visibleCount, resultText('span', `${correct} out of ${total} right first time`, 'visually-hidden'));
+        panel.append(ring);
+        const message = document.createElement('div');
+        message.append(resultText('p', `You got ${correct} out of ${total} right first time.`));
+        if (typeof readyScore === 'number') {
+            message.append(resultText('strong', correct >= readyScore ? readyText : notReadyText));
+        }
+        panel.append(message);
+        container.append(panel);
+    }
+    function tidyNumber(value) {
+        let text = String(value).replace(/\s/g, '').replace(/[−–—]/g, '-');
+        if (/^-?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text)) {
+            text = text.replaceAll(',', '');
+        }
+        text = text.replace(/^(-?)\./, (point, sign) => `${sign}0.`);
+        if (!/^-?\d+(?:\.\d*)?$/.test(text) || !Number.isFinite(Number(text))) return null;
+        return text;
+    }
+
+    function appendResultMark(container, row) {
+        if (row.firstCorrect !== true && row.firstCorrect !== false) return;
+        const visible = row.firstCorrect ? '✓' : row.correct ? '2nd try' : 'Incorrect';
+        const spoken = row.firstCorrect ? 'Right first time' : row.correct ? 'Corrected' : 'Incorrect';
+        const mark = resultText('span', visible);
+        mark.setAttribute('aria-hidden', 'true');
+        container.append(mark, resultText('span', spoken, 'visually-hidden'));
+    }
+
+    // The lesson opens a versioned section first; every card lives in its cards map.
+    // Dependencies are explicit so the cycle can also be tested without the engine UI.
+    function createQuestion(container, config, section, api) {
+        const { sectionId, questionId } = config;
+        if (!section?.state || !sectionId || !questionId) {
+            throw new TypeError('createQuestion requires an opened section state and stable ids.');
+        }
+        if (config.input !== 'choice' && config.input !== 'number') {
+            throw new TypeError('createQuestion input must be choice or number.');
+        }
+        if (!section.state.cards?.[questionId]) {
+            section.update(state => {
+                state.cards ??= {};
+                state.cards[questionId] = {
+                    selected: null, rejected: [], value: '', phase: 'answer',
+                    firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
+                };
+            });
+        }
+        const saved = section.state.cards[questionId];
+        const options = config.options || [];
+        let released = false;
+        function matches(value, expected) {
+            const answer = tidyNumber(expected);
+            return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
+        }
+        function result() {
+            const answer = config.input === 'choice' ? options[saved.selected]?.label ?? '' : saved.value;
+            return {
+                prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
+                correct: saved.correct, explanation: saved.feedback
+            };
+        }
+        const article = document.createElement('article');
+        article.className = 'question-card question-card--bare';
+        const heading = resultText('h3', config.prompt, 'question-prompt');
+        heading.dataset.screenHeading = '';
+        article.append(heading);
+        container.replaceChildren(article);
+        if (config.readOnly) {
+            api.clearSectionAction(sectionId);
+            const row = result();
+            const answer = resultText('p', row.answer, 'retained-result__answer');
+            appendResultMark(answer, row);
+            article.append(answer);
+            if (saved.feedback) {
+                const feedbackClass = saved.correct === true ? 'is-correct' : 'is-incorrect';
+                article.append(resultText('p', saved.feedback, `question-feedback is-visible ${feedbackClass}`));
+            }
+            return { result };
+        }
+        const buttons = [];
+        let input;
+        if (config.input === 'choice') {
+            const group = document.createElement('div');
+            group.className = 'question-card-options';
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', 'Choose an answer');
+            options.forEach((option, index) => {
+                const button = resultText('button', option.label, 'button');
+                button.type = 'button';
+                button.addEventListener('click', () => {
+                    if (saved.phase !== 'answer' || saved.rejected.includes(index) || released) return;
+                    section.update(() => { saved.selected = index; });
+                    section.update(() => { saved.invalid = false; });
+                    update();
+                });
+                buttons.push({ button, rejectionMark: false });
+                group.append(button);
+            });
+            article.append(group);
+        } else {
+            const label = resultText('label', config.inputLabel || 'Your answer', 'question-answer-label');
+            input = document.createElement('input');
+            input.type = 'text';
+            input.inputMode = 'decimal';
+            input.autocomplete = 'off';
+            input.value = saved.value;
+            input.addEventListener('input', () => {
+                if (saved.phase !== 'answer' || released) return;
+                section.update(() => { saved.value = input.value; });
+                section.update(() => { saved.invalid = false; });
+                update();
+            });
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter' && saved.phase === 'answer' && saved.value.trim() !== '') {
+                    event.preventDefault();
+                    act();
+                }
+            });
+            label.append(input);
+            article.append(label);
+        }
+        const feedback = document.createElement('p');
+        feedback.setAttribute('role', 'status');
+        article.append(feedback);
+        function setAction() {
+            api.setSectionAction(sectionId, {
+                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
+                disabled: saved.phase === 'answer' && (config.input === 'choice'
+                    ? saved.selected === null : saved.value.trim() === ''),
+                onClick: act
+            });
+        }
+        function update() {
+            for (const [index, item] of buttons.entries()) {
+                const { button } = item;
+                const selected = saved.selected === index;
+                const rejected = saved.rejected.includes(index);
+                button.className = 'button';
+                if (selected) {
+                    button.className += saved.phase === 'correct' ? ' is-correct'
+                        : saved.phase === 'wrong' ? ' is-incorrect' : ' is-selected';
+                }
+                if (rejected) button.className += ' is-rejected';
+                button.disabled = saved.phase !== 'answer' || rejected;
+                button.setAttribute('aria-pressed', String(selected));
+                if (rejected && !item.rejectionMark) {
+                    const cross = resultText('span', ' ×');
+                    cross.setAttribute('aria-hidden', 'true');
+                    button.append(cross, resultText('span', ' Incorrect option', 'visually-hidden'));
+                    item.rejectionMark = true;
+                }
+            }
+            if (input) {
+                input.value = saved.value;
+                input.disabled = saved.phase !== 'answer';
+            }
+            const shown = saved.invalid || saved.phase !== 'answer';
+            feedback.className = 'question-feedback';
+            if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
+            feedback.replaceChildren();
+            if (saved.invalid) feedback.textContent = 'Type a number, like 12 or 0.5.';
+            else if (shown) {
+                feedback.append(resultText('span', saved.feedback));
+                if (saved.hint) feedback.append(resultText('span', saved.hint, 'question-hint'));
+            }
+            setAction();
+        }
+        function act() {
+            if (released) return;
+            if (saved.phase === 'correct') {
+                released = true;
+                api.clearSectionAction(sectionId);
+                config.onContinue?.();
+                return;
+            }
+            if (saved.phase === 'wrong') {
+                section.update(() => {
+                    saved.phase = 'answer';
+                    saved.selected = null;
+                    saved.value = '';
+                    saved.feedback = '';
+                    saved.hint = null;
+                });
+                update();
+                if (input) input.focus();
+                return;
+            }
+            let correct;
+            let response;
+            let value;
+            if (config.input === 'choice') {
+                if (saved.selected === null || saved.rejected.includes(saved.selected)) return;
+                response = options[saved.selected];
+                correct = response.correct === true;
+            } else {
+                value = tidyNumber(saved.value);
+                if (value === null) {
+                    section.update(() => { saved.invalid = true; });
+                    update();
+                    return;
+                }
+                correct = matches(value, config.answer);
+                response = correct ? { feedback: config.feedback || '' }
+                    : (config.rules || []).find(rule => matches(value, rule.value)) || { feedback: config.fallback || '' };
+            }
+            section.update(() => {
+                if (saved.firstCorrect === null) saved.firstCorrect = correct;
+                saved.correct = correct;
+                saved.phase = correct ? 'correct' : 'wrong';
+                saved.feedback = response.feedback || '';
+                saved.hint = response.hint || null;
+                if (value !== undefined) saved.value = value;
+                if (!correct && config.input === 'choice') saved.rejected.push(saved.selected);
+            });
+            if (config.scored === true) {
+                api.recordAssessment({ questionType: config.questionType, questionId, correct });
+            }
+            update();
+            const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
+            if (config.input === 'choice') outcome.option = saved.selected;
+            else outcome.value = value;
+            config.onFeedback?.(outcome);
+        }
+        update();
+        return { result };
+    }
+
+
+    function assessmentEvidenceId(slug, pageSession, questionId, practice) {
+        const match = questionId.match(/^question-bank:(\d+):(\d+)$/);
+        if (match && practice?.session === Number(match[1])) {
+            const seed = practice.seed ?? practice.items?.[Number(match[2]) - 1]?.seed;
+            if (Number.isInteger(seed)) return `${slug}:practice:${seed}:${questionId}`;
+        }
+        return `${slug}:${pageSession}:${questionId}`;
+    }
+
+    function questionSetId(sectionId, session, index) {
+        return sectionId === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
+    }
+
+    // Archiving is shared with activities which need their own question renderer.
+    // Only a pupil's explicit Practise again action calls this function.
+    function archivePractice(state, fresh) {
+        if (!state.finished) return false;
+        const previous = JSON.parse(JSON.stringify(state));
+        delete previous.earlier;
+        const earlier = [...(state.earlier || []), previous].slice(-5);
+        const session = (state.session || 1) + 1;
+        for (const key of Object.keys(state)) delete state[key];
+        Object.assign(state, fresh, { session, earlier });
+        return true;
+    }
+
+    async function runQuestionSet(sectionId, config, api, container) {
+        if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
+        const isPractice = sectionId === 'question-bank';
+        const initialHash = window.location?.hash || '';
+        document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
+        api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
+        function fresh(excluded = []) {
+            const random = seededRandom(Math.floor(Math.random() * 4294967296));
+            const items = config.pick(random);
+            if (!Array.isArray(items) || items.length !== config.count || items.some(item =>
+                typeof item.type !== 'string' || !Number.isInteger(item.seed))) {
+                throw new TypeError('pick must return count question types with integer seeds.');
+            }
+            const used = new Set(excluded.flatMap(session => session.items.map(item => item.seed)));
+            for (const item of items) {
+                while (used.has(item.seed)) item.seed = (item.seed + 1) >>> 0;
+                used.add(item.seed);
+            }
+            return { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} };
+        }
+        const section = await api.useSectionState(sectionId, {
+            version: config.version, initial: fresh, upgrade: config.upgrade
+        });
+        const saved = section.state;
+        const screenHash = screen => `${sectionId}-question-${screen + 1}`;
+        function syncHash() {
+            if (api.getCurrentSection().id === sectionId) api.setSlideHash(screenHash(saved.screen), { replace: true });
+        }
+        for (let screen = 0; screen <= config.count; screen++) {
+            api.registerHashRoute(screenHash(screen), () => {
+                if (api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) show(Math.min(screen, saved.index));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', syncHash);
+        function question(item) { return config.question(item, seededRandom(item.seed)); }
+        function rows(session) {
+            return session.items.map((item, index) => {
+                const definition = question(item);
+                const card = session.cards[questionSetId(sectionId, session.session, index)];
+                return {
+                    prompt: definition.prompt,
+                    answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? '' : card?.value ?? '',
+                    firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
+                    explanation: card?.feedback || '', visual: config.resultVisual?.(item)
+                };
+            });
+        }
+        function complete() {
+            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', { detail: { sectionId } }));
+        }
+        function focus() {
+            const heading = container.querySelector('[data-screen-heading], h3');
+            if (heading) { heading.tabIndex = -1; heading.focus(); }
+        }
+        function show(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            focus();
+        }
+        function continueSet() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.finished = state.index === state.items.length;
+            });
+            if (saved.finished) complete();
+            render();
+            focus();
+        }
+        function render() {
+            container.replaceChildren();
+            syncHash();
+            api.setSectionBack(sectionId, saved.screen > 0 ? { onClick: () => show(saved.screen - 1) } : null);
+            api.setSectionProgress(sectionId, saved.finished ? config.count : saved.index, config.count);
+            if (saved.finished) {
+                complete();
+                if (api.getSections().at(-1)?.id === sectionId) api.completeLesson();
+            }
+            if (saved.finished && saved.screen === saved.items.length) {
+                const score = document.createElement('div');
+                const results = document.createElement('div');
+                container.append(score, results);
+                const currentRows = rows(saved);
+                renderScorePanel(score, {
+                    correct: currentRows.filter(row => row.firstCorrect === true).length, total: config.count,
+                    readyScore: isPractice ? api.getLesson().question_bank?.ready_score : undefined
+                });
+                renderResults(results, currentRows, { heading: config.heading });
+                if (isPractice && config.practiseAgain) {
+                    const again = resultText('button', 'Practise again', 'lesson-secondary-action');
+                    again.type = 'button';
+                    again.addEventListener('click', () => {
+                        section.update(state => { archivePractice(state, fresh([state, ...(state.earlier || [])])); });
+                        render();
+                        focus();
+                    });
+                    container.append(again, resultText('p', "Practising again doesn't change your score."));
+                }
+                for (const earlier of saved.earlier || []) {
+                    const details = document.createElement('details');
+                    const results = document.createElement('div');
+                    details.append(resultText('summary', `Earlier practice ${earlier.session}`), results);
+                    renderResults(results, rows(earlier));
+                    container.append(details);
+                }
+                const sections = api.getSections();
+                const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
+                api.setSectionAction(sectionId, {
+                    label: next ? 'Continue' : 'All lessons', onClick: () => {
+                        if (config.onContinue) config.onContinue();
+                        else {
+                            if (next) api.continueSection();
+                            else {
+                                api.completeLesson();
+                                window.location.assign(document.querySelector('.site-header__back')?.href || '../../');
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            const item = saved.items[saved.screen];
+            const position = resultText('p', `Question ${saved.screen + 1} of ${config.count}`, 'question-number');
+            const cardRoot = document.createElement('div');
+            container.append(position, cardRoot);
+            const definition = question(item);
+            const readOnly = saved.screen < saved.index;
+            api.createQuestion(cardRoot, {
+                ...definition, sectionId, questionId: questionSetId(sectionId, saved.session, saved.screen),
+                scored: true, readOnly,
+                onFeedback: outcome => {
+                    definition.onFeedback?.(outcome);
+                    if (outcome.correct && saved.index === config.count - 1) complete();
+                    api.setSectionProgress(sectionId, saved.index + Number(outcome.correct), config.count);
+                },
+                onContinue: continueSet
+            });
+            if (readOnly) api.setSectionAction(sectionId, { label: 'Next', onClick: () => show(saved.screen + 1) });
+        }
+        const requested = Array.from({ length: config.count + 1 }, (_, screen) => screen)
+            .find(screen => initialHash === `#${screenHash(screen)}`);
+        if (requested !== undefined && api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
+            section.update(state => { state.screen = Math.min(requested, state.index); });
+        }
+        render();
+        return { section, render };
+    }
+
+    window.Maths1to9LessonEngine = {
+        createRouter,
+        updateStageProgress,
+        calculateScore,
+        createScoreTracker,
+        escapeHtml,
+        shuffle,
+        seededRandom,
+        randomInt,
+        createSectionState,
+        createBackNavigation,
+        renderResults,
+        renderScorePanel,
+        tidyNumber,
+        createQuestion,
+        questionSetId,
+        assessmentEvidenceId,
+        archivePractice,
+        runQuestionSet
+    };
 })();
 
 (() => {
@@ -161,6 +810,9 @@
          * the section the pupil is viewing.
          */
         sectionActions: new Map(),
+        questionSets: new Set(),
+        sectionStates: new Map(),
+        backNavigation: null,
 
         /*
          * Section gating. A lesson script can declare that a
@@ -177,6 +829,7 @@
         headerStageProgress: null,
         navigation: null,
         sectionActionButton: null,
+        backButton: null,
         nextButton: null,
         status: null
     };
@@ -205,6 +858,18 @@
                 window.Maths1to9Progress?.saveCurrentLesson?.();
             }, reservedAnswerIds);
             state.sections = createSectionDefinitions(lesson);
+            if (lesson.navigation?.back_button === true || savedScore?.finished === true) {
+                state.finished = savedScore?.finished === true;
+                const savedUnlocked = Number.isInteger(savedScore?.highestUnlockedIndex)
+                    ? savedScore.highestUnlockedIndex : 0;
+                const completedIndex = state.sections.reduce((highest, section, index) => {
+                    const completed = savedScore?.scoreActivities?.some(activity =>
+                        activity.id === `section:${section.id}` && activity.completed);
+                    return completed ? Math.max(highest, index) : highest;
+                }, 0);
+                state.highestUnlockedIndex = state.finished ? state.sections.length - 1
+                    : clamp(Math.max(savedUnlocked, completedIndex), 0, state.sections.length - 1);
+            }
             state.navigationGroups = createNavigationGroups(
                 lesson,
                 state.sections
@@ -754,6 +1419,29 @@
             'lesson-section-container'
         );
 
+        state.backNavigation = window.Maths1to9LessonEngine.createBackNavigation({
+            enabled: state.lesson.navigation?.back_button === true,
+            current: () => ({ id: state.sections[state.currentIndex]?.id, index: state.currentIndex }),
+            previous: () => window.Maths1to9Lesson.goToSection(state.currentIndex - 1),
+            focus: () => {
+                const section = state.sectionElements[state.currentIndex];
+                const heading = section.querySelector('[data-screen-heading]') || section.querySelector('h2');
+                if (heading) {
+                    heading.tabIndex = -1;
+                    heading.focus({ preventScroll: true });
+                }
+            }
+        });
+        if (state.lesson.navigation?.back_button === true) {
+            const back = createElement('button', 'lesson-back', '‹ Back');
+            back.type = 'button';
+            back.setAttribute('aria-label', 'Previous screen');
+            back.hidden = true;
+            back.addEventListener('click', () => state.backNavigation.back());
+            sectionContainer.append(back);
+            elements.backButton = back;
+        }
+
         state.sectionElements = state.sections.map(
             (definition, index) => {
                 const section = createElement(
@@ -915,7 +1603,7 @@
                 button.type = 'button';
                 button.dataset.stageIndex = String(index);
                 button.dataset.stageNumber = String(index + 1);
-                button.disabled = group.firstIndex > 0;
+                button.disabled = group.firstIndex > state.highestUnlockedIndex;
                 button.setAttribute(
                     'aria-controls',
                     `lesson-section-${
@@ -2047,7 +2735,8 @@
     }
 
     function handlePrimaryAction() {
-        if (state.finished) {
+        if (state.finished && state.lesson.navigation?.back_button !== true &&
+            !state.questionSets.has(state.sections[state.currentIndex]?.id)) {
             const allLessons = document.querySelector('.site-header__back');
             window.location.assign(allLessons?.href || new URL('../../', window.location.href).href);
             return;
@@ -2231,16 +2920,19 @@
         const sectionAction =
             state.sectionActions.get(section?.id);
 
-        const showSectionAction = Boolean(sectionAction) && !state.finished;
+        if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
+        const reviewing = state.lesson.navigation?.back_button === true || state.questionSets.has(section?.id);
+        const finishedAction = state.finished && !reviewing;
+        const showSectionAction = Boolean(sectionAction) && !finishedAction;
         // Keep one primary action throughout the lesson, including completion.
         elements.sectionActionButton.remove();
-        elements.nextButton.disabled = state.finished
+        elements.nextButton.disabled = finishedAction
             ? false
             : showSectionAction ? sectionAction.disabled : !complete;
         elements.controlButtonGroup.append(elements.nextButton);
         elements.controlButtonGroup.hidden = false;
 
-        elements.nextButton.textContent = state.finished
+        elements.nextButton.textContent = finishedAction
             ? 'All lessons'
             : showSectionAction ? sectionAction.label : 'Continue';
 
@@ -2391,8 +3083,12 @@
         }
         scoreTracker.record({id:scoreId, kind:'answer', correct:detail.correct});
 
-        const stableQuestionId =
-            `${state.slug}:${assessmentSessionId}:${questionId}`;
+        // Seeded Practice keeps one skill-evidence identity across page reloads.
+        // Other lesson banks retain their existing per-page assessment identities.
+        const practice = state.sectionStates?.get('question-bank')?.state;
+        const stableQuestionId = practice
+            ? window.Maths1to9LessonEngine.assessmentEvidenceId(state.slug, assessmentSessionId, questionId, practice)
+            : `${state.slug}:${assessmentSessionId}:${questionId}`;
 
         [...new Set(skillIds)].forEach((skillId) => {
             document.dispatchEvent(
@@ -2497,6 +3193,30 @@
 
     function exposeLessonApi() {
         window.Maths1to9Lesson = {
+            setSectionBack(sectionId, handler) {
+                if (findSectionIndex(sectionId) === -1) return;
+                state.backNavigation.set(sectionId, handler);
+                updateControls();
+            },
+
+            async useSectionState(key, options) {
+                const section = await window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
+                state.sectionStates.set(key, section);
+                return section;
+            },
+
+            async runQuestionSet(sectionId, config) {
+                const container = document.getElementById(`${state.slug}-${sectionId === 'question-bank' ? 'questions' : 'comparison'}`);
+                if (!container) throw new Error(`No question set container for ${sectionId}.`);
+                state.questionSets.add(sectionId);
+                return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);
+            },
+
+            createQuestion(container, config) {
+                return window.Maths1to9LessonEngine.createQuestion(container, config,
+                    state.sectionStates.get(config.sectionId), window.Maths1to9Lesson);
+            },
+
             registerHashRoute(id, handler, aliases = []) {
                 router.register(id, handler, aliases);
             },

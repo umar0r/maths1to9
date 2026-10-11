@@ -200,8 +200,8 @@
         else if(['practice','check'].includes(slide.type)) body=slides.filter(item=>item.type===slide.type).every(item=>state.answers[slides.indexOf(item)]?.done)?(slide.type==='practice'?reviewHtml('practice'):summaryHtml()):questionHtml(slide);
         else if(slide.type==='review') body=reviewHtml('practice');
         else if(slide.type==='summary') body=summaryHtml();
-        else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished?'Lesson complete':'Keep learning'}</p><h2 class="lesson-section__title">Percentages of amounts</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><p class="lesson-copy">You have explored parts per hundred, equivalent fractions and decimals, and percentages of amounts.</p><h3>Later percentage lessons</h3><ol class="lesson-copy"><li>Expressing one amount as a percentage of another</li><li>Percentage increase and decrease</li><li>Reverse percentages</li><li>Simple interest</li><li>Repeated percentage change and compound interest</li></ol>${note('Your progress is saved in this browser. Continue returns to all lessons.')}`;
-        app.innerHTML=`<header class="lesson-header lesson-header--compact rounding-header"><div class="lesson-header__inner"><h1 class="lesson-header__title">Percentages of amounts</h1><div class="rounding-score" aria-label="${score.points} points earned"><div class="practice-progress-ring" style="--practice-progress:${score.points/score.maximumPoints*100}%"><span>${score.points}</span></div></div></div></header><nav class="lesson-navigation lesson-navigation--stages" aria-label="Lesson sections"><div class="lesson-navigation__buttons">${data.navigation_stages.map((stage,i) => `<button class="lesson-navigation__button ${stageProgress[i].completed===stageProgress[i].total?'lesson-navigation__button--complete':''}" type="button" data-stage="${i}" data-stage-number="${i+1}" aria-pressed="${i===slide.stage}" >${escape(stage.label)}</button>`).join('')}</div></nav><section id="rounding-card" class="lesson-section" tabindex="-1"><p class="lesson-eyebrow">${slide.type==='summary'?'Summary':escape(data.navigation_stages[slide.stage].label)}</p>${body}</section><footer class="lesson-controls"><div class="button-group"><button id="rounding-action" class="button button--primary" type="button">Continue</button></div></footer>`;
+        else body=`<div class="rounding-finish"><p class="lesson-eyebrow">${state.finished?'Lesson complete':'Keep learning'}</p><h2 class="lesson-section__title">Percentages of amounts</h2><p>You earned <strong>${score.points} / ${score.maximumPoints} points</strong>.</p></div><p class="lesson-copy">You have explored parts per hundred, equivalent fractions and decimals, and percentages of amounts.</p><h3>Later percentage lessons</h3><ol class="lesson-copy"><li>Expressing one amount as a percentage of another</li><li>Percentage increase and decrease</li><li>Reverse percentages</li><li>Simple interest</li><li>Repeated percentage change and compound interest</li></ol>${note('Your progress is saved in this browser. All lessons takes you back to the lesson list.')}`;
+        app.innerHTML=`<header class="lesson-header lesson-header--compact rounding-header"><div class="lesson-header__inner"><h1 class="lesson-header__title">Percentages of amounts</h1><div class="rounding-score" aria-label="${score.points} points earned"><div class="practice-progress-ring" style="--practice-progress:${score.points/score.maximumPoints*100}%"><span>${score.points}</span></div></div></div></header><nav class="lesson-navigation lesson-navigation--stages" aria-label="Lesson sections"><div class="lesson-navigation__buttons">${data.navigation_stages.map((stage,i) => `<button class="lesson-navigation__button ${stageProgress[i].completed===stageProgress[i].total?'lesson-navigation__button--complete':''}" type="button" data-stage="${i}" data-stage-number="${i+1}" aria-pressed="${i===slide.stage}" ${i>slides[state.highest].stage?'disabled':''}>${escape(stage.label)}</button>`).join('')}</div></nav><section id="rounding-card" class="lesson-section" tabindex="-1"><p class="lesson-eyebrow">${slide.type==='summary'?'Summary':escape(data.navigation_stages[slide.stage].label)}</p>${body}</section><footer class="lesson-controls"><div class="button-group"><button id="rounding-action" class="button button--primary" type="button">Continue</button></div></footer>`;
         app.querySelectorAll('[data-stage]').forEach((button, i) => {
             engine.updateStageProgress(button, stageProgress[i].completed, stageProgress[i].total);
         });
@@ -233,7 +233,7 @@
             if ([2, 3].includes(stage) && slides.filter(slide => slide.type === (stage === 2 ? 'practice' : 'check')).every(slide => state.answers[slides.indexOf(slide)]?.done)) {
                 index = slides.findIndex(slide => slide.type === (stage === 2 ? 'review' : 'summary'));
             }
-            state.slide=index; state.highest=Math.max(state.highest,index); save(); render(true);
+            if (index <= state.highest) { state.slide=index; save(); render(true); }
         }));
         if(slide.item?.explore) {
             const updateLine=() => {
@@ -247,6 +247,7 @@
     }
     function updateAction() {
         const slide=slides[state.slide], button=app.querySelector('#rounding-action');
+        if (slide.type === 'finish') { button.textContent='All lessons'; button.disabled=false; return; }
         if(slide.item?.colour) { button.textContent=state.colourDone?'Continue':'Check answer'; button.disabled=false; return; }
         const isQuestion=['guided','practice','check'].includes(slide.type);
         const answer=isQuestion?entry():null;
@@ -297,6 +298,10 @@
             let candidate=saved?.percentageState;
             if (candidate?.contentVersion !== undefined && candidate.contentVersion !== 1) candidate = null;
             state=candidate?.version===1 && Number.isInteger(candidate.slide) && candidate.slide>=0 && candidate.slide<slides.length && Number.isInteger(candidate.highest) && candidate.highest>=candidate.slide && candidate.highest<slides.length && candidate.answers && typeof candidate.answers==='object' ? candidate : {version:1,slide:0,highest:0,answers:{},explore:67,finished:false};
+            state.highest = Math.max(state.highest,
+                ...Object.keys(state.answers).filter(i => state.answers[i]?.done || state.answers[i]?.value).map(Number),
+                ...Object.keys(state.completed || {}).filter(i => state.completed[i]).map(Number));
+            if (state.finished) state.highest = slides.length - 1;
             state.contentVersion = 1;
             state.interactions ||= {};
             // Migrate earlier saves without losing earned scores.
@@ -312,8 +317,8 @@
             slides.forEach((slide, i) => {
                 const aliases = slide.type === 'practice' && slide.number === 1 ? ['practice'] : [];
                 router.register(slide.id, () => {
-                    state.slide = i;
-                    state.highest = Math.max(state.highest, i);
+                    state.slide = Math.min(i, state.highest);
+                    if (i > state.highest) queueMicrotask(() => router.sync(slides[state.slide].id, {replace:true}));
                     save(); render(true);
                 }, aliases);
             });
