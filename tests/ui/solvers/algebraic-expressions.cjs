@@ -1,6 +1,6 @@
 // Solver for algebraic-expressions: each practice story is turned into the
 // expression it describes, and the option with that expression is chosen.
-const { section, options, choose } = require('./common.cjs');
+const { section } = require('./common.cjs');
 const { evaluate, close } = require('../../helpers/lessons.cjs');
 
 const WORDS = { twice: 2, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -44,10 +44,13 @@ module.exports = async function solve(page) {
     const prompt = await page.locator('main .question-prompt:visible, main legend:visible, main h3:visible').first().innerText().catch(() => '');
     const s = story(prompt.replace(/\s+/g, ' '));
     if (!s) throw new Error(`the solver does not recognise this question: "${prompt}"`);
-    const all = await options(page);
+    const buttons = await page.locator('[data-lesson-section="question-bank"] .question-card-options button:visible:enabled').all();
+    const all = [];
+    for (const locator of buttons) all.push({ label: await locator.innerText(), locator });
     const pick = s.contains
         ? all.find(o => o.label.includes(s.contains) && !/^It should be|^Nothing|^There is no/.test(o.label))
         : all.find(o => wellWritten(o.label) && equivalent(o.label, s.expression, s.letter));
     if (!pick) throw new Error(`no option fits "${prompt}" (options: ${all.map(o => o.label).join(' | ')})`);
-    return choose(page, pick.label);
+    await pick.locator.click();
+    return true;
 };

@@ -5,6 +5,7 @@ for (const lesson of ['algebraic-expressions', 'fractions-introduction', 'simpli
     for (const retry of [false, true]) {
         test(`${lesson}: ten-question practice has a fixed maximum and finishes${retry ? ' after a retry' : ''}`, async ({page}) => {
             const solve = require(`./solvers/${lesson}.cjs`);
+            const sharedCard = lesson === 'algebraic-expressions';
             await page.goto(`content/${lesson}/#question-bank`, {waitUntil:'networkidle'});
             const maximum = await page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints);
             const reserved = await page.evaluate(() => window.Maths1to9Lesson.getProgress().scoreActivities.filter(a => a.kind === 'answer'));
@@ -17,15 +18,19 @@ for (const lesson of ['algebraic-expressions', 'fractions-introduction', 'simpli
                 await expect(page.locator('[data-lesson-section="question-bank"] .question-number')).toContainText(`Question ${n} of 10`);
                 await solve(page, {});
                 if (retry && n === 10) {
-                    await page.locator('[data-lesson-section="question-bank"] label').filter({has:page.locator('input[type="radio"]:not(:checked)')}).first().click();
+                    if (sharedCard) {
+                        await page.locator('[data-lesson-section="question-bank"] .question-card-options button:enabled:not([aria-pressed="true"])').first().click();
+                    } else {
+                        await page.locator('[data-lesson-section="question-bank"] label').filter({has:page.locator('input[type="radio"]:not(:checked)')}).first().click();
+                    }
                     await main.click();
                     await expect(main).toHaveText('Try again');
                     await main.click();
                     await solve(page, {});
                 }
-                await expect(main).toHaveText('Check answer');
+                await expect(main).toHaveText(sharedCard ? 'Check' : 'Check answer');
                 await main.click();
-                await expect(main).toHaveText(n === 10 ? 'Finish lesson' : 'Next question');
+                await expect(main).toHaveText(sharedCard ? 'Continue' : n === 10 ? 'Finish lesson' : 'Next question');
                 expect(await page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints)).toBe(maximum);
                 if (n < 10) await main.click();
             }
