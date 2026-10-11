@@ -145,20 +145,20 @@
         return wrapper;
     }
 
-    function shuffle(values) {
+    function shuffle(values, random = Math.random) {
         const result = [...values];
         for (let index = result.length - 1; index > 0; index--) {
-            const other = Math.floor(Math.random() * (index + 1));
+            const other = Math.floor(random() * (index + 1));
             [result[index], result[other]] = [result[other], result[index]];
         }
         return result;
     }
 
-    function pickSession() {
+    function pickSession(random = Math.random) {
         const pairs = shuffle([
-            ...shuffle(PRACTICE_GROUPS[0]).slice(0, 2),
-            ...PRACTICE_GROUPS.slice(1).map(group => shuffle(group)[0])
-        ]);
+            ...shuffle(PRACTICE_GROUPS[0], random).slice(0, 2),
+            ...PRACTICE_GROUPS.slice(1).map(group => shuffle(group, random)[0])
+        ], random);
         const startsWithoutMatches = PRACTICE_GROUPS[3].some(pair =>
             pair[0] === pairs[0][0] && pair[1] === pairs[0][1]
         );
@@ -208,13 +208,41 @@
             }));
         }
         dispatch('gate');
-        let state = await store.getLessonActivityState(SLUG, sectionId);
-        if (!state) {
-            state = {
-                index: 0, order: guided ? [[60, 90], [40, 60]] : pickSession(),
-                items: [], finished: false
+        const engine = window.Maths1to9LessonEngine;
+        function freshPractice(excluded = []) {
+            let seed = Math.floor(Math.random() * 4294967296);
+            const used = new Set(excluded.map(session => session.seed));
+            while (used.has(seed)) seed = (seed + 1) >>> 0;
+            return {
+                seed, session: 1, earlier: [], cards: {}, index: 0, screen: 0,
+                furthestScreen: 0, order: pickSession(engine.seededRandom(seed)), items: [], finished: false
             };
         }
+        function upgradePractice(saved, version) {
+            if (version !== 0 || !Array.isArray(saved?.order) || saved.order.length !== 5 ||
+                !Array.isArray(saved.items) || !Number.isInteger(saved.index) || saved.index < 0 || saved.index > 5) return null;
+            const assessments = api.getProgress().scoreActivities;
+            const next = { ...saved, session: 1, seed: 0, earlier: [], cards: {} };
+            for (const [index, question] of next.items.entries()) {
+                delete question.failed;
+                const assessment = assessments.find(item => item.id === `answer:question-bank:${index + 1}`);
+                question.firstCorrect = assessment?.firstCorrect ?? null;
+                if (question.stage !== 'answer') continue;
+                next.cards[`question-bank:1:${index + 1}`] = {
+                    selected: null, rejected: [], value: question.value, phase: question.phase,
+                    firstCorrect: question.firstCorrect, correct: question.phase === 'correct' ? true : question.phase === 'wrong' ? false : null,
+                    feedback: question.message || '', hint: null, invalid: false
+                };
+            }
+            return next;
+        }
+        const section = guided ? null : await api.useSectionState(sectionId, {
+            version: 1, initial: freshPractice, upgrade: upgradePractice
+        });
+        let state = guided ? await store.getLessonActivityState(SLUG, sectionId) : section.state;
+        if (!state) state = {
+            index: 0, order: [[60, 90], [40, 60]], items: [], finished: false
+        };
         state.screen ??= state.index;
         state.furthestScreen ??= state.index;
         function showScreen(screen) {
@@ -241,7 +269,8 @@
         state.items.forEach(question => { delete question.failed; });
 
         function save() {
-            store.saveLessonActivityState(SLUG, sectionId, state);
+            if (section) section.save();
+            else store.saveLessonActivityState(SLUG, sectionId, state);
         }
         function reportProgress() {
             let completed = state.index;
@@ -257,9 +286,13 @@
         }
         function assess(correct) {
             if (guided) return;
+            const question = state.items[state.index];
+            question.firstCorrect ??= correct;
+            const card = state.cards[`question-bank:${state.session}:${state.index + 1}`];
+            if (card && card.firstCorrect === null) card.firstCorrect = correct;
             api.recordAssessment({
                 questionType: 'hcf-prime-match',
-                questionId: `question-bank:${state.index + 1}`, correct
+                questionId: `question-bank:${state.session}:${state.index + 1}`, correct
             });
         }
         function tapTile(row, tile) {
@@ -341,29 +374,46 @@
         }
         function renderCompletedWork() {
             if (!guided) {
-                const assessments = api.getProgress().scoreActivities;
-                const rows = state.order.map((pair, index) => {
-                    const question = state.items[index];
-                    const assessment = assessments.find(item => item.id === `answer:question-bank:${index + 1}`);
-                    return {
-                        prompt: `${pair[0]} and ${pair[1]}`,
-                        answer: { latex: completedExpression(question) },
-                        firstCorrect: assessment?.firstCorrect ?? null,
-                        correct: true,
-                        explanation: question.overlap.length > 0
-                            ? 'Multiply only the shared prime factors.'
-                            : 'With no shared prime factors, the HCF is 1.'
-                    };
-                });
+                function rows(session) {
+                    return session.order.map((pair, index) => {
+                        const question = session.items[index];
+                        return {
+                            prompt: `${pair[0]} and ${pair[1]}`,
+                            answer: { latex: completedExpression(question) },
+                            firstCorrect: question.firstCorrect ?? null, correct: true,
+                            explanation: question.overlap.length > 0
+                                ? 'Multiply only the shared prime factors.'
+                                : 'With no shared prime factors, the HCF is 1.'
+                        };
+                    });
+                }
                 const score = element('div');
                 const results = element('div');
                 root.append(score, results);
-                window.Maths1to9LessonEngine.renderScorePanel(score, {
-                    correct: rows.filter(row => row.firstCorrect === true).length,
-                    total: rows.length,
-                    readyScore: api.getLesson().question_bank.ready_score
+                const currentRows = rows(state);
+                engine.renderScorePanel(score, {
+                    correct: currentRows.filter(row => row.firstCorrect === true).length,
+                    total: currentRows.length, readyScore: api.getLesson().question_bank.ready_score
                 });
-                window.Maths1to9LessonEngine.renderResults(results, rows, { heading: 'Your practice results' });
+                engine.renderResults(results, currentRows, { heading: 'Your practice results' });
+                const again = element('button', 'Practise again', 'lesson-secondary-action');
+                again.type = 'button';
+                again.addEventListener('click', () => {
+                    const fresh = freshPractice([state, ...state.earlier]);
+                    section.update(state => { engine.archivePractice(state, fresh); });
+                    render();
+                    const heading = root.querySelector('[data-screen-heading]');
+                    heading.tabIndex = -1;
+                    heading.focus();
+                });
+                root.append(again, element('p', "Practising again doesn't change your score."));
+                for (const earlier of state.earlier) {
+                    const details = element('details');
+                    const results = element('div');
+                    details.append(element('summary', `Earlier practice ${earlier.session}`), results);
+                    engine.renderResults(results, rows(earlier));
+                    root.append(details);
+                }
                 return;
             }
 
@@ -431,18 +481,48 @@
             root.append(diagram);
             if (question.stage === 'answer') {
                 if (guided && state.index === 0) renderOptions(question);
-                else renderInput(question);
+                else if (guided) renderInput(question);
             }
-            const feedback = element('p', question.message, 'question-feedback');
+            const message = !guided && question.stage === 'answer' ? '' : question.message;
+            const feedback = element('p', message, 'question-feedback');
             feedback.setAttribute('role', 'status');
-            feedback.classList.toggle('is-visible', Boolean(question.message));
+            feedback.classList.toggle('is-visible', Boolean(message));
             feedback.classList.toggle('is-correct', question.phase === 'correct');
             feedback.classList.toggle('is-incorrect', question.phase !== 'correct');
             root.append(feedback);
             renderMaths(root);
             reportProgress();
             save();
-            updateAction();
+            if (!guided && question.stage === 'answer') {
+                const cardRoot = element('div');
+                root.append(cardRoot);
+                const questionId = `question-bank:${state.session}:${state.index + 1}`;
+                if (!state.cards[questionId]) {
+                    state.cards[questionId] = {
+                        selected: null, rejected: [], value: question.value, phase: question.phase,
+                        firstCorrect: question.firstCorrect ?? null, correct: null,
+                        feedback: '', hint: null, invalid: false
+                    };
+                }
+                const answer = product(question.overlap);
+                const candidates = [...new Set([0, question.overlap.reduce((sum, factor) => sum + factor, 0),
+                    product(question.pair) / answer, ...question.pair])].filter(value => value !== answer);
+                api.createQuestion(cardRoot, {
+                    sectionId, questionId, questionType: 'hcf-prime-match', scored: true,
+                    prompt: 'What is the HCF?', input: 'number', inputLabel: 'HCF =', answer,
+                    rules: candidates.map(value => ({ value, feedback: wrongAnswerFeedback(question, value, false, state.index) })),
+                    fallback: wrongAnswerFeedback(question, NaN, false, state.index), feedback: `HCF = ${answer}.`,
+                    onFeedback: result => {
+                        question.firstCorrect = result.firstCorrect;
+                        question.phase = result.correct ? 'correct' : 'wrong';
+                        question.value = result.value;
+                        question.message = '';
+                        reportProgress();
+                        save();
+                    },
+                    onContinue: () => { question.phase = 'correct'; handleAction(); }
+                });
+            } else updateAction();
         }
         function updateAction() {
             const question = state.items[state.index];

@@ -802,3 +802,35 @@ test('Check uses fixed assessment ids and never offers Practise again', async ()
     set.finishQuestion();
     assert.equal(set.container.children.some(node => node.tagName === 'button'), false);
 });
+
+test('HCF Practice upgrades old tiles, phases, position and first-session marks', () => {
+    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/interactive.js'), 'utf8');
+    const body = pilot.match(/function upgradePractice\(saved, version\) \{([\s\S]*?)\n        \}/)[1];
+    const api = { getProgress: () => ({ scoreActivities: [
+        { id: 'answer:question-bank:1', firstCorrect: false },
+        { id: 'answer:question-bank:2', firstCorrect: true }
+    ] }) };
+    const upgrade = new Function('saved', 'version', 'api', body);
+    const order = [[18, 30], [48, 72], [14, 28], [9, 20], [30, 50]];
+    const items = order.map(pair => ({ pair, stage: 'answer', phase: 'correct', value: '6',
+        used: [[0, 1], [0, 1]], overlap: [2, 3], selected: null, message: 'HCF = 6.' }));
+    for (const phase of ['match', 'answer', 'wrong', 'correct', 'finished']) {
+        const saved = { order, items: JSON.parse(JSON.stringify(items)), index: phase === 'finished' ? 5 : 2,
+            screen: 0, furthestScreen: phase === 'finished' ? 5 : 2, finished: phase === 'finished' };
+        saved.items[2].stage = phase === 'match' ? 'match' : 'answer';
+        saved.items[2].phase = ['wrong', 'correct'].includes(phase) ? phase : 'answer';
+        const next = upgrade(saved, 0, api);
+        assert.equal(next.session, 1);
+        assert.equal(next.screen, 0);
+        assert.equal(next.index, saved.index);
+        assert.equal(next.finished, saved.finished);
+        assert.deepEqual(next.items[2].used, [[0, 1], [0, 1]]);
+        assert.equal(next.items[0].firstCorrect, false);
+        assert.equal(next.items[1].firstCorrect, true);
+        assert.equal(next.items[2].firstCorrect, null);
+        assert.equal(next.cards['question-bank:1:1'].firstCorrect, false);
+        if (phase !== 'match') assert.equal(next.cards['question-bank:1:3'].phase, saved.items[2].phase);
+    }
+    assert.equal(upgrade({ order, items }, 99, api), null);
+    assert.equal(upgrade({}, 0, api), null);
+});
