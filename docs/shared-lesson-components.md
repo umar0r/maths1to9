@@ -321,6 +321,12 @@ Maths1to9LessonEngine.renderScorePanel(container, { correct: 4, total: 5, readyS
   Rows need a `correct` field too, for the third case. "2nd try" means "not
   right first time", whatever the number of attempts, as in every lesson
   today.
+- Screen-reader text (fixed 2026-10-11): `aria-label` on a plain `<span>`
+  isn't read by most screen readers. Give the visible mark
+  `aria-hidden="true"` and put the screen-reader text next to it in a span
+  with a shared `.visually-hidden` class (add it to `app.css`: the standard
+  clip-path/1 px pattern). The score ring does the same: its "3 out of 5
+  right first time" goes in hidden text, not `aria-label`.
 - `explanation` shows only on rows that weren't right first time.
 - `visual` (optional): a DOM node the lesson supplies for that row, such as
   a small function-machine diagram. The engine places it; the lesson draws

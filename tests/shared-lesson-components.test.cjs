@@ -333,13 +333,13 @@ test('shared results render all four marks and explanations only when not right 
     const rows = container.children[1].children;
     const answer = row => row.children[0].children[1];
     assert.equal(answer(rows[0]).children[1].textContent, '✓');
-    assert.equal(answer(rows[0]).children[1].attributes['aria-label'], 'Right first time');
+    assert.equal(answer(rows[0]).children[2].textContent, 'Right first time');
     assert.equal(rows[0].children.length, 1);
     assert.equal(answer(rows[1]).children[1].textContent, '2nd try');
-    assert.equal(answer(rows[1]).children[1].attributes['aria-label'], 'Corrected');
+    assert.equal(answer(rows[1]).children[2].textContent, 'Corrected');
     assert.equal(rows[1].children[1].textContent, 'Correction');
     assert.equal(answer(rows[2]).children[1].textContent, 'Incorrect');
-    assert.equal(answer(rows[2]).children[1].attributes['aria-label'], 'Incorrect');
+    assert.equal(answer(rows[2]).children[2].textContent, 'Incorrect');
     assert.equal(answer(rows[3]).children.length, 1);
     assert.equal(rows[3].children.length, 1);
 });
@@ -385,4 +385,31 @@ test('shared score panel uses exact counts, optional readiness and configurable 
     assert.equal(container.children[0].children[1].children[1].textContent, 'Try more');
     fixture.renderScorePanel(container, { correct: 1, total: 1, readyScore: 1, readyText: 'Ready for Check' });
     assert.equal(container.children[0].children[1].children[1].textContent, 'Ready for Check');
+});
+
+
+test('shared result marks and score rings expose hidden words instead of generic aria labels', () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    fixture.renderResults(container, [
+        { answer: '1', firstCorrect: true, correct: true },
+        { answer: '2', firstCorrect: false, correct: true },
+        { answer: '3', firstCorrect: false, correct: false },
+        { answer: '4', firstCorrect: null, correct: true }
+    ]);
+    const rows = container.children[0].children;
+    for (const [index, words] of ['Right first time', 'Corrected', 'Incorrect'].entries()) {
+        const marks = rows[index].children[0].children[1].children;
+        assert.equal(marks[1].attributes['aria-hidden'], 'true');
+        assert.equal(marks[1].attributes['aria-label'], undefined);
+        assert.equal(marks[2].className, 'visually-hidden');
+        assert.equal(marks[2].textContent, words);
+    }
+    assert.equal(rows[3].children[0].children[1].children.length, 1);
+    fixture.renderScorePanel(container, { correct: 3, total: 5 });
+    const ring = container.children[0].children[0];
+    assert.equal(ring.attributes['aria-label'], undefined);
+    assert.equal(ring.children[0].attributes['aria-hidden'], 'true');
+    assert.equal(ring.children[1].className, 'visually-hidden');
+    assert.equal(ring.children[1].textContent, '3 out of 5 right first time');
 });

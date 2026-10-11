@@ -302,13 +302,17 @@
             let mark = null;
             if (row.firstCorrect === true) {
                 mark = resultText('span', '✓');
-                mark.setAttribute('aria-label', 'Right first time');
+                mark.setAttribute('aria-hidden', 'true');
             } else if (row.firstCorrect === false) {
                 const corrected = row.correct === true;
                 mark = resultText('span', corrected ? '2nd try' : 'Incorrect');
-                mark.setAttribute('aria-label', corrected ? 'Corrected' : 'Incorrect');
+                mark.setAttribute('aria-hidden', 'true');
             }
-            if (mark) answer.append(mark);
+            if (mark) {
+                const spokenMark = row.firstCorrect === true ? 'Right first time'
+                    : row.correct === true ? 'Corrected' : 'Incorrect';
+                answer.append(mark, resultText('span', spokenMark, 'visually-hidden'));
+            }
             line.append(answer);
             item.append(line);
             if (row.visual) item.append(row.visual);
@@ -329,8 +333,9 @@
         const ring = document.createElement('div');
         ring.className = 'practice-progress-ring';
         ring.style.setProperty('--practice-progress', `${total > 0 ? correct / total * 100 : 0}%`);
-        ring.setAttribute('aria-label', `${correct} out of ${total} right first time`);
-        ring.append(resultText('span', `${correct}/${total}`));
+        const visibleCount = resultText('span', `${correct}/${total}`);
+        visibleCount.setAttribute('aria-hidden', 'true');
+        ring.append(visibleCount, resultText('span', `${correct} out of ${total} right first time`, 'visually-hidden'));
         panel.append(ring);
         const message = document.createElement('div');
         message.append(resultText('p', `You got ${correct} out of ${total} right first time.`));
