@@ -82,9 +82,9 @@ $pageTitle = 'Lowest common multiple';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=7"></script>
+    <script src="./interactive.js?v=8"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=33"></script>
+    <script src="../../assets/js/lesson-engine.js?v=34"></script>
 </body>
 </html>

@@ -140,3 +140,103 @@ test('section state rejects non-JSON values with the storage key in the error', 
     assert.throws(() => section.update(state => { state.cycle = state; }), /interactive.*plain JSON/);
     await assert.rejects(createSectionState('pilot', 'learn', { version: 1, initial: () => ({ bad: undefined }) }, harness.store), /learn.*plain JSON/);
 });
+
+test('LCM upgrade preserves its legacy save and declines unknown versions', async () => {
+    const pilot = fs.readFileSync(path.join(__dirname, '../content/lowest-common-multiple/interactive.js'), 'utf8');
+    const body = pilot.match(/upgrade\(saved, fromVersion\) \{([\s\S]*?)\n                \}/)[1];
+    const upgrade = new Function('saved', 'fromVersion', body);
+    const legacy = { index: 1, items: [{ phase: 'wrong', value: '18' }] };
+    assert.equal(upgrade(legacy, 0), legacy);
+    for (const version of [2, 99, -1]) {
+        assert.equal(upgrade(legacy, version), null);
+        const harness = stateStore({ sharedState: 1, version, data: legacy });
+        const section = await createSectionState('pilot', 'interactive', { ...stateOptions, version: 1, upgrade }, harness.store, harness.schedule);
+        assert.equal(section.state.screen, 0);
+        assert.equal(harness.writes[0].value.version, 1);
+    }
+});
+
+test('save validates and batches directly mutated state without changing it', async () => {
+    const harness = stateStore();
+    const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+    const state = section.state;
+    state.screen = 2;
+    section.save();
+    state.screen = 3;
+    section.save();
+    assert.equal(section.state, state);
+    assert.equal(harness.frames.length, 1);
+    assert.equal(harness.writes.length, 0);
+    harness.flush();
+    assert.equal(harness.writes[0].value.data.screen, 3);
+    state.bad = undefined;
+    assert.throws(() => section.save(), /interactive.*plain JSON/);
+    assert.equal(harness.frames.length, 0);
+});
+
+test('reset and invalid-update rollback keep the original state object', async () => {
+    for (const initial of [() => ({ screen: 0, items: [] }), () => [1, 2]]) {
+        const harness = stateStore();
+        const section = await createSectionState('pilot', 'interactive', { version: 1, initial }, harness.store, harness.schedule);
+        const state = section.state;
+        section.update(value => { value.extra = 'remove me'; });
+        section.reset();
+        assert.equal(section.state, state);
+        assert.equal(JSON.stringify(state), JSON.stringify(initial()));
+        assert.equal(Object.hasOwn(state, 'extra'), false);
+        harness.flush();
+        assert.equal(JSON.stringify(harness.writes[0].value.data), JSON.stringify(initial()));
+    }
+    const harness = stateStore();
+    const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
+    const state = section.state;
+    assert.throws(() => section.update(value => { value.bad = undefined; }), /plain JSON/);
+    assert.equal(section.state, state);
+    assert.equal(Object.hasOwn(state, 'bad'), false);
+});
+
+function lifecycleHarness() {
+    const handlers = {};
+    return {
+        window: { addEventListener(name, callback) { handlers[name] = callback; } },
+        document: { hidden: false, addEventListener(name, callback) { handlers[name] = callback; } },
+        emit(name) { handlers[name](); }
+    };
+}
+
+test('pagehide and hidden visibility flush once and stale frames never overwrite newer work', async () => {
+    for (const event of ['pagehide', 'visibilitychange']) {
+        const harness = stateStore();
+        const lifecycle = lifecycleHarness();
+        const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule, lifecycle);
+        section.update(state => { state.screen = 1; });
+        if (event === 'visibilitychange') {
+            lifecycle.emit(event);
+            assert.equal(harness.writes.length, 0);
+            lifecycle.document.hidden = true;
+        }
+        lifecycle.emit(event);
+        assert.equal(harness.writes.length, 1);
+        assert.equal(harness.writes[0].value.data.screen, 1);
+        lifecycle.emit(event);
+        assert.equal(harness.writes.length, 1);
+        lifecycle.document.hidden = false;
+        section.update(state => { state.screen = 2; });
+        harness.frames.shift()(); // the old frame must not flush the new snapshot
+        assert.equal(harness.writes.length, 1);
+        harness.flush();
+        assert.equal(harness.writes.length, 2);
+        assert.equal(harness.writes[1].value.data.screen, 2);
+    }
+});
+
+test('saving while already hidden writes immediately without requesting a frame', async () => {
+    const harness = stateStore();
+    const lifecycle = lifecycleHarness();
+    lifecycle.document.hidden = true;
+    const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule, lifecycle);
+    section.state.screen = 7;
+    section.save();
+    assert.equal(harness.frames.length, 0);
+    assert.equal(harness.writes[0].value.data.screen, 7);
+});

@@ -260,7 +260,7 @@
                 upgrade(saved, fromVersion) {
                     // Version 0 has the same questions and state fields, without a wrapper.
                     if (fromVersion === 0) return saved;
-                    throw new Error('Unsupported saved LCM Try it version.');
+                    return null;
                 }
             });
             state = sectionState.state;
@@ -280,7 +280,7 @@
         function save() {
             if (sectionState) {
                 // The activity mutates its state while drawing; validate and queue that snapshot.
-                sectionState.update(() => {});
+                sectionState.save();
             } else {
                 store.saveLessonActivityState(SLUG, sectionId, state);
             }

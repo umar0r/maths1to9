@@ -67,7 +67,8 @@
 
     // The standard lesson API supplies its slug; dependencies also allow isolated tests.
     async function createSectionState(slug, key, options, store = window.Maths1to9Progress,
-        schedule = callback => window.requestAnimationFrame(callback)) {
+        schedule = callback => window.requestAnimationFrame(callback),
+        lifecycle = { window, document }) {
         const { version, initial, upgrade } = options;
         if (!Number.isSafeInteger(version) || version < 1 || typeof initial !== 'function') {
             throw new TypeError(`Section state "${key}" requires a positive version and initial().`);
@@ -80,39 +81,63 @@
         else if (saved != null && upgrade) {
             restored = upgrade(wrapped ? saved.data : saved, wrapped ? saved.version : 0);
         }
-        let data = jsonState(restored == null ? initial() : restored, key);
+        const data = jsonState(restored == null ? initial() : restored, key);
         let pending = null;
-        let scheduled = false;
+        let scheduled = null;
         function write(snapshot) {
             return store.saveLessonActivityState(slug, key, { sharedState: 1, version, data: snapshot });
         }
         // Persist conversion immediately, including an intentionally fresh replacement.
         if (saved != null && !current) await write(jsonState(data, key));
+        function flush() {
+            if (pending === null) return;
+            const snapshot = pending;
+            pending = null;
+            scheduled = null;
+            return write(snapshot);
+        }
         function queueSave() {
             pending = jsonState(data, key);
+            if (lifecycle.document.hidden) {
+                flush();
+                return;
+            }
             if (scheduled) return;
-            scheduled = true;
+            const frame = {};
+            scheduled = frame;
             schedule(() => {
-                scheduled = false;
-                const snapshot = pending;
-                pending = null;
-                write(snapshot);
+                // A hide event may already have flushed this frame's snapshot.
+                if (scheduled === frame) flush();
             });
         }
+        function replaceState(snapshot) {
+            if (!data || typeof data !== 'object' || !snapshot || typeof snapshot !== 'object' ||
+                Array.isArray(data) !== Array.isArray(snapshot)) {
+                throw new TypeError(`Section state "${key}" must keep the same object or array type.`);
+            }
+            for (const property of Object.keys(data)) delete data[property];
+            if (Array.isArray(data)) data.length = 0;
+            Object.assign(data, snapshot);
+        }
+        lifecycle.window.addEventListener?.('pagehide', flush);
+        lifecycle.document.addEventListener?.('visibilitychange', () => {
+            if (lifecycle.document.hidden) flush();
+        });
         return {
             get state() { return data; },
+            save: queueSave,
             update(change) {
                 const previous = jsonState(data, key);
                 try {
                     change(data);
                     queueSave();
                 } catch (error) {
-                    data = previous;
+                    replaceState(previous);
                     throw error;
                 }
             },
             reset() {
-                data = jsonState(initial(), key);
+                replaceState(jsonState(initial(), key));
                 queueSave();
             }
         };

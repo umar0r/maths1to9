@@ -161,7 +161,9 @@ On load, look at what is saved under the key:
 | Anything else (the lesson's own older format) | `upgrade(savedValue, 0)` |
 
 - If `upgrade` returns `null`, or the lesson gives no `upgrade`, use
-  `initial()`.
+  `initial()`. An `upgrade` returns `null` for any version it doesn't
+  recognise; it never throws, because an error there would stop the
+  section loading at all.
 - A lesson moving onto the helper **must** provide an `upgrade` that
   converts its current saved format for version 0, so pupils keep their
   work. Return `null` only when the questions themselves changed. Never show
@@ -175,6 +177,16 @@ On load, look at what is saved under the key:
 - `update()` never redraws anything. Redrawing is the lesson's job, and only
   when something needs a new layout (see the negative-numbers number-line
   bug, where redrawing on every slider move broke dragging).
+- `section.save()` (added 2026-10-11): for existing lessons that change
+  their state object in place while drawing. It checks and queues a save of
+  the current state, exactly like `update()` without a change. Use it
+  instead of `update(() => {})`. New code should still use `update()`.
+- `section.state` is always the same object. `reset()` empties it and
+  copies `initial()` into it, rather than replacing it, so a lesson that
+  keeps `const state = section.state` never ends up holding an old object.
+- A queued save is written straight away on `pagehide` and when the page
+  becomes hidden (`visibilitychange`), so closing or switching tab within a
+  frame of a change never loses it.
 - "Start over" already clears every saved state for the lesson; check it
   still does with the new format.
 - Doesn't award points. Scoring stays with `recordActivity` /
