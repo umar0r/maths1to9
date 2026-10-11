@@ -597,3 +597,56 @@ test('shared number exact mode distinguishes 15 from 15.0 while default mode doe
     numeric.action.onClick();
     assert.equal(numeric.card.result().correct, true);
 });
+
+test('HCF Check upgrades old shuffled answers and phases without losing work or score history', async () => {
+    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/questions.js'), 'utf8');
+    const body = pilot.match(/function upgradeCheck\(saved, version\) \{([\s\S]*?)\n        \}/)[1];
+    const upgrade = new Function('saved', 'version', 'lesson', body);
+    const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/lesson.json'), 'utf8'));
+    const questions = lesson.comparison.questions.map(question => {
+        const order = [3, 1, 0, 2];
+        return { ...question, options: order.map(index => question.options[index]),
+            feedback: order.map(index => question.feedback[index]), answer: order.indexOf(question.answer) };
+    });
+    for (const phase of ['answer', 'wrong', 'correct', 'finished']) {
+        const old = {
+            contentVersion: 1, index: 1, screen: 1, furthestScreen: 1,
+            selected: phase === 'correct' ? questions[1].answer : 0,
+            phase: phase === 'finished' ? 'correct' : phase,
+            finished: phase === 'finished', questions: JSON.parse(JSON.stringify(questions))
+        };
+        old.questions[0].firstCorrect = false;
+        if (phase === 'wrong') old.questions[1].firstCorrect = false;
+        if (phase === 'correct') old.questions[1].firstCorrect = true;
+        if (phase === 'finished') {
+            old.index = 3; old.screen = 4; old.furthestScreen = 4;
+        }
+        const store = stateStore(old);
+        const section = await createSectionState('highest-common-factor', 'comparison', {
+            version: 1, initial: () => ({}), upgrade: (saved, version) => upgrade(saved, version, lesson)
+        }, store.store, store.schedule);
+        const restored = section.state;
+        assert.equal(restored.finished, old.finished);
+        assert.equal(restored.screen, old.screen);
+        assert.equal(restored.furthestScreen, old.furthestScreen);
+        assert.deepEqual(Array.from(restored.order[1]), [3, 1, 0, 2]);
+        assert.equal(restored.cards['final-check-1'].firstCorrect, false);
+        assert.equal(restored.cards['final-check-1'].selected, questions[0].answer);
+        assert.equal(restored.cards['final-check-1'].correct, true);
+        assert.equal(restored.questions, undefined); // question content is read from lesson.json
+        if (!old.finished) {
+            const card = restored.cards['final-check-2'];
+            assert.equal(card.phase, old.phase);
+            assert.equal(card.selected, old.selected);
+            assert.equal(card.feedback, old.phase === 'answer' ? '' : questions[1].feedback[old.selected]);
+            assert.equal(card.rejected.length, phase === 'wrong' ? 1 : 0);
+        } else {
+            assert.equal(restored.cards['final-check-4'].firstCorrect, null);
+        }
+        assert.equal(store.writes.length, 1);
+        assert.equal(store.writes[0].key, 'comparison');
+        assert.equal(store.writes[0].value.version, 1);
+    }
+    assert.equal(upgrade({ contentVersion: 1, questions }, 99, lesson), null);
+    assert.equal(upgrade({ contentVersion: 2, questions }, 0, lesson), null);
+});
