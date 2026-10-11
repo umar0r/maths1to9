@@ -240,3 +240,40 @@ test('saving while already hidden writes immediately without requesting a frame'
     assert.equal(harness.frames.length, 0);
     assert.equal(harness.writes[0].value.data.screen, 7);
 });
+
+test('Back navigation is opt-in, hidden on the first screen, and prefers screen handlers', async () => {
+    const { createBackNavigation } = window.Maths1to9LessonEngine;
+    let section = { id: 'learn', index: 0 };
+    const calls = [];
+    const options = { current: () => section, previous: () => calls.push('previous'), focus: () => calls.push('focus') };
+    const off = createBackNavigation({ ...options, enabled: false });
+    off.set('learn', { onClick: () => calls.push('screen') });
+    assert.equal(off.available(), false);
+    await off.back();
+    assert.deepEqual(calls, []);
+    const on = createBackNavigation({ ...options, enabled: true });
+    assert.equal(on.available(), false);
+    on.set('learn', { onClick: () => calls.push('screen') });
+    assert.equal(on.available(), true);
+    await on.back();
+    assert.deepEqual(calls, ['screen', 'focus']);
+    on.set('learn', null);
+    assert.equal(on.available(), false);
+    section = { id: 'practice', index: 2 };
+    await on.back();
+    assert.deepEqual(calls, ['screen', 'focus', 'previous', 'focus']);
+});
+
+test('Back waits for screen rendering before focus', async () => {
+    const calls = [];
+    const back = window.Maths1to9LessonEngine.createBackNavigation({
+        enabled: true, current: () => ({ id: 'check', index: 3 }),
+        previous: () => calls.push('section'), focus: () => calls.push('focus')
+    });
+    back.set('check', { onClick: async () => { await Promise.resolve(); calls.push('render'); } });
+    await back.back();
+    assert.deepEqual(calls, ['render', 'focus']);
+    back.set('check', null);
+    await back.back();
+    assert.deepEqual(calls, ['render', 'focus', 'section', 'focus']);
+});

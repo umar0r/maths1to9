@@ -3349,3 +3349,20 @@ noscript p {
 
 .retained-result strong { min-width: 0; overflow-wrap: anywhere; }
 .retained-result__answer > span { white-space: nowrap; }
+
+/* Opt-in screen navigation, separate from the main action. */
+.lesson-back {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+.lesson-back[hidden] { display: none; }
+.lesson-back:focus-visible { outline: 3px solid var(--primary, #2563eb); outline-offset: 2px; }

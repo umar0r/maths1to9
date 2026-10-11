@@ -143,6 +143,27 @@
         };
     }
 
+    function createBackNavigation({ enabled, current, previous, focus }) {
+        const handlers = new Map();
+        return {
+            set(id, handler) {
+                if (handler === null) handlers.delete(id);
+                else if (typeof handler?.onClick === 'function') handlers.set(id, handler);
+            },
+            available() {
+                const section = current();
+                return enabled && (handlers.has(section.id) || section.index > 0);
+            },
+            async back() {
+                if (!this.available()) return;
+                const handler = handlers.get(current().id);
+                if (handler) await handler.onClick();
+                else await previous();
+                focus();
+            }
+        };
+    }
+
     function createRouter() {
         const routes = new Map();
         let started = false;
@@ -257,7 +278,8 @@
         shuffle,
         seededRandom,
         randomInt,
-        createSectionState
+        createSectionState,
+        createBackNavigation
     };
 })();
 
@@ -311,6 +333,7 @@
          * the section the pupil is viewing.
          */
         sectionActions: new Map(),
+        backNavigation: null,
 
         /*
          * Section gating. A lesson script can declare that a
@@ -327,6 +350,7 @@
         headerStageProgress: null,
         navigation: null,
         sectionActionButton: null,
+        backButton: null,
         nextButton: null,
         status: null
     };
@@ -355,6 +379,18 @@
                 window.Maths1to9Progress?.saveCurrentLesson?.();
             }, reservedAnswerIds);
             state.sections = createSectionDefinitions(lesson);
+            if (lesson.navigation?.back_button === true) {
+                state.finished = savedScore?.finished === true;
+                const savedUnlocked = Number.isInteger(savedScore?.highestUnlockedIndex)
+                    ? savedScore.highestUnlockedIndex : 0;
+                const completedIndex = state.sections.reduce((highest, section, index) => {
+                    const completed = savedScore?.scoreActivities?.some(activity =>
+                        activity.id === `section:${section.id}` && activity.completed);
+                    return completed ? Math.max(highest, index) : highest;
+                }, 0);
+                state.highestUnlockedIndex = state.finished ? state.sections.length - 1
+                    : clamp(Math.max(savedUnlocked, completedIndex), 0, state.sections.length - 1);
+            }
             state.navigationGroups = createNavigationGroups(
                 lesson,
                 state.sections
@@ -903,6 +939,29 @@
             'div',
             'lesson-section-container'
         );
+
+        state.backNavigation = window.Maths1to9LessonEngine.createBackNavigation({
+            enabled: state.lesson.navigation?.back_button === true,
+            current: () => ({ id: state.sections[state.currentIndex]?.id, index: state.currentIndex }),
+            previous: () => window.Maths1to9Lesson.goToSection(state.currentIndex - 1),
+            focus: () => {
+                const section = state.sectionElements[state.currentIndex];
+                const heading = section.querySelector('[data-screen-heading]') || section.querySelector('h2');
+                if (heading) {
+                    heading.tabIndex = -1;
+                    heading.focus({ preventScroll: true });
+                }
+            }
+        });
+        if (state.lesson.navigation?.back_button === true) {
+            const back = createElement('button', 'lesson-back', '‹ Back');
+            back.type = 'button';
+            back.setAttribute('aria-label', 'Previous screen');
+            back.hidden = true;
+            back.addEventListener('click', () => state.backNavigation.back());
+            sectionContainer.append(back);
+            elements.backButton = back;
+        }
 
         state.sectionElements = state.sections.map(
             (definition, index) => {
@@ -2197,7 +2256,7 @@
     }
 
     function handlePrimaryAction() {
-        if (state.finished) {
+        if (state.finished && state.lesson.navigation?.back_button !== true) {
             const allLessons = document.querySelector('.site-header__back');
             window.location.assign(allLessons?.href || new URL('../../', window.location.href).href);
             return;
@@ -2381,16 +2440,19 @@
         const sectionAction =
             state.sectionActions.get(section?.id);
 
-        const showSectionAction = Boolean(sectionAction) && !state.finished;
+        if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
+        const reviewing = state.lesson.navigation?.back_button === true;
+        const finishedAction = state.finished && !reviewing;
+        const showSectionAction = Boolean(sectionAction) && !finishedAction;
         // Keep one primary action throughout the lesson, including completion.
         elements.sectionActionButton.remove();
-        elements.nextButton.disabled = state.finished
+        elements.nextButton.disabled = finishedAction
             ? false
             : showSectionAction ? sectionAction.disabled : !complete;
         elements.controlButtonGroup.append(elements.nextButton);
         elements.controlButtonGroup.hidden = false;
 
-        elements.nextButton.textContent = state.finished
+        elements.nextButton.textContent = finishedAction
             ? 'All lessons'
             : showSectionAction ? sectionAction.label : 'Continue';
 
@@ -2647,6 +2709,12 @@
 
     function exposeLessonApi() {
         window.Maths1to9Lesson = {
+            setSectionBack(sectionId, handler) {
+                if (findSectionIndex(sectionId) === -1) return;
+                state.backNavigation.set(sectionId, handler);
+                updateControls();
+            },
+
             useSectionState(key, options) {
                 return window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
             },
