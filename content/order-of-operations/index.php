@@ -27,7 +27,7 @@ $pageTitle = 'Order of operations';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=35">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
     <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
@@ -76,6 +76,6 @@ $pageTitle = 'Order of operations';
     <script src="./interactive.js?v=12"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=38"></script>
+    <script src="../../assets/js/lesson-engine.js?v=39"></script>
 </body>
 </html>

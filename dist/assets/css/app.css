@@ -3394,3 +3394,17 @@ noscript p {
 }
 .question-hint { display: block; margin-top: .3rem; }
 .question-answer-label { display: flex; flex-direction: column; gap: .5rem; }
+
+/* Secondary in-page actions share Back's quiet treatment. */
+.lesson-secondary-action {
+    background: transparent;
+    border: 0;
+    color: var(--muted, #526174);
+    cursor: pointer;
+    font: inherit;
+    min-height: 44px;
+    padding: .5rem .75rem;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+.lesson-secondary-action:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

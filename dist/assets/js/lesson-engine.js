@@ -563,6 +563,172 @@
         return { result };
     }
 
+
+    function questionSetId(sectionId, session, index) {
+        return sectionId === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
+    }
+
+    // Archiving is shared with activities which need their own question renderer.
+    // Only a pupil's explicit Practise again action calls this function.
+    function archivePractice(state, fresh) {
+        if (!state.finished) return false;
+        const previous = JSON.parse(JSON.stringify(state));
+        delete previous.earlier;
+        const earlier = [...(state.earlier || []), previous].slice(-5);
+        const session = (state.session || 1) + 1;
+        for (const key of Object.keys(state)) delete state[key];
+        Object.assign(state, fresh, { session, earlier });
+        return true;
+    }
+
+    async function runQuestionSet(sectionId, config, api, container) {
+        if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
+        const isPractice = sectionId === 'question-bank';
+        const initialHash = window.location?.hash || '';
+        document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
+        api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
+        function fresh(excluded = []) {
+            const random = seededRandom(Math.floor(Math.random() * 4294967296));
+            const items = config.pick(random);
+            if (!Array.isArray(items) || items.length !== config.count || items.some(item =>
+                typeof item.type !== 'string' || !Number.isInteger(item.seed))) {
+                throw new TypeError('pick must return count question types with integer seeds.');
+            }
+            const used = new Set(excluded.flatMap(session => session.items.map(item => item.seed)));
+            for (const item of items) {
+                while (used.has(item.seed)) item.seed = (item.seed + 1) >>> 0;
+                used.add(item.seed);
+            }
+            return { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} };
+        }
+        const section = await api.useSectionState(sectionId, {
+            version: config.version, initial: fresh, upgrade: config.upgrade
+        });
+        const saved = section.state;
+        const screenHash = screen => `${sectionId}-question-${screen + 1}`;
+        function syncHash() {
+            if (api.getCurrentSection().id === sectionId) api.setSlideHash(screenHash(saved.screen), { replace: true });
+        }
+        for (let screen = 0; screen <= config.count; screen++) {
+            api.registerHashRoute(screenHash(screen), () => {
+                if (api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) show(Math.min(screen, saved.index));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', syncHash);
+        function question(item) { return config.question(item, seededRandom(item.seed)); }
+        function rows(session) {
+            return session.items.map((item, index) => {
+                const definition = question(item);
+                const card = session.cards[questionSetId(sectionId, session.session, index)];
+                return {
+                    prompt: definition.prompt,
+                    answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? '' : card?.value ?? '',
+                    firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
+                    explanation: card?.feedback || '', visual: config.resultVisual?.(item)
+                };
+            });
+        }
+        function complete() {
+            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', { detail: { sectionId } }));
+        }
+        function focus() {
+            const heading = container.querySelector('[data-screen-heading], h3');
+            if (heading) { heading.tabIndex = -1; heading.focus(); }
+        }
+        function show(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            focus();
+        }
+        function continueSet() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.finished = state.index === state.items.length;
+            });
+            if (saved.finished) complete();
+            render();
+            focus();
+        }
+        function render() {
+            container.replaceChildren();
+            syncHash();
+            api.setSectionBack(sectionId, saved.screen > 0 ? { onClick: () => show(saved.screen - 1) } : null);
+            api.setSectionProgress(sectionId, saved.finished ? config.count : saved.index, config.count);
+            if (saved.finished) {
+                complete();
+                if (api.getSections().at(-1)?.id === sectionId) api.completeLesson();
+            }
+            if (saved.finished && saved.screen === saved.items.length) {
+                const score = document.createElement('div');
+                const results = document.createElement('div');
+                container.append(score, results);
+                const currentRows = rows(saved);
+                renderScorePanel(score, {
+                    correct: currentRows.filter(row => row.firstCorrect === true).length, total: config.count,
+                    readyScore: isPractice ? api.getLesson().question_bank?.ready_score : undefined
+                });
+                renderResults(results, currentRows, { heading: config.heading });
+                if (isPractice && config.practiseAgain) {
+                    const again = resultText('button', 'Practise again', 'lesson-secondary-action');
+                    again.type = 'button';
+                    again.addEventListener('click', () => {
+                        section.update(state => { archivePractice(state, fresh([state, ...(state.earlier || [])])); });
+                        render();
+                        focus();
+                    });
+                    container.append(again, resultText('p', "Practising again doesn't change your score."));
+                }
+                for (const earlier of saved.earlier || []) {
+                    const details = document.createElement('details');
+                    const results = document.createElement('div');
+                    details.append(resultText('summary', `Earlier practice ${earlier.session}`), results);
+                    renderResults(results, rows(earlier));
+                    container.append(details);
+                }
+                api.setSectionAction(sectionId, {
+                    label: 'Continue', onClick: () => {
+                        if (config.onContinue) config.onContinue();
+                        else {
+                            const sections = api.getSections();
+                            const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
+                            if (next) api.continueSection();
+                            else {
+                                api.completeLesson();
+                                window.location.assign(document.querySelector('.site-header__back')?.href || '../../');
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            const item = saved.items[saved.screen];
+            const position = resultText('p', `Question ${saved.screen + 1} of ${config.count}`, 'question-number');
+            const cardRoot = document.createElement('div');
+            container.append(position, cardRoot);
+            const definition = question(item);
+            const readOnly = saved.screen < saved.index;
+            api.createQuestion(cardRoot, {
+                ...definition, sectionId, questionId: questionSetId(sectionId, saved.session, saved.screen),
+                scored: true, readOnly,
+                onFeedback: outcome => {
+                    definition.onFeedback?.(outcome);
+                    if (outcome.correct && saved.index === config.count - 1) complete();
+                    api.setSectionProgress(sectionId, saved.index + Number(outcome.correct), config.count);
+                },
+                onContinue: continueSet
+            });
+            if (readOnly) api.setSectionAction(sectionId, { label: 'Next', onClick: () => show(saved.screen + 1) });
+        }
+        const requested = Array.from({ length: config.count + 1 }, (_, screen) => screen)
+            .find(screen => initialHash === `#${screenHash(screen)}`);
+        if (requested !== undefined && api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
+            section.update(state => { state.screen = Math.min(requested, state.index); });
+        }
+        render();
+        return { section, render };
+    }
+
     window.Maths1to9LessonEngine = {
         createRouter,
         updateStageProgress,
@@ -577,7 +743,10 @@
         renderResults,
         renderScorePanel,
         tidyNumber,
-        createQuestion
+        createQuestion,
+        questionSetId,
+        archivePractice,
+        runQuestionSet
     };
 })();
 
@@ -631,6 +800,7 @@
          * the section the pupil is viewing.
          */
         sectionActions: new Map(),
+        questionSets: new Set(),
         sectionStates: new Map(),
         backNavigation: null,
 
@@ -678,7 +848,7 @@
                 window.Maths1to9Progress?.saveCurrentLesson?.();
             }, reservedAnswerIds);
             state.sections = createSectionDefinitions(lesson);
-            if (lesson.navigation?.back_button === true) {
+            if (lesson.navigation?.back_button === true || savedScore?.finished === true) {
                 state.finished = savedScore?.finished === true;
                 const savedUnlocked = Number.isInteger(savedScore?.highestUnlockedIndex)
                     ? savedScore.highestUnlockedIndex : 0;
@@ -1423,7 +1593,7 @@
                 button.type = 'button';
                 button.dataset.stageIndex = String(index);
                 button.dataset.stageNumber = String(index + 1);
-                button.disabled = group.firstIndex > 0;
+                button.disabled = group.firstIndex > state.highestUnlockedIndex;
                 button.setAttribute(
                     'aria-controls',
                     `lesson-section-${
@@ -2555,7 +2725,8 @@
     }
 
     function handlePrimaryAction() {
-        if (state.finished && state.lesson.navigation?.back_button !== true) {
+        if (state.finished && state.lesson.navigation?.back_button !== true &&
+            !state.questionSets.has(state.sections[state.currentIndex]?.id)) {
             const allLessons = document.querySelector('.site-header__back');
             window.location.assign(allLessons?.href || new URL('../../', window.location.href).href);
             return;
@@ -2740,7 +2911,7 @@
             state.sectionActions.get(section?.id);
 
         if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
-        const reviewing = state.lesson.navigation?.back_button === true;
+        const reviewing = state.lesson.navigation?.back_button === true || state.questionSets.has(section?.id);
         const finishedAction = state.finished && !reviewing;
         const showSectionAction = Boolean(sectionAction) && !finishedAction;
         // Keep one primary action throughout the lesson, including completion.
@@ -3018,6 +3189,13 @@
                 const section = await window.Maths1to9LessonEngine.createSectionState(state.slug, key, options);
                 state.sectionStates.set(key, section);
                 return section;
+            },
+
+            async runQuestionSet(sectionId, config) {
+                const container = document.getElementById(`${state.slug}-${sectionId === 'question-bank' ? 'questions' : 'comparison'}`);
+                if (!container) throw new Error(`No question set container for ${sectionId}.`);
+                state.questionSets.add(sectionId);
+                return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);
             },
 
             createQuestion(container, config) {

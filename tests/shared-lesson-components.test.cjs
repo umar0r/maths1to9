@@ -316,11 +316,16 @@ function resultsFixture(katex) {
         replaceChildren(...nodes) { this.children = nodes; }
         setAttribute(key, value) { this.attributes[key] = value; }
         addEventListener(name, action) { this.events[name] = action; }
+        querySelector() {
+            const search = node => node.tagName === 'h3' ? node : node.children?.map(search).find(Boolean);
+            return search(this);
+        }
         focus() { this.focused = true; }
     }
-    const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag) };
+    const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag),
+        dispatchEvent() {}, addEventListener() {} };
     const fixtureWindow = { katex };
-    vm.runInNewContext(source, { window: fixtureWindow, document });
+    vm.runInNewContext(source, { window: fixtureWindow, document, CustomEvent: class { constructor(name, options) { this.type = name; this.detail = options?.detail; } } });
     return { ...fixtureWindow.Maths1to9LessonEngine, node: tag => new Node(tag) };
 }
 
@@ -649,4 +654,151 @@ test('HCF Check upgrades old shuffled answers and phases without losing work or 
     }
     assert.equal(upgrade({ contentVersion: 1, questions }, 99, lesson), null);
     assert.equal(upgrade({ contentVersion: 2, questions }, 0, lesson), null);
+});
+
+const { archivePractice, questionSetId } = window.Maths1to9LessonEngine;
+test('question sets use session-specific evidence ids and stable Check ids', () => {
+    assert.equal(questionSetId('question-bank', 1, 0), 'question-bank:1:1');
+    assert.equal(questionSetId('question-bank', 2, 0), 'question-bank:2:1');
+    assert.equal(questionSetId('comparison', 3, 0), 'final-check-1');
+});
+
+test('Practise again keeps the five most recent sessions without mutating their answers', () => {
+    const state = { session: 1, finished: true, earlier: [], cards: { one: { firstCorrect: false } } };
+    const reference = state;
+    const fresh = () => ({ finished: false, cards: {}, items: [{ type: 'number', seed: state.session + 100 }] });
+    for (let session = 2; session <= 8; session++) {
+        assert.equal(archivePractice(state, fresh()), true);
+        assert.equal(state, reference);
+        assert.equal(state.session, session);
+        assert.equal(state.finished, false);
+        assert.equal(state.earlier.length, Math.min(session - 1, 5));
+        assert.ok(state.earlier.every(earlier => earlier.earlier === undefined));
+        state.finished = true;
+    }
+    assert.deepEqual(Array.from(state.earlier, earlier => earlier.session), [3, 4, 5, 6, 7]);
+    const unfinished = { session: 1, finished: false, earlier: [] };
+    assert.equal(archivePractice(unfinished, fresh()), false);
+    assert.equal(unfinished.session, 1);
+});
+
+test('repeat Practice assessments freeze first-session points while retaining distinct evidence ids', () => {
+    const tracker = window.Maths1to9LessonEngine.createScoreTracker([], () => {}, ['answer:question-bank:1', 'answer:question-bank:2']);
+    tracker.record({ id: 'answer:question-bank:1:1', kind: 'answer', correct: false });
+    tracker.record({ id: 'answer:question-bank:1:1', kind: 'answer', correct: true });
+    tracker.record({ id: 'answer:question-bank:1:2', kind: 'answer', completed: true, firstCorrect: true, correct: true });
+    const before = tracker.getScore();
+    for (const correct of [false, true]) {
+        tracker.record({ id: 'answer:question-bank:2:1', kind: 'answer', completed: true, firstCorrect: correct, correct });
+        tracker.record({ id: 'answer:question-bank:2:2', kind: 'answer', completed: true, firstCorrect: correct, correct });
+    }
+    assert.deepEqual(tracker.getScore(), before);
+    assert.equal(tracker.export().length, 2);
+});
+
+async function setFixture(restored, isCheck = false) {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    const id = isCheck ? 'comparison' : 'question-bank';
+    let section;
+    let action;
+    let back;
+    let card;
+    let picks = 0;
+    let completions = 0;
+    const config = {
+        version: 1, count: 2, practiseAgain: true, heading: 'Results',
+        pick(random) { picks++; return [1, 2].map(() => ({ type: 'number', seed: Math.floor(random() * 100000) })); },
+        question(item, random) { return { input: 'number', prompt: `Number ${item.seed}`, answer: String(Math.floor(random() * 10)) }; }
+    };
+    const api = {
+        async useSectionState(key, options) {
+            assert.equal(key, id);
+            section = { state: restored ? JSON.parse(JSON.stringify(restored)) : options.initial(), update(change) { change(this.state); } };
+            return section;
+        },
+        getLesson: () => ({ question_bank: {} }),
+        getSections: () => [{ id: 'question-bank' }, { id: 'comparison' }],
+        getCurrentSection: () => ({ id }), setSlideHash() {}, registerHashRoute() {}, goToSection: () => true,
+        setSectionProgress() {}, setSectionBack(key, value) { back = value; },
+        setSectionAction(key, value) { action = value; }, clearSectionAction() { action = null; },
+        completeLesson() { completions++; },
+        createQuestion(root, definition) {
+            card = definition;
+            section.state.cards[definition.questionId] ??= {
+                value: '', firstCorrect: null, correct: null, feedback: '', phase: 'answer'
+            };
+        }
+    };
+    const runner = await fixture.runQuestionSet(id, config, api, container);
+    function finishQuestion(firstCorrect = true) {
+        Object.assign(section.state.cards[card.questionId], { value: card.answer, correct: true, firstCorrect, phase: 'correct' });
+        card.onFeedback({ correct: true });
+        card.onContinue();
+    }
+    return { container, section, runner, finishQuestion, get card() { return card; }, get action() { return action; },
+        get back() { return back; }, get picks() { return picks; }, get completions() { return completions; } };
+}
+
+test('question sets rebuild saved seeds, retain the exact cursor and show readonly Back/Next without assessments', async () => {
+    let set = await setFixture();
+    const seeds = Array.from(set.section.state.items, item => item.seed);
+    set.finishQuestion(false);
+    const currentId = set.card.questionId;
+    set.section.state.cards[currentId].value = '.5';
+    set = await setFixture(set.section.state);
+    assert.equal(set.picks, 0);
+    assert.deepEqual(Array.from(set.section.state.items, item => item.seed), seeds);
+    assert.equal(set.card.questionId, currentId);
+    assert.equal(set.section.state.cards[currentId].value, '.5');
+    set.back.onClick();
+    assert.equal(set.card.readOnly, true);
+    assert.equal(set.action.label, 'Next');
+    assert.equal(set.section.state.index, 1);
+    set.action.onClick();
+    assert.equal(set.card.readOnly, false);
+    assert.equal(set.card.questionId, currentId);
+    assert.equal(set.section.state.cards[currentId].value, '.5');
+    set.finishQuestion();
+    assert.equal(set.action.label, 'Continue');
+    assert.equal(set.section.state.finished, true);
+    set = await setFixture(set.section.state);
+    assert.equal(set.picks, 0);
+    assert.equal(set.section.state.finished, true);
+    set.back.onClick();
+    assert.equal(set.card.readOnly, true);
+    assert.equal(set.section.state.screen, 1);
+});
+
+test('repeat sessions pick fresh seeds, retain earlier marks and never reset another section or completion', async () => {
+    const set = await setFixture();
+    set.finishQuestion(false);
+    set.finishQuestion();
+    const first = JSON.parse(JSON.stringify(set.section.state));
+    const again = () => set.container.children.find(node => node.tagName === 'button').events.click();
+    again();
+    assert.equal(set.section.state.session, 2);
+    assert.equal(set.section.state.finished, false);
+    assert.equal(set.section.state.earlier[0].cards['question-bank:1:1'].firstCorrect, false);
+    assert.notDeepEqual(Array.from(set.section.state.items, item => item.seed), Array.from(first.items, item => item.seed));
+    assert.equal(set.card.questionId, 'question-bank:2:1');
+    const restored = await setFixture(set.section.state);
+    assert.equal(restored.picks, 0);
+    assert.equal(restored.card.questionId, 'question-bank:2:1');
+    assert.equal(set.completions, 0);
+    set.finishQuestion();
+    set.finishQuestion();
+    const details = set.container.children.filter(node => node.tagName === 'details');
+    assert.equal(details.length, 1);
+    assert.equal(details[0].children[0].textContent, 'Earlier practice 1');
+    assert.equal(details[0].open, undefined);
+});
+
+test('Check uses fixed assessment ids and never offers Practise again', async () => {
+    const set = await setFixture(undefined, true);
+    assert.equal(set.card.questionId, 'final-check-1');
+    set.finishQuestion();
+    assert.equal(set.card.questionId, 'final-check-2');
+    set.finishQuestion();
+    assert.equal(set.container.children.some(node => node.tagName === 'button'), false);
 });
