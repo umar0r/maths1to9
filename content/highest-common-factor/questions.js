@@ -1,6 +1,7 @@
 (() => {
 'use strict';
 const SLUG = 'highest-common-factor';
+const initialScreenHash = window.location.hash;
     const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
     async function renderRecommendations(container) {
@@ -85,6 +86,25 @@ const SLUG = 'highest-common-factor';
                 questions: lesson.comparison.questions.map(shuffleCheckQuestion), finished: false
             };
         }
+        state.screen ??= state.finished ? state.questions.length : state.index;
+        state.furthestScreen ??= state.screen;
+        function showScreen(screen) {
+            state.screen = screen;
+            render();
+            api.setSlideHash(screen === state.questions.length ? 'summary' : `hcf-check-${screen + 1}`, { replace: true });
+        }
+        for (let screen = 0; screen <= state.questions.length; screen++) {
+            api.registerHashRoute(`hcf-check-${screen + 1}`, () => {
+                api.goToSection(sectionId, { moveFocus: false });
+                showScreen(Math.min(screen, state.furthestScreen));
+            });
+        }
+        function syncScreenHash() {
+            if (api.getCurrentSection().id !== sectionId) return;
+            if (root.dataset.view === 'summary' && !state.finished) return;
+            api.setSlideHash(state.screen === state.questions.length ? 'summary' : `hcf-check-${state.screen + 1}`, { replace: true });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncScreenHash));
         const save = () => progress.saveLessonActivityState(SLUG, sectionId, state);
         const reportProgress = () => api.setSectionProgress(sectionId,
             state.finished ? state.questions.length : state.index + (state.phase === 'correct' ? 1 : 0), state.questions.length);
@@ -98,11 +118,15 @@ const SLUG = 'highest-common-factor';
             } else if (state.phase === 'correct') {
                 if (state.index === state.questions.length - 1) {
                     state.finished = true;
+                    state.screen = state.questions.length;
+                    state.furthestScreen = state.screen;
                     render();
                     api.setSlideHash('summary');
                     return;
                 }
                 state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.index;
                 state.selected = null;
                 state.phase = 'answer';
             } else {
@@ -117,6 +141,20 @@ const SLUG = 'highest-common-factor';
         }
         function render() {
             save();
+            syncScreenHash();
+            api.setSectionBack(sectionId, state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.screen < (state.finished ? state.questions.length : state.index)) {
+                if (state.finished) dispatch('complete');
+                showCheckHeading(root, true);
+                const question = state.questions[state.screen];
+                const mark = question.firstCorrect === true ? '✓' : question.firstCorrect === false ? '2nd try' : '';
+                root.innerHTML = `<article class="question-card question-card--bare"><h3 data-screen-heading>${escape(question.prompt)}</h3><p>${escape(question.options[question.answer])} ${mark}</p></article>`;
+                document.dispatchEvent(new CustomEvent('maths1to9:hcf-render-maths', { detail: { root } }));
+                api.setSectionAction(sectionId, { label: 'Next', onClick: () => showScreen(state.screen + 1) });
+                return;
+            }
             if (state.finished || root.dataset.view === 'summary') {
                 renderCheckEnding(root, state, api);
                 if (state.finished) dispatch('complete');
@@ -141,6 +179,7 @@ const SLUG = 'highest-common-factor';
             number.textContent = `Question ${state.index + 1} of ${state.questions.length}`;
             const prompt = document.createElement('h3');
             prompt.className = 'question-prompt';
+            prompt.dataset.screenHeading = '';
             prompt.textContent = question.prompt;
             const options = document.createElement('div');
             options.className = 'prime-check-options';
@@ -176,6 +215,11 @@ const SLUG = 'highest-common-factor';
         document.addEventListener('maths1to9:comparison-view', render);
         reportProgress();
         render();
+        const requested = initialScreenHash.match(/^#hcf-check-(\d+)$/);
+        if (requested) {
+            api.goToSection(sectionId, { unlock: true, moveFocus: false });
+            showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
+        }
     }
 
     document.addEventListener('maths1to9:lesson-rendered', event => {

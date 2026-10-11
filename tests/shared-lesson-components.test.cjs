@@ -277,3 +277,24 @@ test('Back waits for screen rendering before focus', async () => {
     await back.back();
     assert.deepEqual(calls, ['render', 'focus', 'section', 'focus']);
 });
+
+test('HCF Learn upgrades legacy position and completed matches without resetting work', async () => {
+    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/interactive.js'), 'utf8');
+    const body = pilot.match(/upgrade\(saved, version\) \{([\s\S]*?)\n            \}/)[1];
+    const upgrade = new Function('saved', 'version', body);
+    for (const legacy of [
+        { screen: 1, matches: 2, finished: false },
+        { screen: 3, matches: 3, finished: true }
+    ]) {
+        const harness = stateStore(legacy);
+        const section = await createSectionState('highest-common-factor', 'learn', {
+            version: 1, initial: () => ({ screen: 0, furthestScreen: 0, matches: 0, finished: false }), upgrade
+        }, harness.store, harness.schedule);
+        assert.equal(section.state.screen, legacy.screen);
+        assert.equal(section.state.matches, legacy.matches);
+        assert.equal(section.state.finished, legacy.finished);
+        assert.equal(section.state.furthestScreen, legacy.screen);
+        assert.equal(harness.writes[0].key, 'learn');
+    }
+    assert.equal(upgrade({ screen: 3 }, 99), null);
+});

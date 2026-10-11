@@ -2,6 +2,7 @@
     'use strict';
 
     const SLUG = 'highest-common-factor';
+    const initialScreenHash = window.location.hash;
     const PRACTICE_GROUPS = [
         [[18, 30], [42, 70], [45, 75], [30, 50]],
         [[48, 72], [36, 54], [16, 40]],
@@ -214,6 +215,25 @@
                 items: [], finished: false
             };
         }
+        state.screen ??= state.index;
+        state.furthestScreen ??= state.index;
+        function showScreen(screen) {
+            state.screen = screen;
+            render();
+            api.setSlideHash(`hcf-${sectionId}-${screen + 1}`, { replace: true });
+        }
+        for (let screen = 0; screen <= state.order.length; screen++) {
+            api.registerHashRoute(`hcf-${sectionId}-${screen + 1}`, () => {
+                api.goToSection(sectionId, { moveFocus: false });
+                showScreen(Math.min(screen, state.furthestScreen));
+            });
+        }
+        function syncScreenHash() {
+            if (api.getCurrentSection().id === sectionId) {
+                api.setSlideHash(`hcf-${sectionId}-${state.screen + 1}`, { replace: true });
+            }
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncScreenHash));
         // Retain saved tiles and attempts from the first lesson version.
         state.items.forEach(question => { delete question.failed; });
 
@@ -343,6 +363,24 @@
         }
         function render() {
             root.replaceChildren();
+            syncScreenHash();
+            api.setSectionBack(sectionId, state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.screen < state.index) {
+                if (state.finished) dispatch('complete');
+                reportProgress();
+                const question = state.items[state.screen];
+                const heading = element('h3', `${question.pair[0]} and ${question.pair[1]}`);
+                heading.dataset.screenHeading = '';
+                const completed = { ...question, stage: 'answer', phase: 'correct', shake: false };
+                root.append(heading, drawDiagram(completed, null), completedAnswer(question));
+                api.setSectionAction(sectionId, {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+                save();
+                return;
+            }
             if (state.finished) {
                 renderCompletedWork();
                 dispatch('complete');
@@ -353,7 +391,9 @@
             }
             const question = state.items[state.index] ??= newQuestion(state.order[state.index]);
             const position = guided ? `Example ${state.index + 1} of 2` : `Question ${state.index + 1} of 5`;
-            root.append(element('p', position, 'question-number'));
+            const heading = element('h3', position, 'question-number');
+            heading.dataset.screenHeading = '';
+            root.append(heading);
             if (!guided || state.index === 0) {
                 const caption = question.stage === 'match'
                     ? 'Tap a prime, then the same prime in the other row.'
@@ -426,6 +466,8 @@
                 question.message = '';
             } else if (question.phase === 'correct') {
                 state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.index;
                 state.finished = state.index === state.order.length;
             } else {
                 checkAnswer(question);
@@ -433,6 +475,11 @@
             render();
         }
         render();
+        const requested = initialScreenHash.match(new RegExp(`^#hcf-${sectionId}-(\\d+)$`));
+        if (requested) {
+            api.goToSection(sectionId, { unlock: true, moveFocus: false });
+            showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
+        }
     }
 
     async function mountLearn(event) {
@@ -443,9 +490,32 @@
         section.append(root);
         const api = window.Maths1to9Lesson;
         const store = window.Maths1to9Progress;
-        const state = await store.getLessonActivityState(SLUG, 'learn') || {
-            screen: 0, matches: 0, finished: false
-        };
+        const savedSection = await api.useSectionState('learn', {
+            version: 1,
+            initial: () => ({ screen: 0, furthestScreen: 0, matches: 0, finished: false }),
+            upgrade(saved, version) {
+                if (version !== 0) return null;
+                return { ...saved, furthestScreen: saved.finished ? 3 : saved.screen };
+            }
+        });
+        const state = savedSection.state;
+        function showScreen(screen) {
+            state.screen = screen;
+            render();
+            api.setSlideHash(`hcf-learn-${screen + 1}`, { replace: true });
+        }
+        for (let screen = 0; screen < 4; screen++) {
+            api.registerHashRoute(`hcf-learn-${screen + 1}`, () => {
+                api.goToSection('explanation', { moveFocus: false });
+                showScreen(Math.min(screen, state.furthestScreen));
+            });
+        }
+        function syncScreenHash() {
+            if (api.getCurrentSection().id === 'explanation') {
+                api.setSlideHash(`hcf-learn-${state.screen + 1}`, { replace: true });
+            }
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncScreenHash));
         function dispatch(name) {
             document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
                 detail: { sectionId: 'explanation' }
@@ -495,18 +565,32 @@
         function advance() {
             if (state.screen === 1 && state.matches < 3) state.matches++;
             else if (state.screen < 3) state.screen++;
-            render();
+            state.furthestScreen = Math.max(state.furthestScreen, state.screen);
+            showScreen(state.screen);
         }
         function render() {
             root.replaceChildren();
+            syncScreenHash();
+            api.setSectionBack('explanation', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
             const titles = ['What HCF means', 'Match the prime factors', 'Multiply the overlap', 'No matches'];
-            root.append(element('h3', titles[state.screen]));
+            const heading = element('h3', titles[state.screen]);
+            heading.dataset.screenHeading = '';
+            root.append(heading);
             if (state.screen === 0) renderFactorLists();
             else renderPrimeDiagram();
             renderMaths(root);
             // Reaching the final screen completes Learn; the engine supplies Continue.
             if (state.screen === 3) state.finished = true;
-            store.saveLessonActivityState(SLUG, 'learn', state);
+            savedSection.save();
+            if (state.finished) dispatch('complete');
+            if (state.screen < state.furthestScreen) {
+                api.setSectionAction('explanation', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+                return;
+            }
             if (state.finished) {
                 dispatch('complete');
                 api.clearSectionAction('explanation');
@@ -517,6 +601,11 @@
             api.setSectionAction('explanation', { label, disabled: false, onClick: advance });
         }
         render();
+        const requested = initialScreenHash.match(/^#hcf-learn-(\d+)$/);
+        if (requested) {
+            api.goToSection('explanation', { unlock: true, moveFocus: false });
+            showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
+        }
     }
 
     // Check owns its renderer in questions.js; this event keeps the maths helper private.
