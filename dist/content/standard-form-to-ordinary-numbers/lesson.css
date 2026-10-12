@@ -1,0 +1,34 @@
+.ordinary-visual { margin: 1rem 0; text-align: center; }
+.ordinary-maths { font-size: clamp(.95rem, 2.7vw, 1.15rem); }
+.ordinary-maths .katex-display { margin: .65em 0; }
+.ordinary-highlight { background: #e9f5ee; border-radius: .5rem; padding: .15rem; }
+.ordinary-column-arrow { font-size: .75rem; }
+.ordinary-column-arrow .katex-display { margin: .1em 0; }
+.ordinary-chart { margin: 1rem 0; border: 1px solid #b8c5c0; border-radius: .5rem; overflow: hidden; }
+.ordinary-chart-row { display: flex; }
+.ordinary-chart-row > span { flex: 1; min-width: 0; padding: .55rem .1rem; border-right: 1px solid #d4ded8; }
+.ordinary-chart-row > span:last-child { border-right: 0; }
+.ordinary-chart-row:first-child { background: #edf3ef; font-size: clamp(.62rem, 2.4vw, .9rem); }
+.ordinary-chart-row:last-child { font-size: 1.5rem; font-weight: 800; }
+.ordinary-chart-row > .ordinary-point { flex: 0 0 2rem; }
+.ordinary-placeholder { color: #718077; font-weight: 400; }
+.ordinary-controls { display: flex; justify-content: center; gap: 1rem; }
+.ordinary-controls button { min-width: 5rem; min-height: 44px; }
+.ordinary-live { min-height: 3em; }
+.ordinary-chart-working { font-size: clamp(.85rem, 2.7vw, 1rem); }
+.ordinary-chain { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem; margin: 1rem 0; }
+.ordinary-box { border: 1px solid #b8c5c0; border-radius: .4rem; padding: .35rem; }
+.ordinary-arrow { display: flex; flex-direction: column; text-align: center; font-size: .75rem; }
+.ordinary-slide-left { animation: ordinary-left .2s ease-out; }
+.ordinary-slide-right { animation: ordinary-right .2s ease-out; }
+@keyframes ordinary-left { from { transform: translateX(12%); } to { transform: translateX(0); } }
+@keyframes ordinary-right { from { transform: translateX(-12%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+    .ordinary-slide-left, .ordinary-slide-right { animation: none; }
+}
+
+.ordinary-build-lines > .ordinary-maths:nth-child(2) { animation: ordinary-reveal .3s .3s both; }
+@keyframes ordinary-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .ordinary-build-lines > .ordinary-maths:nth-child(2) { animation: none; }
+}
