@@ -5,8 +5,7 @@ declare(strict_types=1);
 /*
  * CHANGE: slug and title. The slug must match:
  *   - "slug" in lesson.json
- *   - SLUG in interactive.js
- *   - ROOT_ID prefix in questions.js
+ * JavaScript reads the slug from data-lesson-id.
  */
 $lessonId = 'my-lesson-slug';
 $pageTitle = 'My lesson title';
@@ -42,12 +41,12 @@ $pageTitle = 'My lesson title';
 >
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="site-logo" href="../../index.php">
+            <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
             </a>
 
-            <a class="site-header__back" href="../../index.php">
+            <a class="site-header__back" href="../../">
                 All lessons
             </a>
         </div>
@@ -72,12 +71,18 @@ $pageTitle = 'My lesson title';
         </div>
     </noscript>
 
+    <!-- CHANGE: uncomment only when this lesson renders maths with KaTeX.
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <script src="../../vendor/katex/katex.min.js"></script>
+    Render whole expressions, including the left side, using katex.render().
+    -->
+
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=10"></script>
-    <script src="./interactive.js?v=10"></script>
+    <script src="./questions.js?v=11"></script>
+    <script src="./interactive.js?v=11"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=41"></script>

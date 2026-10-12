@@ -1,132 +1,105 @@
 # Lesson template
 
-Copy this folder, rename it to your lesson slug, then work through the
-`CHANGE:` markers in each file. Everything wiring-related (the single
-morphing answer button, section gating, engine hooks) is already done —
-you only replace content.
+Copy this folder to `content/<slug>/`. Set the slug and title in
+`lesson.json` and `index.php`, add the lesson and its existing skill ID to
+`curriculum.json` and the relevant collection, then work through every
+`CHANGE:` marker. **Delete README.md from the copy**: the build publishes
+all files in a lesson folder. Remove unused optional video configuration.
 
-## The three moving parts
+Read [the lesson specification](../../docs/lesson-specification.md),
+[scoring rules](../../docs/lesson-scoring.md) and
+[shared component API](../../docs/shared-lesson-components.md) first.
+The doubling content is an example of wiring, not a finished lesson brief.
 
-1. **`lesson.json`** — titles, method steps, worked examples. The engine
-   renders these directly.
-2. **`interactive.js`** — your Try It questions and any bespoke Learn /
-   Method visuals. Contains the single-button state machine.
-3. **`questions.js`** — the endless Practice generators. Contains the
-   same single-button machine per question card.
+## Files
 
-## The single answer button
+- `index.php`: page shell, slug, current shared asset versions and lesson
+  script versions. KaTeX tags are commented out; enable them only if needed
+  and render whole expressions, including their left side.
+- `lesson.json`: exactly Learn, Try it, Practice and Check; navigation,
+  skill mapping, Practice length, fixed Check and summary. `_change` notes
+  are ignored by the engine; replace or remove them before delivery.
+- `interactive.js`: three saved Learn screens and two guided examples.
+  Replace the counter visual with the lesson's own visual. Keep it during
+  the activity and in the read-only completed examples.
+- `questions.js`: seeded Practice through the shared question-set runner,
+  and fixed Check through the shared question card, followed by results
+  and a short summary. Add lesson CSS only for its own visual.
 
-One button per question, three phases:
+## Shared behaviour
 
-| phase       | label          | click does            |
-|-------------|----------------|-----------------------|
-| `answering` | Check          | marks the answer      |
-| `wrong`     | Try again      | resets the question   |
-| `correct`   | Continue / Next question | advances    |
+Use shared section state, question cards, results and score panels rather
+than copying their code. Practice generators receive seeded `random`:
+pass it to `randomInt` and `shuffle`, and save types and seeds, never text.
+Map every generator type to its existing skill in `lesson.json`.
+`question_bank.session_length` defaults here to 5; `ready_score` is optional.
 
-It is disabled until an option is selected. Never add a second
-Check/Next button.
+The engine owns the single main action and the opt-in Back control.
+Questions use Check → Try again → Continue. Wrong choice options remain
+unavailable on retry. Earlier screens are read-only with Next; Back only
+changes the view. Learn completes on reaching its last screen. The last
+screen of the lesson says All lessons and returns to `../../` on both PHP
+and static sites. Never add a second question action or a local Back link.
 
-## Section gating
+Finished Practice offers Practise again: fresh seeds, unchanged points,
+new skill evidence, and the five most recent earlier sessions retained.
+It never resets Check or lesson completion. Revisits show saved work.
 
-The lesson-level forward button is not shown until the current
-section is complete. Two events control it:
+## Skill assessment and points
 
-```js
-// when your activity mounts:
-document.dispatchEvent(new CustomEvent('maths1to9:section-gate', {
-    detail: { sectionId: 'interactive' }
-}));
+Replace `REPLACE_WITH_SKILL_ID` with a real skill from `content/skills.json`,
+listed for this lesson in `curriculum.json`. Map only question types that
+actually assess it. For example:
 
-// when the pupil finishes it:
-document.dispatchEvent(new CustomEvent('maths1to9:section-complete', {
-    detail: { sectionId: 'interactive' }
-}));
+```json
+"assessment": { "question_types": { "sample": "find-hcf" } }
 ```
 
-Section ids the engine knows: `explanation` (Learn), `method`,
-`interactive` (Try it), `worked-examples`, `question-bank` (Practice).
-Sections that never dispatch a gate are ungated (e.g. Worked examples),
-and older lessons that predate gating keep working unchanged.
+The shared card sends every scored attempt to `recordAssessment()` using
+its stable question ID and type; the engine resolves skills and mastery.
+Keep the same ID on retry. Guided cards use `scored: false` and report
+completed steps with `setSectionProgress()`; their planned IDs live in
+`score_activities`. Change those entries if the number of examples changes.
 
-Practice completes after `QUESTIONS_TO_COMPLETE` checked questions
-(default 5), which unlocks "Finish lesson".
+The default header circle shows points against the fixed planned maximum.
+Learning activities earn 5 once; assessed answers earn 10 first time or 5
+when corrected. Register all planned activities before interaction. Going
+back, reloading and navigation never award points themselves.
+
+## Saved progress and Start over
+
+`useSectionState()` keeps answers, phases and cursors through the shared
+progress store. Learn uses `learn`; cards use their section ID
+(`interactive` or `comparison`). Practice is saved by the runner under
+`question-bank`. Bump each section's version when its content changes and
+provide an `upgrade()` for compatible old saves; return null for unknown
+versions instead of throwing or showing answers against different content.
+
+The existing Start over resets the whole lesson. Progress uses localStorage
+behind an adapter today; accounts can use the same load/save/remove/list
+interface with `Maths1to9Progress.use(serverAdapter, userId)`.
+The homepage reads these records for lesson status.
 
 ## Hash links
 
-Every section opens from its hash (`#explanation`, `#interactive`,
-`#comparison`, …) and every stage from its id (`#learn`, `#practice`, …).
-`#summary` opens Check on its end-of-lesson summary. The engine sets
-`data-view="summary"` on the `<slug>-comparison` root and fires
-`maths1to9:comparison-view` on `document`; a lesson that draws its own
-summary shows it while that view is set (see `content/factors/questions.js`).
-Lessons that don't handle it simply show Check. Hash links only change the
-view: they never complete questions or award points.
+Sections: `#explanation`, `#interactive`, `#question-bank`, `#comparison`.
+Screens: `#learn-1`…`#learn-3`, `#try-it-1`…`#try-it-3`,
+`#question-bank-question-1`… (runner), `#check-1`… (fixed questions).
+`#summary` opens the completed Check's retained results and summary.
+Locked links fall back to the screen actually available and replace the
+address. Hashes never complete unanswered work or award points.
 
-## Skill assessment
+## Optional video
 
-Map each stable Practice generator name to the skill it genuinely
-assesses in `lesson.json`:
+Keep `explanation.video` only when a video exists. Set `youtube_id` (a
+privacy-enhanced youtube-nocookie embed) or `mp4: "./video.mp4"`, optionally
+`poster: "./poster.jpg"`, plus title and caption. It appears above Learn.
 
-```json
-"assessment": {
-    "question_types": {
-        "sample": "place-value",
-        "compare": ["order-numbers", "inequality-symbols"]
-    }
-}
-```
+## Delivery
 
-When an answer is checked, `questions.js` calls the shared
-`Maths1to9Lesson.recordAssessment()` function with the generator name,
-the question id and whether the answer was correct. The lesson engine
-resolves the skill id from `lesson.json`; the question bank must not
-store skill ids or calculate mastery itself. Keep the same question id
-when a pupil retries so first-try accuracy remains honest.
-
-Only map skills assessed by Practice. A skill taught in the lesson but
-not tested by its question bank remains in `curriculum.json` and must
-not be added to the assessment map.
-
-## Lesson video (optional)
-
-Add a `video` object inside `explanation` (or at the top level of
-`lesson.json`) and the engine renders it at the top of Learn — before
-the text, so a teacher screen-sharing can play it without scrolling:
-
-```json
-"explanation": {
-    "video": {
-        "youtube_id": "dQw4w9WgXcQ",
-        "title": "Place value in 3 minutes",
-        "caption": "Watch first, then read the ideas below."
-    }
-}
-```
-
-For a self-hosted file use `"mp4": "./video.mp4"` (plus optional
-`"poster": "./poster.jpg"`) instead of `youtube_id`. YouTube embeds use
-the privacy-enhanced `youtube-nocookie.com` domain. Delete the block if
-the lesson has no video.
-
-## Saved progress
-
-`assets/js/progress.js` saves each pupil's position (section reached,
-sections unlocked, finished flag) on every section change and restores
-it when they reopen the lesson, with a "Start over" option. Storage is
-localStorage today behind an adapter interface; when user accounts
-exist, implement the same four methods (`load` / `save` / `remove` /
-`list`) against your API and call
-`Maths1to9Progress.use(serverAdapter, userId)` — nothing else changes.
-The homepage reads the same records to show Continue / Completed badges
-on lesson cards (`assets/js/home-progress.js`).
-
-### Points and progress
-
-Use the shared lesson engine's default earned-points circle. It stays visible in every section and fills against the lesson's planned score. Follow `docs/lesson-scoring.md` for stable activity IDs, planned custom activities, guided-step completion and assessment attempts. Do not replace the circle with a section number. Navigation alone must never award points.
-
-## New lesson specification
-
-Read and follow [the lesson specification](../../docs/lesson-specification.md)
-before creating a lesson. It defines the current four-section structure,
-four-option questions, shared score-circle markup and delivery checks.
+Follow the verification checklist in the lesson specification, including
+old saves when migrating, keyboard and 375 px layouts, wrong-then-right
+answers, reloads, finished work, Practise again and both test suites.
+Bump changed lesson asset versions, build dist and verify All lessons on
+both sites. New lessons need a registered browser solver before claiming
+that the full-run suite covers them.
