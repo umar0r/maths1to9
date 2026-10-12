@@ -33,7 +33,8 @@
         {"folder":"highest-common-factor","title":"Highest common factor","subtitle":"Match prime factors to find the HCF.","skills":["find-hcf"]},
         {"folder":"lowest-common-multiple","title":"Lowest common multiple","subtitle":"Use the prime factor Venn diagram to find the LCM.","skills":["find-lcm"]},
         {"folder":"hcf-and-lcm","title":"Highest common factor and lowest common multiple","subtitle":"Use common prime factors to find the HCF and LCM.","skills":["find-hcf","find-lcm","hcf-lcm-problems"]},
-        {"folder":"standard-form","title":"Standard form","subtitle":"Write, compare and calculate with very large and small numbers.","skills":["write-standard-form","compare-standard-form","calculate-standard-form","calculator-standard-form"]}
+        {"folder":"standard-form","title":"Standard form","subtitle":"Write, compare and calculate with very large and small numbers.","skills":["write-standard-form","compare-standard-form","calculate-standard-form","calculator-standard-form"]},
+        {"folder":"multiplying-standard-form","title":"Multiplying numbers in standard form","subtitle":"Multiply the front numbers, add the indices, then check the front number.","skills":["calculate-standard-form"]}
       ]
     },
     {
