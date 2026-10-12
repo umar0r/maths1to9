@@ -85,6 +85,6 @@ $pageTitle = 'My lesson title';
     <script src="./interactive.js?v=11"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=42"></script>
+    <script src="../../assets/js/lesson-engine.js?v=43"></script>
 </body>
 </html>

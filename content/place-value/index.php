@@ -71,6 +71,6 @@ $pageTitle = 'Place value';
     <script src="../../assets/js/lesson-recommendations.js?v=2"></script>
     <script src="./interactive.js?v=23"></script>
     <script src="./questions.js?v=46"></script>
-    <script src="../../assets/js/lesson-engine.js?v=42"></script>
+    <script src="../../assets/js/lesson-engine.js?v=43"></script>
 </body>
 </html>

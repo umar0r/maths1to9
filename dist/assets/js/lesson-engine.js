@@ -355,6 +355,33 @@
         return text;
     }
 
+    // Keep rational values as integers throughout; BigInts never enter saved state.
+    function fractionValue(value) {
+        const original = String(value);
+        // Removing spaces must not turn a mixed number into an improper fraction.
+        if (/\d\s+\d+\s*\//.test(original)) return null;
+        const text = original.replace(/\s/g, '').replace(/[−–]/g, '-');
+        const fraction = text.match(/^(-?\d+)\/(-?\d+)$/);
+        if (fraction) {
+            const numerator = BigInt(fraction[1]);
+            const denominator = BigInt(fraction[2]);
+            return denominator === 0n ? null : { numerator, denominator };
+        }
+        const decimal = text.match(/^(-?)(\d+)(?:\.(\d*))?$|^(-?)\.(\d+)$/);
+        if (!decimal) return null;
+        const sign = decimal[1] ?? decimal[4];
+        const whole = decimal[2] ?? '0';
+        const digits = decimal[3] ?? decimal[5] ?? '';
+        return {
+            numerator: BigInt(`${sign}${whole}${digits}`),
+            denominator: 10n ** BigInt(digits.length)
+        };
+    }
+
+    function fractionText(value) {
+        return String(value).replace(/\s/g, '').replace(/[-–]/g, '−');
+    }
+
     function appendResultMark(container, row) {
         if (row.firstCorrect !== true && row.firstCorrect !== false) return;
         const visible = row.firstCorrect ? '✓' : row.correct ? '2nd try' : 'Incorrect';
@@ -374,6 +401,10 @@
         if (!['choice', 'number', 'custom'].includes(config.input)) {
             throw new TypeError('createQuestion input must be choice, number or custom.');
         }
+        const fractions = config.input === 'number' && config.fractions === true;
+        if (fractions && config.exact === true) {
+            throw new TypeError('fractions: true cannot be combined with exact: true.');
+        }
         const custom = config.input === 'custom';
         const widget = config.widget;
         if (custom && ['render', 'isEmpty', 'mark', 'answerText'].some(name => typeof widget?.[name] !== 'function')) {
@@ -392,12 +423,18 @@
         const options = config.options || [];
         let released = false;
         function matches(value, expected) {
+            if (fractions) {
+                const actual = fractionValue(value);
+                const answer = fractionValue(expected);
+                return actual !== null && answer !== null &&
+                    actual.numerator * answer.denominator === answer.numerator * actual.denominator;
+            }
             const answer = tidyNumber(expected);
             return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
         }
         function result() {
             const answer = config.input === 'choice' ? options[saved.selected]?.label ?? ''
-                : custom ? (saved.value === null ? '' : widget.answerText(saved.value)) : saved.value;
+                : custom ? (saved.value === null ? '' : widget.answerText(saved.value)) : fractions ? fractionText(saved.value) : saved.value;
             return {
                 prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
                 correct: saved.correct, explanation: saved.feedback
@@ -409,6 +446,11 @@
         heading.dataset.screenHeading = '';
         article.append(heading);
         container.replaceChildren(article);
+        if (typeof config.figure === 'function') {
+            const host = document.createElement('div');
+            article.append(host);
+            config.figure(host, { readOnly: config.readOnly === true });
+        }
         let handle;
         if (custom) {
             const host = document.createElement('div');
@@ -459,7 +501,12 @@
             const label = resultText('label', config.inputLabel || 'Your answer', 'question-answer-label');
             input = document.createElement('input');
             input.type = 'text';
-            input.inputMode = 'decimal';
+            input.inputMode = fractions ? 'text' : 'decimal';
+            if (fractions) {
+                input.setAttribute('autocorrect', 'off');
+                input.autocapitalize = 'off';
+                input.spellcheck = false;
+            }
             input.autocomplete = 'off';
             input.value = saved.value;
             input.addEventListener('input', () => {
@@ -516,7 +563,9 @@
             feedback.className = 'question-feedback';
             if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
             feedback.replaceChildren();
-            if (saved.invalid) feedback.textContent = 'Type a number, like 12 or 0.5.';
+            if (saved.invalid) feedback.textContent = fractions
+                ? 'Type a number or a fraction, like 3 or 1/2.'
+                : 'Type a number, like 12 or 0.5.';
             else if (shown) {
                 feedback.append(resultText('span', saved.feedback));
                 if (saved.hint) feedback.append(resultText('span', saved.hint, 'question-hint'));
@@ -563,7 +612,9 @@
                 correct = response.correct;
                 value = saved.value;
             } else {
-                value = tidyNumber(saved.value);
+                value = fractions
+                    ? (fractionValue(saved.value) === null ? null : fractionText(saved.value))
+                    : tidyNumber(saved.value);
                 if (value === null) {
                     section.update(() => { saved.invalid = true; });
                     update();
@@ -666,7 +717,8 @@
                     prompt: definition.prompt,
                     answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? ''
                         : definition.input === 'custom' ? (card?.value == null ? '' : definition.widget.answerText(card.value))
-                            : card?.value ?? '',
+                            : definition.input === 'number' && definition.fractions === true
+                                ? fractionText(card?.value ?? '') : card?.value ?? '',
                     firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
                     explanation: card?.feedback || '', visual: config.resultVisual?.(item)
                 };
