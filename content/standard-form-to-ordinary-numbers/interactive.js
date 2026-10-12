@@ -121,8 +121,10 @@
         if (!readOnly) {
             const controls = document.createElement('div');
             controls.className = 'ordinary-controls';
+            controls.setAttribute('role', 'group');
+            controls.setAttribute('aria-label', 'Move the digits');
             for (const move of [1, -1]) {
-                const button = textNode('button', move > 0 ? '× 10' : '÷ 10', 'button button--secondary');
+                const button = textNode('button', move > 0 ? '× 10' : '÷ 10', 'button');
                 button.type = 'button';
                 button.disabled = steps === 3;
                 button.addEventListener('click', () => {
