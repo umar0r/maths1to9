@@ -14,7 +14,7 @@
     ];
 
     const examples = [
-        { tiles: true, prompt: '10² × 10³ = 10^? What is the missing index?', input: 'number', answer: '5', feedback: '2 tens and 3 tens make 5 tens: 10⁵.', rules: [{ value: '6', feedback: 'That multiplies the indices. Count the 10s: 2 + 3 = 5.' }], fallback: 'Count the 10s in both groups.' },
+        { tiles: true, prompt: { latex: String.raw`10^{2} \times 10^{3} = 10^{\square}` }, inputLabel: 'What is the missing index?', input: 'number', answer: '5', feedback: '2 tens and 3 tens make 5 tens: 10⁵.', rules: [{ value: '6', feedback: 'That multiplies the indices. Count the 10s: 2 + 3 = 5.' }], fallback: 'Count the 10s in both groups.' },
         { lines: ['(3 × 10²) × (4 × 10³)'], prompt: 'Multiply the numbers at the front: 3 × 4 = ?', input: 'number', answer: '12', feedback: '3 × 4 = 12.', rules: [{ value: '7', feedback: 'That adds them. Multiply: 3 × 4 = 12.' }], fallback: 'Multiply 3 by 4.' },
         { lines: ['(3 × 10²) × (4 × 10³)', '3 × 4 = 12'], prompt: 'Add the indices: 2 + 3 = ?', input: 'number', answer: '5', feedback: '2 + 3 = 5, so we have 12 × 10⁵.', rules: [{ value: '6', feedback: 'That multiplies the indices. Add them: 2 + 3 = 5.' }], fallback: 'Add 2 and 3.' },
         { lines: ['= 12 × 10⁵'], prompt: '12 × 10⁵ = 1.2 × 10^? What is the index?', input: 'number', answer: '6', feedback: '12 = 1.2 × 10, so the index goes up by 1: 1.2 × 10⁶.', rules: [{ value: '4', feedback: 'Making the front smaller means one more 10, so the index goes up: 6.' }, { value: '5', feedback: '12 = 1.2 × 10, so there is one extra 10: the index is 6.' }], fallback: '12 = 1.2 × 10. Add that 10 to 10⁵.' },

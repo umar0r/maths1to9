@@ -2,7 +2,7 @@
     "id": "multiplying-standard-form",
     "slug": "multiplying-standard-form",
     "title": "Multiplying numbers in standard form",
-    "subtitle": "Multiply the front numbers, add the indices, then check the front number.",
+    "subtitle": "Multiply two numbers in standard form and write the answer in standard form.",
     "navigation": {
         "back_button": true
     },
@@ -21,7 +21,7 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Multiply two numbers in standard form and write the answer in standard form."
+        "title": "Multiply in standard form"
     },
     "interactive": {
         "eyebrow": "Try it",
