@@ -444,6 +444,60 @@ Then:
 Pilot: the HCF Check (4 fixed multiple-choice questions), with an `upgrade`
 from its current saved format.
 
+### Custom answer widget (added 2026-10-12)
+
+```js
+Maths1to9Lesson.createQuestion(container, {
+    sectionId: 'question-bank',
+    questionId: 'question-bank:1:3',
+    questionType: 'horizontal-positive',
+    scored: true,
+    prompt: 'Draw y = 3.',
+    input: 'custom',
+    widget: {
+        render(host, { value, editable, onChange }) {
+            // Draw the answer area into host. Call onChange(value) whenever
+            // the pupil's answer changes. value is plain JSON, or null for
+            // no answer yet.
+            return {
+                update({ value, editable, phase }) {},  // phase: 'answer' | 'wrong' | 'correct'
+                focus() {}                              // optional
+            };
+        },
+        isEmpty(value) {},     // true: nothing to check yet
+        mark(value) {},        // { correct: boolean, feedback: string, hint?: string }
+        answerText(value) {}   // plain text for the results row and read-only card
+    },
+    onFeedback, onContinue      // as for the other inputs
+});
+```
+
+
+Use `input: 'custom'` and `widget` in a card or question-set definition.
+All four widget functions are required; a missing function throws a
+`TypeError` naming the question. A new value is `null` (plain JSON once
+answered). The engine renders one host between prompt and feedback, calls
+`render` once, then immediately calls the returned handle's `update` with
+the saved value, editability and phase (`answer`, `wrong` or `correct`).
+
+During answering, `onChange` saves a JSON copy and refreshes only the main
+button; it never calls `update` while dragging. Changes after checking,
+continuing or on read-only cards are ignored. Check is disabled while
+`isEmpty(value)`. The widget owns all keyboard handling.
+
+Check calls `mark` once; its `correct` must be boolean or a `TypeError`
+names the question. The usual first-attempt result, feedback, hint and
+one assessment per scored Check are saved. The handle receives `update`
+with `editable: false`; `onFeedback` receives a copy of the value.
+Try again clears value to `null`, feedback and hint, updates the handle
+with `editable: true` and phase `answer`, then calls optional `focus()`.
+Continue calls the usual `onContinue`.
+
+Read-only cards render with `editable: false`, update with the saved phase,
+and show `answerText(value)` with the usual mark and saved feedback.
+`result()` and question-set results (including earlier sessions) use
+`answerText(value)`, or an empty string for `null`.
+
 ## 6. Question set, with Practise again
 
 The runner for Practice and Check, built from steps 1–5: a session of

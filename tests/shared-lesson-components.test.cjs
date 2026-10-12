@@ -889,3 +889,139 @@ test('finished question sets say All lessons only when no section follows', asyn
         assert.equal(set.action.label, lastSection ? 'All lessons' : 'Continue');
     }
 });
+
+function customWidgetFixture() {
+    const calls = { renders: [], updates: [], marks: [], focus: 0 };
+    let change;
+    const widget = {
+        render(host, options) {
+            calls.renders.push(options);
+            change = options.onChange;
+            return {
+                update(options) { calls.updates.push(JSON.parse(JSON.stringify(options))); },
+                focus() { calls.focus++; }
+            };
+        },
+        isEmpty: value => value === null,
+        mark(value) {
+            calls.marks.push(value);
+            return { correct: value.number === 4, feedback: 'Marked', hint: 'Use four' };
+        },
+        answerText: value => `Number ${value.number}`
+    };
+    return { widget, calls, change(value) { change(value); } };
+}
+
+test('custom cards require every widget function and a boolean marking result', () => {
+    for (const name of ['render', 'isEmpty', 'mark', 'answerText']) {
+        const fake = customWidgetFixture();
+        delete fake.widget[name];
+        assert.throws(() => questionFixture({ input: 'custom', widget: fake.widget }), /stable-1/);
+    }
+    assert.throws(() => questionFixture({ input: 'custom' }), /stable-1/);
+    const fake = customWidgetFixture();
+    fake.widget.mark = () => ({ correct: 'yes' });
+    const card = questionFixture({ input: 'custom', widget: fake.widget });
+    fake.change({ number: 4 });
+    assert.throws(() => card.action.onClick(), /stable-1/);
+    assert.equal(card.assessments.length, 0);
+    assert.equal(card.card.result().firstCorrect, null);
+});
+
+test('custom cards copy changes, refresh only Check and ignore empty Checks', () => {
+    const fake = customWidgetFixture();
+    const card = questionFixture({ input: 'custom', widget: fake.widget });
+    assert.equal(card.section.state.cards['stable-1'].value, null);
+    assert.equal(card.card.result().answer, '');
+    assert.equal(card.action.disabled, true);
+    card.action.onClick();
+    assert.equal(fake.calls.marks.length, 0);
+    const value = { number: 2 };
+    fake.change(value);
+    value.number = 99;
+    assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+    assert.equal(card.action.disabled, false);
+    assert.equal(fake.calls.updates.length, 1);
+    assert.equal(card.card.result().answer, 'Number 2');
+});
+
+test('custom wrong-then-right cycle preserves firstCorrect, scores each Check and copies feedback', () => {
+    for (const scored of [true, false]) {
+        const fake = customWidgetFixture();
+        const card = questionFixture({ input: 'custom', widget: fake.widget, scored });
+        fake.change({ number: 2 });
+        card.action.onClick();
+        assert.equal(fake.calls.marks.length, 1);
+        assert.equal(card.action.label, 'Try again');
+        fake.change({ number: 99 });
+        assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+        assert.equal(fake.calls.updates.at(-1).editable, false);
+        assert.equal(fake.calls.updates.at(-1).phase, 'wrong');
+        card.feedback[0].value.number = 99;
+        assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+        card.action.onClick();
+        assert.equal(card.section.state.cards['stable-1'].value, null);
+        assert.equal(card.section.state.cards['stable-1'].feedback, '');
+        assert.equal(card.section.state.cards['stable-1'].hint, null);
+        assert.deepEqual(fake.calls.updates.at(-1), { value: null, editable: true, phase: 'answer' });
+        assert.equal(fake.calls.focus, 1);
+        fake.change({ number: 4 });
+        card.action.onClick();
+        fake.change({ number: 99 });
+        assert.equal(card.card.result().answer, 'Number 4');
+        assert.equal(card.card.result().firstCorrect, false);
+        assert.equal(card.card.result().correct, true);
+        assert.equal(fake.calls.marks.length, 2);
+        assert.equal(card.assessments.length, scored ? 2 : 0);
+        assert.equal(card.feedback[1].value.number, 4);
+        card.action.onClick();
+        assert.equal(card.continued, 1);
+        fake.change({ number: 99 });
+        assert.equal(card.card.result().answer, 'Number 4');
+    }
+});
+
+test('custom reloads restore each phase and readonly renders preserve answer text without writes', () => {
+    for (const phase of ['answer', 'wrong', 'correct']) {
+        const fake = customWidgetFixture();
+        let card = questionFixture({ input: 'custom', widget: fake.widget });
+        fake.change({ number: phase === 'correct' ? 4 : 2 });
+        if (phase !== 'answer') card.action.onClick();
+        const before = JSON.stringify(card.section.state);
+        card = card.reload();
+        assert.equal(JSON.stringify(card.section.state), before);
+        assert.equal(fake.calls.renders.at(-1).editable, phase === 'answer');
+        assert.equal(fake.calls.updates.at(-1).phase, phase);
+        assert.equal(fake.calls.updates.at(-1).value.number, phase === 'correct' ? 4 : 2);
+        const readonly = card.reload({ readOnly: true });
+        assert.equal(fake.calls.renders.at(-1).editable, false);
+        assert.equal(fake.calls.updates.at(-1).editable, false);
+        fake.change({ number: 99 });
+        assert.equal(JSON.stringify(readonly.section.state), before);
+        assert.equal(readonly.section.writes, 0);
+        assert.equal(readonly.container.children[0].children[2].textContent, readonly.card.result().answer);
+    }
+});
+
+test('custom question-set rows use widget text for current and earlier sessions and blank null values', async () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    const widget = customWidgetFixture().widget;
+    const session = (number, value) => ({
+        session: number, items: [{ type: 'custom', seed: 1 }], screen: 1, index: 1, finished: true,
+        cards: { [`question-bank:${number}:1`]: { value, firstCorrect: true, correct: true } }
+    });
+    const state = { ...session(2, { number: 4 }), earlier: [session(1, { number: 2 }), session(0, null)] };
+    await fixture.runQuestionSet('question-bank', {
+        version: 1, count: 1, question: () => ({ input: 'custom', widget, prompt: 'Choose' })
+    }, {
+        useSectionState: async () => ({ state, update(change) { change(state); } }),
+        getCurrentSection: () => ({ id: 'question-bank' }), getLesson: () => ({}),
+        getSections: () => [{ id: 'question-bank' }, { id: 'comparison' }],
+        registerHashRoute() {}, setSlideHash() {}, setSectionAction() {}, setSectionBack() {}, setSectionProgress() {}
+    }, container);
+    const text = node => [node.textContent, ...node.children.map(text)].join(' ');
+    assert.match(text(container), /Number 4/);
+    assert.match(text(container), /Number 2/);
+    assert.doesNotMatch(text(container), /Number undefined|Number null/);
+});

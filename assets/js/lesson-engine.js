@@ -371,14 +371,19 @@
         if (!section?.state || !sectionId || !questionId) {
             throw new TypeError('createQuestion requires an opened section state and stable ids.');
         }
-        if (config.input !== 'choice' && config.input !== 'number') {
-            throw new TypeError('createQuestion input must be choice or number.');
+        if (!['choice', 'number', 'custom'].includes(config.input)) {
+            throw new TypeError('createQuestion input must be choice, number or custom.');
+        }
+        const custom = config.input === 'custom';
+        const widget = config.widget;
+        if (custom && ['render', 'isEmpty', 'mark', 'answerText'].some(name => typeof widget?.[name] !== 'function')) {
+            throw new TypeError(`Custom question "${questionId}" requires render, isEmpty, mark and answerText.`);
         }
         if (!section.state.cards?.[questionId]) {
             section.update(state => {
                 state.cards ??= {};
                 state.cards[questionId] = {
-                    selected: null, rejected: [], value: '', phase: 'answer',
+                    selected: null, rejected: [], value: custom ? null : '', phase: 'answer',
                     firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
                 };
             });
@@ -391,7 +396,8 @@
             return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
         }
         function result() {
-            const answer = config.input === 'choice' ? options[saved.selected]?.label ?? '' : saved.value;
+            const answer = config.input === 'choice' ? options[saved.selected]?.label ?? ''
+                : custom ? (saved.value === null ? '' : widget.answerText(saved.value)) : saved.value;
             return {
                 prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
                 correct: saved.correct, explanation: saved.feedback
@@ -403,6 +409,20 @@
         heading.dataset.screenHeading = '';
         article.append(heading);
         container.replaceChildren(article);
+        let handle;
+        if (custom) {
+            const host = document.createElement('div');
+            article.append(host);
+            handle = widget.render(host, {
+                value: saved.value, editable: !config.readOnly && saved.phase === 'answer',
+                onChange(value) {
+                    if (config.readOnly || saved.phase !== 'answer' || released) return;
+                    section.update(() => { saved.value = JSON.parse(JSON.stringify(value)); });
+                    setAction();
+                }
+            });
+            handle.update({ value: saved.value, editable: !config.readOnly && saved.phase === 'answer', phase: saved.phase });
+        }
         if (config.readOnly) {
             api.clearSectionAction(sectionId);
             const row = result();
@@ -435,7 +455,7 @@
                 group.append(button);
             });
             article.append(group);
-        } else {
+        } else if (!custom) {
             const label = resultText('label', config.inputLabel || 'Your answer', 'question-answer-label');
             input = document.createElement('input');
             input.type = 'text';
@@ -464,7 +484,7 @@
             api.setSectionAction(sectionId, {
                 label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
-                    ? saved.selected === null : saved.value.trim() === ''),
+                    ? saved.selected === null : custom ? widget.isEmpty(saved.value) : saved.value.trim() === ''),
                 onClick: act
             });
         }
@@ -515,11 +535,15 @@
                 section.update(() => {
                     saved.phase = 'answer';
                     saved.selected = null;
-                    saved.value = '';
+                    saved.value = custom ? null : '';
                     saved.feedback = '';
                     saved.hint = null;
                 });
                 update();
+                if (custom) {
+                    handle.update({ value: null, editable: true, phase: 'answer' });
+                    handle.focus?.();
+                }
                 if (input) input.focus();
                 return;
             }
@@ -530,6 +554,14 @@
                 if (saved.selected === null || saved.rejected.includes(saved.selected)) return;
                 response = options[saved.selected];
                 correct = response.correct === true;
+            } else if (custom) {
+                if (widget.isEmpty(saved.value)) return;
+                response = widget.mark(saved.value);
+                if (typeof response?.correct !== 'boolean') {
+                    throw new TypeError(`Custom question "${questionId}" mark must return a boolean correct.`);
+                }
+                correct = response.correct;
+                value = saved.value;
             } else {
                 value = tidyNumber(saved.value);
                 if (value === null) {
@@ -554,9 +586,10 @@
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
+            if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
-            else outcome.value = value;
+            else outcome.value = custom ? JSON.parse(JSON.stringify(value)) : value;
             config.onFeedback?.(outcome);
         }
         update();
@@ -631,7 +664,9 @@
                 const card = session.cards[questionSetId(sectionId, session.session, index)];
                 return {
                     prompt: definition.prompt,
-                    answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? '' : card?.value ?? '',
+                    answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? ''
+                        : definition.input === 'custom' ? (card?.value == null ? '' : definition.widget.answerText(card.value))
+                            : card?.value ?? '',
                     firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
                     explanation: card?.feedback || '', visual: config.resultVisual?.(item)
                 };

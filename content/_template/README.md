@@ -28,6 +28,10 @@ The doubling content is an example of wiring, not a finished lesson brief.
 
 ## Shared behaviour
 
+Cards take `choice`, `number` or `custom` (a lesson-drawn answer with
+`render`, `isEmpty`, `mark` and `answerText`); the widget lives in the
+lesson's own files.
+
 Use shared section state, question cards, results and score panels rather
 than copying their code. Practice generators receive seeded `random`:
 pass it to `randomInt` and `shuffle`, and save types and seeds, never text.
