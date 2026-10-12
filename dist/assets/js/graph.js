@@ -2,8 +2,11 @@
 (() => {
     'use strict';
 
-    function snap(point) {
-        return point.map(value => Math.round(value) || 0);
+    function snap(point, step = {}) {
+        return point.map((value, index) => {
+            const size = step[index === 0 ? 'x' : 'y'] ?? 1;
+            return Math.round(value / size) * size || 0;
+        });
     }
 
     function classify({ from, to }) {
@@ -44,10 +47,19 @@
         }
         const x = options.x || [-6, 6];
         const y = options.y || [-6, 6];
+        const step = { x: 1, y: 1, ...options.step };
+        if (![step.x, step.y].every(value => Number.isFinite(value) && value > 0)) {
+            throw new RangeError('Graph axis steps must be positive finite numbers.');
+        }
         const wrapper = document.createElement('div');
         wrapper.className = 'maths-graph';
         const surface = document.createElement('div');
         surface.className = 'maths-graph__board';
+        if (options.step) {
+            const columns = (x[1] - x[0]) / step.x + 1.6;
+            const rows = (y[1] - y[0]) / step.y + 1.6;
+            surface.style.setProperty('--maths-graph-aspect', String(columns / rows));
+        }
         const live = document.createElement('p');
         live.className = 'maths-graph__description';
         live.setAttribute('aria-live', 'polite');
@@ -61,15 +73,18 @@
         const colour = property => colours.getPropertyValue(property).trim();
         const tones = {
             neutral: colour('--primary'), correct: colour('--success-dark'),
-            incorrect: colour('--error-dark'), muted: colour('--border-dark')
+            incorrect: colour('--error-dark'), muted: colour('--border-dark'),
+            ink: colour('--text')
         };
         const extent = Math.max(x[1] - x[0], y[1] - y[0]) / 2 + 0.8;
         const cx = (x[0] + x[1]) / 2;
         const cy = (y[0] + y[1]) / 2;
-        const boundingBox = [cx - extent, cy + extent, cx + extent, cy - extent];
+        const boundingBox = options.step
+            ? [x[0] - 0.8 * step.x, y[1] + 0.8 * step.y, x[1] + 0.8 * step.x, y[0] - 0.8 * step.y]
+            : [cx - extent, cy + extent, cx + extent, cy - extent];
         const board = window.JXG.JSXGraph.initBoard(surface, {
             boundingbox: boundingBox,
-            axis: false, grid: false, keepaspectratio: true,
+            axis: false, grid: false, keepaspectratio: !options.step,
             showNavigation: false, showCopyright: false, showInfobox: false,
             pan: { enabled: false }, zoom: { enabled: false, wheel: false },
             keyboard: { enabled: false }, registerEvents: false,
@@ -93,25 +108,27 @@
         function segment(from, to, attributes = {}) {
             return board.create('segment', [from, to], { ...base, ...attributes });
         }
-        const every = options.labelEvery || (Math.max(x[1] - x[0], y[1] - y[0]) > 12 ? 2 : 1);
-        for (let value = Math.ceil(x[0]); value <= x[1]; value++) {
+        const every = options.labelEvery || (Math.max((x[1] - x[0]) / step.x, (y[1] - y[0]) / step.y) > 12 ? 2 : 1);
+        for (let tick = Math.ceil(x[0] / step.x); tick * step.x <= x[1]; tick++) {
+            const value = tick * step.x;
             segment([value, y[0]], [value, y[1]], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && value % every === 0) {
-                text([value, -0.25], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
+            if (value !== 0 && tick % every === 0) {
+                text([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
             }
         }
-        for (let value = Math.ceil(y[0]); value <= y[1]; value++) {
+        for (let tick = Math.ceil(y[0] / step.y); tick * step.y <= y[1]; tick++) {
+            const value = tick * step.y;
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && value % every === 0) {
+            if (value !== 0 && tick % every === 0) {
                 text([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
-        segment([x[0], 0], [x[1] + 0.4, 0], axisStyle);
-        segment([0, y[0]], [0, y[1] + 0.4], axisStyle);
+        segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
+        segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
         text([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
-        text([x[1] + 0.45, 0.2], 'x');
-        text([0.2, y[1] + 0.4], 'y');
+        text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
+        text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
 
         const items = new Set();
         let editable = true;
@@ -119,17 +136,18 @@
         let activeTool = null;
         let gesture = null;
         function clamp(point) {
-            const rounded = snap(point);
+            const rounded = snap(point, step);
             return [Math.max(x[0], Math.min(x[1], rounded[0])), Math.max(y[0], Math.min(y[1], rounded[1]))];
         }
         function pixels(point) {
             return [board.origin.scrCoords[1] + point[0] * board.unitX,
                 board.origin.scrCoords[2] - point[1] * board.unitY];
         }
-        function pointer(event) {
+        function pointer(event, snapped = true) {
             const rect = surface.getBoundingClientRect();
-            return clamp([(event.clientX - rect.left - board.origin.scrCoords[1]) / board.unitX,
-                (board.origin.scrCoords[2] - event.clientY + rect.top) / board.unitY]);
+            const position = [(event.clientX - rect.left - board.origin.scrCoords[1]) / board.unitX,
+                (board.origin.scrCoords[2] - event.clientY + rect.top) / board.unitY];
+            return snapped ? clamp(position) : position;
         }
         function describe(message) {
             live.textContent = message;
@@ -137,7 +155,8 @@
         function markedLabel(label, tone) {
             return label ? `${label}${tone === 'correct' ? ' ✓' : tone === 'incorrect' ? ' ✗' : ''}` : '';
         }
-        function pointLabel(position, content, settings, attributes) {
+        function pointLabel(position, content, settings, attributes, arrow = null) {
+            const centred = arrow !== null;
             let label;
             function placement() {
                 const [px, py] = pixels(position);
@@ -147,9 +166,11 @@
                 const height = bounds?.height || 0;
                 const [left, top] = pixels([x[0], y[1]]);
                 const [right, bottom] = pixels([x[1], y[0]]);
-                const gap = 12;
+                // Arrow labels on an axis also need clearance from its tick labels.
+                const gap = centred && (position[0] === 0 || position[1] === 0) ? 28 : 12;
                 const positions = {
-                    right: [px + 0.2 * board.unitX, py - 0.3 * board.unitY - height / 2],
+                    right: centred ? [px + gap, py - height / 2]
+                        : [px + 0.2 * board.unitX, py - 0.3 * board.unitY - height / 2],
                     left: [px - gap - width, py - height / 2],
                     above: [px - width / 2, py - gap - height],
                     below: [px - width / 2, py + gap]
@@ -160,6 +181,25 @@
                 if ((side === 'right' && lx + width > right) || (side === 'left' && lx < left) ||
                     (side === 'above' && ly < top) || (side === 'below' && ly + height > bottom)) {
                     [lx, ly] = positions[opposite[side]];
+                }
+                if (arrow) {
+                    const from = pixels(arrow.from);
+                    const to = pixels(arrow.to);
+                    const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
+                    if (size > 0) {
+                        // Keep the entire label clear, even when a requested side lies
+                        // along the arrow (for example, right of a horizontal arrow).
+                        const normal = [-(to[1] - from[1]) / size, (to[0] - from[0]) / size];
+                        const distance = (lx + width / 2 - px) * normal[0] +
+                            (ly + height / 2 - py) * normal[1];
+                        const clearance = Math.abs(normal[0]) * width / 2 +
+                            Math.abs(normal[1]) * height / 2 + 12;
+                        if (Math.abs(distance) < clearance) {
+                            const shift = (distance < 0 ? -clearance : clearance) - distance;
+                            lx += normal[0] * shift;
+                            ly += normal[1] * shift;
+                        }
+                    }
                 }
                 // At a corner, also keep the perpendicular dimension inside the grid.
                 return [Math.max(left, Math.min(right - width, lx)),
@@ -189,7 +229,9 @@
                     objects = [];
                     const attributes = { ...base, strokeColor: tones[style.tone] || tones.neutral,
                         fillColor: tones[style.tone] || tones.neutral, fillOpacity: kind === 'point' ? 1 : 0,
-                        strokeWidth: 4, layer: 9 };
+                        strokeWidth: kind === 'arrow' ? 3 : 4, layer: 9 };
+                    if ((kind === 'segment' || kind === 'arrow') && style.dash === true) attributes.dash = 2;
+                    if (kind === 'arrow') attributes.lastArrow = true;
                     let anchor;
                     let labelAttributes = {};
                     if (kind === 'point') {
@@ -213,7 +255,9 @@
                         objects.push(board.create(type, endpoints, attributes), ...endpoints);
                         anchor = [(ends[0][0] + ends[1][0]) / 2 + 0.2, (ends[0][1] + ends[1][1]) / 2 + 0.3];
                         const orientation = classify({ from: ends[0], to: ends[1] });
-                        if (orientation.kind === 'horizontal') {
+                        if (kind === 'arrow') {
+                            anchor = [(ends[0][0] + ends[1][0]) / 2, (ends[0][1] + ends[1][1]) / 2];
+                        } else if (orientation.kind === 'horizontal') {
                             anchor = [Math.max(ends[0][0], ends[1][0]), orientation.value];
                             const below = orientation.value >= y[1] || (orientation.value < 0 && orientation.value > y[0]);
                             labelAttributes = { anchorX: 'right', anchorY: below ? 'top' : 'bottom',
@@ -241,7 +285,10 @@
                         const content = markedLabel(label, style.tone);
                         objects.push(kind === 'point'
                             ? pointLabel(value, content, style, appearance)
-                            : text(anchor, content, appearance));
+                            : kind === 'arrow' ? pointLabel(anchor, content, {
+                                ...style, labelSide: style.labelSide || (value.from[1] === value.to[1] ? 'below' : 'right')
+                            }, appearance, value)
+                                : text(anchor, content, appearance));
                     }
                     board.update();
                 },
@@ -257,7 +304,14 @@
         }
         function movePoint(entry, position) {
             const old = entry.value;
-            const next = clamp(position);
+            const positions = entry.settings.positions;
+            const next = entry.settings.drag === 'positions'
+                ? [...positions.reduce((nearest, candidate) => {
+                    const distance = point => Math.hypot((point[0] - position[0]) * board.unitX,
+                        (point[1] - position[1]) * board.unitY);
+                    return distance(candidate) < distance(nearest) ? candidate : nearest;
+                })]
+                : clamp(position);
             if (entry.settings.drag === 'x') next[1] = old[1];
             if (entry.settings.drag === 'y') next[0] = old[0];
             if (next[0] === old[0] && next[1] === old[1]) return;
@@ -267,7 +321,7 @@
         }
         function drawLine(settings = {}) {
             activeTool?.remove();
-            const config = { minLength: 2, extend: true, shortText: 'Draw a longer line.', ...settings };
+            const config = { minLength: 2, extend: true, movable: true, shortText: 'Draw a longer line.', ...settings };
             let line = null;
             let drawing = null;
             let start = null;
@@ -275,12 +329,12 @@
             let crosshair = null;
             let cursor = clamp([0, 0]);
             let appearance = {};
-            function paint(value, finished = false) {
+            function paint(value, finished = false, toneFinished = finished) {
                 drawing?.remove();
                 drawing = null;
                 if (!value) return;
                 const enough = length(value) >= config.minLength;
-                const tone = enough ? appearance.tone || config.tone?.(copy(value)) || 'neutral' : 'neutral';
+                const tone = enough ? appearance.tone || config.tone?.(copy(value), { finished: toneFinished }) || 'neutral' : 'neutral';
                 const label = finished && enough ? appearance.label ?? config.label?.(copy(value)) : null;
                 drawing = item('segment', value, { tone, label });
             }
@@ -311,6 +365,7 @@
             }
             const tool = {
                 get start() { return start; },
+                get movable() { return config.movable; },
                 get() { return copy(line); },
                 set(value) {
                     line = copy(value);
@@ -341,7 +396,7 @@
                 },
                 finish,
                 move(delta, notify = true, original = line) {
-                    if (!original) return;
+                    if (!config.movable || !original) return;
                     const type = classify(original);
                     if (type.kind === 'sloping') return;
                     const index = type.kind === 'horizontal' ? 1 : 0;
@@ -351,9 +406,10 @@
                     const next = copy(original);
                     next.from[index] = next.to[index] = value;
                     if (notify) finish(next);
-                    else paint(next, true);
+                    else paint(next, true, false);
                 },
                 key(event, delta) {
+                    if (event.shiftKey && delta && !config.movable) return;
                     if ((event.shiftKey && delta) || event.key === 'Enter' || event.key === ' ') showCursor();
                     if (event.key === 'Escape') {
                         setStart(null);
@@ -392,7 +448,7 @@
             const point = [...items].find(entry => entry.kind === 'point' && entry.settings.drag &&
                 Math.hypot(...pixels(entry.value).map((pixel, index) => pixel - [event.clientX - rect.left, event.clientY - rect.top][index])) <= 14);
             gesture = { id: event.pointerId, position, last: position, client: [event.clientX, event.clientY], point, moved: false };
-            if (!point && activeTool) {
+            if (!point && activeTool?.movable) {
                 const line = activeTool.get();
                 const type = line && classify(line);
                 const distance = type?.kind === 'horizontal' ? Math.abs(event.clientY - rect.top - pixels(line.from)[1])
@@ -402,7 +458,7 @@
         }
         function move(event) {
             if (!gesture || event.pointerId !== gesture.id || !editable) return;
-            const position = pointer(event);
+            const position = pointer(event, gesture.point?.settings.drag !== 'positions');
             if (Math.hypot(event.clientX - gesture.client[0], event.clientY - gesture.client[1]) > 8) gesture.moved = true;
             if (gesture.point) movePoint(gesture.point, position);
             else if (activeTool && gesture.moved) {
@@ -432,13 +488,20 @@
         }
         function key(event) {
             if (!editable) return;
-            const delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[event.key];
+            const delta = { ArrowLeft: [-step.x, 0], ArrowRight: [step.x, 0],
+                ArrowUp: [0, step.y], ArrowDown: [0, -step.y] }[event.key];
             if (!delta && !['Enter', ' ', 'Escape'].includes(event.key)) return;
             const points = [...items].filter(entry => entry.kind === 'point' && entry.settings.drag);
             if (activeTool) { event.preventDefault(); activeTool.key(event, delta); }
             else if (points.length === 1 && delta) {
                 event.preventDefault();
-                movePoint(points[0], points[0].value.map((value, index) => value + delta[index]));
+                const entry = points[0];
+                if (entry.settings.drag === 'positions') {
+                    const positions = entry.settings.positions;
+                    const index = positions.findIndex(position => position.every((value, axis) => value === entry.value[axis]));
+                    const direction = event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1;
+                    movePoint(entry, positions[Math.max(0, Math.min(positions.length - 1, index + direction))]);
+                } else movePoint(entry, entry.value.map((value, index) => value + delta[index]));
             }
         }
         const blur = () => activeTool?.blur();
@@ -450,15 +513,26 @@
         surface.addEventListener('blur', blur);
         const resize = new ResizeObserver(() => {
             if (surface.clientWidth) {
-                board.resizeContainer(surface.clientWidth, surface.clientWidth, true, true);
-                board.setBoundingBox(boundingBox, true);
+                board.resizeContainer(surface.clientWidth, options.step ? surface.clientHeight : surface.clientWidth, true, true);
+                board.setBoundingBox(boundingBox, !options.step);
             }
         });
         resize.observe(surface);
         const graph = {
-            point: (value, settings) => item('point', clamp(value), settings),
+            point(value, settings = {}) {
+                if (settings.drag === 'positions') {
+                    if (!Array.isArray(settings.positions) || settings.positions.length === 0) {
+                        throw new TypeError('A positions point needs a non-empty positions list.');
+                    }
+                    // Listed positions are in units and need not coincide with this graph's grid.
+                    const initial = settings.positions.find(position => position.every((number, axis) => number === value[axis]));
+                    return item('point', [...(initial || settings.positions[0])], settings);
+                }
+                return item('point', clamp(value), settings);
+            },
             line: (value, settings) => item('line', value, settings),
             segment: (from, to, settings) => item('segment', { from, to }, settings),
+            arrow: (from, to, settings) => item('arrow', { from, to }, settings),
             plot: (fn, settings) => item('plot', fn, settings),
             drawLine, describe,
             clear() {

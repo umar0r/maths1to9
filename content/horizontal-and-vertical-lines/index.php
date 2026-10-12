@@ -69,9 +69,9 @@ $pageTitle = 'Horizontal and vertical lines';
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
     <script src="../../vendor/katex/katex.min.js"></script>
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
-    <link rel="stylesheet" href="../../assets/css/graph.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/graph.css?v=3">
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=3"></script>
+    <script src="../../assets/js/graph.js?v=4"></script>
 
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>

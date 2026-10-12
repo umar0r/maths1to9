@@ -71,3 +71,21 @@ test('creating a graph rejects a detached host before reading colours or buildin
         message: "Add the graph's container to the page before creating a graph."
     });
 });
+
+test('graph snap accepts axis steps, preserving halfway rounding and unit coordinates', () => {
+    for (const [input, step, expected] of [
+        [[1.2, 3.1], { x: 1, y: 2 }, [1, 4]],
+        [[-1.2, -3.1], { x: 1, y: 2 }, [-1, -4]],
+        [[2.99, 3], { x: 2, y: 2 }, [2, 4]],
+        [[3, -3], { x: 2, y: 2 }, [4, -2]],
+        [[3.01, -3.01], { x: 2, y: 2 }, [4, -4]],
+        [[-0.5, -1], { x: 1, y: 2 }, [0, 0]],
+        [[-0.51, -1.01], { x: 1, y: 2 }, [-1, -2]],
+        [[-12, 6], { x: 2, y: 1 }, [-12, 6]],
+        [[1.2, 3.1], { y: 2 }, [1, 4]],
+        [[1.24, 1.25], { x: 0.5, y: 0.5 }, [1, 1.5]]
+    ]) {
+        assert.deepEqual(plain(graph.snap(input, step)), expected);
+    }
+    assert.equal(Object.is(graph.snap([-0.4, -0.8], { x: 1, y: 2 })[1], -0), false);
+});
