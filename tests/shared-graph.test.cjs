@@ -62,3 +62,12 @@ test('graph number and point labels use Unicode minus and normalise negative zer
     assert.equal(graph.formatPoint([-0.5, -2]), '(−0.5, −2)');
     assert.doesNotMatch(graph.formatNumber(-1e-7), /-/);
 });
+
+test('creating a graph rejects a detached host before reading colours or building a board', () => {
+    const window = { JXG: {} };
+    const document = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/graph.js'), 'utf8'), { window, document });
+    assert.throws(() => window.Maths1to9Graph.create({ isConnected: false, ownerDocument: document }), {
+        message: "Add the graph's container to the page before creating a graph."
+    });
+});

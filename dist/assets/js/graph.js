@@ -39,6 +39,9 @@
         if (!window.JXG) {
             throw new Error('Load vendor/jsxgraph/jsxgraphcore.js before creating a graph.');
         }
+        if (!host.isConnected || host.ownerDocument !== document) {
+            throw new Error("Add the graph's container to the page before creating a graph.");
+        }
         const x = options.x || [-6, 6];
         const y = options.y || [-6, 6];
         const wrapper = document.createElement('div');
@@ -77,9 +80,14 @@
         surface.setAttribute('aria-label', options.label || 'Coordinate grid');
         const base = { fixed: true, highlight: false, withLabel: false };
         function text(position, value, attributes = {}) {
-            return board.create('text', [...position, value], {
+            // JSXGraph text positions use grid units; keep small clearances in pixels
+            // so labels remain clear of axes when the board is resized.
+            const { offset = [0, 0], ...style } = attributes;
+            const placed = position.map((coordinate, index) => () => coordinate +
+                offset[index] / (index === 0 ? board.unitX : board.unitY));
+            return board.create('text', [...placed, value], {
                 ...base, fontSize: 12, strokeColor: colour('--text'),
-                cssClass: 'maths-graph__label', parse: false, ...attributes
+                cssClass: 'maths-graph__label', parse: false, ...style
             });
         }
         function segment(from, to, attributes = {}) {
@@ -95,13 +103,13 @@
         for (let value = Math.ceil(y[0]); value <= y[1]; value++) {
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
             if (value !== 0 && value % every === 0) {
-                text([-0.25, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle' });
+                text([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
         segment([x[0], 0], [x[1] + 0.4, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4], axisStyle);
-        text([-0.2, -0.2], '0', { anchorX: 'right', anchorY: 'top' });
+        text([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
         text([x[1] + 0.45, 0.2], 'x');
         text([0.2, y[1] + 0.4], 'y');
 
@@ -146,6 +154,7 @@
                         fillColor: tones[style.tone] || tones.neutral, fillOpacity: kind === 'point' ? 1 : 0,
                         strokeWidth: 4, layer: 9 };
                     let anchor;
+                    let labelAttributes = {};
                     if (kind === 'point') {
                         objects.push(board.create('point', value, { ...attributes, name: '',
                             size: style.size === 'large' ? 5 : 3, showInfobox: false }));
@@ -167,6 +176,18 @@
                         }));
                         objects.push(board.create(type, endpoints, attributes), ...endpoints);
                         anchor = [(ends[0][0] + ends[1][0]) / 2 + 0.2, (ends[0][1] + ends[1][1]) / 2 + 0.3];
+                        const orientation = classify({ from: ends[0], to: ends[1] });
+                        if (orientation.kind === 'horizontal') {
+                            anchor = [Math.max(ends[0][0], ends[1][0]), orientation.value];
+                            const below = orientation.value >= y[1] || (orientation.value < 0 && orientation.value > y[0]);
+                            labelAttributes = { anchorX: 'right', anchorY: below ? 'top' : 'bottom',
+                                offset: [-8, below ? -12 : 12] };
+                        } else if (orientation.kind === 'vertical') {
+                            anchor = [orientation.value, Math.max(ends[0][1], ends[1][1])];
+                            const left = orientation.value >= x[1] || (orientation.value < 0 && orientation.value > x[0]);
+                            labelAttributes = { anchorX: left ? 'right' : 'left', anchorY: 'top',
+                                offset: [left ? -10 : 10, -12] };
+                        }
                     }
                     let label = style.label;
                     if (kind === 'point' && !label && style.coordinates) {
@@ -179,7 +200,7 @@
                     if (label) {
                         objects.push(text(anchor, markedLabel(label, style.tone), {
                             strokeColor: style.tone === 'muted' ? colour('--text-muted') : attributes.strokeColor,
-                            layer: 10
+                            layer: 10, ...labelAttributes
                         }));
                     }
                     board.update();
@@ -268,7 +289,6 @@
                     if (activeTool === tool) activeTool = null;
                     tooltip.hidden = true;
                 },
-                focus() { showCursor(); },
                 blur() {
                     if (crosshair) board.removeObject(crosshair);
                     crosshair = null;
@@ -277,7 +297,7 @@
                 preview(end, from = start) { paint({ from, to: end }); },
                 tap(end) {
                     if (start) finish({ from: start, to: end });
-                    else { tool.set(null); setStart(end); describe(`Start point ${formatPoint(end)}.`); }
+                    else { setStart(end); describe(`Start point ${formatPoint(end)}.`); }
                 },
                 finish,
                 move(delta, notify = true, original = line) {
@@ -294,6 +314,7 @@
                     else paint(next, true);
                 },
                 key(event, delta) {
+                    if ((event.shiftKey && delta) || event.key === 'Enter' || event.key === ' ') showCursor();
                     if (event.key === 'Escape') {
                         setStart(null);
                         paint(line, true);
@@ -324,12 +345,13 @@
             if (!editable || event.button !== 0 || gesture) return;
             event.preventDefault();
             surface.focus();
+            activeTool?.blur();
             surface.setPointerCapture(event.pointerId);
             const position = pointer(event);
             const rect = surface.getBoundingClientRect();
             const point = [...items].find(entry => entry.kind === 'point' && entry.settings.drag &&
                 Math.hypot(...pixels(entry.value).map((pixel, index) => pixel - [event.clientX - rect.left, event.clientY - rect.top][index])) <= 14);
-            gesture = { id: event.pointerId, position, client: [event.clientX, event.clientY], point, moved: false };
+            gesture = { id: event.pointerId, position, last: position, client: [event.clientX, event.clientY], point, moved: false };
             if (!point && activeTool) {
                 const line = activeTool.get();
                 const type = line && classify(line);
@@ -344,6 +366,8 @@
             if (Math.hypot(event.clientX - gesture.client[0], event.clientY - gesture.client[1]) > 8) gesture.moved = true;
             if (gesture.point) movePoint(gesture.point, position);
             else if (activeTool && gesture.moved) {
+                if (gesture.last && position.every((value, index) => value === gesture.last[index])) return;
+                gesture.last = position;
                 tooltipAt(position);
                 if (gesture.original) activeTool.move(position.map((value, index) => value - gesture.position[index]), false, gesture.original);
                 else activeTool.preview(position, activeTool.start || gesture.position);
@@ -377,14 +401,12 @@
                 movePoint(points[0], points[0].value.map((value, index) => value + delta[index]));
             }
         }
-        const focus = () => { if (editable) activeTool?.focus(); };
         const blur = () => activeTool?.blur();
         surface.addEventListener('pointerdown', down);
         surface.addEventListener('pointermove', move);
         surface.addEventListener('pointerup', up);
         surface.addEventListener('pointercancel', cancel);
         surface.addEventListener('keydown', key);
-        surface.addEventListener('focus', focus);
         surface.addEventListener('blur', blur);
         const resize = new ResizeObserver(() => {
             if (surface.clientWidth) {
@@ -418,7 +440,6 @@
                 surface.removeEventListener('pointerup', up);
                 surface.removeEventListener('pointercancel', cancel);
                 surface.removeEventListener('keydown', key);
-                surface.removeEventListener('focus', focus);
                 surface.removeEventListener('blur', blur);
                 window.JXG.JSXGraph.freeBoard(board);
                 wrapper.remove();

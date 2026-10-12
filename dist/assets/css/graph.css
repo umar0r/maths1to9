@@ -24,6 +24,7 @@
 .maths-graph__board .JXGtext {
     font-family: "Nunito", sans-serif;
     font-size: 12px;
+    line-height: 1;
 }
 
 .maths-graph__description {
