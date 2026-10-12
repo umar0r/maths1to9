@@ -15,12 +15,31 @@ User instructions take precedence. Add future agreed requirements here.
 - Verify every question, option, explanation and worked calculation. Use
   sensible rounding for decimal distractors; avoid accidental truncation.
 - Keep lesson content and saved progress under a stable, matching slug.
+- Make wrong options real misconceptions, with feedback that explains them.
+- Practice generators use the seeded `random` they are given, including for
+  shuffling, so saved questions rebuild with the same numbers on reload.
+
+## Shared components
+
+- New lessons use the lesson engine and shared components: section state,
+  question card, question set, results list, score panel, back button and
+  helpers. Copy `content/_template/` and follow
+  `docs/shared-lesson-components.md` for the API.
+- A lesson that needs its own renderer (`data-lesson-renderer="custom"`)
+  needs the user's approval first.
+- Don't copy shared code into a lesson. If the lesson needs behaviour the
+  engine doesn't have, propose an engine change.
 
 ## Buttons and navigation
 
-- Show one main action button at a time. It changes from Check to Continue
-  after a correct answer; retries use the same button. Never show a separate
-  Continue alongside a question action button.
+- Show one main action button at a time. The question card uses
+  Check → Try again after a wrong answer → Continue after a correct answer.
+  Never show a separate Continue alongside a question action button.
+- Use the engine-owned subtle "‹ Back" control at the top, enabled through
+  `navigation.back_button`. It only changes the view, never answers, points
+  or completion. Lessons never add their own back links.
+- The last screen's main button says **All lessons** and reaches the homepage;
+  Continue is for moving to another screen or section inside the lesson.
 - Disable Check until an answer is selected. Give useful feedback for errors,
   allow correction, and keep the same question ID on retry.
 - Keep section hash links open for direct testing. Navigation must never award
@@ -47,6 +66,9 @@ User instructions take precedence. Add future agreed requirements here.
   state. A finished section shows the completed work read-only, never an empty
   "complete" card. See `docs/retain-completed-work.md`.
 - Report assessed skills through the shared progress API.
+- Finished Practice offers Practise again: a new seeded session, keeping the
+  five most recent earlier sessions. Points stay unchanged; answers still
+  count as skill evidence. It never resets Check or lesson completion.
 
 ## Delivery and verification
 
@@ -72,6 +94,8 @@ User instructions take precedence. Add future agreed requirements here.
 - Learn method and worked example:
 - Try it questions:
 - Practice questions:
+- Practice generators and their question types:
+- Ready score (optional):
 - Check question:
 - Correct answers and three or four options for each:
 - Planned maximum score:
