@@ -7,6 +7,7 @@
       "title": "Graphs",
       "description": "Learn how graphs represent equations, rates, movement and data.",
       "lessons": [
+        "horizontal-and-vertical-lines",
         "coordinates-and-linear-graphs",
         "gradient-and-intercept",
         "equations-of-straight-lines",

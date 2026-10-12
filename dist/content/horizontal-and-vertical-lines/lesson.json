@@ -1,0 +1,130 @@
+{
+    "id": "horizontal-and-vertical-lines",
+    "slug": "horizontal-and-vertical-lines",
+    "title": "Horizontal and vertical lines",
+    "subtitle": "Draw lines like y = 4 and x = −2 by keeping one coordinate the same.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "horizontal-positive": "horizontal-vertical-lines",
+            "vertical-positive": "horizontal-vertical-lines",
+            "horizontal-negative": "horizontal-vertical-lines",
+            "vertical-negative": "horizontal-vertical-lines",
+            "axis": "horizontal-vertical-lines",
+            "mixed": "horizontal-vertical-lines",
+            "draw-horizontal": "horizontal-vertical-lines",
+            "sams-line": "horizontal-vertical-lines",
+            "two-points": "horizontal-vertical-lines",
+            "which-point": "horizontal-vertical-lines",
+            "draw-vertical": "horizontal-vertical-lines"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Draw the line for an equation such as y = 4 or x = −2."
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Keep one coordinate the same",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise drawing lines",
+        "intro": "",
+        "session_length": 6,
+        "ready_score": 5
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "draw-horizontal"
+            },
+            {
+                "type": "sams-line"
+            },
+            {
+                "type": "two-points"
+            },
+            {
+                "type": "which-point"
+            },
+            {
+                "type": "draw-vertical"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "Look at the coordinate that stays the same."
+                },
+                {
+                    "text": "y = a number: a horizontal line (across)."
+                },
+                {
+                    "text": "x = a number: a vertical line (up and down)."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        }
+    ]
+}
