@@ -83,7 +83,7 @@
             // JSXGraph text positions use grid units; keep small clearances in pixels
             // so labels remain clear of axes when the board is resized.
             const { offset = [0, 0], ...style } = attributes;
-            const placed = position.map((coordinate, index) => () => coordinate +
+            const placed = position.map((coordinate, index) => () => (typeof coordinate === 'function' ? coordinate() : coordinate) +
                 offset[index] / (index === 0 ? board.unitX : board.unitY));
             return board.create('text', [...placed, value], {
                 ...base, fontSize: 12, strokeColor: colour('--text'),
@@ -137,6 +137,43 @@
         function markedLabel(label, tone) {
             return label ? `${label}${tone === 'correct' ? ' ✓' : tone === 'incorrect' ? ' ✗' : ''}` : '';
         }
+        function pointLabel(position, content, settings, attributes) {
+            let label;
+            function placement() {
+                const [px, py] = pixels(position);
+                // Measure the unwrapped label, including any coordinate emphasis.
+                const bounds = label?.rendNode?.getBoundingClientRect();
+                const width = bounds?.width || 0;
+                const height = bounds?.height || 0;
+                const [left, top] = pixels([x[0], y[1]]);
+                const [right, bottom] = pixels([x[1], y[0]]);
+                const gap = 12;
+                const positions = {
+                    right: [px + 0.2 * board.unitX, py - 0.3 * board.unitY - height / 2],
+                    left: [px - gap - width, py - height / 2],
+                    above: [px - width / 2, py - gap - height],
+                    below: [px - width / 2, py + gap]
+                };
+                const side = settings.labelSide || 'right';
+                const opposite = { right: 'left', left: 'right', above: 'below', below: 'above' };
+                let [lx, ly] = positions[side];
+                if ((side === 'right' && lx + width > right) || (side === 'left' && lx < left) ||
+                    (side === 'above' && ly < top) || (side === 'below' && ly + height > bottom)) {
+                    [lx, ly] = positions[opposite[side]];
+                }
+                // At a corner, also keep the perpendicular dimension inside the grid.
+                return [Math.max(left, Math.min(right - width, lx)),
+                    Math.max(top, Math.min(bottom - height, ly))];
+            }
+            label = text([
+                () => (placement()[0] - board.origin.scrCoords[1]) / board.unitX,
+                () => (board.origin.scrCoords[2] - placement()[1]) / board.unitY
+            ], content, {
+                ...attributes, anchorX: 'left', anchorY: 'top',
+                cssStyle: 'white-space: nowrap; width: max-content;'
+            });
+            return label;
+        }
         function item(kind, initial, settings = {}) {
             let value = initial;
             let style = { tone: 'neutral', ...settings };
@@ -158,7 +195,6 @@
                     if (kind === 'point') {
                         objects.push(board.create('point', value, { ...attributes, name: '',
                             size: style.size === 'large' ? 5 : 3, showInfobox: false }));
-                        anchor = [value[0] + 0.2, value[1] + 0.3];
                     } else if (kind === 'plot') {
                         objects.push(board.create('functiongraph', [value, ...(style.domain || x)], attributes));
                         const at = (style.domain || x)[1];
@@ -198,10 +234,14 @@
                         label = `(${coordinates.join(', ')})`;
                     } else if (label) label = escapeHtml(label);
                     if (label) {
-                        objects.push(text(anchor, markedLabel(label, style.tone), {
+                        const appearance = {
                             strokeColor: style.tone === 'muted' ? colour('--text-muted') : attributes.strokeColor,
                             layer: 10, ...labelAttributes
-                        }));
+                        };
+                        const content = markedLabel(label, style.tone);
+                        objects.push(kind === 'point'
+                            ? pointLabel(value, content, style, appearance)
+                            : text(anchor, content, appearance));
                     }
                     board.update();
                 },
