@@ -1,559 +1,188 @@
 (() => {
     'use strict';
 
-    /*
-     * CHANGE: '<slug>-questions', matching the lesson slug.
-     */
-    const ROOT_ID = 'my-lesson-slug-questions';
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    const mounted = new WeakSet();
+    function sectionEvent(name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId: 'comparison' }
+        }));
+    }
 
-    /*
-     * How many questions must be checked before the lesson's
-     * "Finish lesson" button unlocks.
-     */
-    const QUESTIONS_TO_COMPLETE = 5;
+    function mountPractice() {
+        const api = window.Maths1to9Lesson;
+        const { randomInt, shuffle } = window.Maths1to9LessonEngine;
+        const count = api.getLesson().question_bank.session_length;
+        return api.runQuestionSet('question-bank', {
+            version: 1, count, practiseAgain: true, heading: 'Your practice results',
+            pick(random) {
+                // CHANGE: add generator types here and map every type to an
+                // existing skill in lesson.json. Save only the type and seed.
+                return Array.from({ length: count }, () => ({
+                    type: 'sample', seed: randomInt(0, 4294967295, random)
+                }));
+            },
+            question(item, random) {
+                // CHANGE: add generators here. Use only the supplied seeded
+                // random, including when shuffling, so reloads reproduce them.
+                const number = randomInt(3, 9, random);
+                return {
+                    questionType: item.type, input: 'choice',
+                    prompt: `What is 2 × ${number}?`,
+                    options: shuffle([
+                        { label: String(2 * number), correct: true, feedback: `Two groups of ${number} make ${2 * number}.` },
+                        { label: String(number + 2), feedback: 'You added 2 instead of doubling.' },
+                        { label: String(number), feedback: 'That counts only one group.' },
+                        { label: String(3 * number), feedback: 'That counts three groups instead of two.' }
+                    ], random)
+                };
+            }
+            // CHANGE: bump version and supply upgrade(saved, version) when
+            // migrating existing saved questions. Unknown versions return null.
+        });
+    }
 
-    function gateSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-gate', {
-                detail: { sectionId }
+    async function mountCheck(root, lesson) {
+        const api = window.Maths1to9Lesson;
+        const { shuffle, renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
+        const questions = lesson.comparison.questions;
+        const count = questions.length;
+        sectionEvent('gate');
+        api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('comparison', {
+            version: 1,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                order: questions.map(question => shuffle(question.options.map((option, index) => index)))
             })
-        );
-    }
+            // CHANGE: bump version and add upgrade(saved, version) if the
+            // fixed questions change. Never restore answers to different content.
+        });
+        const state = section.state;
 
-    function completeSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-complete', {
-                detail: { sectionId }
-            })
-        );
-    }
-
-    const r = (min, max) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
-
-    const pick = (items) =>
-        items[r(0, items.length - 1)];
-
-    function shuffle(items) {
-        const copy = [...items];
-
-        for (let index = copy.length - 1; index > 0; index -= 1) {
-            const randomIndex = r(0, index);
-
-            [copy[index], copy[randomIndex]] =
-                [copy[randomIndex], copy[index]];
+        function syncHash() {
+            if (api.getCurrentSection().id === 'comparison') {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
+            }
         }
 
-        return copy;
-    }
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+        }
 
-    /*
-     * Builds the option list from one correct label and a
-     * list of [label, feedback] distractors. Duplicates are
-     * dropped, so generators must supply distinct values.
-     */
-    function options(correctLabel, wrongOptions) {
-        const unique = new Map([
-            [
-                correctLabel,
-                {
-                    label: correctLabel,
-                    correct: true,
-                    feedback: ''
+        function reportProgress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress('comparison', state.finished ? count : state.index + Number(current?.correct === true), count);
+        }
+
+        function continueQuestion() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === count;
+            });
+            render();
+        }
+
+        function questionConfig(index, readOnly) {
+            const question = questions[index];
+            return {
+                sectionId: 'comparison', questionId: `final-check-${index + 1}`,
+                questionType: question.type, scored: true, input: 'choice', readOnly,
+                prompt: question.prompt,
+                options: state.order[index].map(option => ({
+                    label: question.options[option], correct: option === question.answer,
+                    feedback: question.feedback[option]
+                })),
+                onFeedback: reportProgress, onContinue: continueQuestion
+            };
+        }
+
+        function renderEnding() {
+            const rows = questions.map((question, index) => {
+                const cardRoot = document.createElement('div');
+                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
+            });
+            const scorePanel = document.createElement('div');
+            const results = document.createElement('div');
+            root.append(scorePanel, results);
+            renderScorePanel(scorePanel, {
+                correct: rows.filter(row => row.firstCorrect === true).length, total: count
+            });
+            renderResults(results, rows, { heading: 'Your Check results' });
+            // CHANGE: the lesson's own short summary and next-lesson content
+            // belong here. Keep the shared results, and retain All lessons.
+            const summary = document.createElement('section');
+            summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
+            for (const point of lesson.comparison.summary.points) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = point.text;
+                summary.append(paragraph);
+            }
+            root.append(summary);
+            api.setSectionAction('comparison', {
+                label: 'All lessons',
+                async onClick() {
+                    if (state.finished) api.completeLesson();
+                    await window.Maths1to9Progress.saveCurrentLesson();
+                    window.location.assign(new URL('../../', window.location.href).href);
                 }
-            ]
-        ]);
-
-        wrongOptions.forEach(([label, feedback]) => {
-            if (!unique.has(label)) {
-                unique.set(label, {
-                    label,
-                    correct: false,
-                    feedback
-                });
-            }
-        });
-
-        return shuffle([...unique.values()].slice(0, 4));
-    }
-
-    function make({
-        prompt,
-        expression,
-        correct,
-        wrong,
-        hint,
-        explanation
-    }) {
-        return {
-            prompt,
-            expression,
-            correctLabel: String(correct),
-            answers: options(String(correct), wrong),
-            hint,
-            explanation
-        };
-    }
-
-    /*
-     * CHANGE: your question generators. Each returns one
-     * question via make(). Every distractor should encode a
-     * real misconception, with feedback that names it.
-     */
-    function sampleQuestion() {
-        const a = r(2, 9);
-        const b = r(2, 9);
-        const answer = a + b;
-
-        return make({
-            prompt: 'Work out the sum.',
-            expression: `<span class="esf-row">${a} + ${b} = ?</span>`,
-            correct: answer,
-
-            wrong: [
-                [
-                    String(a * b),
-                    'You multiplied. The question asks for a sum.'
-                ],
-                [
-                    String(answer + 1),
-                    'Close. Check your counting.'
-                ],
-                [
-                    String(Math.abs(a - b)),
-                    'You subtracted. The question asks for a sum.'
-                ]
-            ],
-
-            hint: `Start at ${a} and count on ${b}.`,
-            explanation: `${a} + ${b} = ${answer}.`
-        });
-    }
-
-    /*
-     * CHANGE: register generators, and optionally stage them
-     * so harder types only appear at later question numbers.
-     */
-    const generators = {
-        sample: sampleQuestion
-    };
-
-    function pool(questionNumber) {
-        return Object.keys(generators);
-    }
-
-    function mount(root) {
-        if (!root || mounted.has(root)) {
-            return;
+            });
         }
 
-        mounted.add(root);
-        gateSection('question-bank');
-
-        const state = {
-            running: false,
-            number: 0,
-            checked: 0,
-            correct: 0,
-            previous: '',
-            run: 0
-        };
-
-        root.innerHTML = `
-            <div class="question-bank-controls">
-                <button
-                    class="button button--primary"
-                    type="button"
-                    data-start
-                >
-                    Start practice
-                </button>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-stop
-                    disabled
-                >
-                    Stop practice
-                </button>
-            </div>
-
-            <p data-score aria-live="polite">
-                Select Start practice to begin.
-            </p>
-
-            <div class="question-list" data-list></div>
-        `;
-
-        const start = root.querySelector('[data-start]');
-        const stop = root.querySelector('[data-stop]');
-        const score = root.querySelector('[data-score]');
-        const list = root.querySelector('[data-list]');
-
-        function updateScore() {
-            score.textContent =
-                `Checked: ${state.checked} | ` +
-                `Correct: ${state.correct}`;
-        }
-
-        function chooseGenerator() {
-            const names = pool(state.number + 1);
-
-            let name = pick(names);
-
-            if (names.length > 1 && name === state.previous) {
-                const currentIndex = names.indexOf(name);
-
-                name = names[(currentIndex + 1) % names.length];
-            }
-
-            state.previous = name;
-
-            return name;
-        }
-
-        function addQuestion() {
-            if (!state.running) {
-                return;
-            }
-
-            const generatorName = chooseGenerator();
-            const question = generators[generatorName]();
-
-            state.number += 1;
-
-            const questionNumber = state.number;
-            const questionId =
-                `question-bank:${state.run}:${questionNumber}`;
-
-            const card = document.createElement('article');
-
-            card.className = 'question-card';
-
-            card.innerHTML = `
-                <p class="question-number">
-                    Question ${questionNumber}
-                </p>
-
-                <p class="question-prompt"></p>
-
-                <div class="esf-expression"></div>
-
-                <button
-                    class="button"
-                    type="button"
-                    data-hint-button
-                >
-                    Show hint
-                </button>
-
-                <p
-                    class="esf-hint"
-                    data-hint
-                    aria-live="polite"
-                ></p>
-
-                <div
-                    class="question-options"
-                    data-options
-                    role="radiogroup"
-                ></div>
-
-                <p
-                    class="question-feedback"
-                    data-feedback
-                    aria-live="polite"
-                ></p>
-            `;
-
-            card.querySelector('.question-prompt')
-                .textContent = question.prompt;
-
-            card.querySelector('.esf-expression')
-                .innerHTML = question.expression;
-
-            const hintButton =
-                card.querySelector('[data-hint-button]');
-
-            const hint = card.querySelector('[data-hint]');
-            const optionBox = card.querySelector('[data-options]');
-            const action = document.createElement('button');
-            action.type = 'button';
-            action.textContent = 'Check answer';
-            action.disabled = true;
-            const feedback = card.querySelector('[data-feedback]');
-
-            const optionElements = [];
-
-            const radioName =
-                `practice-question-${questionNumber}`;
-
-            hint.textContent = question.hint;
-
-            optionBox.setAttribute(
-                'aria-label',
-                `Answers for question ${questionNumber}`
-            );
-
-            question.answers.forEach((answer) => {
-                const label = document.createElement('label');
-
-                label.className = 'question-option';
-
-                const input = document.createElement('input');
-
-                input.type = 'radio';
-                input.name = radioName;
-                input.value = answer.label;
-
-                const text = document.createElement('span');
-
-                text.textContent = answer.label;
-
-                label.append(input, text);
-                optionBox.append(label);
-
-                optionElements.push({ label, input, answer });
-            });
-
-            /*
-             * One action button, three phases:
-             *   answering — "Check answer", disabled until
-             *               an option is selected
-             *   wrong     — "Try again", resets the question
-             *   correct   — "Next question", adds the next card
-             */
-            let phase = 'answering';
-            let marked = false;
-            let previousResult = null;
-
-            function setAction(label, enabled) {
-                action.textContent = label;
-                action.disabled = !enabled;
-
-                window.Maths1to9Lesson
-                    ?.useButtonAsSectionAction?.(
-                        'question-bank',
-                        action
-                    );
-            }
-
-            function clearMarks() {
-                optionElements.forEach(({ label }) => {
-                    label.classList.remove(
-                        'is-correct',
-                        'is-incorrect',
-                        'is-correct-answer'
-                    );
+        function render() {
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
+            root.append(heading);
+            api.setSectionBack('comparison', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('complete');
+            if (state.screen === count && state.finished) {
+                renderEnding();
+            } else {
+                const cardRoot = document.createElement('div');
+                root.append(cardRoot);
+                const readOnly = state.screen < state.index;
+                api.createQuestion(cardRoot, questionConfig(state.screen, readOnly));
+                if (readOnly) api.setSectionAction('comparison', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
             }
+            syncHash();
+        }
 
-            hintButton.addEventListener('click', () => {
-                const visible =
-                    hint.classList.toggle('is-visible');
-
-                hintButton.textContent =
-                    visible ? 'Hide hint' : 'Show hint';
-            });
-
-            optionElements.forEach(({ input }) => {
-                input.addEventListener('change', () => {
-                    if (phase === 'correct') {
-                        return;
-                    }
-
-                    clearMarks();
-
-                    feedback.className = 'question-feedback';
-                    feedback.textContent = '';
-
-                    phase = 'answering';
-                    setAction('Check answer', true);
-                });
-            });
-
-            action.addEventListener('click', () => {
-                if (phase === 'wrong') {
-                    optionElements.forEach(({ input }) => {
-                        input.checked = false;
-                    });
-
-                    clearMarks();
-
-                    feedback.className = 'question-feedback';
-                    feedback.textContent = '';
-
-                    phase = 'answering';
-                    setAction('Check answer', false);
-
+        questions.forEach((question, index) => {
+            api.registerHashRoute(`check-${index + 1}`, () => {
+                if (!api.goToSection('comparison', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
-
-                if (phase === 'correct') {
-                    setAction('Next question', false);
-                    addQuestion();
-
-                    return;
-                }
-
-                const selected = optionElements.find(
-                    ({ input }) => input.checked
-                );
-
-                if (!selected) {
-                    return;
-                }
-
-                clearMarks();
-
-                const isCorrect = selected.answer.correct;
-
-                window.Maths1to9Lesson?.recordAssessment?.({
-                    questionType: generatorName,
-                    questionId,
-                    correct: isCorrect
-                });
-
-                if (!marked) {
-                    state.checked += 1;
-
-                    if (isCorrect) {
-                        state.correct += 1;
-                    }
-                } else if (previousResult !== isCorrect) {
-                    state.correct += isCorrect ? 1 : -1;
-                }
-
-                marked = true;
-                previousResult = isCorrect;
-
-                updateScore();
-
-                if (state.checked >= QUESTIONS_TO_COMPLETE) {
-                    completeSection('question-bank');
-                }
-
-                if (isCorrect) {
-                    phase = 'correct';
-
-                    selected.label.classList.add('is-correct');
-
-                    optionElements.forEach(({ input }) => {
-                        input.disabled = true;
-                    });
-
-                    setAction('Next question', true);
-
-                    feedback.className =
-                        'question-feedback ' +
-                        'is-visible is-correct';
-
-                    feedback.textContent =
-                        `Correct. ${question.explanation}`;
-                } else {
-                    phase = 'wrong';
-
-                    selected.label.classList.add('is-incorrect');
-
-                    setAction('Try again', true);
-
-                    feedback.className =
-                        'question-feedback ' +
-                        'is-visible is-incorrect';
-
-                    feedback.textContent =
-                        selected.answer.feedback ||
-                        'Not quite. Try another option.';
-                }
+                showScreen(Math.min(index, state.furthestScreen));
             });
-
-            setAction('Check answer', false);
-
-            list.append(card);
-
-            card.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-
-        start.addEventListener('click', () => {
-            state.running = true;
-            state.number = 0;
-            state.checked = 0;
-            state.correct = 0;
-            state.previous = '';
-            state.run += 1;
-
-            list.replaceChildren();
-
-            start.disabled = true;
-            stop.disabled = false;
-
-            updateScore();
-            addQuestion();
         });
-
-        stop.addEventListener('click', () => {
-            window.Maths1to9Lesson
-                ?.clearSectionAction?.('question-bank');
-            if (!state.running) {
-                return;
-            }
-
-            state.running = false;
-
-            start.disabled = false;
-            start.textContent = 'Start again';
-
-            stop.disabled = true;
-
-            const percentage =
-                state.checked === 0
-                    ? 0
-                    : Math.round(
-                        (state.correct / state.checked) * 100
-                    );
-
-            score.textContent =
-                `Practice stopped: ` +
-                `${state.correct}/${state.checked} correct ` +
-                `(${percentage}%).`;
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        document.addEventListener('maths1to9:comparison-view', () => {
+            if (root.dataset.view === 'summary' && state.finished) showScreen(count);
         });
-    }
-
-    window.Maths1to9QuestionBanks ??= {};
-
-    /*
-     * CHANGE: key must be the lesson slug.
-     */
-    window.Maths1to9QuestionBanks['my-lesson-slug'] = mount;
-
-    function tryMount(root = null) {
-        const target =
-            root || document.getElementById(ROOT_ID);
-
-        if (target) {
-            mount(target);
+        reportProgress();
+        render();
+        const requested = questions.findIndex((question, index) => initialHash === `#check-${index + 1}`);
+        if (initialHash === '#summary' && state.finished) {
+            if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
+        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener(
-            'DOMContentLoaded',
-            () => tryMount()
-        );
-    } else {
-        tryMount();
-    }
-
-    document.addEventListener(
-        'maths1to9:lesson-rendered',
-        (event) => {
-            tryMount(event.detail?.questionsRoot || null);
-        }
-    );
+    document.addEventListener('maths1to9:lesson-rendered', event => {
+        if (event.detail?.slug !== SLUG) return;
+        mountPractice();
+        mountCheck(document.getElementById(`${SLUG}-comparison`), event.detail.lesson);
+    });
 })();

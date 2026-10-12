@@ -1,8 +1,12 @@
 {
-    "id": "my-lesson-slug-01",
+    "_change": "CHANGE: replace all lesson content, titles, skill mapping and examples; keep the four sections and shared wiring.",
+    "id": "my-lesson-slug",
     "slug": "my-lesson-slug",
     "title": "My lesson title",
-    "subtitle": "One-line hook. What changes, what stays the same.",
+    "subtitle": "Two equal groups make double.",
+    "navigation": {
+        "back_button": true
+    },
     "assessment": {
         "question_types": {
             "sample": "REPLACE_WITH_SKILL_ID"
@@ -10,63 +14,102 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "The big idea in one line",
-        "paragraphs": [
-            "Fallback text. interactive.js usually replaces this section with Learn cards."
-        ],
+        "title": "Two equal groups",
         "video": {
-            "youtube_id": "REPLACE_WITH_YOUTUBE_ID",
+            "youtube_id": "",
             "title": "Lesson video",
-            "caption": "Optional caption shown under the video. Delete the whole video block if the lesson has no video."
+            "caption": "",
+            "_change": "CHANGE: set youtube_id or mp4 if there is a video, otherwise remove this optional block."
         }
-    },
-    "method": {
-        "eyebrow": "Method",
-        "title": "Step 1 \u2192 Step 2 \u2192 Step 3",
-        "steps": [
-            {
-                "title": "Step 1 name",
-                "text": "One clause. What the pupil does first."
-            },
-            {
-                "title": "Step 2 name",
-                "text": "One clause. What they do next."
-            },
-            {
-                "title": "Step 3 name",
-                "text": "One clause. How they check."
-            }
-        ]
     },
     "interactive": {
         "eyebrow": "Try it",
-        "title": "Have a go",
-        "intro": "The support is removed one step at a time."
+        "title": "Count both groups",
+        "intro": ""
     },
-    "worked_examples": [
-        {
-            "eyebrow": "Worked example 1",
-            "title": "Straightforward case",
-            "steps": [
-                "First move.",
-                "Second move.",
-                "Result."
-            ],
-            "answer": "x = ?"
-        },
-        {
-            "eyebrow": "Common mistake",
-            "title": "The error most pupils make",
-            "steps": [
-                "Show the wrong move and why it fails.",
-                "Show the correct move."
-            ],
-            "answer": "Correct result"
-        }
-    ],
     "question_bank": {
         "eyebrow": "Practice",
-        "title": "Practise this topic",
-        "intro": "Answer one question at a time. Check each answer before moving on."
-    }
+        "title": "Practise doubling",
+        "intro": "",
+        "session_length": 5,
+        "_change": "CHANGE: choose session_length; optionally add ready_score (e.g. 4), or leave it out."
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "sample",
+                "prompt": "What is 2 × 7?",
+                "options": [
+                    "14",
+                    "9",
+                    "7",
+                    "21"
+                ],
+                "feedback": [
+                    "Two groups of 7 make 14.",
+                    "You added 2 instead of doubling.",
+                    "That counts only one group.",
+                    "That counts three groups instead of two."
+                ],
+                "answer": 0
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "Two equal groups make double the number in one group."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        }
+    ]
 }
