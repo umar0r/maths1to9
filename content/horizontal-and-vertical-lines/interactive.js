@@ -96,15 +96,28 @@
                 root.append(rule, node('p', axis === 'y' ? 'Drag the dot left and right.' : 'Drag the dot up and down.'));
                 const host = document.createElement('div');
                 const caption = node('p', '');
-                root.append(host, caption);
+                host.className = 'lines-exploration';
+                const lineLabel = node('p', '');
+                lineLabel.hidden = true;
+                lineLabel.dataset.lineLabel = '';
+                root.append(host, lineLabel, caption);
                 graph = graphs.create(host, { label: `Coordinate grid for exploring ${equation(axis, 4)}` });
                 const point = value => axis === 'y' ? [value, 4] : [4, value];
-                item.visited.forEach(value => graph.point(point(value), { tone: 'muted' }));
+                let trail = [];
+                function paintTrail() {
+                    trail.forEach(dot => dot.remove());
+                    trail = item.visited.filter(value => value !== item.position)
+                        .map(value => graph.point(point(value), { tone: 'muted' }));
+                }
+                paintTrail();
                 let joined = false;
                 function join() {
                     if (joined || item.visited.length < 4) return;
                     joined = true;
-                    graph.line(target, { label: equation(axis, 4) });
+                    graph.line(target);
+                    // Reserve a label row outside the moving coordinate label's path.
+                    lineLabel.textContent = `Line: ${equation(axis, 4)}`;
+                    lineLabel.hidden = false;
                     caption.textContent = axis === 'y'
                         ? 'Every point on this line has a y-coordinate of 4. '
                         : 'Every point on this line has an x-coordinate of 4. ';
@@ -113,7 +126,7 @@
                     section.update(() => { item.correct = true; });
                     action();
                 }
-                graph.point(point(item.position), {
+                const draggable = graph.point(point(item.position), {
                     size: 'large', coordinates: true, highlight: axis, drag: axis === 'y' ? 'x' : 'y',
                     onMove(position) {
                         const value = position[axis === 'y' ? 0 : 1];
@@ -121,13 +134,24 @@
                             item.position = value;
                             if (!item.visited.includes(value)) {
                                 item.visited.push(value);
-                                graph.point(point(value), { tone: 'muted' });
                             }
                         });
+                        paintTrail();
                         join();
+                        // Repaint last so the solid blue point stays above the trail and line.
+                        paintPoint();
                     }
                 });
+                function paintPoint() {
+                    draggable.update();
+                    // Keep endpoint coordinates inside the grid at narrow widths, too.
+                    const label = host.querySelector('.maths-graph__label strong')?.parentElement;
+                    if (label) {
+                        label.style.transform = axis === 'x' || item.position >= 0 ? 'translateX(calc(-100% - 16px))' : 'translateX(12px)';
+                    }
+                }
                 join();
+                paintPoint();
                 graph.setEditable(index === state.furthestScreen && !state.finished);
             } else {
                 const instruction = node('p', 'Drag across the graph to draw ');
@@ -150,6 +174,9 @@
             showScreen(Math.min(index, state.furthestScreen));
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        // The router ignores hash writes during navigation; normalize after it returns,
+        // including a deep link rejected by a locked section.
+        window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         const requested = /^#learn-([1-4])$/.exec(initialHash);
         if (requested) showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
         else render();
@@ -227,6 +254,9 @@
             showScreen(Math.min(index, state.furthestScreen));
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        // The router ignores hash writes during navigation; normalize after it returns,
+        // including a deep link rejected by a locked section.
+        window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         reportProgress(); render();
         const requested = /^#try-it-([1-5])$/.exec(initialHash);
         if (requested && api.goToSection('interactive', { moveFocus: false })) showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));

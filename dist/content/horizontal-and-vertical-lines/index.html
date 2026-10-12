@@ -20,11 +20,19 @@
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <style>
+        /* Coordinate labels need their full width before shifting away from an edge. */
+        .lines-exploration .maths-graph__label:has(strong) {
+            white-space: nowrap;
+            width: max-content;
+            clip-path: none !important;
+        }
+    </style>
 </head>
 
 <body
     data-lesson-id="horizontal-and-vertical-lines"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -69,9 +77,9 @@
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./lines.js?v=1"></script>
-    <script src="./interactive.js?v=1"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./lines.js?v=2"></script>
+    <script src="./interactive.js?v=2"></script>
+    <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=42"></script>

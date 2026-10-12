@@ -215,6 +215,7 @@
             });
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         document.addEventListener('maths1to9:comparison-view', () => {
             if (root.dataset.view === 'summary' && state.finished) showScreen(count);
         });

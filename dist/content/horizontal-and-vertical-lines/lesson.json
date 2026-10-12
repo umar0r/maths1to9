@@ -2,7 +2,7 @@
     "id": "horizontal-and-vertical-lines",
     "slug": "horizontal-and-vertical-lines",
     "title": "Horizontal and vertical lines",
-    "subtitle": "Draw lines like y = 4 and x = −2 by keeping one coordinate the same.",
+    "subtitle": "Draw lines like y\u00a0=\u00a04 and x\u00a0=\u00a0−2 by keeping one coordinate the same.",
     "navigation": {
         "back_button": true
     },
@@ -23,7 +23,7 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Draw the line for an equation such as y = 4 or x = −2."
+        "title": "Draw the line for an equation such as y\u00a0=\u00a04 or x\u00a0=\u00a0−2."
     },
     "interactive": {
         "eyebrow": "Try it",

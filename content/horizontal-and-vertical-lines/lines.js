@@ -4,7 +4,7 @@
     const number = graph.formatNumber;
 
     function equation(axis, value) {
-        return `${axis} = ${number(value)}`;
+        return `${axis}\u00a0=\u00a0${number(value)}`;
     }
 
     function judge(line, target) {
