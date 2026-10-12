@@ -1,0 +1,55 @@
+.maths-graph {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 1rem auto;
+}
+
+.maths-graph__board {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1;
+    touch-action: none;
+    border: 1px solid var(--border-dark);
+    background: var(--surface);
+}
+
+.maths-graph__board:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.maths-graph__label,
+.maths-graph__board .JXGtext {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+}
+
+.maths-graph__description {
+    min-height: 1.55em;
+    margin: 0.5rem 0 0;
+    color: var(--text-soft);
+}
+
+.maths-graph__coordinates {
+    position: absolute;
+    z-index: 2;
+    padding: 2px 6px;
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius-small);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .maths-graph *,
+    .maths-graph *::before,
+    .maths-graph *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
