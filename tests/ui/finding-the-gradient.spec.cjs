@@ -366,6 +366,56 @@ async function arrowCount(page) {
 for (const mode of modes) {
     test.describe(`${mode.name} detailed checks`, () => {
         test.use({ viewport: mode.viewport, hasTouch: mode.hasTouch || false, isMobile: mode.isMobile || false });
+        test('Try it 1 has no feedback box until the first line is released', async ({ page }) => {
+            const errors = watchForErrors(page);
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await page.goto(`/content/${slug}/`);
+            await board(page).waitFor();
+            for (let i = 0; i < 7; i++) await main(page).click();
+            await expect(page).toHaveURL(/#try-it-1$/);
+            const feedback = page.locator('#lesson-section-interactive .question-feedback');
+            await expect(feedback).toBeHidden();
+            await expect(feedback).toHaveText('');
+            await reload(page);
+            await expect(feedback).toBeHidden();
+            const gesture = await pointer(page, [1, -2], [3, -2], mode.hasTouch);
+            await expect(feedback).toBeHidden();
+            await gesture.release();
+            await expect(feedback).toBeVisible();
+            await expect(feedback).toHaveText('Keep going until you’re directly below (4, 4).');
+            expect(errors).toEqual([]);
+        });
+        test('Learn 3 remains draggable on revisits and after finishing Learn', async ({ page }) => {
+            const errors = watchForErrors(page);
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await page.goto(`/content/${slug}/`);
+            await board(page).waitFor();
+            for (let i = 0; i < 3; i++) await main(page).click();
+            await expect(page).toHaveURL(/#learn-4$/);
+            await back(page).click();
+            await expect(page).toHaveURL(/#learn-3$/);
+            await draw(page, [2, -1], [3, 1], mode.hasTouch);
+            expect((await state(page, 'learn')).position).toEqual([3, 1]);
+            await keys(page, ['ArrowUp']);
+            expect((await state(page, 'learn')).position).toEqual([4, 3]);
+            await reload(page);
+            expect((await state(page, 'learn')).position).toEqual([4, 3]);
+            for (let i = 0; i < 5; i++) await main(page).click();
+            await expect(page).toHaveURL(/#try-it-1$/);
+            await back(page).click();
+            for (let i = 0; i < 4; i++) await back(page).click();
+            await expect(page).toHaveURL(/#learn-3$/);
+            const before = await page.evaluate(() => window.Maths1to9Lesson.getScore());
+            await draw(page, [4, 3], [5, 5], mode.hasTouch);
+            expect((await state(page, 'learn')).position).toEqual([5, 5]);
+            await keys(page, ['ArrowLeft']);
+            expect((await state(page, 'learn')).position).toEqual([4, 3]);
+            await reload(page);
+            expect((await state(page, 'learn')).position).toEqual([4, 3]);
+            expect(await page.evaluate(() => window.Maths1to9Lesson.getScore())).toEqual(before);
+            await labelsClear(page);
+            expect(errors).toEqual([]);
+        });
         test('timed arrows, reduced motion, every triangle feedback and scratch helpers', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);

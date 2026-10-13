@@ -6,7 +6,7 @@
     const graphs = window.Maths1to9Graph;
     const d = G.definition;
     const learn = [
-        { title: 'How steep is a line?', graph: d(2, 1, [0, 0], [1, 2]),
+        { title: 'How steep is a line?', graph: d(2, 1, [1, 1], [2, 3]),
             text: ['The gradient tells you how far a line goes up for every 1 across.',
                 'This line goes up 2 for every 1 across. Its gradient is 2.'] },
         { title: 'Measure a bigger step', graph: d(2, 1, [1, 1], [3, 5]),
@@ -21,7 +21,7 @@
                 'Up: positive gradient. Down: negative gradient.'] },
         { title: 'Flat', graph: d(0, 1, [0, 3], [4, 3]), maths: '\\frac{0}{4} = 0',
             text: ['A horizontal line (across) doesn’t go up or down. Its gradient is 0.'] },
-        { title: 'Read the scale', graph: d(2, 1, [0, 0], [3, 6], { x: 1, y: 2 }),
+        { title: 'Read the scale', graph: d(2, 1, [1, 2], [4, 8], { x: 1, y: 2 }),
             maths: '\\frac{6}{3} = 2', text: ['Here one square up is 2 units.', 'Count the numbers on the axes, not the squares.'] }
     ];
     const triangle = d(2, 1, [1, -2], [4, 4]);
@@ -142,7 +142,6 @@
                     }
                 });
                 measure(state.position);
-                board.setEditable(state.screen === state.furthestScreen && !state.finished);
             } else {
                 const labels = G.changeLabels(graph.a, graph.b);
                 const corner = [graph.b[0], graph.a[1]];
@@ -262,7 +261,8 @@
             if (state.vertical) board.segment(state.vertical.from, state.vertical.to, { tone: 'correct' });
             const shown = readOnly ? judgeLeg(state[index === 0 ? 'horizontal' : 'vertical'], index === 1)
                 : { feedback: state.feedback, correct: state.correct };
-            const feedback = node('p', shown.feedback, `question-feedback is-visible ${shown.correct ? 'is-correct' : 'is-incorrect'}`);
+            const feedback = node('p', shown.feedback, 'question-feedback');
+            if (shown.feedback) feedback.classList.add('is-visible', shown.correct ? 'is-correct' : 'is-incorrect');
             feedback.setAttribute('aria-live', 'polite');
             root.append(feedback);
             if (!readOnly && !(index === 1 && state.vertical)) {

@@ -229,7 +229,8 @@ gradient**.
 
 Every marked or named point sits inside −5 to 5 on the default grid (never
 on the edge, never off it). In Learn and Try it, keep each triangle on one
-side of the y-axis so its labels stay clear of the axis numbers. Given lines use `graph.line({ m, c })`, tone
+side of the y-axis so its labels stay clear of the axis numbers, and never
+draw an arrow along an axis (it disappears under it). Given lines use `graph.line({ m, c })`, tone
 neutral. Marked points are
 large, with coordinates. Arrows use tone `ink`. Under
 `prefers-reduced-motion`, everything that "appears in turn" appears at
@@ -240,8 +241,8 @@ once.
 Each screen is one idea, with the graph first and at most three short
 lines of text under it. Next is always available (Learn is for looking).
 
-1. **How steep is a line?** Line y = 2x, points (0, 0) and (1, 2).
-   Arrows appear in turn: (0, 0) → (1, 0) "1 right", then (1, 0) → (1, 2)
+1. **How steep is a line?** Line y = 2x − 1, points (1, 1) and (2, 3).
+   Arrows appear in turn: (1, 1) → (2, 1) "1 right", then (2, 1) → (2, 3)
    "2 up". Text: "The **gradient** tells you how far a line goes up for
    every 1 across." "This line goes up 2 for every 1 across. Its gradient
    is 2."
@@ -275,8 +276,8 @@ lines of text under it. Next is always available (Learn is for looking).
    down. Its gradient is 0."
 
 7. **Read the scale.** Graph with `y: [-12, 12]`, `step: { x: 1, y: 2 }`.
-   Line y = 2x, points (0, 0) and (3, 6). Arrows "3 right", "6 up" (both
-   three squares long). Text: "Here one square up is 2 units." "Count the
+   Line y = 2x, points (1, 2) and (4, 8). Arrows "3 right", "6 up" (both
+   three squares long), off the axes. Text: "Here one square up is 2 units." "Count the
    numbers on the axes, not the squares." KaTeX: 6/3 = 2.
 
 Learn has no scored questions. Save the screen index as the template does.
