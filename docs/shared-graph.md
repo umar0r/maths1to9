@@ -141,6 +141,42 @@ vertical when both have the same x. For a sloping line it gives `m` and `c`
 as plain numbers (they may be fractions; the lesson decides what to do
 with them).
 
+### Axis steps, arrows and drawing options (added 2026-10-12)
+
+- `create(host, { x: [-6, 6], y: [-12, 12], step: { x: 1, y: 2 } })`
+  defaults each step to 1. Grid lines occur at multiples of the step;
+  labels show their values in units. `labelEvery` counts grid lines.
+  With `step`, the board's aspect ratio follows its number of grid squares,
+  keeping each square square. Points, lines, plots and drawing coordinates
+  remain in units. Dragging, drawing and arrow keys snap one grid step.
+  `snap([1.2, 3.1], { x: 1, y: 2 })` gives `[1, 4]`; existing calls
+  without a step are unchanged. Axis steps must be positive finite numbers.
+- `graph.arrow(from, to, { tone, label, labelSide, dash })` returns the
+  usual updatable/removable item. It is a 3 px segment with a compact
+  arrowhead at `to`, drawn below marked points. Its label sits at the
+  midpoint, below horizontal arrows and right of vertical arrows by default. `labelSide` can be `above`, `below`,
+  `left` or `right`; the label flips to the opposite side when needed
+  and stays within the grid, with pixel clearance from the arrow and
+  axis numbers and axis strokes. It tries the opposite side or nudges the
+  label when needed. Point coordinates and text labels use the same placement,
+  avoiding given lines and arrows as well.
+- `tone: 'ink'` uses the existing `--text` colour, including helper lines
+  and arrows. No additional colour values are introduced.
+- `dash: true` draws dashed segments and arrows; the default is solid.
+- `graph.point([1, 3], { drag: 'positions', positions: [[1, 3], [2, 5],
+  [3, 7]], onMove })` jumps to the listed position nearest the pointer
+  on screen. The list must be non-empty. Keyboard Right/Up selects the
+  next position and Left/Down the previous, stopping at the ends. As for
+  other draggable points, `onMove` runs once per changed position, and
+  the keyboard operates when there is exactly one draggable point.
+- `drawLine({ movable: false })` starts a replacement drawing even near
+  an existing line, and Shift + arrow does nothing. The default is `true`.
+- `drawLine({ tone(line, { finished }) { … } })` receives `finished: false`
+  during a preview and `true` after release (also for restored lines and
+  keyboard-finished lines). Return `neutral` until finished for feedback
+  only on release. Existing callbacks can ignore the extra argument and
+  continue to colour the line live.
+
 ## How it looks
 
 - Square, width 100% up to 440 px, height equal to the width. At 375 px it

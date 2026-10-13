@@ -1025,3 +1025,93 @@ test('custom question-set rows use widget text for current and earlier sessions 
     assert.match(text(container), /Number 2/);
     assert.doesNotMatch(text(container), /Number undefined|Number null/);
 });
+
+test('fraction cards accept signed whole numbers, decimals and fractions by exact value', () => {
+    for (const [value, answer] of [
+        ['3', '3'], ['-2', '-2'], ['0.5', '1/2'], ['1/2', '1/2'],
+        ['−3/4', '-0.75'], ['6/4', '1.5'], ['- 1 / 2', '−1/2'],
+        ['1/−2', '-1/2'], ['–3/4', '-3/4'], ['2/4', '1/2'], ['3/6', '1/2'],
+        ['.5', '1/2'], ['−.5', '-1/2'], ['5.', '5'], ['0', '0/3'],
+        ['9007199254740993/3', '3002399751580331'],
+        ['0.10000000000000000001', '10000000000000000001/100000000000000000000']
+    ]) {
+        const card = questionFixture({ input: 'number', fractions: true, answer });
+        card.type(value);
+        card.action.onClick();
+        assert.equal(card.card.result().correct, true, value);
+        assert.equal(card.assessments.length, 1);
+    }
+    for (const [value, answer] of [['0.33', '1/3'], ['9007199254740993', '9007199254740992']]) {
+        const card = questionFixture({ input: 'number', fractions: true, answer });
+        card.type(value);
+        card.action.onClick();
+        assert.equal(card.card.result().correct, false, value);
+    }
+});
+
+test('fraction cards reject mixed numbers, zero denominators and malformed input without an attempt', () => {
+    for (const value of ['1 1/2', '−1 1/2', '1/0', '1/−0', '1/2/3', 'x', '/', '-',
+        '1.2.3', '1.5/2', '1/2.5', '+1', '1e3', '1,000', '2kg']) {
+        let card = questionFixture({ input: 'number', fractions: true, answer: '1/2' });
+        card.type(value);
+        card.action.onClick();
+        assert.equal(card.card.result().firstCorrect, null, value);
+        assert.equal(card.assessments.length, 0, value);
+        assert.equal(card.container.children[0].children[2].textContent,
+            'Type a number or a fraction, like 3 or 1/2.');
+        card = card.reload();
+        assert.equal(card.action.label, 'Check');
+        assert.equal(card.section.state.cards['stable-1'].invalid, true);
+    }
+});
+
+test('fraction rules use exact values in order, retain typed form and expose text input settings', () => {
+    const card = questionFixture({ input: 'number', fractions: true, answer: '2',
+        rules: [{ value: '-1/2', feedback: 'First' }, { value: '-0.5', feedback: 'Second' }],
+        fallback: 'Other' });
+    const input = card.type('- 3 / 6');
+    assert.equal(input.inputMode, 'text');
+    assert.equal(input.autocomplete, 'off');
+    assert.equal(input.attributes.autocorrect, 'off');
+    assert.equal(input.autocapitalize, 'off');
+    assert.equal(input.spellcheck, false);
+    card.action.onClick();
+    assert.equal(card.card.result().explanation, 'First');
+    assert.equal(card.card.result().answer, '−3/6');
+    assert.equal(card.section.state.cards['stable-1'].value, '−3/6');
+    const review = card.reload({ readOnly: true });
+    assert.equal(review.container.children[0].children[1].textContent, '−3/6');
+    assert.equal(review.card.result().answer, '−3/6');
+    card.action.onClick();
+    card.type('6/4');
+    card.action.onClick();
+    assert.equal(card.card.result().explanation, 'Other');
+    assert.equal(card.card.result().answer, '6/4');
+    assert.throws(() => questionFixture({ input: 'number', fractions: true, exact: true }),
+        /fractions: true cannot be combined with exact: true/);
+});
+
+test('figures render once between prompt and any answer, including reload and read-only cards', () => {
+    for (const input of ['number', 'choice', 'custom']) {
+        const calls = [];
+        const fixture = resultsFixture();
+        const root = fixture.node('div');
+        const section = { state: {}, update(fn) { fn(this.state); } };
+        const config = { input, sectionId: 'comparison', questionId: 'figure', prompt: 'Picture',
+            answer: '1', options: [{ label: '1', correct: true }],
+            widget: { render() { return { update() {} }; }, isEmpty: () => true,
+                mark: () => ({ correct: true }), answerText: () => '' },
+            figure(host, { readOnly }) {
+                const article = root.children[0];
+                assert.equal(article.children[0].textContent, 'Picture');
+                assert.equal(article.children[1], host);
+                assert.equal(article.children.length, 2); // No answer has been created yet.
+                calls.push(readOnly);
+            } };
+        const api = { setSectionAction() {}, clearSectionAction() {} };
+        fixture.createQuestion(root, config, section, api);
+        fixture.createQuestion(root, config, section, api);
+        fixture.createQuestion(root, { ...config, readOnly: true }, section, api);
+        assert.deepEqual(calls, [false, false, true]);
+    }
+});

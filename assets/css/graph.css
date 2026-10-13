@@ -9,7 +9,7 @@
     position: relative;
     overflow: hidden;
     width: 100%;
-    aspect-ratio: 1;
+    aspect-ratio: var(--maths-graph-aspect, 1);
     touch-action: none;
     border: 1px solid var(--border-dark);
     background: var(--surface);

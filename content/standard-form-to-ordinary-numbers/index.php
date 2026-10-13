@@ -28,7 +28,7 @@ $pageTitle = 'From standard form to ordinary numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=37">
 </head>
 
 <body
@@ -81,6 +81,6 @@ $pageTitle = 'From standard form to ordinary numbers';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=42"></script>
+    <script src="../../assets/js/lesson-engine.js?v=43"></script>
 </body>
 </html>

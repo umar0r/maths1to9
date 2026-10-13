@@ -139,3 +139,70 @@ for (const width of [1280, 375]) {
         });
     }
 }
+
+for (const width of [1280, 375]) {
+    for (const example of ['point', 'arrow']) {
+        test(`${width}px shared ${example} labels avoid axis strokes, numbers and given geometry`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 1000 });
+            const errors = watchForErrors(page);
+            await page.goto(lesson);
+            await page.locator(surface).waitFor();
+            await page.evaluate(example => {
+                const host = document.createElement('div');
+                host.id = 'polish-test';
+                host.style.width = 'min(440px, calc(100vw - 32px))';
+                document.body.prepend(host);
+                const graph = window.Maths1to9Graph.create(host);
+                graph.line({ m: -2, c: 1 });
+                if (example === 'point') {
+                    window.polishPoint = graph.point([1, -1], { size: 'large', coordinates: true });
+                    graph.arrow([-2, 5], [1, 5], { tone: 'ink' });
+                } else {
+                    graph.point([-2, 5], { size: 'large', coordinates: true });
+                    graph.point([1, -1], { size: 'large', coordinates: true });
+                    graph.arrow([-2, 5], [1, 5], { tone: 'ink', label: '3 right' });
+                    graph.arrow([1, 5], [1, -1], { tone: 'ink', label: '6 down' });
+                }
+            }, example);
+            async function check() {
+                const collisions = await page.locator('#polish-test .maths-graph__board').evaluate(element => {
+                    const board = Object.values(window.JXG.boards).find(board => board.containerObj === element);
+                    const rect = element.getBoundingClientRect();
+                    const labels = [...element.querySelectorAll('.maths-graph__label')];
+                    const numbers = labels.filter(label => /^[−\d]+$/.test(label.textContent));
+                    const pixel = point => [rect.left + element.clientLeft + board.origin.scrCoords[1] + point.X() * board.unitX,
+                        rect.top + element.clientTop + board.origin.scrCoords[2] - point.Y() * board.unitY];
+                    const lines = Object.values(board.objects).filter(object =>
+                        ['line', 'segment', 'arrow'].includes(object.elType) && object.visProp.strokewidth >= 2);
+                    return labels.filter(label => /^\(|^P$|right|down/.test(label.textContent)).flatMap(label => {
+                        const a = label.getBoundingClientRect();
+                        const result = numbers.filter(number => {
+                            const b = number.getBoundingClientRect();
+                            return a.left < b.right + 3 && a.right > b.left - 3 &&
+                                a.top < b.bottom + 3 && a.bottom > b.top - 3;
+                        }).map(number => `${label.textContent} touches ${number.textContent}`);
+                        for (const line of lines) {
+                            const from = pixel(line.point1), to = pixel(line.point2);
+                            if (line.elType !== 'line' && (a.right < Math.min(from[0], to[0]) - 3 ||
+                                a.left > Math.max(from[0], to[0]) + 3 || a.bottom < Math.min(from[1], to[1]) - 3 ||
+                                a.top > Math.max(from[1], to[1]) + 3)) continue;
+                            const corners = [[a.left - 2, a.top - 2], [a.right + 2, a.top - 2],
+                                [a.left - 2, a.bottom + 2], [a.right + 2, a.bottom + 2]];
+                            const sides = corners.map(([x, y]) => (x - from[0]) * (to[1] - from[1]) -
+                                (y - from[1]) * (to[0] - from[0]));
+                            if (Math.min(...sides) <= 0 && Math.max(...sides) >= 0) result.push(`${label.textContent} touches a line`);
+                        }
+                        return result;
+                    });
+                });
+                expect(collisions).toEqual([]);
+            }
+            await check();
+            if (example === 'point') {
+                await page.evaluate(() => window.polishPoint.update({ label: 'P', coordinates: false }));
+                await check();
+            }
+            expect(errors).toEqual([]);
+        });
+    }
+}

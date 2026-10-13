@@ -424,8 +424,32 @@ Then:
   decimal places).
 - `rules` are checked in order after tidying, with the same comparison;
   the first matching rule gives the feedback and hint. Otherwise `fallback`.
-- Fractions, units and algebra aren't typed-number questions; use choices,
-  or keep the lesson's own input.
+- Units and algebra aren't typed-number questions; use choices or a custom widget.
+
+### Fractions and figures (added 2026-10-12)
+
+For a number card, `fractions: true` accepts whole numbers, decimals and
+`a/b`, with spaces and a leading `-`, `−` or `–` (a negative denominator
+is also accepted). Mixed numbers, zero denominators and malformed input
+are invalid and show “Type a number or a fraction, like 3 or 1/2.” without
+recording an attempt. Answers and rule values use the same syntax.
+
+Values are compared exactly by integer cross multiplication; decimal digits
+become an integer numerator and a power-of-ten denominator. Thus `0.5`,
+`2/4` and `3/6` match `1/2`, but `0.33` does not match `1/3`.
+Combining `fractions: true` with `exact: true` throws a `TypeError`.
+Checked values, read-only cards and results retain the pupil's form (`6/4`
+stays `6/4`), removing spaces and displaying `−` for minus signs.
+The input uses text mode, with autocomplete, autocorrect, autocapitalization
+and spellcheck off, so a phone can offer fraction and minus characters.
+Plain number cards are unchanged.
+
+Any input type can supply `figure(host, { readOnly })`. The card creates a
+host after the prompt and before the answer, and calls the function once
+per render, including reload and read-only cards (`readOnly: true`). The
+engine saves no figure state. A shared graph frees itself when the host is
+removed. Both options also work in `runQuestionSet` definitions, including
+new Practise again sessions.
 
 ### Saving, going back and finished cards
 

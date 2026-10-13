@@ -33,7 +33,7 @@ $pageTitle = 'Lowest common multiple';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=37">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
     <link rel="stylesheet" href="./lesson.css?v=5">
 </head>
@@ -85,6 +85,6 @@ $pageTitle = 'Lowest common multiple';
     <script src="./interactive.js?v=9"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=42"></script>
+    <script src="../../assets/js/lesson-engine.js?v=43"></script>
 </body>
 </html>

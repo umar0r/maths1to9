@@ -3349,6 +3349,7 @@ noscript p {
 
 .retained-result strong { min-width: 0; overflow-wrap: anywhere; }
 .retained-result__answer > span { white-space: nowrap; }
+.retained-result__answer > span:first-child { white-space: normal; overflow-wrap: anywhere; }
 
 /* Opt-in screen navigation, separate from the main action. */
 .lesson-back {
