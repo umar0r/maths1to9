@@ -152,11 +152,12 @@ with them).
   `snap([1.2, 3.1], { x: 1, y: 2 })` gives `[1, 4]`; existing calls
   without a step are unchanged. Axis steps must be positive finite numbers.
 - `graph.arrow(from, to, { tone, label, labelSide, dash })` returns the
-  usual updatable/removable item. It is a 3 px segment with an arrowhead
-  at `to`. Its label sits at the midpoint, below horizontal arrows and
-  right of vertical arrows by default. `labelSide` can be `above`, `below`,
+  usual updatable/removable item. It is a 3 px segment with a compact
+  arrowhead at `to`, drawn below marked points. Its label sits at the
+  midpoint, below horizontal arrows and right of vertical arrows by default. `labelSide` can be `above`, `below`,
   `left` or `right`; the label flips to the opposite side when needed
-  and stays within the grid, with pixel clearance from the arrow.
+  and stays within the grid, with pixel clearance from the arrow and
+  axis numbers. It tries the opposite side or nudges the label when needed.
 - `tone: 'ink'` uses the existing `--text` colour, including helper lines
   and arrows. No additional colour values are introduced.
 - `dash: true` draws dashed segments and arrows; the default is solid.

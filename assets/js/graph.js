@@ -108,25 +108,30 @@
         function segment(from, to, attributes = {}) {
             return board.create('segment', [from, to], { ...base, ...attributes });
         }
+        const axisLabels = [];
+        function axisText(position, value, attributes) {
+            const label = text(position, value, attributes);
+            axisLabels.push({ label, position, attributes });
+        }
         const every = options.labelEvery || (Math.max((x[1] - x[0]) / step.x, (y[1] - y[0]) / step.y) > 12 ? 2 : 1);
         for (let tick = Math.ceil(x[0] / step.x); tick * step.x <= x[1]; tick++) {
             const value = tick * step.x;
             segment([value, y[0]], [value, y[1]], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
             if (value !== 0 && tick % every === 0) {
-                text([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
+                axisText([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
             }
         }
         for (let tick = Math.ceil(y[0] / step.y); tick * step.y <= y[1]; tick++) {
             const value = tick * step.y;
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
             if (value !== 0 && tick % every === 0) {
-                text([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
+                axisText([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
         segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
-        text([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
+        axisText([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
         text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
         text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
 
@@ -186,20 +191,71 @@
                     const from = pixels(arrow.from);
                     const to = pixels(arrow.to);
                     const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
-                    if (size > 0) {
-                        // Keep the entire label clear, even when a requested side lies
-                        // along the arrow (for example, right of a horizontal arrow).
-                        const normal = [-(to[1] - from[1]) / size, (to[0] - from[0]) / size];
+                    const normal = size > 0
+                        ? [-(to[1] - from[1]) / size, (to[0] - from[0]) / size] : [0, 1];
+                    const clearance = Math.abs(normal[0]) * width / 2 +
+                        Math.abs(normal[1]) * height / 2 + 12;
+                    const obstacles = axisLabels.map(({ label, position, attributes }) => {
+                        const bounds = label.rendNode.getBoundingClientRect();
+                        const [px, py] = pixels(position);
+                        const { offset = [0, 0], anchorX, anchorY } = attributes;
+                        // Use current board coordinates: the DOM positions can still
+                        // describe the previous frame while JSXGraph is resizing.
+                        const left = px + offset[0] - (anchorX === 'middle' ? bounds.width / 2
+                            : anchorX === 'right' ? bounds.width : 0);
+                        const top = py - offset[1] - (anchorY === 'middle' ? bounds.height / 2 : 0);
+                        return { left: left - 6, right: left + bounds.width + 6,
+                            top: top - 6, bottom: top + bounds.height + 6 };
+                    });
+                    function fit(candidate) {
+                        let [lx, ly] = candidate;
+                        // Explicit sides along the arrow still need perpendicular clearance.
                         const distance = (lx + width / 2 - px) * normal[0] +
                             (ly + height / 2 - py) * normal[1];
-                        const clearance = Math.abs(normal[0]) * width / 2 +
-                            Math.abs(normal[1]) * height / 2 + 12;
                         if (Math.abs(distance) < clearance) {
                             const shift = (distance < 0 ? -clearance : clearance) - distance;
                             lx += normal[0] * shift;
                             ly += normal[1] * shift;
                         }
+                        return [Math.max(left, Math.min(right - width, lx)),
+                            Math.max(top, Math.min(bottom - height, ly))];
                     }
+                    const lines = [...items].filter(entry => entry.kind === 'line').map(entry => {
+                        const line = entry.value;
+                        const from = pixels(line.axis === 'x' ? [line.value, y[0]]
+                            : line.axis === 'y' ? [x[0], line.value] : [0, line.c]);
+                        const to = pixels(line.axis === 'x' ? [line.value, y[1]]
+                            : line.axis === 'y' ? [x[1], line.value] : [1, line.m + line.c]);
+                        const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
+                        return { from, normal: [-(to[1] - from[1]) / size, (to[0] - from[0]) / size] };
+                    });
+                    function clear(candidate) {
+                        const [lx, ly] = candidate;
+                        const distance = (lx + width / 2 - px) * normal[0] +
+                            (ly + height / 2 - py) * normal[1];
+                        return Math.abs(distance) >= clearance - 0.5 &&
+                            lines.every(({ from, normal }) => {
+                                const distance = (lx + width / 2 - from[0]) * normal[0] +
+                                    (ly + height / 2 - from[1]) * normal[1];
+                                return Math.abs(distance) > Math.abs(normal[0]) * width / 2 +
+                                    Math.abs(normal[1]) * height / 2 + 6;
+                            }) &&
+                            obstacles.every(bounds => lx + width <= bounds.left || lx >= bounds.right ||
+                                ly + height <= bounds.top || ly >= bounds.bottom);
+                    }
+                    const sides = [side, opposite[side], ...Object.keys(positions)];
+                    const candidates = sides.map(side => fit(positions[side]));
+                    const placed = candidates.find(clear);
+                    if (placed) return placed;
+                    // Choose the smallest safe nudge, keeping the label near its arrow.
+                    const nudges = candidates.flatMap(([lx, ly]) => obstacles.flatMap(bounds =>
+                        [[bounds.left - width, ly], [bounds.right, ly],
+                            [lx, bounds.top - height], [lx, bounds.bottom]]));
+                    const safe = nudges.map(fit).filter(clear);
+                    const distance = position => Math.hypot(position[0] - candidates[0][0],
+                        position[1] - candidates[0][1]);
+                    safe.sort((a, b) => distance(a) - distance(b));
+                    return safe[0] || candidates[0];
                 }
                 // At a corner, also keep the perpendicular dimension inside the grid.
                 return [Math.max(left, Math.min(right - width, lx)),
@@ -231,7 +287,12 @@
                         fillColor: tones[style.tone] || tones.neutral, fillOpacity: kind === 'point' ? 1 : 0,
                         strokeWidth: kind === 'arrow' ? 3 : 4, layer: 9 };
                     if ((kind === 'segment' || kind === 'arrow') && style.dash === true) attributes.dash = 2;
-                    if (kind === 'arrow') attributes.lastArrow = true;
+                    if (kind === 'arrow') {
+                        attributes.lastArrow = { type: 1, size: 3 };
+                        // Points keep their existing layer and remain above arrows,
+                        // regardless of the order the lesson creates its items.
+                        attributes.layer = 8;
+                    }
                     let anchor;
                     let labelAttributes = {};
                     if (kind === 'point') {
