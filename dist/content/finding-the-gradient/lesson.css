@@ -1,0 +1,8 @@
+.gradient-maths {
+    font-size: clamp(0.8rem, 3vw, 1.05rem);
+    padding: 0.2rem 0;
+}
+
+.gradient-maths .katex-display {
+    margin: 0.8rem 0;
+}

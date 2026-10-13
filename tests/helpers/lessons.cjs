@@ -169,8 +169,8 @@ const close = (a, b) => Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(a), Math.a
 
 // Find written sums like "3 × 2 + 1 = 7" or "−4 + 9 = 5" in text and return
 // the ones that are wrong. Only purely numeric sides are checked.
-const NUMERIC_TAIL = /(?:^|[^\w£$.,/])([−\-(√]*[\d(][\d.,⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛()\s+\-−×÷]*?)\s*$/;
-const NUMERIC_HEAD = /^\s*([−\-(√]*[\d(√][\d.,⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛()\s+\-−×÷]*)/;
+const NUMERIC_TAIL = /(?:^|[^\w£$.,/])([−\-(√]*[\d(][\d.,⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛()\s+\-−×÷/]*?)\s*$/;
+const NUMERIC_HEAD = /^\s*([−\-(√]*[\d(√][\d.,⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛()\s+\-−×÷/]*)/;
 function wrongSums(text) {
     const plainText = String(text).replace(/<[^>]*>/g, ' ');
     const parts = plainText.split(/=(?![=>])/);
@@ -189,7 +189,7 @@ function wrongSums(text) {
         const clean = s => s.replace(/[\s+\-−×÷,.(]+$/, '').trim();
         const [a, b] = [clean(left), clean(rightMatch[1])];
         // The left side must be a calculation, not just a number.
-        if (!a || !b || !/\d\s*[+\-−×÷]|[⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛]|\d\s*\(/.test(a)) continue;
+        if (!a || !b || !/\d\s*[+\-−×÷/]|[⁰¹²³⁴⁵⁶⁷⁸⁹√¼½¾⅓⅔⅕⅛]|\d\s*\(/.test(a)) continue;
         const balanced = s => [...s].reduce((depth, c) => depth < 0 ? depth : depth + (c === '(') - (c === ')'), 0) === 0;
         if (!balanced(a) || !balanced(b)) continue;
         let x, y;

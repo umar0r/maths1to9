@@ -97,7 +97,7 @@
     {"id":"plot-linear-graphs","title":"Plot straight-line graphs","content_references":["A9"],"recommended_prerequisites":["coordinates-four-quadrants","horizontal-vertical-lines","substitute-expressions"]},
     {"id":"interpret-gradient","title":"Interpret the gradient of a straight line","content_references":["A10"]},
     {"id":"interpret-intercept","title":"Interpret the intercept of a straight line","content_references":["A10"]},
-    {"id":"calculate-gradient","title":"Calculate the gradient of a straight line","content_references":["A10"],"recommended_prerequisites":["coordinates-four-quadrants"]},
+    {"id":"calculate-gradient","title":"Calculate the gradient of a straight line","content_references":["A10"],"recommended_prerequisites":["coordinates-four-quadrants","horizontal-vertical-lines"]},
     {"id":"use-y-mx-c","title":"Use y = mx + c","content_references":["A9","A10"],"recommended_prerequisites":["calculate-gradient","interpret-intercept"]},
     {"id":"parallel-lines","title":"Identify parallel lines using gradient","content_references":["A9"],"recommended_prerequisites":["use-y-mx-c"]},
     {"id":"equation-line-from-information","title":"Find a straight-line equation from points or gradient","content_references":["A9"],"recommended_prerequisites":["use-y-mx-c"]},
