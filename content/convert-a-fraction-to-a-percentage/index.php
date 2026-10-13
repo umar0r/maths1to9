@@ -27,7 +27,7 @@ $pageTitle = 'Convert a fraction to a percentage';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=37">
     <link rel="stylesheet" href="./lesson.css?v=5">
 </head>
 

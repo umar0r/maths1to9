@@ -32,7 +32,7 @@ $pageTitle = 'My lesson title';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=37">
 </head>
 
 <body

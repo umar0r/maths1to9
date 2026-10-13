@@ -28,7 +28,7 @@ $pageTitle = 'Function machines: find the input';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=36">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=37">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 

@@ -26,7 +26,7 @@ $pageTitle = 'Pie charts';
     >
     <link
         rel="stylesheet"
-        href="../../assets/css/app.css?v=36"
+        href="../../assets/css/app.css?v=37"
     >
 
     <script src="../../assets/js/progress.js?v=2" defer></script>
