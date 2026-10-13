@@ -136,6 +136,8 @@
         text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
 
         const items = new Set();
+        const labelLayouts = new Map();
+        let labelOrder = 0;
         let editable = true;
         let destroyed = false;
         let activeTool = null;
@@ -162,6 +164,7 @@
         }
         function pointLabel(position, content, settings, attributes, arrow = null) {
             const centred = arrow !== null;
+            const order = labelOrder++;
             let label;
             function placement() {
                 const [px, py] = pixels(position);
@@ -174,22 +177,16 @@
                 // Arrow labels on an axis also need clearance from its tick labels.
                 const gap = centred && (position[0] === 0 || position[1] === 0) ? 28 : 12;
                 const positions = {
-                    right: centred ? [px + gap, py - height / 2]
-                        : [px + 0.2 * board.unitX, py - 0.3 * board.unitY - height / 2],
+                    right: [px + gap, py - height / 2],
                     left: [px - gap - width, py - height / 2],
                     above: [px - width / 2, py - gap - height],
                     below: [px - width / 2, py + gap]
                 };
                 const side = settings.labelSide || 'right';
                 const opposite = { right: 'left', left: 'right', above: 'below', below: 'above' };
-                let [lx, ly] = positions[side];
-                if ((side === 'right' && lx + width > right) || (side === 'left' && lx < left) ||
-                    (side === 'above' && ly < top) || (side === 'below' && ly + height > bottom)) {
-                    [lx, ly] = positions[opposite[side]];
-                }
-                if (arrow) {
-                    const from = pixels(arrow.from);
-                    const to = pixels(arrow.to);
+                {
+                    const from = pixels(arrow ? arrow.from : position);
+                    const to = pixels(arrow ? arrow.to : position);
                     const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
                     const normal = size > 0
                         ? [-(to[1] - from[1]) / size, (to[0] - from[0]) / size] : [0, 1];
@@ -207,12 +204,19 @@
                         return { left: left - 6, right: left + bounds.width + 6,
                             top: top - 6, bottom: top + bounds.height + 6 };
                     });
+                    for (const layout of labelLayouts.values()) {
+                        if (layout.fixed || layout.order < order) {
+                            const bounds = layout.bounds();
+                            obstacles.push({ left: bounds.left - 4, right: bounds.right + 4,
+                                top: bounds.top - 4, bottom: bounds.bottom + 4 });
+                        }
+                    }
                     function fit(candidate) {
                         let [lx, ly] = candidate;
                         // Explicit sides along the arrow still need perpendicular clearance.
                         const distance = (lx + width / 2 - px) * normal[0] +
                             (ly + height / 2 - py) * normal[1];
-                        if (Math.abs(distance) < clearance) {
+                        if (arrow && Math.abs(distance) < clearance) {
                             const shift = (distance < 0 ? -clearance : clearance) - distance;
                             lx += normal[0] * shift;
                             ly += normal[1] * shift;
@@ -220,46 +224,109 @@
                         return [Math.max(left, Math.min(right - width, lx)),
                             Math.max(top, Math.min(bottom - height, ly))];
                     }
-                    const lines = [...items].filter(entry => entry.kind === 'line').map(entry => {
+                    const geometry = [...items].filter(entry =>
+                        ['line', 'arrow', 'segment'].includes(entry.kind)).map(entry => {
                         const line = entry.value;
-                        const from = pixels(line.axis === 'x' ? [line.value, y[0]]
-                            : line.axis === 'y' ? [x[0], line.value] : [0, line.c]);
-                        const to = pixels(line.axis === 'x' ? [line.value, y[1]]
-                            : line.axis === 'y' ? [x[1], line.value] : [1, line.m + line.c]);
-                        const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
-                        return { from, normal: [-(to[1] - from[1]) / size, (to[0] - from[0]) / size] };
+                        if (entry.kind !== 'line') return { ...line, full: false };
+                        return {
+                            from: line.axis === 'x' ? [line.value, y[0]]
+                                : line.axis === 'y' ? [x[0], line.value] : [0, line.c],
+                            to: line.axis === 'x' ? [line.value, y[1]]
+                                : line.axis === 'y' ? [x[1], line.value] : [1, line.m + line.c],
+                            full: true
+                        };
                     });
+                    // Axis strokes are obstacles too, even between their numbered ticks.
+                    geometry.push({ from: [x[0], 0], to: [x[1], 0], full: true },
+                        { from: [0, y[0]], to: [0, y[1]], full: true });
+                    const lines = geometry.map(({ from, to, full }) => {
+                        from = pixels(from);
+                        to = pixels(to);
+                        const size = Math.hypot(to[0] - from[0], to[1] - from[1]);
+                        return { from, to, full, normal: size > 0
+                            ? [-(to[1] - from[1]) / size, (to[0] - from[0]) / size] : [0, 1] };
+                    });
+                    function distanceFrom(line, candidate) {
+                        return (candidate[0] + width / 2 - line.from[0]) * line.normal[0] +
+                            (candidate[1] + height / 2 - line.from[1]) * line.normal[1];
+                    }
+                    function lineClearance(line) {
+                        return Math.abs(line.normal[0]) * width / 2 +
+                            Math.abs(line.normal[1]) * height / 2 + 6;
+                    }
                     function clear(candidate) {
                         const [lx, ly] = candidate;
                         const distance = (lx + width / 2 - px) * normal[0] +
                             (ly + height / 2 - py) * normal[1];
-                        return Math.abs(distance) >= clearance - 0.5 &&
-                            lines.every(({ from, normal }) => {
-                                const distance = (lx + width / 2 - from[0]) * normal[0] +
-                                    (ly + height / 2 - from[1]) * normal[1];
-                                return Math.abs(distance) > Math.abs(normal[0]) * width / 2 +
-                                    Math.abs(normal[1]) * height / 2 + 6;
-                            }) &&
+                        const pointDistance = Math.hypot(Math.max(lx - px, 0, px - lx - width),
+                            Math.max(ly - py, 0, py - ly - height));
+                        return (arrow ? Math.abs(distance) >= clearance - 0.5 : pointDistance >= 8) &&
+                            lines.every(line => !line.full &&
+                                (lx + width < Math.min(line.from[0], line.to[0]) - 6 ||
+                                    lx > Math.max(line.from[0], line.to[0]) + 6 ||
+                                    ly + height < Math.min(line.from[1], line.to[1]) - 6 ||
+                                    ly > Math.max(line.from[1], line.to[1]) + 6) ||
+                                Math.abs(distanceFrom(line, candidate)) >= lineClearance(line)) &&
                             obstacles.every(bounds => lx + width <= bounds.left || lx >= bounds.right ||
                                 ly + height <= bounds.top || ly >= bounds.bottom);
                     }
-                    const sides = [side, opposite[side], ...Object.keys(positions)];
-                    const candidates = sides.map(side => fit(positions[side]));
-                    const placed = candidates.find(clear);
-                    if (placed) return placed;
-                    // Choose the smallest safe nudge, keeping the label near its arrow.
-                    const nudges = candidates.flatMap(([lx, ly]) => obstacles.flatMap(bounds =>
-                        [[bounds.left - width, ly], [bounds.right, ly],
-                            [lx, bounds.top - height], [lx, bounds.bottom]]));
-                    const safe = nudges.map(fit).filter(clear);
-                    const distance = position => Math.hypot(position[0] - candidates[0][0],
-                        position[1] - candidates[0][1]);
-                    safe.sort((a, b) => distance(a) - distance(b));
-                    return safe[0] || candidates[0];
+                    function place(candidates, side) {
+                        function onSide([lx, ly]) {
+                            if (side === 'right') return lx >= px + 8;
+                            if (side === 'left') return lx + width <= px - 8;
+                            if (side === 'above') return ly + height <= py - 8;
+                            if (side === 'below') return ly >= py + 8;
+                            return true;
+                        }
+                        const origin = candidates[0];
+                        const distance = position => Math.hypot(position[0] - origin[0], position[1] - origin[1]);
+                        let pool = candidates;
+                        const visited = new Set();
+                        const key = position => position.map(value => value.toFixed(2)).join(',');
+                        for (let pass = 0; pass < 4; pass++) {
+                            pool.forEach(position => visited.add(key(position)));
+                            const safe = pool.filter(onSide).filter(clear).sort((a, b) => distance(a) - distance(b));
+                            if (safe.length) return safe[0];
+                            const nudges = [];
+                            for (const [lx, ly] of pool) {
+                                for (const bounds of obstacles) {
+                                    if (lx + width < bounds.left || lx > bounds.right ||
+                                        ly + height < bounds.top || ly > bounds.bottom) continue;
+                                    nudges.push([bounds.left - width - 1, ly], [bounds.right + 1, ly],
+                                        [lx, bounds.top - height - 1], [lx, bounds.bottom + 1]);
+                                }
+                                for (const line of lines) {
+                                    if (Math.abs(distanceFrom(line, [lx, ly])) >= lineClearance(line)) continue;
+                                    for (const sign of [-1, 1]) {
+                                        const shift = sign * (lineClearance(line) + 1) - distanceFrom(line, [lx, ly]);
+                                        nudges.push([lx + line.normal[0] * shift, ly + line.normal[1] * shift]);
+                                        // An axis-aligned nudge can clear a diagonal line
+                                        // without undoing the clearance from an adjacent arrow.
+                                        if (Math.abs(line.normal[0]) > 0.001) nudges.push([lx + shift / line.normal[0], ly]);
+                                        if (Math.abs(line.normal[1]) > 0.001) nudges.push([lx, ly + shift / line.normal[1]]);
+                                    }
+                                }
+                            }
+                            const unique = new Map();
+                            for (const position of nudges.map(fit)) {
+                                if (onSide(position) && !visited.has(key(position))) unique.set(key(position), position);
+                            }
+                            pool = [...unique.values()].sort((a, b) => distance(a) - distance(b)).slice(0, 96);
+                        }
+                    }
+                    function fits(side) {
+                        const [lx, ly] = positions[side];
+                        return lx >= left && lx + width <= right && ly >= top && ly + height <= bottom;
+                    }
+                    // Preserve requested sides and edge flips before trying other sides.
+                    const preferred = [side, opposite[side]].filter(fits);
+                    const candidates = Object.keys(positions).map(side => fit(positions[side]));
+                    for (const side of preferred) {
+                        const placed = place([fit(positions[side])], side);
+                        if (placed) return placed;
+                    }
+                    return place(candidates) || candidates[0];
                 }
-                // At a corner, also keep the perpendicular dimension inside the grid.
-                return [Math.max(left, Math.min(right - width, lx)),
-                    Math.max(top, Math.min(bottom - height, ly))];
             }
             label = text([
                 () => (placement()[0] - board.origin.scrCoords[1]) / board.unitX,
@@ -268,6 +335,11 @@
                 ...attributes, anchorX: 'left', anchorY: 'top',
                 cssStyle: 'white-space: nowrap; width: max-content;'
             });
+            labelLayouts.set(label, { order, bounds() {
+                const [left, top] = placement();
+                const bounds = label.rendNode.getBoundingClientRect();
+                return { left, top, right: left + bounds.width, bottom: top + bounds.height };
+            } });
             return label;
         }
         function item(kind, initial, settings = {}) {
@@ -281,7 +353,7 @@
                 update(changes = {}) {
                     if (Object.hasOwn(changes, 'value')) value = changes.value;
                     style = { ...style, ...changes };
-                    objects.forEach(object => board.removeObject(object));
+                    objects.forEach(object => { labelLayouts.delete(object); board.removeObject(object); });
                     objects = [];
                     const attributes = { ...base, strokeColor: tones[style.tone] || tones.neutral,
                         fillColor: tones[style.tone] || tones.neutral, fillOpacity: kind === 'point' ? 1 : 0,
@@ -344,17 +416,30 @@
                             layer: 10, ...labelAttributes
                         };
                         const content = markedLabel(label, style.tone);
-                        objects.push(kind === 'point'
+                        const labelObject = kind === 'point'
                             ? pointLabel(value, content, style, appearance)
                             : kind === 'arrow' ? pointLabel(anchor, content, {
                                 ...style, labelSide: style.labelSide || (value.from[1] === value.to[1] ? 'below' : 'right')
                             }, appearance, value)
-                                : text(anchor, content, appearance));
+                                : text(anchor, content, appearance);
+                        if (kind !== 'point' && kind !== 'arrow') {
+                            labelLayouts.set(labelObject, { fixed: true, bounds() {
+                                const [px, py] = pixels(anchor);
+                                const bounds = labelObject.rendNode.getBoundingClientRect();
+                                const { offset = [0, 0], anchorX = 'left', anchorY = 'middle' } = appearance;
+                                const left = px + offset[0] - (anchorX === 'right' ? bounds.width
+                                    : anchorX === 'middle' ? bounds.width / 2 : 0);
+                                const top = py - offset[1] - (anchorY === 'bottom' ? bounds.height
+                                    : anchorY === 'middle' ? bounds.height / 2 : 0);
+                                return { left, top, right: left + bounds.width, bottom: top + bounds.height };
+                            } });
+                        }
+                        objects.push(labelObject);
                     }
                     board.update();
                 },
                 remove() {
-                    objects.forEach(object => board.removeObject(object));
+                    objects.forEach(object => { labelLayouts.delete(object); board.removeObject(object); });
                     objects = [];
                     items.delete(entry);
                 }

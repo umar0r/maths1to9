@@ -157,7 +157,9 @@ with them).
   midpoint, below horizontal arrows and right of vertical arrows by default. `labelSide` can be `above`, `below`,
   `left` or `right`; the label flips to the opposite side when needed
   and stays within the grid, with pixel clearance from the arrow and
-  axis numbers. It tries the opposite side or nudges the label when needed.
+  axis numbers and axis strokes. It tries the opposite side or nudges the
+  label when needed. Point coordinates and text labels use the same placement,
+  avoiding given lines and arrows as well.
 - `tone: 'ink'` uses the existing `--text` colour, including helper lines
   and arrows. No additional colour values are introduced.
 - `dash: true` draws dashed segments and arrows; the default is solid.
