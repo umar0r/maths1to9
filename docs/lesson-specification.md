@@ -87,6 +87,22 @@ User instructions take precedence. Add future agreed requirements here.
 - State exactly which checks ran and any remaining limitations. Do not claim
   the full-run suite covers a lesson unless its solver is registered.
 
+### How much to run each round
+
+`npm test` takes seconds: run it every round. The browser suite takes
+minutes, so match it to the round:
+
+- **First build, or any round that changes a shared file** (`lesson-engine.js`, `app.css`, `progress.js`, `graph.js`,
+  `graph.css`, the template): run the full `npm run test:ui` and compare
+  with `main`, and do every browser check in the lesson spec.
+- **Fix rounds that change only the lesson's own files:** run just its
+  browser tests (`node tests/runner/run-all.cjs --ui --only <slug>`), and
+  check in the browser only what the fix touched, at desktop and 375 px.
+  Don't rerun `main` or the PHP and `dist/` full runs.
+- Say in the report which kind of round it was and what ran.
+- The reviewer runs the full suite on the final commit before approving the
+  merge, so a fix round never skips it altogether.
+
 ## Per-lesson brief (fill in)
 
 - Title / slug:
