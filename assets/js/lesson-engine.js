@@ -382,6 +382,10 @@
         return String(value).replace(/\s/g, '').replace(/[-–]/g, '−');
     }
 
+    function fieldsText(fields, value) {
+        return fields.map(field => `${field.label} ${fractionText(value?.[field.id] ?? '')}`).join(', ');
+    }
+
     function appendResultMark(container, row) {
         if (row.firstCorrect !== true && row.firstCorrect !== false) return;
         const visible = row.firstCorrect ? '✓' : row.correct ? '2nd try' : 'Incorrect';
@@ -405,6 +409,19 @@
         if (fractions && config.exact === true) {
             throw new TypeError('fractions: true cannot be combined with exact: true.');
         }
+        const fields = config.fields;
+        if (fields !== undefined) {
+            if (!fractions || !Array.isArray(fields) || fields.length < 2 ||
+                fields.some(field => !field || typeof field.id !== 'string' || !field.id ||
+                    typeof field.label !== 'string' || !field.label) ||
+                new Set(fields.map(field => field.id)).size !== fields.length) {
+                throw new TypeError('fields requires fractions: true, input: number and two or more uniquely labelled fields.');
+            }
+            if (!config.answer || typeof config.answer !== 'object' || Array.isArray(config.answer) ||
+                fields.some(field => !Object.hasOwn(config.answer, field.id) || fractionValue(config.answer[field.id]) === null)) {
+                throw new TypeError('A fields answer must contain a valid number for every field id.');
+            }
+        }
         const custom = config.input === 'custom';
         const widget = config.widget;
         if (custom && ['render', 'isEmpty', 'mark', 'answerText'].some(name => typeof widget?.[name] !== 'function')) {
@@ -414,7 +431,7 @@
             section.update(state => {
                 state.cards ??= {};
                 state.cards[questionId] = {
-                    selected: null, rejected: [], value: custom ? null : '', phase: 'answer',
+                    selected: null, rejected: [], value: custom ? null : fields ? Object.fromEntries(fields.map(field => [field.id, ''])) : '', phase: 'answer',
                     firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
                 };
             });
@@ -432,9 +449,16 @@
             const answer = tidyNumber(expected);
             return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
         }
+        function matchesFields(value, expected) {
+            return Object.keys(expected).every(id => fields.some(field => field.id === id) && matches(value[id], expected[id]));
+        }
+        function empty() {
+            return fields ? fields.some(field => saved.value[field.id].trim() === '') : saved.value.trim() === '';
+        }
         function result() {
             const answer = config.input === 'choice' ? options[saved.selected]?.label ?? ''
-                : custom ? (saved.value === null ? '' : widget.answerText(saved.value)) : fractions ? fractionText(saved.value) : saved.value;
+                : custom ? (saved.value === null ? '' : widget.answerText(saved.value))
+                    : fields ? fieldsText(fields, saved.value) : fractions ? fractionText(saved.value) : saved.value;
             return {
                 prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
                 correct: saved.correct, explanation: saved.feedback
@@ -479,6 +503,7 @@
         }
         const buttons = [];
         let input;
+        const fieldInputs = [];
         if (config.input === 'choice') {
             const group = document.createElement('div');
             group.className = 'question-card-options';
@@ -498,31 +523,40 @@
             });
             article.append(group);
         } else if (!custom) {
-            const label = resultText('label', config.inputLabel || 'Your answer', 'question-answer-label');
-            input = document.createElement('input');
-            input.type = 'text';
-            input.inputMode = fractions ? 'text' : 'decimal';
-            if (fractions) {
-                input.setAttribute('autocorrect', 'off');
-                input.autocapitalize = 'off';
-                input.spellcheck = false;
-            }
-            input.autocomplete = 'off';
-            input.value = saved.value;
-            input.addEventListener('input', () => {
-                if (saved.phase !== 'answer' || released) return;
-                section.update(() => { saved.value = input.value; });
-                section.update(() => { saved.invalid = false; });
-                update();
-            });
-            input.addEventListener('keydown', event => {
-                if (event.key === 'Enter' && saved.phase === 'answer' && saved.value.trim() !== '') {
-                    event.preventDefault();
-                    act();
+            const group = fields ? document.createElement('div') : article;
+            if (fields) { group.className = 'question-answer-fields'; article.append(group); }
+            for (const field of fields || [{ label: config.inputLabel || 'Your answer' }]) {
+                const label = resultText('label', field.label, 'question-answer-label');
+                const box = document.createElement('input');
+                box.type = 'text';
+                box.inputMode = fractions ? 'text' : 'decimal';
+                if (fractions) {
+                    box.setAttribute('autocorrect', 'off');
+                    box.autocapitalize = 'off';
+                    box.spellcheck = false;
                 }
-            });
-            label.append(input);
-            article.append(label);
+                box.autocomplete = 'off';
+                box.value = fields ? saved.value[field.id] : saved.value;
+                box.addEventListener('input', () => {
+                    if (saved.phase !== 'answer' || released) return;
+                    section.update(() => {
+                        if (fields) saved.value[field.id] = box.value;
+                        else saved.value = box.value;
+                        saved.invalid = false;
+                    });
+                    update();
+                });
+                box.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' && saved.phase === 'answer' && !empty()) {
+                        event.preventDefault();
+                        act();
+                    }
+                });
+                if (fields) fieldInputs.push({ id: field.id, box });
+                else input = box;
+                label.append(box);
+                group.append(label);
+            }
         }
         const feedback = document.createElement('p');
         feedback.setAttribute('role', 'status');
@@ -531,7 +565,7 @@
             api.setSectionAction(sectionId, {
                 label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
-                    ? saved.selected === null : custom ? widget.isEmpty(saved.value) : saved.value.trim() === ''),
+                    ? saved.selected === null : custom ? widget.isEmpty(saved.value) : empty()),
                 onClick: act
             });
         }
@@ -559,6 +593,11 @@
                 input.value = saved.value;
                 input.disabled = saved.phase !== 'answer';
             }
+            for (const { id, box } of fieldInputs) {
+                box.value = saved.value[id];
+                box.disabled = saved.phase !== 'answer';
+                box.setAttribute('aria-invalid', String(saved.invalid === id));
+            }
             const shown = saved.invalid || saved.phase !== 'answer';
             feedback.className = 'question-feedback';
             if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
@@ -584,7 +623,7 @@
                 section.update(() => {
                     saved.phase = 'answer';
                     saved.selected = null;
-                    saved.value = custom ? null : '';
+                    if (!fields) saved.value = custom ? null : '';
                     saved.feedback = '';
                     saved.hint = null;
                 });
@@ -594,6 +633,7 @@
                     handle.focus?.();
                 }
                 if (input) input.focus();
+                fieldInputs.find(({ id }) => !matches(saved.value[id], config.answer[id]))?.box.focus();
                 return;
             }
             let correct;
@@ -611,6 +651,19 @@
                 }
                 correct = response.correct;
                 value = saved.value;
+            } else if (fields) {
+                if (empty()) return;
+                const invalid = fieldInputs.find(({ id }) => fractionValue(saved.value[id]) === null);
+                if (invalid) {
+                    section.update(() => { saved.invalid = invalid.id; });
+                    update();
+                    invalid.box.focus();
+                    return;
+                }
+                value = Object.fromEntries(fields.map(field => [field.id, fractionText(saved.value[field.id])]));
+                correct = fields.every(field => matches(value[field.id], config.answer[field.id]));
+                response = correct ? { feedback: config.feedback || '' }
+                    : (config.rules || []).find(rule => matchesFields(value, rule.value)) || { feedback: config.fallback || '' };
             } else {
                 value = fractions
                     ? (fractionValue(saved.value) === null ? null : fractionText(saved.value))
@@ -640,7 +693,7 @@
             if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
-            else outcome.value = custom ? JSON.parse(JSON.stringify(value)) : value;
+            else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
             config.onFeedback?.(outcome);
         }
         update();
@@ -717,6 +770,7 @@
                     prompt: definition.prompt,
                     answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? ''
                         : definition.input === 'custom' ? (card?.value == null ? '' : definition.widget.answerText(card.value))
+                            : definition.fields ? fieldsText(definition.fields, card?.value)
                             : definition.input === 'number' && definition.fractions === true
                                 ? fractionText(card?.value ?? '') : card?.value ?? '',
                     firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
