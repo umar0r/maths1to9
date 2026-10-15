@@ -1,0 +1,10 @@
+.lesson-equation {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    text-align: center;
+    white-space: nowrap;
+    margin: 1.25rem 0 2rem;
+}
+.equation-part { display: inline-block; vertical-align: top; }
+.equation-part.is-highlighted { background: var(--accent-light); color: var(--accent-dark); border-radius: .2rem; }
+.equation-part small { display: block; font-size: .7rem; font-style: normal; line-height: 1.5; }
+.equation-hidden { color: var(--text-muted); }

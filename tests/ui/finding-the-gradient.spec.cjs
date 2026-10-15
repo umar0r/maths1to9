@@ -343,7 +343,7 @@ for (const mode of modes) {
                 const position = titles.indexOf('Finding the gradient');
                 expect(position).toBeGreaterThanOrEqual(0);
                 expect(titles[position - 1]).toBe('Horizontal and vertical lines');
-                expect(titles).not.toContain('Gradient and intercept');
+                expect(titles[position + 1]).toBe('Gradient and intercept');
                 const curriculum = await page.evaluate(async () => (await fetch('./content/curriculum.json')).json());
                 const configuredAlgebra = curriculum.categories.find(category => category.id === 'algebra').lessons.map(lesson => lesson.folder);
                 expect(configuredAlgebra[configuredAlgebra.indexOf(slug) + 1]).toBe('gradient-and-intercept');
