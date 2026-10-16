@@ -104,9 +104,11 @@
     }
     function step(m, c) {
         if (m === 0) return null;
-        for (const x of [1, -2]) {
+        for (const x of [1, -2, 2, -3, 3, -4]) {
             const from = [x, m * x + c], to = [x + 1, m * (x + 1) + c];
-            if (from[1] !== 0 && Math.min(from[1], to[1]) >= -5 && Math.max(from[1], to[1]) <= 7) return { from, corner: [to[0], from[1]], to };
+            if (from[1] * to[1] > 0 && Math.min(from[1], to[1]) >= -5 && Math.max(from[1], to[1]) <= 7) {
+                return { from, corner: [to[0], from[1]], to };
+            }
         }
         return null;
     }

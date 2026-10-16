@@ -226,14 +226,21 @@ marker, which goes wherever the pupil tapped, edges included. Never draw an arro
 `prefers-reduced-motion`, everything that "appears in turn" appears at
 once.
 
-**Step arrows** (screens 4, 5 and 6): two arrows, horizontal then
-vertical, labelled "1 right" and "m up" / "m down" (with the number:
-"2 down"). Start the step at x = 1: (1, m + c) → (2, m + c) →
-(2, 2m + c). If that leaves y = −5…7 or the horizontal arrow would lie on
-the x-axis, start at x = −2 instead: (−2, c − 2m) → (−1, c − 2m) →
-(−1, c − m). If neither fits, or m is 0, show no arrows. Labels use the
-graph's own placement; if one lands on a line, an axis or another label at
-375 px, stop and say which.
+**Step arrows** (screens 3, 4, 5 and 6): two **unlabelled** arrows, tone
+`ink`, horizontal then vertical. The step runs from (a, ma + c) →
+(a + 1, ma + c) → (a + 1, m(a + 1) + c). Try a = 1, −2, 2, −3, 3, −4 in
+that order and use the first where both y-values are inside −5…7, neither
+is 0, and both are on the same side of the x-axis (so the step never
+touches or crosses it). If none fits, or m is 0, show no arrows.
+
+The numbers go in one **step line** directly under the graph, not on it:
+"1 right, 2 up" / "1 right, 3 down", updated whenever the step changes.
+When there are no arrows (m is 0, or no step fits), the line still says
+the step ("1 right, 3 up"), or "Flat: 0 up for every 1 right" when m is 0.
+
+(Revised after review, twice: at 375 px a grid square is about 25 px and
+a label like "1 right" about 45 px, so on-graph labels landed next to the
+wrong arrow whatever the placement.)
 
 ## Learn (6 screens)
 
@@ -270,9 +277,10 @@ each screen's state in section state, so reload and Back keep them.
    (`drag: 'positions'`). Under the graph, a small table, x | y, with the
    row for each position filled in once the point has reached it
    (0 | 3, 1 | 5, 2 | 7). Each move to the right adds that step's arrows:
-   (0, 3) → (1, 3) "1 right", (1, 3) → (1, 5) "2 up", then
-   (1, 5) → (2, 5) "1 right", (2, 5) → (2, 7) "2 up". Only the newest
-   step's arrows are labelled; earlier ones stay, unlabelled and dashed.
+   (0, 3) → (1, 3), (1, 3) → (1, 5), then
+   (1, 5) → (2, 5), (2, 5) → (2, 7), unlabelled (see "Step arrows").
+   The newest step's arrows are solid; earlier ones stay, dashed. The step
+   line under the graph says "1 right, 2 up" once the point has moved.
    Moving back to the left removes the arrows past the point. Prompt
    above: "Drag the point along the line to x = 2." When it reaches
    (2, 7): `2` highlighted ("gradient"), text: "Each time x goes up by 1,

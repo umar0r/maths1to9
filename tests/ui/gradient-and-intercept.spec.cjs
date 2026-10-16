@@ -8,9 +8,35 @@ const input = page => page.locator('.question-card input:visible');
 const plain = text => text.replace(/\u00a0/g, ' ');
 async function capture(page, name) {
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    if(process.env.GRADIENT_REVIEW_OUTPUT) await page.locator('.lesson-section:visible').screenshot({path:`${process.env.GRADIENT_REVIEW_OUTPUT}/${page.viewportSize().width}-${name}.png`});
+    if (process.env.GRADIENT_REVIEW_OUTPUT) {
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.screenshot({ path: `${process.env.GRADIENT_REVIEW_OUTPUT}/${page.viewportSize().width}-${name}.png`, fullPage: true });
+    }
 }
-async function reload(page) { const hash = new URL(page.url()).hash; await page.reload(); await main(page).waitFor(); await expect(page).toHaveURL(new RegExp(`${hash}$`)); }
+async function ready(page) {
+    await page.waitForFunction(() => window.Maths1to9Lesson && window.GradientIntercept);
+    await page.locator('.lesson-section:visible h3').first().waitFor();
+    await main(page).waitFor();
+}
+async function openLesson(page, site = '') {
+    await page.goto(`${site}/content/${slug}/`);
+    await ready(page);
+    await expect(page).toHaveURL(/#learn-1$/);
+    await expect(page.locator('[data-screen-heading]:visible')).toHaveText('An equation is a rule.');
+    await board(page).waitFor();
+}
+async function reload(page) {
+    const hash = new URL(page.url()).hash;
+    const heading = await page.locator('.lesson-section:visible h3').first().textContent();
+    const action = await main(page).textContent();
+    await page.reload();
+    await ready(page);
+    await expect(page).toHaveURL(new RegExp(`${hash}$`));
+    await expect(page.locator('.lesson-section:visible h3').first()).toHaveText(heading);
+    await expect(main(page)).toHaveText(action);
+    if (/^#learn-/.test(hash)) await board(page).waitFor();
+    if (hash === '#learn-5') await expect(page.getByRole('slider', { name: 'Gradient m', exact: true })).toBeVisible();
+}
 async function state(page, key) { await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))); return page.evaluate(async ({slug,key}) => (await Maths1to9Progress.getLessonActivityState(slug,key))?.data, {slug,key}); }
 async function pixels(page, points) {
     await board(page).scrollIntoViewIfNeeded();
@@ -60,6 +86,7 @@ async function setSlider(page, id, value) {
     await slider.evaluate((element,value)=>{element.value=String(value);element.dispatchEvent(new Event('input',{bubbles:true}));element.dispatchEvent(new Event('change',{bubbles:true}));},value);
 }
 async function learn(page, touch, detailed=false) {
+    await ready(page);
     await board(page).waitFor(); if(detailed) await reload(page); await main(page).click();
     await expect(main(page)).toBeDisabled();
     const cases=[[[0,1],"That's on the y-axis"],[[1,5],'That point is on the line'],[[2,0],"That's on the x-axis"],[[2,2],'Tap where the line meets'],[[6,0],"That's on the x-axis"]];
@@ -89,9 +116,10 @@ async function learn(page, touch, detailed=false) {
     await expect(main(page)).toBeEnabled();expect((await arrows(page)).length).toBe(4);await clearLabels(page);
     await expect(page.getByRole('table')).toContainText('7');await capture(page,'learn-3');
     if(detailed)await reload(page);await main(page).click();await clearLabels(page);await capture(page,'learn-4');if(detailed)await reload(page);await main(page).click();
+    await expect(page.locator('.lesson-section:visible h3')).toHaveText('Negative numbers.');
     const m=page.getByRole('slider',{name:'Gradient m',exact:true}),c=page.getByRole('slider',{name:'y-intercept c',exact:true});
     await expect(c).toBeDisabled();await expect(main(page)).toBeDisabled();if(detailed)await reload(page);
-    await m.focus();for(let n=0;n<4;n++)await m.press('ArrowLeft');await expect(m).toHaveValue('-2');await expect(m).toBeDisabled();await expect(c).toBeEnabled();
+    await m.focus();for(let n=0;n<4;n++)await m.press('ArrowLeft');await expect(m).toHaveValue('-2');await expect(m).toBeDisabled();await expect(c).toBeEnabled();await expect(c).toBeFocused();
     await reload(page);await expect(m).toHaveValue('-2');await expect(c).toHaveValue('3');await expect(m).toBeDisabled();
     await c.focus();for(let n=0;n<6;n++)await c.press('ArrowLeft');await expect(c).toHaveValue('-3');await expect(m).toBeEnabled();await expect(main(page)).toBeEnabled();
     if(detailed) {
@@ -104,6 +132,8 @@ async function learn(page, touch, detailed=false) {
         }
         await m.focus();await m.press('ArrowLeft');await expect(m).toBeFocused();
         const identity=await m.evaluate(e=>{window.rangeReference=e;return true;});expect(identity).toBe(true);
+        await m.scrollIntoViewIfNeeded();
+        await m.hover();
         const box=await m.boundingBox();await page.mouse.move(box.x+box.width*.3,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width*.7,box.y+box.height/2,{steps:5});await page.mouse.up();
         expect(await m.evaluate(e=>e===window.rangeReference)).toBe(true);await expect(m).toBeFocused();
         if(touch){
@@ -174,7 +204,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
     test.use({viewport:mode.viewport,hasTouch:!!mode.hasTouch,isMobile:!!mode.isMobile});
     for(const site of ['', '/dist']) test(`${site||'PHP'}: full correct run, saved Learn, feedback, navigation and homepage`,async({page})=>{
         test.setTimeout(240_000);const errors=watchForErrors(page);
-        await page.goto(`${site}/content/${slug}/`);const maximum=await page.evaluate(()=>Maths1to9Lesson.getScore().maximumPoints);
+        await openLesson(page, site);const maximum=await page.evaluate(()=>Maths1to9Lesson.getScore().maximumPoints);
         await learn(page,mode.hasTouch,site==='');await cards(page,'interactive',6,site==='');await main(page).click();
         await cards(page,'question-bank',8,site==='');await main(page).click();await cards(page,'comparison',7,site==='');
         const progress=await page.evaluate(()=>Maths1to9Lesson.getProgress());expect(progress.score.points).toBe(maximum);expect(progress.scoreActivities.filter(a=>!a.completed)).toEqual([]);
@@ -186,7 +216,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
         expect(errors).toEqual([]);
     });
     test('wrong then right keeps the right field; Practise again twice keeps the score',async({page})=>{
-        test.setTimeout(240_000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await learn(page,mode.hasTouch);await cards(page,'interactive',6);await main(page).click();
+        test.setTimeout(240_000);const errors=watchForErrors(page);await openLesson(page);await learn(page,mode.hasTouch);await cards(page,'interactive',6);await main(page).click();
         await cards(page,'question-bank',8,false,true);const before=await page.evaluate(()=>Maths1to9Lesson.getScore());
         for(let session=0;session<2;session++) {await page.getByRole('button',{name:'Practise again',exact:true}).click();await cards(page,'question-bank',8);await reload(page);expect(await page.evaluate(()=>Maths1to9Lesson.getScore())).toEqual(before);}
         expect((await state(page,'question-bank')).earlier.length).toBe(2);
@@ -202,7 +232,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
 });
 
 test('every reading rule and every wrong choice shows its own feedback through the shared card',async({page})=>{
-    test.setTimeout(120_000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await board(page).waitFor();
+    test.setTimeout(120_000);const errors=watchForErrors(page);await openLesson(page);await board(page).waitFor();
     const results=await page.evaluate(()=>{
         const E=GradientIntercept, engine=Maths1to9LessonEngine;
         const host=document.createElement('div');document.body.append(host);
@@ -232,4 +262,76 @@ test('every reading rule and every wrong choice shows its own feedback through t
     expect(results.length).toBeGreaterThan(200);
     for(const result of results){expect(result.actual).toBe(result.expected);expect(result.correct).toBe(false);}
     expect(errors).toEqual([]);
+});
+
+test('375px unlabelled arrows and step line follow every Learn state', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 375, height: 1000 });
+    await openLesson(page);
+    const stepLine = page.locator('.gradient-step-line');
+    function expectedStep(m, c) {
+        if (m === 0) return null;
+        for (const a of [1, -2, 2, -3, 3, -4]) {
+            const y1 = m * a + c, y2 = m * (a + 1) + c;
+            if (y1 * y2 > 0 && Math.min(y1, y2) >= -5 && Math.max(y1, y2) <= 7) {
+                return [{ from: [a, y1], to: [a + 1, y1] }, { from: [a + 1, y1], to: [a + 1, y2] }];
+            }
+        }
+        return null;
+    }
+    async function check(name, m, c, position) {
+        const drawn = await arrows(page);
+        const expected = position === undefined ? expectedStep(m, c) || []
+            : Array.from({ length: position }, (_, index) => [
+                { from: [index, 2 * index + 3], to: [index + 1, 2 * index + 3] },
+                { from: [index + 1, 2 * index + 3], to: [index + 1, 2 * index + 5] }
+            ]).flat();
+        expect(drawn.map(({ from, to }) => ({ from, to })), name).toEqual(expected);
+        for (const arrow of drawn) {
+            expect(arrow.from[1] * arrow.to[1], name).toBeGreaterThan(0);
+        }
+        if (position !== undefined) {
+            expect(drawn.map(arrow => !!arrow.dash), name).toEqual(
+                drawn.map((_, index) => index < drawn.length - 2));
+        }
+        await expect(board(page).locator('.maths-graph__label').filter({ hasText: /right|up|down/ })).toHaveCount(0);
+        if (position === 0) await expect(stepLine).toBeHidden();
+        else await expect(stepLine).toHaveText(m === 0 ? 'Flat: 0 up for every 1 right'
+            : `1 right, ${Math.abs(m)} ${m < 0 ? 'down' : 'up'}`);
+        await capture(page, name);
+    }
+    await main(page).click();
+    await tap(page, [0, 3], false);
+    await expect(page.locator('.question-feedback:visible')).toHaveAttribute('role', 'status');
+    await expect(main(page)).toBeEnabled();
+    await main(page).click();
+    await check('learn-3-position-0', 2, 3, 0);
+    await board(page).focus();
+    await board(page).press('ArrowRight');
+    await check('learn-3-position-1', 2, 3, 1);
+    await drag(page, [1, 5], [2, 7], false);
+    await check('learn-3-position-2', 2, 3, 2);
+    await main(page).click();
+    await check('learn-4', 2, 3);
+    await main(page).click();
+    await expect(page.getByRole('slider', { name: 'Gradient m', exact: true })).toBeVisible();
+    await setSlider(page, 'm', -2);
+    await check('learn-5-m-minus2-c-3', -2, 3);
+    await setSlider(page, 'c', -3);
+    await check('learn-5-m-minus2-c-minus3', -2, -3);
+    for (let m = -3; m <= 3; m++) {
+        for (let c = -4; c <= 4; c++) {
+            await setSlider(page, 'm', m);
+            await setSlider(page, 'c', c);
+            await check(`learn-5-m-${m}-c-${c}`, m, c);
+        }
+    }
+    await main(page).click();
+    const variants = [['y = x + 4', 1, 4], ['y = −x + 4', -1, 4], ['y = 3x', 3, 0]];
+    for (const [index, [label, m, c]] of variants.entries()) {
+        const button = page.getByRole('button', { name: label.replace(/ /g, '\u00a0'), exact: true });
+        await button.click();
+        await expect(button).toHaveClass(/is-selected/);
+        await check(`learn-6-option-${index + 1}`, m, c);
+    }
 });

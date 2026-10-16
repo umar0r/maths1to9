@@ -91,10 +91,10 @@ test('gradient and intercept hidden choices alternate forms by seed', () => {
 test('gradient and intercept step arrows obey bounds and avoid the x-axis for all slider values', () => {
     for (let m = -3; m <= 3; m++) for (let c = -4; c <= 4; c++) {
         const step = plain(E.step(m, c));
-        const valid = x => m !== 0 && m * x + c !== 0 &&
+        const valid = x => m !== 0 && (m * x + c) * (m * (x + 1) + c) > 0 &&
             [m * x + c, m * (x + 1) + c].every(y => y >= -5 && y <= 7);
-        const x = valid(1) ? 1 : valid(-2) ? -2 : null;
-        if (x === null) assert.equal(step, null);
+        const x = [1, -2, 2, -3, 3, -4].find(valid);
+        if (x === undefined) assert.equal(step, null);
         else assert.deepEqual(step, { from: [x, m * x + c], corner: [x + 1, m * x + c], to: [x + 1, m * (x + 1) + c] });
     }
 });

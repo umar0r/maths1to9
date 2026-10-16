@@ -28,8 +28,11 @@
     function stepArrows(graph, m, c) {
         const step = E.step(m, c);
         if (!step) return [];
-        return [graph.arrow(step.from, step.corner, { tone: 'ink', label: '1 right' }),
-            graph.arrow(step.corner, step.to, { tone: 'ink', label: `${Math.abs(m)} ${m < 0 ? 'down' : 'up'}` })];
+        return [graph.arrow(step.from, step.corner, { tone: 'ink' }),
+            graph.arrow(step.corner, step.to, { tone: 'ink' })];
+    }
+    function stepText(m) {
+        return m === 0 ? 'Flat: 0 up for every 1 right' : `1 right, ${Math.abs(m)} ${m < 0 ? 'down' : 'up'}`;
     }
     function tapFeedback([x, y]) {
         if (x === 0 && y === 3) return `✓ The line crosses the y-axis at ${E.coordinate(0, 3)}.`;
@@ -82,15 +85,17 @@
             root.append(heading);
             if (state.screen === 3) {
                 const pattern = node('div', '', 'lesson-equation');
-                pattern.innerHTML = 'y&nbsp;=&nbsp;<i>mx</i>&nbsp;+&nbsp;c';
+                pattern.innerHTML = 'y&nbsp;=&nbsp;<i>mx</i>&nbsp;+&nbsp;<i>c</i>';
                 root.append(pattern);
             }
             const eq = equation(root, 2, 3, { highlight: state.screen === 3 ? 'both' : undefined });
             const prompt = node('p');
             const controls = node('div');
             const host = node('div');
+            const stepLine = node('p', '', 'gradient-step-line');
+            stepLine.hidden = true;
             const content = node('div');
-            root.append(prompt, controls, host, content);
+            root.append(prompt, controls, host, stepLine, content);
             graph = createGraph(host, state.screen === 4 ? 'Coordinate grid. Change the gradient and y-intercept to explore the line.'
                 : state.screen === 5 ? 'Coordinate grid. Lines with hidden numbers in their equations.' : `Coordinate grid. The line ${E.equationText(2, 3)}.`);
             if (state.screen < 4) graph.line({ m: 2, c: 3 }, { tone: 'neutral' });
@@ -102,6 +107,7 @@
             if (state.screen === 1) {
                 prompt.textContent = 'Tap where the line crosses the y-axis.';
                 const feedback = node('p');
+                feedback.setAttribute('role', 'status');
                 const explanation = node('div');
                 content.append(feedback, explanation);
                 let marker;
@@ -122,7 +128,7 @@
                     const picker = graph.pick({ label: prompt.textContent, onPick(position) {
                         section.update(state => { state.tap = position; state.found = position[0] === 0 && position[1] === 3; });
                         if (state.found) picker.stop();
-                        paint(); graph.describe(feedback.textContent); action();
+                        paint(); action();
                     } });
                 }
             }
@@ -137,11 +143,13 @@
                 let arrows = [];
                 function paint() {
                     arrows.forEach(arrow => arrow.remove()); arrows = [];
+                    stepLine.hidden = state.visited.length < 2;
+                    stepLine.textContent = stepText(2);
                     for (let index = 0; index < state.position; index++) {
                         const from = positions[index], to = positions[index + 1], latest = index === state.position - 1;
                         const corner = [to[0], from[1]];
-                        arrows.push(graph.arrow(from, corner, { tone: 'ink', label: latest ? '1 right' : null, dash: !latest }));
-                        arrows.push(graph.arrow(corner, to, { tone: 'ink', label: latest ? '2 up' : null, dash: !latest }));
+                        arrows.push(graph.arrow(from, corner, { tone: 'ink', dash: !latest }));
+                        arrows.push(graph.arrow(corner, to, { tone: 'ink', dash: !latest }));
                     }
                     rows.forEach((row, index) => {
                         row.children[0].textContent = state.visited.includes(index) ? `${positions[index][0]}\u00a0\u00a0` : '';
@@ -162,6 +170,8 @@
                 paint();
             }
             if (state.screen === 3) {
+                stepLine.hidden = false;
+                stepLine.textContent = stepText(2);
                 graph.point([0, 3], { size: 'large', coordinates: true }); stepArrows(graph, 2, 3);
                 paragraphs(content, ['m is the gradient: the number multiplying x.', 'c is the y-intercept: the number added or subtracted.', E.nb('mx means m × x.')]);
             }
@@ -173,7 +183,7 @@
                 const sliders = {};
                 const values = {};
                 for (const [id, label, min, max] of [['m', 'Gradient m', -3, 3], ['c', 'y-intercept c', -4, 4]]) {
-                    const wrapper = node('label', `${label} `);
+                    const wrapper = node('label', `${label} `, 'lesson-slider');
                     values[id] = node('output', E.number(current[id])); wrapper.append(values[id]);
                     const input = node('input'); input.type = 'range'; input.min = min; input.max = max; input.step = 1; input.value = current[id];
                     input.setAttribute('aria-label', label); wrapper.append(input);
@@ -181,14 +191,18 @@
                     sliders[id] = input;
                     input.addEventListener('input', () => { current[id] = Number(input.value); paint(); });
                     input.addEventListener('change', () => {
+                        const wasFocused = document.activeElement === input;
                         if (current.stage === 0 && current.m === -2) current.stage = 1;
                         else if (current.stage === 1 && current.c === -3) current.stage = 2;
                         section.update(state => { state.sliders = { ...current }; });
                         paint(); action();
+                        if (wasFocused && input.disabled) sliders[id === 'm' ? 'c' : 'm'].focus();
                     });
                 }
                 const explanation = node('div'); content.append(explanation);
                 function paint() {
+                    stepLine.hidden = false;
+                    stepLine.textContent = stepText(current.m);
                     eq.innerHTML = E.equationHtml(current.m, current.c);
                     line.update({ value: { m: current.m, c: current.c } }); point.update({ value: [0, current.c] });
                     arrows.forEach(arrow => arrow.remove()); arrows = stepArrows(graph, current.m, current.c);
@@ -205,6 +219,9 @@
                 paint();
             }
             if (state.screen === 5) {
+                controls.setAttribute('role', 'group');
+                controls.setAttribute('aria-label', 'Choose an equation');
+                controls.className = 'lesson-equation-options';
                 const variants = [[1, 4], [-1, 4], [3, 0]];
                 const texts = ['x means 1x, so the gradient is 1.', '−x means −1x, so the gradient is −1.',
                     `Nothing is added, so ${E.equationText(3, 0)} means ${E.nb('y = 3x + 0')}. The y-intercept is 0.`];
@@ -219,6 +236,8 @@
                 });
                 function paint() {
                     const [m, c] = variants[state.hidden];
+                    stepLine.hidden = false;
+                    stepLine.textContent = stepText(m);
                     eq.innerHTML = E.equationHtml(m, c, { showHidden: true });
                     line.update({ value: { m, c } }); point.update({ value: [0, c] });
                     arrows.forEach(arrow => arrow.remove()); arrows = stepArrows(graph, m, c);
