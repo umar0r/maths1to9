@@ -1115,3 +1115,133 @@ test('figures render once between prompt and any answer, including reload and re
         assert.deepEqual(calls, [false, false, true]);
     }
 });
+
+const fieldDefinition = {
+    input: 'number', fractions: true,
+    fields: [{ id: 'm', label: 'Gradient' }, { id: 'c', label: 'y-intercept' }],
+    answer: { m: '-1', c: '1/2' }, feedback: 'Right', fallback: 'Fallback',
+    rules: [{ value: { m: '0' }, feedback: 'First partial' },
+        { value: { m: '0', c: '6' }, feedback: 'Later full' },
+        { value: { m: '-1' }, feedback: 'Gradient right' }]
+};
+function fieldBox(card, index) {
+    return card.container.children[0].children[1].children[index].children[0];
+}
+function typeField(card, index, value) {
+    const box = fieldBox(card, index);
+    box.value = value;
+    box.events.input();
+    return box;
+}
+test('fields reject unsupported inputs, malformed lists, duplicate ids and incomplete answers', () => {
+    for (const override of [
+        { input: 'choice' }, { fractions: false }, { exact: true },
+        { fields: null }, { fields: [] }, { fields: [{ id: 'm', label: 'm' }] },
+        { fields: [{ id: 'm', label: 'm' }, { id: 'm', label: 'c' }] },
+        { fields: [{ id: 'm' }, { id: 'c', label: 'c' }] },
+        { answer: { m: '1' } }, { answer: { m: 'bad', c: '2' } }
+    ]) assert.throws(() => questionFixture({ ...fieldDefinition, ...override }), { name: 'TypeError' });
+});
+test('fields require every box, restore invalid focus without marking and use fraction keyboard settings', () => {
+    let card = questionFixture(fieldDefinition);
+    assert.equal(card.action.disabled, true);
+    typeField(card, 0, '-1');
+    assert.equal(card.action.disabled, true);
+    const box = typeField(card, 1, 'bad');
+    assert.equal(card.action.disabled, false);
+    for (const input of [fieldBox(card, 0), box]) {
+        assert.equal(input.inputMode, 'text');
+        assert.equal(input.autocomplete, 'off');
+        assert.equal(input.attributes.autocorrect, 'off');
+        assert.equal(input.autocapitalize, 'off');
+        assert.equal(input.spellcheck, false);
+    }
+    card.action.onClick();
+    assert.equal(box.attributes['aria-invalid'], 'true');
+    assert.equal(box.focused, true);
+    assert.equal(card.assessments.length, 0);
+    assert.equal(card.section.state.cards['stable-1'].firstCorrect, null);
+    card = card.reload();
+    assert.equal(fieldBox(card, 1).value, 'bad');
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'true');
+    assert.equal(card.container.children[0].children[2].textContent, 'Type a number or a fraction, like 3 or 1/2.');
+});
+test('fields use ordered partial rules, retain retry values and focus the first wrong box', () => {
+    let card = questionFixture(fieldDefinition);
+    typeField(card, 0, '0'); typeField(card, 1, '6');
+    card.action.onClick();
+    assert.equal(card.card.result().explanation, 'First partial');
+    card = card.reload();
+    assert.equal(card.action.label, 'Try again');
+    card.action.onClick();
+    assert.equal(fieldBox(card, 0).value, '0');
+    assert.equal(fieldBox(card, 1).value, '6');
+    assert.equal(fieldBox(card, 0).focused, true);
+    typeField(card, 0, '-1'); card.action.onClick();
+    assert.equal(card.card.result().explanation, 'Gradient right');
+    card.action.onClick();
+    assert.equal(fieldBox(card, 1).focused, true);
+    typeField(card, 1, '2/4'); card.action.onClick();
+    assert.equal(card.card.result().correct, true);
+    assert.equal(card.card.result().firstCorrect, false);
+    assert.equal(card.card.result().answer, 'Gradient −1, y-intercept 2/4');
+});
+test('fields save tidied texts, copy feedback values and render retained answers after reload', () => {
+    let card = questionFixture(fieldDefinition);
+    typeField(card, 0, ' − 1 '); typeField(card, 1, '2 / 4');
+    card = card.reload();
+    assert.equal(card.action.label, 'Check');
+    card.action.onClick();
+    assert.equal(JSON.stringify(card.section.state.cards['stable-1'].value), JSON.stringify({ m: '−1', c: '2/4' }));
+    assert.equal(JSON.stringify(card.feedback[0].value), JSON.stringify({ m: '−1', c: '2/4' }));
+    card.feedback[0].value.m = '99';
+    assert.equal(card.section.state.cards['stable-1'].value.m, '−1');
+    card = card.reload();
+    assert.equal(card.action.label, 'Continue');
+    const review = card.reload({ readOnly: true });
+    assert.equal(review.container.children[0].children[1].textContent, 'Gradient −1, y-intercept 2/4');
+});
+
+test('fields work through question-set results, Back and Practise again with retained earlier rows', async () => {
+    const fixture = resultsFixture();
+    const container = fixture.node('div');
+    let section, action, back, current;
+    const api = {
+        async useSectionState(key, options) {
+            section = { state: options.initial(), update(change) { change(this.state); } };
+            return section;
+        },
+        getLesson: () => ({ question_bank: {} }),
+        getSections: () => [{ id: 'question-bank' }, { id: 'comparison' }],
+        getCurrentSection: () => ({ id: 'question-bank' }), setSlideHash() {}, registerHashRoute() {}, goToSection: () => true,
+        setSectionProgress() {}, setSectionBack(key, value) { back = value; },
+        setSectionAction(key, value) { action = value; }, clearSectionAction() { action = null; }, recordAssessment() {},
+        createQuestion(root, definition) {
+            current = definition;
+            return fixture.createQuestion(root, definition, section, api);
+        }
+    };
+    const runner = await fixture.runQuestionSet('question-bank', {
+        version: 1, count: 1, practiseAgain: true,
+        pick: () => [{ type: 'fields', seed: 123 }], question: () => fieldDefinition
+    }, api, container);
+    const find = (node, tag) => [node, ...node.children.flatMap(child => find(child, tag))].filter(node => node.tagName === tag);
+    function fill() {
+        for (const [index, box] of find(container, 'input').entries()) {
+            box.value = index === 0 ? '−1' : '2/4'; box.events.input();
+        }
+        action.onClick(); action.onClick();
+    }
+    fill();
+    assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 1);
+    back.onClick();
+    assert.equal(current.readOnly, true);
+    assert.equal(find(container, 'input').length, 0);
+    action.onClick();
+    find(container, 'button').find(button => button.textContent === 'Practise again').events.click();
+    assert.equal(section.state.session, 2);
+    assert.equal(section.state.earlier.length, 1);
+    assert.equal(action.disabled, true);
+    fill();
+    assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 2);
+});

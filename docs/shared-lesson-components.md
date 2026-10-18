@@ -451,6 +451,23 @@ engine saves no figure state. A shared graph frees itself when the host is
 removed. Both options also work in `runQuestionSet` definitions, including
 new Practise again sessions.
 
+### Several number fields
+
+With `input: 'number', fractions: true`, supply `fields: [{ id: 'm',
+label: 'Gradient' }, { id: 'c', label: 'y-intercept' }]` and `answer:
+{ m: '-1', c: '6' }`. Fields must have distinct ids and visible labels,
+with at least two entries; unsupported configurations and incomplete or
+invalid answers throw `TypeError`. Each box uses the fraction keyboard and
+exact value comparison. Check requires every box to be filled; an invalid
+box gets `aria-invalid="true"` and focus without recording an attempt.
+
+Rules may name some fields, for example `{ value: { m: '0' }, feedback:
+'…' }`. Every named value must match; the first matching rule wins, then
+fallback. Try again retains all texts and focuses the first wrong box.
+Saved values and `onFeedback` values are objects of tidied texts. Results
+and read-only cards join labels and values: "Gradient −1, y-intercept 6".
+This also works in question sets and later Practise again sessions.
+
 ### Saving, going back and finished cards
 
 - `hint` is the hint text itself, shown under the feedback (clarified 2026-10-11).

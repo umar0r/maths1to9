@@ -177,6 +177,27 @@ with them).
   only on release. Existing callbacks can ignore the extra argument and
   continue to colour the line live.
 
+### Picking a point
+
+```js
+const picker = graph.pick({
+    onPick: ([x, y]) => {},
+    label: 'Tap where the line crosses the y-axis.'
+});
+picker.stop();
+```
+
+A tap or click snaps to the nearest grid corner using the board's steps,
+and calls `onPick` once. Moving more than 8 px before release cancels the
+tap. Picking adds no marked point; the lesson draws its own feedback.
+On focus, the board reads the label and shows the drawing crosshair at
+(0, 0) with coordinates. Arrows move one grid step; Enter or Space picks.
+The live region says "You picked (0, 3)." unless `onPick` calls `describe`.
+Only one tool can be active: picking during drawing, drawing during picking,
+or starting another picker throws `Error`. `stop()`, `clear()`,
+`setEditable(false)` and `destroy()` stop the picker. Re-enabling editing
+does not restart it. Scrolling outside the board is unchanged.
+
 ## How it looks
 
 - Square, width 100% up to 440 px, height equal to the width. At 375 px it

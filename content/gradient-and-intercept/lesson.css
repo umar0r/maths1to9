@@ -1,0 +1,21 @@
+.lesson-equation {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    text-align: center;
+    white-space: nowrap;
+    margin: 1.25rem 0 2rem;
+}
+.equation-part { display: inline-block; vertical-align: top; position: relative; }
+.equation-part.is-highlighted { background: var(--accent-light); color: var(--accent-dark); border-radius: .2rem; }
+.equation-part small {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .7rem;
+    font-style: normal;
+    line-height: 1.5;
+}
+.equation-hidden { color: var(--text-muted); }
+.lesson-slider { display: block; }
+.lesson-slider input[type="range"] { display: block; width: 100%; margin: .5rem 0 0; }
+.lesson-equation-options { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }

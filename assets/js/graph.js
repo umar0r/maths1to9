@@ -466,6 +466,7 @@
             entry.settings.onMove?.([...next]);
         }
         function drawLine(settings = {}) {
+            if (activeTool?.kind === 'pick') throw new Error('Stop picking before drawing a line.');
             activeTool?.remove();
             const config = { minLength: 2, extend: true, movable: true, shortText: 'Draw a longer line.', ...settings };
             let line = null;
@@ -510,6 +511,7 @@
                 config.onChange?.(copy(line));
             }
             const tool = {
+                kind: 'drawLine',
                 get start() { return start; },
                 get movable() { return config.movable; },
                 get() { return copy(line); },
@@ -574,6 +576,59 @@
             tool.set(config.line || null);
             return tool;
         }
+        function pick(settings = {}) {
+            if (activeTool) throw new Error('Stop the active graph tool before picking a point.');
+            let cursor = clamp([0, 0]);
+            let crosshair = null;
+            const originalLabel = surface.getAttribute('aria-label');
+            function blur() {
+                if (crosshair) board.removeObject(crosshair);
+                crosshair = null;
+                tooltip.hidden = true;
+            }
+            function showCursor() {
+                blur();
+                crosshair = board.create('point', cursor, { ...base, face: '+', size: 7,
+                    strokeColor: tones.neutral, fillColor: tones.neutral, name: '', layer: 10 });
+                crosshair.label?.setAttribute({ visible: false });
+                tooltipAt(cursor);
+            }
+            const tool = {
+                kind: 'pick',
+                blur,
+                focus() {
+                    if (!editable) return;
+                    showCursor();
+                    if (settings.label) describe(settings.label);
+                },
+                tap(position) {
+                    describe(`You picked ${formatPoint(position)}.`);
+                    settings.onPick?.([...position]);
+                },
+                key(event, delta) {
+                    if (delta) {
+                        cursor = clamp([cursor[0] + delta[0], cursor[1] + delta[1]]);
+                        showCursor();
+                        describe(formatPoint(cursor));
+                    } else if (event.key === 'Enter' || event.key === ' ') tool.tap([...cursor]);
+                },
+                stop() {
+                    if (activeTool !== tool) return;
+                    blur();
+                    if (gesture) {
+                        if (surface.hasPointerCapture(gesture.id)) surface.releasePointerCapture(gesture.id);
+                        gesture = null;
+                    }
+                    surface.setAttribute('aria-label', originalLabel);
+                    activeTool = null;
+                },
+                remove() { tool.stop(); }
+            };
+            activeTool = tool;
+            if (settings.label) surface.setAttribute('aria-label', `${originalLabel}. ${settings.label}`);
+            if (document.activeElement === surface) tool.focus();
+            return tool;
+        }
         function tooltipAt(position) {
             tooltip.textContent = formatPoint(position);
             tooltip.hidden = false;
@@ -591,9 +646,9 @@
             surface.setPointerCapture(event.pointerId);
             const position = pointer(event);
             const rect = surface.getBoundingClientRect();
-            const point = [...items].find(entry => entry.kind === 'point' && entry.settings.drag &&
+            const point = activeTool?.kind === 'pick' ? null : [...items].find(entry => entry.kind === 'point' && entry.settings.drag &&
                 Math.hypot(...pixels(entry.value).map((pixel, index) => pixel - [event.clientX - rect.left, event.clientY - rect.top][index])) <= 14);
-            gesture = { id: event.pointerId, position, last: position, client: [event.clientX, event.clientY], point, moved: false };
+            gesture = { id: event.pointerId, position, last: position, client: [event.clientX, event.clientY], point, moved: false, tool: activeTool };
             if (!point && activeTool?.movable) {
                 const line = activeTool.get();
                 const type = line && classify(line);
@@ -607,7 +662,7 @@
             const position = pointer(event, gesture.point?.settings.drag !== 'positions');
             if (Math.hypot(event.clientX - gesture.client[0], event.clientY - gesture.client[1]) > 8) gesture.moved = true;
             if (gesture.point) movePoint(gesture.point, position);
-            else if (activeTool && gesture.moved) {
+            else if (activeTool && activeTool.kind !== 'pick' && gesture.moved) {
                 if (gesture.last && position.every((value, index) => value === gesture.last[index])) return;
                 gesture.last = position;
                 tooltipAt(position);
@@ -623,6 +678,11 @@
             tooltip.hidden = true;
             if (!editable || current.point || !activeTool) return;
             const end = pointer(event);
+            if (activeTool.kind === 'pick') {
+                const moved = current.moved || Math.hypot(event.clientX - current.client[0], event.clientY - current.client[1]) > 8;
+                if (!moved && current.tool === activeTool) activeTool.tap(end);
+                return;
+            }
             if (current.moved && current.original) activeTool.move(end.map((value, index) => value - current.position[index]), true, current.original);
             else if (current.moved) activeTool.finish({ from: activeTool.start || current.position, to: end });
             else activeTool.tap(end);
@@ -630,7 +690,7 @@
         function cancel() {
             gesture = null;
             tooltip.hidden = true;
-            activeTool?.set(activeTool.get());
+            if (activeTool?.kind === 'drawLine') activeTool.set(activeTool.get());
         }
         function key(event) {
             if (!editable) return;
@@ -651,12 +711,14 @@
             }
         }
         const blur = () => activeTool?.blur();
+        const focus = () => activeTool?.focus?.();
         surface.addEventListener('pointerdown', down);
         surface.addEventListener('pointermove', move);
         surface.addEventListener('pointerup', up);
         surface.addEventListener('pointercancel', cancel);
         surface.addEventListener('keydown', key);
         surface.addEventListener('blur', blur);
+        surface.addEventListener('focus', focus);
         const resize = new ResizeObserver(() => {
             if (surface.clientWidth) {
                 board.resizeContainer(surface.clientWidth, options.step ? surface.clientHeight : surface.clientWidth, true, true);
@@ -680,7 +742,7 @@
             segment: (from, to, settings) => item('segment', { from, to }, settings),
             arrow: (from, to, settings) => item('arrow', { from, to }, settings),
             plot: (fn, settings) => item('plot', fn, settings),
-            drawLine, describe,
+            drawLine, pick, describe,
             clear() {
                 activeTool?.remove();
                 [...items].forEach(entry => entry.remove());
@@ -688,11 +750,15 @@
             },
             setEditable(value) {
                 editable = value;
-                if (!editable) { cancel(); activeTool?.blur(); }
+                if (!editable) {
+                    if (activeTool?.kind === 'pick') activeTool.stop();
+                    else { cancel(); activeTool?.blur(); }
+                }
             },
             destroy() {
                 if (destroyed) return;
                 destroyed = true;
+                activeTool?.remove();
                 resize.disconnect();
                 removal.disconnect();
                 surface.removeEventListener('pointerdown', down);
@@ -701,6 +767,7 @@
                 surface.removeEventListener('pointercancel', cancel);
                 surface.removeEventListener('keydown', key);
                 surface.removeEventListener('blur', blur);
+                surface.removeEventListener('focus', focus);
                 window.JXG.JSXGraph.freeBoard(board);
                 wrapper.remove();
             }
