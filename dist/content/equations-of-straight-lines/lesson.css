@@ -1,0 +1,14 @@
+.lesson-equation {
+    margin: 1.25rem 0;
+    text-align: center;
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+    font-weight: 800;
+    white-space: nowrap;
+}
+.equation-tiles { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: wrap; }
+.equation-tile { display: inline-block; padding: .35rem .45rem; white-space: nowrap; }
+.equation-highlight { background: var(--accent-light); color: var(--accent-dark); border-radius: .3rem; padding: .1rem .15rem; }
+.equation-highlight small { display: inline-block; font-size: .75rem; margin-left: .3rem; }
+.workbench-step { margin: 1rem 0; text-align: center; }
+.workbench-equation { font-size: clamp(.96rem, 4.2vw, 1.4rem); font-weight: 800; white-space: nowrap; margin: .65rem 0; }
+.workbench-caption { color: var(--text-muted); }
