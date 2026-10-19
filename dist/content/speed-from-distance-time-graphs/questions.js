@@ -34,10 +34,12 @@
             choice('Sam', 'Sam goes further, but takes longer. Sam: 24 ÷ 8 = 3 m/s. Lena: 20 ÷ 5 = 4 m/s.'),
             choice("They're the same speed", 'Their lines have different steepness, so different speeds.')
         ], figure(host, { readOnly }) {
-            const graph = J.journeyGraph(host, { corners: [[0, 0], [5, 20]], labels: ['Lena'],
+            const graph = J.journeyGraph(host, { corners: [[0, 0], [5, 20]],
                 label: 'Distance–time graph. Lena walks from 0 seconds, 0 metres to 5 seconds, 20 metres. Sam walks from 0 seconds, 0 metres to 8 seconds, 24 metres.' });
-            graph.segment([0, 0], [8, 24], { label: 'Sam' });
+            graph.segment([0, 0], [8, 24]);
             [[0, 0], [5, 20], [8, 24]].forEach(point => J.guides(graph, point));
+            graph.point([5, 20], { label: 'Lena' });
+            graph.point([8, 24], { label: 'Sam' });
             graph.setEditable(!readOnly);
         } },
         J.withFigure({ questionType: 'after-a-stop', prompt: 'What is the speed between 5 and 9 seconds?',
