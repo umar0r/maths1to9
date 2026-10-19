@@ -426,6 +426,17 @@ Then:
   the first matching rule gives the feedback and hint. Otherwise `fallback`.
 - Units and algebra aren't typed-number questions; use choices or a custom widget.
 
+### Units after number boxes (added 2026-10-19)
+
+A number card accepts `unit: 'm/s'`. Each entry in `fields` can instead
+supply its own unit, for example `{ id: 'd', label: 'Distance travelled',
+unit: 'm' }`. Units appear as plain text immediately after the box on the
+same line. Its wrapping label includes “, in m” for assistive technology.
+Results, earlier sessions and read-only cards append the unit to the saved
+value, preserving the pupil's number or fraction. Both fields fit on one
+line at 375 px. Supplying a unit for choice or custom inputs throws a
+`TypeError`. A card without units keeps its existing rendering.
+
 ### Fractions and figures (added 2026-10-12)
 
 For a number card, `fractions: true` accepts whole numbers, decimals and

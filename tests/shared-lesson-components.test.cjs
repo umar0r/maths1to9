@@ -1245,3 +1245,98 @@ test('fields work through question-set results, Back and Practise again with ret
     fill();
     assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 2);
 });
+
+// Units use the normal saved card cycle and number formatting.
+function unitNodes(node, tag) {
+    return [node, ...node.children.flatMap(child => unitNodes(child, tag))].filter(node => node.tagName === tag);
+}
+const speedDefinition = { input: 'number', inputLabel: 'Speed', unit: 'm/s', answer: '3', feedback: 'Right.' };
+const journeyDefinition = { input: 'number', fractions: true,
+    fields: [{ id: 'd', label: 'Distance travelled', unit: 'm' }, { id: 't', label: 'Time taken', unit: 's' }],
+    answer: { d: '12', t: '4' }, feedback: 'Right.' };
+function fillUnitCard(card, values) {
+    unitNodes(card.container, 'input').forEach((box, index) => {
+        box.value = values[index]; box.events.input();
+    });
+}
+test('number units sit outside the box and its wrapping label includes in and the unit', () => {
+    for (const definition of [speedDefinition, journeyDefinition]) {
+        const card = questionFixture(definition);
+        const labels = unitNodes(card.container, 'label');
+        for (const [index, field] of (definition.fields || [{ label: 'Speed', unit: 'm/s' }]).entries()) {
+            const label = labels[index];
+            assert.equal(label.children[0].textContent, field.label);
+            assert.equal(label.children[0].attributes['aria-hidden'], 'true');
+            assert.equal(label.children[1].textContent, `${field.label}, in ${field.unit}`);
+            assert.equal(label.children[1].className, 'visually-hidden');
+            const line = label.children[2];
+            assert.equal(line.className, 'question-answer-with-unit');
+            assert.equal(line.children[0].tagName, 'input');
+            assert.equal(line.children[1].textContent, field.unit);
+            assert.equal(line.children[1].attributes['aria-hidden'], 'true');
+            assert.equal(line.children[0].value, '');
+        }
+    }
+});
+test('number unit results and read-only cards retain values and units after reload in every phase', () => {
+    for (const [definition, values, expected] of [
+        [speedDefinition, ['3'], '3\u00a0m/s'],
+        [journeyDefinition, ['12', '4'], 'Distance travelled 12\u00a0m, Time taken 4\u00a0s']
+    ]) {
+        let card = questionFixture(definition);
+        fillUnitCard(card, values.map(() => '99'));
+        card = card.reload();
+        assert.equal(card.action.label, 'Check');
+        card.action.onClick();
+        card = card.reload();
+        assert.equal(card.action.label, 'Try again');
+        assert.ok(card.card.result().answer.includes('\u00a0'));
+        card.action.onClick(); fillUnitCard(card, values); card.action.onClick();
+        card = card.reload();
+        assert.equal(card.action.label, 'Continue');
+        assert.equal(card.card.result().answer, expected);
+        const review = card.reload({ readOnly: true });
+        assert.equal(unitNodes(review.container, 'input').length, 0);
+        assert.equal(review.container.children[0].children[1].textContent, expected);
+    }
+});
+test('a unit on choice or custom input throws TypeError', () => {
+    for (const input of ['choice', 'custom']) {
+        assert.throws(() => questionFixture({ input, unit: 'm/s' }), {
+            name: 'TypeError', message: 'Question units require input: number.'
+        });
+        assert.throws(() => questionFixture({ input, fields: [{ id: 'd', label: 'Distance', unit: 'm' }] }), { name: 'TypeError' });
+    }
+});
+test('question-set results include units for one-box and field cards, including retained sessions', async () => {
+    const fixture = resultsFixture(), container = fixture.node('div');
+    let section, action, back;
+    const api = {
+        async useSectionState(key, options) { section = { state: options.initial(), update(change) { change(this.state); } }; return section; },
+        getLesson: () => ({ question_bank: {} }), getSections: () => [{ id: 'question-bank' }, { id: 'comparison' }],
+        getCurrentSection: () => ({ id: 'question-bank' }), setSlideHash() {}, registerHashRoute() {}, goToSection: () => true,
+        setSectionProgress() {}, setSectionBack(key, value) { back = value; },
+        setSectionAction(key, value) { action = value; }, clearSectionAction() { action = null; }, recordAssessment() {},
+        createQuestion(root, definition) { return fixture.createQuestion(root, definition, section, api); }
+    };
+    await fixture.runQuestionSet('question-bank', {
+        version: 1, count: 2, practiseAgain: true,
+        pick: () => [{ type: 'speed', seed: 1 }, { type: 'journey', seed: 2 }],
+        question: item => item.type === 'speed' ? speedDefinition : journeyDefinition
+    }, api, container);
+    const expected = ['3\u00a0m/s', 'Distance travelled 12\u00a0m, Time taken 4\u00a0s'];
+    function finish() {
+        for (const values of [['3'], ['12', '4']]) {
+            fillUnitCard({ container }, values); action.onClick(); action.onClick();
+        }
+    }
+    finish();
+    for (const answer of expected) assert.equal(unitNodes(container, 'span').filter(node => node.textContent === answer).length, 1);
+    back.onClick();
+    assert.equal(unitNodes(container, 'input').length, 0);
+    assert.equal(unitNodes(container, 'p').filter(node => node.textContent === expected[1]).length, 1);
+    action.onClick();
+    unitNodes(container, 'button').find(button => button.textContent === 'Practise again').events.click();
+    finish();
+    for (const answer of expected) assert.equal(unitNodes(container, 'span').filter(node => node.textContent === answer).length, 2);
+});
