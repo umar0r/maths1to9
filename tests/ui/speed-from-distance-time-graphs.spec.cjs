@@ -71,7 +71,7 @@ async function graphLayout(page) {
         const pixel = point => [rect.left + board.origin.scrCoords[1] + point.X() * board.unitX,
             rect.top + board.origin.scrCoords[2] - point.Y() * board.unitY];
         const lines = Object.values(board.objects).filter(o => ['line', 'segment', 'arrow'].includes(o.elType) && o.visProp.strokewidth >= 2);
-        for (const node of all.filter(n => /^\d+\s+s,/.test(n.textContent))) {
+        for (const node of all.filter(n => /^\d+\s+s,|^[ABC]$|^(Lena|Sam):/.test(n.textContent))) {
             const a = node.getBoundingClientRect();
             for (const line of lines) {
                 const from = pixel(line.point1), to = pixel(line.point2);
@@ -141,6 +141,13 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
             await board(page).focus(); for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
             await expect(page.locator('.speed-working:visible')).toContainText('12 ÷ 6 = 2\u00a0m/s');
             expect((await state(page, 'learn')).visited.sort()).toEqual([0, 1, 2, 3, 4, 5, 6]);
+            await expect(page.locator('.maths-graph__description:visible')).toHaveText('6\u00a0s, 12\u00a0m');
+            expect(await board(page).evaluate(element => {
+                const b = Object.values(JXG.boards).find(b => b.containerObj === element);
+                const muted = getComputedStyle(element).getPropertyValue('--border-dark').trim();
+                return Object.values(b.objects).filter(o => o.elType === 'point' && o.visProp.visible &&
+                    o.X() === 6 && o.Y() === 12 && o.visProp.fillcolor === muted).length;
+            })).toBe(0);
             await capture(page, 'learn-2'); await backAndForward(page); await reload(page); await main(page).click();
             const pick = position => mode.name === 'desktop' || mode.name === 'phone' && site === '/dist'
                 ? keyboardPick(page, position) : tap(page, position, mode.touch);
@@ -151,6 +158,12 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
             await pick([4, 8]); await reload(page);
             await pick([6, 14]); await expect(page.locator('.question-feedback:visible')).toContainText('Tap the end');
             await pick([10, 26]); await page.waitForTimeout(1500);
+            await expect(page.locator('.maths-graph__description:visible')).toHaveText('10\u00a0s, 26\u00a0m');
+            expect(await board(page).evaluate(element => {
+                const b = Object.values(JXG.boards).find(b => b.containerObj === element);
+                return Object.values(b.objects).filter(o => o.elType === 'segment' && o.visProp.dash > 0 &&
+                    o.point1.X() === 10 && o.point2.X() === 10).every(o => Math.max(o.point1.Y(), o.point2.Y()) <= 8);
+            })).toBe(true);
             await capture(page, 'learn-3'); await backAndForward(page); await reload(page); await main(page).click();
             await expect(page.locator('.speed-working:visible')).toHaveText('8\u00a0m in 4\u00a0s: 8 ÷ 4 = 2\u00a0m/s');
             await page.getByRole('button', { name: '4 to 10 s', exact: true }).click(); await capture(page, 'learn-4'); await backAndForward(page); await main(page).click();
@@ -158,6 +171,11 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
             await board(page).focus(); await page.keyboard.press('ArrowLeft');
             await expect(page.locator('.walker:visible')).toHaveAttribute('aria-label', 'Time: 7\u00a0s · Distance from the start: 12\u00a0m');
             await page.keyboard.press('ArrowRight');
+            expect(await board(page).evaluate(element => {
+                const b = Object.values(JXG.boards).find(b => b.containerObj === element);
+                return Object.values(b.objects).filter(o => o.elType === 'segment' && o.visProp.dash > 0 &&
+                    o.point1.Y() === 12 && o.point2.Y() === 12).length;
+            })).toBe(0);
             await capture(page, 'learn-5'); await backAndForward(page); await reload(page); await main(page).click();
             for (let i = 0; i < 4; i++) {
                 const saved = await state(page, 'interactive');
@@ -190,6 +208,12 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
                     const wrong = definition.options.findIndex(option => !option.correct);
                     await page.locator('.question-card-options:visible button').nth(saved.order[i].indexOf(wrong)).click(); await reload(page);
                     await main(page).click(); await expect(main(page)).toHaveText('Try again'); await reload(page); await main(page).click();
+                }
+                if (i === 2) {
+                    const labels = page.locator('.maths-graph__label:visible');
+                    await expect(labels.filter({ hasText: /^Lena: 5\s+s, 20\s+m$/ })).toHaveCount(1);
+                    await expect(labels.filter({ hasText: /^Sam: 8\s+s, 24\s+m$/ })).toHaveCount(1);
+                    await expect(labels.filter({ hasText: /^0\s+s, 0\s+m$/ })).toHaveCount(0);
                 }
                 await answer(page, definition, saved.order[i]); await capture(page, `check-${i}`); await backAndForward(page); await reload(page); await main(page).click();
             }

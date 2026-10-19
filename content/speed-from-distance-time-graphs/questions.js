@@ -37,9 +37,8 @@
             const graph = J.journeyGraph(host, { corners: [[0, 0], [5, 20]],
                 label: 'Distance–time graph. Lena walks from 0 seconds, 0 metres to 5 seconds, 20 metres. Sam walks from 0 seconds, 0 metres to 8 seconds, 24 metres.' });
             graph.segment([0, 0], [8, 24]);
-            [[0, 0], [5, 20], [8, 24]].forEach(point => J.guides(graph, point));
-            graph.point([5, 20], { label: 'Lena' });
-            graph.point([8, 24], { label: 'Sam' });
+            J.guides(graph, [5, 20], { label: J.nb('Lena: 5 s, 20 m'), labelSide: 'above' });
+            J.guides(graph, [8, 24], { label: J.nb('Sam: 8 s, 24 m'), labelSide: 'above' });
             graph.setEditable(!readOnly);
         } },
         J.withFigure({ questionType: 'after-a-stop', prompt: 'What is the speed between 5 and 9 seconds?',

@@ -105,8 +105,9 @@
                     helpers.forEach(item => item.remove()); dots.forEach(item => item.remove());
                     const time = flat ? state.flatTime : state.position, distance = flat ? 12 : 2 * time;
                     updateWalker(time, distance);
-                    helpers = J.guides(graph, [time, distance]);
-                    dots = flat ? [] : state.visited.map(i => graph.point(positions[i], { tone: 'muted' }));
+                    helpers = J.guides(graph, [time, distance], { horizontal: !flat });
+                    graph.describe(J.pointText([time, distance]));
+                    dots = flat ? [] : state.visited.filter(i => i < time).map(i => graph.point(positions[i], { tone: 'muted' }));
                     if (!flat && state.walkReached && graph.journeyLines.length === 0 && !completedLine) completedLine = graph.segment([0, 0], [6, 12]);
                     working.hidden = flat || time === 0;
                     working.textContent = J.nb(`At ${time} s you've gone ${distance} m. ${J.speedText(distance, time || 1)}.`);
@@ -139,8 +140,9 @@
                     prompt.textContent = state.foundEnd ? '' : state.foundStart ? 'Now tap the end.'
                         : 'Find the speed between 4 and 10 seconds. Tap the start of the highlighted section.';
                     if (state.foundStart) helpers.push(...J.guides(graph, [4, 8]));
-                    if (state.foundEnd) helpers.push(...J.guides(graph, [10, 26]), ...J.sectionArrows(graph, [4, 8], [10, 26]));
+                    if (state.foundEnd) helpers.push(...J.guides(graph, [10, 26], { verticalTo: 8 }), ...J.sectionArrows(graph, [4, 8], [10, 26]));
                     if (state.tap && state.tapFeedback) marker = graph.point(state.tap, { tone: 'incorrect' });
+                    if (state.tap) graph.describe(J.pointText(state.tap));
                     feedback.textContent = state.tapFeedback;
                     feedback.className = state.tapFeedback ? 'question-feedback is-visible is-incorrect' : '';
                     if (state.foundEnd) {

@@ -8,6 +8,8 @@
     const fields = [{ id: 'd', label: 'Distance travelled', unit: 'm' }, { id: 't', label: 'Time taken', unit: 's' }];
     const fallback = 'Distance travelled in the section ÷ time taken for the section.';
 
+    const pointText = ([t, d]) => nb(`${t} s, ${d} m`);
+
     function speedText(distance, time) {
         return nb(`${distance} ÷ ${time} = ${distance / time} m/s`);
     }
@@ -25,14 +27,31 @@
         });
         const lines = draw ? corners.slice(1).map((to, index) => graph.segment(corners[index], to, {
             tone: !section || corners[index][0] === section[0] && to[0] === section[1] ? 'neutral' : 'muted',
-            label: labels[index]
+            label: labels[index], ...(labels[index] ? { labelSide: 'above', labelTone: 'ink' } : {})
         })) : [];
-        return Object.assign(graph, { journeyLines: lines });
+        return Object.assign(graph, { journeyLines: lines, journeyCorners: corners });
     }
-    function guides(graph, [t, d]) {
-        return [graph.segment([t, 0], [t, d], { tone: 'ink', dash: true }),
-            graph.segment([0, d], [t, d], { tone: 'ink', dash: true }),
-            graph.point([t, d], { label: nb(`${t} s, ${d} m`) })];
+    function guideOverlapsJourney(graph, from, to) {
+        return graph.journeyCorners.slice(1).some((end, index) => {
+            const start = graph.journeyCorners[index];
+            const cross = point => (point[0] - from[0]) * (to[1] - from[1]) -
+                (point[1] - from[1]) * (to[0] - from[0]);
+            if (cross(start) !== 0 || cross(end) !== 0) return false;
+            const axis = from[0] === to[0] ? 1 : 0;
+            return Math.max(Math.min(from[axis], to[axis]), Math.min(start[axis], end[axis])) <
+                Math.min(Math.max(from[axis], to[axis]), Math.max(start[axis], end[axis]));
+        });
+    }
+    function guides(graph, [t, d], options = {}) {
+        const items = [];
+        const ends = [];
+        if (t !== 0 && (options.verticalTo ?? d) !== 0) ends.push([[t, 0], [t, options.verticalTo ?? d]]);
+        if (d !== 0 && t !== 0 && options.horizontal !== false) ends.push([[0, d], [t, d]]);
+        for (const [from, to] of ends) {
+            if (!guideOverlapsJourney(graph, from, to)) items.push(graph.segment(from, to, { tone: 'ink', dash: true }));
+        }
+        items.push(graph.point([t, d], { label: options.label ?? pointText([t, d]), labelSide: options.labelSide }));
+        return items;
     }
     function sectionArrows(graph, from, to) {
         const dt = to[0] - from[0], dd = to[1] - from[1];
@@ -173,6 +192,6 @@
         }
         return withFigure({ questionType: item.type, ...config }, journey);
     }
-    window.SpeedJourneys = { nb, decimal, typedTypes, choiceTypes, fields, fallback, speedText,
+    window.SpeedJourneys = { nb, pointText, decimal, typedTypes, choiceTypes, fields, fallback, speedText,
         journeyGraph, guides, sectionArrows, figure, withFigure, numberCard, choice, distanceAndTime, pick, generate };
 })();
