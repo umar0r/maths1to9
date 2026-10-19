@@ -89,3 +89,26 @@ test('graph snap accepts axis steps, preserving halfway rounding and unit coordi
     }
     assert.equal(Object.is(graph.snap([-0.4, -0.8], { x: 1, y: 2 })[1], -0), false);
 });
+
+test('graph aspect needs explicit steps', () => {
+    assert.throws(() => graph.create({}, { aspect: 1 }), { name: 'TypeError', message: 'Graph aspect requires step.' });
+});
+
+test('default graph retains its bounding box, square shape and axis letters', () => {
+    const labels = [];
+    let settings;
+    const node = () => ({ style: { setProperty() { assert.fail('Default graph must not override its square shape.'); } },
+        append() {}, setAttribute() {}, addEventListener() {} });
+    const document = { createElement: node, body: node() };
+    const board = { create(kind, args) { if (kind === 'text') labels.push(args[2]); return {}; } };
+    const stop = new Error('Axes captured');
+    const window = { JXG: { JSXGraph: { initBoard(surface, options) { settings = options; return board; } } } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/graph.js'), 'utf8'), {
+        window, document, getComputedStyle: () => ({ getPropertyValue: () => '' }),
+        ResizeObserver: class { constructor() { throw stop; } }
+    });
+    assert.throws(() => window.Maths1to9Graph.create({ isConnected: true, ownerDocument: document, append() {} }), error => error === stop);
+    assert.deepEqual(plain(settings.boundingbox), [-6.8, 6.8, 6.8, -6.8]);
+    assert.equal(settings.keepaspectratio, true);
+    assert.deepEqual(labels.slice(-2), ['x', 'y']);
+});

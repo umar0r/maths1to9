@@ -54,3 +54,8 @@
         transition: none !important;
     }
 }
+
+.maths-graph__board--named .maths-graph__label {
+    font-family: "Nunito", sans-serif !important;
+    white-space: nowrap;
+}

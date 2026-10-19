@@ -39,6 +39,12 @@
     }
 
     function create(host, options = {}) {
+        if (options.aspect !== undefined && !options.step) {
+            throw new TypeError('Graph aspect requires step.');
+        }
+        if (options.aspect !== undefined && (!Number.isFinite(options.aspect) || options.aspect <= 0)) {
+            throw new RangeError('Graph aspect must be a positive finite number.');
+        }
         if (!window.JXG) {
             throw new Error('Load vendor/jsxgraph/jsxgraphcore.js before creating a graph.');
         }
@@ -60,6 +66,9 @@
             const rows = (y[1] - y[0]) / step.y + 1.6;
             surface.style.setProperty('--maths-graph-aspect', String(columns / rows));
         }
+        const namedAxes = options.axisNames !== undefined;
+        const fitted = namedAxes || options.aspect !== undefined;
+        if (namedAxes) surface.classList.add('maths-graph__board--named');
         const live = document.createElement('p');
         live.className = 'maths-graph__description';
         live.setAttribute('aria-live', 'polite');
@@ -79,12 +88,29 @@
         const extent = Math.max(x[1] - x[0], y[1] - y[0]) / 2 + 0.8;
         const cx = (x[0] + x[1]) / 2;
         const cy = (y[0] + y[1]) / 2;
-        const boundingBox = options.step
+        let boundingBox = options.step
             ? [x[0] - 0.8 * step.x, y[1] + 0.8 * step.y, x[1] + 0.8 * step.x, y[0] - 0.8 * step.y]
             : [cx - extent, cy + extent, cx + extent, cy - extent];
+        // Reserve pixels for readable axis labels independently of the unit scales.
+        // Existing boards keep their original bounding box and square-grid layout.
+        function fitBoard() {
+            if (!fitted) return;
+            const width = surface.clientWidth || 440;
+            const margins = { left: 40, right: 20, top: 36, bottom: 48 };
+            const gridWidth = Math.max(1, width - margins.left - margins.right);
+            const aspect = options.aspect ?? ((x[1] - x[0]) / step.x) / ((y[1] - y[0]) / step.y);
+            const gridHeight = gridWidth / aspect;
+            const height = gridHeight + margins.top + margins.bottom;
+            surface.style.setProperty('--maths-graph-aspect', String(width / height));
+            const unitX = gridWidth / (x[1] - x[0]);
+            const unitY = gridHeight / (y[1] - y[0]);
+            boundingBox = [x[0] - margins.left / unitX, y[1] + margins.top / unitY,
+                x[1] + margins.right / unitX, y[0] - margins.bottom / unitY];
+        }
+        fitBoard();
         const board = window.JXG.JSXGraph.initBoard(surface, {
             boundingbox: boundingBox,
-            axis: false, grid: false, keepaspectratio: !options.step,
+            axis: false, grid: false, keepaspectratio: !options.step && !fitted,
             showNavigation: false, showCopyright: false, showInfobox: false,
             pan: { enabled: false }, zoom: { enabled: false, wheel: false },
             keyboard: { enabled: false }, registerEvents: false,
@@ -132,8 +158,17 @@
         segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
         axisText([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
-        text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
-        text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
+        if (namedAxes) {
+            axisText([(x[0] + x[1]) / 2, 0], escapeHtml(options.axisNames.x ?? 'x'), {
+                anchorX: 'middle', anchorY: 'top', offset: [0, -28]
+            });
+            axisText([0, y[1]], escapeHtml(options.axisNames.y ?? 'y'), {
+                anchorX: 'left', anchorY: 'bottom', offset: [0, 20]
+            });
+        } else {
+            text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
+            text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
+        }
 
         const items = new Set();
         const labelLayouts = new Map();
@@ -721,8 +756,9 @@
         surface.addEventListener('focus', focus);
         const resize = new ResizeObserver(() => {
             if (surface.clientWidth) {
-                board.resizeContainer(surface.clientWidth, options.step ? surface.clientHeight : surface.clientWidth, true, true);
-                board.setBoundingBox(boundingBox, !options.step);
+                fitBoard();
+                board.resizeContainer(surface.clientWidth, options.step || fitted ? surface.clientHeight : surface.clientWidth, true, true);
+                board.setBoundingBox(boundingBox, !options.step && !fitted);
             }
         });
         resize.observe(surface);

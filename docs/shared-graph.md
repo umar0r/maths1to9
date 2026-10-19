@@ -141,6 +141,20 @@ vertical when both have the same x. For a sloping line it gives `m` and `c`
 as plain numbers (they may be fractions; the lesson decides what to do
 with them).
 
+### Axis names and grid shape (added 2026-10-19)
+
+`create(host, { x: [0, 10], y: [0, 30], step: { x: 1, y: 2 },
+labelEvery: 1, axisNames: { x: 'Time (s)', y: 'Distance (m)' }, aspect: 1 })`
+replaces the axis-end letters with names. The x name is centred below the
+numbers; the y name reads horizontally above the y-axis. The board reserves
+space for names and numbers at phone widths without reducing the font.
+
+`aspect` is the grid area's width divided by its height, independent of
+its unit scales. It must be positive and finite and requires `step`
+(otherwise a `TypeError` is thrown). Omitting it keeps grid squares square
+on step boards. Omitting both new options preserves the existing board.
+Coordinates, snapping, picking, dragging and keyboard steps remain in units.
+
 ### Axis steps, arrows and drawing options (added 2026-10-12)
 
 - `create(host, { x: [-6, 6], y: [-12, 12], step: { x: 1, y: 2 } })`
