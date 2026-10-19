@@ -191,6 +191,18 @@ Coordinates, snapping, picking, dragging and keyboard steps remain in units.
   only on release. Existing callbacks can ignore the extra argument and
   continue to colour the line live.
 
+### Opt-in segment labels
+
+`graph.segment(from, to, { tone, label, labelSide, labelTone })` accepts
+`labelSide: 'above' | 'below' | 'left' | 'right'`. When supplied, the label
+uses the collision-aware midpoint placement used by arrows, flipping or
+nudging to stay inside the grid and clear of all lines, arrows, marked
+points, axes, axis numbers and earlier labels.
+
+`labelTone` accepts any existing tone, independently of the segment's
+colour; use `'ink'` for normal text. It defaults to the segment's tone.
+Segments without these options keep their existing label position and colour.
+
 ### Picking a point
 
 ```js

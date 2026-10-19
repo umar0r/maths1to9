@@ -112,3 +112,52 @@ test('default graph retains its bounding box, square shape and axis letters', ()
     assert.equal(settings.keepaspectratio, true);
     assert.deepEqual(labels.slice(-2), ['x', 'y']);
 });
+
+function labelBoard() {
+    const texts = [];
+    const node = () => ({ style: { setProperty() {} }, append() {}, setAttribute() {}, addEventListener() {} });
+    const document = { createElement: node, body: node() };
+    const board = { unitX: 25, unitY: 25, origin: { scrCoords: [1, 170, 170] },
+        create(kind, args, attributes) {
+            const object = { rendNode: { getBoundingClientRect: () => ({ width: String(args[2] ?? '').length * 7, height: 12 }) } };
+            if (kind === 'text') texts.push({ args, attributes, object });
+            return object;
+        }, update() {}, removeObject() {} };
+    const window = { JXG: { JSXGraph: { initBoard: () => board } } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/graph.js'), 'utf8'), {
+        window, document, getComputedStyle: () => ({ getPropertyValue: property => property }),
+        ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} }
+    });
+    const graph = window.Maths1to9Graph.create({ isConnected: true, ownerDocument: document, append() {} });
+    return { graph, last: () => texts.at(-1), position: () => Array.from(texts.at(-1).args.slice(0, 2), fn => fn()) };
+}
+test('segment labels retain their original anchor and line tone without new options', () => {
+    const fixture = labelBoard();
+    fixture.graph.segment([-2, -2], [2, 2], { label: 'A' });
+    assert.deepEqual(fixture.position(), [0.2, 0.3]);
+    assert.equal(fixture.last().attributes.strokeColor, '--primary');
+    assert.equal(fixture.last().attributes.anchorY, undefined);
+});
+test('segment labelTone changes the text independently and survives updates', () => {
+    const fixture = labelBoard();
+    const segment = fixture.graph.segment([-2, -2], [2, 2], { tone: 'neutral', label: 'A', labelTone: 'ink' });
+    assert.equal(fixture.last().attributes.strokeColor, '--text');
+    assert.equal(segment.settings.tone, 'neutral');
+    assert.deepEqual(fixture.position(), [0.2, 0.3]);
+    segment.update({ labelTone: 'muted' });
+    assert.equal(fixture.last().attributes.strokeColor, '--text-muted');
+});
+test('opt-in segment labels use each side and clear marked points inside the grid', () => {
+    for (const side of ['above', 'below', 'left', 'right']) {
+        const fixture = labelBoard();
+        fixture.graph.point([0, 2], { size: 'large' });
+        fixture.graph.segment([-3, 0], [3, 0], { label: 'A', labelSide: side, labelTone: 'ink' });
+        const [x, y] = fixture.position();
+        const left = 170 + x * 25, top = 170 - y * 25;
+        assert.ok(left >= 20 && left + 7 <= 320 && top >= 20 && top + 12 <= 320);
+        assert.ok(top + 12 < 164 || top > 176, 'label must clear its own segment');
+        assert.ok(left + 7 <= 159 || left >= 181 || top + 12 <= 109 || top >= 131, 'label must clear the marked point');
+        assert.equal(fixture.last().attributes.anchorY, 'top');
+        assert.equal(fixture.last().attributes.strokeColor, '--text');
+    }
+});

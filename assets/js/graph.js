@@ -200,7 +200,7 @@
         function markedLabel(label, tone) {
             return label ? `${label}${tone === 'correct' ? ' ✓' : tone === 'incorrect' ? ' ✗' : ''}` : '';
         }
-        function pointLabel(position, content, settings, attributes, arrow = null) {
+        function pointLabel(position, content, settings, attributes, arrow = null, avoidPoints = false) {
             const centred = arrow !== null;
             const order = labelOrder++;
             let label;
@@ -247,6 +247,15 @@
                             const bounds = layout.bounds();
                             obstacles.push({ left: bounds.left - 4, right: bounds.right + 4,
                                 top: bounds.top - 4, bottom: bounds.bottom + 4 });
+                        }
+                    }
+                    if (avoidPoints) {
+                        for (const entry of items) {
+                            if (entry.kind !== 'point') continue;
+                            const [px, py] = pixels(entry.value);
+                            const radius = (entry.settings.size === 'large' ? 5 : 3) + 6;
+                            obstacles.push({ left: px - radius, right: px + radius,
+                                top: py - radius, bottom: py + radius });
                         }
                     }
                     function fit(candidate) {
@@ -405,6 +414,7 @@
                     }
                     let anchor;
                     let labelAttributes = {};
+                    const placedSegment = kind === 'segment' && style.labelSide !== undefined;
                     if (kind === 'point') {
                         objects.push(board.create('point', value, { ...attributes, name: '',
                             size: style.size === 'large' ? 5 : 3, showInfobox: false }));
@@ -426,7 +436,7 @@
                         objects.push(board.create(type, endpoints, attributes), ...endpoints);
                         anchor = [(ends[0][0] + ends[1][0]) / 2 + 0.2, (ends[0][1] + ends[1][1]) / 2 + 0.3];
                         const orientation = classify({ from: ends[0], to: ends[1] });
-                        if (kind === 'arrow') {
+                        if (kind === 'arrow' || placedSegment) {
                             anchor = [(ends[0][0] + ends[1][0]) / 2, (ends[0][1] + ends[1][1]) / 2];
                         } else if (orientation.kind === 'horizontal') {
                             anchor = [Math.max(ends[0][0], ends[1][0]), orientation.value];
@@ -449,8 +459,9 @@
                         label = `(${coordinates.join(', ')})`;
                     } else if (label) label = escapeHtml(label);
                     if (label) {
+                        const labelTone = kind === 'segment' ? style.labelTone ?? style.tone : style.tone;
                         const appearance = {
-                            strokeColor: style.tone === 'muted' ? colour('--text-muted') : attributes.strokeColor,
+                            strokeColor: labelTone === 'muted' ? colour('--text-muted') : tones[labelTone] || attributes.strokeColor,
                             layer: 10, ...labelAttributes
                         };
                         const content = markedLabel(label, style.tone);
@@ -459,8 +470,9 @@
                             : kind === 'arrow' ? pointLabel(anchor, content, {
                                 ...style, labelSide: style.labelSide || (value.from[1] === value.to[1] ? 'below' : 'right')
                             }, appearance, value)
-                                : text(anchor, content, appearance);
-                        if (kind !== 'point' && kind !== 'arrow') {
+                                : placedSegment ? pointLabel(anchor, content, style, appearance, value, true)
+                                    : text(anchor, content, appearance);
+                        if (kind !== 'point' && kind !== 'arrow' && !placedSegment) {
                             labelLayouts.set(labelObject, { fixed: true, bounds() {
                                 const [px, py] = pixels(anchor);
                                 const bounds = labelObject.rendNode.getBoundingClientRect();
