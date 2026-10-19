@@ -71,7 +71,7 @@ $pageTitle = 'Horizontal and vertical lines';
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=5">
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=8"></script>
+    <script src="../../assets/js/graph.js?v=9"></script>
 
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>

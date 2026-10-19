@@ -157,7 +157,10 @@
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
         segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
-        axisText([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
+        const firstQuadrantNames = namedAxes && x[0] === 0 && y[0] === 0;
+        axisText([0, 0], '0', firstQuadrantNames
+            ? { anchorX: 'right', anchorY: 'top', offset: [-26, -6] }
+            : { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
         if (namedAxes) {
             axisText([(x[0] + x[1]) / 2, 0], escapeHtml(options.axisNames.x ?? 'x'), {
                 anchorX: 'middle', anchorY: 'top', offset: [0, -28]
