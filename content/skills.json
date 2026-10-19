@@ -106,6 +106,7 @@
     {"id":"graphical-solutions-quadratic","title":"Identify quadratic roots and turning points graphically","content_references":["A11","A18"]},
     {"id":"real-context-graphs","title":"Plot and interpret graphs in real contexts","content_references":["A14"]},
     {"id":"kinematic-graphs","title":"Interpret simple distance, speed and acceleration graphs","content_references":["A14"]},
+    {"id":"speed-from-distance-time-graph","title":"Find speed from a straight section of a distance–time graph","content_references":["A14","R11","R14"],"recommended_prerequisites":["calculate-gradient","speed-distance-time"]},
     {"id":"generate-sequences","title":"Generate sequences from term and position rules","content_references":["A23"]},
     {"id":"recognise-special-sequences","title":"Recognise arithmetic and special sequences","content_references":["A24"]},
     {"id":"use-nth-term","title":"Use an nth-term expression","content_references":["A23"]},
