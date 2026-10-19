@@ -1,0 +1,144 @@
+{
+    "id": "equations-of-straight-lines",
+    "slug": "equations-of-straight-lines",
+    "title": "Using y = mx + c",
+    "subtitle": "Rearrange a line's equation into y = mx + c and check if a point is on it.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "reorder": "use-y-mx-c",
+            "add-subtract": "use-y-mx-c",
+            "divide": "use-y-mx-c",
+            "two-step": "use-y-mx-c",
+            "point-sides": "use-y-mx-c",
+            "same-equation": "use-y-mx-c",
+            "on-its-own": "use-y-mx-c",
+            "read-reordered": "use-y-mx-c",
+            "point-check": "use-y-mx-c",
+            "sam": "use-y-mx-c",
+            "rearrange-two-step": "use-y-mx-c",
+            "mia": "use-y-mx-c",
+            "keep-sign": "use-y-mx-c",
+            "rearrange-negative": "use-y-mx-c",
+            "which-point": "use-y-mx-c"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Rewrite a straight-line equation as y = mx + c, and check whether a point lies on the line."
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Work with the equation",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise using equations",
+        "intro": "",
+        "session_length": 8
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "sam"
+            },
+            {
+                "type": "rearrange-two-step"
+            },
+            {
+                "type": "mia"
+            },
+            {
+                "type": "keep-sign"
+            },
+            {
+                "type": "rearrange-negative"
+            },
+            {
+                "type": "which-point"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "To write y = mx + c, get y on its own and put the x term first."
+                },
+                {
+                    "text": "Do the same to both sides. When you divide, divide every term."
+                },
+                {
+                    "text": "To check a point, put its coordinates in. Equal sides mean it's on the line."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        }
+    ]
+}
