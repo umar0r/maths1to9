@@ -139,6 +139,8 @@ test('equations-of-straight-lines workbench wrong operations, keyboard, both two
     await expect(root(page).locator('.question-feedback:visible')).toContainText('y + 4');
     await root(page).getByRole('button', { name: '− 2 from both sides', exact: true }).click();
     await expect(root(page).locator('.workbench-result').last()).toHaveText('y = 3x − 2 ✓');
+    await expect(root(page).getByRole('button', { name: '+ 2 to both sides', exact: true })).toBeDisabled();
+    await expect(root(page).getByRole('button', { name: '− 2 from both sides', exact: true })).toBeDisabled();
     await layout(page, 'two-step-divide-first');
     await back(page).click(); await main(page).click(); await reload(page);
     await expect(root(page).locator('.workbench-result')).toHaveCount(2);
@@ -146,9 +148,31 @@ test('equations-of-straight-lines workbench wrong operations, keyboard, both two
     await page.evaluate(() => localStorage.clear()); await page.goto(`/content/${slug}/`); await ready(page); await advanceLearn(page, 5);
     await root(page).getByRole('button', { name: '− 4 from both sides', exact: true }).click(); await reload(page);
     await expect(root(page).locator('.workbench-result')).toHaveText('2y = 6x − 4');
+    await expect(root(page).getByRole('button', { name: '+ 4 to both sides', exact: true })).toBeDisabled();
+    await expect(root(page).getByRole('button', { name: '− 4 from both sides', exact: true })).toBeDisabled();
+    await expect(root(page).getByRole('button', { name: '÷ 2 both sides', exact: true })).toBeEnabled();
     await root(page).getByRole('button', { name: '÷ 2 both sides', exact: true }).click();
     await expect(root(page).locator('.workbench-equation').nth(2)).toHaveText('2y ÷ 2 = 6x ÷ 2 − 4 ÷ 2');
-    await layout(page, 'two-step-subtract-first'); expect(errors).toEqual([]);
+    await layout(page, 'two-step-subtract-first');
+    for (const divideFirst of [false, true]) {
+        await page.evaluate(() => localStorage.clear());
+        await page.goto(`/content/${slug}/`); await ready(page); await advanceLearn(page, 5);
+        const press = async name => {
+            const control = root(page).getByRole('button', { name, exact: true });
+            await control.focus(); await control.press('Enter');
+        };
+        if (divideFirst) await press('÷ 2 both sides');
+        await press(`− ${divideFirst ? 2 : 4} from both sides`);
+        for (const sign of ['+', '−']) await expect(root(page).getByRole('button', {
+            name: `${sign} ${divideFirst ? 2 : 4} ${sign === '+' ? 'to' : 'from'} both sides`, exact: true
+        })).toBeDisabled();
+        if (!divideFirst) {
+            await expect(root(page).getByRole('button', { name: '÷ 2 both sides', exact: true })).toBeEnabled();
+            await press('÷ 2 both sides');
+        }
+        await expect(root(page).locator('.workbench-result').last()).toHaveText('y = 3x − 2 ✓');
+    }
+    expect(errors).toEqual([]);
 });
 
 test('equations-of-straight-lines partial answers, reload phases, repeated Practice and skill evidence', async ({ page }) => {
@@ -165,10 +189,15 @@ test('equations-of-straight-lines partial answers, reload phases, repeated Pract
         return StraightLineEquations.generate(s.items[0], Maths1to9LessonEngine.seededRandom(s.items[0].seed)).answer;
     }, slug);
     const values = Object.values(answer), inputs = root(page).locator('.question-card input');
-    await inputs.nth(0).fill(values[0]); await inputs.nth(1).fill('39'); await layout(page, 'practice-partial');
-    await reload(page); await expect(inputs.nth(0)).toHaveValue(values[0]); await expect(inputs.nth(1)).toHaveValue('39');
+    const wrong = values[1] === '39' ? '38' : '39';
+    const checkedFirst = values[0].replace(/-/g, '−');
+    await expect(inputs).toHaveCount(2);
+    await inputs.nth(0).fill(values[0]); await inputs.nth(1).fill(wrong); await layout(page, 'practice-partial');
+    await reload(page); await expect(inputs.nth(0)).toHaveValue(values[0]); await expect(inputs.nth(1)).toHaveValue(wrong);
     await main(page).click(); await expect(main(page)).toHaveText('Try again'); await reload(page);
-    await main(page).click(); await expect(inputs.nth(0)).toHaveValue(values[0]); await expect(inputs.nth(1)).toHaveValue('39');
+    await main(page).click(); await expect(inputs).toHaveCount(2);
+    // Checked answers display the shared card's Unicode minus, and Try again retains that text.
+    await expect(inputs.nth(0)).toHaveValue(checkedFirst); await expect(inputs.nth(1)).toHaveValue(wrong);
     await expect(inputs.nth(1)).toBeFocused();
     await inputs.nth(1).fill(values[1]); await main(page).click(); await expect(main(page)).toHaveText('Continue'); await reload(page);
     for (let step = 0; step < 75 && !/#question-bank-question-9$/.test(page.url()); step++) {
@@ -196,7 +225,6 @@ test('equations-of-straight-lines partial answers, reload phases, repeated Pract
     expect((await state(page, 'comparison')).finished).toBe(true);
     expect(last.session).toBe(3); expect(last.earlier).toHaveLength(2); expect(last.items).not.toEqual(first.items);
     await expect(root(page).locator('details')).toHaveCount(2);
-    const progress = await page.evaluate(slug => Maths1to9Progress.getLessonProgress(slug), slug);
     const skill = await page.evaluate(() => Maths1to9Progress.getSkillProgress('use-y-mx-c'));
     expect(skill.assessedQuestions).toBeGreaterThanOrEqual(24);
     expect(errors).toEqual([]);

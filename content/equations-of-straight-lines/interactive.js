@@ -166,7 +166,7 @@
                     }
                 });
                 if (steps.some(step => step.kind === operation.kind && step.value === operation.value)) control.classList.add('is-correct');
-                control.disabled = finished || screen === 4 && (operation.kind === 'divide' && current.k === 1 || operation.kind === 'add' && operation.value < 0 && current.d === 0);
+                control.disabled = finished || screen === 4 && (operation.kind === 'divide' && current.k === 1 || operation.kind === 'add' && current.d === 0);
                 return control;
             });
             let form = initial;
