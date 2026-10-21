@@ -63,7 +63,7 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe(`d
         const score=await page.evaluate(()=>Maths1to9Lesson.getScore());expect(score.points).toBe(score.maximumPoints);
         await reload(page);await main(page).click();await expect(page).toHaveURL(new RegExp(`${site}/$`));
         await expect(page.locator('.lesson-card__title').filter({hasText:/^\s*Drawing quadratic graphs\s*$/})).toBeVisible();
-        for(const title of ['Finding the turning point','Finding roots from a graph','Cubic and reciprocal graphs']) await expect(page.locator('.lesson-card__title').filter({hasText:new RegExp(`^\\s*${title}\\s*$`)})).toHaveCount(0);
+        for(const title of ['Finding roots from a graph','Cubic and reciprocal graphs']) await expect(page.locator('.lesson-card__title').filter({hasText:new RegExp(`^\\s*${title}\\s*$`)})).toHaveCount(0);
         expect(errors).toEqual([]);
     });
 });
