@@ -1,0 +1,32 @@
+.simultaneous-learn p { margin: 0.45rem 0; }
+.simultaneous-status { min-height: 1.6rem; color: var(--text-muted); font-weight: 700; }
+.simultaneous-steps { font-size: 1.15rem; }
+.simultaneous-steps p { margin: 0.2rem 0; }
+.simultaneous-card-graph { max-width: 320px; margin: 0 auto; }
+.simultaneous-retained + .simultaneous-retained { margin-top: 1.5rem; }
+@media (min-width: 760px) {
+    .simultaneous-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        column-gap: 2.5rem;
+        align-items: center;
+    }
+    .simultaneous-notes { font-size: 1.1rem; }
+}
+
+.simultaneous-key { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.65rem; }
+.simultaneous-key__line { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.simultaneous-key__swatch { width: 1.4rem; border-top: 4px solid var(--primary); }
+.simultaneous-key__swatch--ink { border-color: var(--text); }
+.simultaneous-single-equation .simultaneous-key { font-size: 1.4rem; font-weight: 800; }
+
+@media (min-width: 760px) {
+    .simultaneous-guided-card .question-card {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        column-gap: 2.5rem;
+        align-items: start;
+    }
+    .simultaneous-guided-card .question-card > * { grid-column: 2; }
+    .simultaneous-guided-card .question-card > :nth-child(2) { grid-column: 1; grid-row: 1 / span 6; }
+}

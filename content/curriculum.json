@@ -66,6 +66,7 @@
         {"folder":"equations-of-straight-lines","title":"Using y = mx + c","subtitle":"Rearrange a line's equation into y = mx + c and check if a point is on it.","skills":["use-y-mx-c"]},
         {"folder":"parallel-lines","title":"Parallel lines","subtitle":"Spot parallel lines from their gradients.","skills":["parallel-lines"]},
         {"folder":"finding-the-equation-of-a-line","title":"Finding the equation of a line","subtitle":"Write y = mx + c from a gradient and a point, or from two points.","skills":["equation-line-from-information"]},
+        {"folder":"simultaneous-equations-graphs","title":"Solving simultaneous equations using graphs","subtitle":"Read where two lines cross to find x and y.","skills":["simultaneous-graphs"]},
         {"folder":"drawing-quadratic-graphs","title":"Drawing quadratic graphs","subtitle":"Complete a table of values, plot the points and draw a smooth curve.","skills":["quadratic-graphs"]},
         {"folder":"quadratic-turning-points","title":"Finding the turning point","subtitle":"Read the turning point of a quadratic graph and say if it's a minimum or a maximum.","skills":["quadratic-turning-points"]},
         {"folder":"roots-from-quadratic-graphs","title":"Finding roots from a graph","subtitle":"Use a quadratic graph to solve an equation.","skills":["quadratic-solutions-graphs"]},

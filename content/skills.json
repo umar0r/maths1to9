@@ -88,6 +88,7 @@
     {"id":"quadratic-solutions-graphs","title":"Find approximate quadratic solutions using a graph","content_references":["A18"],"recommended_prerequisites":["quadratic-graphs"]},
     {"id":"simultaneous-elimination","title":"Solve simultaneous equations by elimination","content_references":["A19"],"recommended_prerequisites":["solve-unknown-both-sides"]},
     {"id":"simultaneous-substitution","title":"Solve simultaneous equations by substitution","content_references":["A19"],"recommended_prerequisites":["substitute-expressions","solve-two-step-equations"]},
+    {"id":"simultaneous-graphs","title":"Solve simultaneous equations using graphs","content_references":["A19"],"recommended_prerequisites":["plot-linear-graphs","coordinates-four-quadrants"]},
     {"id":"form-simultaneous-equations","title":"Form simultaneous equations from a situation","content_references":["A21"],"recommended_prerequisites":["form-equations"]},
     {"id":"inequality-notation","title":"Interpret inequality notation","content_references":["A3","A22"]},
     {"id":"solve-linear-inequalities","title":"Solve linear inequalities in one variable","content_references":["A22"],"recommended_prerequisites":["solve-two-step-equations"]},
