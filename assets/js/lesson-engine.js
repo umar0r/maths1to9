@@ -378,6 +378,25 @@
         };
     }
 
+    // Numeric options may use exponent notation when JavaScript prints them.
+    // Expand their decimal fraction without doing arithmetic with floating point.
+    function numberFraction(value) {
+        const [digits, exponent = '0'] = String(value).split('e');
+        const fraction = fractionValue(digits);
+        const power = BigInt(exponent);
+        return power >= 0n
+            ? { numerator: fraction.numerator * 10n ** power, denominator: fraction.denominator }
+            : { numerator: fraction.numerator, denominator: fraction.denominator * 10n ** -power };
+    }
+
+    function withinTolerance(actual, answer, tolerance) {
+        if (actual === null || answer === null) return false;
+        const absolute = value => value < 0n ? -value : value;
+        const difference = actual.numerator * answer.denominator - answer.numerator * actual.denominator;
+        return absolute(difference) * tolerance.denominator <=
+            tolerance.numerator * absolute(actual.denominator * answer.denominator);
+    }
+
     function fractionText(value) {
         return String(value).replace(/\s/g, '').replace(/[-–]/g, '−');
     }
@@ -422,6 +441,25 @@
                 throw new TypeError('A fields answer must contain a valid number for every field id.');
             }
         }
+        const hasTolerance = Object.hasOwn(config, 'tolerance');
+        let tolerance;
+        if (hasTolerance) {
+            if (config.input !== 'number' || config.exact === true) {
+                throw new TypeError('tolerance requires input: number without exact: true.');
+            }
+            const valid = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+            const option = config.tolerance;
+            if (valid(option)) tolerance = fields
+                ? Object.fromEntries(fields.map(field => [field.id, numberFraction(option)])) : numberFraction(option);
+            else if (fields && option !== null && typeof option === 'object' && !Array.isArray(option) &&
+                Reflect.ownKeys(option).length === fields.length &&
+                fields.every(field => Object.hasOwn(option, field.id) && valid(option[field.id]))) {
+                tolerance = Object.fromEntries(fields.map(field => [field.id, numberFraction(option[field.id])]));
+            } else throw new TypeError('tolerance must be a finite non-negative number, or one for every field id and no other keys.');
+            if (!fractions && tidyNumber(config.answer) === null) {
+                throw new TypeError('A plain number card with tolerance requires a plain number answer.');
+            }
+        }
         const custom = config.input === 'custom';
         const widget = config.widget;
         if (custom && ['render', 'isEmpty', 'mark', 'answerText'].some(name => typeof widget?.[name] !== 'function')) {
@@ -439,7 +477,12 @@
         const saved = section.state.cards[questionId];
         const options = config.options || [];
         let released = false;
-        function matches(value, expected) {
+        function matches(value, expected, fieldId) {
+            if (hasTolerance) {
+                const answer = fractions ? expected : tidyNumber(expected);
+                return answer !== null && withinTolerance(fractionValue(value), fractionValue(answer),
+                    fields ? tolerance[fieldId] : tolerance);
+            }
             if (fractions) {
                 const actual = fractionValue(value);
                 const answer = fractionValue(expected);
@@ -450,7 +493,7 @@
             return answer !== null && (config.exact === true ? value === answer : Number(value) === Number(answer));
         }
         function matchesFields(value, expected) {
-            return Object.keys(expected).every(id => fields.some(field => field.id === id) && matches(value[id], expected[id]));
+            return Object.keys(expected).every(id => fields.some(field => field.id === id) && matches(value[id], expected[id], id));
         }
         function empty() {
             return fields ? fields.some(field => saved.value[field.id].trim() === '') : saved.value.trim() === '';
@@ -633,7 +676,7 @@
                     handle.focus?.();
                 }
                 if (input) input.focus();
-                fieldInputs.find(({ id }) => !matches(saved.value[id], config.answer[id]))?.box.focus();
+                fieldInputs.find(({ id }) => !matches(saved.value[id], config.answer[id], id))?.box.focus();
                 return;
             }
             let correct;
@@ -661,7 +704,7 @@
                     return;
                 }
                 value = Object.fromEntries(fields.map(field => [field.id, fractionText(saved.value[field.id])]));
-                correct = fields.every(field => matches(value[field.id], config.answer[field.id]));
+                correct = fields.every(field => matches(value[field.id], config.answer[field.id], field.id));
                 response = correct ? { feedback: config.feedback || '' }
                     : (config.rules || []).find(rule => matchesFields(value, rule.value)) || { feedback: config.fallback || '' };
             } else {
