@@ -37,3 +37,15 @@
 .quadratic-steps p { margin: 0.2rem 0; }
 .quadratic-wrong { color: var(--text-muted); }
 .quadratic-right { color: var(--success-dark); font-weight: 700; }
+@media (min-width: 760px) {
+    .quadratic-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        grid-template-areas: "figure equation" "figure notes";
+        grid-template-rows: auto 1fr;
+        column-gap: 2.5rem;
+    }
+    .quadratic-layout .quadratic-equation { grid-area: equation; text-align: left; margin-top: 1rem; }
+    .quadratic-figure { grid-area: figure; }
+    .quadratic-notes { grid-area: notes; font-size: 1.1rem; }
+}

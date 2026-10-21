@@ -180,15 +180,21 @@
                 timers.push(setTimeout(run, delay));
             };
             root.append(node('h3', screen.title));
-            equation(root, screen.form);
+            // On wide screens the figure (table and graph) sits beside the equation and notes; on phones they stack.
+            const layout = node('div', '', 'quadratic-layout');
+            equation(layout, screen.form);
+            const figure = node('div', '', 'quadratic-figure');
+            const notes = node('div', '', 'quadratic-notes');
+            layout.append(figure, notes);
+            root.append(layout);
             const filled = [];
             let table = null;
             if (screen.table) {
                 table = Q.table(screen.form, { filled: animate ? [] : Q.xs });
-                root.append(table);
+                figure.append(table);
             }
             const host = node('div');
-            root.append(host);
+            figure.append(host);
             board = Q.graph(host, screen.form);
             const points = pointsOf(screen.form);
             if (screen.focus !== undefined) {
@@ -196,7 +202,7 @@
                 points.forEach(p => { if (p[0] !== screen.focus) board.point(p, { tone: 'muted' }); });
                 Q.point(board, [screen.focus, valueOf(screen.form, screen.focus)], 'neutral', true);
                 const working = node('div', '', 'quadratic-steps');
-                root.append(working);
+                notes.append(working);
                 steps(screen.form, screen.focus).forEach(line => later(() => working.append(node('p', line))));
             } else if (screen.table) {
                 points.forEach(p => later(() => {
@@ -216,7 +222,7 @@
                 points.forEach(p => Q.point(board, p));
                 const wrong = node('p', '', 'quadratic-wrong');
                 const right = node('p', '', 'quadratic-right');
-                root.append(wrong, right);
+                notes.append(wrong, right);
                 let segments = [];
                 later(() => {
                     segments = points.slice(1).map((p, i) => board.segment(points[i], p, { tone: 'ink', dash: true }));
@@ -231,7 +237,7 @@
                 board.plot(curve(screen.form), { domain: [-2.3, 2.3] });
                 points.forEach(p => Q.point(board, p));
             }
-            screen.text.forEach(text => strongText(root, text));
+            screen.text.forEach(text => strongText(notes, text));
             section.update(s => { s.seen[s.screen] = true; });
             api.setSectionBack('explanation', state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
             if (state.finished) event('explanation', 'complete');
