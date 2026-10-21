@@ -1,0 +1,15 @@
+.turning-learn p { margin: 0.45rem 0; }
+.turning-status { min-height: 1.6rem; color: var(--text-muted); font-weight: 700; }
+.turning-steps { font-size: 1.15rem; }
+.turning-steps p { margin: 0.2rem 0; }
+.turning-card-graph { max-width: 320px; margin: 0 auto; }
+.turning-retained + .turning-retained { margin-top: 1.5rem; }
+@media (min-width: 760px) {
+    .turning-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        column-gap: 2.5rem;
+        align-items: center;
+    }
+    .turning-notes { font-size: 1.1rem; }
+}
