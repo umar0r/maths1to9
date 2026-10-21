@@ -64,21 +64,21 @@ test('simultaneous feedback rules cover each row in order and omit duplicates, a
     assert.ok(!repeated.some(r => /crosses the y-axis/.test(r.feedback)));
 });
 
-test('simultaneous generator is seeded, alternates three distinct typed kinds with one of each choice type and valid maths', () => {
+test('simultaneous generator is seeded, alternates two distinct integer kinds and one typed estimate with one of each choice type and valid maths', () => {
     for (let seed = 0; seed < 500; seed++) {
         const items = T.pick(E.seededRandom(seed));
         assert.deepEqual(plain(T.pick(E.seededRandom(seed))), plain(items));
-        assert.deepEqual(plain(items.map(i => i.type === 'read-solution')), [true, false, true, false, true, false]);
+        assert.deepEqual(plain(items.map(i => T.typedTypes.includes(i.type))), [true, false, true, false, true, false]);
         const typed = items.filter(i => i.type === 'read-solution');
-        assert.equal(new Set(typed.map(i => i.kind)).size, 3);
-        assert.equal(new Set(typed.flatMap(i => i.lines.map(l => `${l.m}:${l.c}`))).size, 6);
-        assert.deepEqual(plain(items.filter(i => i.type !== 'read-solution').map(i => i.type).sort()), plain([...T.choiceTypes].sort()));
+        assert.equal(new Set(typed.map(i => i.kind)).size, 2);
+        assert.equal(new Set(typed.flatMap(i => i.lines.map(l => `${l.m}:${l.c}`))).size, 4);
+        assert.deepEqual(plain(items.filter(i => T.choiceTypes.includes(i.type)).map(i => i.type).sort()), plain([...T.choiceTypes].sort()));
         for (const item of items) {
             const card = T.generate(item, E.seededRandom(item.seed));
             const { x, y } = T.crossing(...card.lines);
             assert.equal(card.lines.length, 2);
             assert.ok(card.lines[0].m * card.lines[1].m < 0);
-            if (item.type !== 'estimate') {
+            if (!item.type.startsWith('estimate')) {
                 assert.ok(card.lines.every(l => Number.isInteger(l.m) && Math.abs(l.m) >= 1 && Math.abs(l.m) <= 3 && Math.abs(l.c) <= 8));
                 assert.ok(Number.isInteger(x) && Number.isInteger(y) && Math.abs(x) <= 4 && Math.abs(y) <= 4);
                 if (item.kind === 'positive') assert.ok(x > 0 && y > 0);
@@ -102,7 +102,14 @@ test('simultaneous generator is seeded, alternates three distinct typed kinds wi
                     assert.ok(card.point.every(v => Number.isInteger(v) && Math.abs(v) <= 4));
                     assert.ok(Math.hypot(card.point[0] - x, card.point[1] - y) >= 2);
                 }
-            } else assert.deepEqual(plain(card.answer), { x: String(x), y: String(y) });
+            } else if (item.type === 'read-solution') assert.deepEqual(plain(card.answer), { x: String(x), y: String(y) });
+            else {
+                assert.equal(item.type, 'estimate-solution');
+                const exact = T.crossing(...card.lines).exact;
+                assert.deepEqual(plain(card.answer), { x: T.fractionText(exact.x), y: T.fractionText(exact.y) });
+                assert.equal(card.tolerance, 0.2);
+                assert.ok(items.find(i => i.type === 'estimate').pool !== item.pool);
+            }
             const rebuilt = T.generate(item, E.seededRandom(item.seed));
             assert.deepEqual(plain({ ...rebuilt, figure: null }), plain({ ...card, figure: null }));
         }
@@ -155,4 +162,72 @@ test('simultaneous maths text keeps equations, values and working together witho
     assert.equal(T.mathText('Read x, then y.'), 'Read x, then\u00a0y.');
     assert.equal(T.mathText('It is on y = 4 − 2x.'), 'It is on y\u00a0=\u00a04\u00a0−\u00a02x.');
     assert.equal(T.mathText('(−1, 1)'), '(−1, 1)');
+});
+
+test('typed estimate rules cover each misconception and about-right field using exact fractions', () => {
+    const rules = plain(T.estimateRules(T.estimatePool[0]));
+    assert.deepEqual(rules.map(r => r.value), [
+        { x: '8/3', y: '4/3' }, { x: '1', y: '3' }, { x: '-4/3' }, { y: '-8/3' }, { x: '4/3' }, { y: '8/3' }
+    ]);
+    for (const [i, pattern] of [/Write x first/, /nearest grid point/, /Right of 0 is positive/,
+        /Above 0 is positive/, /x is about right/, /y is about right/].entries()) assert.match(rules[i].feedback, pattern);
+    const negative = T.estimateRules(T.estimatePool[4]);
+    assert.match(negative.find(r => Object.keys(r.value).length === 1 && r.value.y === '1/3').feedback, /Below 0 is negative/);
+    const negativeX = T.estimateRules(T.estimatePool[1]);
+    assert.match(negativeX.find(r => r.value.x === '2/3' && !r.value.y).feedback, /Left of 0 is negative/);
+});
+
+test('typed estimate rules skip acceptable misconceptions and near duplicates while retaining about-right partials', () => {
+    const tiny = plain(T.estimateRules([{ m: 1, c: 0 }, { m: -9, c: 1 }]));
+    assert.deepEqual(tiny.map(r => r.value), [{ x: '1/10' }, { y: '1/10' }]);
+    assert.ok(tiny.every(r => /about right/.test(r.feedback)));
+    const equal = T.estimateRules([{ m: 1, c: 0 }, { m: -2, c: 1 }]);
+    assert.ok(!equal.some(r => /Write x first/.test(r.feedback)));
+    const axis = T.estimateRules([{ m: 1, c: 1 }, { m: -1, c: 1 }]);
+    assert.ok(!axis.some(r => /sign of x|nearest grid point/.test(r.feedback)));
+    assert.ok(axis.some(r => /x is about right/.test(r.feedback)));
+    assert.equal(T.withinFifth('1/10', '3/10'), true);
+    assert.equal(T.withinFifth('1/10', '4/10'), false);
+    for (const lines of [...T.estimatePool, [{ m: 1, c: 0 }, { m: -9, c: 1 }]]) {
+        const rules = T.estimateRules(lines), cross = T.crossing(...lines);
+        const answer = { x: T.fractionText(cross.exact.x), y: T.fractionText(cross.exact.y) };
+        rules.forEach((rule, index) => {
+            const keys = Object.keys(rule.value);
+            if (!/about right/.test(rule.feedback)) assert.ok(!keys.every(id => T.withinFifth(rule.value[id], answer[id])));
+            assert.ok(!rules.slice(0, index).some(earlier => Object.keys(earlier.value).length === keys.length &&
+                keys.every(id => Object.hasOwn(earlier.value, id) && T.withinFifth(earlier.value[id], rule.value[id]))));
+        });
+    }
+});
+
+test('typed estimates use every typed position by seed and never share the choice estimate pair', () => {
+    const positions = new Set();
+    for (let seed = 0; seed < 100; seed++) {
+        const items = T.pick(E.seededRandom(seed));
+        const index = items.findIndex(i => i.type === 'estimate-solution');
+        positions.add(index);
+        assert.equal(items.filter(i => i.type === 'read-solution').length, 2);
+        assert.equal(items.filter(i => i.type === 'estimate-solution').length, 1);
+        assert.notEqual(items[index].pool, items.find(i => i.type === 'estimate').pool);
+    }
+    assert.deepEqual([...positions].sort(), [0, 2, 4]);
+});
+
+test('old saves preserve finished Check cards and restart unfinished work without discarding earlier practice', () => {
+    const saved = { finished: true, cards: { 'final-check-1': { value: { x: '1', y: '4' }, correct: true } }, index: 4, screen: 4 };
+    assert.deepEqual(plain(T.upgradeCheck(saved, 1)), { ...saved, legacyCount: 4 });
+    assert.equal(T.upgradeCheck({ ...saved, finished: false }, 1), null);
+    assert.equal(T.upgradeCheck(saved, 99), null);
+    const old = { session: 2, items: [{ type: 'read-solution', seed: 123 }], finished: false, earlier: [{ session: 1 }], cards: {} };
+    const practice = plain(T.upgradePractice(old, 1));
+    assert.equal(practice.session, 2);
+    assert.deepEqual(practice.earlier, [{ session: 1 }]);
+    assert.equal(practice.index, 0);
+    assert.equal(practice.finished, false);
+    assert.equal(practice.items.filter(i => i.type === 'estimate-solution').length, 1);
+    const completed = plain(T.upgradePractice({ ...old, finished: true }, 1));
+    assert.equal(completed.session, 3);
+    assert.equal(completed.earlier.length, 2);
+    assert.equal(completed.earlier[1].finished, true);
+    assert.equal(T.upgradePractice(old, 99), null);
 });

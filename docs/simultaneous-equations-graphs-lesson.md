@@ -278,9 +278,46 @@ Crossing kinds, h and k from −4 to 4:
 
 ### Typed
 
-Three `read-solution` cards per session, three different kinds (by
-seed), all different lines: the two-field card "Find the solution of
-y = … and y = …." with `solutionRules`.
+Two `read-solution` cards per session, two different kinds (by seed),
+all different lines: the two-field card "Find the solution of y = … and
+y = …." with `solutionRules`.
+
+One `estimate-solution` card goes in any of the three typed positions,
+chosen by seed. Use a different pair from `estimatePool` from the choice
+estimate in that session. Fields `x` and `y`, labelled "x ≈" and "y ≈",
+`fractions: true`, exact fraction answers and `tolerance: 0.2`. Prompt:
+"Estimate the solution of y = … and y = …. Give each value to 1 decimal
+place, like 1.3." Correct: "Right. The solution is about x ≈ 1.3,
+y ≈ 2.7." (the crossing rounded to 1 d.p.).
+Map `estimate-solution` to `simultaneous-graphs`.
+
+### `estimateRules(lines)`
+
+Use the exact crossing (x0, y0). Misconception rules, in order:
+
+| Value | Feedback |
+|---|---|
+| `{ x: y0, y: x0 }` | "Write x first, then y. Read x on the x-axis." |
+| `{ x: round(x0), y: round(y0) }` | "That's the nearest grid point, but the lines don't cross there. Estimate between the grid lines." |
+| `{ x: −x0 }`, when x0 ≠ 0 | "Check the sign of x. Left of 0 is negative." (or "Right of 0 is positive.") |
+| `{ y: −y0 }`, when y0 ≠ 0 | "Check the sign of y. Below 0 is negative." (or "Above 0 is positive.") |
+
+Skip a misconception rule when it is within 0.2 of the answer on every
+field it names, including partial sign rules. Compare near-duplicate
+rules only when they name the same fields; the earlier one wins.
+
+Then keep these partial rules unless an earlier rule naming the same
+field already covers them within 0.2:
+
+- `{ x: x0 }`: "x is about right. Now go across from the crossing point
+  to the y-axis to read y."
+- `{ y: y0 }`: "y is about right. Now go down or up from the crossing
+  point to the x-axis to read x."
+
+For example, y = x and y = −9x + 1 cross at (1/10, 1/10). Both sign
+rules are skipped; the two about-right rules remain.
+Fallback: "Find where the lines cross. Use the scale to estimate x,
+then y."
 
 ### Choice
 
@@ -330,7 +367,7 @@ the line y = …. Is P the solution?"
 
 ## Check
 
-Four fixed questions in `questions.js` (two typed, two choice), through
+Five fixed questions in `questions.js` (three typed, two choice), through
 the shared card, options shuffled once and saved. Each shows its graph,
 no guides or marked crossing point. No hints before the answer.
 
@@ -362,6 +399,20 @@ no guides or marked crossing point. No hints before the answer.
    - A's coordinates must be whole numbers.: "Solutions can be decimals.
      What matters is that the point is on both lines."
 
+5. **Estimate** (two-field). y = x − 1 and y = −2x + 1, crossing at
+   (2/3, −1/3). Fields "x ≈" and "y ≈", `fractions: true`, exact answers
+   `2/3` and `-1/3`, `tolerance: 0.2`, `estimateRules`.
+   Correct: "Right. The solution is about x ≈ 0.7, y ≈ −0.3."
+
+### Existing saved work
+
+Version 1's finished four-question Check keeps its four cards, completion,
+points and summary. An unfinished Check restarts at question 1. Practice
+starts a fresh current session; a finished old session is kept in earlier
+results, and existing earlier results remain. Stable score slots keep
+points from counting twice. Earned points stay unchanged; the planned
+maximum is now 155 for everyone, so an old perfect finish may show 145/155.
+
 Summary after the results, three points:
 - "The solution of simultaneous equations works in both equations."
 - "On a graph, it's where the two lines cross: the point of
@@ -381,7 +432,7 @@ The engine plans the maximum. Report it; don't hard-code it.
 - Unit tests for `simultaneous.js`: `crossing` (whole and fraction
   answers), `onLine`, `equationText` for every case listed; every
   `solutionRules` row including skipped rows and duplicates (h = 0,
-  k = 0, h = k); the generator gives three different typed kinds and
+  k = 0, h = k); the generator gives two different integer typed kinds, one typed estimate and
   one of each choice type, alternating, within the ranges, c from −8 to
   8, four different options on every choice card, P on one line only and
   2+ units from the crossing, the same session for the same seed.

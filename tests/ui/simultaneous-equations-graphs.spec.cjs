@@ -225,7 +225,7 @@ test('simultaneous-equations-graphs every wrong option and rule displays its own
             (definition.rules || []).forEach(rule => {
                 const value = definition.fields
                     ? Object.fromEntries(definition.fields.map(f => [f.id, String(rule.value[f.id] ?? 99)])) : String(rule.value);
-                const first = definition.fields ? definition.rules.find(r => Object.entries(r.value).every(([id, v]) => +value[id] === +v)) : rule;
+                const first = definition.fields ? definition.rules.find(r => Object.entries(r.value).every(([id, v]) => definition.tolerance ? T.withinFifth(value[id], v) : +value[id] === +v)) : rule;
                 tests.push({ index, value, expected: first.feedback });
             });
         });
@@ -320,6 +320,105 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
             }
             expect(await noSideways(page)).toBe(true);
             await page.locator(`#${host}`).screenshot({ path: `/tmp/simultaneous-practice-seed-${seed}${phone ? '' : '-desktop'}.png`, style: '.lesson-header { visibility: hidden !important; }' });
+        }
+        expect(errors).toEqual([]);
+    });
+});
+
+for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs typed tolerance ${phone ? 'phone' : 'desktop'}`, () => {
+    test.use({ viewport: { width: phone ? 375 : 1280, height: phone ? 812 : 800 }, hasTouch: phone, isMobile: phone });
+    test('typed estimates accept close values, reject the grid point and retain every phase', async ({ page }) => {
+        test.setTimeout(180000);
+        const errors = watchForErrors(page);
+        // Session seed 0 puts pool 0 at the first typed place.
+        await page.goto(`/content/${slug}/`);
+        await ready(page);
+        await until(page, '#question-bank-question-1');
+        // Use a real saved session rather than changing the graph library's randomness.
+        await page.evaluate(async () => {
+            const saved = await Maths1to9Progress.getLessonActivityState('simultaneous-equations-graphs', 'question-bank');
+            saved.data.items = Simultaneous.pick(Maths1to9LessonEngine.seededRandom(0));
+            saved.data.cards = {};
+            await Maths1to9Progress.saveLessonActivityState('simultaneous-equations-graphs', 'question-bank', saved);
+        });
+        await page.reload(); await ready(page);
+        const first = await read(page);
+        expect(first.s.items[0].type).toBe('estimate-solution');
+        await expect(root(page).locator('.question-answer-label')).toHaveText(['x ≈', 'y ≈']);
+        const inputs = root(page).locator('.question-card input');
+        await inputs.nth(0).fill('1'); await inputs.nth(1).fill('3');
+        await main(page).click();
+        await expect(main(page)).toHaveText('Try again');
+        await expect(root(page).locator('.question-feedback')).toContainText("That's the nearest grid point");
+        await reload(page);
+        await main(page).click();
+        await inputs.nth(0).fill('1.4'); await inputs.nth(1).fill('2.7');
+        await reload(page);
+        await expect(inputs.nth(0)).toHaveValue('1.4');
+        await main(page).click();
+        await expect(main(page)).toHaveText('Continue');
+        await expect(root(page).locator('.question-feedback')).toHaveText('Right. The solution is about x ≈ 1.3, y ≈ 2.7.');
+        await reload(page);
+        expect(await noSideways(page)).toBe(true);
+        await page.locator('.site-logo').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `/tmp/tolerance-practice-${phone ? 375 : 1280}.png`, fullPage: true });
+        await until(page, '#check-5');
+        await expect(root(page).locator('.question-answer-label')).toHaveText(['x ≈', 'y ≈']);
+        await inputs.nth(0).fill('1'); await inputs.nth(1).fill('0');
+        await main(page).click();
+        await expect(main(page)).toHaveText('Try again');
+        await reload(page);
+        await main(page).click();
+        await inputs.nth(0).fill('0.6'); await inputs.nth(1).fill('-0.3');
+        await reload(page);
+        await main(page).click();
+        await expect(main(page)).toHaveText('Continue');
+        await expect(root(page).locator('.question-feedback')).toHaveText('Right. The solution is about x ≈ 0.7, y ≈ −0.3.');
+        await reload(page);
+        await expect(inputs.nth(0)).toHaveValue('0.6');
+        expect(await noSideways(page)).toBe(true);
+        await page.locator('.site-logo').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `/tmp/tolerance-check5-${phone ? 375 : 1280}.png`, fullPage: true });
+        await until(page, '#summary');
+        expect((await page.evaluate(() => Maths1to9Lesson.getScore())).maximumPoints).toBe(155);
+        await main(page).click();
+        await expect(page).toHaveURL(/\/$/);
+        expect(errors).toEqual([]);
+    });
+});
+
+test.describe('simultaneous-equations-graphs version 1 saves', () => {
+    const oldSaves = require('../fixtures/simultaneous-v1-saves.json');
+    for (const name of ['practice', 'check', 'finished']) test(`old ${name} save loads with earned points retained`, async ({ page }) => {
+        test.setTimeout(90000);
+        const errors = watchForErrors(page);
+        await page.goto('/');
+        await page.evaluate(values => {
+            localStorage.clear();
+            for (const [key, value] of Object.entries(values)) localStorage.setItem(key, value);
+        }, oldSaves[name]);
+        const target = name === 'finished' ? '#summary' : name === 'check' ? '#check-2' : '#question-bank-question-2';
+        await page.goto(`/content/${slug}/${target}`);
+        await ready(page);
+        const score = await page.evaluate(() => Maths1to9Lesson.getScore());
+        expect(score.maximumPoints).toBe(155);
+        if (name === 'finished') {
+            await expect(main(page)).toHaveText('All lessons');
+            expect((await read(page)).s.legacyCount).toBe(4);
+            await expect(root(page).locator('.retained-result')).toHaveCount(4);
+            expect(score.points).toBe(145);
+            await reload(page);
+            expect((await page.evaluate(() => Maths1to9Lesson.getScore())).points).toBe(145);
+            const progress = await page.evaluate(() => Maths1to9Progress.getLessonProgress('simultaneous-equations-graphs'));
+            expect(progress.finished).toBe(true);
+            const practice = await page.evaluate(() => Maths1to9Progress.getLessonActivityState('simultaneous-equations-graphs', 'question-bank'));
+            expect(practice.data.earlier.at(-1).finished).toBe(true);
+        } else {
+            await expect(page).toHaveURL(name === 'check' ? /#check-1$/ : /#question-bank-question-1$/);
+            if (name === 'practice') expect((await read(page)).s.items.filter(i => i.type === 'estimate-solution')).toHaveLength(1);
+            await solve(page);
+            expect((await page.evaluate(() => Maths1to9Lesson.getScore())).points).toBe(score.points);
+            await reload(page);
         }
         expect(errors).toEqual([]);
     });

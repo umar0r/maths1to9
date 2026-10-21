@@ -19,7 +19,8 @@
                 T.choice('A must be on both lines.', 'Right. The values must work in both equations, so the point must be on both lines.', true),
                 T.choice('Nothing. Any point on a line is a solution.', "A point on one line only works in that line's equation. It must work in both."),
                 T.choice('A must be on an axis.', "The solution doesn't have to be on an axis. It's where the two lines cross."),
-                T.choice("A's coordinates must be whole numbers.", 'Solutions can be decimals. What matters is that the point is on both lines.')] }
+                T.choice("A's coordinates must be whole numbers.", 'Solutions can be decimals. What matters is that the point is on both lines.')] },
+        { ...T.estimateCard([{ m: 1, c: -1 }, { m: -2, c: 1 }]), questionType: 'estimate-solution' }
     ].map(T.formatCard);
     T.checks = checks;
 
@@ -32,7 +33,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
+            version: 2, upgrade: T.upgradePractice, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: T.pick, question: T.generate
         });
     }
@@ -40,18 +41,18 @@
     async function mountCheck(root, lesson) {
         const api = window.Maths1to9Lesson;
         const { shuffle, renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
-        const questions = checks;
-        const count = questions.length;
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('comparison', {
-            version: 1,
+            version: 2, upgrade: T.upgradeCheck,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                order: questions.map(question => shuffle((question.options || []).map((option, index) => index)))
+                order: checks.map(question => shuffle((question.options || []).map((option, index) => index)))
             })
         });
         const state = section.state;
+        const questions = state.legacyCount ? checks.slice(0, state.legacyCount) : checks;
+        const count = questions.length;
         section.save();
 
         function syncHash() {

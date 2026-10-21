@@ -172,8 +172,51 @@
             choice(solution([point[0], -point[1]], '≈'), 'Check the signs. Below 0 is negative.')
         ];
     }
+    const fractionText = value => value.denominator === 1 ? String(value.numerator) : `${value.numerator}/${value.denominator}`;
+    // Rule values here are exact fractions or whole numbers from a crossing.
+    function withinFifth(a, b) {
+        const [an, ad = 1n] = String(a).split('/').map(BigInt);
+        const [bn, bd = 1n] = String(b).split('/').map(BigInt);
+        const absolute = n => n < 0n ? -n : n;
+        return 5n * absolute(an * bd - bn * ad) <= absolute(ad * bd);
+    }
+    function estimateRules(lines) {
+        const { x, y, exact } = crossing(...lines);
+        const answer = { x: fractionText(exact.x), y: fractionText(exact.y) };
+        const used = [], rules = [];
+        function add(value, feedback, misconception = true) {
+            const keys = Object.keys(value);
+            if (misconception && keys.every(id => withinFifth(value[id], answer[id]))) return;
+            // Partial rules remain partial: compare them only with the same named fields.
+            if (used.some(earlier => Object.keys(earlier).length === keys.length &&
+                keys.every(id => Object.hasOwn(earlier, id) && withinFifth(value[id], earlier[id])))) return;
+            used.push(value);
+            rules.push({ value, feedback });
+        }
+        add({ x: answer.y, y: answer.x }, 'Write x first, then y. Read x on the x-axis.');
+        add({ x: String(Math.round(x) || 0), y: String(Math.round(y) || 0) },
+            "That's the nearest grid point, but the lines don't cross there. Estimate between the grid lines.");
+        if (x !== 0) add({ x: fractionText({ ...exact.x, numerator: -exact.x.numerator }) },
+            `Check the sign of x. ${x < 0 ? 'Left of 0 is negative.' : 'Right of 0 is positive.'}`);
+        if (y !== 0) add({ y: fractionText({ ...exact.y, numerator: -exact.y.numerator }) },
+            `Check the sign of y. ${y < 0 ? 'Below 0 is negative.' : 'Above 0 is positive.'}`);
+        add({ x: answer.x }, 'x is about right. Now go across from the crossing point to the y-axis to read y.', false);
+        add({ y: answer.y }, 'y is about right. Now go down or up from the crossing point to the x-axis to read x.', false);
+        return rules;
+    }
+    function estimateCard(lines) {
+        const { x, y, exact } = crossing(...lines);
+        return formatCard({
+            lines, input: 'number', fractions: true, tolerance: 0.2,
+            fields: [{ id: 'x', label: 'x ≈' }, { id: 'y', label: 'y ≈' }],
+            answer: { x: fractionText(exact.x), y: fractionText(exact.y) }, rules: estimateRules(lines),
+            prompt: `Estimate the solution of ${lines.map(equationText).join(' and ')}. Give each value to 1 decimal place, like 1.3.`,
+            feedback: `Right. The solution is about ${solution([x, y].map(v => Number(v.toFixed(1))), '≈')}.`,
+            fallback: 'Find where the lines cross. Use the scale to estimate x, then y.', figure: figure(lines)
+        });
+    }
     const kinds = ['positive', 'negative-x', 'negative-y', 'on-axis'];
-    const typedTypes = ['read-solution'];
+    const typedTypes = ['read-solution', 'estimate-solution'];
     const choiceTypes = ['which-solution', 'estimate', 'both-lines'];
 
     function makeLines(kind, random) {
@@ -211,33 +254,53 @@
     function pick(random) {
         const { shuffle, randomInt } = window.Maths1to9LessonEngine;
         const order = shuffle(kinds, random), choices = shuffle(choiceTypes, random);
-        const items = [];
-        const used = new Set();
+        const typed = shuffle(['read-solution', 'read-solution', 'estimate-solution'], random);
+        const estimates = shuffle(estimatePool.map((lines, i) => i), random);
+        const items = [], used = new Set();
+        let nextKind = 0;
         for (let i = 0; i < 3; i++) {
-            let lines, key;
-            do {
-                lines = makeLines(order[i], random);
-                key = JSON.stringify([...lines].sort((a, b) => a.m - b.m));
-            } while (used.has(key) || lines.some(line => used.has(`${line.m}:${line.c}`)));
-            used.add(key);
-            lines.forEach(line => used.add(`${line.m}:${line.c}`));
-            items.push({ type: 'read-solution', kind: order[i], lines, seed: randomInt(0, 4294967295, random) });
-            items.push({ type: choices[i], kind: order[3], seed: randomInt(0, 4294967295, random) });
+            if (typed[i] === 'read-solution') {
+                const kind = order[nextKind++];
+                let lines;
+                do { lines = makeLines(kind, random); }
+                while (lines.some(line => used.has(`${line.m}:${line.c}`)));
+                lines.forEach(line => used.add(`${line.m}:${line.c}`));
+                items.push({ type: typed[i], kind, lines, seed: randomInt(0, 4294967295, random) });
+            } else items.push({ type: typed[i], pool: estimates[0], seed: randomInt(0, 4294967295, random) });
+            items.push({ type: choices[i], kind: order[2], pool: choices[i] === 'estimate' ? estimates[1] : null,
+                seed: randomInt(0, 4294967295, random) });
         }
         return items;
+    }
+    function upgradePractice(saved, version) {
+        if (version !== 1 || !saved || !Array.isArray(saved.items)) return null;
+        const previous = JSON.parse(JSON.stringify(saved));
+        delete previous.earlier;
+        const earlier = saved.finished ? [...(saved.earlier || []), previous].slice(-5) : saved.earlier || [];
+        return { session: (saved.session || 1) + Number(saved.finished),
+            items: pick(window.Maths1to9LessonEngine.seededRandom(saved.items[0]?.seed || 1)),
+            index: 0, screen: 0, finished: false, cards: {}, earlier };
+    }
+    function upgradeCheck(saved, version) {
+        // Finished four-question Checks keep their answers and summary; unfinished ones restart.
+        return version === 1 && saved?.finished === true ? { ...saved, legacyCount: 4 } : null;
     }
     function generate(item, random) {
         const { shuffle, randomInt } = window.Maths1to9LessonEngine;
         let lines = item.lines || makeLines(item.kind || kinds[randomInt(0, 3, random)], random);
         let config;
         if (item.type === 'read-solution') config = solutionCard(lines);
+        if (item.type === 'estimate-solution') {
+            lines = estimatePool[item.pool ?? randomInt(0, estimatePool.length - 1, random)];
+            config = estimateCard(lines);
+        }
         if (item.type === 'which-solution') {
             // Some axis crossings repeat a distractor. Pick another allowed pair until four are distinct.
             while (whichOptions(lines).length !== 4) lines = makeLines(item.kind, random);
             config = { input: 'choice', prompt: 'What is the solution?', options: whichOptions(lines), figure: figure(lines) };
         }
         if (item.type === 'estimate') {
-            lines = estimatePool[randomInt(0, estimatePool.length - 1, random)];
+            lines = estimatePool[item.pool ?? randomInt(0, estimatePool.length - 1, random)];
             config = { input: 'choice', prompt: 'Estimate the solution.', options: estimateOptions(lines), figure: figure(lines) };
         }
         if (item.type === 'both-lines') {
@@ -259,6 +322,6 @@
     window.Simultaneous = {
         GRID, LEARN_GRID, TRY_GRID, number, coordinate, solution, crossing, onLine, equationText,
         mathText, formatCard, lineEnds, node, strongText, graphLabel, graph, guides, figure, solutionRules, solutionCard, choice,
-        whichOptions, estimateOptions, estimatePool, kinds, typedTypes, choiceTypes, makeLines, otherPoint, pick, generate
+        whichOptions, estimateOptions, estimatePool, fractionText, withinFifth, estimateRules, estimateCard, upgradePractice, upgradeCheck, kinds, typedTypes, choiceTypes, makeLines, otherPoint, pick, generate
     };
 })();

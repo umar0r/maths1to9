@@ -12,7 +12,8 @@
             "which-solution": "simultaneous-graphs",
             "estimate": "simultaneous-graphs",
             "both-lines": "simultaneous-graphs",
-            "aisha": "simultaneous-graphs"
+            "aisha": "simultaneous-graphs",
+            "estimate-solution": "simultaneous-graphs"
         }
     },
     "explanation": {
@@ -82,6 +83,9 @@
             },
             {
                 "type": "aisha"
+            },
+            {
+                "type": "estimate-solution"
             }
         ],
         "summary": {
