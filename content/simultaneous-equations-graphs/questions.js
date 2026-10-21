@@ -14,13 +14,13 @@
                 T.choice('x ≈ 1.7, y ≈ 0.7', 'x comes first. Read x on the x-axis, then y on the y-axis.'),
                 T.choice('x ≈ 0, y ≈ 1', "(0, 1) is where y = x + 1 crosses the y-axis. It's on one line only.")] },
         { input: 'choice', questionType: 'aisha',
-            figure: T.figure([{ m: 1, c: 2 }, { m: -1, c: 4 }], { point: [3, 5], label: 'A' }),
+            figure: T.figure([{ m: 1, c: 2 }, { m: -1, c: 4 }], { point: [-1, 1], label: 'A' }),
             prompt: "Aisha says A is the solution because it's on a line. What else must be true?", options: [
                 T.choice('A must be on both lines.', 'Right. The values must work in both equations, so the point must be on both lines.', true),
                 T.choice('Nothing. Any point on a line is a solution.', "A point on one line only works in that line's equation. It must work in both."),
                 T.choice('A must be on an axis.', "The solution doesn't have to be on an axis. It's where the two lines cross."),
                 T.choice("A's coordinates must be whole numbers.", 'Solutions can be decimals. What matters is that the point is on both lines.')] }
-    ];
+    ].map(T.formatCard);
     T.checks = checks;
 
     function sectionEvent(name) {
@@ -114,7 +114,7 @@
             summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
             for (const point of lesson.comparison.summary.points) {
                 const paragraph = document.createElement('p');
-                paragraph.textContent = point.text;
+                paragraph.textContent = T.mathText(point.text);
                 summary.append(paragraph);
             }
             root.append(summary);

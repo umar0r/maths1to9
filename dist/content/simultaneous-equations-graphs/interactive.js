@@ -159,7 +159,7 @@
             T.choice('x = 1, y = 5', 'The point is left of 0, so x is negative: x = −1.'),
             T.choice('x = 0, y = 7', "(0, 7) is where y = 2x + 7 crosses the y-axis. It's on one line only.")] },
         T.solutionCard(lessHelp)
-    ];
+    ].map(config => config ? T.formatCard(config) : null);
 
     async function mountTryIt(root) {
         const api = window.Maths1to9Lesson;
@@ -211,10 +211,10 @@
                 if (state.tap) dot = board.point(state.tap, { size: 'large', tone: state.found ? 'correct' : 'incorrect' });
                 const first = state.tap && T.onLine(guided[0], state.tap);
                 const second = state.tap && T.onLine(guided[1], state.tap);
-                status.textContent = state.found ? '✓ Both lines go through this point.'
+                status.textContent = T.mathText(state.found ? '✓ Both lines go through this point.'
                     : !state.tap ? '' : first ? '✗ That point is on y = 2x + 7 only. Find where both lines meet.'
                         : second ? '✗ That point is on y = −x + 4 only. Find where both lines meet.'
-                            : "✗ That point isn't on either line. Find where the two lines cross.";
+                            : "✗ That point isn't on either line. Find where the two lines cross.");
                 status.className = `simultaneous-status${state.tap ? ` question-feedback is-visible ${state.found ? 'is-correct' : 'is-incorrect'}` : ''}`;
                 api.setSectionAction('interactive', {
                     label: state.index > 0 ? 'Next' : 'Continue', disabled: !state.found,

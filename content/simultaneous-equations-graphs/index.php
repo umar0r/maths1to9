@@ -31,7 +31,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=4">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
@@ -75,11 +75,11 @@ $pageTitle = 'Solving simultaneous equations using graphs';
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
     <script src="../../assets/js/graph.js?v=7"></script>
-    <script src="./simultaneous.js?v=2"></script>
+    <script src="./simultaneous.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=2"></script>
+    <script src="./questions.js?v=3"></script>
+    <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=44"></script>

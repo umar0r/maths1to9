@@ -93,13 +93,13 @@ test('simultaneous generator is seeded, alternates three distinct typed kinds wi
                 assert.ok(card.options.every(o => o.feedback));
                 if (item.type === 'which-solution') {
                     assert.ok(!typed.some(t => t.kind === item.kind));
-                    assert.equal(card.options.find(o => o.correct).label, T.solution([x, y]));
+                    assert.equal(card.options.find(o => o.correct).label, T.mathText(T.solution([x, y])));
                 }
                 if (item.type === 'estimate') assert.equal(card.options.find(o => o.correct).label,
-                    T.solution([x, y].map(v => Number(v.toFixed(1))), '≈'));
+                    T.mathText(T.solution([x, y].map(v => Number(v.toFixed(1))), '≈')));
                 if (item.type === 'both-lines') {
                     assert.equal(card.lines.filter(l => T.onLine(l, card.point)).length, 1);
-                    assert.ok(card.point.every(v => Number.isInteger(v) && Math.abs(v) <= 5));
+                    assert.ok(card.point.every(v => Number.isInteger(v) && Math.abs(v) <= 4));
                     assert.ok(Math.hypot(card.point[0] - x, card.point[1] - y) >= 2);
                 }
             } else assert.deepEqual(plain(card.answer), { x: String(x), y: String(y) });
@@ -119,4 +119,40 @@ test('simultaneous registries place the new lesson and skill immediately after t
     const graphs = json('collections.json').collections.find(c => c.id === 'graphs');
     assert.ok(graphs);
     assert.equal(graphs.lessons[graphs.lessons.indexOf('finding-the-equation-of-a-line') + 1], 'simultaneous-equations-graphs');
+});
+
+
+test('simultaneous line ends stop at all four grid edges, including steep, shallow and corner crossings', () => {
+    for (const [line, expected] of [
+        [{ m: 4, c: 0 }, [[-1.25, -5], [1.25, 5]]],
+        [{ m: 0.25, c: 1 }, [[-5, -0.25], [5, 2.25]]],
+        [{ m: 1, c: 0 }, [[-5, -5], [5, 5]]],
+        [{ m: -1, c: 0 }, [[-5, 5], [5, -5]]],
+        [{ m: 2, c: 1 }, [[-3, -5], [2, 5]]],
+        [{ m: -2, c: 1 }, [[-2, 5], [3, -5]]],
+        [{ m: 0, c: 2 }, [[-5, 2], [5, 2]]]
+    ]) assert.deepEqual(plain(T.lineEnds(line)), expected);
+    assert.deepEqual(plain(T.lineEnds({ m: -2, c: 4 }, T.LEARN_GRID)), [[-1, 6], [4, -4]]);
+    assert.deepEqual(plain(T.lineEnds({ m: 1, c: 20 })), []);
+    for (let seed = 0; seed < 100; seed++) for (const item of T.pick(E.seededRandom(seed))) {
+        const card = T.generate(item, E.seededRandom(item.seed));
+        for (const line of card.lines) {
+            const ends = T.lineEnds(line);
+            assert.equal(ends.length, 2);
+            ends.forEach(point => {
+                assert.ok(T.onLine(line, point));
+                assert.ok(point.every(v => v >= -5 && v <= 5));
+                assert.ok(point.some(v => Math.abs(v) === 5));
+            });
+        }
+    }
+});
+
+test('simultaneous maths text keeps equations, values and working together without joining prose', () => {
+    for (const text of ['y = 4 − 2x', 'x = −1', 'x ≈ 1.3', '4 − 2 × 0 = 4', 'y = x + 1', '≈ means']) {
+        assert.equal(T.mathText(text), text.replace(/ /g, '\u00a0'));
+    }
+    assert.equal(T.mathText('Read x, then y.'), 'Read x, then\u00a0y.');
+    assert.equal(T.mathText('It is on y = 4 − 2x.'), 'It is on y\u00a0=\u00a04\u00a0−\u00a02x.');
+    assert.equal(T.mathText('(−1, 1)'), '(−1, 1)');
 });

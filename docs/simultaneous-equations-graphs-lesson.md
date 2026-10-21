@@ -71,6 +71,10 @@ Register it (change nothing else in these files):
   Unicode minus `−`, `×` for times in working. Coordinates are `(x, y)`
   with a space after the comma and no-break spaces inside them.
 - Answers are written `x = 1, y = 2`.
+- An equation or a working line never breaks across two lines of text:
+  no-break spaces inside every equation (`y = 4 − 2x`), inside `x = 1`,
+  `x ≈ 1.3` and around `≈`, `=` and `−` in working. The same in
+  prompts, feedback, the key and the summary.
 - Never refer to a line by its colour alone. Name it by its equation.
 - No exam-board names or codes.
 - A small `simultaneous.js`, loaded before `interactive.js` and
@@ -99,10 +103,13 @@ The shared graph, loaded in `index.php` with the four tags from
 - Try it 1 to 4: `{ x: [-5, 3], y: [-2, 9] }`
 - Try it 5, Practice, Check: `{ x: [-5, 5], y: [-5, 5] }`
 
-- Each line is `graph.line({ m, c }, { tone })` across the whole grid,
-  **with no label on the graph** (the shared wrapper puts sloping-line
-  labels at a fixed spot, which can fall off the grid). The first line is
-  tone `neutral`, the second tone `ink`.
+- Each line is a `graph.segment(from, to, { tone })` between the two
+  points where it meets the edge of the grid (worked out in
+  `simultaneous.js`), so it stops at the grid's edge and never runs into
+  the frame around it. Not `graph.line`, which runs past the grid. **No
+  label on the graph** (the shared wrapper puts sloping-line labels at a
+  fixed spot, which can fall off the grid). The first line is tone
+  `neutral`, the second tone `ink`.
 - **A key names the lines instead.** Lesson markup inside the figure (or
   Learn's graph area), directly above the graph: one row per line, a
   short thick swatch drawn with that line's colour token, then its
@@ -310,7 +317,7 @@ seed (each crosses between grid lines; values rounded to 1 d.p.):
 | x ≈ the x estimate, y ≈ the y estimate with its sign flipped (or x's sign flipped if y's is 0) | "Check the signs. Below 0 is negative." (or "Left of 0 is negative.") |
 
 **`both-lines`**: an integer crossing; a point P marked large on one
-line only (whole-number coordinates, inside the grid, at least 2 units
+line only (whole-number coordinates, at least 1 unit inside every grid edge, at least 2 units
 from the crossing), labelled "P" (not its coordinates). "Point P is on
 the line y = …. Is P the solution?"
 
@@ -343,7 +350,7 @@ no guides or marked crossing point. No hints before the answer.
    - x ≈ 0, y ≈ 1: "(0, 1) is where y = x + 1 crosses the y-axis. It's on
      one line only."
 4. **Aisha's point** (choice). y = x + 2 and y = −x + 4, crossing at
-   (1, 3), with point A at (3, 5) marked large on y = x + 2 and labelled
+   (1, 3), with point A at (−1, 1) marked large on y = x + 2 and labelled
    "A". "Aisha says A is the solution because it's on a line. What else
    must be true?"
    - **A must be on both lines.**: "Right. The values must work in both

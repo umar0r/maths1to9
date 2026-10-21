@@ -257,19 +257,19 @@ test('simultaneous-equations-graphs every wrong option and rule displays its own
     expect(errors).toEqual([]);
 });
 
-test.describe('simultaneous-equations-graphs key, labels and layout', () => {
-    test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
+for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs key, labels and layout ${phone ? 'phone' : 'desktop'}`, () => {
+    test.use({ viewport: { width: phone ? 375 : 1280, height: phone ? 812 : 800 }, hasTouch: phone, isMobile: phone });
     test('ten seeded Practice sessions have clear keys and point labels, with no answer marked', async ({ page }) => {
         test.setTimeout(90000);
         const errors = watchForErrors(page);
         await page.goto(`/content/${slug}/`);
         await ready(page);
-        const host = await page.evaluate(() => {
+        const host = await page.evaluate(phone => {
             const fixture = document.createElement('div'); fixture.id = 'graph-fixture';
-            fixture.style.cssText = 'width:320px;max-width:100%;margin:auto;';
+            fixture.style.cssText = `width:${phone ? 299 : 320}px;max-width:100%;margin:auto;`;
             document.body.append(fixture);
             return fixture.id;
-        });
+        }, phone);
         for (let seed = 0; seed < 10; seed++) {
             const results = await page.evaluate(seed => {
                 const host = document.getElementById('graph-fixture'); host.replaceChildren();
@@ -280,7 +280,7 @@ test.describe('simultaneous-equations-graphs key, labels and layout', () => {
                     const title = document.createElement('p'); title.textContent = card.questionType; item.append(title);
                     card.figure(item);
                 });
-                return cards.map(card => ({ type: card.questionType, equations: card.lines.map(T.equationText) }));
+                return cards.map(card => ({ type: card.questionType, lines: card.lines, equations: card.lines.map(T.equationText) }));
             }, seed);
             const items = page.locator(`#${host} > section`);
             await expect(items).toHaveCount(6);
@@ -300,9 +300,26 @@ test.describe('simultaneous-equations-graphs key, labels and layout', () => {
                         return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; });
                 });
                 expect(overlap).toBe(false);
+                if (results[i].type === 'both-lines') {
+                    const clearance = await graph.evaluate((element, lines) => {
+                        const surface = element.getBoundingClientRect();
+                        const label = [...element.querySelectorAll('.maths-graph__label')].find(e => e.textContent === 'P').getBoundingClientRect();
+                        const unitX = (surface.width - 2) / 11.6, unitY = (surface.height - 2) / 11.6;
+                        const origin = [surface.left + 1 + 5.8 * unitX, surface.top + 1 + 5.8 * unitY];
+                        const centre = [(label.left + label.right) / 2, (label.top + label.bottom) / 2];
+                        return lines.map(line => {
+                            const length = Math.hypot(unitX, line.m * unitY);
+                            const normal = [line.m * unitY / length, unitX / length];
+                            const distance = Math.abs((centre[0] - origin[0]) * normal[0] +
+                                (centre[1] - (origin[1] - line.c * unitY)) * normal[1]);
+                            return distance - label.width / 2 * Math.abs(normal[0]) - label.height / 2 * Math.abs(normal[1]);
+                        });
+                    }, results[i].lines);
+                    expect(Math.min(...clearance), `seed ${seed}: P label clears both lines`).toBeGreaterThanOrEqual(4);
+                }
             }
             expect(await noSideways(page)).toBe(true);
-            await page.locator(`#${host}`).screenshot({ path: `/tmp/simultaneous-practice-seed-${seed}.png` });
+            await page.locator(`#${host}`).screenshot({ path: `/tmp/simultaneous-practice-seed-${seed}${phone ? '' : '-desktop'}.png`, style: '.lesson-header { visibility: hidden !important; }' });
         }
         expect(errors).toEqual([]);
     });

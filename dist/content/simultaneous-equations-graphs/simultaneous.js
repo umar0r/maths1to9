@@ -29,15 +29,47 @@
         return `y = ${term}${c === 0 ? '' : c > 0 ? ` + ${number(c)}` : ` − ${number(-c)}`}`;
     }
 
+    // Keep each maths expression together, while prose can still wrap naturally.
+    const mathText = text => String(text)
+        .replace(/ +(?=[=≈+−×])/g, '\u00a0')
+        .replace(/([=≈+−×]) +/g, '$1\u00a0')
+        .replace(/then y\./g, 'then\u00a0y.');
+
+    function formatCard(config) {
+        return {
+            ...config, prompt: mathText(config.prompt),
+            ...(config.feedback ? { feedback: mathText(config.feedback) } : {}),
+            ...(config.fallback ? { fallback: mathText(config.fallback) } : {}),
+            ...(config.options ? { options: config.options.map(option => ({
+                ...option, label: mathText(option.label), feedback: mathText(option.feedback)
+            })) } : {}),
+            ...(config.rules ? { rules: config.rules.map(rule => ({ ...rule, feedback: mathText(rule.feedback) })) } : {})
+        };
+    }
+
+    // Meet the rectangle at its edges. Deduplicate a corner before taking the two ends.
+    function lineEnds({ m, c }, grid = GRID) {
+        const points = [];
+        const add = (x, y) => {
+            const epsilon = 1e-9;
+            if (x < grid.x[0] - epsilon || x > grid.x[1] + epsilon || y < grid.y[0] - epsilon || y > grid.y[1] + epsilon) return;
+            const point = [Math.max(grid.x[0], Math.min(grid.x[1], x)), Math.max(grid.y[0], Math.min(grid.y[1], y))];
+            if (!points.some(p => Math.hypot(p[0] - point[0], p[1] - point[1]) < epsilon)) points.push(point);
+        };
+        grid.x.forEach(x => add(x, m * x + c));
+        if (m !== 0) grid.y.forEach(y => add((y - c) / m, y));
+        return points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    }
+
     function node(tag, text = '', className = '') {
         const element = document.createElement(tag);
-        element.textContent = text;
+        element.textContent = mathText(text);
         element.className = className;
         return element;
     }
     function strongText(text) {
         const p = node('p');
-        text.split('**').forEach((part, i) => p.append(i % 2 ? node('strong', part) : document.createTextNode(part)));
+        text.split('**').forEach((part, i) => p.append(i % 2 ? node('strong', part) : document.createTextNode(mathText(part))));
         return p;
     }
     const name = line => line.text || equationText(line);
@@ -49,13 +81,16 @@
             const row = node('span', '', 'simultaneous-key__line');
             const swatch = node('span', '', `simultaneous-key__swatch${i ? ' simultaneous-key__swatch--ink' : ''}`);
             swatch.setAttribute('aria-hidden', 'true');
-            row.append(swatch, document.createTextNode(name(line)));
+            row.append(swatch, document.createTextNode(mathText(name(line))));
             key.append(row);
         });
         const surface = node('div');
         host.append(key, surface);
         const board = window.Maths1to9Graph.create(surface, { ...grid, step: { x: 1, y: 1 }, label });
-        lines.forEach((line, i) => board.line({ m: line.m, c: line.c }, { tone: i ? 'ink' : 'neutral' }));
+        lines.forEach((line, i) => {
+            const ends = lineEnds(line, grid);
+            if (ends.length === 2) board.segment(ends[0], ends[1], { tone: i ? 'ink' : 'neutral' });
+        });
         return board;
     }
     function guides(board, [x, y]) {
@@ -68,7 +103,7 @@
         const frame = node('div', '', 'simultaneous-card-graph');
         host.append(frame);
         const board = graph(frame, lines, graphLabel(lines), options.grid || GRID);
-        if (options.point) board.point(options.point, { size: 'large', label: options.label, labelSide: 'below' });
+        if (options.point) board.point(options.point, { size: 'large', label: options.label, labelSide: options.labelSide || 'below' });
         options.setup?.(board);
         return board;
     };
@@ -94,13 +129,13 @@
     }
     function solutionCard(lines) {
         const { x, y } = crossing(...lines);
-        return {
+        return formatCard({
             lines, input: 'number', fractions: true, prompt: `Find the solution of ${lines.map(equationText).join(' and ')}.`,
             fields: [{ id: 'x', label: 'x =' }, { id: 'y', label: 'y =' }],
             answer: { x: String(x), y: String(y) }, rules: solutionRules(lines, [x, y]),
             fallback: 'Find where the two lines cross. Read x on the x-axis, then y on the y-axis.',
             feedback: `Right. ${solution([x, y])} works in both equations.`, figure: figure(lines)
-        };
+        });
     }
     const choice = (label, feedback, correct = false) => ({ label, feedback, correct });
     function whichOptions(lines) {
@@ -158,13 +193,20 @@
     }
     function otherPoint(lines) {
         const cross = crossing(...lines);
-        for (let i = 0; i < 2; i++) for (let x = -4; x <= 4; x++) {
+        const candidates = [];
+        // Two units of room leave space for P and its label, including on a phone.
+        for (let i = 0; i < 2; i++) for (let x = -3; x <= 3; x++) {
             const y = lines[i].m * x + lines[i].c;
-            if (y >= -4 && y <= 4 && !onLine(lines[1 - i], [x, y]) && Math.hypot(x - cross.x, y - cross.y) >= 2) {
-                return { point: [x, y], line: lines[i] };
-            }
+            if (y < -3 || y > 3 || onLine(lines[1 - i], [x, y]) || Math.hypot(x - cross.x, y - cross.y) < 2) continue;
+            const otherY = lines[1 - i].m * x + lines[1 - i].c;
+            candidates.push({ point: [x, y], line: lines[i],
+                labelSide: otherY > y ? 'below' : 'above',
+                room: Math.min(Math.abs(x), Math.abs(y), 5 - Math.abs(x), 5 - Math.abs(y)) });
         }
-        return null;
+        candidates.sort((a, b) => b.room - a.room);
+        if (!candidates.length) return null;
+        const { point, line, labelSide } = candidates[0];
+        return { point, line, labelSide };
     }
     function pick(random) {
         const { shuffle, randomInt } = window.Maths1to9LessonEngine;
@@ -203,20 +245,20 @@
             while (!marked) { lines = makeLines(item.kind, random); marked = otherPoint(lines); }
             const equation = equationText(marked.line);
             config = { input: 'choice', prompt: `Point P is on the line ${equation}. Is P the solution?`,
-                point: marked.point, pointLine: marked.line,
-                figure: figure(lines, { point: marked.point, label: 'P' }), options: [
+                point: marked.point, pointLine: marked.line, labelSide: marked.labelSide,
+                figure: figure(lines, { point: marked.point, label: 'P', labelSide: marked.labelSide }), options: [
                     choice('No. P is only on one line.', 'Right. The solution must be on both lines.', true),
                     choice('Yes. P is on a line.', `P works in ${equation} only. The solution must work in both equations, so it's where the lines cross.`),
                     choice('Yes. P has whole-number coordinates.', "Whole numbers don't make it the solution. It must be on both lines."),
                     choice('No. The solution is where a line crosses the y-axis.', "That's not it. The solution is where the two lines cross each other.")
                 ] };
         }
-        return { ...config, lines, kind: item.kind, questionType: item.type,
-            ...(config.options ? { options: shuffle(config.options, random) } : {}) };
+        return formatCard({ ...config, lines, kind: item.kind, questionType: item.type,
+            ...(config.options ? { options: shuffle(config.options, random) } : {}) });
     }
     window.Simultaneous = {
         GRID, LEARN_GRID, TRY_GRID, number, coordinate, solution, crossing, onLine, equationText,
-        node, strongText, graphLabel, graph, guides, figure, solutionRules, solutionCard, choice,
+        mathText, formatCard, lineEnds, node, strongText, graphLabel, graph, guides, figure, solutionRules, solutionCard, choice,
         whichOptions, estimateOptions, estimatePool, kinds, typedTypes, choiceTypes, makeLines, otherPoint, pick, generate
     };
 })();
