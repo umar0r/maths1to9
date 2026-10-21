@@ -49,3 +49,30 @@
     .quadratic-figure { grid-area: figure; }
     .quadratic-notes { grid-area: notes; font-size: 1.1rem; }
 }
+.quadratic-cell {
+    width: 100%;
+    max-width: 3.2rem;
+    padding: 0.35rem 0.1rem;
+    border: 2px dashed var(--text-muted);
+    border-radius: 0.3rem;
+    font: inherit;
+    text-align: center;
+    background: transparent;
+    color: inherit;
+}
+.quadratic-cell:focus { border-style: solid; border-color: var(--accent-dark); outline: none; }
+.quadratic-cell.is-correct { border: 2px solid var(--success-dark); }
+.quadratic-cell.is-incorrect { border: 2px solid var(--error-dark); }
+/* On phones the graph sits above the table, so it stays in view while the keyboard is open. */
+.quadratic-live { display: flex; flex-direction: column; }
+.quadratic-live__graph { order: -1; width: 100%; max-width: 260px; margin: 0 auto 0.5rem; }
+@media (min-width: 760px) {
+    .quadratic-live__graph { order: 0; max-width: 320px; }
+    .quadratic-live {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+        column-gap: 2rem;
+        align-items: center;
+    }
+    .quadratic-live__graph { margin: 0; }
+}

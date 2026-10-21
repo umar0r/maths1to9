@@ -257,8 +257,8 @@
     }
     const examples = [
         { ...Q.valueCard(guided, -2), prompt: 'What is y when x = −2? Square −2, then subtract 2.' },
-        { ...Q.tableCard(guided, [-1, 0, 1, 2]), prompt: 'Complete the rest of the table.',
-            feedback: 'Right. The table is symmetrical: the same y for x = 1 and x = −1.' }
+        { ...Q.tableCard(guided, [-1, 0, 1, 2], { correctFeedback: 'Right. The table is symmetrical: the same y for x = 1 and x = −1.' }),
+            prompt: 'Complete the rest of the table.' }
     ];
     async function mountTryIt(root) {
         const api = window.Maths1to9Lesson;
@@ -285,12 +285,15 @@
         }
         function card(host, index, readOnly) {
             const config = examples[index];
+            // The first card shows the table above it; the second card's table is its own answer area.
             api.createQuestion(host, { ...config, figure(figure) {
                 equation(figure, guided);
-                const filled = index === 0 ? state.cards['example-1']?.correct ? [-2] : [] : state.cards['example-2']?.correct ? Q.xs : [-2];
-                figure.append(Q.table(guided, { filled }));
+                if (index === 0) figure.append(Q.table(guided, { filled: state.cards['example-1']?.correct ? [-2] : [] }));
             }, sectionId: 'interactive', questionId: `example-${index + 1}`, scored: false, readOnly,
-                onFeedback(result) { report(); if (result.correct) root.querySelector('.quadratic-table')?.replaceWith(Q.table(guided, { filled: index ? Q.xs : [-2] })); }, onContinue: advance });
+                onFeedback(result) {
+                    report();
+                    if (result.correct && index === 0) host.querySelector('.quadratic-table')?.replaceWith(Q.table(guided, { filled: [-2] }));
+                }, onContinue: advance });
         }
         function render() {
             board?.destroy(); board = null; root.replaceChildren();

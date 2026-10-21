@@ -147,11 +147,126 @@
         return { input: 'number', fractions: true, answer: String(valueOf(form, x)), rules: valueRules(form, x),
             fallback: workingText(form, x), feedback: `Right. ${workingText(form, x)}.` };
     }
-    function tableCard(form, values = xs) {
-        return { input: 'number', fractions: true, fields: values.map(x => ({ id: fieldId(x), label: `x = ${number(x)}` })),
-            answer: answers(form, values), rules: tableRules(form, values),
-            fallback: 'Square x first, then the rest. Work each column out on its own.', feedback: 'Right.',
-            figure(host) { host.append(table(form, { filled: xs.filter(x => !values.includes(x)) })); } };
+    // A typed whole number, accepting any of the minus signs a phone keyboard offers; null if it isn't one.
+    function readNumber(text) {
+        const tidy = String(text ?? '').trim().replace(/[−–]/g, '-');
+        return /^-?\d+$/.test(tidy) ? Number(tidy) : null;
+    }
+
+    // The table's y cells are the answer boxes. Each value typed appears straight away as a point on the
+    // graph beside the table, in a neutral colour, so the pupil sees it land without being told if it's right.
+    function tableWidget(form, values = xs, { correctFeedback = 'Right.' } = {}) {
+        const given = xs.filter(x => !values.includes(x));
+        const target = answers(form, values);
+        const rules = tableRules(form, values);
+        const fallback = 'Square x first, then the rest. Work each column out on its own.';
+        const filled = value => value && values.every(x => readNumber(value[fieldId(x)]) !== null);
+        let lastChecked = null;
+        return {
+            kind: 'table', values, answers: target,
+            isEmpty: value => !filled(value),
+            mark(value) {
+                lastChecked = { ...value };
+                if (values.every(x => readNumber(value[fieldId(x)]) === Number(target[fieldId(x)]))) {
+                    return { correct: true, feedback: correctFeedback };
+                }
+                const rule = rules.find(r => Object.entries(r.value).every(([id, v]) => readNumber(value[id]) === Number(v)));
+                return { correct: false, feedback: rule ? rule.feedback : fallback };
+            },
+            answerText: value => `You wrote y = ${values.map(x => number(readNumber(value?.[fieldId(x)]) ?? '?')).join(', ')}.`,
+            render(host, { value, onChange }) {
+                const layout = node('div', '', 'quadratic-live');
+                const tableHost = node('div', '', 'quadratic-live__table');
+                const graphHost = node('div', '', 'quadratic-live__graph');
+                layout.append(tableHost, graphHost);
+                host.append(layout);
+                const element = node('table', '', 'quadratic-table');
+                element.setAttribute('aria-label', `Table of values for ${quadraticText(form)}`);
+                const inputs = {};
+                for (const axis of ['x', 'y']) {
+                    const row = node('tr');
+                    const heading = node('th', axis);
+                    heading.scope = 'row';
+                    row.append(heading);
+                    for (const x of xs) {
+                        const cell = node('td');
+                        cell.dataset.x = x;
+                        if (axis === 'x' || given.includes(x)) cell.textContent = number(axis === 'x' ? x : valueOf(form, x));
+                        else {
+                            const input = node('input', '', 'quadratic-cell');
+                            Object.assign(input, { type: 'text', inputMode: 'text', autocomplete: 'off', spellcheck: false });
+                            input.setAttribute('autocapitalize', 'off');
+                            input.setAttribute('autocorrect', 'off');
+                            input.setAttribute('aria-label', `y when x = ${number(x)}`);
+                            inputs[x] = input;
+                            cell.append(input);
+                        }
+                        row.append(cell);
+                    }
+                    element.append(row);
+                }
+                tableHost.append(element);
+                const board = graph(graphHost, form);
+                given.forEach(x => point(board, [x, valueOf(form, x)]));
+                const points = {};
+                let curve = null;
+                const current = () => Object.fromEntries(values.map(x => [fieldId(x), inputs[x].value.trim()]));
+                // Move one point to match its box; nothing else on the graph is redrawn.
+                function show(x, tone = 'neutral') {
+                    const y = readNumber(inputs[x].value);
+                    const visible = y !== null && y >= -5 && y <= 6;
+                    if (!visible) { points[x]?.remove(); delete points[x]; return; }
+                    if (points[x]) points[x].update({ value: [x, y], tone });
+                    else points[x] = point(board, [x, y], tone);
+                }
+                function highlight(x) {
+                    element.querySelectorAll('[aria-current]').forEach(cell => cell.removeAttribute('aria-current'));
+                    if (x !== null) element.querySelectorAll(`[data-x="${x}"]`).forEach(cell => cell.setAttribute('aria-current', 'true'));
+                }
+                values.forEach(x => {
+                    inputs[x].addEventListener('input', () => { show(x); onChange(current()); });
+                    inputs[x].addEventListener('focus', () => highlight(x));
+                    inputs[x].addEventListener('blur', () => highlight(null));
+                });
+                function fill(value) {
+                    values.forEach(x => { inputs[x].value = value?.[fieldId(x)] ?? ''; show(x); });
+                }
+                fill(value);
+                return {
+                    update({ value, editable, phase }) {
+                        curve?.remove();
+                        curve = null;
+                        if (phase === 'wrong' && value) lastChecked = { ...value };
+                        // After Try again, keep the boxes that were right and empty only the wrong ones.
+                        if (phase === 'answer' && !value && lastChecked) {
+                            const kept = Object.fromEntries(values.map(x => [fieldId(x),
+                                readNumber(lastChecked[fieldId(x)]) === Number(target[fieldId(x)]) ? number(readNumber(lastChecked[fieldId(x)])) : '']));
+                            lastChecked = null;
+                            fill(kept);
+                            onChange(kept);
+                        } else fill(value);
+                        values.forEach(x => {
+                            inputs[x].readOnly = !editable;
+                            // Once checked, show the pupil's number with a proper minus sign, as the shared boxes do.
+                            const typed = readNumber(inputs[x].value);
+                            if (phase !== 'answer' && typed !== null) inputs[x].value = number(typed);
+                            const right = readNumber(inputs[x].value) === Number(target[fieldId(x)]);
+                            const tone = phase === 'answer' ? 'neutral' : right ? 'correct' : 'incorrect';
+                            inputs[x].classList.toggle('is-correct', phase !== 'answer' && right);
+                            inputs[x].classList.toggle('is-incorrect', phase !== 'answer' && !right);
+                            show(x, tone);
+                        });
+                        if (phase === 'correct') curve = board.plot(x => valueOf(form, x), { domain: [-2.3, 2.3], tone: 'correct' });
+                    },
+                    focus() {
+                        (values.map(x => inputs[x]).find(input => !input.value) || inputs[values[0]]).focus();
+                    }
+                };
+            }
+        };
+    }
+    function tableCard(form, values = xs, options = {}) {
+        return { input: 'custom', widget: tableWidget(form, values, options) };
     }
     const choice = (label, feedback, correct = false) => ({ label, feedback, correct });
     const joinOptions = () => [
@@ -197,5 +312,5 @@
         return prepare({ ...config, questionType: item.type });
     }
     window.Quadratics = { prose, prepare, xs, number, bracket, coordinate, nb, valueOf, quadraticText, workingText, valueRules, tableRules,
-        plotMark, plotWidget, node, table, graph, guides, point, valueCard, tableCard, choice, joinOptions, typedTypes, choiceTypes, pick, generate };
+        plotMark, plotWidget, tableWidget, readNumber, node, table, graph, guides, point, valueCard, tableCard, choice, joinOptions, typedTypes, choiceTypes, pick, generate };
 })();

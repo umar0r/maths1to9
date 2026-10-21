@@ -31,7 +31,7 @@ $pageTitle = 'Drawing quadratic graphs';
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=4">
-    <link rel="stylesheet" href="./lesson.css?v=5">
+    <link rel="stylesheet" href="./lesson.css?v=6">
 </head>
 
 <body
@@ -75,11 +75,11 @@ $pageTitle = 'Drawing quadratic graphs';
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
     <script src="../../assets/js/graph.js?v=7"></script>
-    <script src="./quadratics.js?v=3"></script>
+    <script src="./quadratics.js?v=4"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=14"></script>
-    <script src="./interactive.js?v=19"></script>
+    <script src="./interactive.js?v=20"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=44"></script>
