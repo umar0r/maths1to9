@@ -20,7 +20,7 @@
                 T.choice('Nothing. Any point on a line is a solution.', "A point on one line only works in that line's equation. It must work in both."),
                 T.choice('A must be on an axis.', "The solution doesn't have to be on an axis. It's where the two lines cross."),
                 T.choice("A's coordinates must be whole numbers.", 'Solutions can be decimals. What matters is that the point is on both lines.')] },
-        { ...T.estimateCard([{ m: 1, c: -1 }, { m: -2, c: 1 }]), questionType: 'estimate-solution' }
+        { ...T.estimateCard([{ m: 2, c: 4 }, { m: -1, c: -1 }]), questionType: 'estimate-solution' }
     ].map(T.formatCard);
     T.checks = checks;
 

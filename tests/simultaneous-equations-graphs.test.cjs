@@ -231,3 +231,13 @@ test('old saves preserve finished Check cards and restart unfinished work withou
     assert.equal(completed.earlier[1].finished, true);
     assert.equal(T.upgradePractice(old, 99), null);
 });
+
+
+test('Check 5 estimates a negative x away from the origin using exact fraction answers', () => {
+    const lines = [{ m: 2, c: 4 }, { m: -1, c: -1 }];
+    const card = T.estimateCard(lines);
+    assert.deepEqual(plain(card.answer), { x: '-5/3', y: '2/3' });
+    assert.equal(card.tolerance, 0.2);
+    assert.equal(card.feedback, T.mathText('Right. The solution is about x ≈ −1.7, y ≈ 0.7.'));
+    assert.ok(card.rules.some(rule => JSON.stringify(rule.value) === JSON.stringify({ x: '-2', y: '1' }) && /nearest grid point/.test(rule.feedback)));
+});

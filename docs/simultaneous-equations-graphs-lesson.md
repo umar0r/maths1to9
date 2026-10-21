@@ -399,10 +399,11 @@ no guides or marked crossing point. No hints before the answer.
    - A's coordinates must be whole numbers.: "Solutions can be decimals.
      What matters is that the point is on both lines."
 
-5. **Estimate** (two-field). y = x − 1 and y = −2x + 1, crossing at
-   (2/3, −1/3). Fields "x ≈" and "y ≈", `fractions: true`, exact answers
-   `2/3` and `-1/3`, `tolerance: 0.2`, `estimateRules`.
-   Correct: "Right. The solution is about x ≈ 0.7, y ≈ −0.3."
+5. **Estimate** (two-field). y = 2x + 4 and y = −x − 1, crossing at
+   (−5/3, 2/3), away from the origin and its axis numbers. Fields "x ≈"
+   and "y ≈", `fractions: true`, exact answers `-5/3` and `2/3`,
+   `tolerance: 0.2`, `estimateRules`.
+   Correct: "Right. The solution is about x ≈ −1.7, y ≈ 0.7."
 
 ### Existing saved work
 

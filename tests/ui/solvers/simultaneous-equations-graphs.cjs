@@ -40,7 +40,9 @@ async function solve(page) {
         if (q.fields) for (let i = 0; i < q.fields.length; i++) {
             const answer = q.answer[q.fields[i].id];
             const [n, d = 1] = answer.split('/').map(Number);
-            await inputs.nth(i).fill(q.tolerance ? String(Number((n / d).toFixed(1))) : answer);
+            // Check 5 also proves a close reading is accepted instead of requiring the rounded answer.
+            const checkReading = id === 'comparison' && s.screen === 4 ? { x: '-1.6', y: '0.7' }[q.fields[i].id] : null;
+            await inputs.nth(i).fill(checkReading || (q.tolerance ? String(Number((n / d).toFixed(1))) : answer));
         }
         else await inputs.fill(q.answer);
     }
