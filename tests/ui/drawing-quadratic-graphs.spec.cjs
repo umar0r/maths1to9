@@ -12,7 +12,7 @@ async function reload(page) {const hash=new URL(page.url()).hash, label=await ma
 async function layout(page) {
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     const data = await read(page);
-    if (page.viewportSize().width === 375 && (page.url().endsWith('#try-it-3') || data.q?.input === 'custom')) {
+    if (page.viewportSize().width === 375 && (page.url().endsWith('#try-it-3') || data.q?.input === 'custom' && data.q?.widget?.kind !== 'table')) {
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await page.evaluate(() => document.fonts.ready);
         await expect.poll(async () => { const box = await root(page).locator('.maths-graph__board').boundingBox(); return box.y + box.height; }).toBeLessThanOrEqual(812);
@@ -132,6 +132,41 @@ test('drawing-quadratic-graphs wrong plotting taps, guides, saved points and joi
 });
 
 });
+test.describe('live table', () => {
+    for (const phone of [false, true]) test(`table cells plot as they are typed and Try again keeps the right ones (${phone ? '375px' : 'desktop'})`, async ({ browser }) => {
+        const page = await browser.newPage(phone ? { viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 800 } });
+        const errors = watchForErrors(page);
+        await page.goto(`/content/${slug}/`); await ready(page); await until(page, '#try-it-2');
+        const cells = root(page).locator('.question-card .quadratic-cell');
+        const plotted = () => page.evaluate(() => Object.values(JXG.boards).flatMap(board => Object.values(board.objects))
+            .filter(o => o.elType === 'point' && o.visProp.visible === true && o.board.containerObj.closest('.quadratic-live'))
+            .map(o => [o.X(), o.Y()]).sort((a, b) => a[0] - b[0]));
+        await expect(cells).toHaveCount(4);
+        expect(await plotted()).toEqual([[-2, 2]]);
+        await cells.nth(0).fill('-1');
+        await expect.poll(plotted).toEqual([[-2, 2], [-1, -1]]);
+        await cells.nth(1).fill('-2'); await cells.nth(2).fill('1');
+        await expect.poll(plotted).toEqual([[-2, 2], [-1, -1], [0, -2], [1, 1]]);
+        await reload(page);
+        await expect(cells.nth(2)).toHaveValue('1');
+        await cells.nth(3).fill('2');
+        await main(page).click();
+        await expect(root(page).locator('.question-feedback.is-visible')).toContainText('One box is wrong');
+        await expect(cells.nth(2)).toHaveClass(/is-incorrect/);
+        await expect(cells.nth(0)).toHaveValue('−1');
+        await main(page).click();
+        await expect(cells.nth(0)).toHaveValue('−1');
+        await expect(cells.nth(2)).toHaveValue('');
+        await expect(main(page)).toBeDisabled();
+        await cells.nth(2).fill('-1');
+        await main(page).click();
+        await expect(main(page)).toHaveText('Continue');
+        await expect(page.locator('.quadratic-live path').first()).toBeAttached();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        expect(errors).toEqual([]);
+        await page.close();
+    });
+});
 test('drawing-quadratic-graphs wrong Practice plot, reload phases and two more sessions preserve score',async({page})=>{
     test.setTimeout(180000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await ready(page);await until(page,'#try-it-1');
     await root(page).getByRole('textbox').fill('-6'); await main(page).click(); await reload(page);
@@ -140,7 +175,7 @@ test('drawing-quadratic-graphs wrong Practice plot, reload phases and two more s
     await root(page).getByRole('textbox').first().fill('-1'); await reload(page);
     await expect(root(page).getByRole('textbox').first()).toHaveValue('-1');
     await until(page,'#question-bank-question-1');
-    for(let i=0;i<30;i++){const data=await read(page);if(data.q?.input==='custom')break;await step(page);}
+    for(let i=0;i<30;i++){const data=await read(page);if(data.q?.input==='custom'&&data.q.widget?.kind!=='table')break;await step(page);}
     const labels = () => root(page).locator('.maths-graph__label').filter({hasText:/^\(/});
     await expect(labels()).toHaveCount(0);
     await tapPoint(page,[4,6]); await expect(labels()).toHaveCount(1);

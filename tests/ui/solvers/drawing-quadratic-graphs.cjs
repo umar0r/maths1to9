@@ -37,6 +37,10 @@ async function solve(page) {
         const inputs=root(page).locator('.question-card input');
         if(q.fields)for(let i=0;i<q.fields.length;i++)await inputs.nth(i).fill(q.answer[q.fields[i].id]);
         else await inputs.fill(q.answer);
+    } else if(q.widget?.kind==='table') {
+        // The table's own cells are the answer boxes.
+        const cells=root(page).locator('.question-card .quadratic-cell');
+        for(let i=0;i<q.widget.values.length;i++)await cells.nth(i).fill(q.widget.answers[`x${q.widget.values[i]}`]);
     } else {
         const target=await root(page).locator('.quadratic-table').evaluate(table=>{
             const xText=document.querySelector('.lesson-section:not([hidden]) .question-prompt')?.textContent || table.parentElement.parentElement.textContent;

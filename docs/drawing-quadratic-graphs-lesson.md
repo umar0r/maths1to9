@@ -117,6 +117,17 @@ tokens and `aria-current="true"`. It fits at 375 px with no sideways
 scroll. Above a graph, the table and the graph are visible together
 without scrolling at 375 × 812.
 
+### Live table (added 2026-10-21)
+
+Table cards (Try it 2, Practice `table`, Check 1) are a custom answer
+widget, `tableWidget`: the table's empty y cells are the answer boxes, and
+a graph sits beside the table (above it on phones, so it stays in view
+with the keyboard open). Each value appears as a neutral point as soon as
+it's typed. On Check, right cells and points turn green and wrong ones
+red, with `tableRules` feedback; when all are right, the smooth curve
+draws through them. Try again keeps the right cells and empties only the
+wrong ones. Checked values show a Unicode minus.
+
 ## The graph
 
 The shared graph, loaded in `index.php` with the four tags from

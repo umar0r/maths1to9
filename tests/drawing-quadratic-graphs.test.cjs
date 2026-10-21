@@ -83,7 +83,7 @@ test('quadratics generator alternates all six types, bounds every table, avoids 
                 assert.equal(new Set(q.options.map(o=>o.label)).size,q.options.length);
                 assert.ok(q.options.every(o=>o.feedback));
             }
-            if(item.type==='table') for(const value of Object.values(q.answer)) assert.ok(Number(value)>=-5&&Number(value)<=6);
+            if(item.type==='table') for(const value of Object.values(q.widget.answers)) assert.ok(Number(value)>=-5&&Number(value)<=6);
         });
     }
     assert.ok(varied>350&&varied<650); assert.ok(ordinary>350&&ordinary<650);
@@ -95,4 +95,21 @@ test('quadratics hides given point coordinates and places a tapped label on its 
     assert.equal(Q.point(board, [-2,3], 'correct', true).options.labelSide, 'left');
     assert.equal(Q.point(board, [0,-1], 'incorrect', true).options.labelSide, 'right');
     assert.equal(Q.point(board, [2,3], 'correct', true).options.coordinates, true);
+});
+
+test('the live table widget reads any minus sign, needs every box, and marks with the table rules', () => {
+    const widget = Q.tableWidget({ a: 1, c: -2 }, [-1, 0, 1, 2], { correctFeedback: 'Right. Symmetrical.' });
+    for (const [text, expected] of [['-1', -1], ['−1', -1], ['–1', -1], [' 2 ', 2], ['1.5', null], ['', null], ['x', null]]) {
+        assert.equal(Q.readNumber(text), expected);
+    }
+    assert.equal(widget.isEmpty(null), true);
+    assert.equal(widget.isEmpty({ 'x-1': '-1', x0: '-2', x1: '', x2: '2' }), true);
+    const right = { 'x-1': '−1', x0: '-2', x1: '-1', x2: '2' };
+    assert.equal(widget.isEmpty(right), false);
+    assert.deepEqual(plain(widget.mark(right)), { correct: true, feedback: 'Right. Symmetrical.' });
+    const oneWrong = { ...right, x1: '1' };
+    assert.equal(widget.mark(oneWrong).correct, false);
+    assert.match(widget.mark(oneWrong).feedback, /One box is wrong/);
+    assert.match(widget.mark({ 'x-1': '-3', x0: '-2', x1: '-1', x2: '2' }).feedback, /negative times a negative/);
+    assert.equal(widget.answerText(right), 'You wrote y = −1, −2, −1, 2.');
 });
