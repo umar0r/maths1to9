@@ -468,6 +468,24 @@ Saved values and `onFeedback` values are objects of tidied texts. Results
 and read-only cards join labels and values: "Gradient −1, y-intercept 6".
 This also works in question sets and later Practise again sessions.
 
+### Close-enough answers (added 2026-10-22)
+
+Number cards may set `tolerance: 0.2`: an answer is right when its distance
+from `answer` is ≤ 0.2, including the edges. This works with plain numbers,
+`fractions: true` and several fields. For fields, use one number for all
+boxes, or `tolerance: { x: 0.2, y: 0.5 }` with exactly every field id.
+
+Comparisons use exact integer fractions. With answer `4/3` and tolerance
+0.2, `1.2`, `1.3`, `1.4`, `1.5` and `1.53` are right; `1.1` and `1.54`
+are wrong. Rules use the same tolerance, in their usual order; the answer
+is checked first. Correct feedback still comes from the card's `feedback`.
+
+A tolerance must be a finite non-negative number. Bad values, missing or
+extra field ids, an object without fields, `exact: true`, or a plain card
+whose answer is not a plain number throw `TypeError`. Saved text, attempts,
+results, reload, question sets and Practise again work as before.
+Plain cards without `tolerance` are unchanged.
+
 ### Saving, going back and finished cards
 
 - `hint` is the hint text itself, shown under the feedback (clarified 2026-10-11).

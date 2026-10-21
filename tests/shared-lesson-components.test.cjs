@@ -1245,3 +1245,88 @@ test('fields work through question-set results, Back and Practise again with ret
     fill();
     assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 2);
 });
+
+test('tolerance plain cards include both exact edges and reject just outside without float rounding', () => {
+    for (const [answer, tolerance, values] of [
+        ['1.5', 0.2, [['1.4', true], ['1.3', true], ['1.7', true], ['1.29999999999999999', false], ['1.70000000000000001', false]]],
+        ['-1.5', 0.2, [['-1.3', true], ['-1.7', true], ['-1.29999999999999999', false], ['-1.70000000000000001', false]]],
+        ['5.0', 0, [['5', true], ['5.0', true], ['5.00000000000000001', false]]],
+        ['1', 1e-7, [['1.0000001', true], ['1.0000001000000001', false]]],
+        ['1', 1e308, [['0', true]]]
+    ]) for (const [value, correct] of values) {
+        const card = questionFixture({ input: 'number', answer, tolerance, feedback: 'Close enough' });
+        card.type(value); card.action.onClick();
+        assert.equal(card.card.result().correct, correct, `${answer} ± ${tolerance}, ${value}`);
+        if (correct) assert.equal(card.card.result().explanation, 'Close enough');
+    }
+});
+
+test('tolerance fraction cards compare decimals and fractions exactly, including negative denominators', () => {
+    for (const [value, correct] of [['1.2', true], ['1.3', true], ['1.4', true], ['1.5', true], ['1.53', true],
+        ['1.1', false], ['1.54', false], ['7/5', true], ['-7/-5', true], ['17/15', true], ['23/15', true]]) {
+        const card = questionFixture({ input: 'number', fractions: true, answer: '4/3', tolerance: 0.2 });
+        card.type(value); card.action.onClick();
+        assert.equal(card.card.result().correct, correct, value);
+    }
+    const negative = questionFixture({ input: 'number', fractions: true, answer: '4/-3', tolerance: 0.2 });
+    negative.type('-7/5'); negative.action.onClick();
+    assert.equal(negative.card.result().correct, true);
+});
+
+test('tolerance fields apply scalar or per-field ranges to every box and to ordered partial rules', () => {
+    for (const [tolerance, values, correct] of [[0.2, ['-0.8', '0.7'], true], [0.2, ['-0.8', '0.71'], false],
+        [{ m: 0.2, c: 0.5 }, ['-1.2', '1'], true], [{ m: 0.2, c: 0.5 }, ['-1.21', '0.5'], false]]) {
+        const card = questionFixture({ ...fieldDefinition, tolerance });
+        values.forEach((value, index) => typeField(card, index, value)); card.action.onClick();
+        assert.equal(card.card.result().correct, correct);
+    }
+    const card = questionFixture({ ...fieldDefinition, tolerance: { m: 0.2, c: 0.5 }, rules: [
+        { value: { m: '0', c: '6' }, feedback: 'First near rule' },
+        { value: { m: '0' }, feedback: 'Later partial' }
+    ] });
+    typeField(card, 0, '0.2'); typeField(card, 1, '5.5'); card.action.onClick();
+    assert.equal(card.card.result().explanation, 'First near rule');
+    card.action.onClick();
+    assert.equal(fieldBox(card, 0).focused, true);
+});
+
+test('tolerance rules keep order and can never beat the right answer', () => {
+    for (const [value, feedback] of [['2.1', 'First'], ['1.5', 'Correct']]) {
+        const card = questionFixture({ input: 'number', answer: '1.5', tolerance: 0.2, feedback: 'Correct', rules: [
+            { value: '2', feedback: 'First' }, { value: '2.1', feedback: 'Second' }, { value: '1.6', feedback: 'Overlaps answer' }
+        ] });
+        card.type(value); card.action.onClick();
+        assert.equal(card.card.result().explanation, feedback);
+    }
+});
+
+test('tolerance rejects every unsupported configuration before creating saved cards', () => {
+    for (const tolerance of [-0.1, Infinity, -Infinity, NaN, '0.2', null, undefined, [], {}, { m: 0.2 }]) {
+        assert.throws(() => questionFixture({ input: 'number', answer: '1.5', tolerance }), { name: 'TypeError' });
+    }
+    assert.throws(() => questionFixture({ input: 'number', answer: '1.5', tolerance: 0, exact: true }), { name: 'TypeError' });
+    for (const answer of ['4/3', 'bad', 'Infinity']) {
+        assert.throws(() => questionFixture({ input: 'number', answer, tolerance: 0.2 }), { name: 'TypeError' });
+    }
+    for (const tolerance of [{ m: 0.2 }, { m: 0.2, c: 0.5, extra: 1 }, { m: -1, c: 0.5 },
+        { m: 0.2, c: '0.5' }, { m: 0.2, c: NaN }, { m: 0.2, c: Infinity }, { m: 0.2, c: 0.5, [Symbol('extra')]: 1 }]) {
+        assert.throws(() => questionFixture({ ...fieldDefinition, tolerance }), { name: 'TypeError' });
+    }
+});
+
+test('tolerance keeps pupil text, invalid-input attempts, feedback and phases through reload and read-only results', () => {
+    let card = questionFixture({ input: 'number', fractions: true, answer: '4/3', tolerance: 0.2, feedback: 'Close enough' });
+    card.type('bad'); card.action.onClick();
+    assert.equal(card.assessments.length, 0);
+    assert.equal(card.card.result().firstCorrect, null);
+    card.type('1.1'); card.action.onClick();
+    card = card.reload(); assert.equal(card.action.label, 'Try again');
+    card.action.onClick(); card.type('7/5'); card.action.onClick();
+    assert.equal(card.feedback[0].value, '7/5');
+    assert.equal(card.card.result().firstCorrect, false);
+    card = card.reload(); assert.equal(card.action.label, 'Continue');
+    const review = card.reload({ readOnly: true });
+    assert.equal(review.card.result().answer, '7/5');
+    assert.equal(review.card.result().explanation, 'Close enough');
+    assert.equal(review.assessments.length, 0);
+});
