@@ -156,9 +156,12 @@ Each press replaces the last drawing. A wrong choice is drawn with tone
 - Flat across the bottom: "Your curve misses (0, −1). The curve must go
   through every point, including the lowest one." (with the real point)
 
-The right choice is drawn tone `correct`, ✓, buttons disabled, and the
-screen's closing text appears. Save the right choice in section state so
-reload and Back show the finished curve. Wrong presses aren't saved.
+The right choice is drawn tone `correct` and the buttons are disabled.
+Learn 6 shows "✓ Right. One smooth curve through every point." in its
+green feedback box, then its closing text. Try it 4 shows "✓ The graph
+goes through all five points and curves smoothly at the bottom." inside
+that box, with no separate copy of the sentence. Save the right choice in
+section state so reload and Back show the finished curve. Wrong presses aren't saved.
 
 ## Plotting points (Learn 5, Try it 3, Practice, Check)
 
@@ -169,9 +172,12 @@ between them through `quadratics.js` if that's tidier) that uses
 - The prompt names the point: "Plot (−2, 3)." The table column for that
   point is highlighted.
 - A tap snaps to the nearest grid corner (the picker does this).
-- **Right:** a large point, tone `correct`, coordinates shown, stays
-  visible. Move on to the next point (the next column highlights).
-- **Wrong:** a point tone `incorrect` with its coordinates, the right
+- **Right:** a large point, tone `correct`, stays visible. While plotting,
+  label only the point just tapped, with `labelSide: 'left'` for x < 0 and
+  `'right'` for x ≥ 0. Hide the previous point's coordinate label on the
+  next tap. Move on to the next point (the next column highlights).
+- **Wrong:** a point tone `incorrect` with its coordinates (the only
+  labelled point, on the same left/right rule), the right
   feedback from `plotMark`, and dashed guide segments (`dash: true`,
   tone `muted`) from the origin along the x-axis to the right x, then up
   or down to the right y. The wrong point and guides go on the next tap.
@@ -186,6 +192,12 @@ between them through `quadratics.js` if that's tidier) that uses
     (with the real numbers and "up" / "down" / "stay on the x-axis").
 - Save each plotted point in section state (Learn, Try it) or the
   widget's value (Practice, Check), so reload keeps them.
+- Once all points are plotted, show them without coordinate labels on
+  Learn 5, Learn 6, Learn 7 and Try it 4. The filled table stays above
+  the graph. Given points on Practice/Check plotting cards also have no
+  coordinate labels. The newly tapped answer is labelled while answering
+  or wrong, and has no coordinate label once checked correct. Use only
+  existing graph options; no shared changes.
 
 As a **custom answer widget** (Practice, Check) it follows
 `docs/custom-answer-widget.md`: `render` makes the graph and any given
@@ -214,18 +226,19 @@ its feedback, and Next unlocks on the right one.
 2. **Negative numbers.** `y = x²`. Buttons `x = −1`, `x = −2`, `x = −3`.
    Each press shows `(−3) × (−3) = 9` and "So (−3, 9) is on the graph
    too." Text: "A negative times a negative is positive." Then the question
-   "What is x² when x = −2?":
-   - **4**: "Right. (−2) × (−2) = 4."
-   - −4: "A negative times a negative is positive: (−2) × (−2) = 4."
-   - −2: "Squaring means multiplying −2 by itself: (−2) × (−2) = 4."
-   - 0: "(−2) × (−2) = 4. Squaring doesn't cancel the number out."
+   "What is x² when x = −5?":
+   - **25**: "Right. (−5) × (−5) = 25."
+   - −25: "A negative times a negative is positive: (−5) × (−5) = 25."
+   - −10: "Squaring isn't doubling. (−5) × (−5) = 25."
+   - 10: "Squaring means multiplying −5 by itself, not by 2: (−5) × (−5) = 25."
 
 3. **A table of values.** `y = x² − 1`, the table with every y empty.
-   Text: "Square x first, then subtract 1." Prompt: "Tap each empty box
-   to work it out." Tapping a y cell (a button) highlights its column and
-   shows `workingText` under the table for that x, then fills the cell.
-   Any order. Next unlocks when all five are filled. Closing text: "Each
-   column gives one point."
+   Put "Square x first, then subtract 1." and "Tap each empty box to work
+   it out." above the table. Only the y cells for x = −2, −1 and 0 are
+   tappable, in any order; x = 1 and 2 stay as dashed boxes for Learn 4.
+   Tapping a cell highlights its column, shows `workingText` under the
+   table and fills the cell. Next unlocks when those three are filled.
+   Closing text: "Each column gives one point."
 
 4. **Fill in the last two.** `y = x² − 1`, the table filled for x = −2,
    −1, 0 (3, 0, −1), boxes for x = 1 and x = 2. Question "What is y when
@@ -242,7 +255,8 @@ its feedback, and Next unlocks on the right one.
    for y." The plotting helper, in order (−2, 3), (−1, 0), (0, −1),
    (1, 0), (2, 3). Next unlocks when all five are plotted.
 
-6. **Join the points.** The five points. "Joining the points" buttons.
+6. **Join the points.** The filled table above the five points, without
+   coordinate labels. "Joining the points" buttons.
    Closing text: "y = x² − 1 has x² in it, so it's a **quadratic**. Its
    graph is a smooth U-shaped curve."
 
@@ -270,8 +284,10 @@ in as the pupil goes.
 3. **Plot.** The plotting helper for the five points, guides only after a
    wrong tap. A Learn-style activity (not a card); Continue after all five.
 
-4. **Join them.** The "joining the points" buttons, then "The graph goes
-   through all five points and curves smoothly at the bottom."
+4. **Join them.** The filled table above the five unlabelled points and
+   the "joining the points" buttons. The correct choice shows "✓ The graph
+   goes through all five points and curves smoothly at the bottom." in the
+   green feedback box, without repeating it below.
 
 ## Feedback rules
 
@@ -418,8 +434,8 @@ planned maximum score; don't hard-code it.
   three choice types, alternating, every table value within −5 to 6, no
   duplicate options, the same session for the same seed.
 - Add `tests/ui/drawing-quadratic-graphs.spec.cjs`: a full correct run
-  through all four sections; Learn 2 with a wrong option first; Learn 5
-  with one wrong tap (guides appear, then go); Learn 6 with each wrong
+  through all four sections; Learn 2 with a wrong option first (the new
+  x = −5 question); Learn 5 with one wrong tap (guides appear, then go); Learn 6 with each wrong
   join first; a wrong-then-right Practice plotting card; reload mid-Learn
   5 after two points.
 - `node --check` on every JS file; `lesson.json` is valid JSON.

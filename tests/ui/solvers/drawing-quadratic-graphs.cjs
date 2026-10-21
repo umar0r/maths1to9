@@ -28,8 +28,8 @@ async function solve(page) {
     const click=async name=>{await root(page).getByRole('button',{name,exact:true}).click();return true;};
     if(id==='explanation') {
         if(s.screen===0&&s.positive===null)return click('x\u00a0=\u00a03');
-        if(s.screen===1&&!s.negativeChoice.correct)return click('4');
-        if(s.screen===2&&s.filled.length<5)return click(`y when x = ${String([-2,-1,0,1,2].find(x=>!s.filled.includes(x))).replace('-','−')}`);
+        if(s.screen===1&&!s.negativeChoice.correct)return click('25');
+        if(s.screen===2&&s.filled.length<3)return click(`y when x = ${String([-2,-1,0].find(x=>!s.filled.includes(x))).replace('-','−')}`);
         if(s.screen===3&&!s.lastTwo.every(c=>c.correct))return click(s.lastTwo[0].correct?'3':'0');
         if(s.screen===4&&s.plotted.length<5){const x=[-2,-1,0,1,2][s.plotted.length];await tapPoint(page,[x,x*x-1]);return true;}
         if(s.screen===5&&!s.joined)return click('A smooth curve');

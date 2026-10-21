@@ -77,7 +77,7 @@
         element.textContent = prose(text); element.className = className;
         return element;
     }
-    function table(form, { filled = xs, highlighted = null, onPick = null } = {}) {
+    function table(form, { filled = xs, highlighted = null, onPick = null, pickable = xs } = {}) {
         const element = node('table', '', 'quadratic-table');
         element.setAttribute('aria-label', `Table of values for ${quadraticText(form)}`);
         for (const axis of ['x', 'y']) {
@@ -87,9 +87,10 @@
                 if (x === highlighted) cell.setAttribute('aria-current', 'true');
                 if (axis === 'x' || filled.includes(x)) cell.textContent = number(axis === 'x' ? x : valueOf(form, x));
                 else {
-                    const box = node(onPick ? 'button' : 'span', '', 'quadratic-empty');
+                    const tappable = onPick && pickable.includes(x);
+                    const box = node(tappable ? 'button' : 'span', '', 'quadratic-empty');
                     box.setAttribute('aria-label', `y when x = ${number(x)}`);
-                    if (onPick) { box.type = 'button'; box.addEventListener('click', () => onPick(x)); }
+                    if (tappable) { box.type = 'button'; box.addEventListener('click', () => onPick(x)); }
                     cell.append(box);
                 }
                 row.append(cell);
@@ -106,8 +107,8 @@
         return [board.segment([0, 0], [x, 0], { dash: true, tone: 'muted' }),
             board.segment([x, 0], [x, y], { dash: true, tone: 'muted' })];
     }
-    function point(board, position, tone = 'neutral') {
-        return board.point(position, { size: 'large', coordinates: true, tone });
+    function point(board, position, tone = 'neutral', coordinates = false) {
+        return board.point(position, { size: 'large', coordinates, tone, labelSide: position[0] < 0 ? 'left' : 'right' });
     }
     function plotWidget(form, x) {
         const target = [x, valueOf(form, x)];
@@ -127,13 +128,13 @@
                 function clear() { picker?.stop(); picker = null; shown.forEach(item => item.remove()); shown = []; }
                 function start() {
                     picker = board.pick({ onPick(value) {
-                        clear(); shown = [point(board, value)]; onChange(value); start();
+                        clear(); shown = [point(board, value, 'neutral', true)]; onChange(value); start();
                     } });
                 }
                 return {
                     update({ value, editable, phase }) {
                         clear(); board.setEditable(editable);
-                        if (value) shown.push(point(board, value, phase === 'wrong' ? 'incorrect' : phase === 'correct' ? 'correct' : 'neutral'));
+                        if (value) shown.push(point(board, value, phase === 'wrong' ? 'incorrect' : phase === 'correct' ? 'correct' : 'neutral', phase !== 'correct'));
                         if (phase === 'wrong') shown.push(...guides(board, target));
                         if (editable && phase === 'answer') start();
                     },

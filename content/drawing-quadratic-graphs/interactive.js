@@ -41,11 +41,11 @@
         }
         paint();
     }
-    const negative = { prompt: 'What is x² when x = −2?', options: [
-        Q.choice('4', 'Right. (−2) × (−2) = 4.', true),
-        Q.choice('−4', 'A negative times a negative is positive: (−2) × (−2) = 4.'),
-        Q.choice('−2', 'Squaring means multiplying −2 by itself: (−2) × (−2) = 4.'),
-        Q.choice('0', "(−2) × (−2) = 4. Squaring doesn't cancel the number out.") ] };
+    const negative = { prompt: 'What is x² when x = −5?', options: [
+        Q.choice('25', 'Right. (−5) × (−5) = 25.', true),
+        Q.choice('−25', 'A negative times a negative is positive: (−5) × (−5) = 25.'),
+        Q.choice('−10', "Squaring isn't doubling. (−5) × (−5) = 25."),
+        Q.choice('10', 'Squaring means multiplying −5 by itself, not by 2: (−5) × (−5) = 25.') ] };
     const lastTwo = [
         { prompt: 'What is y when x = 1?', options: [
             Q.choice('0', 'Right. 1² − 1 = 1 − 1 = 0.', true),
@@ -64,13 +64,19 @@
         const prompt = paragraph(root, saved.length < 5 ? `Plot ${nb(coordinate(points[saved.length]))}.` : '✓ All five points plotted.');
         const host = node('div'); root.append(host);
         const board = Q.graph(host, form);
-        saved.forEach(p => Q.point(board, p, 'correct'));
+        let lastPoint = null;
+        saved.forEach((p, index) => {
+            const labelled = saved.length < 5 && index === saved.length - 1;
+            const item = Q.point(board, p, 'correct', labelled);
+            if (labelled) lastPoint = item;
+        });
         let temporary = [];
         if (saved.length < 5) board.pick({ onPick(position) {
             temporary.forEach(item => item.remove()); temporary = [];
+            lastPoint?.update({ coordinates: false }); lastPoint = null;
             const target = points[saved.length], result = Q.plotMark(position, target);
             if (result.correct) {
-                Q.point(board, position, 'correct'); saved.push(position); save();
+                lastPoint = Q.point(board, position, 'correct', saved.length < 4); saved.push(position); save();
                 table.querySelectorAll('[aria-current]').forEach(el => el.removeAttribute('aria-current'));
                 const next = points[saved.length];
                 if (next) table.querySelectorAll(`[data-x="${next[0]}"]`).forEach(el => el.setAttribute('aria-current', 'true'));
@@ -78,26 +84,28 @@
                 board.describe('');
                 if (!next) { board.setEditable(false); done(); }
             } else {
-                temporary = [Q.point(board, position, 'incorrect'), ...Q.guides(board, target)];
+                temporary = [Q.point(board, position, 'incorrect', true), ...Q.guides(board, target)];
                 board.describe(result.feedback);
             }
         } });
         return board;
     }
     function joining(root, form, saved, save, done, closing) {
+        root.append(Q.table(form));
         const host = node('div'); root.append(host);
         const board = Q.graph(host, form);
         Q.xs.forEach(x => Q.point(board, [x, valueOf(form, x)]));
         const controls = group(root, 'How do you join the points?');
         const feedback = node('p', '', 'question-feedback'); feedback.setAttribute('role', 'status'); root.append(feedback);
-        const ending = paragraph(root, ''); ending.hidden = !saved.joined;
+        const ending = paragraph(root, ''); ending.hidden = form.c !== -1 || !saved.joined;
+        const correctFeedback = form.c === -1 ? '✓ Right. One smooth curve through every point.' : `✓ ${closing}`;
         function closeText() {
             if (form.c === -1) {
                 const [before, after] = closing.split('quadratic');
                 ending.replaceChildren(document.createTextNode(Q.prose(before)), node('strong', 'quadratic'), document.createTextNode(after));
             } else ending.textContent = Q.prose(closing);
         }
-        if (saved.joined) closeText();
+        if (saved.joined && form.c === -1) closeText();
         let drawing = [];
         const labels = ['A smooth curve', 'Straight lines, dot to dot', 'Flat across the bottom'];
         function draw(index) {
@@ -111,8 +119,9 @@
             buttons.forEach((b, i) => { b.className = `button${i === index ? index ? ' is-incorrect' : ' is-correct' : ''}`; });
             if (index === 0) {
                 saved.joined = true; save(); buttons.forEach(b => { b.disabled = true; });
-                feedback.textContent = '✓'; feedback.className = 'question-feedback is-visible is-correct';
-                closeText(); ending.hidden = false; done();
+                feedback.textContent = correctFeedback; feedback.className = 'question-feedback is-visible is-correct';
+                if (form.c === -1) { closeText(); ending.hidden = false; }
+                done();
             } else {
                 feedback.textContent = index === 1 ? "The graph doesn't have corners. Quadratic graphs curve smoothly between the points."
                     : `Your curve misses ${coordinate([0, form.c])}. The curve must go through every point, including the lowest one.`;
@@ -121,7 +130,7 @@
         }));
         if (saved.joined) {
             draw(0); buttons.forEach(b => { b.disabled = true; }); buttons[0].classList.add('is-correct');
-            feedback.textContent = '✓'; feedback.className = 'question-feedback is-visible is-correct';
+            feedback.textContent = correctFeedback; feedback.className = 'question-feedback is-visible is-correct';
         }
         return board;
     }
@@ -129,13 +138,17 @@
         const api = window.Maths1to9Lesson;
         const root = node('article', '', 'quadratic-learn'); document.getElementById('lesson-section-explanation').append(root);
         event('explanation', 'gate');
-        const section = await api.useSectionState('learn', { version: 1, initial: () => ({ screen: 0, furthestScreen: 0, finished: false,
+        const section = await api.useSectionState('learn', { version: 2, upgrade(saved, version) {
+            if (version !== 1 || !Array.isArray(saved.filled)) return null;
+            return { ...saved, negativeChoice: freshChoice(), filled: saved.filled.filter(x => x <= 0),
+                highlighted: [-2, -1, 0].includes(saved.highlighted) ? saved.highlighted : null };
+        }, initial: () => ({ screen: 0, furthestScreen: 0, finished: false,
             positive: null, negative: null, negativeChoice: freshChoice(), filled: [], highlighted: null,
             lastTwo: [freshChoice(), freshChoice()], plotted: [], joined: false, drawn: false }) });
         const state = section.state; section.save();
         let board = null, timers = [];
         function complete() {
-            return [state.positive !== null, state.negativeChoice.correct, state.filled.length === 5,
+            return [state.positive !== null, state.negativeChoice.correct, state.filled.length === 3,
                 state.lastTwo.every(c => c.correct), state.plotted.length === 5, state.joined, state.drawn][state.screen];
         }
         function syncHash() { if (api.getCurrentSection().id === 'explanation') api.setSlideHash(`learn-${state.screen + 1}`, { replace: true }); }
@@ -176,15 +189,16 @@
                 }
             }
             if (screen === 2) {
+                paragraph(root, 'Square x first, then subtract 1.');
+                paragraph(root, 'Tap each empty box to work it out.');
                 const host = node('div'); root.append(host);
                 const working = paragraph(root, state.highlighted === null ? '' : nb(Q.workingText(base, state.highlighted)));
-                paragraph(root, 'Square x first, then subtract 1.'); paragraph(root, 'Tap each empty box to work it out.');
-                const closing = paragraph(root, state.filled.length === 5 ? 'Each column gives one point.' : '');
+                const closing = paragraph(root, state.filled.length === 3 ? 'Each column gives one point.' : '');
                 function paint() {
-                    host.replaceChildren(Q.table(base, { filled: state.filled, highlighted: state.highlighted, onPick(x) {
+                    host.replaceChildren(Q.table(base, { filled: state.filled, highlighted: state.highlighted, pickable: [-2, -1, 0], onPick(x) {
                         section.update(s => { s.highlighted = x; s.filled.push(x); });
                         working.textContent = nb(Q.workingText(base, x));
-                        closing.textContent = state.filled.length === 5 ? 'Each column gives one point.' : '';
+                        closing.textContent = state.filled.length === 3 ? 'Each column gives one point.' : '';
                         paint(); action();
                     } }));
                 }

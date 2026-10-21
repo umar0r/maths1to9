@@ -34,6 +34,21 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe(`d
         for(let i=0;i<200;i++) {
             points=checkScreen(await screen(page),points);
             const hash=new URL(page.url()).hash;
+            const data = await read(page);
+            const coordinateLabels = root(page).locator('.maths-graph__label').filter({hasText:/^\(/});
+            expect(await coordinateLabels.count()).toBeLessThanOrEqual(1);
+            if ((data.id === 'explanation' && ([5,6].includes(data.s.screen) || data.s.screen === 4 && data.s.plotted.length === 5)) ||
+                (data.id === 'interactive' && data.s.screen >= 3) || (data.q?.input === 'custom' && (await main(page).textContent()).trim() === 'Continue')) {
+                await expect(coordinateLabels).toHaveCount(0);
+            }
+            if (data.id === 'explanation' && data.s.screen === 2) {
+                await expect(root(page).getByRole('button',{name:'y when x = 1',exact:true})).toHaveCount(0);
+                await expect(root(page).getByRole('button',{name:'y when x = 2',exact:true})).toHaveCount(0);
+                expect(await root(page).locator('p').filter({hasText:'Tap each empty box to work it out.'}).evaluate(p => Boolean(p.compareDocumentPosition(p.parentElement.querySelector('table')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+            }
+            if (data.id === 'interactive' && data.s.screen >= 3 && data.s.joined) {
+                await expect(root(page).locator('.question-feedback.is-correct').last()).toHaveText('✓ The graph goes through all five points and curves smoothly at the bottom.');
+            }
             if (process.env.DEBUG_RUN) console.log(i,hash,await main(page).textContent(),(await read(page)).s?.screen);
             if(hash!==prior) {
                 await reload(page);await layout(page);
@@ -53,19 +68,21 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe(`d
         expect(errors).toEqual([]);
     });
 });
+test.describe('phone review fixes', () => {
+    test.use({viewport:{width:375,height:812},hasTouch:true,isMobile:true});
 test('drawing-quadratic-graphs wrong Learn options, guides, saved points and all join pictures',async({page})=>{
     test.setTimeout(120000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await ready(page);await until(page,'#learn-2');
-    await root(page).getByRole('button',{name:'−4',exact:true}).click();await expect(root(page).locator('.question-feedback')).toContainText('A negative times a negative');await reload(page);
-    await expect(root(page).getByRole('button',{name:'−4',exact:true})).toBeDisabled();
-    for (const label of ['−2', '0']) {
-        await root(page).getByRole('button',{name:label,exact:true}).click();
+    await root(page).getByRole('button',{name:'−25',exact:true}).tap();await expect(root(page).locator('.question-feedback')).toContainText('A negative times a negative');await reload(page);
+    await expect(root(page).getByRole('button',{name:'−25',exact:true})).toBeDisabled();
+    for (const label of ['−10', '10']) {
+        await root(page).getByRole('button',{name:label,exact:true}).tap();
         await expect(root(page).locator('.question-feedback.is-visible')).toHaveCount(1);
     }
-    await root(page).getByRole('button',{name:'4',exact:true}).click(); await reload(page);
+    await root(page).getByRole('button',{name:'25',exact:true}).tap(); await reload(page);
     await until(page,'#learn-4');
-    for (const label of ['1', '2']) await root(page).getByRole('button',{name:label,exact:true}).click();
-    await root(page).getByRole('button',{name:'0',exact:true}).click();
-    for (const label of ['1', '5']) await root(page).getByRole('button',{name:label,exact:true}).click();
+    for (const label of ['1', '2']) await root(page).getByRole('button',{name:label,exact:true}).tap();
+    await root(page).getByRole('button',{name:'0',exact:true}).tap();
+    for (const label of ['1', '5']) await root(page).getByRole('button',{name:label,exact:true}).tap();
     await until(page,'#learn-5');
     for (const [point, message] of [
         [[3,-2], 'Go across first for x, then up or down for y.'],
@@ -87,11 +104,20 @@ test('drawing-quadratic-graphs wrong Learn options, guides, saved points and all
     await board.press('ArrowRight'); await board.press('ArrowUp'); await board.press('Enter');
     await until(page,'#learn-6');
     for(const [label,text]of [['Straight lines, dot to dot',"The graph doesn't have corners"],['Flat across the bottom','Your curve misses (0, −1)']]) {
-        await root(page).getByRole('button',{name:label,exact:true}).click();await expect(root(page).locator('.question-feedback')).toContainText(text);
+        await root(page).getByRole('button',{name:label,exact:true}).tap();await expect(root(page).locator('.question-feedback')).toContainText(text);
+        await expect(root(page).locator('.maths-graph__label').filter({hasText:/^\(/})).toHaveCount(0);
         await page.screenshot({path:label.startsWith('Flat')?'/tmp/quadratic-flat-bottom.png':'/tmp/quadratic-straight-join.png',fullPage:true});
     }
-    await root(page).getByRole('button',{name:'A smooth curve',exact:true}).click();await reload(page);await expect(root(page).getByRole('button',{name:'A smooth curve',exact:true})).toBeDisabled();
+    await root(page).getByRole('button',{name:'A smooth curve',exact:true}).tap();await reload(page);await expect(root(page).getByRole('button',{name:'A smooth curve',exact:true})).toBeDisabled();
+    await expect(root(page).locator('.question-feedback.is-correct')).toHaveText('✓ Right. One smooth curve through every point.');
+    await main(page).tap();
+    await root(page).getByRole('button',{name:'Draw it',exact:true}).tap();
+    await page.waitForFunction(() => Object.values(JXG.boards).some(board => Object.values(board.objects).filter(o => o.elType === 'point' && o.visProp.visible === true && [-2,-1,0,1,2].includes(o.X()) && o.Y() === 3 - o.X() ** 2).length === 5));
+    await expect(root(page).locator('.maths-graph__label').filter({hasText:/^\(/})).toHaveCount(0);
+    await page.screenshot({path:'/tmp/quadratic-fix-learn7-phone.png',fullPage:true});
     expect(errors).toEqual([]);
+});
+
 });
 test('drawing-quadratic-graphs wrong Practice plot, reload phases and two more sessions preserve score',async({page})=>{
     test.setTimeout(180000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await ready(page);await until(page,'#try-it-1');
@@ -102,7 +128,12 @@ test('drawing-quadratic-graphs wrong Practice plot, reload phases and two more s
     await expect(root(page).getByRole('textbox').first()).toHaveValue('-1');
     await until(page,'#question-bank-question-1');
     for(let i=0;i<30;i++){const data=await read(page);if(data.q?.input==='custom')break;await step(page);}
-    await tapPoint(page,[4,6]);await reload(page);await main(page).click();await expect(main(page)).toHaveText('Try again');await reload(page);await main(page).click();await solve(page);await reload(page);
+    const labels = () => root(page).locator('.maths-graph__label').filter({hasText:/^\(/});
+    await expect(labels()).toHaveCount(0);
+    await tapPoint(page,[4,6]); await expect(labels()).toHaveCount(1);
+    await reload(page); await main(page).click(); await expect(main(page)).toHaveText('Try again');
+    await expect(labels()).toHaveCount(1); await reload(page); await main(page).click();
+    await expect(labels()).toHaveCount(0); await solve(page); await expect(labels()).toHaveCount(0); await reload(page);
     await until(page,'#question-bank-question-7');await main(page).click();await until(page,'#check-1');
     for (const input of await root(page).getByRole('textbox').all()) await input.fill('99');
     await main(page).click(); await reload(page); await main(page).click(); await solve(page); await reload(page);
@@ -148,4 +179,25 @@ test('drawing-quadratic-graphs every generated wrong option and typed feedback r
     expect(results.length).toBeGreaterThan(300);
     for(const result of results){expect(result.actual).toBe(result.expected);expect(result.correct).toBe(false);expect(result.boxes).toBe(1);}
     expect(errors).toEqual([]);
+});
+
+test('drawing-quadratic-graphs upgrades review saves without showing the old answer as the new question', async ({page}) => {
+    await page.goto(`/content/${slug}/`); await ready(page); await until(page,'#learn-2');
+    await read(page);
+    await page.evaluate(async slug => {
+        const saved = await Maths1to9Progress.getLessonActivityState(slug,'learn');
+        saved.version = 1;
+        saved.data.negativeChoice = {selected:0,rejected:[],correct:true};
+        saved.data.filled = [-2,-1,0,1,2];
+        saved.data.highlighted = 2;
+        await Maths1to9Progress.saveLessonActivityState(slug,'learn',saved);
+    },slug);
+    await page.reload(); await ready(page);
+    await expect(root(page).getByRole('button',{name:'25',exact:true})).toBeEnabled();
+    await expect(main(page)).toBeDisabled();
+    const state = (await read(page)).s;
+    expect(state.negativeChoice.correct).toBe(false);
+    expect(state.filled).toEqual([-2,-1,0]);
+    expect(state.highlighted).toBe(null);
+    expect(state.screen).toBe(1);
 });

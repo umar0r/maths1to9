@@ -88,3 +88,11 @@ test('quadratics generator alternates all six types, bounds every table, avoids 
     }
     assert.ok(varied>350&&varied<650); assert.ok(ordinary>350&&ordinary<650);
 });
+
+test('quadratics hides given point coordinates and places a tapped label on its x side', () => {
+    const board = { point(position, options) { return { position, options }; } };
+    assert.equal(Q.point(board, [-2,3]).options.coordinates, false);
+    assert.equal(Q.point(board, [-2,3], 'correct', true).options.labelSide, 'left');
+    assert.equal(Q.point(board, [0,-1], 'incorrect', true).options.labelSide, 'right');
+    assert.equal(Q.point(board, [2,3], 'correct', true).options.coordinates, true);
+});
