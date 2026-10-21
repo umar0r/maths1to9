@@ -1,0 +1,31 @@
+.quadratic-table {
+    width: 100%;
+    table-layout: fixed;
+    scroll-margin-top: 5rem;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    text-align: center;
+}
+.quadratic-table th, .quadratic-table td {
+    padding: 0.35rem 0.1rem;
+    border: 1px solid var(--border);
+}
+.quadratic-table [aria-current="true"] {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+}
+.quadratic-empty {
+    display: inline-block;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 2px dashed var(--text-muted);
+    border-radius: 0.3rem;
+    background: transparent;
+}
+.quadratic-equation {
+    text-align: center;
+    font-size: 1.7rem;
+    margin: 0.5rem 0;
+}
+.quadratic-working { color: var(--text-muted); }
+.quadratic-learn p { margin: 0.45rem 0; }
