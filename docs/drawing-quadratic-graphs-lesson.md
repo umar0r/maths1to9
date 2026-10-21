@@ -134,7 +134,7 @@ a little beyond the outer points, clipped to the grid. Under
 `prefers-reduced-motion`, everything that "appears in turn" appears at
 once.
 
-### Joining the points (Learn 6 and Try it 4)
+### Joining the points (Try it 4)
 
 Three in-activity buttons in a `role="group"` labelled "How do you join
 the points?", shared `button` styles with `is-selected` / `is-correct` /
@@ -157,13 +157,12 @@ Each press replaces the last drawing. A wrong choice is drawn with tone
   through every point, including the lowest one." (with the real point)
 
 The right choice is drawn tone `correct` and the buttons are disabled.
-Learn 6 shows "✓ Right. One smooth curve through every point." in its
-green feedback box, then its closing text. Try it 4 shows "✓ The graph
+Try it 4 shows "✓ The graph
 goes through all five points and curves smoothly at the bottom." inside
 that box, with no separate copy of the sentence. Save the right choice in
 section state so reload and Back show the finished curve. Wrong presses aren't saved.
 
-## Plotting points (Learn 5, Try it 3, Practice, Check)
+## Plotting points (Try it 3, Practice, Check)
 
 One lesson-level helper in `interactive.js` / `questions.js` (shared
 between them through `quadratics.js` if that's tidier) that uses
@@ -190,10 +189,10 @@ between them through `quadratics.js` if that's tidier) that uses
     y is below 0."
   - otherwise: "Start at (0, 0). Go across to x = −2, then up to y = 3."
     (with the real numbers and "up" / "down" / "stay on the x-axis").
-- Save each plotted point in section state (Learn, Try it) or the
+- Save each plotted point in section state (Try it) or the
   widget's value (Practice, Check), so reload keeps them.
 - Once all points are plotted, show them without coordinate labels on
-  Learn 5, Learn 6, Learn 7 and Try it 4. The filled table stays above
+  Try it 4. The filled table stays above
   the graph. Given points on Practice/Check plotting cards also have no
   coordinate labels. The newly tapped answer is labelled while answering
   or wrong, and has no coordinate label once checked correct. Use only
@@ -208,62 +207,41 @@ card is checked), `mark` uses `plotMark`, `answerText` is "You plotted
 tone, the guides on `wrong`, and stops picking. It never recreates the
 board.
 
-## Learn (7 screens)
+## Learn (6 screens)
 
-One idea per screen: the equation (large, centred), the activity, then
-at most three short lines of text. Save the screen index and each
-screen's state in section state, so reload and Back keep them. Learn has
-no scored questions. Learn's choice questions are lesson buttons with the
-shared answer classes (not question cards); a wrong option greys out with
-its feedback, and Next unlocks on the right one.
+Learn is for looking, as in `finding-the-gradient`. Every screen shows
+the graph first (with the table where listed), then at most three short
+lines of text. Learn has **no questions, no buttons and no gating**:
+Next is always enabled, mid-animation too. "In turn" means about 500 ms
+apart; under `prefers-reduced-motion`, and on every revisit (Back,
+reload), the finished screen shows at once. Only the point a screen is
+about has a coordinates label (left of it for x < 0, right otherwise).
+Old seven-screen saves: a finished Learn stays finished; otherwise Learn
+starts again at screen 1.
 
-1. **From x to y.** `y = x²`. Text: "Square x to find y. Squaring means
-   multiplying a number by itself." Three in-activity buttons `x = 1`,
-   `x = 2`, `x = 3` in a `role="group"` labelled "Pick a value of x".
-   Each press shows its working under the equation: `3 × 3 = 9`, then
-   "So (3, 9) is on the graph." Next unlocks after one press.
+1. **This is a quadratic graph.** y = x² − 1 drawn with its five points,
+   no labels. Text: "This is the graph of y = x² − 1." "It has x² in it,
+   so it's a **quadratic**." "Quadratic graphs are smooth U-shaped curves."
+2. **Each point comes from the equation.** The other points muted;
+   (2, 3) large and labelled. The working appears in turn: "x = 2",
+   "2² = 2 × 2 = 4", "4 − 1 = 3", "So the point is (2, 3)." Text: "Take
+   x, square it, then subtract 1. That gives y."
+3. **Negative x.** As screen 2 for (−2, 3): "(−2)² = (−2) × (−2) = 4".
+   Text: "A negative times a negative is positive." "So (−2, 3) is level
+   with (2, 3). The curve is the same on both sides."
+4. **A table keeps it tidy.** Empty table above an empty grid. The cells
+   fill in turn, each column highlighting as its point appears. Text:
+   "Work out y for each x in the table." "Each column is one point (x, y)."
+5. **Join with a smooth curve.** The five points. Dashed straight lines
+   dot to dot appear with "✗ Not straight lines from dot to dot.", stay
+   for about 1.8 s, then give way to the smooth curve (tone `correct`)
+   with "✓ One smooth curve through every point, a little past the ends."
+   Text: "Quadratic graphs have no corners."
+6. **Upside down.** y = 3 − x²: table cells and points in turn, then the
+   curve. Text: "When x² is taken away, the curve is an upside-down U."
+   "Same method: table, points, smooth curve."
 
-2. **Negative numbers.** `y = x²`. Buttons `x = −1`, `x = −2`, `x = −3`.
-   Each press shows `(−3) × (−3) = 9` and "So (−3, 9) is on the graph
-   too." Text: "A negative times a negative is positive." Then the question
-   "What is x² when x = −5?":
-   - **25**: "Right. (−5) × (−5) = 25."
-   - −25: "A negative times a negative is positive: (−5) × (−5) = 25."
-   - −10: "Squaring isn't doubling. (−5) × (−5) = 25."
-   - 10: "Squaring means multiplying −5 by itself, not by 2: (−5) × (−5) = 25."
-
-3. **A table of values.** `y = x² − 1`, the table with every y empty.
-   Put "Square x first, then subtract 1." and "Tap each empty box to work
-   it out." above the table. Only the y cells for x = −2, −1 and 0 are
-   tappable, in any order; x = 1 and 2 stay as dashed boxes for Learn 4.
-   Tapping a cell highlights its column, shows `workingText` under the
-   table and fills the cell. Next unlocks when those three are filled.
-   Closing text: "Each column gives one point."
-
-4. **Fill in the last two.** `y = x² − 1`, the table filled for x = −2,
-   −1, 0 (3, 0, −1), boxes for x = 1 and x = 2. Question "What is y when
-   x = 1?" then "What is y when x = 2?", each as lesson choice buttons:
-   - x = 1: **0** ("Right. 1² − 1 = 1 − 1 = 0."), 1 ("Subtract 1 as
-     well: 1² − 1 = 0."), 2 ("Subtract 1, don't add it: 1 − 1 = 0.").
-   - x = 2: **3** ("Right. 2² − 1 = 4 − 1 = 3."), 1 ("Square 2 first:
-     2² = 2 × 2 = 4. Then 4 − 1 = 3."), 5 ("Subtract 1, don't add it:
-     4 − 1 = 3.").
-   Each right answer fills its cell.
-
-5. **Plot the points.** The full table above the grid. Text: "Write each
-   column as (x, y). Start at (0, 0): go across for x, then up or down
-   for y." The plotting helper, in order (−2, 3), (−1, 0), (0, −1),
-   (1, 0), (2, 3). Next unlocks when all five are plotted.
-
-6. **Join the points.** The filled table above the five points, without
-   coordinate labels. "Joining the points" buttons.
-   Closing text: "y = x² − 1 has x² in it, so it's a **quadratic**. Its
-   graph is a smooth U-shaped curve."
-
-7. **Upside down.** `y = 3 − x²`, its table filled (−1, 2, 3, 2, −1) and
-   one in-activity button "Draw it". The press plots the five points in
-   turn, then the smooth curve. Text: "When x² is taken away, the curve is
-   an upside-down U." "Same method: table, plot, smooth curve."
+The hands-on table, plotting and joining are in Try it.
 
 ## Try it (4 screens)
 
@@ -434,17 +412,18 @@ planned maximum score; don't hard-code it.
   three choice types, alternating, every table value within −5 to 6, no
   duplicate options, the same session for the same seed.
 - Add `tests/ui/drawing-quadratic-graphs.spec.cjs`: a full correct run
-  through all four sections; Learn 2 with a wrong option first (the new
-  x = −5 question); Learn 5 with one wrong tap (guides appear, then go); Learn 6 with each wrong
-  join first; a wrong-then-right Practice plotting card; reload mid-Learn
-  5 after two points.
+  through all four sections; every Learn screen with Next enabled at once
+  and its finished picture; reduced motion; Try it 3 with each wrong tap
+  (guides appear, then go); Try it 4 with each wrong join first; a
+  wrong-then-right Practice plotting card; reload mid-Try it 3 after two
+  points; old seven-screen Learn saves.
 - `node --check` on every JS file; `lesson.json` is valid JSON.
 - In the browser, desktop and 375 px (and touch emulation), with real
   clicks and taps:
   - a full run ending on All lessons and the homepage, on the PHP site
     and the built `dist/` site
   - the table and graph are both visible without scrolling at 375 × 812
-    on Learn 5, Try it 3 and the Practice / Check plotting cards
+    on Try it 3 and the Practice / Check plotting cards
   - the five-field card fits at 375 px with no sideways scroll, and the
     phone keyboard offers a minus. **If five boxes don't fit, stop and
     ask** (don't shrink the shared boxes from the lesson)

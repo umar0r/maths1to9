@@ -5,8 +5,6 @@
     const Q = window.Quadratics;
     const { node, nb, number, coordinate, valueOf } = Q;
     const base = { a: 1, c: -1 }, guided = { a: 1, c: -2 };
-    const titles = ['From x to y.', 'Negative numbers.', 'A table of values.', 'Fill in the last two.',
-        'Plot the points.', 'Join the points.', 'Upside down.'];
     const event = (sectionId, name) => document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, { detail: { sectionId } }));
     function paragraph(root, text) { const p = node('p', text); root.append(p); return p; }
     function button(root, text, onClick) {
@@ -19,42 +17,6 @@
     function group(root, label) {
         const el = node('div', '', 'question-options'); el.setAttribute('role', 'group'); el.setAttribute('aria-label', label); root.append(el); return el;
     }
-    function choices(root, definition, saved, save, done) {
-        paragraph(root, definition.prompt);
-        const options = group(root, definition.prompt), feedback = node('p', '', 'question-feedback');
-        feedback.setAttribute('role', 'status'); root.append(feedback);
-        const buttons = definition.options.map((option, index) => button(options, nb(option.label), () => {
-            if (saved.correct || saved.rejected.includes(index)) return;
-            saved.selected = index;
-            if (option.correct) saved.correct = true; else saved.rejected.push(index);
-            save(); paint(); done(option.correct);
-        }));
-        function paint() {
-            buttons.forEach((b, index) => {
-                b.disabled = saved.correct || saved.rejected.includes(index);
-                b.className = `button${saved.rejected.includes(index) ? ' is-incorrect' : saved.correct && saved.selected === index ? ' is-correct' : ''}`;
-            });
-            if (saved.selected !== null) {
-                feedback.textContent = Q.prose(`${saved.correct ? '✓' : '✗'} ${definition.options[saved.selected].feedback}`);
-                feedback.className = `question-feedback is-visible ${saved.correct ? 'is-correct' : 'is-incorrect'}`;
-            }
-        }
-        paint();
-    }
-    const negative = { prompt: 'What is x² when x = −5?', options: [
-        Q.choice('25', 'Right. (−5) × (−5) = 25.', true),
-        Q.choice('−25', 'A negative times a negative is positive: (−5) × (−5) = 25.'),
-        Q.choice('−10', "Squaring isn't doubling. (−5) × (−5) = 25."),
-        Q.choice('10', 'Squaring means multiplying −5 by itself, not by 2: (−5) × (−5) = 25.') ] };
-    const lastTwo = [
-        { prompt: 'What is y when x = 1?', options: [
-            Q.choice('0', 'Right. 1² − 1 = 1 − 1 = 0.', true),
-            Q.choice('1', 'Subtract 1 as well: 1² − 1 = 0.'), Q.choice('2', "Subtract 1, don't add it: 1 − 1 = 0.") ] },
-        { prompt: 'What is y when x = 2?', options: [
-            Q.choice('3', 'Right. 2² − 1 = 4 − 1 = 3.', true),
-            Q.choice('1', 'Square 2 first: 2² = 2 × 2 = 4. Then 4 − 1 = 3.'), Q.choice('5', "Subtract 1, don't add it: 4 − 1 = 3.") ] }
-    ];
-    function freshChoice() { return { selected: null, rejected: [], correct: false }; }
     function plotting(root, form, saved, save, done) {
         const points = Q.xs.map(x => [x, valueOf(form, x)]);
         const table = Q.table(form, { highlighted: points[saved.length]?.[0] }); root.append(table);
@@ -134,116 +96,158 @@
         }
         return board;
     }
+    // Learn is for looking: the graph first, things appear in turn, nothing to answer.
+    const upsideDown = { a: -1, c: 3 };
+    const curve = form => x => valueOf(form, x);
+    const pointsOf = form => Q.xs.map(x => [x, valueOf(form, x)]);
+    const learn = [
+        { title: 'This is a quadratic graph.', form: base, text: [
+            'This is the graph of y = x² − 1.',
+            "It has x² in it, so it's a **quadratic**.",
+            'Quadratic graphs are smooth U-shaped curves.'] },
+        { title: 'Each point comes from the equation.', form: base, focus: 2, text: [
+            'Take x, square it, then subtract 1. That gives y.'] },
+        { title: 'Negative x.', form: base, focus: -2, text: [
+            'A negative times a negative is positive.',
+            'So (−2, 3) is level with (2, 3). The curve is the same on both sides.'] },
+        { title: 'A table keeps it tidy.', form: base, table: true, text: [
+            'Work out y for each x in the table.',
+            'Each column is one point (x, y).'] },
+        { title: 'Join with a smooth curve.', form: base, join: true, text: [
+            'Quadratic graphs have no corners.'] },
+        { title: 'Upside down.', form: upsideDown, table: true, curve: true, text: [
+            'When x² is taken away, the curve is an upside-down U.',
+            'Same method: table, points, smooth curve.'] }
+    ];
+    function steps(form, x) {
+        const square = `${Q.bracket(x)}²`;
+        const times = `${Q.bracket(x)} × ${Q.bracket(x)}`;
+        return [
+            `x = ${number(x)}`,
+            `${square} = ${times} = ${number(x * x)}`,
+            `${number(x * x)} − 1 = ${number(valueOf(form, x))}`,
+            `So the point is ${coordinate([x, valueOf(form, x)])}.`
+        ];
+    }
+    function strongText(root, text) {
+        const p = node('p');
+        text.split('**').forEach((part, index) => {
+            p.append(index % 2 ? node('strong', part) : document.createTextNode(Q.prose(part)));
+        });
+        root.append(p);
+    }
     async function mountLearn() {
         const api = window.Maths1to9Lesson;
-        const root = node('article', '', 'quadratic-learn'); document.getElementById('lesson-section-explanation').append(root);
+        const root = node('article', '', 'quadratic-learn');
+        document.getElementById('lesson-section-explanation').append(root);
         event('explanation', 'gate');
-        const section = await api.useSectionState('learn', { version: 2, upgrade(saved, version) {
-            if (version !== 1 || !Array.isArray(saved.filled)) return null;
-            return { ...saved, negativeChoice: freshChoice(), filled: saved.filled.filter(x => x <= 0),
-                highlighted: [-2, -1, 0].includes(saved.highlighted) ? saved.highlighted : null };
-        }, initial: () => ({ screen: 0, furthestScreen: 0, finished: false,
-            positive: null, negative: null, negativeChoice: freshChoice(), filled: [], highlighted: null,
-            lastTwo: [freshChoice(), freshChoice()], plotted: [], joined: false, drawn: false }) });
-        const state = section.state; section.save();
-        let board = null, timers = [];
-        function complete() {
-            return [state.positive !== null, state.negativeChoice.correct, state.filled.length === 3,
-                state.lastTwo.every(c => c.correct), state.plotted.length === 5, state.joined, state.drawn][state.screen];
-        }
-        function syncHash() { if (api.getCurrentSection().id === 'explanation') api.setSlideHash(`learn-${state.screen + 1}`, { replace: true }); }
-        function action() {
-            if (state.screen === 6 && complete() && !state.finished) section.update(s => { s.finished = true; });
-            if (state.finished) event('explanation', 'complete');
-            api.setSectionBack('explanation', state.screen ? { onClick: () => show(state.screen - 1) } : null);
-            if (state.screen === 6 && complete()) api.clearSectionAction('explanation');
-            else api.setSectionAction('explanation', { label: 'Next', disabled: !complete(), onClick: () => show(state.screen + 1) });
+        const section = await api.useSectionState('learn', {
+            version: 3,
+            // The old seven-screen Learn asked questions. Keep a finished Learn finished; otherwise start again.
+            upgrade: saved => ({ screen: 0, furthestScreen: saved.finished ? learn.length - 1 : 0,
+                finished: Boolean(saved.finished), seen: [] }),
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, seen: [] })
+        });
+        const state = section.state;
+        let board = null;
+        let timers = [];
+        function syncHash() {
+            if (api.getCurrentSection().id === 'explanation') api.setSlideHash(`learn-${state.screen + 1}`, { replace: true });
         }
         function show(screen) {
-            section.update(s => { s.screen = screen; s.furthestScreen = Math.max(s.furthestScreen, screen); }); render();
-            const h = root.querySelector('h3'); h.tabIndex = -1; h.focus();
+            section.update(s => {
+                s.screen = screen;
+                s.furthestScreen = Math.max(s.furthestScreen, screen);
+                if (screen === learn.length - 1) s.finished = true;
+            });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
         function render() {
-            board?.destroy(); board = null; timers.forEach(clearTimeout); timers = []; root.replaceChildren();
-            const screen = state.screen; root.append(node('h3', titles[screen]));
-            equation(root, screen < 2 ? { a: 1, c: 0 } : screen === 6 ? { a: -1, c: 3 } : base);
-            if (screen < 2) {
-                if (!screen) paragraph(root, 'Square x to find y. Squaring means multiplying a number by itself.');
-                const controls = group(root, 'Pick a value of x');
-                const working = paragraph(root, '', 'quadratic-working'), result = paragraph(root, '');
-                function paint() {
-                    const x = screen ? state.negative : state.positive;
-                    if (x === null) return;
-                    working.textContent = nb(`${Q.bracket(x)} × ${Q.bracket(x)} = ${x * x}`);
-                    result.textContent = `So ${nb(coordinate([x, x * x]))} is on the graph${screen ? ' too' : ''}.`;
-                }
-                [1, 2, 3].map(x => screen ? -x : x).forEach(x => {
-                    const control = button(controls, nb(`x = ${number(x)}`), () => {
-                        section.update(s => { s[screen ? 'negative' : 'positive'] = x; }); paint(); action();
-                    });
-                    control.disabled = state.screen < state.furthestScreen || state.finished;
-                }); paint();
-                if (screen) {
-                    paragraph(root, 'A negative times a negative is positive.');
-                    choices(root, negative, state.negativeChoice, () => section.save(), action);
-                }
+            timers.forEach(clearTimeout);
+            timers = [];
+            board?.destroy();
+            root.replaceChildren();
+            const screen = learn[state.screen];
+            const animate = !state.seen[state.screen] && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let delay = 0;
+            // Run each step in turn the first time; on a revisit, or with reduced motion, show the finished screen.
+            const later = (run, wait = 500) => {
+                if (!animate) return run();
+                delay += wait;
+                timers.push(setTimeout(run, delay));
+            };
+            root.append(node('h3', screen.title));
+            equation(root, screen.form);
+            const filled = [];
+            let table = null;
+            if (screen.table) {
+                table = Q.table(screen.form, { filled: animate ? [] : Q.xs });
+                root.append(table);
             }
-            if (screen === 2) {
-                paragraph(root, 'Square x first, then subtract 1.');
-                paragraph(root, 'Tap each empty box to work it out.');
-                const host = node('div'); root.append(host);
-                const working = paragraph(root, state.highlighted === null ? '' : nb(Q.workingText(base, state.highlighted)));
-                const closing = paragraph(root, state.filled.length === 3 ? 'Each column gives one point.' : '');
-                function paint() {
-                    host.replaceChildren(Q.table(base, { filled: state.filled, highlighted: state.highlighted, pickable: [-2, -1, 0], onPick(x) {
-                        section.update(s => { s.highlighted = x; s.filled.push(x); });
-                        working.textContent = nb(Q.workingText(base, x));
-                        closing.textContent = state.filled.length === 3 ? 'Each column gives one point.' : '';
-                        paint(); action();
-                    } }));
-                }
-                paint();
+            const host = node('div');
+            root.append(host);
+            board = Q.graph(host, screen.form);
+            const points = pointsOf(screen.form);
+            if (screen.focus !== undefined) {
+                board.plot(curve(screen.form), { domain: [-2.3, 2.3] });
+                points.forEach(p => { if (p[0] !== screen.focus) board.point(p, { tone: 'muted' }); });
+                Q.point(board, [screen.focus, valueOf(screen.form, screen.focus)], 'neutral', true);
+                const working = node('div', '', 'quadratic-steps');
+                root.append(working);
+                steps(screen.form, screen.focus).forEach(line => later(() => working.append(node('p', line))));
+            } else if (screen.table) {
+                points.forEach(p => later(() => {
+                    filled.push(p[0]);
+                    const next = Q.table(screen.form, { filled: animate ? filled : Q.xs, highlighted: animate ? p[0] : null });
+                    table.replaceWith(next);
+                    table = next;
+                    Q.point(board, p);
+                }));
+                if (animate) later(() => {
+                    const done = Q.table(screen.form);
+                    table.replaceWith(done);
+                    table = done;
+                });
+                if (screen.curve) later(() => board.plot(curve(screen.form), { domain: [-2.3, 2.3] }));
+            } else if (screen.join) {
+                points.forEach(p => Q.point(board, p));
+                const wrong = node('p', '', 'quadratic-wrong');
+                const right = node('p', '', 'quadratic-right');
+                root.append(wrong, right);
+                let segments = [];
+                later(() => {
+                    segments = points.slice(1).map((p, i) => board.segment(points[i], p, { tone: 'ink', dash: true }));
+                    wrong.textContent = '✗ Not straight lines from dot to dot.';
+                }, 700);
+                later(() => {
+                    segments.forEach(item => item.remove());
+                    board.plot(curve(screen.form), { domain: [-2.3, 2.3], tone: 'correct' });
+                    right.textContent = Q.prose('✓ One smooth curve through every point, a little past the ends.');
+                }, 1800);
+            } else {
+                board.plot(curve(screen.form), { domain: [-2.3, 2.3] });
+                points.forEach(p => Q.point(board, p));
             }
-            if (screen === 3) {
-                root.append(Q.table(base, { filled: [-2, -1, 0, ...(state.lastTwo[0].correct ? [1] : []), ...(state.lastTwo[1].correct ? [2] : [])] }));
-                const index = state.lastTwo[0].correct ? 1 : 0;
-                if (state.lastTwo[0].correct) paragraph(root, 'Right. 1² − 1 = 1 − 1 = 0.');
-                choices(root, lastTwo[index], state.lastTwo[index], () => section.save(), correct => { if (correct) render(); else action(); });
-            }
-            if (screen === 4) {
-                paragraph(root, 'Write each column as (x, y). Start at (0, 0): go across for x, then up or down for y.');
-                board = plotting(root, base, state.plotted, () => section.save(), action);
-            }
-            if (screen === 5) board = joining(root, base, state, () => section.save(), action,
-                "y = x² − 1 has x² in it, so it's a quadratic. Its graph is a smooth U-shaped curve.");
-            if (screen === 6) {
-                const form = { a: -1, c: 3 }; root.append(Q.table(form));
-                const host = node('div'); root.append(host); board = Q.graph(host, form);
-                const draw = () => {
-                    Q.xs.forEach(x => Q.point(board, [x, valueOf(form, x)]));
-                    board.plot(x => valueOf(form, x), { domain: [-2.3, 2.3] });
-                };
-                if (state.drawn) draw();
-                const control = button(root, 'Draw it', () => {
-                    section.update(s => { s.drawn = true; }); control.disabled = true;
-                    const active = board;
-                    if (matchMedia('(prefers-reduced-motion: reduce)').matches) draw();
-                    else {
-                        Q.xs.forEach((x, i) => timers.push(setTimeout(() => { if (board === active) Q.point(board, [x, valueOf(form, x)]); }, i * 180)));
-                        timers.push(setTimeout(() => { if (board === active) board.plot(x => valueOf(form, x), { domain: [-2.3, 2.3] }); }, 900));
-                    }
-                    action();
-                }); control.disabled = state.drawn;
-                paragraph(root, 'When x² is taken away, the curve is an upside-down U.');
-                paragraph(root, 'Same method: table, plot, smooth curve.');
-            }
-            action(); syncHash();
+            screen.text.forEach(text => strongText(root, text));
+            section.update(s => { s.seen[s.screen] = true; });
+            api.setSectionBack('explanation', state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
+            if (state.finished) event('explanation', 'complete');
+            if (state.screen === learn.length - 1 && state.finished) api.clearSectionAction('explanation');
+            else api.setSectionAction('explanation', { label: 'Next', onClick: () => show(state.screen + 1) });
+            syncHash();
         }
-        titles.forEach((title, i) => api.registerHashRoute(`learn-${i + 1}`, () => { api.goToSection('explanation', { moveFocus: false }); show(Math.min(i, state.furthestScreen)); }));
+        learn.forEach((screen, index) => api.registerHashRoute(`learn-${index + 1}`, () => {
+            api.goToSection('explanation', { moveFocus: false });
+            show(Math.min(index, state.furthestScreen));
+        }));
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         window.addEventListener('hashchange', () => queueMicrotask(syncHash));
-        const requested = /^#learn-([1-7])$/.exec(initialHash);
-        if (requested) show(Math.min(Number(requested[1]) - 1, state.furthestScreen)); else render();
+        const requested = /^#learn-([1-6])$/.exec(initialHash);
+        if (requested) show(Math.min(Number(requested[1]) - 1, state.furthestScreen));
+        else render();
     }
     const examples = [
         { ...Q.valueCard(guided, -2), prompt: 'What is y when x = −2? Square −2, then subtract 2.' },
@@ -309,7 +313,7 @@
         if (requested && api.goToSection('interactive', { moveFocus: false })) show(Math.min(Number(requested[1]) - 1, state.furthestScreen));
     }
     examples.forEach((question, index) => { examples[index] = Q.prepare(question); });
-    Q.examples = examples; Q.learnChoices = { negative, lastTwo };
+    Q.examples = examples;
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[SLUG] = mountTryIt;
     document.addEventListener('maths1to9:lesson-rendered', e => { if (e.detail?.slug === SLUG) mountLearn(); });
