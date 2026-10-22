@@ -2,10 +2,27 @@
 (() => {
     'use strict';
 
-    function snap(point, step = {}) {
+    function tidyNumber(value) {
+        return Number.isFinite(value) ? Number(value.toPrecision(14)) || 0 : value;
+    }
+
+    function subdivisions(value = {}) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+            throw new RangeError('Graph subdivisions must be whole numbers of at least 1.');
+        }
+        const result = { x: 1, y: 1, ...value };
+        if (![result.x, result.y].every(size => Number.isInteger(size) && size >= 1)) {
+            throw new RangeError('Graph subdivisions must be whole numbers of at least 1.');
+        }
+        return result;
+    }
+
+    function snap(point, step = {}, subdivide = {}) {
+        const parts = subdivisions(subdivide);
         return point.map((value, index) => {
-            const size = step[index === 0 ? 'x' : 'y'] ?? 1;
-            return Math.round(value / size) * size || 0;
+            const axis = index === 0 ? 'x' : 'y';
+            const size = (step[axis] ?? 1) / parts[axis];
+            return tidyNumber(Math.round(tidyNumber(value / size)) * size);
         });
     }
 
@@ -21,7 +38,7 @@
     }
 
     function formatNumber(value) {
-        return String(Object.is(value, -0) ? 0 : value).replace(/-/g, '−');
+        return String(tidyNumber(value)).replace(/-/g, '−');
     }
 
     function formatPoint(point) {
@@ -51,6 +68,8 @@
         if (![step.x, step.y].every(value => Number.isFinite(value) && value > 0)) {
             throw new RangeError('Graph axis steps must be positive finite numbers.');
         }
+        const subdivide = subdivisions(options.subdivide);
+        const minorStep = { x: step.x / subdivide.x, y: step.y / subdivide.y };
         const wrapper = document.createElement('div');
         wrapper.className = 'maths-graph';
         const surface = document.createElement('div');
@@ -113,6 +132,20 @@
             const label = text(position, value, attributes);
             axisLabels.push({ label, position, attributes });
         }
+        for (const axis of ['x', 'y']) {
+            if (subdivide[axis] === 1) continue;
+            const range = axis === 'x' ? x : y;
+            const size = minorStep[axis];
+            for (let tick = Math.ceil(range[0] / size); tick * size <= range[1]; tick++) {
+                if (tick % subdivide[axis] === 0) continue;
+                const value = tidyNumber(tick * size);
+                const from = axis === 'x' ? [value, y[0]] : [x[0], value];
+                const to = axis === 'x' ? [value, y[1]] : [x[1], value];
+                segment(from, to, {
+                    strokeColor: colour('--border'), strokeOpacity: 0.35, strokeWidth: 1, layer: 0
+                });
+            }
+        }
         const every = options.labelEvery || (Math.max((x[1] - x[0]) / step.x, (y[1] - y[0]) / step.y) > 12 ? 2 : 1);
         for (let tick = Math.ceil(x[0] / step.x); tick * step.x <= x[1]; tick++) {
             const value = tick * step.x;
@@ -143,7 +176,7 @@
         let activeTool = null;
         let gesture = null;
         function clamp(point) {
-            const rounded = snap(point, step);
+            const rounded = snap(point, step, subdivide);
             return [Math.max(x[0], Math.min(x[1], rounded[0])), Math.max(y[0], Math.min(y[1], rounded[1]))];
         }
         function pixels(point) {
@@ -694,8 +727,8 @@
         }
         function key(event) {
             if (!editable) return;
-            const delta = { ArrowLeft: [-step.x, 0], ArrowRight: [step.x, 0],
-                ArrowUp: [0, step.y], ArrowDown: [0, -step.y] }[event.key];
+            const delta = { ArrowLeft: [-minorStep.x, 0], ArrowRight: [minorStep.x, 0],
+                ArrowUp: [0, minorStep.y], ArrowDown: [0, -minorStep.y] }[event.key];
             if (!delta && !['Enter', ' ', 'Escape'].includes(event.key)) return;
             const points = [...items].filter(entry => entry.kind === 'point' && entry.settings.drag);
             if (activeTool) { event.preventDefault(); activeTool.key(event, delta); }

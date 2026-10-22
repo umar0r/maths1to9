@@ -89,3 +89,22 @@ test('graph snap accepts axis steps, preserving halfway rounding and unit coordi
     }
     assert.equal(Object.is(graph.snap([-0.4, -0.8], { x: 1, y: 2 })[1], -0), false);
 });
+
+
+test('graph subdivisions snap halves, fifths and odd y values without floating-point noise', () => {
+    assert.deepEqual(plain(graph.snap([0.49, 3.1], { x: 1, y: 2 }, { x: 2, y: 2 })), [0.5, 3]);
+    assert.deepEqual(plain(graph.snap([-0.26, -7.1], { y: 2 }, { x: 2, y: 2 })), [-0.5, -7]);
+    assert.deepEqual(plain(graph.snap([0.61, -0.61], {}, { x: 5, y: 5 })), [0.6, -0.6]);
+    assert.deepEqual(plain(graph.snap([0.3, -0.3], {}, { x: 5, y: 5 })), [0.4, -0.2]);
+    assert.deepEqual(plain(graph.snap([0.7, -0.7], {}, { x: 5, y: 5 })), [0.8, -0.6]);
+    assert.deepEqual(plain(graph.snap([0.1 + 0.2, -0.1 - 0.2], { x: 0.1, y: 0.1 })), [0.3, -0.3]);
+    assert.deepEqual(plain(graph.snap([1.2, 3.1], { y: 2 }, {})), [1, 4]);
+    assert.equal(graph.formatNumber(0.1 + 0.2), '0.3');
+    assert.equal(graph.formatNumber(-0.25), '−0.25');
+});
+
+test('graph subdivisions reject malformed values', () => {
+    for (const value of [null, [], 2, { x: 0 }, { y: -1 }, { x: 1.5 }, { y: Infinity }, { x: undefined }]) {
+        assert.throws(() => graph.snap([0, 0], {}, value), { name: 'RangeError' });
+    }
+});
