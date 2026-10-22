@@ -54,3 +54,11 @@
         transition: none !important;
     }
 }
+
+/* Keep axis numbers legible when a curve or marked point passes behind them. */
+.maths-graph__axis-number {
+    text-shadow:
+        -2px -2px 0 var(--surface), 0 -2px 0 var(--surface), 2px -2px 0 var(--surface),
+        -2px 0 0 var(--surface), 2px 0 0 var(--surface),
+        -2px 2px 0 var(--surface), 0 2px 0 var(--surface), 2px 2px 0 var(--surface);
+}

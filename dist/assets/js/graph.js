@@ -129,7 +129,20 @@
         }
         const axisLabels = [];
         function axisText(position, value, attributes) {
-            const label = text(position, value, attributes);
+            let label;
+            const size = () => label?.rendNode?.getBoundingClientRect() || { width: 0, height: 0 };
+            // Keep HTML labels left/top anchored, like point and arrow labels. Right-anchored
+            // text can shift with the container before ResizeObserver updates the board's units.
+            const placed = [
+                () => position[0] - (attributes.anchorX === 'right' ? size().width
+                    : attributes.anchorX === 'middle' ? size().width / 2 : 0) / board.unitX,
+                () => position[1] + (attributes.anchorY === 'bottom' ? size().height
+                    : attributes.anchorY === 'middle' ? size().height / 2 : 0) / board.unitY
+            ];
+            label = text(placed, value, {
+                ...attributes, anchorX: 'left', anchorY: 'top', layer: 11,
+                cssClass: 'maths-graph__label maths-graph__axis-number'
+            });
             axisLabels.push({ label, position, attributes });
         }
         for (const axis of ['x', 'y']) {
