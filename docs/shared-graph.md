@@ -381,3 +381,18 @@ file with it.
   the finger, and keyboard drawing), and what you did.
 - Anything in this spec that didn't fit, and what you did. Then stop: the
   horizontal and vertical lines lesson comes after review.
+
+
+### Subdividing the grid
+
+Use `subdivide: { x: 1, y: 2 }` with `step: { x: 1, y: 2 }` to keep
+numbered y lines two units apart while allowing whole-number answers.
+Each subdivision adds faint minor lines between the main grid lines.
+Only main lines have axis numbers. Each missing subdivision defaults to 1;
+values must be whole numbers of at least 1.
+
+Picking, dragging, drawing and arrow keys use `step / subdivide` on each
+axis. Arrow keys move one minor step. The board size still follows the
+main grid. Without `subdivide`, existing graphs work as before.
+`snap([0.49, 3.1], { x: 1, y: 2 }, { x: 2, y: 2 })` gives `[0.5, 3]`.
+Snapped coordinates and labels remove floating-point noise.

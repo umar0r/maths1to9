@@ -1,0 +1,136 @@
+{
+    "id": "drawing-cubic-graphs",
+    "slug": "drawing-cubic-graphs",
+    "title": "Drawing cubic graphs",
+    "subtitle": "Complete a table of values, plot the points and draw a smooth S-shaped curve.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "value": "cubic-graphs",
+            "table": "cubic-graphs",
+            "plot": "cubic-graphs",
+            "cube": "cubic-graphs",
+            "point-on": "cubic-graphs",
+            "shape": "cubic-graphs",
+            "crosses": "cubic-graphs",
+            "aisha": "cubic-graphs",
+            "ben": "cubic-graphs",
+            "cube-first": "cubic-graphs",
+            "join": "cubic-graphs"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Draw a cubic graph from a table of values."
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Table, plot, smooth curve",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise drawing cubic graphs",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "table"
+            },
+            {
+                "type": "plot"
+            },
+            {
+                "type": "aisha"
+            },
+            {
+                "type": "ben"
+            },
+            {
+                "type": "cube-first"
+            },
+            {
+                "type": "join"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "x³ means x × x × x. A negative cubed stays negative."
+                },
+                {
+                    "text": "Complete a table, then plot each column as a point (x, y)."
+                },
+                {
+                    "text": "Join the points with one smooth S-shaped curve."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        }
+    ]
+}
