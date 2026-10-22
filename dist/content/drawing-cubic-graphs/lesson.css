@@ -1,0 +1,78 @@
+.cubic-table {
+    width: 100%;
+    table-layout: fixed;
+    scroll-margin-top: 8rem;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    text-align: center;
+}
+.cubic-table th, .cubic-table td {
+    padding: 0.35rem 0.1rem;
+    border: 1px solid var(--border);
+}
+.cubic-table [aria-current="true"] {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+}
+.cubic-empty {
+    display: inline-block;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 2px dashed var(--text-muted);
+    border-radius: 0.3rem;
+    background: transparent;
+}
+.cubic-equation {
+    text-align: center;
+    font-size: 1.7rem;
+    margin: 0.5rem 0;
+}
+.cubic-working { color: var(--text-muted); }
+.cubic-learn p { margin: 0.45rem 0; }
+.cubic-steps {
+    min-height: 7.5rem;
+    margin: 0.5rem 0;
+    font-size: 1.15rem;
+}
+.cubic-steps p { margin: 0.2rem 0; }
+.cubic-wrong { color: var(--text-muted); }
+.cubic-right { color: var(--success-dark); font-weight: 700; }
+@media (min-width: 760px) {
+    .cubic-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        grid-template-areas: "figure equation" "figure notes";
+        grid-template-rows: auto 1fr;
+        column-gap: 2.5rem;
+    }
+    .cubic-layout .cubic-equation { grid-area: equation; text-align: left; margin-top: 1rem; }
+    .cubic-figure { grid-area: figure; }
+    .cubic-notes { grid-area: notes; font-size: 1.1rem; }
+}
+.cubic-cell {
+    width: 100%;
+    max-width: 3.2rem;
+    padding: 0.35rem 0.1rem;
+    border: 2px dashed var(--text-muted);
+    border-radius: 0.3rem;
+    font: inherit;
+    text-align: center;
+    background: transparent;
+    color: inherit;
+}
+.cubic-cell:focus { border-style: solid; border-color: var(--accent-dark); outline: none; }
+.cubic-cell.is-correct { border: 2px solid var(--success-dark); }
+.cubic-cell.is-incorrect { border: 2px solid var(--error-dark); }
+/* On phones the graph sits above the table, so it stays in view while the keyboard is open. */
+.cubic-live { display: flex; flex-direction: column; }
+.cubic-live__graph { order: -1; width: 100%; max-width: 260px; margin: 0 auto 0.5rem; }
+@media (min-width: 760px) {
+    .cubic-live__graph { order: 0; max-width: 320px; }
+    .cubic-live {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+        column-gap: 2rem;
+        align-items: center;
+    }
+    .cubic-live__graph { margin: 0; }
+}
