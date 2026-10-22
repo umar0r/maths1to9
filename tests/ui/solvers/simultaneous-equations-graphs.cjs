@@ -15,7 +15,7 @@ async function read(page) {
             const item = s.items[s.screen];
             q = T.generate(item, Maths1to9LessonEngine.seededRandom(item.seed));
         }
-        return { id, s, q: q && { input: q.input, answer: q.answer, fields: q.fields, options: q.options, lines: q.lines } };
+        return { id, s, q: q && { input: q.input, answer: q.answer, fields: q.fields, tolerance: q.tolerance, options: q.options, lines: q.lines } };
     }, slug);
 }
 async function tap(page, point) {
@@ -37,7 +37,13 @@ async function solve(page) {
     if (q.input === 'choice') await root(page).getByRole('button', { name: q.options.find(o => o.correct).label, exact: true }).click();
     else {
         const inputs = root(page).locator('.question-card input');
-        if (q.fields) for (let i = 0; i < q.fields.length; i++) await inputs.nth(i).fill(q.answer[q.fields[i].id]);
+        if (q.fields) for (let i = 0; i < q.fields.length; i++) {
+            const answer = q.answer[q.fields[i].id];
+            const [n, d = 1] = answer.split('/').map(Number);
+            // Check 5 also proves a close reading is accepted instead of requiring the rounded answer.
+            const checkReading = id === 'comparison' && s.screen === 4 ? { x: '-1.6', y: '0.7' }[q.fields[i].id] : null;
+            await inputs.nth(i).fill(checkReading || (q.tolerance ? String(Number((n / d).toFixed(1))) : answer));
+        }
         else await inputs.fill(q.answer);
     }
     await main.click();
