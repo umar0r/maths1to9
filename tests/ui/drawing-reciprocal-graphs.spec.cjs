@@ -302,3 +302,35 @@ test('drawing-reciprocal-graphs every wrong option and number rule shows its own
     }
     expect(errors).toEqual([]);
 });
+
+test.describe('reciprocal typed quarter points', () => {
+    test.use({viewport:{width:375,height:812},hasTouch:true,isMobile:true});
+    test('drawing-reciprocal-graphs Check table shows six exact whole dots when wrong and right', async ({page}) => {
+        test.setTimeout(120000);
+        const errors=watchForErrors(page);
+        await page.goto('/content/'+slug+'/');await ready(page);await until(page,'#check-1');
+        const xs=[-4,-1,-0.25,0.25,1,4],wrong=[-0.5,-1,-3.5,4,1,0.25],right=[-0.25,-1,-4,4,1,0.25];
+        async function dots(expected){
+            const result=await root(page).locator('.maths-graph__board').evaluate(element=>{
+                const board=Object.values(JXG.boards).find(b=>b.containerObj===element),bounds=element.getBoundingClientRect();
+                return Object.values(board.objects).filter(o=>o.elType==='point'&&o.visProp.visible).map(point=>{
+                    const dot=point.rendNode.getBoundingClientRect();
+                    return {value:[point.X(),point.Y()],whole:dot.left>=bounds.left&&dot.right<=bounds.right&&dot.top>=bounds.top&&dot.bottom<=bounds.bottom};
+                }).sort((a,b)=>a.value[0]-b.value[0]);
+            });
+            expect(result).toHaveLength(6);
+            expect(result.map(dot=>dot.value)).toEqual(xs.map((x,i)=>[x,expected[i]]));
+            expect(result.every(dot=>dot.whole)).toBe(true);
+        }
+        const inputs=root(page).locator('.reciprocal-cell');
+        for(let i=0;i<6;i++)await inputs.nth(i).fill(String(wrong[i]));
+        await dots(wrong);await main(page).click();
+        await expect(main(page)).toHaveText('Try again');await dots(wrong);
+        await page.screenshot({path:'/tmp/reciprocal-check-six-dots-wrong.png',fullPage:true});
+        await main(page).click();await solve(page);await dots(right);
+        await expect(main(page)).toHaveText('Continue');
+        await page.screenshot({path:'/tmp/reciprocal-check-six-dots-right.png',fullPage:true});
+        await tableFit(page);await reload(page);await dots(right);
+        expect(errors).toEqual([]);
+    });
+});

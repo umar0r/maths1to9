@@ -75,7 +75,7 @@ $pageTitle = 'Drawing reciprocal graphs';
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
     <script src="../../assets/js/graph.js?v=9"></script>
-    <script src="./reciprocals.js?v=1"></script>
+    <script src="./reciprocals.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=1"></script>

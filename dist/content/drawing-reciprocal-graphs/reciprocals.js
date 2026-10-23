@@ -205,16 +205,21 @@
                 }
                 tableHost.append(element);
                 const board = graph(graphHost, form);
+                board.setEditable(false);
                 const points = {};
                 let curves = [];
                 const current = () => Object.fromEntries(values.map(x => [fieldId(x), inputs[x].value.trim()]));
                 // Move one point to match its box; nothing else on the graph is redrawn.
                 function show(x, tone = 'neutral') {
                     const y = readNumber(inputs[x].value);
-                    const visible = y !== null && y >= -4 && y <= 4 && Number.isInteger(x * 2) && Number.isInteger(y * 2);
+                    const visible = y !== null && y >= -4 && y <= 4;
                     if (!visible) { points[x]?.remove(); delete points[x]; return; }
-                    if (points[x]) points[x].update({ value: [x, y], tone });
-                    else points[x] = point(board, [x, y], tone);
+                    if (points[x]) points[x].update({ value: [x, y], tone, positions: [[x, y]] });
+                    // A typed value can lie between the picking grid's half steps.
+                    // A single listed position draws it exactly, without snapping.
+                    else points[x] = board.point([x, y], {
+                        size: 'large', tone, drag: 'positions', positions: [[x, y]]
+                    });
                 }
                 function highlight(x) {
                     element.querySelectorAll('[aria-current]').forEach(cell => cell.removeAttribute('aria-current'));
