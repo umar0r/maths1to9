@@ -87,7 +87,8 @@ for (const site of ['', '/dist']) for (const phone of [false, true]) test.descri
         await expect(page).toHaveURL(new RegExp(`${site}/$`));
         const titles = await page.locator('.lesson-card__title').allTextContents();
         expect(titles.map(t => t.trim())).toContain('Drawing cubic graphs');
-        expect(titles.map(t => t.trim())).not.toContain('Drawing reciprocal graphs');
+        expect(titles.map(t => t.trim())).toContain('Drawing reciprocal graphs');
+        expect(titles.findIndex(t => t.trim() === 'Drawing reciprocal graphs')).toBe(titles.findIndex(t => t.trim() === 'Drawing cubic graphs') + 1);
         expect(titles.map(t => t.trim())).not.toContain('Recognising graph types');
         expect(titles.findIndex(t => t.trim() === 'Drawing cubic graphs')).toBeGreaterThan(titles.findIndex(t => t.trim() === 'Finding the turning point'));
         expect(errors).toEqual([]);
