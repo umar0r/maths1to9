@@ -1,0 +1,5 @@
+.graphtypes-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: calc(100% + 1rem); max-width: 340px; position: relative; left: 50%; transform: translateX(-50%); }
+.graphtypes-small { pointer-events: none; min-width: 0; }
+.graphtypes-small .maths-graph { margin: 0; }
+.lesson-section .graphtypes-grid > .graphtypes-choice { min-width: 0; width: 100%; padding: 0.15rem; text-align: center; }
+.graphtypes-caption { display: block; margin: 0.3rem 0; font-weight: 700; }
