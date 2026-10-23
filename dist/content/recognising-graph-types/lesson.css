@@ -1,0 +1,27 @@
+.graphtypes-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: calc(100% + 1rem); max-width: 340px; position: relative; left: 50%; transform: translateX(-50%); }
+.graphtypes-small { pointer-events: none; min-width: 0; }
+.graphtypes-small .maths-graph { margin: 0; }
+.lesson-section .graphtypes-grid > .graphtypes-choice { min-width: 0; width: 100%; padding: 0.15rem; text-align: center; }
+.graphtypes-caption { display: block; margin: 0.3rem 0; font-weight: 700; }
+.graphtypes-equation { font-size: 1.35rem; margin: 0.5rem 0; text-align: center; }
+.graphtypes-name { text-align: center; margin: 0.2rem 0 0.8rem; font-weight: 700; }
+.graphtypes-fraction { display: inline-flex; vertical-align: middle; flex-direction: column; text-align: center; line-height: 1.1; }
+.graphtypes-fraction span:first-child { border-bottom: 1px solid currentColor; padding: 0 0.3em 0.1em; }
+.graphtypes-fraction span:last-child { padding-top: 0.1em; }
+.graphtypes-big { width: 100%; max-width: 320px; margin: auto; }
+.graphtypes-learn p { margin-top: 0.45rem; margin-bottom: 0.45rem; }
+.graphtypes-steps { min-height: 4rem; }
+.graphtypes-missing { display: inline-block; border: 2px dashed var(--text-muted); padding: 0 0.2em; border-radius: 0.2rem; }
+.graphtypes-blue { color: var(--primary); }
+.graphtypes-ink { color: var(--text); }
+.graphtypes-right { color: var(--success-dark); font-weight: 800; }
+.graphtypes-muted { color: var(--text-muted); }
+.graphtypes-learn mark { color: var(--accent-dark); background: var(--accent-light); border-radius: 0.2rem; padding: 0 0.15em; }
+@media (min-width: 760px) {
+    .graphtypes-layout { display: grid; grid-template-columns: minmax(0,320px) minmax(0,1fr); gap: 2.5rem; align-items: start; }
+    .graphtypes-notes { font-size: 1.1rem; }
+    .graphtypes-notes .graphtypes-equation { text-align: left; }
+    .question-card:has(.graphtypes-big) { display: grid; grid-template-columns: minmax(0,320px) minmax(0,1fr); column-gap: 2.5rem; align-items: start; }
+    .question-card:has(.graphtypes-big) > * { grid-column: 2; }
+    .question-card:has(.graphtypes-big) > div:has(> .graphtypes-big) { grid-column: 1; grid-row: 1 / span 5; }
+}
