@@ -171,7 +171,7 @@
         }));
     }
     function missingCard(form) {
-        return { input: 'number', answer: String(powerOf(form)), rules: missingRules(form),
+        return { form, input: 'number', answer: String(powerOf(form)), rules: missingRules(form),
             prompt: "What's the missing power?",
             feedback: 'Right. ' + shape(form).replace(/^a /, 'A ') + ': power ' + powerOf(form) + '.',
             fallback: 'Look at the shape. It is ' + shape(form) + '.',
