@@ -3,6 +3,27 @@
 
     const SLUG = document.body.dataset.lessonId;
     const initialHash = window.location.hash;
+    const Q = window.GraphTypes;
+    const reciprocal={kind:'reciprocal',k:1},cubic={kind:'cubic',c:-1};
+    const checks=[
+        {input:'custom',questionType:'graph-from-equation',prompt:'Which graph is y = 1/x?',
+            widget:Q.graphChoice(Q.graphOptions([reciprocal,{kind:'line',c:1},{kind:'quadratic',c:1},cubic],reciprocal))},
+        {...Q.equationCard(cubic,[cubic,{kind:'line',c:-1},{kind:'quadratic',c:-1},reciprocal]),questionType:'equation-from-graph'},
+        {input:'choice',questionType:'noah',prompt:"Noah says y = x³ + 1 is a straight line, because the equation ends in + 1. What's wrong?",options:[
+            Q.choice("The highest power is 3, so it's a cubic: an S shape.",'Right. The + 1 only moves the graph up.',true),
+            Q.choice("Nothing. It's a straight line.",'It has x³. Power 3 makes an S shape, not a straight line.'),
+            Q.choice("It's a quadratic, because it has a power.","The power is 3, not 2. It's a cubic."),
+            Q.choice("It's a reciprocal, because of the + 1.",'A reciprocal has x on the bottom of a fraction. This has x³: a cubic.')]},
+        {...Q.powerCard(Q.powerSums[2]),questionType:'power'},
+        {input:'choice',questionType:'two-curves',prompt:'A graph has two separate curves, one top right and one bottom left. They get closer to the axes but never touch them. Which equation could it be?',options:[
+            Q.choice('y = 2/x','Right. Two separate curves: a reciprocal.',true),
+            Q.choice('y = x³',"A cubic is one S-shaped curve. It doesn't break in two."),
+            Q.choice('y = x²','A quadratic is one U-shaped curve.'),
+            Q.choice('y = 2x',"That's a straight line through (0, 0).")]},
+        {...Q.missingCard({kind:'quadratic',c:-1}),questionType:'missing-power'}
+    ];
+    checks.forEach((question, index) => { checks[index] = Q.prepare(question); });
+    Q.checks = checks;
 
     function sectionEvent(name) {
         document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
@@ -12,41 +33,16 @@
 
     function mountPractice() {
         const api = window.Maths1to9Lesson;
-        const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        const count = api.getLesson().question_bank.session_length;
         return api.runQuestionSet('question-bank', {
-            version: 1, count, practiseAgain: true, heading: 'Your practice results',
-            pick(random) {
-                // CHANGE: add generator types here and map every type to an
-                // existing skill in lesson.json. Save only the type and seed.
-                return Array.from({ length: count }, () => ({
-                    type: 'sample', seed: randomInt(0, 4294967295, random)
-                }));
-            },
-            question(item, random) {
-                // CHANGE: add generators here. Use only the supplied seeded
-                // random, including when shuffling, so reloads reproduce them.
-                const number = randomInt(3, 9, random);
-                return {
-                    questionType: item.type, input: 'choice',
-                    prompt: `What is 2 × ${number}?`,
-                    options: shuffle([
-                        { label: String(2 * number), correct: true, feedback: `Two groups of ${number} make ${2 * number}.` },
-                        { label: String(number + 2), feedback: 'You added 2 instead of doubling.' },
-                        { label: String(number), feedback: 'That counts only one group.' },
-                        { label: String(3 * number), feedback: 'That counts three groups instead of two.' }
-                    ], random)
-                };
-            }
-            // CHANGE: bump version and supply upgrade(saved, version) when
-            // migrating existing saved questions. Unknown versions return null.
+            version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
+            pick: Q.pick, question: Q.generate
         });
     }
 
     async function mountCheck(root, lesson) {
         const api = window.Maths1to9Lesson;
         const { shuffle, renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
-        const questions = lesson.comparison.questions;
+        const questions = checks;
         const count = questions.length;
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
@@ -54,12 +50,12 @@
             version: 1,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                order: questions.map(question => shuffle(question.options.map((option, index) => index)))
+                order: questions.map(question => shuffle((question.options || []).map((option, index) => index))),
+                graphOrders: questions.map(question => shuffle((question.widget?.options || []).map((option, index) => index)))
             })
-            // CHANGE: bump version and add upgrade(saved, version) if the
-            // fixed questions change. Never restore answers to different content.
         });
         const state = section.state;
+        section.save();
 
         function syncHash() {
             if (api.getCurrentSection().id === 'comparison') {
@@ -70,6 +66,8 @@
         function showScreen(screen) {
             section.update(state => { state.screen = screen; });
             render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1; heading.focus();
         }
 
         function reportProgress() {
@@ -87,24 +85,32 @@
             render();
         }
 
+        function orderedQuestion(index) {
+            const question=questions[index];
+            return question.widget?.kind==='graph-choice' ? {...question,widget:Q.graphChoice(state.graphOrders[index].map(i=>question.widget.options[i]))} : question;
+        }
+
         function questionConfig(index, readOnly) {
-            const question = questions[index];
+            const question = orderedQuestion(index);
             return {
+                ...question,
                 sectionId: 'comparison', questionId: `final-check-${index + 1}`,
-                questionType: question.type, scored: true, input: 'choice', readOnly,
-                prompt: question.prompt,
-                options: state.order[index].map(option => ({
-                    label: question.options[option], correct: option === question.answer,
-                    feedback: question.feedback[option]
-                })),
+                scored: true, readOnly,
+                options: state.order[index].map(option => question.options[option]),
                 onFeedback: reportProgress, onContinue: continueQuestion
             };
         }
 
         function renderEnding() {
-            const rows = questions.map((question, index) => {
-                const cardRoot = document.createElement('div');
-                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
+            const rows = questions.map((original, index) => {
+                const question = orderedQuestion(index);
+                const card = state.cards[`final-check-${index + 1}`];
+                const answer = question.input === 'custom' ? question.widget.answerText(card.value)
+                    : question.input === 'choice' ? question.options[state.order[index][card.selected]].label
+                    : question.fields ? question.fields.map(field => `${field.label} ${card.value[field.id]}`).join(', ')
+                    : card.value;
+                return { prompt: question.prompt, answer, firstCorrect: card.firstCorrect,
+                    correct: card.correct, explanation: card.feedback };
             });
             const scorePanel = document.createElement('div');
             const results = document.createElement('div');
@@ -113,13 +119,11 @@
                 correct: rows.filter(row => row.firstCorrect === true).length, total: count
             });
             renderResults(results, rows, { heading: 'Your Check results' });
-            // CHANGE: the lesson's own short summary and next-lesson content
-            // belong here. Keep the shared results, and retain All lessons.
             const summary = document.createElement('section');
             summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
             for (const point of lesson.comparison.summary.points) {
                 const paragraph = document.createElement('p');
-                paragraph.textContent = point.text;
+                paragraph.textContent = Q.prose(point.text);
                 summary.append(paragraph);
             }
             root.append(summary);

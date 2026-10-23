@@ -2,36 +2,34 @@
     "id": "recognising-graph-types",
     "slug": "recognising-graph-types",
     "title": "Recognising graph types",
-    "subtitle": "Draw the two separate curves of y = 1/x.",
+    "subtitle": "Use a graph's shape to match it to its equation.",
     "navigation": {
         "back_button": true
     },
     "assessment": {
         "question_types": {
-            "value": "reciprocal-graphs",
-            "table": "reciprocal-graphs",
-            "plot": "reciprocal-graphs",
-            "point-on": "reciprocal-graphs",
-            "at-zero": "reciprocal-graphs",
-            "negative": "reciprocal-graphs",
-            "bigger": "reciprocal-graphs",
-            "join": "reciprocal-graphs",
-            "mia": "reciprocal-graphs",
-            "sam": "reciprocal-graphs"
+            "power": "cubic-reciprocal-graphs",
+            "missing-power": "cubic-reciprocal-graphs",
+            "type-from-equation": "cubic-reciprocal-graphs",
+            "type-from-graph": "cubic-reciprocal-graphs",
+            "equation-from-graph": "cubic-reciprocal-graphs",
+            "graph-from-equation": "cubic-reciprocal-graphs",
+            "noah": "cubic-reciprocal-graphs",
+            "two-curves": "cubic-reciprocal-graphs"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Draw the two separate curves of a reciprocal graph."
+        "title": "Use a graph's shape to match it to its equation."
     },
     "interactive": {
         "eyebrow": "Try it",
-        "title": "Table, plot, two curves",
+        "title": "Look at the shape, then match",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
-        "title": "Practise drawing reciprocal graphs",
+        "title": "Practise recognising graph types",
         "intro": "",
         "session_length": 6
     },
@@ -77,32 +75,35 @@
         "intro": "",
         "questions": [
             {
-                "type": "table"
+                "type": "graph-from-equation"
             },
             {
-                "type": "plot"
+                "type": "equation-from-graph"
             },
             {
-                "type": "mia"
+                "type": "noah"
             },
             {
-                "type": "sam"
+                "type": "power"
             },
             {
-                "type": "value"
+                "type": "two-curves"
+            },
+            {
+                "type": "missing-power"
             }
         ],
         "summary": {
             "title": "What you have learnt",
             "points": [
                 {
-                    "text": "y = 1/x means 1 ÷ x. There's no point where x = 0."
+                    "text": "Power 1: straight line. Power 2: U shape. Power 3: stretched S."
                 },
                 {
-                    "text": "Positive x gives positive y. Negative x gives negative y."
+                    "text": "x on the bottom of a fraction: two separate curves."
                 },
                 {
-                    "text": "Draw two separate smooth curves. They get closer to the axes but never touch them."
+                    "text": "The highest power decides the shape."
                 }
             ]
         }
