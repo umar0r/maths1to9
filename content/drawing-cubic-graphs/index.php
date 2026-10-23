@@ -30,7 +30,7 @@ $pageTitle = 'Drawing cubic graphs';
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
-    <link rel="stylesheet" href="../../assets/css/graph.css?v=4">
+    <link rel="stylesheet" href="../../assets/css/graph.css?v=5">
     <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
@@ -74,7 +74,7 @@ $pageTitle = 'Drawing cubic graphs';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=8"></script>
+    <script src="../../assets/js/graph.js?v=9"></script>
     <script src="./cubics.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
