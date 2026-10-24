@@ -1,25 +1,101 @@
 {
-  "id": "convert-a-fraction-to-a-percentage-01",
-  "slug": "convert-a-fraction-to-a-percentage",
-  "title": "Convert a fraction to a percentage",
-  "subtitle": "Divide the numerator by the denominator, then multiply by 100.",
-  "renderer": "custom",
-  "navigation_stages": [
-    {
-      "id": "learn",
-      "label": "Learn"
+    "id": "convert-a-fraction-to-a-percentage-01",
+    "slug": "convert-a-fraction-to-a-percentage",
+    "title": "Convert a fraction to a percentage",
+    "subtitle": "Divide the numerator by the denominator, then multiply by 100.",
+    "navigation": {
+        "back_button": true
     },
-    {
-      "id": "try-it",
-      "label": "Try it"
+    "assessment": {
+        "question_types": {
+            "quarters": "fraction-percentage-conversion",
+            "twentieths": "fraction-percentage-conversion",
+            "sixteenths": "fraction-percentage-conversion",
+            "percentage": "fraction-percentage-conversion",
+            "divide": "fraction-percentage-conversion",
+            "multiply": "fraction-percentage-conversion",
+            "error": "fraction-percentage-conversion"
+        }
     },
-    {
-      "id": "practice",
-      "label": "Practice"
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "From a fraction to a percentage"
     },
-    {
-      "id": "check",
-      "label": "Check"
-    }
-  ]
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Convert 3/8 to a percentage",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise converting fractions",
+        "intro": "",
+        "session_length": 3
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "error"
+            },
+            {
+                "type": "percentage"
+            },
+            {
+                "type": "percentage"
+            }
+        ],
+        "summary": {
+            "title": "Your Check is complete",
+            "points": []
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        }
+    ]
 }

@@ -1,27 +1,33 @@
-.lesson-header__inner { justify-content: space-between; gap: 16px; }
-.lesson-header--compact .lesson-header__title { max-width: calc(100% - 60px); }
-.fraction-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 24px 0; }
-.fraction-options .button { white-space: normal; height: auto; text-align: left; }
-.fraction-options [aria-pressed="true"] { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
-.fraction-equation { padding: 20px; background: var(--surface-soft); border-radius: 14px; font-size: 1.25rem; font-weight: 800; margin: 20px 0; }
-.fraction { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; line-height: 1.2; margin: 0 5px; }
-.fraction > span:first-child { border-bottom: 2px solid currentColor; padding: 0 7px 3px; }
-.fraction > span:last-child { padding-top: 3px; }
-#feedback { font-weight: 700; color: var(--primary-dark); }
-@media(max-width:520px) { .fraction-options { grid-template-columns: 1fr; } }
+/* The shared engine owns cards, actions, score panels and results. */
+.fraction-equation {
+    padding: 1.25rem;
+    background: var(--surface-soft);
+    border-radius: 14px;
+    font-size: clamp(1.15rem, 4vw, 1.5rem);
+    font-weight: 800;
+    margin-block: 1.25rem;
+    overflow-wrap: anywhere;
+}
 
-.rounding-score { flex-shrink: 0; color: var(--primary-dark); font-weight: 800; }
+.fraction-route {
+    font-weight: 800;
+    color: var(--primary-dark);
+}
 
-.retained-results { list-style: none; padding: 0; }
-.retained-results > li { padding: .8rem 0; border-bottom: 1px solid var(--color-border, #ddd); }
-.retained-result { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.retained-result__answer { display: flex; gap: .7rem; flex-shrink: 1; min-width: 0; }
-.retained-result__explanation { margin: .4rem 0 0; font-size: .9rem; }
-.retained-try-example { margin-bottom: 2rem; }
-@media (max-width: 480px) { .retained-result { flex-wrap: wrap; } }
-.retained-result svg { max-width: 11rem; max-height: 5rem; height: auto; vertical-align: middle; }
-.question-list:has(.retained-results) { gap: .5rem; }
-.question-list:has(.retained-results) > h3, .retained-results { margin-block: .5rem; }
+.fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 1.2;
+    margin-inline: .3rem;
+}
 
-.retained-result strong { min-width: 0; overflow-wrap: anywhere; }
-.retained-result__answer > span { white-space: nowrap; }
+.fraction > span:first-child {
+    border-bottom: 2px solid currentColor;
+    padding: 0 .45rem .2rem;
+}
+
+.fraction > span:last-child {
+    padding-top: .2rem;
+}
