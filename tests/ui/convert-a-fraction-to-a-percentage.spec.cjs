@@ -115,8 +115,8 @@ for (const width of [1280, 375]) {
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
-            expect(penalty).toBe(25);
-            expect(earned).toBe(90 - penalty);
+            expect(penalty).toBe(35);
+            expect(earned).toBe(140 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#convert-a-fraction-to-a-percentage-comparison .retained-results')).toContainText('2nd try');
@@ -164,6 +164,9 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/convert-a-fraction-to-a-percentage/', { waitUntil: 'networkidle' });
+        await expect(page.locator('.percentage-grid:visible span')).toHaveCount(100);
+        await expect(page.locator('.percentage-grid:visible .is-shaded')).toHaveCount(25);
+        await page.screenshot({ path: `/private/tmp/fraction-percentage-grid-${width}.png`, fullPage: true });
         await expect(page.locator('.fraction-equation:visible')).toContainText('25%');
         await mainAction(page).click();
         await expect(page.getByText('The numerator is the top number. The denominator is the bottom number.', { exact: true })).toBeVisible();

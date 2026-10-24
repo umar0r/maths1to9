@@ -12,7 +12,8 @@ module.exports = async function solve(page) {
     }
     const fraction = text.match(/(\d+)\/(\d+)/);
     const division = text.match(/(\d+) ÷ (\d+)/);
-    const match = fraction || division;
+    const marks = text.match(/scores (\d+) out of (\d+)/);
+    const match = fraction || division || marks;
     if (!match) throw new Error(`Cannot solve fraction-percentage question: ${text}`);
     const decimal = Number(match[1]) / Number(match[2]);
     const answer = tidy(/percentage/.test(text) ? decimal * 100 : decimal);

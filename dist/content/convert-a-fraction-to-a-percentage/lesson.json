@@ -14,7 +14,8 @@
             "percentage": "fraction-percentage-conversion",
             "divide": "fraction-percentage-conversion",
             "multiply": "fraction-percentage-conversion",
-            "error": "fraction-percentage-conversion"
+            "error": "fraction-percentage-conversion",
+            "context": "fraction-percentage-conversion"
         }
     },
     "explanation": {
@@ -30,7 +31,7 @@
         "eyebrow": "Practice",
         "title": "Practise converting fractions",
         "intro": "",
-        "session_length": 3
+        "session_length": 6
     },
     "section_order": [
         "explanation",
@@ -78,6 +79,12 @@
             },
             {
                 "type": "percentage"
+            },
+            {
+                "type": "percentage"
+            },
+            {
+                "type": "context"
             },
             {
                 "type": "percentage"

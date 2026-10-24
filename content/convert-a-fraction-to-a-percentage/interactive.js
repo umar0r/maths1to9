@@ -16,7 +16,7 @@
             'A calculator can help with the division. Keep all the decimal digits.'
         ] },
         { title: 'Multiply the decimal by 100', lines: [
-            'Multiply the decimal by 100. Then add the % sign.',
+            'Add the % sign to your answer.',
             '5/16 and 31.25% show the same amount.'
         ] }
     ];

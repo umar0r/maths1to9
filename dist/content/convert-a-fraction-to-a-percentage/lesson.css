@@ -31,3 +31,22 @@
 .fraction > span:last-child {
     padding-top: .2rem;
 }
+
+.percentage-grid {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    width: min(100%, 280px);
+    gap: 2px;
+    margin-block: 1.25rem;
+}
+
+.percentage-grid span {
+    aspect-ratio: 1;
+    border: 1px solid #8a9bb0;
+    background: #f1f5f9;
+}
+
+.percentage-grid .is-shaded {
+    background: #126879;
+    border-color: #126879;
+}

@@ -72,14 +72,27 @@
                 ]
             },
             percentage(1, 4, 'number'),
-            percentage(9, 16, 'number')
+            percentage(9, 16, 'number'),
+            {
+                n: 17, d: 20, questionType: 'context', input: 'choice',
+                prompt: 'Mia scores 17 out of 20 in a test. What percentage is that?',
+                options: [
+                    option('85%', '17 ÷ 20 = 0.85. Then 0.85 × 100 = 85, so Mia scores 85%.', true),
+                    option('17%', '17 is her mark out of 20. Convert the fraction 17/20 to a percentage.'),
+                    option('8.5%', 'That multiplies the decimal by 10. A percentage needs × 100.'),
+                    option('117.6%', 'That divides 20 by 17 before multiplying by 100. Divide her mark by the total mark.')
+                ]
+            },
+            percentage(7, 8, 'number')
         ];
     }
 
     const practiceTypes = ['quarters', 'twentieths', 'sixteenths'];
     function pick(random) {
         const { randomInt } = window.Maths1to9LessonEngine;
-        return practiceTypes.map(type => ({ type, seed: randomInt(0, 4294967295, random) }));
+        return practiceTypes.flatMap(type => ['choice', 'number'].map(mode => ({
+            type, mode, seed: randomInt(0, 4294967295, random)
+        })));
     }
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
@@ -87,7 +100,7 @@
     function generate(item, random) {
         const d = { quarters: 4, twentieths: 20, sixteenths: 16 }[item.type];
         const n = window.Maths1to9LessonEngine.randomInt(1, d - 1, random);
-        return prepare({ ...percentage(n, d, item.type === 'twentieths' ? 'number' : 'choice'), questionType: item.type }, random);
+        return prepare({ ...percentage(n, d, item.mode || (item.type === 'twentieths' ? 'number' : 'choice')), questionType: item.type }, random);
     }
 
     function fraction(host, n, d) {
@@ -107,7 +120,27 @@
         paragraph.className = 'fraction-equation';
         host.append(paragraph);
     }
+    function drawHundred(host) {
+        const grid = document.createElement('div');
+        grid.className = 'percentage-grid';
+        grid.setAttribute('role', 'img');
+        grid.setAttribute('aria-label', '100 squares. The top-left quarter has 25 shaded squares.');
+        for (let row = 0; row < 10; row++) {
+            for (let column = 0; column < 10; column++) {
+                const square = document.createElement('span');
+                square.className = row < 5 && column < 5 ? 'is-shaded' : '';
+                square.setAttribute('aria-hidden', 'true');
+                grid.append(square);
+            }
+        }
+        host.append(grid);
+        const caption = document.createElement('p');
+        caption.textContent = '25 of the 100 squares are shaded.';
+        host.append(caption);
+    }
+
     function drawLearn(host, screen) {
+        if (screen === 0) drawHundred(host);
         const visual = document.createElement('div');
         visual.className = 'fraction-equation';
         if (screen === 0) {

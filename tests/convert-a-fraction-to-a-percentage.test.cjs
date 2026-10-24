@@ -11,7 +11,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const Q = loadScript(path.join(contentDir, 'convert-a-fraction-to-a-percentage/fraction-percentage.js'),
     ['percentage', 'examples', 'checks', 'practiceTypes', 'pick', 'generate'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
-const generated = Q.practiceTypes.flatMap(type => Array.from({ length: 200 }, (_, seed) => Q.generate({ type }, seededRandom(seed))));
+const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode => Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(seed)))));
 const questions = [...Q.examples(), ...Q.checks(), ...generated];
 const number = text => Number(text.replace('%', ''));
 
@@ -63,11 +63,17 @@ test('convert-a-fraction-to-a-percentage: 200 seeds per type are deterministic a
     const lesson = JSON.parse(fs.readFileSync(path.join(contentDir, 'convert-a-fraction-to-a-percentage/lesson.json')));
     for (const type of Q.practiceTypes) {
         assert.equal(lesson.assessment.question_types[type], 'fraction-percentage-conversion');
-        for (let seed = 0; seed < 200; seed++) assert.deepEqual(Q.generate({ type }, seededRandom(seed)), Q.generate({ type }, seededRandom(seed)));
+        for (const mode of ['choice', 'number']) {
+            for (let seed = 0; seed < 200; seed++) assert.deepEqual(Q.generate({ type, mode }, seededRandom(seed)), Q.generate({ type, mode }, seededRandom(seed)));
+        }
     }
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
+        assert.equal(items.length, 6);
         assert.equal(items.length, lesson.question_bank.session_length);
+        for (const type of Q.practiceTypes) {
+            assert.deepEqual(Array.from(items.filter(item => item.type === type).map(item => item.mode)).sort(), ['choice', 'number']);
+        }
         const inputs = new Set(items.map(item => Q.generate(item, seededRandom(item.seed)).input));
         assert.ok(inputs.has('choice') && inputs.has('number'));
     }
