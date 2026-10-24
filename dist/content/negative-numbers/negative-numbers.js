@@ -12,9 +12,9 @@
             prompt: `Which calculation means the same as ${equation(start, amount)}?`,
             options: [
                 option(`${signed(start)} + ${amount}`, 'Keep the starting number. Subtracting a negative becomes addition.', true),
-                option(`${signed(start)} − ${amount}`, 'You subtracted the positive number instead of adding it.'),
-                option(`${signed(-start)} + ${amount}`, 'You changed the sign of the starting number. Keep it unchanged.'),
-                option(`${signed(-start)} − ${amount}`, 'Keep the starting number and change subtracting a negative to addition.')
+                option(`${signed(start)} − ${amount}`, `That keeps the subtraction. Subtracting a negative means adding: ${signed(start)} + ${amount}.`),
+                option(`${signed(-start)} + ${amount}`, `That changes the starting number. Keep ${signed(start)} and write ${signed(start)} + ${amount}.`),
+                option(`${signed(-start)} − ${amount}`, `That changes the starting number and keeps subtraction. Write ${signed(start)} + ${amount}.`)
             ]
         };
     }
@@ -129,7 +129,7 @@
         return node;
     }
 
-    function drawLine(host, start, end, position = start) {
+    function drawLine(host, start, end, position = start, showJourney = true) {
         const min = Math.min(-10, start);
         const max = Math.max(10, end);
         const line = document.createElement('div');
@@ -143,23 +143,29 @@
             const tick = document.createElement('span');
             tick.style.left = `${(value - min) / (max - min) * 100}%`;
             tick.textContent = signed(value);
-            if (value % 2 !== 0) tick.className = 'negative-small-tick';
+            if (value % 2 !== 0) {
+                tick.className = value === start || (showJourney && value === end)
+                    ? 'negative-key-tick' : 'negative-small-tick';
+            }
             ticks.append(tick);
         }
         const path = document.createElement('div');
         path.className = 'negative-path';
         path.style.left = `${(start - min) / (max - min) * 100}%`;
-        path.style.width = `${(end - start) / (max - min) * 100}%`;
         path.textContent = '→';
         const marker = document.createElement('span');
         marker.className = 'negative-marker';
-        marker.textContent = '●';
+        marker.setAttribute('aria-hidden', 'true');
         track.append(path, marker, ticks);
         line.append(track);
         host.append(line);
         function update(value) {
             marker.style.left = `${(value - min) / (max - min) * 100}%`;
-            line.setAttribute('aria-label', `Number line from ${signed(min)} to ${signed(max)}. Start ${signed(start)}, move right to ${signed(end)}. Marker ${signed(value)}.`);
+            path.hidden = !showJourney || value === start;
+            path.style.width = `${Math.max(0, value - start) / (max - min) * 100}%`;
+            line.setAttribute('aria-label', showJourney
+                ? `Number line from ${signed(min)} to ${signed(max)}. Start ${signed(start)}, move right to ${signed(value)}. Marker ${signed(value)}.`
+                : `Number line from ${signed(min)} to ${signed(max)}. Starting marker ${signed(start)}.`);
         }
         update(position);
         return update;
@@ -206,7 +212,7 @@
         const update = () => {
             picture.replaceChildren();
             drawLine(picture, state.start, state.start + state.amount, state.start + state.amount);
-            sum.textContent = working(state.start, state.amount);
+            sum.textContent = working(state.start, state.amount).replace(/\.$/, '');
         };
         slider(host, 'Starting number', -10, 2, state.start, start => {
             section.update(saved => { saved.start = start; });
@@ -221,11 +227,11 @@
     }
 
     function drawAnswerLine(host, question, correct) {
-        drawLine(host, question.start, question.start + question.amount, correct ? question.start + question.amount : question.start);
+        drawLine(host, question.start, question.start + question.amount, correct ? question.start + question.amount : question.start, Boolean(correct));
     }
 
     window.NegativeNumbers = {
         signed, equation, working, rewrite, calculate, checks,
-        practiceTypes, pick, prepare, generate, drawJourney, drawExplore, drawAnswerLine
+        practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine
     };
 })();

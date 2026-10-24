@@ -25,7 +25,7 @@
             'Keep −7. Only subtracting −3 changes to adding 3.',
             'a − (−b) = a + b',
             'Here, a is the starting number. b is the positive amount you add.'
-        ] }
+        ], staticLine: true }
     ];
 
     function examples() {
@@ -80,6 +80,7 @@
                 if (/^([−\d]|a −)/.test(line)) paragraph.className = 'negative-equation';
                 root.append(paragraph);
             }
+            if (screen.staticLine) window.NegativeNumbers.drawLine(root, -7, -4, -4);
             if (screen.line) window.NegativeNumbers.drawJourney(root, section);
             if (screen.explore) window.NegativeNumbers.drawExplore(root, section);
             api.setSectionBack('explanation', state.screen > 0 ? {

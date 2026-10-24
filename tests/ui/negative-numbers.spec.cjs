@@ -158,3 +158,57 @@ test('negative-numbers: built static lesson finishes and All lessons reaches its
     await expect(page).toHaveURL(expected);
     expect((await page.request.get(expected)).ok()).toBe(true);
 });
+
+for (const width of [1280, 375]) {
+    test(`negative-numbers ${width}px: number lines reveal only completed movement and label key values`, async ({ browser }) => {
+        const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
+        const page = await context.newPage();
+        await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
+        await mainAction(page).click();
+        const path = page.locator('.negative-path:visible');
+        await expect(path).toHaveCount(0);
+        const slider = page.getByLabel('Spaces moved right', { exact: true });
+        await slider.focus();
+        await slider.press('ArrowRight');
+        const firstWidth = await path.evaluate(element => element.getBoundingClientRect().width);
+        await slider.press('End');
+        const fullWidth = await path.evaluate(element => element.getBoundingClientRect().width);
+        expect(fullWidth).toBeCloseTo(firstWidth * 4, 0);
+        const alignment = await page.evaluate(() => {
+            const marker = document.querySelector('.negative-marker').getBoundingClientRect();
+            const track = document.querySelector('.negative-ticks').getBoundingClientRect();
+            return marker.y + marker.height / 2 - (track.y + track.height / 2);
+        });
+        expect(Math.abs(alignment)).toBeLessThan(0.6);
+        for (const value of ['3', '7']) await expect(page.locator('.negative-ticks:visible span').filter({ hasText: new RegExp(`^${value}$`) })).toHaveCSS('font-size', width === 375 ? '10.4px' : '12px');
+        await page.screenshot({ path: `/private/tmp/negative-line-learn-${width}.png`, fullPage: true });
+        await mainAction(page).click();
+        await expect(page.locator('.negative-equation:visible').last()).not.toHaveText(/\.$/);
+        // Adjacent odd key labels sit on a separate row from the even scale labels.
+        await page.getByLabel('Starting number', { exact: true }).focus();
+        await page.getByLabel('Starting number', { exact: true }).press('Home');
+        await page.getByLabel('Positive amount to add', { exact: true }).focus();
+        await page.getByLabel('Positive amount to add', { exact: true }).press('Home');
+        const overlaps = await page.locator('.negative-ticks:visible span').evaluateAll(nodes => {
+            const labels = nodes.filter(node => parseFloat(getComputedStyle(node).fontSize) > 0).map(node => node.getBoundingClientRect());
+            return labels.some((a, i) => labels.slice(i + 1).some(b => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom));
+        });
+        expect(overlaps).toBe(false);
+        await mainAction(page).click();
+        await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Start −7, move right to −4/);
+        await mainAction(page).click();
+        await expect(page.locator('.negative-path:visible')).toHaveCount(0);
+        await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Starting marker 5/);
+        await expect(page.locator('.negative-line:visible')).not.toHaveAttribute('aria-label', /move right to 8/);
+        await page.getByRole('button', { name: '5 − 3', exact: true }).click();
+        await mainAction(page).click();
+        await expect(page.locator('.question-feedback:visible')).toHaveText('That keeps the subtraction. Subtracting a negative means adding: 5 + 3.');
+        await expect(page.locator('.negative-path:visible')).toHaveCount(0);
+        await mainAction(page).click();
+        await solve(page);
+        await mainAction(page).click();
+        await expect(page.locator('.negative-path:visible')).toHaveCount(1);
+        await page.screenshot({ path: `/private/tmp/negative-line-try-${width}.png`, fullPage: true });
+        await context.close();
+    });
+}
