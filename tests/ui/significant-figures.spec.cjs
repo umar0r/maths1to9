@@ -109,7 +109,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(35);
-            expect(earned).toBe(220 - penalty);
+            expect(earned).toBe(190 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
@@ -164,9 +164,10 @@ for (const width of [1280, 375]) {
         for (let index = 1; index < 9; index++) {
             await mainAction(page).click();
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-            if (index === 5 || index === 6) await page.screenshot({ path: `/private/tmp/significant-learn-${index + 1}-${width}.png`, fullPage: true });
+            if (index === 5 || index === 6 || index === 8) await page.screenshot({ path: `/private/tmp/significant-learn-${index + 1}-${width}.png`, fullPage: true });
         }
         await mainAction(page).click();
+        await expect(page.getByRole('heading', { name: 'Example 1 of 4 · Step 1 of 3', exact: true })).toBeVisible();
         await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(0);
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
@@ -185,6 +186,26 @@ for (const width of [1280, 375]) {
         await solve(page);
         await mainAction(page).click();
         await expect(page.locator('.significant-equation:visible')).toHaveText('0.0283 ≈ 0.03');
+        await mainAction(page).click();
+        for (let card = 0; card < 9; card++) {
+            await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
+            await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(card % 3 === 0 ? 0 : 1);
+            await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(card % 3 === 2 ? 1 : 0);
+            if (card === 5 || card === 8) await page.screenshot({ path: `/private/tmp/significant-guided-${card}-${width}.png`, fullPage: true });
+            if (card === 8) {
+                await expect(page.getByRole('heading', { name: 'Example 4 of 4 · Step 3 of 3', exact: true })).toBeVisible();
+                await expect(prompt(page)).toContainText('Keep the zero at the end after the decimal point.');
+                await page.locator('.question-card:visible input[type=text]').fill('15');
+                await mainAction(page).click();
+                await expect(mainAction(page)).toHaveText('Try again');
+                await mainAction(page).click();
+            }
+            await solve(page);
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Continue');
+            await mainAction(page).click();
+        }
+        await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
         await context.close();
     });
 
@@ -215,7 +236,7 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('15.0');
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
-        expect(await score(page)).toBe(215);
+        expect(await score(page)).toBe(185);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await page.screenshot({ path: `/private/tmp/significant-summary-${width}.png`, fullPage: true });
         await context.close();

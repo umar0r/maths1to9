@@ -149,30 +149,6 @@
         {
             "id": "step:interactive:11",
             "kind": "guided"
-        },
-        {
-            "id": "step:interactive:12",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:13",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:14",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:15",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:16",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:17",
-            "kind": "guided"
         }
     ]
 }

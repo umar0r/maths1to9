@@ -103,8 +103,8 @@
         };
     }
     const guided = [
-        ['0.0283', 1, 'choice'], ['0.0283', 2, 'number'], ['5480217', 2, 'number'],
-        ['147921', 1, 'choice'], ['147921', 2, 'number'], ['30560', 3, 'choice']
+        ['0.0283', 1, 'choice'], ['147921', 2, 'number'],
+        ['9.964', 2, 'choice'], ['15.03', 3, 'number']
     ];
     function examples() {
         return guided.flatMap(([number, n, input]) => [digitQuestion(number, n, 'keep'), digitQuestion(number, n, 'decider'), roundingQuestion(number, n, input)]);
@@ -161,7 +161,7 @@
         { title: 'Keep the number the right size', lines: ['To round 5,480,217 to 2 significant figures, keep 5 and 4.', 'The next digit is 8, so round up. Fill the remaining whole-number places with zeros.'], number: '5480217', n: 2, equations: ['5,480,217 ≈ 5,500,000'], caption: '55 is much too small. The zeros keep the answer close to the original number.' },
         { title: 'Sometimes a final zero matters', lines: ['To round 15.03 to 3 significant figures, keep 1, 5 and 0.', 'The next digit is 3, so the 0 stays. Keep that zero after the decimal point to show three significant figures.'], number: '15.03', n: 3, equations: ['15.03 ≈ 15.0'], caption: '15 and 15.0 have the same value. Here, 15.0 shows the three significant figures asked for.' },
         { title: 'Take care when rounding a 9', lines: ['To round 9.96 to 2 significant figures, keep both 9s. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Write 10 for this answer. An extra decimal zero would show three significant figures.'], number: '9.96', n: 2, equations: ['9.96 ≈ 10'] },
-        { title: 'Use the original number', lines: ['Round the original number each time.', 'To round 2.449 to 2 significant figures, the next digit is 4. Keep 2.4. Rounding to 2.45 first could give a different answer.'], number: '2.449', n: 2, equations: ['2.449 ≈ 2.4'] }
+        { title: 'Use the original number', lines: ['Round the original number each time.', 'To round 2.449 to 2 significant figures, the next digit is 4. Keep 2.4.', "Don't round to 2.45 first. That would then round up to 2.5, which is wrong."], number: '2.449', n: 2, equations: ['2.449 ≈ 2.4'] }
     ];
     function text(host, tag, value, className) {
         const element = document.createElement(tag);

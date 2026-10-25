@@ -29,5 +29,5 @@ assert.equal(tidyNumber('15.0'), accuracy.answer);
 assert.notEqual(tidyNumber('15'), accuracy.answer);
 assert.notEqual(tidyNumber('15.00'), accuracy.answer);
 assert.equal(new Set(Q.learnScreens.map(q => q.title)).size, Q.learnScreens.length);
-assert.equal(Q.guided.length, 6);
+assert.equal(Q.guided.length, 4);
 console.log('Significant figures: answers, distractors, digit targets, exact accuracy and unique Learn screens passed.');

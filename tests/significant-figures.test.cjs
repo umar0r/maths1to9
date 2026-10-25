@@ -117,9 +117,11 @@ test('significant-figures: explanations name the right deciding digit and show t
     }
 });
 
-test('significant-figures: six guided examples point at the correct keep and deciding digits', () => {
-    assert.equal(Q.guided.length, 6);
-    assert.equal(Q.examples().length, 18);
+test('significant-figures: four guided examples point at the correct keep and deciding digits', () => {
+    assert.equal(Q.guided.length, 4);
+    assert.equal(Q.examples().length, 12);
+    assert.equal(data.score_activities.length, 12);
+    assert.deepEqual(Array.from(Q.guided, ([number, n]) => Q.round(number, n)), ['0.03', '150000', '10', '15.0']);
     for (const q of questions.filter(q => q.number)) {
         const indexes = [...q.number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
         const significant = indexes.slice(indexes.findIndex(i => q.number[i] !== '0'));
