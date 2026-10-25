@@ -1,132 +1,162 @@
-// Maths checks for rounding-and-significant-figures: every rounding in the
-// lesson is recomputed exactly, and digits, options and explanations must agree.
+// Exact maths and retained form/diagram checks for the shared rounding lesson.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
-const { readJson, contentDir } = require('./helpers/lessons.cjs');
-const { roundToPower, roundSig, withCommas, lessonChecker } = require('./helpers/decimals.cjs');
-
-const folder = 'rounding-and-significant-figures';
-const data = readJson(path.join(contentDir, folder, 'lesson.json'));
-const { matches } = lessonChecker(path.join(contentDir, folder, 'lesson.js'));
-const questions = [...data.guided, ...data.practice, ...data.check];
-const decimals = text => (String(text).split('.')[1] || '').length;
-
-// "nearest 10", "2 decimal places", "3 significant figures" -> how to round.
+const vm = require('node:vm');
+const { contentDir, loadScript, allStrings } = require('./helpers/lessons.cjs');
+const { roundToPower, roundSig, withCommas } = require('./helpers/decimals.cjs');
+const window = {};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
+const { seededRandom, tidyNumber } = window.Maths1to9LessonEngine;
+const folder = path.join(contentDir, 'rounding-and-significant-figures');
+const data = JSON.parse(fs.readFileSync(path.join(folder, 'lesson.json')));
+const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'guided', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
+const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode => Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0)))));
+const questions = [...Q.examples(), ...Q.checks(), ...generated];
+const answerOf = q => q.answer ?? q.options.find(o => o.correct).label;
+const clean = text => text.replace(/,/g, '');
 function accuracyIn(text) {
     let m;
-    if ((m = text.match(/nearest (\d[\d,]*)/))) return { kind: 'power', power: m[1].replace(/,/g, '').length - 1, phrase: m[0] };
-    if ((m = text.match(/nearest whole number/))) return { kind: 'power', power: 0, phrase: m[0] };
-    if ((m = text.match(/(\d+) decimal places?/))) return { kind: 'power', power: -Number(m[1]), phrase: m[0] };
-    if ((m = text.match(/(\d+) significant figures?/))) return { kind: 'sig', figures: Number(m[1]), phrase: m[0] };
+    if ((m = text.match(/nearest (\d[\d,]*)/))) return { kind: 'nearest', accuracy: clean(m[1]).length - 1, phrase: m[0] };
+    if ((m = text.match(/(\d+) decimal places?/))) return { kind: 'decimal', accuracy: Number(m[1]), phrase: m[0] };
+    if ((m = text.match(/(\d+) significant figures?/))) return { kind: 'sig', accuracy: Number(m[1]), phrase: m[0] };
     return null;
 }
-const round = (number, accuracy) => accuracy.kind === 'sig' ? roundSig(number, accuracy.figures) : roundToPower(number, accuracy.power);
-// The number being rounded: the prompt's number that is not part of the accuracy.
-function numberIn(prompt, accuracy) {
-    const numbers = prompt.replace(accuracy.phrase, '').match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
-    return numbers.length === 1 ? numbers[0].replace(/,/g, '') : null;
+function expected(number, kind, accuracy) {
+    return kind === 'sig' ? roundSig(number, accuracy) : roundToPower(number, kind === 'decimal' ? -accuracy : accuracy);
 }
-// Index in the number string of the digit to keep, and of the deciding digit.
-function keyDigits(number, accuracy) {
-    const digitIndexes = [...number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
-    let target;
-    if (accuracy.kind === 'sig') {
-        const significant = digitIndexes.slice(digitIndexes.findIndex(i => number[i] !== '0'));
-        target = significant[accuracy.figures - 1];
-    } else {
-        const point = number.includes('.') ? number.indexOf('.') : number.length;
-        target = accuracy.power >= 0 ? point - 1 - accuracy.power : point - accuracy.power;
-    }
-    return { target, decider: digitIndexes[digitIndexes.indexOf(target) + 1] };
-}
-const roundingQuestions = questions
-    .map(q => ({ q, accuracy: accuracyIn(q.prompt) }))
-    .filter(({ q, accuracy }) => accuracy && !/says/.test(q.prompt))
-    .map(({ q, accuracy }) => ({ q, accuracy, number: q.number ?? numberIn(q.prompt, accuracy) }));
-
-test('every rounding question is recognised', () => {
-    for (const q of questions.filter(q => !/says/.test(q.prompt))) {
-        const found = roundingQuestions.find(r => r.q === q);
-        assert.ok(found?.number, `could not read the number and accuracy from "${q.prompt}"`);
-    }
-});
-
-test('every rounding answer is correct', () => {
-    for (const { q, accuracy, number } of roundingQuestions) {
-        assert.equal(q.answer.replace(/,/g, ''), round(number, accuracy), q.prompt);
-        assert.ok(matches(q, q.answer), `the lesson's checker rejects its own answer: ${q.prompt}`);
-    }
-});
-
-test('typed answers that need a trailing zero insist on it (places is set)', () => {
-    for (const { q } of roundingQuestions.filter(({ q }) => !q.options && /\.\d*0$/.test(q.answer))) {
-        assert.equal(q.places, decimals(q.answer), `"${q.prompt}" needs ${q.answer}, but without "places" the answer ${q.answer.replace(/\.?0+$/, '')} is also accepted`);
-    }
-});
-
-test('each set of options has exactly one correct answer, and no duplicates', () => {
-    for (const q of questions.filter(q => q.options)) {
-        assert.equal(q.options.filter(option => matches(q, option)).length, 1, `${q.prompt}: ${q.options.join(', ')}`);
-        assert.equal(new Set(q.options.map(o => o.replace(/,/g, ''))).size, q.options.length, `duplicate options: ${q.prompt}`);
-    }
-});
-
-const PLACE_POWERS = { thousands: 3, hundreds: 2, tens: 1, ones: 0, tenths: -1, hundredths: -2, thousandths: -3 };
-// The digit of `number` in the place 10^power.
-function digitAt(number, power) {
+function keyDigits(number, kind, accuracy) {
+    const indexes = [...number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
+    const significant = indexes.slice(indexes.findIndex(i => number[i] !== '0'));
     const point = number.includes('.') ? number.indexOf('.') : number.length;
-    return number[power >= 0 ? point - 1 - power : point - power];
+    const target = kind === 'sig' ? significant[accuracy - 1] : kind === 'decimal' ? point + accuracy : point - 1 - accuracy;
+    return { target, decider: indexes[indexes.indexOf(target) + 1] };
 }
 
-test('explanations name the right digits', () => {
-    for (const { q, accuracy, number } of roundingQuestions) {
-        const decider = number[keyDigits(number, accuracy).decider];
-        const next = q.explanation.match(/next digit(?: after [^.,]*?)? is (\d)/i) ?? q.explanation.match(/deciding digit is (\d)/i) ?? q.explanation.match(/^(\d) is (?:at least|less than) 5/);
-        if (next) assert.equal(next[1], decider, `the deciding digit is ${decider}, the explanation says ${next[1]}: ${q.prompt}`);
-        for (const [, place, digit] of q.explanation.matchAll(/The (thousands|hundreds|tens|ones|tenths|hundredths|thousandths) digit(?: in the original number)? is (\d)/g)) {
-            assert.equal(digit, digitAt(number, PLACE_POWERS[place]), `the ${place} digit of ${number} is ${digitAt(number, PLACE_POWERS[place])}, the explanation says ${digit}: ${q.prompt}`);
+test('rounding-and-significant-figures: every rounding prompt is recognised and gives the right exact answer', () => {
+    for (const q of questions.filter(q => q.stage === 'round')) {
+        const info = accuracyIn(q.prompt);
+        assert.ok(info, q.prompt);
+        const numbers = q.prompt.replace(info.phrase, '').match(/\d[\d,]*(?:\.\d+)?/g) || [];
+        assert.equal(numbers.length, 1, q.prompt);
+        assert.equal(clean(numbers[0]), q.number);
+        assert.equal(clean(answerOf(q)), expected(clean(numbers[0]), info.kind, info.accuracy), q.prompt);
+        assert.equal(q.kind, info.kind);
+        assert.equal(q.accuracy, info.accuracy);
+    }
+});
+
+test('rounding-and-significant-figures: all choices have four distinct forms, one correct answer and distinct feedback', () => {
+    for (const q of questions.filter(q => q.options)) {
+        assert.equal(q.options.length, 4, q.prompt);
+        assert.equal(q.options.filter(o => o.correct).length, 1, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.label)).size, 4, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
+        assert.ok(q.options.every(o => o.feedback));
+        if (q.stage === 'round') {
+            const answer = expected(q.number, q.kind, q.accuracy);
+            assert.equal(q.options.filter(o => tidyNumber(o.label) === answer).length, 1, q.prompt);
+            assert.equal(new Set(q.options.map(o => tidyNumber(o.label))).size, 4, q.prompt);
         }
     }
 });
 
-test('explanations state the final answer', () => {
-    const missing = roundingQuestions
-        .filter(({ q }) => ![q.answer, withCommas(q.answer.replace(/,/g, ''))].some(a => q.explanation.includes(a)))
-        .map(({ q }) => `"${q.prompt}" (answer ${q.answer})`);
-    assert.deepEqual(missing, [], 'these explanations describe the step but never give the answer');
+test('rounding-and-significant-figures: typed answers keep exact zeros, with rules and a fallback', () => {
+    for (const q of questions.filter(q => q.input === 'number')) {
+        assert.equal(q.exact, q.kind !== 'nearest');
+        assert.ok(q.rules.length && q.fallback && q.feedback);
+        for (const rule of q.rules) assert.notEqual(tidyNumber(rule.value), tidyNumber(q.answer), q.prompt);
+        if (q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
+    }
+    assert.equal(Q.checks().at(-1).answer, '1.0');
+    assert.equal(Q.examples().at(-1).answer, '10.0');
 });
 
-test('step-by-step examples point at the right digits', () => {
-    for (const q of data.guided) {
-        const accuracy = accuracyIn(q.prompt);
-        const { target, decider } = keyDigits(q.number, accuracy);
-        assert.equal(q.target, target, `digit to keep: ${q.prompt}`);
-        assert.equal(q.decider, decider, `deciding digit: ${q.prompt}`);
-        const helped = q.decider_help?.match(/is (\d)\./);
-        if (helped) assert.equal(helped[1], q.number[q.decider], `decider_help names the wrong digit: ${q.prompt}`);
+test('rounding-and-significant-figures: explanations name the right deciding digit and state the answer', () => {
+    for (const q of questions.filter(q => q.stage === 'round')) {
+        const { decider } = keyDigits(q.number, q.kind, q.accuracy);
+        assert.equal(q.feedback.match(/next digit is (\d)/)[1], q.number[decider], q.prompt);
+        assert.ok([answerOf(q), withCommas(clean(answerOf(q)))].some(answer => q.feedback.includes(answer)), q.prompt);
     }
 });
 
-test('learn slides: worked examples and highlighted digits are right', () => {
-    for (const item of data.learn) {
-        const m = (item.equation ?? '').match(/^([\d,.]+) ≈ ([\d,.]+)\s+\((.+)\)$/);
-        if (m) assert.equal(m[2].replace(/,/g, ''), round(m[1].replace(/,/g, ''), accuracyIn(m[3])), item.equation);
-        if (item.digits && m) {
-            const number = item.digits.map(([, digit]) => digit === '·' ? '.' : digit).join('');
-            assert.equal(number, m[1].replace(/,/g, ''), `${item.title}: the digit chart does not show ${m[1]}`);
-            const { target, decider } = keyDigits(number, accuracyIn(m[3]));
-            assert.deepEqual([item.target, item.decider], [target, decider], `${item.title}: wrong digits highlighted`);
+test('rounding-and-significant-figures: four guided examples and Learn pictures highlight the right digits', () => {
+    assert.equal(Q.guided.length, 4);
+    assert.equal(Q.examples().length, 12);
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 12);
+    for (const q of questions.filter(q => q.number)) {
+        const expected = keyDigits(q.number, q.kind, q.accuracy);
+        assert.equal(q.target, expected.target, q.prompt);
+        assert.equal(q.decider, expected.decider, q.prompt);
+        if (q.stage === 'keep' || q.stage === 'decider') assert.equal(q.options.find(o => o.correct).index, q.stage === 'keep' ? expected.target : expected.decider);
+    }
+    for (const screen of Q.learnScreens.filter(screen => screen.number)) {
+        const positions = Q.keyDigits(screen.number, screen.kind, screen.accuracy);
+        const target = keyDigits(screen.number, screen.kind, screen.accuracy);
+        assert.equal(positions.target, target.target);
+        assert.equal(positions.decider, target.decider);
+        for (const equation of screen.equations || []) {
+            const match = equation.replace(/ metres/g, '').match(/^([\d,.]+) ≈ ([\d,.]+)$/);
+            assert.ok(match, equation);
+            assert.equal(clean(match[2]), expected(clean(match[1]), screen.kind, screen.accuracy), equation);
         }
     }
 });
 
-test("Amir's claim is wrong and the correct explanation gives the right rounding", () => {
-    for (const q of questions.filter(q => /says/.test(q.prompt))) {
-        const [, number, claim, spec] = q.prompt.match(/“([\d.]+) rounds to ([\d.]+) (?:at|to) (.+?)\.”/) ?? [];
-        assert.ok(number, `could not read Amir's claim: ${q.prompt}`);
-        const right = round(number, accuracyIn(spec));
-        assert.notEqual(claim, right, `Amir is actually right: ${q.prompt}`);
-        assert.ok(q.answer.includes(right), `the correct option should give ${right}: "${q.answer}"`);
+test('rounding-and-significant-figures: halfway cases, carrying and direct rounding follow exact half-up rules', () => {
+    for (const [number, kind, accuracy, answer] of [
+        ['650', 'nearest', 2, '700'], ['5.465', 'decimal', 2, '5.47'], ['9.96', 'decimal', 1, '10.0'],
+        ['2.449', 'decimal', 1, '2.4'], ['1.049', 'decimal', 1, '1.0'], ['2748', 'nearest', 2, '2700'],
+        ['0.00726', 'sig', 2, '0.0073'], ['0.0045', 'sig', 1, '0.005']
+    ]) assert.equal(Q.rounded(number, kind, accuracy), answer);
+    assert.equal(Q.roundToPower('18', 2), '0');
+    assert.equal(Q.roundToPower('0.004', -2), '0.00');
+});
+
+test("rounding-and-significant-figures: Amir's claim is wrong and the explanation corrects it", () => {
+    const q = Q.checks().find(q => q.questionType === 'error');
+    assert.equal(expected('4.95', 'decimal', 1), '5.0');
+    assert.equal(answerOf(q), 'The 5 rounds the tenths up, giving 5.0');
+    assert.equal(q.options.length, 4);
+    assert.ok(q.options.some(o => o.label.startsWith('Write 5 because') && !o.correct));
+});
+
+test('rounding-and-significant-figures: 200 seeds per type and input mode are deterministic and mapped to the three existing skills', () => {
+    for (const type of Q.practiceTypes) {
+        const skill = /significant/.test(type) ? 'round-significant-figures' : type === 'path-context' ? 'round-in-context' : 'round-decimal-places';
+        assert.equal(data.assessment.question_types[type], skill);
+        const positions = new Set();
+        for (const mode of ['choice', 'number']) for (let seed = 0; seed < 200; seed++) {
+            const q = Q.generate({ type, mode }, seededRandom(seed));
+            assert.deepEqual(q, Q.generate({ type, mode }, seededRandom(seed)));
+            if (q.options) positions.add(q.options.findIndex(o => o.correct));
+        }
+        assert.ok(positions.size > 1, type);
     }
+    for (let seed = 0; seed < 200; seed++) {
+        const items = Q.pick(seededRandom(seed));
+        assert.equal(items.length, 6);
+        assert.equal(items.length, data.question_bank.session_length);
+        const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
+        assert.equal(qs.filter(q => q.input === 'choice').length, 3);
+        assert.equal(qs.filter(q => q.input === 'number').length, 3);
+        assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-significant-figures', 'round-in-context']));
+    }
+    for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number']));
+    assert.equal(Q.checks().length, 5);
+});
+
+test('rounding-and-significant-figures: wording and input numbers are tidy and style matches significant figures', () => {
+    for (const q of generated) assert.doesNotMatch(q.number, /\.\d*0$/);
+    for (const text of allStrings([questions, Q.learnScreens])) {
+        assert.doesNotMatch(text, /\b1 decimal places\b|\b1 significant figures\b|AQA|Edexcel|OCR/);
+        assert.doesNotMatch(text, /\d+\.\d{12,}|\b(?:color|center|recognize|organize)\b/);
+    }
+    const sigCss = fs.readFileSync(path.join(contentDir, 'significant-figures/lesson.css'), 'utf8');
+    assert.ok(fs.readFileSync(path.join(folder, 'lesson.css'), 'utf8').startsWith(sigCss));
+    assert.equal(data.navigation.back_button, true);
+    assert.deepEqual(data.navigation_stages.map(s => s.label), ['Learn', 'Try it', 'Practice', 'Check']);
+    const reference = path.join(__dirname, '../dist/content/rounding-and-significant-figures');
+    for (const file of ['lesson.json', 'lesson.css', 'rounding.js', 'interactive.js', 'questions.js']) assert.equal(fs.readFileSync(path.join(reference, file), 'utf8'), fs.readFileSync(path.join(folder, file), 'utf8'), file);
 });
