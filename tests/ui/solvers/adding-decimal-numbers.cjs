@@ -30,7 +30,7 @@ module.exports = async function solve(page) {
         await page.getByRole('button', { name: 'Line up the decimal points. The 8 is tenths and the 4 is hundredths.', exact: true }).click();
         return true;
     }
-    const numbers = text.replace(/£/g, '').match(/\d+\.\d+/g);
+    const numbers = text.replace(/£/g, '').match(/\d+(?:\.\d+)?/g);
     if (!numbers || numbers.length < 2) throw new Error(`Cannot solve decimal addition: ${text}`);
     const [a, b] = numbers;
     const total = cents(a) + cents(b);

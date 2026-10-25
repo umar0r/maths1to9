@@ -24,6 +24,7 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
     await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
     expect(await points(page)).toBe(0);
     await expect(page.locator('.lesson-navigation__button')).toHaveCount(4);
+    await expect(page.locator('.decimal-labels:visible')).toHaveText('tensonestenthshundredths');
     await advance(page, 'interactive');
     const expectedHashes = ['try-it-1', 'try-it-2', 'try-it-3', 'try-it-4', 'try-it-5', 'try-it-6'];
     for (const hash of expectedHashes) {

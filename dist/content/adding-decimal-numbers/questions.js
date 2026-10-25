@@ -13,7 +13,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 1, count: api.getLesson().question_bank.session_length,
+            version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DecimalAddition.pick,
             question: window.DecimalAddition.generate,

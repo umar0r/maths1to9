@@ -28,7 +28,7 @@ $pageTitle = 'Adding decimal numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=8">
+    <link rel="stylesheet" href="./lesson.css?v=9">
 </head>
 
 <body
@@ -70,10 +70,10 @@ $pageTitle = 'Adding decimal numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
-    <script src="./decimal-addition.js?v=2"></script>
+    <script src="./decimal-addition.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=15"></script>
+    <script src="./questions.js?v=16"></script>
     <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->

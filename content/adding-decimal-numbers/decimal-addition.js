@@ -47,7 +47,7 @@
             grid.append(node);
             return node;
         }
-        row(['', '10s', '1s', '·', '0.1s', '0.01s', ''], 'decimal-labels');
+        row(['', 'tens', 'ones', '', 'tenths', 'hundredths', ''], 'decimal-labels');
         const carryRow = row(Array.from({ length: 7 }, (_, index) => {
             const key = Object.keys(positions).find(key => positions[key] === index);
             return config.carries?.[key] || '';
@@ -198,7 +198,7 @@
                     { value: '4', feedback: '8.44 is a different number. A zero at the end keeps 8.4 unchanged.' },
                     { value: '1', feedback: '8.41 is bigger than 8.4. Use a digit that adds no hundredths.' }
                 ], fallback: 'Choose a digit that adds no hundredths to 8.4.' },
-            { a: '8.40', b: '2.35', input: 'custom', questionType: 'columns', prompt: 'Fill the answer digits for 8.40 + 2.35. What do you carry to tens?', widget: columnWidget('8.40', '2.35') },
+            { a: '8.40', b: '2.35', input: 'custom', questionType: 'columns', prompt: 'Add 8.40 + 2.35. Start on the right. Write each answer digit, and write any carry in the small box.', widget: columnWidget('8.40', '2.35') },
             { a: '8.4', b: '2.35', input: 'choice', questionType: 'decimal-point', prompt: 'Where should the answer’s decimal point go?', options: [
                 option('Directly below the decimal points in the two numbers.', 'The decimal points stay in the same column.', true),
                 option('Before the last digit.', 'The last digit may be tenths or hundredths. Use the decimal points above it.'),
@@ -206,7 +206,7 @@
                 option('Under the last digits of the two numbers.', 'The last digits may have different place values. The decimal points must line up.')
             ] },
             { a: '3.6', b: '1.25', input: 'custom', questionType: 'alignment', prompt: 'Move the second number so the decimal points line up.', widget: alignmentWidget('3.6', '1.25') },
-            { a: '3.60', b: '1.25', input: 'custom', questionType: 'columns', prompt: 'Fill the answer digits for 3.60 + 1.25.', widget: columnWidget('3.60', '1.25') }
+            { a: '3.60', b: '1.25', input: 'custom', questionType: 'columns', prompt: 'Add 3.60 + 1.25. Start on the right. Write each answer digit.', widget: columnWidget('3.60', '1.25') }
         ];
     }
 
@@ -280,7 +280,13 @@
             x = ones[0] * 100 + tenths[0] * 10 + hundredths[0];
             y = ones[1] * 100 + tenths[1] * 10 + hundredths[1];
         }
-        const a = decimalText(x), b = item.type === 'mixed-places' ? decimalText(y).slice(0, -1) : decimalText(y);
+        if (item.type === 'money') {
+            if (x % 10 === 0) x += x === 3900 ? -1 : 1;
+            if (y % 10 === 0) y += y === 3900 ? -1 : 1;
+        }
+        if (x % 100 === 0 && y % 100 === 0) y++;
+        const trim = number => decimalText(number).replace(/0+$/, '').replace(/\.$/, '');
+        const a = trim(x), b = trim(y);
         const input = ['no-carry', 'carry-ones', 'mixed-places'].includes(item.type) ? 'choice' : 'number';
         const prompt = item.type === 'money' ? `Work out £${a} + £${b}. Leave out the £ sign.` : undefined;
         return prepare({ ...calculate(a, b, input, prompt, item.type === 'money'), questionType: item.type }, random);

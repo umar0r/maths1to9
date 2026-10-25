@@ -21,6 +21,9 @@
 
 .decimal-labels {
     font-size: .75rem;
+    line-height: 1.2;
+    min-height: 2.4rem;
+    align-items: end;
     color: var(--text-muted);
 }
 
@@ -104,4 +107,11 @@
     width: 100%;
     min-height: 44px;
     accent-color: #126879;
+}
+
+.decimal-labels > span {
+    min-width: 0;
+    padding-inline: 1px;
+    overflow-wrap: anywhere;
+    hyphens: auto;
 }

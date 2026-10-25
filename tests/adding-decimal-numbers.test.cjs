@@ -154,3 +154,11 @@ test('adding-decimal-numbers: 200 seeds per type are deterministic, mapped and m
     assert.ok(Q.examples().some(question => question.input === 'choice'));
     for (const text of allStrings(questions)) assert.doesNotMatch(text, /\d+\.\d{4,}/, text);
 });
+
+
+test('adding-decimal-numbers: Practice operands have no trailing decimal zeros', () => {
+    for (const question of generated) {
+        for (const operand of [question.a, question.b]) assert.doesNotMatch(operand, /\.\d*0$/);
+        assert.ok(question.a.includes('.') || question.b.includes('.'));
+    }
+});
