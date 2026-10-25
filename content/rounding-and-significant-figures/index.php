@@ -70,7 +70,7 @@ $pageTitle = 'Rounding';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
-    <script src="./rounding.js?v=1"></script>
+    <script src="./rounding.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=10"></script>
