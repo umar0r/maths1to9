@@ -1,5 +1,4 @@
 // Read the pupil-visible table and calculate every share/angle independently.
-const gcd = (a, b) => b ? gcd(b, a % b) : a;
 async function readTable(page) {
     const table = page.locator('.question-card:visible .pie-frequency-table');
     const rows = [];
@@ -35,8 +34,7 @@ async function solve(page) {
         else if (text.startsWith('Which fraction')) {
             const name = text.match(/chose (\w+)/)[1];
             const count = data.find(row => row.name === name).count;
-            const divisor = gcd(count, total);
-            answer = `${count / divisor}/${total / divisor}`;
+            answer = `${count}/${total}`;
         } else {
             const name = text.match(/angle for (\w+)/)?.[1];
             if (!name) throw new Error(`Cannot solve pie-chart question: ${text}`);

@@ -42,6 +42,8 @@ test('pie-charts: all choices have four distinct options, one correct answer and
         assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
         assert.ok(q.options.every(o => o.feedback));
         if (q.questionType === 'share') {
+            assert.equal(answerOf(q), `${q.data[q.index].count}/${Q.total(q.data)}`);
+            assert.ok(q.options.every(o => /^\d+\/\d+$/.test(o.label)));
             assert.equal(q.options.filter(o => fractionValue(o.label) === q.data[q.index].count / Q.total(q.data)).length, 1);
         } else if (q.questionType !== 'error') {
             assert.equal(q.options.filter(o => numeric(o.label) === numeric(answerOf(q))).length, 1);

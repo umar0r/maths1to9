@@ -196,6 +196,11 @@ for (const width of [1280, 375]) {
         for (let index = 1; index < 5; index++) {
             await mainAction(page).click();
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+            if (index === 2) {
+                for (const line of ['360° ÷ 12 pupils = 30° for each pupil', 'Blue: 3 × 30° = 90°', 'Green: 9 × 30° = 270°', 'Both ways give the same angle.']) {
+                    await expect(page.getByText(line, { exact: true })).toBeVisible();
+                }
+            }
             if (index === 2 || index === 4) await page.screenshot({ path: `/private/tmp/pie-learn-${index + 1}-${width}.png`, fullPage: true });
         }
         await mainAction(page).click();

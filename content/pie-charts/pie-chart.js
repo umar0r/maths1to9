@@ -313,18 +313,19 @@
     function shareQuestion(data, index = 0) {
         const item = data[index];
         const t = total(data);
-        const answer = fraction(item.count, t);
+        const answer = `${item.count}/${t}`;
         const wrong = [
-            option(fraction(t, item.count), 'That puts the whole group on top. Put this row on top and the total underneath.'),
-            option(fraction(t - item.count, t), 'That is the share for all the other colours. Use the colour asked for.'),
-            option(fraction(1, t), 'That is one pupil\'s share. Use every pupil in this row.'),
-            option(fraction(item.count, t - item.count), 'That leaves this row out of the bottom number. The bottom number is the whole group.')
-        ].filter((entry, i, list) => entry.label !== answer && list.findIndex(other => other.label === entry.label) === i);
+            option(`${t}/${item.count}`, 'That puts the whole group on top. Put this row on top and the total underneath.'),
+            option(`${item.count}/${item.count}`, 'That uses only this row as the whole group. Put the total number of pupils underneath.'),
+            option(`1/${t}`, 'That is one pupil\'s share. Use every pupil in this row.'),
+            option(`${t - item.count}/${t}`, 'That is the share for all the other colours. Use the colour asked for.'),
+            option(`${item.count}/${t - item.count}`, 'That leaves this row out of the bottom number. The bottom number is the whole group.')
+        ].filter((entry, i, list) => entry.label.split('/').reduce((a, b) => Number(a) / Number(b)) !== item.count / t && list.findIndex(other => other.label === entry.label) === i);
         return {
             data, index, input: 'choice', questionType: 'share',
             prompt: `Which fraction of the pupils chose ${item.name}?`,
             figure: host => drawTable(host, data),
-            options: [option(answer, `${item.count}/${t} = ${answer}`, true), ...wrong.slice(0, 3)]
+            options: [option(answer, `${item.count}/${t} = ${fraction(item.count, t)}`, true), ...wrong.slice(0, 3)]
         };
     }
     function perItemQuestion(data, input = 'number') {
@@ -451,6 +452,11 @@
         } else if (index === 2) {
             text(host, 'p', 'Blue: 3/12 × 360° = 90°', 'pie-equation');
             text(host, 'p', 'Green: 9/12 × 360° = 270°', 'pie-equation');
+            text(host, 'p', 'You can also find the angle for one pupil, then multiply by the number in each row.');
+            text(host, 'p', '360° ÷ 12 pupils = 30° for each pupil', 'pie-equation');
+            text(host, 'p', 'Blue: 3 × 30° = 90°', 'pie-equation');
+            text(host, 'p', 'Green: 9 × 30° = 270°', 'pie-equation');
+            text(host, 'p', 'Both ways give the same angle.');
             chart(host, learnData, angles(learnData), { protractor: true, label: 'Blue angle 90 degrees; green angle 270 degrees' });
         } else if (index === 3) {
             drawTable(host, learnData, { showTotal: true, showAngles: true });
