@@ -1,29 +1,31 @@
-// Checks for the significant-figures lesson: maths, options, explanations,
-// wording, wiring and the dist build. Run with: node --test tests/
+// Retain exact rounding, format, digit, wording and wiring coverage on shared cards.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-
+const vm = require('node:vm');
+const { loadScript, allStrings } = require('./helpers/lessons.cjs');
 const root = path.join(__dirname, '..');
 const folder = 'significant-figures';
 const lessonDir = path.join(root, 'content', folder);
 const distDir = path.join(root, 'dist', 'content', folder);
 const read = file => fs.readFileSync(file, 'utf8');
-const source = read(path.join(lessonDir, 'lesson.js'));
 const page = read(path.join(lessonDir, 'index.php'));
 const data = JSON.parse(read(path.join(lessonDir, 'lesson.json')));
-const questions = [...data.guided, ...data.practice, ...data.check];
-
-// Use the lesson's own answer checker rather than a copy of it.
-const { normalise, matches } = new Function(
-    source.slice(source.indexOf('    const normalise ='), source.indexOf('    const engine =')) +
-    source.slice(source.indexOf('    function matches('), source.indexOf('    function advance(')) +
-    'return { normalise, matches };'
-)();
-
-// Round a decimal string to n significant figures, half up, without floats.
-// After a carry (9.96 -> 10) the extra digit is dropped so the answer keeps n figures.
+const window = {};
+vm.runInNewContext(read(path.join(root, 'assets/js/lesson-engine.js')), {
+    window, document: { body: { dataset: { lessonRenderer: 'custom' } } }
+});
+const { seededRandom, tidyNumber } = window.Maths1to9LessonEngine;
+const Q = loadScript(path.join(lessonDir, 'significant-figures.js'),
+    ['round', 'digits', 'place', 'digitLabel', 'roundingQuestion', 'guided', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
+const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode =>
+    Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(seed)))));
+const questions = [...Q.examples(), ...Q.checks(), ...generated];
+const answerOf = q => q.answer ?? q.options.find(option => option.correct).label;
+const clean = text => text.replace(/,/g, '');
+const spaced = text => { const [a, b] = text.split('.'); return a.replace(/\B(?=(\d{3})+$)/g, ',') + (b !== undefined ? '.' + b : ''); };
+const nextDigit = (text, n) => text.replace(/[,.]/g, '').replace(/^0+/, '')[n];
 function roundSig(text, n) {
     const clean = text.replace(/,/g, '');
     const [whole, fraction = ''] = clean.split('.');
@@ -44,159 +46,169 @@ function roundSig(text, n) {
     const digits = kept.toString().padStart(-place + 1, '0');
     return digits.slice(0, place) + '.' + digits.slice(place);
 }
-const nextDigit = (text, n) => text.replace(/[,.]/g, '').replace(/^0+/, '')[n];
-const decimals = text => (text.split('.')[1] || '').length;
-const withCommas = text => {
-    const [whole, fraction] = text.split('.');
-    return whole.replace(/\B(?=(\d{3})+$)/g, ',') + (fraction !== undefined ? '.' + fraction : '');
-};
-const roundPrompt = q => q.prompt.match(/^Round ([\d,.]+) to (\d+) significant figures?\.$/);
-const allStrings = value => typeof value === 'string' ? [value]
-    : value && typeof value === 'object' ? Object.values(value).flatMap(allStrings) : [];
-
-test('rounding helper follows GCSE half-up rules', () => {
+test('significant-figures: rounding helper follows exact half-up rules and keeps needed zeros', () => {
     for (const [number, n, expected] of [
         ['2.45', 2, '2.5'], ['650', 1, '700'], ['0.0047', 1, '0.005'], ['9.96', 2, '10'],
-        ['9644', 1, '10000'], ['15.03', 3, '15.0'], ['0.0283', 2, '0.028'], ['305', 2, '310']
-    ]) assert.equal(roundSig(number, n), expected, `${number} to ${n} s.f.`);
-});
-
-test('5. every rounding answer is mathematically correct', () => {
-    for (const q of questions) {
-        const match = roundPrompt(q);
-        if (!match) continue;
-        const [, number, n] = match;
-        const expected = roundSig(number, Number(n));
-        assert.equal(q.answer.replace(/,/g, ''), expected, q.prompt);
-        assert.equal(q.significant_figures, Number(n), `significant_figures field: ${q.prompt}`);
-        assert.equal(q.places, decimals(expected), `places field: ${q.prompt}`);
-        assert.ok(matches(q, q.answer), `checker rejects its own answer: ${q.prompt}`);
-        assert.ok(matches(q, withCommas(expected)), `checker rejects comma form: ${q.prompt}`);
+        ['9644', 1, '10000'], ['15.03', 3, '15.0'], ['0.0283', 2, '0.028'], ['305', 2, '310'],
+        ['0.0045', 1, '0.005'], ['0.07304', 3, '0.0730'], ['0.9996', 2, '1.0']
+    ]) {
+        assert.equal(roundSig(number, n), expected);
+        assert.equal(Q.round(number, n), expected);
     }
 });
 
-test('5. worked examples in learn slides and the summary are correct', () => {
-    for (const item of data.learn) {
-        const match = (item.equation || '').match(/^([\d,.]+) ≈ ([\d,.]+)\s+\((\d+) significant figures?\)$/);
-        if (match) assert.equal(match[2].replace(/,/g, ''), roundSig(match[1], Number(match[3])), item.equation);
-    }
-    const claims = [...source.matchAll(/([\d,.]*\d) to (\d+) significant figures? is ([\d,.]*\d)/g)];
-    assert.ok(claims.length > 0, 'expected worked examples in the summary');
-    for (const [claim, number, n, answer] of claims) {
-        assert.equal(answer.replace(/,/g, ''), roundSig(number, Number(n)), claim);
-    }
-});
-
-test('5. multiple-choice explanation answers contain the correct rounding', () => {
-    for (const q of data.check.filter(q => q.options && !roundPrompt(q))) {
-        const match = q.prompt.match(/([\d,.]*\d) to (\d+) significant figures?/);
-        if (match) assert.match(q.answer, new RegExp(roundSig(match[1], Number(match[2])).replace('.', '\\.') + '\\.?$'), q.prompt);
+test('significant-figures: every fixed and generated rounding answer is right in value and form', () => {
+    for (const q of questions.filter(q => q.stage === 'round')) {
+        const match = q.prompt.match(/^Round ([\d,.]+) to (\d+) significant figures?\./);
+        assert.ok(match, q.prompt);
+        assert.equal(clean(answerOf(q)), roundSig(match[1], Number(match[2])), q.prompt);
+        assert.equal(q.n, Number(match[2]));
+        assert.equal(q.exact, true);
+        assert.notEqual(tidyNumber(answerOf(q)), null);
+        if (q.input === 'number' && q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zero at the end after the decimal point/);
     }
 });
 
-test('6. each set of options has exactly one correct, distinct, well-formed answer', () => {
+test('significant-figures: worked Learn examples and explanation question give the right answers', () => {
+    for (const screen of Q.learnScreens) for (const equation of screen.equations || []) {
+        const match = equation.match(/^([\d,.]+) ≈ ([\d,.]+)/);
+        assert.ok(match, equation);
+        assert.equal(clean(match[2]), roundSig(match[1], screen.n), equation);
+    }
+    const error = Q.checks()[0];
+    assert.equal(answerOf(error), 'Start at 2. Keep 2 and 8. The next digit is 3, so the answer is 0.028');
+    assert.equal(roundSig('0.0283', 2), '0.028');
+});
+
+test('significant-figures: every choice has four distinct well-formed options and one correct answer', () => {
     for (const q of questions.filter(q => q.options)) {
-        assert.equal(q.options.filter(option => matches(q, option)).length, 1, `one correct option: ${q.prompt}`);
-        assert.equal(new Set(q.options).size, q.options.length, `duplicate options: ${q.prompt}`);
-        if (normalise(q.answer) === null) continue;
-        q.options.forEach(option => assert.notEqual(normalise(option), null, `badly formatted option "${option}": ${q.prompt}`));
-        // 15 and 15.0 may both appear: the accuracy is what's being tested.
-        const values = q.options.map(option => `${normalise(option)}|${decimals(option)}`);
-        assert.equal(new Set(values).size, values.length, `two options are the same number: ${q.prompt}`);
+        assert.equal(q.options.length, 4, q.prompt);
+        assert.equal(q.options.filter(o => o.correct).length, 1, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.label)).size, 4, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
+        assert.ok(q.options.every(o => o.feedback));
+        if (q.stage === 'round') {
+            const expected = roundSig(q.number, q.n);
+            assert.equal(q.options.filter(o => tidyNumber(o.label) === expected).length, 1, q.prompt);
+            assert.equal(new Set(q.options.map(o => tidyNumber(o.label))).size, 4, q.prompt);
+            assert.ok(q.options.every(o => tidyNumber(o.label) !== null), q.prompt);
+        }
     }
 });
 
-test('6. the correct option is not always in the same position', () => {
-    for (const [name, set] of Object.entries({ guided: data.guided, practice: data.practice })) {
-        const positions = set.filter(q => q.options).map(q => q.options.findIndex(option => matches(q, option)));
-        assert.ok(new Set(positions).size > 1, `${name}: correct answer is always option ${positions[0] + 1}`);
+test('significant-figures: shuffling moves correct answers without changing the content', () => {
+    const examples = Q.examples();
+    for (const q of examples.filter(q => q.options)) {
+        const positions = new Set();
+        for (let seed = 0; seed < 200; seed++) {
+            const shuffled = Q.prepare(q, seededRandom(seed));
+            positions.add(shuffled.options.findIndex(o => o.correct));
+            assert.deepEqual(Array.from(shuffled.options, o => o.label).sort(), Array.from(q.options, o => o.label).sort());
+        }
+        assert.ok(positions.size > 1);
     }
 });
 
-test('7. explanations show the answer and name the right deciding digit', () => {
-    for (const q of questions) {
-        const match = roundPrompt(q);
-        if (!match) continue;
-        assert.ok(q.explanation.includes(q.answer) || q.explanation.includes(withCommas(q.answer)),
-            `explanation doesn't show ${q.answer}: ${q.prompt}`);
-        const said = q.explanation.match(/next digit(?: after [^.,]*?)? is (\d)/i);
-        if (said) assert.equal(said[1], nextDigit(match[1], Number(match[2])), `wrong deciding digit: ${q.prompt}`);
+test('significant-figures: explanations name the right deciding digit and show the answer', () => {
+    for (const q of questions.filter(q => q.stage === 'round')) {
+        const feedback = q.feedback;
+        assert.ok(feedback.includes(answerOf(q)) || feedback.includes(spaced(clean(answerOf(q)))), q.prompt);
+        assert.equal(feedback.match(/next digit is (\d)/)[1], nextDigit(q.number, q.n), q.prompt);
     }
 });
 
-test('7. step-by-step examples point at the right digits', () => {
-    for (const q of data.guided) {
-        const n = q.significant_figures;
-        assert.equal(q.prompt, `Round ${q.number} to ${q.accuracy}.`);
-        assert.equal(q.accuracy, `${n} significant ${n === 1 ? 'figure' : 'figures'}`);
-        const digitIndexes = [...q.number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
-        const significant = digitIndexes.slice(digitIndexes.findIndex(i => q.number[i] !== '0'));
-        assert.equal(q.target, significant[n - 1], `target digit: ${q.prompt}`);
-        assert.equal(q.decider, significant[n], `deciding digit: ${q.prompt}`);
-        const helped = q.decider_help.match(/is (\d)\./);
-        assert.ok(helped, `decider_help should name the digit: ${q.prompt}`);
-        assert.equal(helped[1], q.number[q.decider], `decider_help digit: ${q.prompt}`);
+test('significant-figures: six guided examples point at the correct keep and deciding digits', () => {
+    assert.equal(Q.guided.length, 6);
+    assert.equal(Q.examples().length, 18);
+    for (const q of questions.filter(q => q.number)) {
+        const indexes = [...q.number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
+        const significant = indexes.slice(indexes.findIndex(i => q.number[i] !== '0'));
+        assert.equal(q.first, significant[0], q.prompt);
+        assert.equal(q.target, significant[q.n - 1], q.prompt);
+        assert.equal(q.decider, significant[q.n], q.prompt);
+        if (q.stage === 'keep' || q.stage === 'decider') {
+            const correct = q.options.find(o => o.correct);
+            const index = q.stage === 'keep' ? q.target : q.decider;
+            assert.equal(correct.index, index, q.prompt);
+            assert.equal(correct.label, `${q.number[index]} (${Q.place(q.number, index)})`, q.prompt);
+        }
     }
 });
 
-test('8. wording: plurals, British spelling and no raw HTML', () => {
-    const texts = [...allStrings(data), source];
-    for (const text of texts) {
-        assert.doesNotMatch(text, /\b1 significant figures\b/, 'should be "1 significant figure"');
-        assert.doesNotMatch(text, /\b(?:[2-9]|\d{2,}) significant figure\b(?!s)/, 'should be plural');
-        assert.doesNotMatch(text, /\b(?:color|center|recognize|organize|analyze|favorite|practicing|practiced)\b/i,
-            'American spelling');
+test('significant-figures: typed answers use exact form, meaningful rules and a fallback', () => {
+    for (const q of questions.filter(q => q.input === 'number')) {
+        assert.equal(q.exact, true);
+        assert.ok(q.rules.length && q.fallback && q.feedback);
+        for (const rule of q.rules) {
+            assert.notEqual(tidyNumber(rule.value), tidyNumber(q.answer), q.prompt);
+            assert.ok(rule.feedback);
+        }
     }
-    for (const text of allStrings(data)) assert.doesNotMatch(text, /<\/?[a-z]|&[a-z]+;/i, `HTML in lesson text: ${text}`);
+    const accuracy = Q.checks().find(q => q.answer === '15.0');
+    assert.equal(accuracy.exact, true);
+    assert.ok(accuracy.rules.some(rule => rule.value === '15'));
 });
 
-test('9. lesson is wired up to the site', () => {
+test('significant-figures: generators cover every old type for 200 seeds in both answer modes', () => {
+    assert.equal(Q.practiceTypes.length, 10);
+    for (const type of Q.practiceTypes) {
+        assert.equal(data.assessment.question_types[type], 'round-significant-figures');
+        const positions = new Set(Array.from({ length: 200 }, (_, seed) =>
+            Q.generate({ type, mode: 'choice' }, seededRandom(seed)).options.findIndex(o => o.correct)));
+        assert.ok(positions.size > 1, type);
+        for (const mode of ['choice', 'number']) for (let seed = 0; seed < 200; seed++) {
+            assert.deepEqual(Q.generate({ type, mode }, seededRandom(seed)), Q.generate({ type, mode }, seededRandom(seed)));
+        }
+    }
+    for (let seed = 0; seed < 200; seed++) {
+        const items = Q.pick(seededRandom(seed));
+        assert.equal(items.length, 6);
+        assert.equal(items.length, data.question_bank.session_length);
+        const modes = items.map(item => Q.generate(item, seededRandom(item.seed)).input);
+        assert.equal(modes.filter(mode => mode === 'choice').length, 3);
+        assert.equal(modes.filter(mode => mode === 'number').length, 3);
+    }
+    for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number']));
+    assert.equal(Q.checks().length, 5);
+});
+
+test('significant-figures: wording has correct plurals, British spelling and no padded question decimals', () => {
+    for (const text of allStrings([questions, Q.learnScreens])) {
+        assert.doesNotMatch(text, /\b1 significant figures\b|\b(?:[2-9]|\d{2,}) significant figure\b(?!s)/);
+        assert.doesNotMatch(text, /\b(?:color|center|recognize|organize|analyze|favorite|practicing|practiced)\b/i);
+        assert.doesNotMatch(text, /AQA|Edexcel|OCR|<\/?[a-z]|&[a-z]+;/i);
+    }
+    for (const q of generated) assert.doesNotMatch(q.number, /\.\d*0$/);
+});
+
+test('significant-figures: lesson is wired to its existing skill and four shared sections', () => {
     assert.equal(data.slug, folder);
-    assert.match(page, new RegExp(`\\$lessonId = '${folder}';`));
-    const curriculum = JSON.parse(read(path.join(root, 'content', 'curriculum.json')));
+    assert.match(page, /\$lessonId = 'significant-figures';/);
+    assert.doesNotMatch(page, /data-lesson-renderer/);
+    assert.deepEqual(data.navigation_stages.map(stage => stage.label), ['Learn', 'Try it', 'Practice', 'Check']);
+    assert.equal(data.navigation.back_button, true);
+    assert.equal(new Set(Q.learnScreens.map(screen => screen.title)).size, Q.learnScreens.length);
+    const curriculum = JSON.parse(read(path.join(root, 'content/curriculum.json')));
     const entry = curriculum.categories.flatMap(c => c.lessons).find(l => l.folder === folder);
-    assert.ok(entry, 'missing from curriculum.json');
-    const skillIds = new Set(JSON.parse(read(path.join(root, 'content', 'skills.json'))).skills.map(s => s.id));
-    for (const q of [...data.practice, ...data.check]) {
-        assert.ok(skillIds.has(q.skill), `unknown skill ${q.skill}`);
-        assert.ok(entry.skills.includes(q.skill), `curriculum.json doesn't list ${q.skill}`);
+    const skills = JSON.parse(read(path.join(root, 'content/skills.json'))).skills;
+    for (const skill of Object.values(data.assessment.question_types)) {
+        assert.ok(skills.some(s => s.id === skill));
+        assert.ok(entry.skills.includes(skill));
     }
 });
 
-test('9. every file the page loads exists', () => {
-    const urls = [...page.matchAll(/(?:src|href)="(\.[^"]+)"/g)].map(m => m[1]);
-    const fetched = [...source.matchAll(/fetch\('([^']+)'/g)].map(m => m[1]);
-    const lessonSrc = page.match(/data-lesson-src="([^"]+)"/)[1];
-    for (const url of [...urls, ...fetched, lessonSrc]) {
-        assert.ok(fs.existsSync(path.join(lessonDir, url.split('?')[0])), `missing file: ${url}`);
-    }
-});
-
-test('9. slide ids and sections are consistent', () => {
-    const reserved = ['step-by-step', 'practice', 'practise', 'practice-review', 'check', 'summary', 'complete'];
-    const ids = data.learn.map(item => item.id);
-    assert.equal(new Set(ids).size, ids.length, 'duplicate learn ids');
-    for (const id of ids) {
-        assert.match(id, /^[a-z0-9-]+$/, `id not usable as a #hash: ${id}`);
-        assert.ok(!reserved.includes(id) && !/^(?:step|practice|check)-\d+$/.test(id), `learn id clashes with a slide id: ${id}`);
-    }
-    const total = source.match(/totalSections:(\d+)/);
-    assert.ok(total, 'totalSections not found in lesson.js');
-    assert.equal(Number(total[1]), data.navigation_stages.length, 'totalSections disagrees with navigation_stages');
-});
-
-test('10. dist build matches the source', () => {
-    for (const file of ['lesson.js', 'lesson.json', 'lesson.css']) {
-        assert.equal(read(path.join(distDir, file)), read(path.join(lessonDir, file)), `dist ${file} is out of date`);
+test('significant-figures: every loaded asset exists and dist matches the source', () => {
+    const urls = text => [...text.matchAll(/(?:src|href)="(\.[^"]+)"/g)].map(m => m[1]).filter(url => !url.endsWith('/'));
+    for (const url of [...urls(page), './lesson.json']) assert.ok(fs.existsSync(path.join(lessonDir, url.split('?')[0])), url);
+    for (const file of ['lesson.json', 'lesson.css', 'significant-figures.js', 'interactive.js', 'questions.js']) {
+        assert.equal(read(path.join(distDir, file)), read(path.join(lessonDir, file)), file);
     }
     const html = read(path.join(distDir, 'index.html'));
-    // The build rewrites page links (index.php -> ../../), so compare assets only.
-    const assetUrls = text => [...text.matchAll(/(?:src|href)="(\.[^"]+)"/g)].map(m => m[1])
-        .filter(url => !url.endsWith('/') && !url.split('?')[0].endsWith('.php'));
-    assert.deepEqual(assetUrls(html), assetUrls(page), 'dist index.html loads different files or versions');
-    assert.match(html, new RegExp(`data-lesson-id="${folder}"`));
-    for (const url of assetUrls(page).filter(url => url.startsWith('../../assets/'))) {
-        const relative = url.split('?')[0].replace('../../', '');
-        assert.equal(read(path.join(root, 'dist', relative)), read(path.join(root, relative)), `dist ${relative} is out of date`);
+    assert.deepEqual(urls(html), urls(page));
+    assert.match(html, /data-lesson-id="significant-figures"/);
+    assert.ok(!fs.existsSync(path.join(distDir, 'lesson.js')));
+    for (const url of urls(page).filter(url => url.startsWith('../../assets/'))) {
+        const file = url.split('?')[0].replace('../../', '');
+        assert.equal(read(path.join(root, 'dist', file)), read(path.join(root, file)), file);
     }
 });
