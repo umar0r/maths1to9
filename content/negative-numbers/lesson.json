@@ -1,37 +1,118 @@
 {
-  "id": "negative-numbers-01",
-  "slug": "negative-numbers",
-  "title": "Subtracting negative numbers",
-  "subtitle": "Rewrite subtracting a negative as adding a positive.",
-  "learning_goal": "Learn how to subtract a negative number by rewriting it as addition.",
-  "rule": "a − (−b) = a + b",
-  "navigation_stages": [
-    {
-      "id": "learn",
-      "label": "Learn"
+    "id": "negative-numbers-01",
+    "slug": "negative-numbers",
+    "title": "Subtracting negative numbers",
+    "subtitle": "Rewrite subtracting a negative as adding a positive.",
+    "navigation": {
+        "back_button": true
     },
-    {
-      "id": "step-by-step",
-      "label": "Step by Step"
+    "assessment": {
+        "question_types": {
+            "rewrite-positive": "calculate-negative-numbers",
+            "rewrite-negative": "calculate-negative-numbers",
+            "calculate-positive": "calculate-negative-numbers",
+            "cross-zero": "calculate-negative-numbers",
+            "stay-negative": "calculate-negative-numbers",
+            "zero": "calculate-negative-numbers",
+            "error": "calculate-negative-numbers",
+            "rewrite": "calculate-negative-numbers",
+            "calculate": "calculate-negative-numbers",
+            "temperature": "calculate-negative-numbers"
+        }
     },
-    {
-      "id": "practise",
-      "label": "Practise"
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Subtracting a negative number"
     },
-    {
-      "id": "check",
-      "label": "Check"
-    }
-  ],
-  "renderer": "custom",
-  "mastery": {
-    "question_ids": [
-      "check-1",
-      "check-2",
-      "check-3",
-      "check-4"
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Try these calculations",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise subtracting negative numbers",
+        "intro": "",
+        "session_length": 11
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
     ],
-    "reasoning_question": "check-5",
-    "explanations": "self-assessed against model answers"
-  }
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "calculate"
+            },
+            {
+                "type": "calculate"
+            },
+            {
+                "type": "rewrite"
+            },
+            {
+                "type": "error"
+            },
+            {
+                "type": "temperature"
+            }
+        ],
+        "summary": {
+            "title": "Your Check is complete",
+            "points": []
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        }
+    ]
 }

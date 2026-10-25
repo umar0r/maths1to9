@@ -1,107 +1,164 @@
-// Maths checks for adding-decimal-numbers. The questions, worked examples and
-// hints live in lesson.js, so they are loaded from there and recomputed exactly.
+// Keep exact decimal arithmetic, column, hint and answer-check coverage on the new content.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
-const { contentDir, read, loadScript, plain, wrongSums } = require('./helpers/lessons.cjs');
-const { exact, show, equal } = require('./helpers/decimals.cjs');
-
-const file = path.join(contentDir, 'adding-decimal-numbers', 'lesson.js');
-const source = read(file);
-// An empty progress store, so the lesson starts fresh instead of "restoring" a stub.
-const emptyStore = { getLessonProgress: async () => null, saveLessonProgress: async () => {} };
-const lesson = loadScript(file, ['questions', 'learn', 'review', 'answer', 'assess'], { window: { Maths1to9Progress: emptyStore } });
-const { questions } = lesson;
-const sum = (a, b) => {
-    const [x, y] = [exact(a), exact(b)];
+const vm = require('node:vm');
+const { contentDir, loadScript, wrongSums, allStrings } = require('./helpers/lessons.cjs');
+const { exact, equal } = require('./helpers/decimals.cjs');
+const window = {};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), {
+    window, document: { body: { dataset: { lessonRenderer: 'custom' } } }
+});
+const Q = loadScript(path.join(contentDir, 'adding-decimal-numbers/decimal-addition.js'),
+    ['worked', 'cells', 'columnSteps', 'alignmentWidget', 'columnWidget', 'examples', 'checks', 'practiceTypes', 'generate', 'pick'], { window });
+const { seededRandom } = window.Maths1to9LessonEngine;
+const { screens } = loadScript(path.join(contentDir, 'adding-decimal-numbers/interactive.js'), ['screens']);
+const generated = Q.practiceTypes.flatMap(type => Array.from({ length: 200 }, (_, seed) => Q.generate({ type }, seededRandom(seed))));
+const questions = [...Q.examples(), ...Q.checks(), ...generated];
+function sum(a, b) {
+    const x = exact(a), y = exact(b);
     const places = Math.max(x.places, y.places);
-    const lift = v => v.digits * 10n ** BigInt(places - v.places);
-    return { digits: lift(x) + lift(y), places };
-};
-// Column digits right to left (hundredths, tenths, ones, tens) of a 2-decimal number.
-const columns = text => [...exact(text).digits.toString().padStart(3, '0')].reverse().join('').slice(0, 4).split('');
-const array = pattern => JSON.parse(source.match(pattern)[1].replace(/'/g, '"'));
+    return { digits: x.digits * 10n ** BigInt(places - x.places) + y.digits * 10n ** BigInt(places - y.places), places };
+}
+const numeric = text => text.replace('£', '');
 
-test('every question adds up correctly', () => {
-    for (const [a, b, total] of questions) {
-        assert.ok(equal(sum(a, b), exact(total)), `${a} + ${b} = ${show(sum(a, b))}, not ${total}`);
+test('adding-decimal-numbers: every fixed and generated addition is right', () => {
+    for (const question of questions.filter(question => question.a && !['alignment', 'columns', 'zero', 'decimal-point'].includes(question.questionType))) {
+        const answer = question.input === 'choice' ? numeric(question.options.find(option => option.correct).label) : question.answer;
+        assert.ok(equal(sum(question.a, question.b), exact(answer)), question.prompt);
     }
 });
 
-test('every number fits the place-value grid (tens, ones, tenths, hundredths)', () => {
-    for (const number of questions.flat()) {
-        const [whole, fraction = ''] = number.split('.');
-        assert.ok(whole.length <= 2 && fraction.length <= 2, `${number} does not fit the 2-digit whole, 2-decimal grid, so digits would be lost`);
-    }
-});
-
-test('step-by-step examples expect the right digits, right to left', () => {
-    const expected = source.match(/const expected=i===0\?(\[[^\]]+\]):(\[[^\]]+\])/);
-    assert.ok(expected, 'could not find the expected digits in lesson.js');
-    [expected[1], expected[2]].forEach((list, i) => {
-        const digits = JSON.parse(list.replace(/'/g, '"'));
-        const total = show({ ...exact(questions[i][2]) }, 2).replace('.', '');
-        const fromColumns = [...total].reverse();
-        assert.deepEqual(digits, fromColumns.slice(0, digits.length), `example ${i + 1} (${questions[i][0]} + ${questions[i][1]}) expects ${digits.join(', ')}`);
-        assert.equal(digits.length, total.replace(/^0+(?=\d)/, '').length, `example ${i + 1} should ask for every digit of ${questions[i][2]}`);
-    });
-});
-
-test('step-by-step hints add the right column digits', () => {
-    const hints = source.match(/feedback\(\(i===0\?(\[[^\]]+\]):(\[[^\]]+\])\)/);
-    assert.ok(hints, 'could not find the step hints in lesson.js');
-    const places = { hundredths: 0, tenths: 1, ones: 2 };
-    [hints[1], hints[2]].forEach((list, i) => {
-        const [a, b] = questions[i].slice(0, 2).map(n => show(exact(n), 2));
-        for (const hint of JSON.parse(list.replace(/'/g, '"'))) {
-            const m = hint.match(/Check the (hundredths|tenths|ones): (\d) \+ (\d)/);
-            if (!m) continue;
-            const column = places[m[1]];
-            const digit = n => [...n.replace('.', '')].reverse()[column];
-            assert.deepEqual([m[2], m[3]], [digit(a), digit(b)], `example ${i + 1} hint "${hint}": the ${m[1]} digits of ${a} and ${b} are ${digit(a)} and ${digit(b)}`);
+test('adding-decimal-numbers: operands and totals fit the tens-to-hundredths chart', () => {
+    for (const question of questions.filter(question => question.a)) {
+        for (const number of [question.a, question.b]) {
+            const [whole, fractional = ''] = number.split('.');
+            assert.ok(whole.length <= 2 && fractional.length <= 2);
+            assert.equal(Q.cells(number).length, 5);
         }
-    });
-});
-
-test('the worked example on the learn slide is right, step by step', () => {
-    const text = plain(lesson.learn());
-    assert.match(text, /Add 14\.7 \+ 6\.82/);
-    assert.ok(equal(sum('14.7', '6.82'), exact('21.52')), '14.7 + 6.82 = 21.52');
-    assert.match(text, /21\.52/, 'the grid should show 21.52');
-    assert.deepEqual(wrongSums(text), [], 'a step in the worked example does not add up');
-    // The sense check: about 15 + about 7 = about 22.
-    const [, x, y, z] = text.match(/about (\d+) and .*? is about (\d+)\. An answer near (\d+)/) ?? [];
-    assert.equal(Number(x) + Number(y), Number(z), 'the estimate does not add up');
-});
-
-test('the check review and model answers add up and match the questions', () => {
-    const text = plain(lesson.review());
-    assert.deepEqual(wrongSums(text), [], 'a sum in the check review does not add up');
-    for (const i of [6, 7]) {
-        const [a, b, total] = questions[i];
-        assert.match(text, new RegExp(`${show(exact(a), 2).replace('.', '\\.')} \\+ ${show(exact(b), 2).replace('.', '\\.')} = ${total.replace('.', '\\.')}`), `review should show ${a} + ${b} = ${total}`);
+        const total = Number(question.a) + Number(question.b);
+        assert.ok(total < 100);
     }
 });
 
-test('question wording matches the data', () => {
-    assert.match(source, new RegExp(`Work out ${questions[6][0]} \\+ ${questions[6][1]}`), 'check question 1 text');
-    assert.match(source, new RegExp(`contains ${questions[7][0]} litres\\. Another contains ${questions[7][1]} litres`), 'check question 3 text');
-    assert.match(source, new RegExp(`'£${questions[5][0]} \\+ £${questions[5][1]}'`), 'the money question text');
-    assert.match(source, new RegExp(`'£${questions[5][2]}'`), 'the money question answer text');
-    assert.match(source, new RegExp(`add ${questions[6][0]} and ${questions[6][1]}`), 'the explain-the-mistake question');
+test('adding-decimal-numbers: column widgets expect every digit from right to left', () => {
+    for (const [a, b] of [['8.40', '2.35'], ['3.60', '1.25']]) {
+        const widget = Q.columnWidget(a, b);
+        const total = sum(a, b);
+        const scaled = total.digits * 10n ** BigInt(2 - total.places);
+        const digits = String(scaled).padStart(3, '0').split('').reverse();
+        const keys = ['hundredths', 'tenths', 'ones', 'tens'].slice(0, digits.length);
+        assert.deepEqual(Array.from(widget.fields.filter(key => key !== 'carry')), keys);
+        keys.forEach((key, index) => assert.equal(widget.expected(key), digits[index]));
+    }
 });
 
-test('the answer checker accepts right answers and rejects misaligned or wrong ones', () => {
-    questions.forEach(([a, b, total], i) => {
-        const entry = lesson.answer(i);
-        Object.assign(entry, { offset: 0, value: total });
-        assert.equal(lesson.assess(i), true, `${a} + ${b}: ${total} with the decimal points lined up should be accepted`);
-        Object.assign(entry, { offset: 1, value: total });
-        assert.equal(lesson.assess(i), false, `${a} + ${b}: a misaligned layout should not be accepted`);
-        Object.assign(entry, { offset: 0, value: show(sum(total, '0.1')) });
-        assert.equal(lesson.assess(i), false, `${a} + ${b}: a wrong total should not be accepted`);
-    });
-    const money = lesson.answer(5);
-    Object.assign(money, { offset: 0, value: `£${questions[5][2]}` });
-    assert.equal(lesson.assess(5), true, 'the money answer should accept a £ sign');
+test('adding-decimal-numbers: column hints use the correct operands and carries', () => {
+    for (const [a, b] of [['14.70', '6.82'], ['8.40', '2.35'], ['3.60', '1.25']]) {
+        const x = String(exact(a).digits).padStart(4, '0').split('').reverse();
+        const y = String(exact(b).digits).padStart(4, '0').split('').reverse();
+        let carry = 0;
+        Q.columnSteps(a, b).forEach((step, index) => {
+            assert.equal(step.left, Number(x[index]));
+            assert.equal(step.right, Number(y[index]));
+            assert.equal(step.incoming, carry);
+            const total = Number(x[index]) + Number(y[index]) + carry;
+            assert.equal(step.total, total);
+            assert.equal(step.digit, total % 10);
+            carry = Math.floor(total / 10);
+            assert.equal(step.carry, carry);
+        });
+    }
+});
+
+test('adding-decimal-numbers: Learn keeps the correct worked example and estimate', () => {
+    assert.equal(Q.worked.a, '14.7');
+    assert.equal(Q.worked.b, '6.82');
+    assert.ok(equal(sum(Q.worked.a, Q.worked.b), exact(Q.worked.total)));
+    const text = screens.flatMap(screen => screen.lines).join(' ');
+    assert.match(text, /14\.70 \+ 6\.82 = 21\.52/);
+    assert.match(text, /about 15 and .*about 7.*near 22/);
+    assert.equal(15 + 7, 22);
+    assert.deepEqual(wrongSums(text), []);
+});
+
+test('adding-decimal-numbers: Check totals, context and replacement explanation match', () => {
+    const checks = Q.checks();
+    assert.equal(checks.length, 5);
+    assert.equal(checks[0].answer, '6.14');
+    assert.equal(checks[2].answer, '2.55');
+    assert.match(checks[2].prompt, /contains 1\.75 litres\. Another contains 0\.8 litres/);
+    assert.match(checks[3].prompt, /£6\.75 \+ £2\.40/);
+    assert.equal(checks[3].options.find(option => option.correct).label, '£9.15');
+    assert.equal(checks[4].answer, '11.24');
+    assert.match(checks[1].options.find(option => option.correct).label, /8 is tenths and the 4 is hundredths/);
+    for (const question of questions) {
+        for (const text of [question.feedback, ...question.options?.map(option => option.feedback) || []].filter(Boolean)) assert.deepEqual(wrongSums(text), [], text);
+    }
+});
+
+test('adding-decimal-numbers: widget checks accept right work, reject misalignment and wrong digits', () => {
+    for (const [a, b] of [['8.40', '2.35'], ['3.60', '1.25']]) {
+        const alignment = Q.alignmentWidget(a, b);
+        assert.equal(alignment.isEmpty(null), true);
+        assert.equal(alignment.isEmpty(0), false);
+        assert.equal(alignment.mark(0).correct, true);
+        assert.equal(alignment.mark(1).correct, false);
+        assert.equal(alignment.mark(-1).correct, false);
+        const widget = Q.columnWidget(a, b);
+        const values = Object.fromEntries(widget.fields.map(key => [key, widget.expected(key)]));
+        assert.equal(widget.isEmpty(values), false);
+        assert.equal(widget.mark(values).correct, true);
+        assert.ok(equal(exact(widget.answerText(values)), sum(a, b)));
+        for (const key of widget.fields) {
+            assert.equal(widget.mark({ ...values, [key]: String((Number(values[key]) + 1) % 10) }).correct, false);
+            assert.equal(widget.isEmpty({ ...values, [key]: '' }), true);
+            assert.ok(widget.mark({ ...values, [key]: '9' }).feedback);
+        }
+    }
+});
+
+test('adding-decimal-numbers: choices are four distinct values with one correct answer and specific feedback', () => {
+    for (const question of questions.filter(question => question.input === 'choice')) {
+        assert.equal(question.options.length, 4);
+        assert.equal(question.options.filter(option => option.correct).length, 1);
+        assert.equal(new Set(question.options.map(option => option.label)).size, 4);
+        assert.equal(new Set(question.options.map(option => option.feedback)).size, 4);
+        if (question.a && question.questionType !== 'decimal-point') {
+            assert.equal(question.options.filter(option => equal(exact(numeric(option.label)), sum(question.a, question.b))).length, 1);
+        }
+    }
+});
+
+test('adding-decimal-numbers: typed questions have correct mistake rules and fallback', () => {
+    for (const question of questions.filter(question => question.input === 'number')) {
+        assert.ok(question.rules.length && question.fallback);
+        for (const rule of question.rules) {
+            assert.notEqual(Number(rule.value), Number(question.answer));
+            assert.ok(rule.feedback);
+        }
+    }
+});
+
+test('adding-decimal-numbers: 200 seeds per type are deterministic, mapped and mixed', () => {
+    const lesson = JSON.parse(fs.readFileSync(path.join(contentDir, 'adding-decimal-numbers/lesson.json')));
+    for (const type of Q.practiceTypes) {
+        assert.equal(lesson.assessment.question_types[type], 'decimal-add-subtract');
+        for (let seed = 0; seed < 200; seed++) assert.deepEqual(JSON.parse(JSON.stringify(Q.generate({ type }, seededRandom(seed)))), JSON.parse(JSON.stringify(Q.generate({ type }, seededRandom(seed)))));
+    }
+    const picked = Q.pick(seededRandom(7));
+    assert.equal(picked.length, 6);
+    assert.deepEqual(new Set(picked.map(item => Q.generate(item, seededRandom(item.seed)).input)), new Set(['choice', 'number']));
+    assert.ok(Q.examples().some(question => question.input === 'number'));
+    assert.ok(Q.examples().some(question => question.input === 'choice'));
+    for (const text of allStrings(questions)) assert.doesNotMatch(text, /\d+\.\d{4,}/, text);
+});
+
+
+test('adding-decimal-numbers: Practice operands have no trailing decimal zeros', () => {
+    for (const question of generated) {
+        for (const operand of [question.a, question.b]) assert.doesNotMatch(operand, /\.\d*0$/);
+        assert.ok(question.a.includes('.') || question.b.includes('.'));
+    }
 });

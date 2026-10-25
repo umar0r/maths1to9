@@ -156,6 +156,7 @@
       "lessons": [
         {"folder":"sampling-and-data","title":"Sampling and types of data","subtitle":"Use samples carefully and recognise the data being collected.","skills":["populations-and-samples","sampling-limitations","data-types"]},
         {"folder":"frequency-tables-and-charts","title":"Frequency tables and charts","subtitle":"Organise and display categorical and discrete data clearly.","skills":["frequency-tables","bar-and-line-charts","pictograms"]},
+        {"folder":"pie-charts","title":"Pie charts","subtitle":"Turn a frequency table into angles, then draw the chart.","skills":["construct-pie-charts"]},
         {"folder":"averages-and-range","title":"Averages and range","subtitle":"Calculate and choose suitable measures of centre and spread.","skills":["mean-median-mode","range-and-outliers","choose-average"]},
         {"folder":"averages-from-tables","title":"Averages from tables","subtitle":"Calculate averages from frequency and grouped tables.","skills":["mean-frequency-table","estimated-mean-grouped","modal-class"]},
         {"folder":"comparing-distributions","title":"Comparing distributions","subtitle":"Use averages, range and graphs to compare data sets.","skills":["compare-distributions"]},
