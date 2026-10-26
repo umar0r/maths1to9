@@ -42,6 +42,8 @@ test('factors: choices have exactly four distinct options, one correct answer an
 test('factors: typed mistake rules are wrong and every typed card has feedback and fallback', () => {
     for (const question of questions.filter(question => question.input === 'number')) {
         assert.ok(question.feedback && question.fallback && question.rules.length);
+        const method = question.kind === 'remainder' ? 'left over' : question.kind === 'missing' ? 'Divide' : 'count';
+        assert.ok(question.fallback.includes(method), question.prompt);
         for (const rule of question.rules) { assert.notEqual(Number(rule.value), Number(question.answer)); assert.ok(rule.feedback); }
     }
 });

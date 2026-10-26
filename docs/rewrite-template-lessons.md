@@ -322,10 +322,12 @@ report.
 - Add a solver for any lesson without one (factors, prime factors, HCF,
   LCM). Every solver answers every question from what's visible and
   finishes the lesson.
-- Add `tests/ui/<slug>.spec.cjs` for each lesson: desktop and 375 px with
-  touch, every wrong option's feedback, a typed retry, reload in each
-  phase, Back, Practise again twice with the score unchanged, picture
-  timing (no early answers) and `dist/` completion.
+- **Don't write per-lesson Playwright spec files** (`tests/ui/<slug>.spec.cjs`,
+  `tests/ui/shared-practice-<slug>.spec.cjs`) from lesson 4 on (Umar,
+  2026-10-26: they cost too much time). Keep the unit test file and the
+  solver. Claude checks the lesson in the browser at review, and Umar does
+  manual tests at the end. Keep the spec files already written for HCF,
+  LCM and factors.
 - Never weaken or skip an existing check. List every test changed or
   removed, and why, in the report.
 - **Lesson 1:** full `npm test` and `npm run test:ui` on your branch and on
@@ -340,7 +342,9 @@ report.
 ## Checks for each lesson (in a real browser)
 
 Desktop and 375 px with touch on. Real clicks. Full page loads after code
-changes.
+changes. From lesson 4 on, a quick manual pass is enough: walk Learn, one
+wrong-then-right answer, one reload, Back once, and the 375 px layout. Don't
+spend time automating these.
 
 - The first Learn screen teaches with a picture before asking. Every
   control visibly changes the picture.

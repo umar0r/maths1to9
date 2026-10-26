@@ -153,7 +153,9 @@
         const rules = wrong.filter(([value], index, values) => value !== answer && values.findIndex(([other]) => value === other) === index);
         return { kind, number, divisor, questionType, input: 'number', prompt, answer: String(answer), feedback,
             rules: rules.map(([value, feedback]) => ({ value: String(value), feedback })),
-            fallback: 'Use factor pairs. Check that the division leaves nothing over, and list each factor once.',
+            fallback: kind === 'remainder' ? 'Divide the total by the number of rows. Give the number left over.'
+                : kind === 'missing' ? 'Divide the total by the first factor to find its partner.'
+                    : 'Find every factor pair. List each factor once, then count the numbers.',
             figure: host => drawBoard(host, number) };
     }
     function asChoice(question) {
