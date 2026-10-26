@@ -28,7 +28,7 @@ $pageTitle = 'Recognising graph types';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=5">
     <link rel="stylesheet" href="./lesson.css?v=2">

@@ -28,7 +28,7 @@ $pageTitle = 'Substituting into formulae';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
     <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
