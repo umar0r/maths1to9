@@ -28,9 +28,9 @@ $pageTitle = 'Solving simultaneous equations using graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
-    <link rel="stylesheet" href="../../assets/css/graph.css?v=5">
+    <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
@@ -74,7 +74,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=9"></script>
+    <script src="../../assets/js/graph.js?v=10"></script>
     <script src="./simultaneous.js?v=4"></script>
 
     <!-- Data and behaviour specific to this lesson -->
@@ -82,6 +82,6 @@ $pageTitle = 'Solving simultaneous equations using graphs';
     <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=45"></script>
+    <script src="../../assets/js/lesson-engine.js?v=46"></script>
 </body>
 </html>

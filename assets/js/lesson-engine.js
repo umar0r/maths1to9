@@ -401,8 +401,16 @@
         return String(value).replace(/\s/g, '').replace(/[-–]/g, '−');
     }
 
-    function fieldsText(fields, value) {
-        return fields.map(field => `${field.label} ${fractionText(value?.[field.id] ?? '')}`).join(', ');
+    function unitText(value, unit) {
+        return value !== '' && unit ? `${value}\u00a0${unit}` : value;
+    }
+
+    function numberAnswerText(config, value) {
+        if (config.fields) {
+            return config.fields.map(field =>
+                `${field.label} ${unitText(fractionText(value?.[field.id] ?? ''), field.unit)}`).join(', ');
+        }
+        return unitText(config.fractions === true ? fractionText(value ?? '') : value ?? '', config.unit);
     }
 
     function appendResultMark(container, row) {
@@ -423,6 +431,10 @@
         }
         if (!['choice', 'number', 'custom'].includes(config.input)) {
             throw new TypeError('createQuestion input must be choice, number or custom.');
+        }
+        if (config.input !== 'number' && (config.unit !== undefined ||
+            config.fields?.some(field => field?.unit !== undefined))) {
+            throw new TypeError('Question units require input: number.');
         }
         const fractions = config.input === 'number' && config.fractions === true;
         if (fractions && config.exact === true) {
@@ -501,7 +513,7 @@
         function result() {
             const answer = config.input === 'choice' ? options[saved.selected]?.label ?? ''
                 : custom ? (saved.value === null ? '' : widget.answerText(saved.value))
-                    : fields ? fieldsText(fields, saved.value) : fractions ? fractionText(saved.value) : saved.value;
+                    : numberAnswerText(config, saved.value);
             return {
                 prompt: config.prompt, answer, firstCorrect: saved.firstCorrect,
                 correct: saved.correct, explanation: saved.feedback
@@ -568,8 +580,8 @@
         } else if (!custom) {
             const group = fields ? document.createElement('div') : article;
             if (fields) { group.className = 'question-answer-fields'; article.append(group); }
-            for (const field of fields || [{ label: config.inputLabel || 'Your answer' }]) {
-                const label = resultText('label', field.label, 'question-answer-label');
+            for (const field of fields || [{ label: config.inputLabel || 'Your answer', unit: config.unit }]) {
+                const label = resultText('label', field.unit ? '' : field.label, 'question-answer-label');
                 const box = document.createElement('input');
                 box.type = 'text';
                 box.inputMode = fractions ? 'text' : 'decimal';
@@ -597,7 +609,17 @@
                 });
                 if (fields) fieldInputs.push({ id: field.id, box });
                 else input = box;
-                label.append(box);
+                if (field.unit) {
+                    const caption = resultText('span', field.label);
+                    caption.setAttribute('aria-hidden', 'true');
+                    label.append(caption, resultText('span', `${field.label}, in ${field.unit}`, 'visually-hidden'));
+                    const line = document.createElement('span');
+                    line.className = 'question-answer-with-unit';
+                    const unit = resultText('span', field.unit);
+                    unit.setAttribute('aria-hidden', 'true');
+                    line.append(box, unit);
+                    label.append(line);
+                } else label.append(box);
                 group.append(label);
             }
         }
@@ -813,9 +835,7 @@
                     prompt: definition.prompt,
                     answer: definition.input === 'choice' ? definition.options[card?.selected]?.label ?? ''
                         : definition.input === 'custom' ? (card?.value == null ? '' : definition.widget.answerText(card.value))
-                            : definition.fields ? fieldsText(definition.fields, card?.value)
-                            : definition.input === 'number' && definition.fractions === true
-                                ? fractionText(card?.value ?? '') : card?.value ?? '',
+                            : numberAnswerText(definition, card?.value),
                     firstCorrect: card?.firstCorrect ?? null, correct: card?.correct ?? null,
                     explanation: card?.feedback || '', visual: config.resultVisual?.(item)
                 };

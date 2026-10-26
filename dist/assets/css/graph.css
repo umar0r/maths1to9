@@ -62,3 +62,8 @@
         -2px 0 0 var(--surface), 2px 0 0 var(--surface),
         -2px 2px 0 var(--surface), 0 2px 0 var(--surface), 2px 2px 0 var(--surface);
 }
+
+.maths-graph__board--named .maths-graph__label {
+    font-family: "Nunito", sans-serif !important;
+    white-space: nowrap;
+}

@@ -27,7 +27,7 @@ $pageTitle = 'Horizontal and vertical lines';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
 </head>
 
 <body
@@ -69,9 +69,9 @@ $pageTitle = 'Horizontal and vertical lines';
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
     <script src="../../vendor/katex/katex.min.js"></script>
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
-    <link rel="stylesheet" href="../../assets/css/graph.css?v=5">
+    <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=9"></script>
+    <script src="../../assets/js/graph.js?v=10"></script>
 
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
@@ -82,6 +82,6 @@ $pageTitle = 'Horizontal and vertical lines';
     <script src="./questions.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=45"></script>
+    <script src="../../assets/js/lesson-engine.js?v=46"></script>
 </body>
 </html>

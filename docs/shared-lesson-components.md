@@ -722,3 +722,15 @@ keeps pupils' work, so the behaviour to match is known).
 - Each browser check above, with what you did and what you saw.
 - Any solver changes, and anything in this spec you couldn't follow and why.
 - Stop. Don't start the next step until the user says so.
+
+### Units beside typed answers (added 2026-10-26)
+
+A number card can set `unit: 'm/s'` and `inputLabel: 'Speed'`. Each entry
+in `fields` can also set its own unit, for example
+`{ id: 'd', label: 'Distance travelled', unit: 'm' }`. Fields still require
+`fractions: true`. The suffix sits outside the input on the same line;
+the accessible label reads “Speed, in m/s”. Read-only cards and results
+include the value and unit, joined by a non-breaking space. Paired fields
+keep their labels and units beside their own boxes. Units on any input
+type other than `number` throw a TypeError. Cards without units keep their
+existing appearance and answer text.
