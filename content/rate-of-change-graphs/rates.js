@@ -10,6 +10,7 @@
     const plantA = { ...contexts.plant, corners: [[0, 4], [2, 8], [4, 20], [6, 20], [8, 24]], step: 4, maxValue: 28 };
     const plantB = { ...contexts.plant, corners: [[0, 6], [2, 18], [4, 18], [6, 24]], step: 2, maxValue: 24 };
     const tank = { ...contexts.tank, corners: [[0, 60], [2, 40], [4, 40], [5, 10]], step: 10, maxValue: 70 };
+    const amount = (value, unit) => unit.startsWith('£') ? `£${value}${unit.slice(1)}` : `${value} ${unit}`;
     const practiceTypes = ['fastest', 'trend', 'flat-meaning', 'change', 'rate-up', 'rate-down'];
     const choice = (label, feedback, correct = false) => ({ label, feedback, correct });
     const rule = (value, feedback) => ({ value: String(value), feedback });
@@ -20,7 +21,7 @@
         const graph = window.Maths1to9Graph.create(host, {
             x: [0, data.corners.at(-1)[0]], y: [0, data.maxValue],
             step: { x: 1, y: data.step }, axisNames: data.axisNames, aspect: 1,
-            label: `${data.context} graph. ${data.corners.map(([t, v]) => `${t} ${data.time}: ${v} ${data.unit}`).join('; ')}.`
+            label: `${data.context} graph. ${data.corners.map(([t, v]) => `${t} ${data.time}: ${amount(v, data.unit)}`).join('; ')}.`
         });
         const lines = data.corners.slice(1).map((to, i) => graph.segment(data.corners[i], to, {
             tone: highlight === null || i === highlight ? 'neutral' : 'muted',
@@ -60,10 +61,10 @@
             'The slope of a line is called its gradient. Up is a positive gradient, down is negative, flat is zero.'
         ], captions: ['The value is increasing.', 'The value is decreasing.', 'It stays the same.'] },
         { title: 'Steeper means faster.', captions: [
-            'Weeks 0 to 2: a gentle slope. The plant grows 2 cm each week.',
+            'Weeks 0 to 2: a gentle slope. The plant grows slowly.',
             'Weeks 2 to 4: steepest. The plant grows fastest here.',
             "Weeks 4 to 6: flat. The plant stays 20 cm tall. Flat doesn't mean zero height. It means no change.",
-            'Weeks 6 to 8: a gentle slope. The plant grows 2 cm each week.'
+            'Weeks 6 to 8: a gentle slope. The plant grows slowly again.'
         ], lines: [] },
         { title: 'Work out the rate.', maths: [
             'Change in height: 20 − 8 = 12 cm', 'Time taken: 4 − 2 = 2 weeks', 'Rate: 12 ÷ 2 = 6 cm per week'
@@ -74,9 +75,12 @@
         { title: 'Use the change, not the height.', lines: [
             "Don't divide the final height by the time: 20 ÷ 2 = 10 is wrong. It counts the 8 cm the plant already had."
         ], maths: ['20 ÷ 2 = 10', '(20 − 8) ÷ 2 = 6 cm per week'] },
-        { title: 'Going down and staying flat.', lines: [
+        { title: 'Going down and staying flat.', maths: [
+            'Change in water: 60 − 40 = 20 litres',
+            'Time taken: 2 − 0 = 2 minutes',
+            'Rate: 20 ÷ 2 = 10 litres per minute'
+        ], lines: [
             'Time is now in minutes, not weeks.',
-            'Minutes 0 to 2: 60 − 40 = 20 litres in 2 minutes, so the tank loses 10 litres per minute.',
             'Minutes 2 to 4: flat, so 0 litres per minute.',
             "The tank isn't empty: it still holds 40 litres.",
             'Per minute means each minute. The tank loses 10 litres each minute from minute 0 to minute 2.'
@@ -169,7 +173,13 @@
         const descending = key === 'tank' || key !== 'plant' && random() < 0.5;
         let rates, durations, start;
         if (type === 'fastest') {
-            rates = descending ? [-1, 0, -1, -3] : [1, 3, 0, 1];
+            rates = shuffle(descending ? [-1, 0, -1, -3] : [1, 3, 0, 1], random);
+            // Keep a gentle section at the highest end. Shuffle all the other
+            // sections so neither the steepest nor the flat has a fixed place.
+            const highest = descending ? 0 : 3;
+            const gentle = descending ? -1 : 1;
+            const slowIndex = rates.indexOf(gentle);
+            [rates[highest], rates[slowIndex]] = [rates[slowIndex], rates[highest]];
             durations = rates.map(() => randomInt(1, 2, random));
             start = descending ? 12 : 1;
         } else {
@@ -186,16 +196,19 @@
         const graph = { ...context, corners, step: scale, maxValue: 12 * scale };
         let index = 1, config;
         if (type === 'fastest') {
-            const fastest = descending ? 3 : 1, flat = descending ? 1 : 2, highest = descending ? 0 : 3;
+            const fastest = rates.findIndex(rate => Math.abs(rate) === 3);
+            const flat = rates.indexOf(0), highest = descending ? 0 : 3;
             index = fastest;
             config = { input: 'choice', prompt: key === 'plant' ? 'In which weeks does the plant grow fastest?'
-                : key === 'tank' ? 'In which minutes does the tank empty fastest?' : `In which ${context.time} does the ${context.subject} change fastest?`,
+                : key === 'tank' ? 'In which minutes does the tank empty fastest?' : `In which ${context.time} ${key === 'savings' ? 'do' : 'does'} the ${context.subject} change fastest?`,
             options: rates.map((rate, i) => choice(`${context.time[0].toUpperCase() + context.time.slice(1)} ${corners[i][0]} to ${corners[i + 1][0]}`,
                 i === fastest ? 'Right. That is the steepest section.' : i === highest ? "That's the highest part, not the steepest."
                     : i === flat ? 'That part is flat: nothing changes.' : 'That part is less steep.', i === fastest)) };
         } else if (type === 'trend') {
             index = randomInt(0, rates.length - 1, random);
-            const labels = ['It is increasing.', 'It is decreasing.', 'It is staying the same.', 'It is zero'];
+            const labels = key === 'savings'
+                ? ['They are increasing.', 'They are decreasing.', 'They are staying the same.', 'They are zero.']
+                : ['It is increasing.', 'It is decreasing.', 'It is staying the same.', 'It is zero.'];
             const correct = rates[index] > 0 ? 0 : rates[index] < 0 ? 1 : 2;
             config = { input: 'choice', prompt: `What happens to the ${context.subject} from ${context.time.slice(0, -1)} ${corners[index][0]} to ${corners[index + 1][0]}?`,
                 options: labels.map((label, i) => choice(label, i === correct ? 'Right. Read the line from left to right.'
@@ -203,11 +216,11 @@
                         : i === 1 ? 'Decreasing means the line goes down. Look at this section.' : 'Staying the same means the line is flat. Look at this section.', i === correct)) };
         } else if (type === 'flat-meaning') {
             const value = corners[1][1];
-            config = { input: 'choice', prompt: `The graph is flat at ${value} ${context.unit} from ${context.time.slice(0, -1)} ${corners[1][0]} to ${corners[2][0]}. What does this show?`, options: [
-                choice(`The ${context.subject} stays at ${value} ${context.unit}. The rate is 0 ${context.rateUnit}.`, 'Right. Flat means no change.', true),
-                choice(`The ${context.subject} is 0 ${context.unit}.`, `Flat means no change, not zero. The value is ${value} ${context.unit}.`),
+            config = { input: 'choice', prompt: `The graph is flat at ${amount(value, context.unit)} from ${context.time.slice(0, -1)} ${corners[1][0]} to ${corners[2][0]}. What does this show?`, options: [
+                choice(`The ${context.subject} ${key === 'savings' ? 'stay' : 'stays'} at ${amount(value, context.unit)}. The rate is ${amount(0, context.rateUnit)}.`, 'Right. Flat means no change.', true),
+                choice(`The ${context.subject} ${key === 'savings' ? 'are' : 'is'} ${amount(0, context.unit)}.`, `Flat means no change, not zero. The value is ${amount(value, context.unit)}.`),
                 choice('The graph stops.', 'The graph carries on as time passes. The value stays the same.'),
-                choice('It changes fastest.', 'A flat section has no change. Look for a steep section for the fastest change.')
+                choice(key === 'savings' ? 'They change fastest.' : 'It changes fastest.', 'A flat section has no change. Look for a steep section for the fastest change.')
             ] };
         } else {
             index = rates.findIndex(rate => type === 'rate-down' ? rate < 0 : rate > 0);
@@ -215,8 +228,8 @@
             const time = t2 - t1, change = Math.abs(v2 - v1), rate = change / time;
             const interval = `from ${context.time.slice(0, -1)} ${t1} to ${t2}`;
             if (type === 'change') {
-                config = { prompt: `How much does the ${context.subject} go up ${interval}?`, ...number(change, context.unit,
-                    `Right. ${v2} − ${v1} = ${change} ${context.unit}.`, [
+                config = { prompt: key === 'plant' ? `How much does the plant grow ${interval}?` : `How much ${key === 'savings' ? 'do' : 'does'} the ${context.subject} go up ${interval}?`, ...number(change, key === 'savings' ? 'pounds' : context.unit,
+                    key === 'savings' ? `Right. £${v2} − £${v1} = £${change}.` : `Right. ${v2} − ${v1} = ${change} ${context.unit}.`, [
                         rule(v2, "That's the final value. Take away the value at the start."), rule(v1 + v2, "Take away, don't add.")
                     ]) };
             } else {
@@ -227,18 +240,23 @@
                 ];
                 const seen = new Set([rate]);
                 const rules = candidates.flatMap(([value, feedback], i) => {
-                    if (i === 1 && !Number.isInteger(value) || seen.has(value)) return [];
+                    if (i === 1 && !Number.isInteger(value) || i === 2 && !Number.isInteger(value * 100) || seen.has(value)) return [];
                     seen.add(value); return [rule(value, feedback)];
                 });
                 const prompt = type === 'rate-up' ? `What is the rate of increase ${interval}?`
                     : key === 'tank' ? `From minute ${t1} to minute ${t2}, how many litres leave the tank each minute?`
                         : key === 'savings' ? `From month ${t1} to month ${t2}, how many pounds are spent each month?`
                             : `From hour ${t1} to hour ${t2}, by how many °C does the temperature fall each hour?`;
-                config = { prompt, ...number(rate, context.rateUnit, `Right. ${change} ÷ ${time} = ${rate} ${context.rateUnit}.`, rules) };
+                config = { prompt, ...number(rate, key === 'savings' ? 'pounds per month' : context.rateUnit,
+                    key === 'savings' ? `Right. £${change} ÷ ${time} = £${rate} per month.` : `Right. ${change} ÷ ${time} = ${rate} ${context.rateUnit}.`, rules) };
             }
         }
         if (config.options) config.options = shuffle(config.options, random);
-        return card({ questionType: type, ...config }, graph, [corners[index][0], corners[index + 1][0]]);
+        const result = card({ questionType: type, ...config }, graph, [corners[index][0], corners[index + 1][0]]);
+        // Practice pictures stay neutral in every answer phase and on reload.
+        result.figure = host => drawGraph(host, result.graph);
+        delete result.onFeedback;
+        return result;
     }
 
     window.RateOfChangeGraphs = { learnScreens, examples, practiceTypes, pick, generate, checks,

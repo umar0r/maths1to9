@@ -77,13 +77,12 @@
                 const graph = graphAt(root, J.plantA);
                 const input = slider('Move the dot week by week.', 0, 8, state.week);
                 const readout = node('p', '', 'rates-working'); readout.setAttribute('aria-live', 'polite'); root.append(readout);
-                const dot = graph.point([state.week, heightAt(state.week)], { size: 'large' });
+                const dot = graph.point([state.week, heightAt(state.week)], { tone: 'correct', size: 'large' });
                 function paint() {
                     const week = Number(input.value), height = heightAt(week);
                     dot.update({ value: [week, height] });
                     readout.textContent = `Week ${week}: ${height} cm`;
                     input.setAttribute('aria-valuetext', readout.textContent);
-                    graph.describe(readout.textContent);
                 }
                 input.addEventListener('input', () => { section.update(state => { state.week = Number(input.value); }); paint(); });
                 paint(); paragraphs(root, [screen.lines[1]]);
@@ -106,7 +105,6 @@
                     graph.sections.forEach((line, index) => line.update({ tone: index === chosen ? 'neutral' : 'muted' }));
                     caption.textContent = screen.captions[chosen];
                     input.setAttribute('aria-valuetext', `Weeks ${J.plantA.corners[chosen][0]} to ${J.plantA.corners[chosen + 1][0]}`);
-                    graph.describe(caption.textContent);
                 }
                 input.addEventListener('input', () => { section.update(state => { state.chosen = Number(input.value); }); paint(); });
                 paint();
@@ -122,8 +120,12 @@
                 const right = node('p', screen.maths[1], 'rates-working');
                 row.append(wrong, right); root.append(row);
             } else {
-                graphAt(root, J.tank);
-                paragraphs(root, screen.lines);
+                const graph = graphAt(root, J.tank, { highlight: 0 });
+                graph.arrow([0, 60], [2, 60], { tone: 'ink', label: '2 minutes', labelSide: 'above' });
+                graph.arrow([2, 60], [2, 40], { tone: 'ink', label: '20 litres', labelSide: 'right' });
+                paragraphs(root, [screen.lines[0]]);
+                paragraphs(root, screen.maths, 'rates-working');
+                paragraphs(root, screen.lines.slice(1));
             }
             if (state.finished || state.screen < state.furthestScreen) {
                 root.querySelectorAll('input').forEach(input => { input.disabled = true; });

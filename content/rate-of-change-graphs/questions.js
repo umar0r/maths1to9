@@ -16,23 +16,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 1, upgrade: () => null, count: api.getLesson().question_bank.session_length,
+            version: 2, upgrade: () => null, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results', pick: J.pick,
-            question(item, random) {
-                const config = J.generate(item, random);
-                const visual = J.cardVisual(config.graph);
-                return { ...config, ...visual, figure(host) {
-                    visual.figure(host);
-                    // Restore the figure from the same saved card the runner uses.
-                    window.Maths1to9Progress.getLessonActivityState(SLUG, 'question-bank').then(record => {
-                        const saved = record?.data;
-                        const index = saved?.items.findIndex(entry => entry.type === item.type && entry.seed === item.seed);
-                        if (index >= 0 && saved.cards[`question-bank:${saved.session}:${index + 1}`]?.correct) {
-                            visual.onFeedback({ correct: true });
-                        }
-                    });
-                } };
-            }
+            question: J.generate
         });
     }
 
