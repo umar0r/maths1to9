@@ -15,7 +15,7 @@
     height: auto;
 }
 .prime-tree-edges line { stroke: #788391; stroke-width: 3; }
-.prime-tree-node text { font: 600 25px Nunito, sans-serif; fill: #172b3b; }
+.prime-tree-node text { font: 600 32px Nunito, sans-serif; fill: #172b3b; }
 .prime-tree-node circle { fill: #ecfdf3; stroke: #15803d; stroke-width: 3; }
 .prime-tree-node.is-split { opacity: .35; }
 .prime-tree-node.is-collected circle { fill: #bbf7d0; stroke-width: 5; }
@@ -182,7 +182,17 @@
     .prime-tree-node, .prime-number-tile { animation: none !important; transition: none !important; }
 }
 
-.prime-tree-explorer { min-height: 300px; display: flow-root; }
+.prime-tree-explorer { display: flow-root; }
 .prime-tree-controls { display: grid; grid-template-columns: 1fr; gap: 6px; margin-block: 16px; }
 .prime-tree-controls input { min-height: 44px; width: 100%; max-width: 400px; }
 .prime-tree-node.is-active .prime-tree-empty { stroke: #155e75; stroke-width: 4; fill: #e0f2fe; }
+
+.prime-intro-tiles { justify-content: center; gap: .5rem; }
+.prime-intro-tiles .prime-number-tile {
+    min-width: 56px;
+    min-height: 56px;
+    border: 2px solid #155e75;
+    background: #ecfeff;
+    font-size: 1.5rem;
+    font-weight: 800;
+}

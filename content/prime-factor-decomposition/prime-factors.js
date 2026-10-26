@@ -697,12 +697,12 @@
         { title: 'Prime factors make a number', lines: [
             'A factor divides a number exactly. A prime number has just two factors: 1 and itself.',
             'Prime factor decomposition means writing a number as prime numbers multiplied together.',
-            'A product means multiply. Here, 2 × 2 × 3 × 5 = 60. Include both 2s.'
+            'Multiply these primes together and you get 60. Include both 2s.'
         ] },
         { title: 'Grow a factor tree', lines: [
             'A factor tree splits a number into pairs of factors. Use two numbers bigger than 1.',
             'Move the slider to see each split. Keep splitting any end that is not prime. A green circle means that end is prime and finished.',
-            'Leave out 1. It is not prime. A correct factor pair grows a new pair of branches.'
+            'Leave out 1. It is not prime.'
         ] },
         { title: 'Collect every prime', lines: [
             'Tap each prime at an end of the tree. Use each end once, even when two ends are both 2.',
@@ -728,7 +728,7 @@
         const state = section.state;
         if (index === 0) {
             host.append(element('p', '60 = 2 × 2 × 3 × 5', 'prime-learn-maths'));
-            const row = element('div', '', 'prime-count-tiles');
+            const row = element('div', '', 'prime-count-tiles prime-intro-tiles');
             for (const prime of [2, 2, 3, 5]) row.append(element('span', prime, 'prime-number-tile'));
             host.append(row);
         } else if (index === 1) {

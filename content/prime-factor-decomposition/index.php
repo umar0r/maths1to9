@@ -29,7 +29,7 @@ $pageTitle = 'Prime factor decomposition';
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="./lesson.css?v=12">
+    <link rel="stylesheet" href="./lesson.css?v=13">
 </head>
 
 <body
@@ -74,7 +74,7 @@ $pageTitle = 'Prime factor decomposition';
     <script src="../../vendor/katex/katex.min.js"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./prime-factors.js?v=3"></script>
+    <script src="./prime-factors.js?v=4"></script>
     <script src="./questions.js?v=17"></script>
     <script src="./interactive.js?v=21"></script>
 
