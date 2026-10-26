@@ -235,7 +235,7 @@
                 tiles.setAttribute('aria-label', `${numberText(value)} squared is 25`);
                 for (let i = 0; i < 25; i++) tiles.append(document.createElement('span'));
                 const caption = document.createElement('figcaption');
-                caption.textContent = `${numberText(value)} × ${value < 0 ? '(−5)' : '5'} = 25`;
+                caption.textContent = `${value < 0 ? '(−5)' : '5'} × ${value < 0 ? '(−5)' : '5'} = 25`;
                 panel.append(tiles, caption);
                 picture.append(panel);
             }

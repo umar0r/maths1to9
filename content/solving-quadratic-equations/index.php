@@ -86,7 +86,7 @@ $pageTitle = 'Solving quadratic equations';
     <script src="../../vendor/gsap/gsap.min.js"></script>
 
     <!-- Lesson-specific behaviour -->
-    <script src="./quadratics.js?v=1"></script>
+    <script src="./quadratics.js?v=2"></script>
     <script src="./questions.js?v=15"></script>
     <script src="./interactive.js?v=14"></script>
 
