@@ -1,7 +1,8 @@
 const {test, expect} = require('@playwright/test');
 const {MAIN_ACTION} = require('./helpers.cjs');
+// Lessons rewritten on the shared template leave these lists: their Learn
+// screens teach without a puzzle gate.
 const gated = [
-    ['fractions-introduction', 'explanation'],
     ['simplifying-fractions', 'explanation'],
     ['simplifying-expressions', 'explanation'],
     ['function-machines-find-the-input-2', 'interactive'],
@@ -21,7 +22,7 @@ for (const [lesson, section] of gated) {
         expect(after.score).toEqual(before.score);
     });
 }
-for (const lesson of ['fractions-introduction', 'simplifying-fractions']) {
+for (const lesson of ['simplifying-fractions']) {
     test(`${lesson}: the shared footer advances every ready Learn card`, async ({page}) => {
         await page.goto(`content/${lesson}/#explanation`, {waitUntil:'networkidle'});
         const main = page.locator(`${MAIN_ACTION}:visible`);
