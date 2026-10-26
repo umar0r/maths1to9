@@ -3,14 +3,14 @@
 
     const practiceTypes = ['nameThePart', 'shadedFraction', 'classifyFraction', 'improperToMixed',
         'mixedToImproper', 'chooseInequality', 'orderThree', 'compareNegative'];
-    const fraction = (n, d) => `${n}/${d}`;
+    const fraction = (n, d) => `${n}/${d}`.replace(/-/g, '−');
     const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
     const compare = (a, b) => Math.sign(a[0] * b[1] - b[0] * a[1]);
     const show = pair => fraction(...pair);
 
     // Compare fraction options by value too, so equivalent answers never appear twice.
     function optionKey(value) {
-        const text = String(value).trim();
+        const text = String(value).trim().replace(/−/g, '-');
         const match = text.match(/^(-)?(?:(\d+) )?(\d+)\/(\d+)$/);
         if (match) {
             const denominator = Number(match[4]);
@@ -247,11 +247,11 @@
             'The sign < means smaller than. The sign > means greater than. The sign = means the same value.'],
         maths: ['3/8 > 2/8', '2/3 = (2 × 5)/(3 × 5) = 10/15', '3/5 = (3 × 3)/(5 × 3) = 9/15', '2/3 > 3/5'] },
         { title: 'Negative fractions on a number line', lines: ['Negative numbers are less than zero. They sit to the left of zero on the number line.',
-            'Further left means smaller. So -3/4 < -1/2, even though 3/4 is bigger than 1/2.',
-            'The positive fractions are to the right of zero. 5/4 is beyond 1 because it is more than one whole.'], maths: ['-3/4', '-1/2', '0', '2/5', '5/4', '-3/4 < -1/2'] },
-        { title: 'Put fractions in order', lines: ['Order -3/4, 2/5 and -1/2, smallest first.',
-            'Both negative fractions come before the positive fraction. Of the two negatives, -3/4 is further left.',
-            'Smallest first: -3/4 < -1/2 < 2/5.'], maths: ['-3/4 < -1/2 < 2/5'] }
+            'Further left means smaller. So −3/4 < −1/2, even though 3/4 is bigger than 1/2.',
+            'The positive fractions are to the right of zero. 5/4 is beyond 1 because it is more than one whole.'], maths: ['−3/4', '−1/2', '0', '2/5', '5/4', '−3/4 < −1/2'] },
+        { title: 'Put fractions in order', lines: ['Order −3/4, 2/5 and −1/2, smallest first.',
+            'Both negative fractions come before the positive fraction. Of the two negatives, −3/4 is further left.',
+            'Smallest first: −3/4 < −1/2 < 2/5.'], maths: ['−3/4 < −1/2 < 2/5'] }
     ];
 
     function barSvg(n, d) {
@@ -275,10 +275,10 @@
     function numberLineSvg() {
         const x = value => 30 + (value + 1) * 110;
         let marks = '';
-        for (let i = -1; i <= 2; i++) marks += `<path d="M${x(i)} 53v10" stroke="#334155"/><text x="${x(i)}" y="84">${i}</text>`;
+        for (let i = -1; i <= 2; i++) marks += `<path d="M${x(i)} 53v10" stroke="#334155"/><text x="${x(i)}" y="84">${String(i).replace('-', '−')}</text>`;
         for (const [n, d, below] of [[-3, 4, false], [-1, 2, true], [2, 5, false], [5, 4, true]]) {
             const point = x(n / d);
-            marks += `<circle cx="${point}" cy="58" r="4" fill="#155e75"/><path d="M${point} 58V${below ? 97 : 36}" stroke="#155e75"/><text x="${point}" y="${below ? 116 : 27}">${n}/${d}</text>`;
+            marks += `<circle cx="${point}" cy="58" r="4" fill="#155e75"/><path d="M${point} 58V${below ? 97 : 36}" stroke="#155e75"/><text x="${point}" y="${below ? 116 : 27}">${show([n, d])}</text>`;
         }
         return `<svg class="fi-svg fi-number-line" role="img" aria-label="Number line from minus 1 to 2: minus 3 quarters, minus one half, two fifths, five quarters" viewBox="0 0 400 138" width="400" height="138"><path d="M20 58H375" stroke="#334155" stroke-width="2"/>${marks}</svg>`;
     }
