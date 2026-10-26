@@ -1,0 +1,22 @@
+/* Terms, sorting trays and algebra tiles. */
+.sx-term-row, .sx-zero-board { display: flex; flex-wrap: wrap; gap: .6rem; margin-block: 1rem; }
+.sx-term-row button, .sx-term-picture { min-width: 54px; min-height: 44px; padding: .6rem; border: 2px solid #64748b; border-radius: .45rem; background: #fff; color: #172b3b; font: inherit; font-weight: 800; text-align: center; }
+.sx-term-picture { display: inline-grid; place-items: center; border-color: #155e75; background: #ecfeff; }
+.sx-term-row button[aria-pressed=true], .sx-zero-board button[aria-pressed=true] { outline: 3px solid #155e75; outline-offset: 2px; }
+.sx-coefficient-fields { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.sx-coefficient-fields label { display: grid; gap: .4rem; width: 150px; max-width: 100%; font-weight: 800; }
+.sx-coefficient-fields input { min-width: 0; width: 100%; min-height: 44px; padding: .5rem; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
+.sx-trays { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: .75rem; margin-block: 1rem; }
+.sx-tray { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; min-width: 0; min-height: 130px; padding: .65rem; border: 2px dashed #64748b; border-radius: .5rem; background: #f8fafc; }
+.sx-tray > button { min-height: 44px; padding: .4rem; border: 2px solid #64748b; border-radius: .35rem; background: #fff; color: #172b3b; font: inherit; font-weight: 800; }
+.sx-zero-tile { display: inline-grid; place-items: center; min-width: 58px; min-height: 48px; max-width: 100%; padding: .5rem; border: 2px solid; border-radius: .4rem; color: #172b3b; font: inherit; font-weight: 800; }
+.sx-positive { background: #dcfce7; border-color: #166534; }
+.sx-negative { background: #fee2e2; border-color: #991b1b; }
+.sx-result { font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; }
+.sx-term-row button:focus-visible, .sx-tray button:focus-visible, .sx-zero-tile:focus-visible, .sx-coefficient-fields input:focus-visible { outline: 3px solid #155e75; outline-offset: 3px; }
+@media (max-width: 400px) {
+    .sx-coefficient-fields label { width: 130px; }
+    .sx-zero-tile { font-size: .9rem; }
+}
+
+.sx-zero-tile[hidden], .sx-merged-term[hidden], .sx-term-row button[hidden] { display: none; }
