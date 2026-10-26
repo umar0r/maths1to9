@@ -51,10 +51,6 @@
     .prime-learn *, .prime-learn *::before { animation: none !important; transition: none !important; }
 }
 
-/* Only the bespoke Learn screens supply headings for this lesson. */
-body[data-lesson-id='prime-factor-decomposition'] #lesson-section-explanation > .lesson-section__title {
-    display: none;
-}
 .prime-learn h3 { margin-bottom: .5rem; }
 .prime-learn p { margin-block: .5rem; }
 .prime-tree { margin-block: .5rem; }
@@ -180,14 +176,13 @@ body[data-lesson-id='prime-factor-decomposition'] #lesson-section-explanation > 
 .prime-example-pair-label { position: absolute; top: 100%; left: 0; width: 100%; padding-top: .25rem; text-align: center; white-space: nowrap; font-size: .9rem; }
 .prime-count-tiles:has(.prime-example-pair) { padding-bottom: 1.75rem; }
 
-.prime-check-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-block: 1.25rem; }
-.prime-check-options .button { white-space: normal; height: auto; min-height: 44px; }
-@media (max-width: 620px) { .prime-check-options { grid-template-columns: 1fr; } }
+.prime-split-inputs[hidden], .prime-widget-status[hidden] { display: none; }
+.prime-widget-status { margin-block: .5rem; }
+@media (prefers-reduced-motion: reduce) {
+    .prime-tree-node, .prime-number-tile { animation: none !important; transition: none !important; }
+}
 
-.retained-results { list-style: none; padding: 0; }
-.retained-results > li { padding: .8rem 0; border-bottom: 1px solid var(--color-border, #ddd); }
-.retained-result { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.retained-result__answer { display: flex; gap: .7rem; flex-shrink: 0; }
-.retained-result__explanation { margin: .4rem 0 0; font-size: .9rem; }
-.retained-try-example { margin-bottom: 2rem; }
-@media (max-width: 480px) { .retained-result { flex-wrap: wrap; } }
+.prime-tree-explorer { min-height: 300px; display: flow-root; }
+.prime-tree-controls { display: grid; grid-template-columns: 1fr; gap: 6px; margin-block: 16px; }
+.prime-tree-controls input { min-height: 44px; width: 100%; max-width: 400px; }
+.prime-tree-node.is-active .prime-tree-empty { stroke: #155e75; stroke-width: 4; fill: #e0f2fe; }
