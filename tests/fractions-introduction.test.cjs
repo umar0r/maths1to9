@@ -174,7 +174,7 @@ test('text has no broken values, tidy numbers and correct worked sums', () => {
     }
 });
 
-test('displayed maths uses the proper minus sign', { skip: 'Codex is changing - to − in the lesson (lesson 8 fix round)' }, () => {
+test('displayed maths uses the proper minus sign', () => {
     const texts = [...all.flatMap(({ q }) => allStrings({ ...q, picture: undefined, model: undefined })),
         ...F.learnScreens.flatMap(screen => [...screen.lines, ...screen.maths])];
     for (const text of texts) assert.doesNotMatch(text, /(?:^|[\s(=,])-\d/, `hyphen used as a minus sign in "${text}"`);

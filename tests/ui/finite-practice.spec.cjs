@@ -3,7 +3,7 @@ const {MAIN_ACTION} = require('./helpers.cjs');
 
 // Lessons rewritten on the shared template leave these lists: their Practice
 // is the shared six-question set, covered by the shared component tests.
-for (const lesson of ['algebraic-expressions', 'simplifying-fractions']) {
+for (const lesson of ['algebraic-expressions']) {
     for (const retry of [false, true]) {
         test(`${lesson}: ten-question practice has a fixed maximum and finishes${retry ? ' after a retry' : ''}`, async ({page}) => {
             const solve = require(`./solvers/${lesson}.cjs`);
@@ -53,7 +53,7 @@ for (const lesson of ['algebraic-expressions', 'simplifying-fractions']) {
     }
 }
 
-for (const lesson of ['simplifying-fractions']) {
+for (const lesson of []) {
     test(`${lesson}: leaving and returning does not add score slots`, async ({page}) => {
         const solve = require(`./solvers/${lesson}.cjs`);
         await page.goto(`content/${lesson}/#question-bank`, {waitUntil:'networkidle'});
