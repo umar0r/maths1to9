@@ -79,78 +79,25 @@
 .power-teaching__groups > span { font-size: 1.5rem; color: var(--text-muted); }
 .power-teaching figcaption { margin-top: .75rem; font-weight: 800; }
 
-/* Match Place Value's bare question layout; scope every override to this lesson. */
-body[data-lesson-id="indices-basics"] .question-card,
-body[data-lesson-id="indices-basics"] .lx2-card,
-body[data-lesson-id="indices-basics"] .worked-example {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+
+.indices-factor-tiles { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem; margin-block: 1rem; }
+.indices-factor-tile { display: grid; place-items: center; min-width: 48px; min-height: 48px; padding: .35rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; font-size: 1.4rem; font-weight: 800; }
+.indices-times { font-size: 1.3rem; }
+.indices-equation { text-align: center; font-size: clamp(1.1rem, 3vw, 1.5rem); font-weight: 800; overflow-wrap: anywhere; }
+.indices-explorer-controls { display: grid; grid-template-columns: 1fr 2fr; align-items: start; gap: 1rem; margin-block: 1rem; }
+.indices-explorer-controls label { display: grid; grid-template-columns: 1fr; gap: .5rem; min-width: 0; }
+.indices-explorer-controls select, .indices-explorer-controls input { width: 100%; min-height: 44px; font: inherit; }
+.indices-explorer-picture { min-height: 170px; display: flow-root; }
+.indices-cube-layers { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+.indices-cube-layers .indices-grid { width: 90px; margin: .5rem 0; }
+.indices-grid { margin-inline: auto; }
+.indices-doubling { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-block: 1rem; }
+.indices-doubling-step { padding: .75rem; text-align: center; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; font-weight: 800; }
+@media (max-width: 400px) {
+    .indices-notation__layout { column-gap: .5rem; }
+    .indices-notation__label { font-size: .9rem; }
+    .indices-notation__label::after { display: none; }
 }
-body[data-lesson-id="indices-basics"] .question-card,
-body[data-lesson-id="indices-basics"] .lx2-card { padding: 0; }
-body[data-lesson-id="indices-basics"] .lx2-formula,
-body[data-lesson-id="indices-basics"] .worked-example__answer {
-    padding: .5rem 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    overflow-wrap: anywhere;
-}
-body[data-lesson-id="indices-basics"] .question-number { display: none; }
-body[data-lesson-id="indices-basics"] .question-feedback { min-height: 3.5rem; }
-body[data-lesson-id="indices-basics"] .lesson-navigation { border: 0; background: transparent; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) {
-    body[data-lesson-id="indices-basics"] *,
-    body[data-lesson-id="indices-basics"] *::before,
-    body[data-lesson-id="indices-basics"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-}
-
-.retained-results {
-    list-style: none;
-    counter-reset: result;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.retained-results > li {
-    counter-increment: result;
-    min-width: 0;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.retained-result {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 8px 16px;
-}
-
-.retained-result::before {
-    content: counter(result) ".";
-    color: var(--text-muted);
-}
-
-.retained-result > :first-child {
-    flex: 1 1 160px;
-}
-
-.retained-result__answer {
-    display: inline-flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-
-.retained-result__answer > :last-child {
-    white-space: nowrap;
-}
-
-.retained-result__explanation {
-    margin: 8px 0 0;
-    color: var(--text-muted);
+    .indices-factor-tile { animation: none; transition: none; }
 }

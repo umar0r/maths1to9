@@ -1,176 +1,139 @@
 {
-  "id": "order-of-operations-01",
-  "slug": "order-of-operations",
-  "title": "Order of operations",
-  "subtitle": "Use BIDMAS to decide which operation to complete first.",
-  "assessment": {
-    "question_types": {
-      "multiplyBeforeAdd": "order-of-operations",
-      "divideBeforeSubtract": "order-of-operations",
-      "divideMultiplyLeftToRight": "order-of-operations",
-      "addSubtractLeftToRight": "order-of-operations",
-      "brackets": "order-of-operations",
-      "powers": "order-of-operations",
-      "roots": "order-of-operations",
-      "hiddenMultiplication": "order-of-operations",
-      "reciprocal": "order-of-operations",
-      "negativeNumbers": "order-of-operations",
-      "groupedDivision": "order-of-operations",
-      "firstOperationQuestion": "order-of-operations",
-      "errorSpotting": "order-of-operations"
-    }
-  },
-  "grade": "1–4",
-  "estimated_minutes": 20,
-  "explanation": {
-    "eyebrow": "Explanation",
-    "title": "Why does order matter?",
-    "paragraphs": [
-      "A calculation can contain more than one operation.",
-      "For example, in 3 + 4 × 2, multiplying first gives 3 + 8 = 11. Adding first would give 14.",
-      "Mathematicians use an agreed order of operations so that every calculation has one correct answer.",
-      "BIDMAS stands for Brackets, Indices, Division and Multiplication, Addition and Subtraction."
-    ],
-    "key_points": [
-      "Complete calculations inside brackets first.",
-      "Calculate indices next, including powers and roots.",
-      "Division and multiplication have equal priority, so work from left to right.",
-      "Addition and subtraction have equal priority, so work from left to right.",
-      "Complete one operation at a time and rewrite the calculation after each step."
-    ]
-  },
-  "method": {
-    "eyebrow": "Step-by-step guide",
-    "title": "Using BIDMAS",
-    "steps": [
-      {
-        "title": "Complete the brackets",
-        "text": "Work out any calculations inside brackets before anything outside them."
-      },
-      {
-        "title": "Calculate the indices",
-        "text": "Work out powers and roots, such as 3² or √25."
-      },
-      {
-        "title": "Complete division and multiplication",
-        "text": "Division and multiplication have equal priority. Work from left to right."
-      },
-      {
-        "title": "Complete addition and subtraction",
-        "text": "Addition and subtraction also have equal priority. Work from left to right."
-      },
-      {
-        "title": "Rewrite the calculation",
-        "text": "Replace only the operation you have completed with its answer, then decide what comes next."
-      }
-    ]
-  },
-  "interactive": {
-    "eyebrow": "Try it",
-    "title": "Complete the calculation map",
-    "intro": "Choose which operation should be completed next, then calculate it. The full expression will remain visible while each completed step is added to the map.",
-    "hide_heading": true
-  },
-  "worked_examples": [
-    {
-      "eyebrow": "Worked example 1",
-      "title": "Calculate 18 ÷ 3 × 2",
-      "steps": [
-        "Division and multiplication have equal priority.",
-        "The division is further left, so calculate 18 ÷ 3 first.",
-        "18 ÷ 3 = 6.",
-        "The calculation becomes 6 × 2.",
-        "6 × 2 = 12."
-      ],
-      "answer": "18 ÷ 3 × 2 = 12"
+    "id": "order-of-operations-01",
+    "slug": "order-of-operations",
+    "title": "Order of operations",
+    "subtitle": "Use BIDMAS to decide which operation to complete first.",
+    "navigation": {
+        "back_button": true
     },
-    {
-      "eyebrow": "Worked example 2",
-      "title": "Calculate 5 + (12 − 4) ÷ 2² × 3",
-      "steps": [
-        "Complete the brackets first: 12 − 4 = 8.",
-        "The calculation becomes 5 + 8 ÷ 2² × 3.",
-        "Calculate the index: 2² = 2 × 2 = 4.",
-        "The calculation becomes 5 + 8 ÷ 4 × 3.",
-        "Division and multiplication have equal priority, so work from left to right: 8 ÷ 4 = 2.",
-        "The calculation becomes 5 + 2 × 3.",
-        "Complete the multiplication: 2 × 3 = 6.",
-        "The calculation becomes 5 + 6.",
-        "Complete the addition: 5 + 6 = 11."
-      ],
-      "answer": "5 + (12 − 4) ÷ 2² × 3 = 11"
+    "assessment": {
+        "question_types": {
+            "multiplyBeforeAdd": "order-of-operations",
+            "divideBeforeSubtract": "order-of-operations",
+            "divideMultiplyLeftToRight": "order-of-operations",
+            "addSubtractLeftToRight": "order-of-operations",
+            "brackets": "order-of-operations",
+            "powers": "order-of-operations",
+            "roots": "order-of-operations",
+            "hiddenMultiplication": "order-of-operations",
+            "reciprocal": "order-of-operations",
+            "negativeNumbers": "order-of-operations",
+            "groupedDivision": "order-of-operations",
+            "firstOperationQuestion": "order-of-operations",
+            "errorSpotting": "order-of-operations"
+        }
     },
-    {
-      "eyebrow": "Worked example 3",
-      "title": "Calculate 3(√25 − 2)",
-      "steps": [
-        "Calculate the root inside the brackets: √25 = 5.",
-        "The calculation becomes 3(5 − 2).",
-        "Complete the brackets: 5 − 2 = 3.",
-        "The calculation becomes 3(3).",
-        "A number directly beside a bracket means multiplication.",
-        "3 × 3 = 9."
-      ],
-      "answer": "3(√25 − 2) = 9"
-    }
-  ],
-  "question_bank": {
-    "eyebrow": "Question bank",
-    "title": "Practise order of operations",
-    "intro": "Choose a difficulty and generate a new set of questions involving brackets, indices, equal-priority operations and mixed calculations.",
-    "session_length": 10,
-    "ready_score": 8,
-    "hide_heading": true
-  },
-  "section_order": [
-    "explanation",
-    "method",
-    "worked-examples",
-    "interactive",
-    "question-bank",
-    "comparison"
-  ],
-  "navigation_stages": [
-    {
-      "id": "learn",
-      "label": "Learn",
-      "sections": [
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Use the agreed order"
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Try BIDMAS",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise order of operations",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
         "explanation",
-        "method",
-        "worked-examples"
-      ]
-    },
-    {
-      "id": "try-it",
-      "label": "Step by step",
-      "sections": [
-        "interactive"
-      ]
-    },
-    {
-      "id": "practice",
-      "label": "Practice",
-      "sections": [
-        "question-bank"
-      ]
-    },
-    {
-      "id": "check",
-      "label": "Check",
-      "sections": [
+        "interactive",
+        "question-bank",
         "comparison"
-      ]
-    }
-  ],
-  "comparison": {
-    "title": "Check",
-    "hide_eyebrow": true,
-    "questions": [
-      "multiplyBeforeAdd",
-      "brackets",
-      "firstOperationQuestion",
-      "errorSpotting",
-      "divideMultiplyLeftToRight"
-    ]
-  }
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you’ve learned",
+        "intro": "",
+        "questions": [
+            {
+                "type": "multiplyBeforeAdd"
+            },
+            {
+                "type": "brackets"
+            },
+            {
+                "type": "firstOperationQuestion"
+            },
+            {
+                "type": "errorSpotting"
+            },
+            {
+                "type": "divideMultiplyLeftToRight"
+            }
+        ],
+        "summary": {
+            "title": "You've finished Order of operations",
+            "points": []
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        }
+    ],
+    "grade": "1–4",
+    "estimated_minutes": 20
 }

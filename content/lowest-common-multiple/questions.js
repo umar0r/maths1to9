@@ -1,196 +1,163 @@
 (() => {
-'use strict';
-const SLUG = 'lowest-common-multiple';
-    const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    'use strict';
 
-    async function renderRecommendations(container) {
-        try {
-            const lessons = await window.Maths1to9Recommendations.getForLesson(SLUG);
-            if (!lessons.length) {
-                container.innerHTML = '<p>Choose another topic from all lessons.</p>';
-                return;
-            }
-            container.innerHTML = '<h3 class="lesson-completion__next-title">Next lessons</h3>'
-                + '<div class="lesson-completion__more">' + lessons.slice(0,3).map(lesson =>
-                    `<a class="lesson-recommendation-card" href="${escape(lesson.url)}"><span class="lesson-recommendation-card__title">${escape(lesson.title)}</span><span class="lesson-recommendation-card__subtitle">${escape(lesson.subtitle || '')}</span><span class="lesson-recommendation-card__action">${lesson.state?.label === 'In progress' ? 'Continue lesson' : 'Start lesson'}</span></a>`
-                ).join('') + '</div>';
-        } catch {
-            container.innerHTML = '<p>Choose another topic from all lessons.</p>';
-        }
-    }
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    // The end screen replaces Check's heading; the questions bring it back.
-    function showCheckHeading(root, visible) {
-        const section = root.closest('.lesson-section');
-        for (const child of section.children) {
-            if (child.matches('.lesson-eyebrow, .lesson-section__title, .lesson-section__intro')) child.hidden = !visible;
-        }
-        if (!visible && section.hasAttribute('aria-labelledby')) {
-            section.dataset.labelledby = section.getAttribute('aria-labelledby');
-            section.removeAttribute('aria-labelledby');
-        }
-        if (visible) {
-            section.removeAttribute('aria-label');
-            if (section.dataset.labelledby) section.setAttribute('aria-labelledby', section.dataset.labelledby);
-        } else section.setAttribute('aria-label', 'Lowest common multiple result');
-    }
-
-    function renderCheckEnding(root, state, api) {
-        const score = state.questions.filter(q => q.firstCorrect === true).length;
-        const ready = score === state.questions.length;
-        const summary = api.getLesson().comparison.summary;
-        showCheckHeading(root, false);
-        root.innerHTML = `<section class="lesson-completion" aria-label="Lowest common multiple result">
-            <div class="lesson-completion__result ${ready ? 'lesson-completion__result--success' : ''}">
-                ${ready ? '<span class="lesson-completion__celebration" aria-hidden="true">★</span>' : ''}
-                <div><h2>${ready ? 'Congratulations!' : 'A little more practice will help'}</h2><p>${ready ? 'You’ve completed Lowest common multiple and you’re ready to move on.' : 'You can choose another lesson below if you want to move on.'}</p><p>${score} of ${state.questions.length} Check questions correct first time.</p></div>
-                <p class="lesson-completion__score">${score}<small>/${state.questions.length}</small></p>
-            </div>
-            ${`<section class="final-check-summary" aria-label="What you’ve learnt"><h2 class="lesson-section__title">${escape(summary.title)}</h2><ol class="lesson-steps">${summary.points.map(point => `<li class="lesson-step"><h3 class="lesson-step__title">${escape(point.title)}</h3><p class="lesson-step__text">${escape(point.text)}</p></li>`).join('')}</ol></section>`}
-            <div class="lesson-completion__recommendations" aria-live="polite"><p>Finding your next lesson…</p></div>
-        </section>`;
-        renderRecommendations(root.querySelector('.lesson-completion__recommendations'));
-    }
-
-    // Keep each option and its feedback together during shuffling.
-    function shuffleCheckQuestion(question) {
-        const choices = question.options.map((option, index) => ({
-            option, feedback: question.feedback[index], correct: index === question.answer
+    function sectionEvent(name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId: 'comparison' }
         }));
-        for (let i = choices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [choices[i], choices[j]] = [choices[j], choices[i]];
-        }
-        return {
-            ...question, options: choices.map(choice => choice.option),
-            feedback: choices.map(choice => choice.feedback),
-            answer: choices.findIndex(choice => choice.correct)
-        };
+    }
+
+    function mountPractice() {
+        const api = window.Maths1to9Lesson;
+        return api.runQuestionSet('question-bank', {
+            version: 2, count: api.getLesson().question_bank.session_length,
+            practiseAgain: true, heading: 'Your practice results',
+            pick: window.LCM.pick,
+            question: (item, random) => window.LCM.prepare(window.LCM.generate(item, random), random),
+            upgrade: () => null
+        });
     }
 
     async function mountCheck(root, lesson) {
-        if (!root || root.dataset.mounted === 'true') return;
-        root.dataset.mounted = 'true';
         const api = window.Maths1to9Lesson;
-        const progress = window.Maths1to9Progress;
-        const sectionId = 'comparison';
-        const checkContentVersion = 1;
-        const dispatch = name => document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, { detail: { sectionId } }));
-        dispatch('gate');
-        api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick: () => {} });
-        let state = await progress.getLessonActivityState(SLUG, sectionId);
-        if (!state || state.contentVersion !== checkContentVersion || !Array.isArray(state.questions)) {
-            state = {
-                contentVersion: checkContentVersion, index: 0, selected: null, phase: 'answer',
-                questions: lesson.comparison.questions.map(shuffleCheckQuestion), finished: false
-            };
-        }
-        const save = () => progress.saveLessonActivityState(SLUG, sectionId, state);
-        const reportProgress = () => api.setSectionProgress(sectionId,
-            state.finished ? state.questions.length : state.index + (state.phase === 'correct' ? 1 : 0), state.questions.length);
+        const { renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
+        const questions = window.LCM.checks();
+        const count = questions.length;
+        sectionEvent('gate');
+        api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('comparison', {
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
+        });
+        const state = section.state;
+        section.save();
 
-        function action() {
-            if (state.finished) return;
-            const question = state.questions[state.index];
-            if (state.phase === 'wrong') {
-                state.phase = 'answer';
-                state.selected = null;
-            } else if (state.phase === 'correct') {
-                if (state.index === state.questions.length - 1) {
-                    state.finished = true;
-                    render();
-                    api.setSlideHash('summary');
-                    return;
-                }
-                state.index++;
-                state.selected = null;
-                state.phase = 'answer';
-            } else {
-                if (state.selected === null) return;
-                const correct = state.selected === question.answer;
-                if (question.firstCorrect === undefined) question.firstCorrect = correct;
-                state.phase = correct ? 'correct' : 'wrong';
-                question.rejected ??= [];
-                if (!correct && !question.rejected.includes(state.selected)) question.rejected.push(state.selected);
-                api.recordAssessment({ questionType: question.type, questionId: `final-check-${state.index + 1}`, correct });
-                reportProgress();
+        function syncHash() {
+            if (api.getCurrentSection().id === 'comparison') {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
             }
+        }
+
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
+        }
+
+        function reportProgress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress('comparison', state.finished ? count : state.index + Number(current?.correct === true), count);
+        }
+
+        function continueQuestion() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === count;
+            });
             render();
         }
-        function render() {
-            save();
-            if (state.finished || root.dataset.view === 'summary') {
-                renderCheckEnding(root, state, api);
-                if (state.finished) dispatch('complete');
-                api.setSectionAction(sectionId, {
-                    label: 'All lessons', disabled: false,
-                    onClick: async () => {
-                        if (state.finished) api.completeLesson();
-                        await progress.saveCurrentLesson();
-                        window.location.assign(new URL('../../', window.location.href).href);
-                    }
-                });
-                return;
-            }
-            showCheckHeading(root, true);
-            root.replaceChildren();
-            const question = state.questions[state.index];
-            const answered = state.phase !== 'answer';
-            const card = document.createElement('article');
-            card.className = 'question-card question-card--bare';
-            const number = document.createElement('p');
-            number.className = 'question-number';
-            number.textContent = `Question ${state.index + 1} of ${state.questions.length}`;
-            const prompt = document.createElement('h3');
-            prompt.className = 'question-prompt';
-            prompt.textContent = question.prompt;
-            const options = document.createElement('div');
-            options.className = 'prime-check-options';
-            options.setAttribute('role', 'group');
-            options.setAttribute('aria-label', 'Choose an answer');
-            question.options.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                const selected = state.selected === index;
-                button.className = `button${selected ? state.phase === 'correct' ? ' is-correct' : state.phase === 'wrong' ? ' is-incorrect' : ' is-selected' : ''}`;
-                const rejected = question.rejected?.includes(index);
-                button.textContent = option;
-                if (rejected) {
-                    button.classList.add('is-rejected');
-                    const mark = document.createElement('span');
-                    mark.className = 'lcm-wrong-mark';
-                    mark.textContent = ' ×';
-                    button.append(mark);
-                }
-                button.disabled = answered || rejected;
-                button.setAttribute('aria-pressed', String(selected));
-                button.addEventListener('click', () => {
-                    if (state.phase !== 'answer') return;
-                    state.selected = index;
-                    render();
-                });
-                options.append(button);
+
+        function questionConfig(index, readOnly) {
+            const question = questions[index];
+            return {
+                ...window.LCM.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
+                sectionId: 'comparison', questionId: `final-check-${index + 1}`,
+                scored: true, readOnly,
+                onFeedback: reportProgress, onContinue: continueQuestion
+            };
+        }
+
+        function renderEnding() {
+            const rows = questions.map((question, index) => {
+                const cardRoot = document.createElement('div');
+                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
             });
-            const feedback = document.createElement('p');
-            feedback.className = `question-feedback${answered ? ` is-visible ${state.phase === 'correct' ? 'is-correct' : 'is-incorrect'}` : ''}`;
-            feedback.setAttribute('role', 'status');
-            feedback.textContent = answered ? question.feedback[state.selected] : '';
-            card.append(number, prompt, options, feedback);
-            root.append(card);
-            document.dispatchEvent(new CustomEvent('maths1to9:lcm-render-maths', { detail: { root: card } }));
-            api.setSectionAction(sectionId, {
-                label: state.phase === 'wrong' ? 'Try again' : state.phase === 'correct' ? 'Continue' : 'Check',
-                disabled: state.phase === 'answer' && state.selected === null, onClick: action
+            const scorePanel = document.createElement('div');
+            const results = document.createElement('div');
+            root.append(scorePanel, results);
+            renderScorePanel(scorePanel, {
+                correct: rows.filter(row => row.firstCorrect === true).length, total: count
+            });
+            renderResults(results, rows, { heading: 'Your Check results' });
+            const summary = document.createElement('section');
+            summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
+            for (const point of lesson.comparison.summary.points) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = point.text;
+                summary.append(paragraph);
+            }
+            root.append(summary);
+            api.setSectionAction('comparison', {
+                label: 'All lessons',
+                async onClick() {
+                    if (state.finished) api.completeLesson();
+                    await window.Maths1to9Progress.saveCurrentLesson();
+                    window.location.assign(new URL('../../', window.location.href).href);
+                }
             });
         }
-        document.addEventListener('maths1to9:comparison-view', render);
+
+        function render() {
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
+            root.append(heading);
+            api.setSectionBack('comparison', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('complete');
+            if (state.screen === count && state.finished) {
+                renderEnding();
+            } else {
+                const cardRoot = document.createElement('div');
+                root.append(cardRoot);
+                const readOnly = state.screen < state.index;
+                api.createQuestion(cardRoot, questionConfig(state.screen, readOnly));
+                if (readOnly) api.setSectionAction('comparison', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+            }
+            syncHash();
+        }
+
+        questions.forEach((question, index) => {
+            api.registerHashRoute(`check-${index + 1}`, () => {
+                if (!api.goToSection('comparison', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
+                }
+                showScreen(Math.min(index, state.furthestScreen));
+            });
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        document.addEventListener('maths1to9:comparison-view', () => {
+            if (root.dataset.view === 'summary' && state.finished) showScreen(count);
+        });
         reportProgress();
         render();
+        const requested = questions.findIndex((question, index) => initialHash === `#check-${index + 1}`);
+        if (initialHash === '#summary' && state.finished) {
+            if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
+        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
+        }
     }
 
     document.addEventListener('maths1to9:lesson-rendered', event => {
         if (event.detail?.slug !== SLUG) return;
-        const lesson = event.detail.lesson || window.Maths1to9Lesson.getLesson();
-        mountCheck(document.getElementById(`${SLUG}-comparison`), lesson);
+        mountPractice();
+        mountCheck(document.getElementById(`${SLUG}-comparison`), event.detail.lesson);
     });
 })();

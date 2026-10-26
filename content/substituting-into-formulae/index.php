@@ -28,13 +28,13 @@ $pageTitle = 'Substituting into formulae';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -69,8 +69,9 @@ $pageTitle = 'Substituting into formulae';
     </noscript>
 
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="./questions.js?v=12"></script>
-    <script src="./interactive.js?v=12"></script>
+    <script src="./substitution.js?v=2"></script>
+    <script src="./questions.js?v=13"></script>
+    <script src="./interactive.js?v=13"></script>
     <script src="../../assets/js/lesson-engine.js?v=45"></script>
 </body>
 </html>

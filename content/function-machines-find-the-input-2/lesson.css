@@ -1,47 +1,27 @@
-.retained-results {
-    list-style: none;
-    counter-reset: result;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.retained-results > li {
-    counter-increment: result;
-    min-width: 0;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.retained-result {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 8px 16px;
-}
-
-.retained-result::before {
-    content: counter(result) ".";
-    color: var(--text-muted);
-}
-
-.retained-result > :first-child {
-    flex: 1 1 160px;
-}
-
-.retained-result__answer {
-    display: inline-flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-
-.retained-result__answer > :last-child {
-    white-space: nowrap;
-}
-
-.retained-result__explanation {
-    margin: 8px 0 0;
-    color: var(--text-muted);
+/* Function-machine pictures. The engine owns cards and controls. */
+.fm-picture { margin: 1.25rem 0; }
+.fm-caption { margin-bottom: .75rem; text-align: center; font-weight: 800; }
+.fm-chain { display: flex; align-items: center; justify-content: center; gap: .3rem; }
+.fm-chain--backwards { flex-direction: row-reverse; }
+.fm-box { flex-shrink: 0; min-width: 56px; padding: .65rem .5rem; border: 2px solid #155e75; border-radius: .6rem; background: #ecfeff; text-align: center; }
+.fm-value { display: grid; gap: .3rem; width: 76px; min-width: 0; overflow-wrap: anywhere; }
+.fm-value span { font-size: .75rem; }
+.fm-value strong { font-size: 1.25rem; }
+.fm-operation { border-color: #64748b; background: #fff; font-size: 1.1rem; font-weight: 800; }
+.fm-arrow { flex-shrink: 0; font-size: 1.25rem; font-weight: 800; }
+.fm-arrow::before { content: '→'; }
+.fm-chain--backwards .fm-arrow::before { content: '←'; }
+.fm-inverse-pairs { padding: .75rem; border: 2px solid #155e75; border-radius: .6rem; background: #ecfeff; text-align: center; font-weight: 800; }
+.fm-paired { display: grid; gap: .5rem; }
+@media (max-width: 800px) {
+    .fm-picture { margin-block: .5rem; }
+    .fm-caption { margin-bottom: .3rem; font-size: .8rem; line-height: 1.2; }
+    .fm-chain, .fm-chain--backwards { flex-direction: column; gap: .15rem; }
+    .fm-box { min-width: 0; width: 130px; max-width: 100%; padding: .2rem .35rem; }
+    .fm-value { display: flex; align-items: center; justify-content: space-between; gap: .3rem; }
+    .fm-value span { font-size: .68rem; line-height: 1.1; white-space: nowrap; }
+    .fm-value strong, .fm-operation { font-size: .95rem; line-height: 1.15; }
+    .fm-arrow { font-size: .8rem; line-height: 1; }
+    .fm-arrow::before, .fm-chain--backwards .fm-arrow::before { content: '↓'; }
+    .fm-paired { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
 }

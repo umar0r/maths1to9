@@ -27,13 +27,13 @@ $pageTitle = 'Writing algebraic expressions';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -68,8 +68,9 @@ $pageTitle = 'Writing algebraic expressions';
     </noscript>
 
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=13"></script>
+    <script src="./expressions.js?v=1"></script>
+    <script src="./questions.js?v=16"></script>
+    <script src="./interactive.js?v=14"></script>
     <script src="../../assets/js/lesson-engine.js?v=45"></script>
 </body>
 </html>

@@ -1,137 +1,23 @@
-/* Local presentation only: the shared engine and Place Value remain unchanged. */
-body[data-lesson-id="order-of-operations"] .lesson-eyebrow,
-body[data-lesson-id="order-of-operations"] #lesson-section-worked-examples > .lesson-section__title,
-body[data-lesson-id="order-of-operations"] #lesson-section-comparison > .lesson-section__title,
-body[data-lesson-id="order-of-operations"] #lesson-section-question-bank > .lesson-intro,
-body[data-lesson-id="order-of-operations"] .order-answer-bank__header {
-    display: none;
-}
-body[data-lesson-id="order-of-operations"] .lesson-navigation {
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-}
-body[data-lesson-id="order-of-operations"] .ooo-expression,
-body[data-lesson-id="order-of-operations"] .order-equation-line__expression,
-body[data-lesson-id="order-of-operations"] .question-prompt,
-body[data-lesson-id="order-of-operations"] .worked-example__title {
-    font-size: clamp(1.35rem, 3vw, 1.75rem);
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-.ooo-expression { margin: 1rem 0 1.5rem; font-weight: 800; }
-body[data-lesson-id="order-of-operations"] .worked-example,
-body[data-lesson-id="order-of-operations"] .order-interactive,
-body[data-lesson-id="order-of-operations"] .order-equation-stack,
-body[data-lesson-id="order-of-operations"] .order-equation-line--current,
-body[data-lesson-id="order-of-operations"] .order-answer-bank {
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    padding: 0;
-    min-width: 0;
-}
-body[data-lesson-id="order-of-operations"] .order-equation-line--current { padding: 1rem 0; }
-body[data-lesson-id="order-of-operations"] .order-equation-line__expression { min-width: 0; flex-wrap: wrap; }
-body[data-lesson-id="order-of-operations"] .order-stage.is-active { color: var(--primary); background: #edf2ff; border-color: #b9c7ff; }
-body[data-lesson-id="order-of-operations"] .order-expression__target.is-ready { color: var(--primary); background: #edf2ff; border-color: #b9c7ff; animation: none; }
-body[data-lesson-id="order-of-operations"] .question-options { min-width: 0; }
-body[data-lesson-id="order-of-operations"] .question-option { min-width: 0; overflow-wrap: anywhere; }
-body[data-lesson-id="order-of-operations"] .practice-progress-ring span { font-size: .8rem; }
-body[data-lesson-id="order-of-operations"] .practice-review__score { display: block; }
-body[data-lesson-id="order-of-operations"] .ooo-stage-complete::before { content: '✓'; color: #fff; background: #20864c; border-color: #20864c; }
-.ooo-check-position { color: var(--text-muted); font-size: .85rem; }
-.ooo-next-lesson { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
-@media (max-width: 480px) {
-    body[data-lesson-id="order-of-operations"] .order-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    body[data-lesson-id="order-of-operations"] .order-equation-line { gap: .25rem; }
-    body[data-lesson-id="order-of-operations"] .lesson-completion__result { padding: 1rem; gap: .75rem; }
-    body[data-lesson-id="order-of-operations"] .question-options { grid-template-columns: 1fr; }
-    body[data-lesson-id="order-of-operations"] .lesson-completion__celebration { opacity: .15; }
-}
-@media (prefers-reduced-motion: reduce) {
-    body[data-lesson-id="order-of-operations"] *,
-    body[data-lesson-id="order-of-operations"] *::before,
-    body[data-lesson-id="order-of-operations"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-}
-body[data-lesson-id="order-of-operations"] .lesson-section {
-    border: 0;
-    box-shadow: none;
-    background: transparent;
-}
-body[data-lesson-id="order-of-operations"] .order-equation-line__expression,
-body[data-lesson-id="order-of-operations"] .order-expression__target {
-    font-family: inherit;
-}
-.ooo-expression--hint [data-first] { background: #edf2ff; color: var(--primary); border-radius: .25rem; }
-body[data-lesson-id="order-of-operations"] .order-equation-line { font-family: inherit; }
-body[data-lesson-id="order-of-operations"] .lesson-controls .button--primary:not(:disabled),
-body[data-lesson-id="order-of-operations"] .ooo-next-lesson .button {
-    min-width: 180px;
-    padding: 14px 24px;
-    background: var(--primary);
-    color: #fff;
-    border: 0;
-    border-radius: 14px;
-    box-shadow: 0 4px 0 #2449a8;
-    font-weight: 900;
-    text-align: center;
-    text-decoration: none;
-}
-body[data-lesson-id="order-of-operations"] .lesson-navigation--stages .lesson-navigation__button.ooo-stage-complete::before {
-    background: var(--success);
-    border-color: var(--success);
-    box-shadow: none;
-}
-body[data-lesson-id="order-of-operations"] .lesson-navigation--stages .lesson-navigation__button.ooo-stage-complete { color: var(--success-dark); }
-body[data-lesson-id="order-of-operations"] .lesson-recommendation-card + .lesson-recommendation-card { margin-top: 12px; }
-.ooo-answer-target { padding: .75rem; margin-bottom: 1rem; border: 1px dashed var(--border-dark); border-radius: .5rem; text-align: center; color: var(--text-muted); }
-.ooo-answer-target.is-drag-over { border-color: var(--primary); background: #edf2ff; }
-
-.retained-results {
-    list-style: none;
-    counter-reset: result;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.retained-results > li {
-    counter-increment: result;
-    min-width: 0;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.retained-result {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 8px 16px;
-}
-
-.retained-result::before {
-    content: counter(result) ".";
-    color: var(--text-muted);
-}
-
-.retained-result > :first-child {
-    flex: 1 1 160px;
-}
-
-.retained-result__answer {
-    display: inline-flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-
-.retained-result__answer > :last-child {
-    white-space: nowrap;
-}
-
-.retained-result__explanation {
-    margin: 8px 0 0;
-    color: var(--text-muted);
-}
+/* Pictures and the calculation-map answer widget. */
+.operations-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-block: 1.25rem; }
+.operations-flow-box { display: grid; gap: .5rem; align-content: center; padding: .75rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; text-align: center; }
+.operations-flow-box span { font-size: .9rem; }
+.operations-flow-box strong { font-size: 1.25rem; }
+.operations-picture-line { padding: .75rem; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; text-align: center; font-size: clamp(1.1rem, 3vw, 1.4rem); font-weight: 800; overflow-wrap: anywhere; }
+.operations-fraction { display: grid; justify-items: center; width: fit-content; margin: 1rem auto; font-size: 1.5rem; font-weight: 800; }
+.operations-fraction span { padding: .4rem 1rem; }
+.operations-fraction span:first-child { border-bottom: 3px solid #172b3b; }
+.operations-worked-map { padding-left: 2rem; }
+.operations-worked-map li { margin-block: .75rem; padding: .65rem; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; font-size: 1.1rem; font-weight: 800; overflow-wrap: anywhere; }
+.operations-map { display: grid; gap: 1.5rem; margin-block: 1rem; }
+.operations-map-row { position: relative; padding: .75rem; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; min-width: 0; }
+.operations-map-row[hidden] { display: none; }
+.operations-map-row:not(:first-child)::before { content: '↓'; position: absolute; top: -1.6rem; left: 50%; color: #155e75; font-weight: 800; }
+.operations-map-stage { margin-top: 0; color: #155e75; font-size: .85rem; font-weight: 800; }
+.operations-map-expression { font-size: clamp(1rem, 3vw, 1.2rem); font-weight: 800; line-height: 1.7; overflow-wrap: anywhere; }
+.operations-map-answer { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.operations-map-answer span { overflow-wrap: anywhere; }
+.operations-map-answer input { min-width: 0; width: 90px; min-height: 44px; padding: .4rem; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
+.operations-map-answer input:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
+.operations-map-final { font-weight: 800; text-align: center; }
+@media (max-width: 500px) { .operations-flow { grid-template-columns: 1fr; } }

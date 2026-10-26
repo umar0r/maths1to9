@@ -28,13 +28,13 @@ $pageTitle = 'Function machines: find the input';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -68,138 +68,10 @@ $pageTitle = 'Function machines: find the input';
         </div>
     </noscript>
 
-    <script src="../../vendor/gsap/gsap.min.js"></script>
     <script src="../../assets/js/progress.js?v=2"></script>
-
-    <script>
-        (() => {
-            'use strict';
-
-            const slug = 'function-machines-find-the-input';
-
-            function isObject(value) {
-                return (
-                    value !== null
-                    && typeof value === 'object'
-                    && !Array.isArray(value)
-                );
-            }
-
-            function findSection(sectionId) {
-                return (
-                    document.getElementById(`lesson-section-${sectionId}`)
-                    || document.querySelector(
-                        `[data-lesson-section="${sectionId}"]`
-                    )
-                );
-            }
-
-            function buildLessonRoots(lesson) {
-                const learnShell = findSection('explanation');
-                const interactiveShell = document.getElementById(
-                    `${slug}-interactive`
-                );
-                const questionsShell = document.getElementById(
-                    `${slug}-questions`
-                );
-
-                if (!learnShell || !interactiveShell || !questionsShell) {
-                    return false;
-                }
-
-                if (interactiveShell.dataset.functionBootstrap === 'ready') {
-                    return true;
-                }
-
-                learnShell.dataset.functionBootstrap = 'ready';
-                learnShell.replaceChildren();
-
-                const learnRoot = document.createElement('div');
-                learnRoot.id = 'function-machine-learn';
-                learnRoot.dataset.config = JSON.stringify(
-                    isObject(lesson.explanation)
-                        ? lesson.explanation
-                        : {}
-                );
-                learnShell.append(learnRoot);
-
-                interactiveShell.dataset.functionBootstrap = 'ready';
-                interactiveShell.replaceChildren();
-
-                const tryRoot = document.createElement('div');
-                tryRoot.id = 'function-machine-try-it';
-                tryRoot.dataset.config = JSON.stringify(
-                    isObject(lesson.interactive)
-                        ? lesson.interactive
-                        : {}
-                );
-                interactiveShell.append(tryRoot);
-
-                questionsShell.replaceChildren();
-
-                const practiceRoot = document.createElement('div');
-                practiceRoot.id = 'function-machine-practice';
-                practiceRoot.dataset.config = JSON.stringify(
-                    isObject(lesson.question_bank)
-                        ? lesson.question_bank
-                        : {}
-                );
-                questionsShell.append(practiceRoot);
-
-                document.dispatchEvent(
-                    new CustomEvent('function-machines:roots-ready', {
-                        detail: { lesson }
-                    })
-                );
-
-                return true;
-            }
-
-            async function start() {
-                let lesson;
-
-                try {
-                    const response = await fetch('./lesson.json', {
-                        cache: 'no-store'
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(
-                            `lesson.json returned ${response.status}`
-                        );
-                    }
-
-                    lesson = await response.json();
-                } catch (error) {
-                    console.error(
-                        'The function machines lesson could not be loaded.',
-                        error
-                    );
-                    return;
-                }
-
-                if (buildLessonRoots(lesson)) {
-                    return;
-                }
-
-                const observer = new MutationObserver(() => {
-                    if (buildLessonRoots(lesson)) {
-                        observer.disconnect();
-                    }
-                });
-
-                observer.observe(document.documentElement, {
-                    childList: true,
-                    subtree: true
-                });
-            }
-
-            start();
-        })();
-    </script>
-
-    <script src="./interactive.js?v=12"></script>
-    <script src="./questions.js?v=14"></script>
+    <script src="./machines.js?v=2"></script>
+    <script src="./questions.js?v=15"></script>
+    <script src="./interactive.js?v=13"></script>
     <script src="../../assets/js/lesson-engine.js?v=45"></script>
 </body>
 </html>

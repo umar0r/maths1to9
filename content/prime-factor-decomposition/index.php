@@ -2,12 +2,6 @@
 
 declare(strict_types=1);
 
-/*
- * CHANGE: slug and title. The slug must match:
- *   - "slug" in lesson.json
- *   - SLUG in interactive.js
- *   - ROOT_ID prefix in questions.js
- */
 $lessonId = 'prime-factor-decomposition';
 $pageTitle = 'Prime factor decomposition';
 ?>
@@ -33,14 +27,14 @@ $pageTitle = 'Prime factor decomposition';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
     <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="./lesson.css?v=11">
+    <link rel="stylesheet" href="./lesson.css?v=13">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -77,14 +71,12 @@ $pageTitle = 'Prime factor decomposition';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
-    <script src="../../assets/js/lesson-recommendations.js?v=2"></script>
     <script src="../../vendor/katex/katex.min.js"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./prime-factors.js?v=2"></script>
-    <script src="./answer-builder.js?v=5"></script>
-    <script src="./questions.js?v=16"></script>
-    <script src="./interactive.js?v=20"></script>
+    <script src="./prime-factors.js?v=4"></script>
+    <script src="./questions.js?v=17"></script>
+    <script src="./interactive.js?v=21"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=45"></script>

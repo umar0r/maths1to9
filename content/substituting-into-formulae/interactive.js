@@ -1,479 +1,202 @@
 (() => {
     'use strict';
 
-    const slug = 'substituting-into-formulae';
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    window.Maths1to9Interactives ??= {};
-
-    function gateSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-gate', {
-                detail: { sectionId }
-            })
-        );
+    function examples() {
+        return window.Substitution.examples();
     }
 
-    function completeSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-complete', {
-                detail: { sectionId }
-            })
-        );
+    function sectionEvent(sectionId, name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId }
+        }));
     }
 
-    function createElement(tagName, className = '', text = '') {
-        const element = document.createElement(tagName);
+    async function mountLearn() {
+        const screens = window.Substitution.learnScreens;
+        const root = document.createElement('article');
+        document.getElementById('lesson-section-explanation').append(root);
+        const api = window.Maths1to9Lesson;
+        sectionEvent('explanation', 'gate');
+        const section = await api.useSectionState('learn', {
+            version: 2,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false }),
+            upgrade: () => null
+        });
+        const state = section.state;
+        section.save();
 
-        if (className !== '') {
-            element.className = className;
+        function syncHash() {
+            if (api.getCurrentSection().id === 'explanation') {
+                api.setSlideHash(`learn-${state.screen + 1}`, { replace: true });
+            }
         }
 
-        if (text !== '') {
-            element.textContent = text;
+        function showScreen(screen) {
+            section.update(state => {
+                state.screen = screen;
+                state.furthestScreen = Math.max(state.furthestScreen, screen);
+                if (screen === screens.length - 1) state.finished = true;
+            });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
-        return element;
+        function render() {
+            const screen = screens[state.screen];
+            const { escapeHtml } = window.Maths1to9LessonEngine;
+            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
+            for (const line of screen.lines) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = line;
+                root.append(paragraph);
+            }
+            const visual = document.createElement('div');
+            root.append(visual);
+            window.Substitution.drawLearn(visual, state.screen, section);
+            api.setSectionBack('explanation', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('explanation', 'complete');
+            if (state.screen < state.furthestScreen) {
+                api.setSectionAction('explanation', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+            } else if (state.finished) {
+                api.clearSectionAction('explanation');
+            } else {
+                api.setSectionAction('explanation', {
+                    label: 'Next idea', onClick: () => showScreen(state.screen + 1)
+                });
+            }
+            syncHash();
+        }
+
+        screens.forEach((screen, index) => {
+            api.registerHashRoute(`learn-${index + 1}`, () => {
+                api.goToSection('explanation', { moveFocus: false });
+                showScreen(Math.min(index, state.furthestScreen));
+            });
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
+        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
+        else render();
     }
 
-    /*
-     * One walkthrough of Find → Replace → Calculate → Check.
-     *
-     * Flow rules:
-     * - Every step asks for exactly one decision.
-     * - A correct decision advances the step immediately. There are
-     *   no Continue buttons inside this component; the lesson
-     *   engine's own Continue (released by section-complete at the
-     *   end) is the only flow button on the page.
-     * - A wrong decision stays on the step and explains the error.
-     */
-    window.Maths1to9Interactives[slug] =
-        async function mountSubstitutionWalkthrough(root) {
-            if (!root || root.dataset.mounted) {
-                return;
+    async function mountTryIt(root) {
+        const questions = examples();
+        const api = window.Maths1to9Lesson;
+        sectionEvent('interactive', 'gate');
+        api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('interactive', {
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
+        });
+        const state = section.state;
+        section.save();
+
+        function syncHash() {
+            if (api.getCurrentSection().id === 'interactive') {
+                api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true });
             }
+        }
 
-            root.dataset.mounted = 'true';
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
+        }
 
-            gateSection('interactive');
+        function reportProgress() {
+            const card = state.cards[`example-${state.index + 1}`];
+            const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
+            api.setSectionProgress('interactive', completed, questions.length);
+        }
 
-            const methodStages = [
-                'Find',
-                'Replace',
-                'Calculate',
-                'Check'
-            ];
+        function continueExample() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === questions.length;
+            });
+            render();
+        }
 
-            /*
-             * Internal steps. Steps 2 and 3 both belong to the
-             * Calculate stage of the method trail.
-             */
-            const steps = [
-                {
-                    id: 'find',
-                    methodIndex: 0,
-                    prompt: 'What value are you given for s?',
-                    success:
-                        'You found it: s = 4. That is the value to substitute.',
-                    choices: [
-                        {
-                            label: '5',
-                            feedback:
-                                '5 is the fixed ticket cost. It is already a number in the formula. Look for the value given for the letter s.'
-                        },
-                        {
-                            label: '2',
-                            feedback:
-                                '2 is the cost of one snack. It is already a number in the formula. Look for the value given for the letter s.'
-                        },
-                        {
-                            label: '4',
-                            correct: true
-                        }
-                    ]
+        function drawExample(container, index, readOnly) {
+            const example = questions[index];
+            const cardRoot = document.createElement('div');
+            container.append(cardRoot);
+            api.createQuestion(cardRoot, {
+                ...window.Substitution.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
+                scored: false, readOnly,
+                onFeedback(result) {
+                    reportProgress();
                 },
-                {
-                    id: 'replace',
-                    methodIndex: 1,
-                    prompt:
-                        'Replace s with 4. Drag the 4 into the letter space, or tap 4 and then tap s.',
-                    success:
-                        'Every letter is replaced. The formula is now a calculation: C = 5 + 2 × 4.'
-                },
-                {
-                    id: 'first-op',
-                    methodIndex: 2,
-                    prompt:
-                        'C = 5 + 2 × 4. Which part do you work out first?',
-                    success:
-                        '2 × 4 = 8. BIDMAS: multiplication before addition.',
-                    choices: [
-                        {
-                            label: '5 + 2',
-                            feedback:
-                                'Not first. BIDMAS puts multiplication before addition. Adding first gives 7 × 4 = 28, which is wrong.'
-                        },
-                        {
-                            label: '2 × 4',
-                            correct: true
-                        }
-                    ]
-                },
-                {
-                    id: 'add',
-                    methodIndex: 2,
-                    prompt: 'C = 5 + 8. What is the value of C?',
-                    success: 'C = 13.',
-                    choices: [
-                        {
-                            label: '13',
-                            correct: true
-                        },
-                        {
-                            label: '40',
-                            feedback:
-                                'That is 5 × 8. The multiplication is already done. This step is an addition: 5 + 8.'
-                        },
-                        {
-                            label: '12',
-                            feedback:
-                                'Check the addition again: 5 + 8.'
-                        }
-                    ]
-                },
-                {
-                    id: 'check',
-                    methodIndex: 3,
-                    prompt:
-                        'Last step: check the answer and give it with its unit. How much does the cinema visit cost?',
-                    success:
-                        'You used Find → Replace → Calculate → Check. The cinema visit costs £13.',
-                    choices: [
-                        {
-                            label: '£13',
-                            correct: true
-                        },
-                        {
-                            label: '13p',
-                            feedback:
-                                'The prices in the question are in pounds, not pence.'
-                        },
-                        {
-                            label: '£28',
-                            feedback:
-                                '£28 comes from adding before multiplying. Your working shows C = 13.'
-                        }
-                    ]
-                }
-            ];
+                onContinue: continueExample
+            });
+        }
 
-            const store = window.Maths1to9Progress;
-            let state = await store.getLessonActivityState(slug, 'interactive');
-            if (state?.contentVersion !== 1) state = {
-                contentVersion: 1, steps, answers: [],
-                step: 0,
-                successMessage: '',
-                errorMessage: '',
-                tileSelected: false,
-                finished: false
-            };
-
-            steps.splice(0, steps.length, ...state.steps);
-            function save() {
-                store.saveLessonActivityState(slug, 'interactive', state);
-            }
-            function recordAnswer(selected, correct) {
-                const answer = state.answers[state.step] ??= { firstCorrect: correct, attempts: [] };
-                answer.selected = selected;
-                answer.phase = correct ? 'correct' : 'wrong';
-                answer.attempts.push({ selected, correct });
-            }
-
-            function currentStep() {
-                return steps[state.step];
-            }
-
-            function currentMethodIndex() {
-                return state.finished
-                    ? methodStages.length
-                    : currentStep().methodIndex;
-            }
-
-            function advance(selected = '4') {
-                recordAnswer(selected, true);
-                state.successMessage = currentStep().success;
-                state.errorMessage = '';
-                state.tileSelected = false;
-
-                if (state.step === steps.length - 1) {
-                    state.finished = true;
-                    completeSection('interactive');
-                } else {
-                    state.step += 1;
-                }
-
-                render();
-            }
-
-            function fail(message, selected) {
-                recordAnswer(selected, false);
-                state.errorMessage = message;
-                state.successMessage = '';
-                render();
-            }
-
-            function methodTrail() {
-                const row = createElement('div', 'lx2-chip-row');
-                const activeIndex = currentMethodIndex();
-
-                methodStages.forEach((stage, index) => {
-                    const chip = createElement(
-                        'span',
-                        'lx2-chip',
-                        stage
-                    );
-
-                    if (index < activeIndex) {
-                        chip.classList.add('is-found');
-                    }
-
-                    if (index === activeIndex) {
-                        chip.classList.add('is-armed');
-                    }
-
-                    row.append(chip);
-
-                    if (index < methodStages.length - 1) {
-                        row.append(
-                            createElement('span', 'lx2-arrow', '→')
-                        );
-                    }
+        function render() {
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
+            root.append(heading);
+            api.setSectionBack('interactive', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('interactive', 'complete');
+            if (state.screen === questions.length) {
+                questions.forEach((example, index) => {
+                    const completed = document.createElement('article');
+                    root.append(completed);
+                    drawExample(completed, index, true);
                 });
-
-                return row;
+                api.clearSectionAction('interactive');
+            } else {
+                const readOnly = state.screen < state.index;
+                drawExample(root, state.screen, readOnly);
+                if (readOnly) api.setSectionAction('interactive', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
             }
+            syncHash();
+        }
 
-            function workingSoFar() {
-                const card = createElement('div', 'lx2-card');
-
-                card.append(
-                    createElement(
-                        'p',
-                        'lx2-context',
-                        'A cinema visit costs £5, plus £2 for each snack. You buy 4 snacks.'
-                    ),
-                    createElement('p', 'lx2-formula', 'C = 5 + 2s')
-                );
-
-                const given = createElement('p', 'lx2-chip', 's = 4');
-
-                if (state.step >= 1 || state.finished) {
-                    given.classList.add('is-found');
-                }
-
-                card.append(given);
-
-                const lines = [
-                    { minStep: 2, text: 'C = 5 + 2 × 4' },
-                    { minStep: 3, text: 'C = 5 + 8' },
-                    { minStep: 4, text: 'C = 13' }
-                ];
-
-                lines.forEach((line) => {
-                    if (state.step >= line.minStep || state.finished) {
-                        card.append(
-                            createElement(
-                                'p',
-                                'lx2-live-line',
-                                line.text
-                            )
-                        );
-                    }
-                });
-
-                if (state.finished) {
-                    card.append(
-                        createElement(
-                            'p',
-                            'lx2-live-line',
-                            'The cinema visit costs £13.'
-                        )
-                    );
-                }
-
-                return card;
-            }
-
-            function feedback(text, correct = true) {
-                return createElement(
-                    'p',
-                    `question-feedback is-visible ${
-                        correct ? 'is-correct' : 'is-incorrect'
-                    }`,
-                    text
-                );
-            }
-
-            function choiceChips(card, step) {
-                const row = createElement('div', 'lx2-chip-row');
-
-                step.choices.forEach((choice) => {
-                    const chip = createElement(
-                        'button',
-                        'lx2-chip lx2-chip--value',
-                        choice.label
-                    );
-
-                    chip.type = 'button';
-
-                    chip.addEventListener('click', () => {
-                        if (choice.correct) {
-                            advance(choice.label);
-                        } else {
-                            fail(choice.feedback, choice.label);
-                        }
-                    });
-
-                    row.append(chip);
-                });
-
-                card.append(row);
-            }
-
-            function replaceStep(card, step) {
-                const formula = createElement('div', 'lx2-formula');
-
-                formula.append(
-                    document.createTextNode('C = 5 + 2 × ')
-                );
-
-                const slot = createElement('button', 'button', 's');
-
-                slot.type = 'button';
-                slot.dataset.role = 'slot';
-                formula.append(slot);
-
-                const tile = createElement(
-                    'button',
-                    'lx2-chip lx2-chip--value',
-                    '4'
-                );
-
-                tile.type = 'button';
-                tile.draggable = true;
-                tile.dataset.role = 'tile';
-
-                if (state.tileSelected) {
-                    tile.classList.add('is-armed');
-                }
-
-                tile.addEventListener('click', () => {
-                    state.tileSelected = !state.tileSelected;
-                    render();
-                });
-
-                tile.addEventListener('dragstart', (event) => {
-                    event.dataTransfer.setData('text/plain', '4');
-                });
-
-                slot.addEventListener('click', () => {
-                    if (state.tileSelected) {
-                        advance();
-                    }
-                });
-
-                slot.addEventListener('dragover', (event) => {
-                    event.preventDefault();
-                });
-
-                slot.addEventListener('drop', (event) => {
-                    event.preventDefault();
-
-                    if (
-                        event.dataTransfer.getData('text/plain') ===
-                        '4'
-                    ) {
-                        advance();
-                    }
-                });
-
-                card.append(formula, tile);
-            }
-
-            function render() {
-                save();
-                root.replaceChildren();
-
-                root.append(methodTrail(), workingSoFar());
-
-                if (state.finished) {
-                    completeSection('interactive');
-                    root.append(feedback(state.successMessage));
+        for (let index = 0; index <= questions.length; index++) {
+            api.registerHashRoute(`try-it-${index + 1}`, () => {
+                if (!api.goToSection('interactive', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
-
-                const step = currentStep();
-
-                const card = createElement(
-                    'article',
-                    'worked-example'
-                );
-
-                card.append(
-                    createElement(
-                        'p',
-                        'lesson-eyebrow',
-                        `${methodStages[step.methodIndex]} · Step ${
-                            step.methodIndex + 1
-                        } of 4`
-                    )
-                );
-
-                if (state.successMessage !== '') {
-                    card.append(feedback(state.successMessage));
-                }
-
-                card.append(
-                    createElement(
-                        'p',
-                        'question-prompt',
-                        step.prompt
-                    )
-                );
-
-                if (step.id === 'replace') {
-                    replaceStep(card, step);
-                } else {
-                    choiceChips(card, step);
-                }
-
-                if (state.errorMessage !== '') {
-                    card.append(
-                        feedback(state.errorMessage, false)
-                    );
-                }
-
-                root.append(card);
-            }
-
-            render();
-        };
-
-    function mountFallback() {
-        const root = document.getElementById(
-            `${slug}-interactive`
-        );
-
-        if (root && !root.dataset.mounted) {
-            window.Maths1to9Interactives[slug](root);
+                showScreen(Math.min(index, state.furthestScreen));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        reportProgress();
+        render();
+        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
+            .find(index => initialHash === `#try-it-${index + 1}`);
+        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
         }
     }
 
-    document.addEventListener(
-        'maths1to9:lesson-rendered',
-        mountFallback
-    );
-
-    document.addEventListener('lesson:rendered', mountFallback);
-
-    mountFallback();
+    window.Maths1to9Interactives ??= {};
+    window.Maths1to9Interactives[SLUG] = mountTryIt;
+    document.addEventListener('maths1to9:lesson-rendered', event => {
+        if (event.detail?.slug === SLUG) mountLearn();
+    });
 })();

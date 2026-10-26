@@ -27,22 +27,22 @@ $pageTitle = 'Place value';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=39">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="site-logo" href="../../index.php">
+            <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
             </a>
 
-            <a class="site-header__back" href="../../index.php">
+            <a class="site-header__back" href="../../">
                 All lessons
             </a>
         </div>
@@ -67,10 +67,16 @@ $pageTitle = 'Place value';
         </div>
     </noscript>
 
+    <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="../../assets/js/lesson-recommendations.js?v=2"></script>
-    <script src="./interactive.js?v=23"></script>
-    <script src="./questions.js?v=46"></script>
+
+
+    <!-- Data and behaviour specific to this lesson -->
+    <script src="./place-value.js?v=2"></script>
+    <script src="./questions.js?v=47"></script>
+    <script src="./interactive.js?v=24"></script>
+
+    <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=45"></script>
 </body>
 </html>

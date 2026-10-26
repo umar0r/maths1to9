@@ -1,10 +1,13 @@
-.retained-results { list-style: none; padding: 0; }
-.retained-results > li { padding: .8rem 0; border-bottom: 1px solid var(--color-border, #ddd); }
-.retained-result { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.retained-result__answer { display: flex; gap: .7rem; flex-shrink: 0; }
-.retained-result__explanation { margin: .4rem 0 0; font-size: .9rem; }
-.retained-try-example { margin-bottom: 2rem; }
-@media (max-width: 480px) { .retained-result { flex-wrap: wrap; } }
-.retained-result svg { max-width: 11rem; max-height: 5rem; height: auto; vertical-align: middle; }
-.question-list:has(.retained-results) { gap: .5rem; }
-.question-list:has(.retained-results) > h3, .retained-results { margin-block: .5rem; }
+/* Pictures and exploration controls for Understanding fractions. */
+.fi-picture { margin: 1rem 0; text-align: center; }
+.fi-svg { display: block; width: 100%; max-width: 320px; height: auto; margin: 1rem auto; overflow: visible; }
+.fi-pizza { max-width: 200px; }
+.fi-number-line { max-width: 480px; }
+.fi-number-line text { fill: #172b3b; font-size: 17px; text-anchor: middle; font-family: inherit; }
+.fi-equation { text-align: center; font-weight: 800; font-size: 1.25rem; }
+.fi-slider-label { display: grid; gap: .75rem; max-width: 360px; margin: 1rem auto; font-weight: 800; }
+.fi-slider-label input { width: 100%; min-height: 44px; accent-color: #155e75; }
+.fi-forms { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 1rem 0; }
+.fi-forms button { min-height: 44px; padding: .65rem; border: 2px solid #64748b; border-radius: .5rem; background: #fff; color: #172b3b; font: inherit; }
+.fi-forms button[aria-pressed=true] { background: #ecfeff; border-color: #155e75; }
+.fi-forms button:focus-visible, .fi-slider-label input:focus-visible { outline: 3px solid #155e75; outline-offset: 3px; }
