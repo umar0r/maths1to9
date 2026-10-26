@@ -1,944 +1,163 @@
 (() => {
     'use strict';
 
-    const ROOT_ID = 'fractions-introduction-questions';
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    const mounted = new WeakSet();
-
-    function gateSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-gate', {
-                detail: { sectionId }
-            })
-        );
+    function sectionEvent(name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId: 'comparison' }
+        }));
     }
 
-    function completeSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent('maths1to9:section-complete', {
-                detail: { sectionId }
-            })
-        );
+    function mountPractice() {
+        const api = window.Maths1to9Lesson;
+        return api.runQuestionSet('question-bank', {
+            version: 2, count: api.getLesson().question_bank.session_length,
+            practiseAgain: true, heading: 'Your practice results',
+            pick: window.FractionsIntroduction.pick,
+            question: (item, random) => window.FractionsIntroduction.prepare(window.FractionsIntroduction.generate(item, random), random),
+            upgrade: () => null
+        });
     }
 
-    const r = (min, max) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+    async function mountCheck(root, lesson) {
+        const api = window.Maths1to9Lesson;
+        const { renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
+        const questions = window.FractionsIntroduction.checks();
+        const count = questions.length;
+        sectionEvent('gate');
+        api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('comparison', {
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
+        });
+        const state = section.state;
+        section.save();
 
-    const pick = (items) =>
-        items[r(0, items.length - 1)];
-
-    const coin = () => Math.random() < 0.5;
-
-    function gcd(a, b) {
-        a = Math.abs(a);
-        b = Math.abs(b);
-
-        while (b) {
-            [a, b] = [b, a % b];
-        }
-
-        return a || 1;
-    }
-
-    function shuffle(items) {
-        const copy = [...items];
-
-        for (let index = copy.length - 1; index > 0; index -= 1) {
-            const randomIndex = r(0, index);
-
-            [copy[index], copy[randomIndex]] =
-                [copy[randomIndex], copy[index]];
-        }
-
-        return copy;
-    }
-
-    /*
-     * Builds the option list from one correct label and a
-     * list of [label, feedback] distractors. Duplicates are
-     * dropped, so generators must supply distinct values.
-     */
-    function options(correctLabel, wrongOptions) {
-        const unique = new Map([
-            [
-                correctLabel,
-                {
-                    label: correctLabel,
-                    correct: true,
-                    feedback: ''
-                }
-            ]
-        ]);
-
-        wrongOptions.forEach(([label, feedback]) => {
-            if (!unique.has(label)) {
-                unique.set(label, {
-                    label,
-                    correct: false,
-                    feedback
-                });
+        function syncHash() {
+            if (api.getCurrentSection().id === 'comparison') {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
             }
-        });
-
-        return shuffle([...unique.values()].slice(0, 4));
-    }
-
-    function make({
-        prompt,
-        expression,
-        correct,
-        wrong,
-        hint,
-        explanation
-    }) {
-        return {
-            prompt,
-            expression,
-            correctLabel: String(correct),
-            answers: options(String(correct), wrong),
-            hint,
-            explanation
-        };
-    }
-
-    /* ---------- display helpers ---------- */
-
-    function injectStyles() {
-        if (document.getElementById('fractions-introduction-question-styles')) {
-            return;
         }
 
-        const style = document.createElement('style');
-        style.id = 'fractions-introduction-question-styles';
-        style.textContent = `
-            .fi-q-big {
-                font-size: clamp(1.5rem, 3.4vw, 2.1rem);
-                font-weight: 800;
-                letter-spacing: .02em;
-            }
-
-            .fi-q-neg {
-                color: #9f1239;
-            }
-
-            .fi-q-bar {
-                display: block;
-                width: 100%;
-                max-width: 360px;
-                height: auto;
-                margin: 6px auto 0;
-            }
-
-            .fi-q-bar rect {
-                vector-effect: non-scaling-stroke;
-            }
-        `;
-
-        document.head.append(style);
-    }
-
-    function big(text, negative) {
-        return `<span class="fi-q-big ${negative ? 'fi-q-neg' : ''}">${text}</span>`;
-    }
-
-    function fr(n, d) {
-        return `${n}/${d}`;
-    }
-
-    function mixed(w, n, d) {
-        return `${w} ${n}/${d}`;
-    }
-
-    function barSvg(numerator, denominator) {
-        const barWidth = 300;
-        const barHeight = 70;
-        const cellWidth = barWidth / denominator;
-        const cells = [];
-
-        for (let index = 0; index < denominator; index += 1) {
-            const shaded = index < numerator;
-
-            cells.push(
-                '<rect'
-                + ` x="${(index * cellWidth).toFixed(2)}" y="0"`
-                + ` width="${cellWidth.toFixed(2)}" height="${barHeight}"`
-                + ` fill="${shaded ? '#62c5bc' : '#ffffff'}"`
-                + ' stroke="#1f2937" stroke-width="1.5" />'
-            );
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
-        return (
-            `<svg class="fi-q-bar" viewBox="0 0 ${barWidth} ${barHeight}"`
-            + ` width="${barWidth}" height="${barHeight}" role="img"`
-            + ` aria-label="${numerator} of ${denominator} equal parts shaded">`
-            + cells.join('')
-            + `<rect x="0" y="0" width="${barWidth}" height="${barHeight}" rx="6"`
-            + ' fill="none" stroke="#111827" stroke-width="3" />'
-            + '</svg>'
-        );
-    }
-
-    /* value of a signed fraction */
-    const val = (n, d, sign) => (sign || 1) * (n / d);
-
-    /* ---------- generators ---------- */
-
-    function nameThePart() {
-        const d = pick([4, 5, 6, 8, 9, 10, 12]);
-        const n = r(1, d - 1);
-        const askDenominator = coin();
-        const correct = askDenominator ? d : n;
-        const other = askDenominator ? n : d;
-
-        return make({
-            prompt: `Which number is the ${askDenominator ? 'denominator' : 'numerator'}?`,
-            expression: big(fr(n, d)),
-            correct,
-
-            wrong: [
-                [
-                    String(other),
-                    `That is the ${askDenominator ? 'numerator' : 'denominator'} — the ${askDenominator ? 'top' : 'bottom'} number.`
-                ],
-                [
-                    String(n + d),
-                    'That is the two numbers added together, not one of them.'
-                ],
-                [
-                    String(d + 1),
-                    'That number is not part of this fraction.'
-                ]
-            ],
-
-            hint: askDenominator
-                ? 'The denominator is written below the line.'
-                : 'The numerator is written above the line.',
-
-            explanation: askDenominator
-                ? `The bottom number is the denominator, so it is ${d}. It shows the whole is cut into ${d} equal parts.`
-                : `The top number is the numerator, so it is ${n}. It counts how many parts are taken.`
-        });
-    }
-
-    function shadedFraction() {
-        let d = pick([3, 4, 5, 6, 7, 8]);
-        let n = r(1, d - 1);
-
-        while (gcd(n, d) !== 1) {
-            d = pick([3, 4, 5, 6, 7, 8]);
-            n = r(1, d - 1);
+        function reportProgress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress('comparison', state.finished ? count : state.index + Number(current?.correct === true), count);
         }
 
-        return make({
-            prompt: 'What fraction of the shape is shaded?',
-            expression: barSvg(n, d),
-            correct: fr(n, d),
-
-            wrong: [
-                [
-                    fr(d, n),
-                    'That is upside down. The denominator is the number of equal parts in the whole.'
-                ],
-                [
-                    fr(n, n + d),
-                    'The denominator is the total equal parts in the whole, not shaded plus unshaded counted twice.'
-                ],
-                [
-                    fr(d - n, d),
-                    'That is the unshaded fraction. The question asks for the shaded part.'
-                ]
-            ],
-
-            hint: 'Numerator = shaded parts. Denominator = all equal parts in the whole.',
-            explanation: `${n} ${n === 1 ? 'part is' : 'parts are'} shaded out of ${d} equal parts, so the shaded fraction is ${fr(n, d)}.`
-        });
-    }
-
-    function classifyFraction() {
-        const kind = pick(['proper', 'improper', 'mixed']);
-        let display;
-        let correct;
-
-        if (kind === 'proper') {
-            const d = pick([3, 4, 5, 6, 7, 8]);
-            const n = r(1, d - 1);
-            display = fr(n, d);
-            correct = 'Proper fraction';
-        } else if (kind === 'improper') {
-            const d = pick([2, 3, 4, 5, 6]);
-            const n = d + r(1, d + 2);
-            display = fr(n, d);
-            correct = 'Improper fraction';
-        } else {
-            const d = pick([2, 3, 4, 5, 6]);
-            const w = r(1, 4);
-            const n = r(1, d - 1);
-            display = mixed(w, n, d);
-            correct = 'Mixed number';
-        }
-
-        const feedback = {
-            'Proper fraction': 'A proper fraction has a numerator smaller than its denominator, with no whole number beside it.',
-            'Improper fraction': 'An improper fraction is a single fraction whose numerator is equal to or larger than its denominator.',
-            'Mixed number': 'A mixed number is a whole number written next to a proper fraction.'
-        };
-
-        return make({
-            prompt: 'Which name describes this number?',
-            expression: big(display),
-            correct,
-
-            wrong: Object.keys(feedback)
-                .filter((label) => label !== correct)
-                .map((label) => [label, feedback[label]]),
-
-            hint: 'Compare the top with the bottom, and check whether a whole number is written beside it.',
-            explanation: `${display} is ${correct === 'Improper fraction' ? 'an improper fraction' : correct === 'Mixed number' ? 'a mixed number' : 'a proper fraction'}.`
-        });
-    }
-
-    function improperToMixed() {
-        const d = pick([2, 3, 4, 5, 6]);
-        const w = r(1, 3);
-        const rem = r(1, d - 1);
-        const n = w * d + rem;
-
-        return make({
-            prompt: 'Write this improper fraction as a mixed number.',
-            expression: big(fr(n, d)),
-            correct: mixed(w, rem, d),
-
-            wrong: [
-                [
-                    mixed(w, d, rem),
-                    'The remainder goes on top and the denominator stays on the bottom.'
-                ],
-                [
-                    mixed(rem, w, d),
-                    'The whole number is how many times the denominator fits, not the remainder.'
-                ],
-                [
-                    mixed(w + 1, rem, d),
-                    `Check the division: ${n} ÷ ${d} = ${w} remainder ${rem}.`
-                ]
-            ],
-
-            hint: `Work out ${n} ÷ ${d}. The quotient is the whole number; the remainder stays over ${d}.`,
-            explanation: `${n} ÷ ${d} = ${w} remainder ${rem}, so ${fr(n, d)} = ${mixed(w, rem, d)}.`
-        });
-    }
-
-    function mixedToImproper() {
-        const d = pick([2, 3, 4, 5, 6]);
-        const w = r(1, 4);
-        const rem = r(1, d - 1);
-        const n = w * d + rem;
-
-        return make({
-            prompt: 'Write this mixed number as an improper fraction.',
-            expression: big(mixed(w, rem, d)),
-            correct: fr(n, d),
-
-            wrong: [
-                [
-                    fr(w + rem, d),
-                    `Multiply the whole number by the denominator first: ${w} × ${d} = ${w * d}, then add ${rem}.`
-                ],
-                [
-                    fr(n, w * d),
-                    'The denominator does not change when converting a mixed number.'
-                ],
-                [
-                    fr(w * rem, d),
-                    `Multiply the whole number by the denominator, not by the numerator: ${w} × ${d} + ${rem}.`
-                ]
-            ],
-
-            hint: `Multiply: ${w} × ${d}, then add ${rem}. Keep the denominator ${d}.`,
-            explanation: `${w} × ${d} + ${rem} = ${n}, so ${mixed(w, rem, d)} = ${fr(n, d)}.`
-        });
-    }
-
-    function chooseInequality() {
-        let an;
-        let ad;
-        let bn;
-        let bd;
-
-        do {
-            ad = pick([2, 3, 4, 5, 6]);
-            bd = pick([2, 3, 4, 5, 6, 8]);
-            an = r(1, ad);
-            bn = r(1, bd);
-        } while (an === ad && bn === bd);
-
-        const left = an / ad;
-        const right = bn / bd;
-        const correct = left < right ? '<' : left > right ? '>' : '=';
-
-        const feedback = {
-            '<': `${fr(an, ad)} is smaller, so the sign should open towards ${fr(bn, bd)}.`,
-            '>': `${fr(an, ad)} is larger, so the sign should open towards ${fr(an, ad)}.`,
-            '=': `${fr(an, ad)} and ${fr(bn, bd)} have the same value, so use the equals sign (=).`
-        };
-
-        const common = ad * bd;
-
-        return make({
-            prompt: `Choose the symbol that makes this true:  ${fr(an, ad)} □ ${fr(bn, bd)}`,
-            expression: big(`${fr(an, ad)}  □  ${fr(bn, bd)}`),
-            correct,
-
-            wrong: ['<', '>', '=']
-                .filter((symbol) => symbol !== correct)
-                .map((symbol) => [symbol, feedback[correct]]),
-
-            hint: 'Write both fractions with a common denominator, then compare their numerators.',
-            explanation: `${fr(an, ad)} = ${fr(an * bd, common)} and ${fr(bn, bd)} = ${fr(bn * ad, common)}, so ${fr(an, ad)} ${correct} ${fr(bn, bd)}.`
-        });
-    }
-
-    function compareNegative() {
-        let an;
-        let ad;
-        let bn;
-        let bd;
-
-        do {
-            ad = pick([2, 3, 4, 5, 6]);
-            bd = pick([2, 3, 4, 5, 6]);
-            an = r(1, ad - 1);
-            bn = r(1, bd - 1);
-        } while (an / ad === bn / bd);
-
-        const aLabel = `−${fr(an, ad)}`;
-        const bLabel = `−${fr(bn, bd)}`;
-        const smaller = (an / ad) > (bn / bd) ? aLabel : bLabel;
-        const bigger = smaller === aLabel ? bLabel : aLabel;
-
-        return make({
-            prompt: `Which is the smaller number:  ${aLabel}  or  ${bLabel}?`,
-            expression: big(`${aLabel}   ${bLabel}`, true),
-            correct: smaller,
-
-            wrong: [
-                [
-                    bigger,
-                    'For negatives, the number further to the left on the number line is smaller.'
-                ],
-                [
-                    'They are equal',
-                    'The two fractions have different values, so they sit at different points.'
-                ]
-            ],
-
-            hint: 'The negative that is further from zero is the smaller number.',
-            explanation: `${smaller} is further to the left of zero, so ${smaller} < ${bigger}.`
-        });
-    }
-
-    function orderThree() {
-        const sources = [
-            { n: 1, d: 2, s: 1 },
-            { n: 3, d: 4, s: 1 },
-            { n: 2, d: 5, s: 1 },
-            { n: 5, d: 4, s: 1 },
-            { n: 1, d: 4, s: -1 },
-            { n: 3, d: 4, s: -1 },
-            { n: 1, d: 2, s: -1 }
-        ];
-
-        const chosen = shuffle(sources).slice(0, 3);
-        const labelOf = (f) => (f.s < 0 ? `−${fr(f.n, f.d)}` : fr(f.n, f.d));
-
-        const ascending = [...chosen]
-            .sort((a, b) => val(a.n, a.d, a.s) - val(b.n, b.d, b.s))
-            .map(labelOf);
-
-        const correct = ascending.join(' < ');
-        const reversed = [...ascending].reverse().join(' < ');
-        const swapped = [ascending[1], ascending[0], ascending[2]].join(' < ');
-
-        return make({
-            prompt: 'Which list is in order from smallest to largest?',
-            expression: big(shuffle(chosen).map(labelOf).join('   ')),
-            correct,
-
-            wrong: [
-                [
-                    reversed,
-                    'That is largest to smallest. The question asks for smallest first.'
-                ],
-                [
-                    swapped,
-                    'Check the first two: a common denominator or the number line shows which is smaller.'
-                ]
-            ],
-
-            hint: 'Any negative fraction is smaller than any positive one. Place the rest with a common denominator.',
-            explanation: `In order from smallest: ${correct}.`
-        });
-    }
-
-    const generators = {
-        nameThePart,
-        shadedFraction,
-        classifyFraction,
-        improperToMixed,
-        mixedToImproper,
-        chooseInequality,
-        compareNegative,
-        orderThree
-    };
-
-    function pool(questionNumber) {
-        if (questionNumber <= 2) {
-            return ['nameThePart', 'shadedFraction', 'classifyFraction'];
-        }
-
-        if (questionNumber <= 4) {
-            return [
-                'nameThePart',
-                'shadedFraction',
-                'classifyFraction',
-                'improperToMixed',
-                'mixedToImproper'
-            ];
-        }
-
-        return Object.keys(generators);
-    }
-
-    async function mount(root) {
-        if (!root || mounted.has(root)) {
-            return;
-        }
-
-        mounted.add(root);
-        injectStyles();
-        gateSection('question-bank');
-        const sessionLength = window.Maths1to9Lesson.getLesson().question_bank.session_length;
-
-        const lessonSlug = window.Maths1to9Lesson.getLesson().slug;
-        const progress = window.Maths1to9Progress;
-        const saved = await progress?.getLessonActivityState?.(lessonSlug, 'question-bank');
-        const state = saved?.contentVersion === 1 ? saved : {
-            contentVersion: 1,
-            running: false,
-            number: 0,
-            checked: 0,
-            correct: 0,
-            previous: '',
-            finished: false
-        };
-
-        state.history ??= [];
-        // Older progress contains only the current card. Keep that card; do
-        // not invent first-attempt evidence for answers it did not retain.
-        if (state.current) state.history[state.number - 1] ??= structuredClone(state.current);
-        root.innerHTML = `
-            <p data-score aria-live="polite"></p>
-
-            <div class="question-list" data-list></div>
-        `;
-
-        const score = root.querySelector('[data-score]');
-        const list = root.querySelector('[data-list]');
-
-        function save() {
-            return progress?.saveLessonActivityState?.(lessonSlug, 'question-bank', state);
-        }
-
-        function updateScore() {
-            score.textContent =
-                `Checked: ${state.checked} | ` +
-                `Correct: ${state.correct}`;
-        }
-
-        function chooseGenerator() {
-            const names = pool(state.number + 1);
-
-            let name = pick(names);
-
-            if (names.length > 1 && name === state.previous) {
-                const currentIndex = names.indexOf(name);
-
-                name = names[(currentIndex + 1) % names.length];
-            }
-
-            state.previous = name;
-
-            return name;
-        }
-
-        function addQuestion(restoring = false) {
-            if (!state.running || (!restoring && state.number >= sessionLength)) {
-                return;
-            }
-
-            const generatorName = restoring ? state.current.generatorName : chooseGenerator();
-            const question = restoring ? state.current.question : generators[generatorName]();
-
-            if (!restoring) {
-                state.number += 1;
-                state.current = { generatorName, question };
-            }
-
-            const questionNumber = state.number;
-            const questionId =
-                `question-bank:${questionNumber}`;
-
-            const card = document.createElement('article');
-
-            card.className = 'question-card';
-
-            card.innerHTML = `
-                <p class="question-number">
-                    Question ${questionNumber} of ${sessionLength}
-                </p>
-
-                <p class="question-prompt"></p>
-
-                <div class="esf-expression"></div>
-
-                <div
-                    class="question-options"
-                    data-options
-                    role="radiogroup"
-                ></div>
-
-                <p
-                    class="question-feedback"
-                    data-feedback
-                    aria-live="polite"
-                ></p>
-            `;
-
-            card.querySelector('.question-prompt')
-                .textContent = question.prompt;
-
-            card.querySelector('.esf-expression')
-                .innerHTML = question.expression;
-
-            const optionBox = card.querySelector('[data-options]');
-            const action = document.createElement('button');
-            action.type = 'button';
-            action.textContent = 'Check answer';
-            action.disabled = true;
-            const feedback = card.querySelector('[data-feedback]');
-
-            const optionElements = [];
-
-            const radioName =
-                `practice-question-${questionNumber}`;
-
-            optionBox.setAttribute(
-                'aria-label',
-                `Answers for question ${questionNumber}`
-            );
-
-            question.answers.forEach((answer) => {
-                const label = document.createElement('label');
-
-                label.className = 'question-option';
-
-                const input = document.createElement('input');
-
-                input.type = 'radio';
-                input.name = radioName;
-                input.value = answer.label;
-
-                const text = document.createElement('span');
-
-                text.textContent = answer.label;
-
-                label.append(input, text);
-                optionBox.append(label);
-
-                optionElements.push({ label, input, answer });
+        function continueQuestion() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === count;
             });
+            render();
+        }
 
-            /*
-             * One action button, three phases:
-             *   answering — "Check answer", disabled until
-             *               an option is selected
-             *   wrong     — "Try again", resets the question
-             *   correct   — "Next question", adds the next card
-             */
-            let hintShown = state.current.hintShown || false;
-            let phase = state.current.phase || 'answering';
-            let marked = state.current.marked || false;
-            let previousResult = state.current.previousResult ?? null;
+        function questionConfig(index, readOnly) {
+            const question = questions[index];
+            return {
+                ...window.FractionsIntroduction.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
+                sectionId: 'comparison', questionId: `final-check-${index + 1}`,
+                scored: true, readOnly,
+                onFeedback: reportProgress, onContinue: continueQuestion
+            };
+        }
 
-            function saveQuestion() {
-                Object.assign(state.current, {
-                    hintShown, phase, marked, previousResult,
-                    selected: optionElements.findIndex(({ input }) => input.checked),
-                    feedbackText: feedback.firstChild?.textContent || ''
-                });
-                state.history[questionNumber - 1] = structuredClone(state.current);
-                save();
-            }
-
-            function setAction(label, enabled) {
-                action.textContent = label;
-                action.disabled = !enabled;
-
-                window.Maths1to9Lesson
-                    ?.useButtonAsSectionAction?.(
-                        'question-bank',
-                        action
-                    );
-            }
-
-            function appendHint() {
-                if (hintShown && question.hint) {
-                    const hintLine = document.createElement('span');
-                    hintLine.textContent = question.hint;
-                    feedback.append(document.createElement('br'), hintLine);
-                }
-            }
-
-            function clearMarks() {
-                optionElements.forEach(({ label }) => {
-                    label.classList.remove(
-                        'is-correct',
-                        'is-incorrect',
-                        'is-correct-answer'
-                    );
-                });
-            }
-
-            optionElements.forEach(({ input }) => {
-                input.addEventListener('change', () => {
-                    if (phase === 'correct') {
-                        return;
-                    }
-
-                    clearMarks();
-
-                    phase = 'answering';
-                    setAction('Check answer', true);
-                    saveQuestion();
-                });
+        function renderEnding() {
+            const rows = questions.map((question, index) => {
+                const cardRoot = document.createElement('div');
+                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
             });
-
-            action.addEventListener('click', () => {
-                if (phase === 'wrong') {
-                    optionElements.forEach(({ input }) => {
-                        input.checked = false;
-                    });
-
-                    clearMarks();
-
-                    phase = 'answering';
-                    setAction('Check answer', false);
-                    saveQuestion();
-
-                    return;
-                }
-
-                if (phase === 'correct') {
-                    if (questionNumber === sessionLength) {
-                        window.Maths1to9Lesson.completeLesson();
-                        return;
-                    }
-                    setAction('Next question', false);
-                    addQuestion();
-
-                    return;
-                }
-
-                const selected = optionElements.find(
-                    ({ input }) => input.checked
-                );
-
-                if (!selected) {
-                    return;
-                }
-
-                clearMarks();
-
-                const isCorrect = selected.answer.correct;
-                state.current.firstCorrect ??= isCorrect;
-                state.current.attempts ??= [];
-                state.current.attempts.push({ selected: selected.input.value, correct: isCorrect });
-
-                window.Maths1to9Lesson?.recordAssessment?.({
-                    questionType: generatorName,
-                    questionId,
-                    correct: isCorrect
-                });
-
-                if (!marked) {
-                    state.checked += 1;
-
-                    if (isCorrect) {
-                        state.correct += 1;
-                    }
-                } else if (previousResult !== isCorrect) {
-                    state.correct += isCorrect ? 1 : -1;
-                }
-
-                marked = true;
-                previousResult = isCorrect;
-
-                updateScore();
-
-                if (state.correct === sessionLength) {
-                    completeSection('question-bank');
-                }
-
-                if (isCorrect) {
-                    phase = 'correct';
-
-                    selected.label.classList.add('is-correct');
-
-                    optionElements.forEach(({ input }) => {
-                        input.disabled = true;
-                    });
-
-                    setAction(questionNumber === sessionLength ? 'Finish lesson' : 'Next question', true);
-
-                    feedback.className =
-                        'question-feedback ' +
-                        'is-visible is-correct';
-
-                    feedback.textContent =
-                        `Correct. ${question.explanation}`;
-                } else {
-                    phase = 'wrong';
-
-                    selected.label.classList.add('is-incorrect');
-
-                    setAction('Try again', true);
-
-                    feedback.className =
-                        'question-feedback ' +
-                        'is-visible is-incorrect';
-
-                    feedback.textContent =
-                        selected.answer.feedback ||
-                        'Not quite. Try another option.';
-                    hintShown = true;
-                    appendHint();
-                }
-                saveQuestion();
+            const scorePanel = document.createElement('div');
+            const results = document.createElement('div');
+            root.append(scorePanel, results);
+            renderScorePanel(scorePanel, {
+                correct: rows.filter(row => row.firstCorrect === true).length, total: count
             });
-
-            if (restoring) {
-                const selected = optionElements[state.current.selected];
-                if (selected) selected.input.checked = true;
-                if (phase === 'correct') {
-                    selected?.label.classList.add('is-correct');
-                    optionElements.forEach(({ input }) => { input.disabled = true; });
-                    feedback.className = 'question-feedback is-visible is-correct';
-                    feedback.textContent = `Correct. ${question.explanation}`;
-                    setAction(questionNumber === sessionLength ? 'Finish lesson' : 'Next question', true);
-                } else {
-                    if (hintShown) {
-                        feedback.className = 'question-feedback is-visible is-incorrect';
-                        feedback.textContent = state.current.feedbackText || '';
-                        appendHint();
-                    }
-                    if (phase === 'wrong') selected?.label.classList.add('is-incorrect');
-                    setAction(phase === 'wrong' ? 'Try again' : 'Check answer', phase === 'wrong' || !!selected);
+            renderResults(results, rows, { heading: 'Your Check results' });
+            const summary = document.createElement('section');
+            summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
+            for (const point of lesson.comparison.summary.points) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = point.text;
+                summary.append(paragraph);
+            }
+            root.append(summary);
+            api.setSectionAction('comparison', {
+                label: 'All lessons',
+                async onClick() {
+                    if (state.finished) api.completeLesson();
+                    await window.Maths1to9Progress.saveCurrentLesson();
+                    window.location.assign(new URL('../../', window.location.href).href);
                 }
+            });
+        }
+
+        function render() {
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
+            root.append(heading);
+            api.setSectionBack('comparison', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('complete');
+            if (state.screen === count && state.finished) {
+                renderEnding();
             } else {
-                setAction('Check answer', false);
+                const cardRoot = document.createElement('div');
+                root.append(cardRoot);
+                const readOnly = state.screen < state.index;
+                api.createQuestion(cardRoot, questionConfig(state.screen, readOnly));
+                if (readOnly) api.setSectionAction('comparison', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
             }
-            saveQuestion();
-
-            list.replaceChildren(card);
-
-            card.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+            syncHash();
         }
 
-        function finishPractice(restoring = false) {
-            if (state.finished && restoring !== true) return;
-            state.finished = true;
-            state.running = false;
-            score.hidden = true;
-            save();
-            window.Maths1to9Lesson.clearSectionAction('question-bank');
-            list.innerHTML = '<h3>Your practice results</h3><ol class="retained-results">' + state.history.filter(Boolean).map(entry => {
-                const question = entry.question;
-                const answer = question.answers[entry.selected];
-                const correct = answer?.correct;
-                const status = entry.firstCorrect === true ? '✓' : entry.firstCorrect === false && correct ? '2nd try' : correct ? 'Correct' : 'Incorrect';
-                const row = document.createElement('li');
-                const line = document.createElement('div');
-                line.className = 'retained-result';
-                const prompt = document.createElement('span');
-                prompt.textContent = question.prompt;
-                const expression = document.createElement('span');
-                expression.innerHTML = question.expression || '';
-                prompt.append(' ', expression);
-                const result = document.createElement('span');
-                result.className = 'retained-result__answer';
-                const value = document.createElement('strong');
-                value.textContent = answer?.label || '';
-                result.append(value, ' ' + status);
-                line.append(prompt, result);
-                row.append(line);
-                if (entry.firstCorrect === false) {
-                    const explanation = document.createElement('p');
-                    explanation.className = 'retained-result__explanation';
-                    explanation.textContent = question.explanation;
-                    row.append(explanation);
+        questions.forEach((question, index) => {
+            api.registerHashRoute(`check-${index + 1}`, () => {
+                if (!api.goToSection('comparison', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
                 }
-                return row.outerHTML;
-            }).join('') + '</ol>' + (state.history.filter(Boolean).length < state.number ? '<p>Earlier questions were not retained by the previous version.</p>' : '');
-            completeSection('question-bank');
-            window.Maths1to9Lesson.completeLesson();
-        }
-        document.addEventListener('maths1to9:lesson-complete', () => finishPractice());
-
-        function startPractice() {
-            if (window.Maths1to9Lesson.getCurrentSection().id !== 'question-bank') return;
-            if (state.finished) {
-                finishPractice(true);
-                return;
-            }
-            if (list.children.length) return;
-            state.running = true;
-            updateScore();
-            if (state.correct === sessionLength) completeSection('question-bank');
-            addQuestion(!!state.current);
-        }
-        document.addEventListener('maths1to9:section-change', startPractice);
-        startPractice();
-    }
-
-    window.Maths1to9QuestionBanks ??= {};
-
-    window.Maths1to9QuestionBanks['fractions-introduction'] = mount;
-
-    function tryMount(root = null) {
-        const target =
-            root || document.getElementById(ROOT_ID);
-
-        if (target) {
-            mount(target);
+                showScreen(Math.min(index, state.furthestScreen));
+            });
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        document.addEventListener('maths1to9:comparison-view', () => {
+            if (root.dataset.view === 'summary' && state.finished) showScreen(count);
+        });
+        reportProgress();
+        render();
+        const requested = questions.findIndex((question, index) => initialHash === `#check-${index + 1}`);
+        if (initialHash === '#summary' && state.finished) {
+            if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
+        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener(
-            'DOMContentLoaded',
-            () => tryMount()
-        );
-    } else {
-        tryMount();
-    }
-
-    document.addEventListener(
-        'maths1to9:lesson-rendered',
-        (event) => {
-            tryMount(event.detail?.questionsRoot || null);
-        }
-    );
+    document.addEventListener('maths1to9:lesson-rendered', event => {
+        if (event.detail?.slug !== SLUG) return;
+        mountPractice();
+        mountCheck(document.getElementById(`${SLUG}-comparison`), event.detail.lesson);
+    });
 })();
