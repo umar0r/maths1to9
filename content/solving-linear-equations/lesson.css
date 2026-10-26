@@ -1,0 +1,13 @@
+/* Balanced equation pictures. */
+.eq-balance { max-width: 520px; margin: 1.25rem auto; }
+.eq-pans { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: end; gap: .4rem; }
+.eq-pan { display: grid; place-items: center; min-width: 0; min-height: 62px; padding: .75rem .35rem; border: 3px solid #155e75; border-top: 0; border-radius: 0 0 18px 18px; background: #ecfeff; color: #172b3b; font-size: clamp(1rem, 3.5vw, 1.3rem); font-weight: 800; text-align: center; overflow-wrap: anywhere; }
+.eq-equals { align-self: center; text-align: center; font-size: 1.5rem; color: #155e75; }
+.eq-beam { height: 4px; margin-top: .65rem; background: #155e75; border-radius: 4px; }
+.eq-stand { width: 0; height: 0; margin-inline: auto; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid #64748b; }
+.eq-caption { margin-top: .5rem; text-align: center; }
+@media (max-width: 400px) {
+    .eq-balance { margin-block: 1rem; }
+    .eq-pan { min-height: 52px; padding: .5rem .25rem; }
+    .eq-stand { border-bottom-width: 22px; border-left-width: 16px; border-right-width: 16px; }
+}
