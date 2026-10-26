@@ -4,7 +4,6 @@ const {MAIN_ACTION} = require('./helpers.cjs');
 // screens teach without a puzzle gate.
 const gated = [
     ['simplifying-expressions', 'explanation'],
-    ['function-machines-find-the-input-2', 'interactive'],
     ['solving-linear-equations', 'interactive'],
     ['solving-quadratic-equations', 'interactive']
 ];

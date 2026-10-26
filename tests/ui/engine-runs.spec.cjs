@@ -90,7 +90,8 @@ for (const lesson of lessons) {
         const missed = (progress?.scoreActivities ?? []).filter(a => !a.completed || (a.kind === 'answer' && !a.firstCorrect)).map(a => a.id);
         test.info().annotations.push({ type: 'score', description: `${progress?.score?.points} of ${progress?.score?.maximumPoints} points` });
         if (lesson === 'function-machines-find-the-input-2') {
-            expect.soft(progress?.score?.maximumPoints, 'Every function-machine question and step must count separately').toBe(360);
+            // On the shared template: 4 sections (20) + 8 Try it steps (40) + 6 Practice (60) + 5 Check (50).
+            expect.soft(progress?.score?.maximumPoints, 'Every function-machine question and step must count separately').toBe(170);
         }
         // Report every end-of-run problem together rather than stopping at the first.
         expect.soft(missed, 'activities not completed (or not correct first time) after a full correct run').toEqual([]);
