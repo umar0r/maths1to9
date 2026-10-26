@@ -15,15 +15,22 @@ for (const width of [1280, 375]) {
             await expect(prompt(page)).toHaveCount(0);
             await expect(page.getByText('A factor divides a number exactly, with no remainder.', { exact: true })).toBeVisible();
             await expect(page.locator('.hcf-tile.is-largest:visible')).toHaveCount(2);
+            if (width === 375) {
+                const rows = await page.locator('.hcf-factor-row:visible').evaluateAll(rows => rows.map(row => [...row.children].map(child => child.getBoundingClientRect().top)));
+                for (const tops of rows) expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(8);
+            }
             await main(page).click();
             const slider = page.getByRole('slider', { name: 'Matched pairs', exact: true });
             await slider.focus(); await slider.press('ArrowRight');
             await expect(slider).toBeFocused();
+            await expect(page.getByText('Matched pairs: 1 of 3', { exact: true })).toBeVisible();
             await expect(page.locator('.hcf-zone.shared:visible .hcf-tile')).toHaveCount(1);
             await reload(page);
             await expect(slider).toHaveValue('1');
+            await expect(page.getByText('Matched pairs: 1 of 3', { exact: true })).toBeVisible();
             await slider.focus(); await slider.press('End');
             await expect(page.locator('.hcf-zone.shared:visible .hcf-tile')).toHaveCount(3);
+            await expect(page.getByText('Matched pairs: 3 of 3', { exact: true })).toBeVisible();
             await page.screenshot({ path: `/private/tmp/hcf-learn-${width}.png`, fullPage: true });
             const visited = new Set();
             const testedNumbers = new Set();

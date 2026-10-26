@@ -61,17 +61,19 @@
             window.HCF.drawLearn(visual, state.screen, state.matches);
             if (state.screen === 1) {
                 const label = document.createElement('label');
-                label.textContent = 'Matched pairs ';
+                const count = document.createElement('span');
+                count.textContent = `Matched pairs: ${state.matches} of 3`;
                 const slider = document.createElement('input');
                 Object.assign(slider, { type: 'range', min: '0', max: '3', step: '1', value: String(state.matches) });
                 slider.setAttribute('aria-label', 'Matched pairs');
                 slider.addEventListener('input', () => {
                     section.update(state => { state.matches = Number(slider.value); });
+                    count.textContent = `Matched pairs: ${state.matches} of 3`;
                     api.recordActivity({ id: 'hcf:explore-matches', kind: 'explore' });
                     visual.replaceChildren();
                     window.HCF.drawLearn(visual, state.screen, state.matches);
                 });
-                label.append(slider);
+                label.append(count, slider);
                 root.append(label);
             }
             api.setSectionBack('explanation', state.screen > 0 ? {

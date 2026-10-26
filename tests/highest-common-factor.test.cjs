@@ -64,7 +64,7 @@ test('highest-common-factor: sessions are seeded, have six items and mix two cho
 });
 test('highest-common-factor: Learn teaches factors, prime factors, repeated matches, multiplication and no-match cases', () => {
     const text = Q.learnScreens.flatMap(s => s.lines).join(' ');
-    for (const keyword of ['factor', 'prime', 'overlap', 'repeated', 'Multiply', 'HCF is 1']) assert.ok(text.includes(keyword));
+    for (const keyword of ['factor', 'prime', 'overlap', 'repeated', 'Multiply', 'HCF is 1']) assert.ok(text.toLowerCase().includes(keyword.toLowerCase()));
     assert.equal(Q.learnScreens[0].title, 'What HCF means');
     assert.deepEqual(Array.from(Q.shared([24, 36])), [2, 2, 3]);
     for (const fn of [Q.examples, Q.checks]) {

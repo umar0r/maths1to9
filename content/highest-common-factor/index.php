@@ -28,7 +28,7 @@ $pageTitle = 'Highest common factor';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=6">
+    <link rel="stylesheet" href="./lesson.css?v=7">
 </head>
 
 <body
@@ -70,11 +70,11 @@ $pageTitle = 'Highest common factor';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
-    <script src="./hcf.js?v=5"></script>
+    <script src="./hcf.js?v=6"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=6"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./interactive.js?v=12"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=45"></script>

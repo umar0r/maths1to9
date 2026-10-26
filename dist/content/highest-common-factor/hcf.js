@@ -217,14 +217,14 @@
     }
     const learnScreens = [
         { title: 'What HCF means', lines: ['A factor divides a number exactly, with no remainder.', 'A common factor divides both numbers. The highest common factor (HCF) is the biggest one.', 'The highlighted factors divide both 12 and 18. The biggest is 6.'] },
-        { title: 'Match the prime factors', lines: ['A prime number has just two factors: 1 and itself. Examples are 2, 3 and 5.', 'Prime factors are prime numbers that multiply to make a number. Here, each tile is one prime factor.', 'Match the same prime in both rows. Put one tile from each pair in the overlap, the shared part of the circles. Match repeated primes too.'] },
+        { title: 'Match the prime factors', lines: ['A prime number has just two factors: 1 and itself. Examples are 2, 3 and 5.', 'Prime factors are prime numbers that multiply to make a number. Here, each tile is one prime factor.', 'Move the slider. Each matching pair of primes moves into the overlap, the part both circles share. Repeated primes can match too.'] },
         { title: 'Multiply the overlap', lines: ['Multiply the primes in the overlap, using each matched pair once.', 'Keep the other primes outside the overlap. They are not shared by both numbers.'] },
         { title: 'No matches', lines: ['When no primes match, the HCF is 1. The number 1 divides every whole number.'] }
     ];
     function drawLearn(host, index, matches = 0) {
         if (index === 0) {
             for (const [number, factors] of [[12, [1, 2, 3, 4, 6, 12]], [18, [1, 2, 3, 6, 9, 18]]]) {
-                const row = element('div', '', 'hcf-row');
+                const row = element('div', '', 'hcf-row hcf-factor-row');
                 row.append(element('strong', `${number}:`));
                 for (const factor of factors) row.append(element('span', factor, `hcf-tile${[1, 2, 3, 6].includes(factor) ? ' is-shared' : ''}${factor === 6 ? ' is-largest' : ''}`));
                 host.append(row);

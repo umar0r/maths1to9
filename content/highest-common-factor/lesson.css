@@ -111,6 +111,8 @@
 
 @media (max-width: 620px) {
     .hcf-zone .hcf-tile { min-width: 36px; min-height: 40px; }
+    .hcf-factor-row { flex-wrap: nowrap; gap: 4px; }
+    .hcf-factor-row .hcf-tile { min-width: 32px; min-height: 40px; font-size: 1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
