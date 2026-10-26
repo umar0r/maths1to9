@@ -179,7 +179,7 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
             await capture(page, 'learn-5'); await backAndForward(page); await reload(page); await main(page).click();
             for (let i = 0; i < 4; i++) {
                 const saved = await state(page, 'interactive');
-                const definition = await page.evaluate(i => SpeedJourneys.examples[i], i);
+                const definition = await page.evaluate(i => SpeedJourneys.examples()[i], i);
                 if (mode.touch && i === 0) {
                     await page.locator('.question-card input:visible').fill('0.25'); await reload(page);
                     await main(page).click(); await expect(main(page)).toHaveText('Try again'); await reload(page); await main(page).click();
@@ -188,22 +188,22 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
                 await main(page).click();
             }
             await backAndForward(page); await main(page).click();
-            for (let i = 0; i < 8; i++) await solvePractice(page, mode.touch && i === 0);
+            for (let i = 0; i < 6; i++) await solvePractice(page, mode.touch && i === 0);
             await capture(page, 'practice-results'); await reload(page);
             const scoreBeforeRepeat = await page.evaluate(() => Maths1to9Lesson.getScore());
             if (mode.touch) {
                 for (let session = 0; session < 2; session++) {
                     await page.getByRole('button', { name: 'Practise again', exact: true }).click();
-                    for (let i = 0; i < 8; i++) await solvePractice(page);
+                    for (let i = 0; i < 6; i++) await solvePractice(page);
                     await reload(page); expect(await page.evaluate(() => Maths1to9Lesson.getScore())).toEqual(scoreBeforeRepeat);
                 }
                 expect((await state(page, 'question-bank')).earlier.length).toBe(2);
             }
             await back(page).click();
             expect(await page.locator('.question-card input:visible').count()).toBe(0); await main(page).click(); await main(page).click();
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 5; i++) {
                 const saved = await state(page, 'comparison');
-                const definition = await page.evaluate(i => SpeedJourneys.checks[i], i);
+                const definition = await page.evaluate(i => SpeedJourneys.checks()[i], i);
                 if (mode.touch && i === 0) {
                     const wrong = definition.options.findIndex(option => !option.correct);
                     await page.locator('.question-card-options:visible button').nth(saved.order[i].indexOf(wrong)).click(); await reload(page);
@@ -243,7 +243,7 @@ for (const width of [1280, 375]) test(`${width}px every specified misconception 
     await page.goto(`/content/${slug}/`); await ready(page);
     const count = await page.evaluate(() => {
         const J = SpeedJourneys, E = Maths1to9LessonEngine;
-        const definitions = [...J.examples, ...J.checks,
+        const definitions = [...J.examples(), ...J.checks(),
             ...[...J.typedTypes, ...J.choiceTypes].flatMap(type => [1, 8, 23].map(seed => J.generate({ type, seed }, E.seededRandom(seed))))];
         window.speedFeedbackCases = definitions.flatMap(definition => {
             if (definition.input === 'choice') return definition.options.flatMap((option, index) => option.correct ? [] : [{ definition, option: index, feedback: option.feedback }]);

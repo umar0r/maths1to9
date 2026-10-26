@@ -16,15 +16,16 @@ test('speedText divides distance by time and keeps the unit with the answer', ()
     assert.equal(J.speedText(18, 6), '18 ÷ 6 = 3\u00a0m/s');
     assert.equal(J.speedText(0, 4), '0 ÷ 4 = 0\u00a0m/s');
 });
-test('seeded sessions alternate four distinct typed types and one of every choice type', () => {
+test('seeded sessions alternate three distinct typed types and three distinct choice types', () => {
     for (let seed = 0; seed < 200; seed++) {
         const items = J.pick(E.seededRandom(seed));
-        assert.equal(items.length, 8);
+        assert.equal(items.length, 6);
         const typed = items.filter((item, i) => i % 2 === 0).map(item => item.type);
         const choices = items.filter((item, i) => i % 2 === 1).map(item => item.type);
-        assert.equal(new Set(typed).size, 4);
+        assert.equal(new Set(typed).size, 3);
         assert.ok(typed.every(type => J.typedTypes.includes(type)));
-        assert.deepEqual([...choices].sort(), [...J.choiceTypes].sort());
+        assert.equal(new Set(choices).size, 3);
+        assert.ok(choices.every(type => J.choiceTypes.includes(type)));
         assert.deepEqual(plain(items), plain(J.pick(E.seededRandom(seed))));
         for (const item of items) {
             assert.deepEqual(plain(J.generate(item, E.seededRandom(item.seed))), plain(J.generate(item, E.seededRandom(item.seed))));
@@ -56,11 +57,33 @@ test('every generated journey follows the time, distance, section and whole-spee
         if (q.options) {
             assert.equal(new Set(q.options.map(o => o.label)).size, q.options.length);
             assert.equal(q.options.filter(o => o.correct).length, 1);
-            assert.ok(q.options.length >= 3);
+            assert.equal(q.options.length, 4);
         }
         if (q.input === 'number') for (const rule of q.rules) {
             if (q.fields) assert.notDeepEqual(plain(rule.value), plain(q.answer));
             else assert.notEqual(Number(rule.value), Number(q.answer));
         }
     }
+});
+
+test('typed answers are the highlighted section\'s distance ÷ time', () => {
+    for (const type of J.typedTypes) for (let seed = 0; seed < 300; seed++) {
+        const q = J.generate({ type, seed }, E.seededRandom(seed));
+        const [t1, t2] = q.journey.section;
+        const at = t => q.journey.corners.find(([time]) => time === t)[1];
+        const speed = (at(t2) - at(t1)) / (t2 - t1);
+        if (q.fields) assert.deepEqual(plain(q.answer), { d: String(at(t2) - at(t1)), t: String(t2 - t1) }, q.prompt);
+        else assert.equal(Number(q.answer), speed, q.prompt);
+    }
+});
+test('Try it and Check mix choice and typed cards, with four options on every choice', () => {
+    for (const set of [J.examples(), J.checks()]) {
+        assert.ok(set.filter(q => q.input === 'choice').length >= 1);
+        assert.ok(set.filter(q => q.input === 'number').length >= 1);
+        for (const q of set.filter(q => q.options)) {
+            assert.equal(q.options.length, 4, q.prompt);
+            assert.equal(q.options.filter(o => o.correct).length, 1, q.prompt);
+        }
+    }
+    assert.equal(J.checks().length, 5);
 });
