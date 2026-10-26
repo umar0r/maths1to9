@@ -1,0 +1,132 @@
+{
+    "id": "speed-from-distance-time-graphs",
+    "slug": "speed-from-distance-time-graphs",
+    "title": "Speed from a distance–time graph",
+    "subtitle": "Work out speed from a straight section of a distance–time graph.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "whole-line": "speed-from-distance-time-graph",
+            "second-section": "speed-from-distance-time-graph",
+            "middle-section": "speed-from-distance-time-graph",
+            "after-stop": "speed-from-distance-time-graph",
+            "distance-and-time": "speed-from-distance-time-graph",
+            "stopped": "speed-from-distance-time-graph",
+            "whole-journey-mistake": "speed-from-distance-time-graph",
+            "fastest": "speed-from-distance-time-graph",
+            "steady-or-not": "speed-from-distance-time-graph",
+            "amir": "speed-from-distance-time-graph",
+            "fix-it": "speed-from-distance-time-graph",
+            "who-is-faster": "speed-from-distance-time-graph",
+            "after-a-stop": "speed-from-distance-time-graph",
+            "stop-duration": "speed-from-distance-time-graph"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Use a distance–time graph to work out how fast someone is going, and spot when they've stopped."
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Work out the speed",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise finding speed",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "amir"
+            },
+            {
+                "type": "fix-it"
+            },
+            {
+                "type": "who-is-faster"
+            },
+            {
+                "type": "after-a-stop"
+            },
+            {
+                "type": "stop-duration"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "Speed = distance travelled ÷ time taken"
+                },
+                {
+                    "text": "For a section, use only its start and end."
+                },
+                {
+                    "text": "Steeper is faster. Flat means stopped."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        }
+    ]
+}

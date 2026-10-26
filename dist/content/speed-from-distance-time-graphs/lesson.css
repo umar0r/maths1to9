@@ -1,0 +1,14 @@
+.walker { margin: 2rem 0 1.5rem; }
+.walker__track { position: relative; height: 3.5rem; margin: 0 1rem; }
+.walker__track::before { content: ''; position: absolute; top: 1.25rem; width: 100%; border-top: 3px solid var(--border); }
+.walker__start { position: absolute; left: 0; top: -.75rem; color: var(--text-muted); font-size: .8rem; }
+.walker__mark { position: absolute; top: 1.8rem; transform: translateX(-50%); white-space: nowrap; color: var(--text-muted); font-size: 12px; }
+.walker__mark::before { content: ''; position: absolute; left: 50%; top: -.6rem; height: .4rem; border-left: 1px solid var(--border); }
+.walker__dot { position: absolute; top: .85rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); transform: translateX(-50%); transition: left 200ms; }
+.walker__caption { margin: .5rem 0; font-size: .95rem; }
+.speed-slider { display: flex; flex-direction: column; gap: .75rem; }
+.speed-slider input { width: 100%; min-height: 44px; }
+.speed-section-options { display: flex; gap: .75rem; }
+.speed-section-options > .button { flex: 1; }
+.speed-working { font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .walker__dot { transition: none; } }
