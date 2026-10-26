@@ -72,7 +72,7 @@
 .lcm-tile.is-shared {
     background: #dcfce7;
     border-color: #15803d;
-    animation: lcm-slide .3s ease-out;
+    animation: lcm-fade .2s ease-out;
 }
 
 .lcm-tile[aria-pressed="true"] {
@@ -104,9 +104,9 @@
 .lcm-none input { width: 22px; height: 22px; }
 .lcm-tile-message { min-height: 1.5em; }
 
-@keyframes lcm-slide {
-    from { transform: translateY(40px); opacity: .2; }
-    to { transform: translateY(0); opacity: 1; }
+@keyframes lcm-fade {
+    from { opacity: .4; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 620px) {
@@ -116,7 +116,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lcm-model * { animation: none !important; }
+    .lcm-tile { animation: none !important; transition: none !important; }
 }
 
 .lcm-tile.is-lcm-side { border-color: #0369a1; background: #e0f2fe; }

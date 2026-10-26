@@ -28,7 +28,7 @@ $pageTitle = 'Lowest common multiple';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=6">
+    <link rel="stylesheet" href="./lesson.css?v=7">
 </head>
 
 <body

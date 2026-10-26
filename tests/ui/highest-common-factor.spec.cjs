@@ -37,6 +37,14 @@ for (const width of [1280, 375]) {
             let customTested = false;
             for (let step = 0; step < 160; step++) {
                 expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+                const animation = await page.locator('.hcf-tile:visible').evaluateAll(tiles => tiles.map(tile => {
+                    const style = getComputedStyle(tile);
+                    return { transform: style.transform, duration: parseFloat(style.animationDuration), delay: parseFloat(style.animationDelay) };
+                }));
+                for (const tile of animation) {
+                    expect(tile.transform).toBe('none');
+                    expect(tile.duration + tile.delay).toBeLessThanOrEqual(.5);
+                }
                 const url = page.url();
                 const previous = page.getByRole('button', { name: 'Previous screen', exact: true });
                 if (!visited.has(url) && await previous.isVisible()) {
@@ -147,6 +155,37 @@ for (const width of [1280, 375]) {
             await expect(main(page)).toHaveText('All lessons');
             await main(page).click(); await expect(page).toHaveURL(/\/dist\/$/);
             expect((await page.request.get(page.url())).ok()).toBe(true);
+        });
+    });
+}
+
+for (const reducedMotion of ['no-preference', 'reduce']) {
+    test.describe('highest-common-factor tile entrance ' + reducedMotion, () => {
+        test.use({ viewport: { width: 375, height: 900 }, hasTouch: true, reducedMotion });
+        test('tiles fade briefly in place, with no animation for reduced motion', async ({ page }) => {
+            await page.goto('content/highest-common-factor/', { waitUntil: 'networkidle' });
+            async function checkTiles() {
+                const styles = await page.locator('.hcf-tile:visible').evaluateAll(tiles => tiles.map(tile => {
+                    const style = getComputedStyle(tile);
+                    return { name: style.animationName, duration: parseFloat(style.animationDuration),
+                        transform: style.transform, frames: tile.getAnimations().flatMap(animation => animation.effect.getKeyframes()) };
+                }));
+                expect(styles.length).toBeGreaterThan(0);
+                for (const style of styles) {
+                    expect(style.transform).toBe('none');
+                    expect(style.duration).toBeLessThanOrEqual(.5);
+                    if (reducedMotion === 'reduce') expect(style.name).toBe('none');
+                    for (const frame of style.frames) expect(frame.transform || 'none').toBe('none');
+                }
+            }
+            await checkTiles();
+            await page.screenshot({ path: `/private/tmp/hcf-first-${reducedMotion}-375.png`, fullPage: true });
+            for (let screen = 0; screen < 3; screen++) {
+                await main(page).click();
+                const slider = page.getByRole('slider', { name: 'Matched pairs', exact: true });
+                if (await slider.isVisible()) await slider.press('End');
+                await checkTiles();
+            }
         });
     });
 }

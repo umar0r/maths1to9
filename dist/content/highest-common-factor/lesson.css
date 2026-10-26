@@ -72,7 +72,7 @@
 .hcf-tile.is-shared {
     background: #dcfce7;
     border-color: #15803d;
-    animation: hcf-slide .3s ease-out;
+    animation: hcf-fade .2s ease-out;
 }
 
 .hcf-tile[aria-pressed="true"] {
@@ -104,9 +104,9 @@
 .hcf-none input { width: 22px; height: 22px; }
 .hcf-tile-message { min-height: 1.5em; }
 
-@keyframes hcf-slide {
-    from { transform: translateY(40px); opacity: .2; }
-    to { transform: translateY(0); opacity: 1; }
+@keyframes hcf-fade {
+    from { opacity: .4; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 620px) {
@@ -116,5 +116,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .hcf-model * { animation: none !important; }
+    .hcf-tile { animation: none !important; transition: none !important; }
 }
