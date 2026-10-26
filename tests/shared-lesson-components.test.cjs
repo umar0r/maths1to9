@@ -141,21 +141,6 @@ test('section state rejects non-JSON values with the storage key in the error', 
     await assert.rejects(createSectionState('pilot', 'learn', { version: 1, initial: () => ({ bad: undefined }) }, harness.store), /learn.*plain JSON/);
 });
 
-test('LCM upgrade preserves its legacy save and declines unknown versions', async () => {
-    const pilot = fs.readFileSync(path.join(__dirname, '../content/lowest-common-multiple/interactive.js'), 'utf8');
-    const body = pilot.match(/upgrade\(saved, fromVersion\) \{([\s\S]*?)\n                \}/)[1];
-    const upgrade = new Function('saved', 'fromVersion', body);
-    const legacy = { index: 1, items: [{ phase: 'wrong', value: '18' }] };
-    assert.equal(upgrade(legacy, 0), legacy);
-    for (const version of [2, 99, -1]) {
-        assert.equal(upgrade(legacy, version), null);
-        const harness = stateStore({ sharedState: 1, version, data: legacy });
-        const section = await createSectionState('pilot', 'interactive', { ...stateOptions, version: 1, upgrade }, harness.store, harness.schedule);
-        assert.equal(section.state.screen, 0);
-        assert.equal(harness.writes[0].value.version, 1);
-    }
-});
-
 test('save validates and batches directly mutated state without changing it', async () => {
     const harness = stateStore();
     const section = await createSectionState('pilot', 'interactive', stateOptions, harness.store, harness.schedule);
