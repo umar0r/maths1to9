@@ -46,7 +46,8 @@
                 equation: `${term(a, letter)} = ${numberText(c - b)}` });
             if (a !== 1) steps.push({ instruction: `Divide both sides by ${a}.`, equation: `${letter} = ${numberText(c - b)} ÷ ${a}` });
         }
-        steps.push({ instruction: 'This is the value of the unknown.', equation: `${letter} = ${numberText(model.solution)}` });
+        const finalEquation = `${letter} = ${numberText(model.solution)}`;
+        if (steps.at(-1)?.equation !== finalEquation) steps.push({ instruction: 'This is the value of the unknown.', equation: finalEquation });
         return steps;
     }
     function wrongAnswers(model) {
