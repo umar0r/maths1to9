@@ -78,4 +78,14 @@ async function htmlDrag(page, source, target) {
     }
 }
 
-module.exports = { lessonData, num, same, tidy, section, sectionText, options, choose, setSlider, htmlDrag };
+// The visible labels of shared-card option buttons, without the rejected
+// mark (×) or its screen-reader text ("Incorrect option").
+function optionLabels(buttons) {
+    return buttons.evaluateAll(nodes => nodes.map(node => {
+        const copy = node.cloneNode(true);
+        copy.querySelectorAll('.visually-hidden, [aria-hidden="true"]').forEach(part => part.remove());
+        return copy.textContent.replace(/\s+/g, ' ').replace(/\s*×\s*$/, '').trim();
+    }));
+}
+
+module.exports = { lessonData, num, same, tidy, section, sectionText, options, choose, setSlider, htmlDrag, optionLabels };

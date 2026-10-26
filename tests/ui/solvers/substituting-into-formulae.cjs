@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read the formula and values from each question, work it out, then pick the
 // answer with the right unit or place the values and type the result.
 const signed = text => Number(String(text).replace(/−/g, '-'));
@@ -29,9 +30,9 @@ async function solve(page, memory = {}) {
     const prompt = await card.locator('.question-prompt').innerText();
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
-        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const labels = await optionLabels(options);
         let answer;
-        if (/Which part do you work out first/.test(prompt)) answer = labels.find(label => /^\d+ × \d+$/.test(label));
+        if (/Which part do you work out first/.test(prompt)) answer = prompt.match(/(\d+ × \d+)/)[1];
         else if (/What value is given for (\w)/.test(prompt)) answer = String(read(prompt).givens[prompt.match(/given for (\w)/)[1]]);
         else {
             const value = shown(read(prompt).answer);

@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read each machine from the question, undo it box by box, and answer the
 // guided steps from their own wording.
 const signed = text => Number(String(text).replace(/−/g, '-'));
@@ -20,8 +21,12 @@ async function answerFor(card, prompt, labels) {
     if ((m = prompt.match(/next box to undo says ([+−×÷]) (\d+)/))) return `${OPPOSITE[m[1]]} ${m[2]}`;
     if ((m = prompt.match(/Work out (−?\d+) ([+−×÷]) (\d+)/))) return shown(DO[m[2]](signed(m[1]), Number(m[3])));
     // Numbers in the machine picture, not in the prompt or the options.
-    let picture = await card.innerText();
-    for (const text of [prompt, ...labels]) picture = picture.replace(text, ' ');
+    // Only the machine picture: leave out the prompt, the options and any feedback.
+    const picture = await card.evaluate(node => {
+        const copy = node.cloneNode(true);
+        copy.querySelectorAll('.question-prompt, .question-card-options, .question-feedback, h3').forEach(part => part.remove());
+        return copy.textContent;
+    });
     // Box labels like "× 4" are operations, not values.
     const pictured = (picture.replace(/[+−×÷]\s*\d+/g, ' ').match(/−?\d+/g) ?? []).map(signed);
     if (/Which number do you start with/.test(prompt)) {
@@ -52,7 +57,7 @@ async function solve(page, memory = {}) {
     const card = page.locator('.question-card:visible');
     const prompt = await card.locator('.question-prompt').innerText();
     const options = card.locator('.question-card-options button');
-    const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+    const labels = await optionLabels(options);
     const answer = await answerFor(card, prompt, labels);
     if (labels.length) {
         const index = labels.indexOf(answer);

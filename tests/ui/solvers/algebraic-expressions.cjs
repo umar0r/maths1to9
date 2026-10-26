@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read each story, work out the expression as [number, letter, letter²]
 // amounts, then pick the matching choice or build it from tiles.
 const WORDS = { twice: 2, 'three times': 3, 'four times': 4, 'five times': 5, 'six times': 6, three: 3 };
@@ -61,9 +62,9 @@ async function solve(page, memory = {}) {
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
         const letter = (prompt.match(/\b([a-z])\b(?= (?:songs|coins|points|pens|counters|stickers|marbles|cards|goals|pounds)|\. |,| multiplied| \+|$)/) || prompt.match(/lots of ([a-z])/) || [])[1]
-            ?? (await options.allInnerTexts()).join(' ').match(/[a-z]/)[0];
+            ?? (await optionLabels(options)).join(' ').match(/[a-z]/)[0];
         const answer = written(goal, letter, brackets);
-        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const labels = await optionLabels(options);
         const index = labels.indexOf(answer);
         if (index < 0) throw new Error(`No option "${answer}" in ${labels.join(' | ')} for: ${prompt}`);
         await options.nth(index).click();

@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read each quadratic from the question and find both whole-number solutions
 // by trying values, then pick or type them smaller first.
 function side(text, x) {
@@ -34,7 +35,7 @@ async function solve(page, memory = {}) {
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
         const answer = `x = ${shown(smaller)} or x = ${shown(larger)}`;
-        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const labels = await optionLabels(options);
         const index = labels.indexOf(answer);
         if (index < 0) throw new Error(`No option "${answer}" in ${labels.join(' | ')} for: ${prompt}`);
         await options.nth(index).click();

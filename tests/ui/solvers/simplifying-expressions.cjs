@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read the expression from each question, collect its terms by letter part,
 // then pick the option with the same value or work the activity.
 const POWERS = { '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6 };
@@ -50,7 +51,7 @@ async function solve(page, memory = {}) {
     const expression = prompt.match(/(?:Simplify|In|terms in) (.+?)(?:\. |, select|\.$)/)[1];
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
-        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const labels = await optionLabels(options);
         const index = labels.findIndex(label => same(label, expression));
         if (index < 0) throw new Error(`No option equal to ${expression} in ${labels.join(' | ')}`);
         await options.nth(index).click();

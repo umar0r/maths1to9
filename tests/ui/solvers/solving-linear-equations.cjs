@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Read each equation from the question and solve it; build the story
 // equation from the story's numbers.
 function side(text, x) {
@@ -37,7 +38,7 @@ async function solveStep(page, memory = {}) {
     const answer = answerFor(prompt);
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
-        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const labels = await optionLabels(options);
         const index = labels.indexOf(answer);
         if (index < 0) throw new Error(`No option "${answer}" in ${labels.join(' | ')} for: ${prompt}`);
         await options.nth(index).click();

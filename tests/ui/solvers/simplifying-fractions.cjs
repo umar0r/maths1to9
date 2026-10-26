@@ -1,3 +1,4 @@
+const { optionLabels } = require('./common.cjs');
 // Work out each answer from the visible question and its picture. Explore the
 // Learn slider once so the exploration points are earned.
 const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
@@ -68,7 +69,7 @@ async function solve(page, memory = {}) {
     const answer = answerFor(prompt, picture);
     const options = card.locator('.question-card-options button');
     if (await options.count()) {
-        const labels = await options.allInnerTexts();
+        const labels = await optionLabels(options);
         const text = Array.isArray(answer) ? answer.join('/') : answer;
         const fits = typeof answer === 'function' ? answer : label => tidy(label) === tidy(text);
         const index = labels.findIndex(label => fits(label.replace(/\s*×\s*$/, '')));
