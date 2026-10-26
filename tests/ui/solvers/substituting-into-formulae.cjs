@@ -1,66 +1,56 @@
-// Substitute the displayed values, calculate the resulting expression and
-// choose the answer with the appropriate unit. No correctness markers are read.
-const {section, choose} = require('./common.cjs');
-const {evaluate, close} = require('../../helpers/lessons.cjs');
+// Read the formula and values from each question, work it out, then pick the
+// answer with the right unit or place the values and type the result.
+const signed = text => Number(String(text).replace(/−/g, '-'));
+const shown = value => String(value).replace(/-/g, '−');
+const UNITS = { area: 'cm²', perimeter: 'cm', pyramid: 'cm³', speed: 'mph' };
 
-module.exports = async function solve(page) {
-    const where = await section(page);
-    if (!['interactive','question-bank'].includes(where)) return false;
-    const main = page.locator('.lesson-controls button:visible').first();
-    if (await main.isEnabled()) return false;
-    const container = page.locator(`[data-lesson-section="${where}"]`);
-    if (where === 'interactive') {
-        const text = (await container.innerText()).replace(/\s+/g,' ');
-        const value = Number(text.match(/s = (\d+)/)?.[1]);
-        const formula = text.match(/C = (\d+) \+ (\d+)s/);
-        if (!formula || !Number.isFinite(value)) throw new Error(`Cannot read the cinema formula: ${text}`);
-        const slot = container.locator('[data-role="slot"]');
-        if (await slot.count()) {
-            await container.getByRole('button',{name:String(value),exact:true}).click();
-            await container.locator('[data-role="slot"]').click();
-            return true;
-        }
-        const prompt = await container.locator('.question-prompt').innerText();
-        const result = Number(formula[1]) + Number(formula[2]) * value;
+function evaluate(formula, givens) {
+    let js = formula.split(' = ')[1].replace(/−/g, '-').replace(/×/g, '*').replace(/÷/g, '/');
+    js = js.replace(/[a-z]/g, letter => `(${givens[letter]})`).replace(/²/g, '**2').replace(/³/g, '**3');
+    return Function(`return ${js.replace(/(\d|\))\s*\(/g, '$1*(')};`)();
+}
+function read(prompt) {
+    const [, formula, given] = prompt.match(/Use ([A-Za-z] = .+?) when (.+?)\. (?:Find|Replace|What)/);
+    const givens = Object.fromEntries([...given.matchAll(/([a-z]) = (−?\d+)/g)].map(([, letter, value]) => [letter, signed(value)]));
+    return { givens, answer: evaluate(formula, givens) };
+}
+
+async function solve(page, memory = {}) {
+    const main = page.locator('.lesson-controls button.button--primary:visible');
+    const action = await main.innerText();
+    if (action === 'All lessons') {
+        const home = new URL('../../', page.url()).pathname;
+        await main.click();
+        if (new URL(page.url()).pathname !== home) (memory.problems ??= []).push('All lessons did not reach the homepage');
+        return true;
+    }
+    if (action !== 'Check' || await main.isEnabled()) return false;
+    const card = page.locator('.question-card:visible');
+    const prompt = await card.locator('.question-prompt').innerText();
+    const options = card.locator('.question-card-options button');
+    if (await options.count()) {
+        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
         let answer;
-        if (/What value are you given/.test(prompt)) answer = String(value);
-        else if (/Which part do you work out first/.test(prompt)) answer = `${formula[2]} × ${value}`;
-        else if (/What is the value/.test(prompt)) answer = String(result);
-        else if (/with its unit/.test(prompt)) answer = `£${result}`;
-        else throw new Error(`Cannot solve walkthrough step: ${prompt}`);
-        await container.getByRole('button',{name:answer,exact:true}).click();
+        if (/Which part do you work out first/.test(prompt)) answer = labels.find(label => /^\d+ × \d+$/.test(label));
+        else if (/What value is given for (\w)/.test(prompt)) answer = String(read(prompt).givens[prompt.match(/given for (\w)/)[1]]);
+        else {
+            const value = shown(read(prompt).answer);
+            const unit = Object.entries(UNITS).find(([word]) => prompt.toLowerCase().includes(word))?.[1];
+            answer = labels.some(label => label.startsWith('£')) ? `£${value}` : unit ? `${value} ${unit}` : value;
+        }
+        const index = labels.indexOf(answer);
+        if (index < 0) throw new Error(`No option "${answer}" in ${labels.join(' | ')} for: ${prompt}`);
+        await options.nth(index).click();
         return true;
     }
-    const card = container.locator('.question-card').first();
-    const givens = {};
-    for (const chip of await card.locator('.lx2-chip-row').first().locator('.lx2-chip').allTextContents()) {
-        const match = chip.replace(/\s+/g,' ').trim().match(/^([a-z]) = ([−-]?\d+(?:\.\d+)?)$/i);
-        if (match) givens[match[1]] = match[2];
+    const { givens, answer } = read(prompt);
+    const slots = card.locator('button[data-letter]');
+    for (let index = 0; index < await slots.count(); index++) {
+        const letter = await slots.nth(index).getAttribute('data-letter');
+        await card.getByRole('button', { name: `Value ${shown(givens[letter])}`, exact: true }).click();
+        await slots.nth(index).click();
     }
-    for (const slot of await card.locator('[data-slot]').all()) {
-        const letter = (await slot.innerText()).match(/[a-z]/)?.[0];
-        if (!letter) continue; // Already replaced on an earlier solver turn.
-        if (givens[letter] === undefined) throw new Error(`No given value for ${letter}`);
-        const index = await slot.getAttribute('data-slot');
-        await card.locator(`[data-tile="${givens[letter]}"]`).click();
-        await container.locator(`[data-slot="${index}"]`).click();
-        return true;
-    }
-    const calculation = card.locator('.worked-example .lx2-formula');
-    if (!(await calculation.count())) return false;
-    const expression = (await calculation.innerText()).split('=')[1].trim();
-    const answer = evaluate(expression);
-    const text = await card.innerText();
-    const unit = /area of a rectangle/i.test(text) ? 'cm²'
-        : /perimeter of a rectangle/i.test(text) ? 'cm'
-        : /volume of a pyramid/i.test(text) ? 'cm³'
-        : /speed equals/i.test(text) ? 'mph' : '';
-    const options = await card.locator('input[type=radio]').evaluateAll(elements=>elements.map(element=>element.value));
-    const chosen = options.find(option=>{
-        if (unit && !option.endsWith(` ${unit}`)) return false;
-        const numeric = option.replace(/^[a-z]\s*=\s*/i,'').replace(/^£/,'').replace(/\s+(?:cm[²³]?|mph|miles)$/,'').replace('−','-');
-        return close(Number(numeric),answer);
-    });
-    if (chosen === undefined) throw new Error(`No answer with the right value and unit for ${expression}: ${options.join(' | ')}`);
-    return choose(page,chosen);
-};
+    await card.locator('input[type=text]').fill(shown(answer));
+    return true;
+}
+module.exports = solve;
