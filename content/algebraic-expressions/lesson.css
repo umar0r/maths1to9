@@ -1,21 +1,12 @@
-.expression-chain {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 16px;
-    font-size: clamp(1rem, 3.5vw, 1.5rem);
-}
-
-.expression-chain__term {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.expression-chain__status {
-    font-size: .7rem;
-    color: var(--text-muted);
-}
+/* Story pictures and expression-building tiles. */
+.ae-story-picture { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .65rem; margin-block: 1.25rem; }
+.ae-story-tile { min-width: 64px; padding: .8rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; text-align: center; font-size: 1.2rem; font-weight: 800; }
+.ae-number-fields { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.ae-number-fields label { display: grid; gap: .35rem; width: 130px; max-width: 100%; font-weight: 800; }
+.ae-number-fields input { width: 100%; min-width: 0; min-height: 44px; padding: .5rem; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
+.ae-tile-bank, .ae-sequence { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+.ae-tile-bank button, .ae-sequence button { min-width: 44px; min-height: 44px; padding: .55rem; color: #172b3b; background: #fff; border: 2px solid #64748b; border-radius: .4rem; font: inherit; font-weight: 800; }
+.ae-sequence { min-height: 64px; align-items: center; padding: .6rem; border: 2px dashed #64748b; border-radius: .5rem; }
+.ae-sequence button { background: #ecfeff; border-color: #155e75; }
+.ae-expression-preview { min-height: 1.75rem; font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; }
+.ae-tile-bank button:focus-visible, .ae-sequence button:focus-visible, .ae-number-fields input:focus-visible { outline: 3px solid #155e75; outline-offset: 3px; }

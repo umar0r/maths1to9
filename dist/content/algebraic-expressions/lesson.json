@@ -1,130 +1,131 @@
 {
-  "id": "algebraic-expressions-01",
-  "slug": "algebraic-expressions",
-  "title": "Writing algebraic expressions",
-  "subtitle": "Use a letter for a number you do not know yet. Then follow what happens to it.",
-  "assessment": {
-    "question_types": {
-      "multiplyVariable": "write-expressions",
-      "addFixedAmount": "write-expressions",
-      "twoStep": "write-expressions",
-      "notation": "use-algebraic-notation",
-      "orderSensitive": "write-expressions",
-      "matchStory": "write-expressions",
-      "spotMistake": "write-expressions"
-    }
-  },
-  "explanation": {
-    "eyebrow": "Learn",
-    "title": "A letter can take the place of a number",
-    "paragraphs": [
-      "A game screen usually shows a number beside the coin symbol.",
-      "Sometimes you do not know that number yet.",
-      "A letter can take its place on the counter.",
-      "If the counter shows c, then c stands for the whole number of coins you started with.",
-      "If you win 200 more coins, the counter changes from c to c + 200.",
-      "c + 200 is called an expression."
+    "id": "algebraic-expressions-01",
+    "slug": "algebraic-expressions",
+    "title": "Writing algebraic expressions",
+    "subtitle": "Use a letter for a number you do not know yet. Then follow what happens to it.",
+    "assessment": {
+        "question_types": {
+            "multiplyVariable": "write-expressions",
+            "addFixedAmount": "write-expressions",
+            "twoStep": "write-expressions",
+            "notation": "use-algebraic-notation",
+            "orderSensitive": "write-expressions",
+            "matchStory": "write-expressions",
+            "spotMistake": "write-expressions"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Write what happens to the number"
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Build the expression",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise writing expressions",
+        "intro": "",
+        "session_length": 6
+    },
+    "navigation": {
+        "back_button": true
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
     ],
-    "key_points": [
-      "The letter stands for the starting number.",
-      "Follow the story in order.",
-      "A number beside a letter means multiply. For example, 3p means 3 × p."
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you’ve learned",
+        "intro": "",
+        "questions": [
+            {
+                "type": "multiplyVariable"
+            },
+            {
+                "type": "addFixedAmount"
+            },
+            {
+                "type": "orderSensitive"
+            },
+            {
+                "type": "notation"
+            },
+            {
+                "type": "matchStory"
+            }
+        ],
+        "summary": {
+            "title": "You've finished Writing algebraic expressions",
+            "points": []
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        }
     ]
-  },
-  "method": {
-    "eyebrow": "Method",
-    "title": "Start → Follow → Write",
-    "steps": [
-      {
-        "title": "Start",
-        "text": "Write the letter that stands for the starting number."
-      },
-      {
-        "title": "Follow",
-        "text": "Follow each change in the order it happens."
-      },
-      {
-        "title": "Write",
-        "text": "Write the final expression."
-      }
-    ]
-  },
-  "interactive": {
-    "eyebrow": "Try it",
-    "title": "Build the expression",
-    "intro": "Start with the letter. Choose each change in the story. Watch the expression grow one step at a time."
-  },
-  "worked_examples": [
-    {
-      "eyebrow": "Worked example 1 · Gaming",
-      "title": "You win more coins",
-      "steps": [
-        "Your coin counter starts at c.",
-        "You win 200 more coins.",
-        "Add 200 to the starting total."
-      ],
-      "answer": "c + 200"
-    },
-    {
-      "eyebrow": "Worked example 2 · Music",
-      "title": "Miguel, Adam and Josh",
-      "steps": [
-        "Miguel has p songs.",
-        "Adam has twice as many songs, so Adam has 2p.",
-        "Josh has 30 more songs than Adam.",
-        "Add 30 to 2p."
-      ],
-      "answer": "2p + 30"
-    },
-    {
-      "eyebrow": "Worked example 3 · Football",
-      "title": "Two more wins",
-      "steps": [
-        "A team starts with t points.",
-        "Each win adds 3 points.",
-        "Two wins add 6 points.",
-        "Add 6 to the starting total."
-      ],
-      "answer": "t + 6"
-    },
-    {
-      "eyebrow": "Worked example 4 · Food",
-      "title": "Three burgers and delivery",
-      "steps": [
-        "One burger costs b pounds.",
-        "Three burgers cost 3b pounds.",
-        "Delivery costs £2.",
-        "Add the delivery cost once."
-      ],
-      "answer": "3b + 2"
-    },
-    {
-      "eyebrow": "Worked example 5 · Gaming",
-      "title": "Triple your score, then collect a bonus",
-      "steps": [
-        "Your score starts at s.",
-        "A power-up triples your score, so it becomes 3s.",
-        "You collect 50 bonus points.",
-        "Add 50 to 3s."
-      ],
-      "answer": "3s + 50"
-    },
-    {
-      "eyebrow": "Worked example 6 · Money",
-      "title": "How much money is left?",
-      "steps": [
-        "You start with £50.",
-        "Each game costs £4.",
-        "n games cost 4n pounds.",
-        "Subtract the amount spent from 50."
-      ],
-      "answer": "50 − 4n"
-    }
-  ],
-  "question_bank": {
-    "session_length": 10,
-    "eyebrow": "Practice",
-    "title": "Write the expression",
-    "intro": "Use stories about games, football, food and money. Start with the letter, then follow each change."
-  }
 }
