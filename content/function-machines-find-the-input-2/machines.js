@@ -222,8 +222,12 @@
             host.append(group); return;
         }
         const problem = makeProblem(screen.input, screen.operations);
-        if (screen.paired) drawMachine(host, problem, { direction: 'forwards', showAll: true });
-        drawMachine(host, problem, { direction: screen.direction, showAll: true });
+        if (screen.paired) {
+            const pair = element('div', '', 'fm-paired');
+            drawMachine(pair, problem, { direction: 'forwards', showAll: true });
+            drawMachine(pair, problem, { direction: 'backwards', showAll: true });
+            host.append(pair);
+        } else drawMachine(host, problem, { direction: screen.direction, showAll: true });
     }
     function prepare(question, random) {
         const prepared = question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };

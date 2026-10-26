@@ -29,7 +29,7 @@ $pageTitle = 'Function machines: find the input';
     >
 
     <link rel="stylesheet" href="../../assets/css/app.css?v=38">
-    <link rel="stylesheet" href="./lesson.css?v=2">
+    <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
 <body
@@ -69,7 +69,7 @@ $pageTitle = 'Function machines: find the input';
     </noscript>
 
     <script src="../../assets/js/progress.js?v=2"></script>
-    <script src="./machines.js?v=1"></script>
+    <script src="./machines.js?v=2"></script>
     <script src="./questions.js?v=15"></script>
     <script src="./interactive.js?v=13"></script>
     <script src="../../assets/js/lesson-engine.js?v=45"></script>

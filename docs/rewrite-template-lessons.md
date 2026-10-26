@@ -306,6 +306,15 @@ report.
 
 ## Tests
 
+### No testing by Codex, from lesson 13 on (Umar, 2026-10-26)
+
+Codex keeps running out of usage, so Codex does **no testing at all**: no
+`npm test`, no `--only` runs, no browser or manual checks, no screenshots.
+Codex writes the lesson, runs `node --check` on its JS files and checks
+`lesson.json` parses (seconds), runs `./build.sh`, commits, pushes and
+reports, including the test contract. Claude runs every test and does every
+browser check at review, and sends fixes back.
+
 ### Who writes what, from lesson 8 on (Umar, 2026-10-26)
 
 To save Codex's usage, the work is split:
