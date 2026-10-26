@@ -3,7 +3,6 @@ const {MAIN_ACTION} = require('./helpers.cjs');
 // Lessons rewritten on the shared template leave these lists: their Learn
 // screens teach without a puzzle gate.
 const gated = [
-    ['simplifying-expressions', 'explanation'],
     ['solving-linear-equations', 'interactive'],
     ['solving-quadratic-equations', 'interactive']
 ];
