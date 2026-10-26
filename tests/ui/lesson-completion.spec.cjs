@@ -6,32 +6,30 @@ for (const base of ['content', 'dist/content']) {
         test(`${base}/${lesson}: completion keeps a working All lessons footer`, async ({page}) => {
             const solve = require(`./solvers/${lesson}.cjs`);
             await page.goto(`${base}/${lesson}/#comparison`, {waitUntil:'networkidle'});
-            if (lesson === 'place-value') await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
+            await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
             const main = page.locator(`${MAIN_ACTION}:visible`);
             const destination = await page.locator('.site-header__back').getAttribute('href');
             const expectedUrl = new URL(destination, page.url()).href;
             for (let step = 0; step < 80; step++) {
-                if (lesson === 'place-value' && await main.innerText() === 'All lessons') break;
-                if (lesson !== 'place-value' && await page.evaluate(() => window.Maths1to9Lesson.getProgress().finished)) break;
+                if (await main.innerText() === 'All lessons') break;
                 if (await solve(page, {})) continue;
                 await expect(main).toBeEnabled();
                 await main.click();
             }
-            if (lesson !== 'place-value') expect(await page.evaluate(() => window.Maths1to9Lesson.getProgress().finished)).toBe(true);
             await expect(main).toHaveCount(1);
             await expect(main).toHaveText('All lessons');
             await expect(main).toBeEnabled();
             const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
-            const expectedAnswers = lesson === 'order-of-operations' ? 15 : 5;
+            // Both fixtures now isolate the five shared Check cards. The full
+            // Practice + Check score is covered by engine-runs.spec.cjs.
+            const expectedAnswers = 5;
             expect(score.answered).toBe(expectedAnswers);
             expect(score.answerPoints).toBe(expectedAnswers * 10);
             await main.click();
             await expect(page).toHaveURL(expectedUrl);
             expect((await page.request.get(expectedUrl)).ok()).toBe(true);
-            if (lesson === 'place-value') {
-                const saved = await page.evaluate(() => window.Maths1to9Progress.getLessonProgress('place-value'));
-                expect(saved.finished).toBe(true);
-            }
+            const saved = await page.evaluate(slug => window.Maths1to9Progress.getLessonProgress(slug), lesson);
+            expect(saved.finished).toBe(true);
         });
     }
 }

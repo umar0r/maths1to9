@@ -306,6 +306,43 @@ report.
 
 ## Tests
 
+### Who writes what, from lesson 8 on (Umar, 2026-10-26)
+
+To save Codex's usage, the work is split:
+
+- **Codex writes the lesson only:** lesson files, rebuilt `dist/`, a quick
+  manual check, commit, push, report. No new test files and no solver.
+- **Claude writes the tests:** the lesson's unit test file
+  (`tests/<slug>.test.cjs`, adapting the old one), its browser solver
+  (`tests/ui/solvers/<slug>.cjs`) and any other test file the rewrite
+  breaks. Claude commits them on the same branch, after Codex's lesson
+  commit and before sending the next lesson.
+- **Codex doesn't touch `tests/`** from lesson 8 on, unless a message asks.
+- **Expected failures:** after Codex's rewrite, the lesson's own old tests
+  and old solver will fail. That's fine. In the report, run `npm test` and
+  list which failing tests are in the lesson's own files (expected) and
+  which are anywhere else (those are real: fix the lesson or stop and ask).
+  Skip `--only <slug>` until Claude has written the solver.
+- **The test contract.** So Claude can test without reading the whole
+  lesson, the helper `.js` must expose one object on `window` (like
+  `window.PrimeFactors`) with:
+  - `learnScreens`: the Learn screens' text (titles, lines, displayed maths)
+  - `examples()`: the Try it card configs
+  - `practiceTypes`, `pick(random)`, `generate(item, random)`: the Practice
+    generator, returning card configs
+  - `checks()`: the Check card configs
+  - for every custom widget: its `mark(value)` and a way to build a correct
+    value (e.g. `correctValue(question)`), so a test can check marking
+    without a browser.
+
+  Card configs use the shared card fields (`input`, `prompt`, `options` with
+  `label`/`correct`/`feedback`, `answer`, `rules`, `fallback`,
+  `questionType`). In the report, list the object's name and anything a
+  test needs that isn't obvious (e.g. which fields hold the numbers).
+
+The sections below still describe what the tests must cover; Claude
+follows them.
+
 - These lessons have unit tests (`tests/<slug>.test.cjs`, plus
   `tests/place-value-answers.cjs`) and browser solvers
   (`tests/ui/solvers/<slug>.cjs`); HCF also has
