@@ -100,7 +100,7 @@
         {"folder":"speed-distance-time","title":"Speed, distance and time","subtitle":"Use a compound measure to connect distance, speed and time.","skills":["speed-distance-time","speed-unit-conversions"]},
         {"folder":"density-and-pressure","title":"Density and pressure","subtitle":"Use compound measures involving mass, volume, force and area.","skills":["density-mass-volume","pressure-force-area"]},
         {"folder":"rates-and-unit-pricing","title":"Rates and unit pricing","subtitle":"Compare pay, prices and other rates per unit.","skills":["rates-of-pay","unit-pricing","compare-rates"]},
-        {"folder":"rate-of-change-graphs","title":"Rates of change on graphs","subtitle":"Interpret a straight-line gradient as a rate of change.","skills":["gradient-as-rate","proportion-graphs"]}
+        {"folder":"rate-of-change-graphs","title":"Rates of change on graphs","subtitle":"Interpret a straight-line gradient as a rate of change.","skills":["gradient-as-rate"]}
       ]
     },
     {

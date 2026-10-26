@@ -1,0 +1,146 @@
+{
+    "id": "rate-of-change-graphs",
+    "slug": "rate-of-change-graphs",
+    "title": "Rates of change on graphs",
+    "subtitle": "Interpret a straight-line gradient as a rate of change.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "fastest": "gradient-as-rate",
+            "trend": "gradient-as-rate",
+            "flat-meaning": "gradient-as-rate",
+            "change": "gradient-as-rate",
+            "rate-up": "gradient-as-rate",
+            "rate-down": "gradient-as-rate",
+            "read-height": "gradient-as-rate",
+            "time-taken": "gradient-as-rate",
+            "equal-rates": "gradient-as-rate"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Graphs show how things change"
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Read the plant graph",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise rates of change",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "fastest"
+            },
+            {
+                "type": "rate-up"
+            },
+            {
+                "type": "flat-meaning"
+            },
+            {
+                "type": "rate-up"
+            },
+            {
+                "type": "change"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "A steeper line means a faster change. A flat line means no change."
+                },
+                {
+                    "text": "Rate of change = change in the value ÷ time taken."
+                },
+                {
+                    "text": "Use the change in the value, not the value at the end."
+                },
+                {
+                    "text": "Give the unit: cm per week, litres per minute."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        }
+    ]
+}
