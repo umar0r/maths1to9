@@ -453,7 +453,8 @@
         ] },
         { title: 'One number, different place values', lines: [
             'Tap a digit to see its column and value. Start with the 9: it is worth 9 ones.',
-            'Each place to the left is worth ten times as much. Each place to the right is worth one tenth as much.'
+            'Each place to the left is worth ten times as much. Each place to the right is worth one tenth as much.',
+            'Read this number as: one hundred and seven thousand, three hundred and eighty-nine point four eight two eight.'
         ] },
         { title: 'Read decimal places and empty places', lines: [
             'The decimal point separates whole-number places from decimal places. To its right are tenths, hundredths, then thousandths.',
