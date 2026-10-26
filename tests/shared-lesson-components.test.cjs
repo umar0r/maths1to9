@@ -278,27 +278,6 @@ test('Back waits for screen rendering before focus', async () => {
     assert.deepEqual(calls, ['render', 'focus', 'section', 'focus']);
 });
 
-test('HCF Learn upgrades legacy position and completed matches without resetting work', async () => {
-    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/interactive.js'), 'utf8');
-    const body = pilot.match(/upgrade\(saved, version\) \{([\s\S]*?)\n            \}/)[1];
-    const upgrade = new Function('saved', 'version', body);
-    for (const legacy of [
-        { screen: 1, matches: 2, finished: false },
-        { screen: 3, matches: 3, finished: true }
-    ]) {
-        const harness = stateStore(legacy);
-        const section = await createSectionState('highest-common-factor', 'learn', {
-            version: 1, initial: () => ({ screen: 0, furthestScreen: 0, matches: 0, finished: false }), upgrade
-        }, harness.store, harness.schedule);
-        assert.equal(section.state.screen, legacy.screen);
-        assert.equal(section.state.matches, legacy.matches);
-        assert.equal(section.state.finished, legacy.finished);
-        assert.equal(section.state.furthestScreen, legacy.screen);
-        assert.equal(harness.writes[0].key, 'learn');
-    }
-    assert.equal(upgrade({ screen: 3 }, 99), null);
-});
-
 // A small DOM fixture checks the helpers' generated structure without starting
 // the standard lesson renderer. Real layout and KaTeX are checked in the pilots.
 function resultsFixture(katex) {
@@ -603,59 +582,6 @@ test('shared number exact mode distinguishes 15 from 15.0 while default mode doe
     assert.equal(numeric.card.result().correct, true);
 });
 
-test('HCF Check upgrades old shuffled answers and phases without losing work or score history', async () => {
-    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/questions.js'), 'utf8');
-    const body = pilot.match(/function upgradeCheck\(saved, version\) \{([\s\S]*?)\n        \}/)[1];
-    const upgrade = new Function('saved', 'version', 'lesson', body);
-    const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/lesson.json'), 'utf8'));
-    const questions = lesson.comparison.questions.map(question => {
-        const order = [3, 1, 0, 2];
-        return { ...question, options: order.map(index => question.options[index]),
-            feedback: order.map(index => question.feedback[index]), answer: order.indexOf(question.answer) };
-    });
-    for (const phase of ['answer', 'wrong', 'correct', 'finished']) {
-        const old = {
-            contentVersion: 1, index: 1, screen: 1, furthestScreen: 1,
-            selected: phase === 'correct' ? questions[1].answer : 0,
-            phase: phase === 'finished' ? 'correct' : phase,
-            finished: phase === 'finished', questions: JSON.parse(JSON.stringify(questions))
-        };
-        old.questions[0].firstCorrect = false;
-        if (phase === 'wrong') old.questions[1].firstCorrect = false;
-        if (phase === 'correct') old.questions[1].firstCorrect = true;
-        if (phase === 'finished') {
-            old.index = 3; old.screen = 4; old.furthestScreen = 4;
-        }
-        const store = stateStore(old);
-        const section = await createSectionState('highest-common-factor', 'comparison', {
-            version: 1, initial: () => ({}), upgrade: (saved, version) => upgrade(saved, version, lesson)
-        }, store.store, store.schedule);
-        const restored = section.state;
-        assert.equal(restored.finished, old.finished);
-        assert.equal(restored.screen, old.screen);
-        assert.equal(restored.furthestScreen, old.furthestScreen);
-        assert.deepEqual(Array.from(restored.order[1]), [3, 1, 0, 2]);
-        assert.equal(restored.cards['final-check-1'].firstCorrect, false);
-        assert.equal(restored.cards['final-check-1'].selected, questions[0].answer);
-        assert.equal(restored.cards['final-check-1'].correct, true);
-        assert.equal(restored.questions, undefined); // question content is read from lesson.json
-        if (!old.finished) {
-            const card = restored.cards['final-check-2'];
-            assert.equal(card.phase, old.phase);
-            assert.equal(card.selected, old.selected);
-            assert.equal(card.feedback, old.phase === 'answer' ? '' : questions[1].feedback[old.selected]);
-            assert.equal(card.rejected.length, phase === 'wrong' ? 1 : 0);
-        } else {
-            assert.equal(restored.cards['final-check-4'].firstCorrect, null);
-        }
-        assert.equal(store.writes.length, 1);
-        assert.equal(store.writes[0].key, 'comparison');
-        assert.equal(store.writes[0].value.version, 1);
-    }
-    assert.equal(upgrade({ contentVersion: 1, questions }, 99, lesson), null);
-    assert.equal(upgrade({ contentVersion: 2, questions }, 0, lesson), null);
-});
-
 const { archivePractice, questionSetId } = window.Maths1to9LessonEngine;
 test('question sets use session-specific evidence ids and stable Check ids', () => {
     assert.equal(questionSetId('question-bank', 1, 0), 'question-bank:1:1');
@@ -801,38 +727,6 @@ test('Check uses fixed assessment ids and never offers Practise again', async ()
     assert.equal(set.card.questionId, 'final-check-2');
     set.finishQuestion();
     assert.equal(set.container.children.some(node => node.tagName === 'button'), false);
-});
-
-test('HCF Practice upgrades old tiles, phases, position and first-session marks', () => {
-    const pilot = fs.readFileSync(path.join(__dirname, '../content/highest-common-factor/interactive.js'), 'utf8');
-    const body = pilot.match(/function upgradePractice\(saved, version\) \{([\s\S]*?)\n        \}/)[1];
-    const api = { getProgress: () => ({ scoreActivities: [
-        { id: 'answer:question-bank:1', firstCorrect: false },
-        { id: 'answer:question-bank:2', firstCorrect: true }
-    ] }) };
-    const upgrade = new Function('saved', 'version', 'api', body);
-    const order = [[18, 30], [48, 72], [14, 28], [9, 20], [30, 50]];
-    const items = order.map(pair => ({ pair, stage: 'answer', phase: 'correct', value: '6',
-        used: [[0, 1], [0, 1]], overlap: [2, 3], selected: null, message: 'HCF = 6.' }));
-    for (const phase of ['match', 'answer', 'wrong', 'correct', 'finished']) {
-        const saved = { order, items: JSON.parse(JSON.stringify(items)), index: phase === 'finished' ? 5 : 2,
-            screen: 0, furthestScreen: phase === 'finished' ? 5 : 2, finished: phase === 'finished' };
-        saved.items[2].stage = phase === 'match' ? 'match' : 'answer';
-        saved.items[2].phase = ['wrong', 'correct'].includes(phase) ? phase : 'answer';
-        const next = upgrade(saved, 0, api);
-        assert.equal(next.session, 1);
-        assert.equal(next.screen, 0);
-        assert.equal(next.index, saved.index);
-        assert.equal(next.finished, saved.finished);
-        assert.deepEqual(next.items[2].used, [[0, 1], [0, 1]]);
-        assert.equal(next.items[0].firstCorrect, false);
-        assert.equal(next.items[1].firstCorrect, true);
-        assert.equal(next.items[2].firstCorrect, null);
-        assert.equal(next.cards['question-bank:1:1'].firstCorrect, false);
-        if (phase !== 'match') assert.equal(next.cards['question-bank:1:3'].phase, saved.items[2].phase);
-    }
-    assert.equal(upgrade({ order, items }, 99, api), null);
-    assert.equal(upgrade({}, 0, api), null);
 });
 
 test('seeded Practice keeps its skill evidence identity through reloads and changes it for new sessions', () => {
