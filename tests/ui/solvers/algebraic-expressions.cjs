@@ -1,56 +1,82 @@
-// Solver for algebraic-expressions: each practice story is turned into the
-// expression it describes, and the option with that expression is chosen.
-const { section } = require('./common.cjs');
-const { evaluate, close } = require('../../helpers/lessons.cjs');
+// Read each story, work out the expression as [number, letter, letter²]
+// amounts, then pick the matching choice or build it from tiles.
+const WORDS = { twice: 2, 'three times': 3, 'four times': 4, 'five times': 5, 'six times': 6, three: 3 };
 
-const WORDS = { twice: 2, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
-const times = word => WORDS[word] ?? Number(word);
-const wellWritten = text => /^(?:\d+)?[a-z](?: [+−] \d+)?$/.test(text);
-const equivalent = (a, b, letter) => {
-    try { return [-3, 0.5, 2, 7].every(v => close(evaluate(a, { [letter]: v }), evaluate(b, { [letter]: v }))); } catch { return false; }
-};
-
-// { letter, expression } for a story, or { answer } for a spot-the-mistake question.
-function story(prompt) {
+function target(p) {
     let m;
-    if ((m = prompt.match(/has (twice|(\w+) times) as many (\w+) as \w+\. \w+ has ([a-z]) \3/)) && !/more \w+ than/.test(prompt)) return { letter: m[4], expression: `${times(m[2] ?? 'twice')}${m[4]}` };
-    if ((m = prompt.match(/has ([a-z]) (\w+)\. \w+ has (twice|(\w+) times) as many \2 as \w+\. \w+ has (\d+) more \2 than/))) return { letter: m[1], expression: `${times(m[4] ?? 'twice')}${m[1]} + ${m[5]}` };
-    if ((m = prompt.match(/has ([a-z]) [\w ]+?\. (?:\w+ )?(\d+) more [\w ]+ are added/))) return { letter: m[1], expression: `${m[1]} + ${m[2]}` };
-    if ((m = prompt.match(/(?:have|has) ([a-z]) (\w+)\. \w+ (?:spend|eat|eats|uses|give away|gives away) (\d+)/))) return { letter: m[1], expression: `${m[1]} − ${m[3]}` };
-    if ((m = prompt.match(/costs £([a-z])\. A person buys (\d+) \w+ and pays a £(\d+) [\w ]+ once/))) return { letter: m[1], expression: `${m[2]}${m[1]} + ${m[3]}` };
-    if ((m = prompt.match(/"(\d+) lots of ([a-z])"/))) return { letter: m[2], expression: `${m[1]}${m[2]}` };
-    if ((m = prompt.match(/"([a-z]) add (\d+)" can be written as/))) return { contains: `${m[1]} + ${m[2]}` };
-    if ((m = prompt.match(/has ([a-z]) marbles and finds (\d+) more/))) return { contains: `${m[1]} + ${m[2]}` };
-    if ((m = prompt.match(/cost of (\d+) pens at £([a-z]) each/))) return { contains: `${m[1]}${m[2]}` };
-    return null;
+    if (/multiplied by itself/.test(p)) return [0, 0, 1];
+    if ((m = p.match(/Add (\d+), then multiply the whole new amount by (\d+)/))) return [m[1] * m[2], Number(m[2]), 0];
+    if ((m = p.match(/(twice|three times|four times|five times|six times) as many\. \w+ has (\d+) more/))) return [Number(m[2]), WORDS[m[1]], 0];
+    if ((m = p.match(/has twice Miguel’s p songs\. Josh has (\d+) more/))) return [Number(m[1]), 2, 0];
+    if ((m = p.match(/(twice|three times|four times|five times|six times) as many/))) return [0, WORDS[m[1]], 0];
+    if ((m = p.match(/You buy (\w+) \w+ and pay (?:a )?£(\d+)/))) return [Number(m[2]), Number(m[1]) || WORDS[m[1]], 0];
+    if ((m = p.match(/start with £(\d+)\. Each game costs £(\d+)/i))) return [Number(m[1]), -Number(m[2]), 0];
+    if ((m = p.match(/You (gain|lose) (\d+) points/))) return [m[1] === 'gain' ? Number(m[2]) : -Number(m[2]), 1, 0];
+    if ((m = p.match(/You use (\d+) of them/))) return [-Number(m[1]), 1, 0];
+    if ((m = p.match(/^Write (\d+) lots of/))) return [0, Number(m[1]), 0];
+    if ((m = p.match(/writes (\d+) pens at \w+ pounds each/))) return [0, Number(m[1]), 0];
+    if ((m = p.match(/“\w add (\d+)”/))) return [Number(m[1]), 1, 0];
+    if ((m = p.match(/finds (\d+) more/))) return [Number(m[1]), 1, 0];
+    if ((m = p.match(/win (\d+) more/))) return [Number(m[1]), 1, 0];
+    if (/Two wins add 3 points each/.test(p)) return [6, 1, 0];
+    if ((m = p.match(/Write the number in (\w+) bags/))) return [0, WORDS[m[1]], 0];
+    if ((m = p.match(/^Start with \w\. Add (\d+)\.$/))) return [Number(m[1]), 1, 0];
+    if (/What expression do you start with/.test(p)) return [0, 1, 0];
+    throw new Error(`Unrecognised algebra question: ${p}`);
 }
 
-module.exports = async function solve(page) {
-    const where = await section(page);
-    if (where === 'interactive') {
-        const container = page.locator('[data-lesson-section="interactive"]');
-        const prompt = await container.locator('.question-prompt').innerText();
-        let match, expression;
-        if ((match = prompt.match(/has ([a-z]) \w+\. What expression do you start with/))) expression = match[1];
-        else if ((match = prompt.match(/has (twice|\w+ times) as many.*What does ([a-z]) become/))) expression = `${times(match[1].split(' ')[0])}${match[2]}`;
-        else if ((match = prompt.match(/has (\d+) more.*What does (\d*[a-z]) become/))) expression = `${match[2]} + ${match[1]}`;
-        else return false; // Completed expression: let the main button advance.
-        await container.getByRole('button', {name:expression, exact:true}).click();
+// The usual written form of a target, matching the lesson's choice labels.
+function written([constant, linear, square], letter, brackets) {
+    if (square) return `${letter}²`;
+    const term = linear === 1 ? letter : `${Math.abs(linear)}${letter}`;
+    if (brackets) return `${linear}(${letter} + ${constant / linear})`;
+    if (linear < 0) return `${constant} − ${term}`;
+    if (!constant) return term;
+    return `${term} ${constant > 0 ? '+' : '−'} ${Math.abs(constant)}`;
+}
+
+// Tiles and typed numbers that build the target.
+function build([constant, linear, square], brackets) {
+    if (square) return { numbers: [], tiles: ['square'] };
+    if (brackets) return { numbers: [linear, constant / linear], tiles: ['A', '(', 'letter', '+', 'B', ')'] };
+    if (linear < 0) return { numbers: [constant, -linear], tiles: ['A', '−', 'B', 'letter'] };
+    if (linear === 1) return constant ? { numbers: [Math.abs(constant)], tiles: ['letter', constant > 0 ? '+' : '−', 'A'] } : { numbers: [], tiles: ['letter'] };
+    return constant ? { numbers: [linear, constant], tiles: ['A', 'letter', '+', 'B'] } : { numbers: [linear], tiles: ['A', 'letter'] };
+}
+
+async function solve(page, memory = {}) {
+    const main = page.locator('.lesson-controls button.button--primary:visible');
+    const action = await main.innerText();
+    if (action === 'All lessons') {
+        const home = new URL('../../', page.url()).pathname;
+        await main.click();
+        if (new URL(page.url()).pathname !== home) (memory.problems ??= []).push('All lessons did not reach the homepage');
         return true;
     }
-    if (where !== 'question-bank') return false;
-    const main = page.locator('.lesson-controls button:visible').first();
-    if (await main.isEnabled().catch(() => false)) return false;
-    const prompt = await page.locator('main .question-prompt:visible, main legend:visible, main h3:visible').first().innerText().catch(() => '');
-    const s = story(prompt.replace(/\s+/g, ' '));
-    if (!s) throw new Error(`the solver does not recognise this question: "${prompt}"`);
-    const buttons = await page.locator('[data-lesson-section="question-bank"] .question-card-options button:visible:enabled').all();
-    const all = [];
-    for (const locator of buttons) all.push({ label: await locator.innerText(), locator });
-    const pick = s.contains
-        ? all.find(o => o.label.includes(s.contains) && !/^It should be|^Nothing|^There is no/.test(o.label))
-        : all.find(o => wellWritten(o.label) && equivalent(o.label, s.expression, s.letter));
-    if (!pick) throw new Error(`no option fits "${prompt}" (options: ${all.map(o => o.label).join(' | ')})`);
-    await pick.locator.click();
+    if (action !== 'Check' || await main.isEnabled()) return false;
+    const card = page.locator('.question-card:visible');
+    const prompt = await card.locator('.question-prompt').innerText();
+    const goal = target(prompt);
+    const brackets = /multiply the whole new amount/.test(prompt);
+    const options = card.locator('.question-card-options button');
+    if (await options.count()) {
+        const letter = (prompt.match(/\b([a-z])\b(?= (?:songs|coins|points|pens|counters|stickers|marbles|cards|goals|pounds)|\. |,| multiplied| \+|$)/) || prompt.match(/lots of ([a-z])/) || [])[1]
+            ?? (await options.allInnerTexts()).join(' ').match(/[a-z]/)[0];
+        const answer = written(goal, letter, brackets);
+        const labels = (await options.allInnerTexts()).map(label => label.replace(/\s*×\s*$/, '').trim());
+        const index = labels.indexOf(answer);
+        if (index < 0) throw new Error(`No option "${answer}" in ${labels.join(' | ')} for: ${prompt}`);
+        await options.nth(index).click();
+        return true;
+    }
+    const { numbers, tiles } = build(goal, brackets);
+    for (const [index, value] of numbers.entries()) await card.getByLabel(`Number ${index ? 'B' : 'A'}`, { exact: true }).fill(String(value));
+    const bank = card.getByRole('group', { name: 'Expression tiles' });
+    for (const tile of tiles) {
+        const name = tile === 'A' || tile === 'B' ? new RegExp(`^Add number ${tile}:`)
+            : tile === 'letter' ? /^Add [a-z] tile$/ : tile === 'square' ? /^Add [a-z]² tile$/ : `Add ${tile} tile`;
+        await bank.getByRole('button', { name, exact: typeof name === 'string' }).click();
+    }
     return true;
-};
+}
+module.exports = solve;

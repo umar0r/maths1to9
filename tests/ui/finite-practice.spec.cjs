@@ -3,7 +3,7 @@ const {MAIN_ACTION} = require('./helpers.cjs');
 
 // Lessons rewritten on the shared template leave these lists: their Practice
 // is the shared six-question set, covered by the shared component tests.
-for (const lesson of ['algebraic-expressions']) {
+for (const lesson of []) {
     for (const retry of [false, true]) {
         test(`${lesson}: ten-question practice has a fixed maximum and finishes${retry ? ' after a retry' : ''}`, async ({page}) => {
             const solve = require(`./solvers/${lesson}.cjs`);

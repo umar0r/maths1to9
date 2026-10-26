@@ -1,79 +1,188 @@
-// Maths checks for algebraic-expressions: the expected expression is built
-// from the story, then compared with the answer by substituting values.
+// Maths checks for algebraic-expressions: each story's expression is worked
+// out again from the numbers in its wording, every choice is evaluated, and
+// the tile widget accepts the right construction and rejects common mistakes.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { questionsOf, evaluate, close } = require('./helpers/lessons.cjs');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { loadScript, allStrings, wrongSums } = require('./helpers/lessons.cjs');
 
-const folder = 'algebraic-expressions';
-const WORDS = { twice: 2, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
-const multiplier = text => WORDS[text] ?? Number(text);
+const window = {};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'),
+    { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
+loadScript(path.join(__dirname, '../content/algebraic-expressions/expressions.js'), [], { window });
+const A = window.AlgebraicExpressions;
+const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/algebraic-expressions/lesson.json'), 'utf8'));
+const { seededRandom } = window.Maths1to9LessonEngine;
+const WORDS = { twice: 2, 'three times': 3, 'four times': 4, 'five times': 5, 'six times': 6, three: 3 };
 
-// Same expression if it gives the same value for several letter values.
-function equivalent(a, b, letter) {
-    try {
-        return [-3, 0.5, 2, 7, 13].every(value => close(evaluate(a, { [letter]: value }), evaluate(b, { [letter]: value })));
-    } catch {
-        return false; // not valid algebra (e.g. "g2"), so not the same expression
-    }
+// Evaluate a written expression in one letter, e.g. "3(n + 2)" or "50 − 4n".
+// "n3" (number after the letter) is a notation mistake and has no value here.
+function evaluate(label, letter, x) {
+    if (new RegExp(`${letter}\\d`).test(label)) return null;
+    const js = label.replace(/−/g, '-').replace(/×/g, '*').replace(/²/g, '**2').replace(/³/g, '**3')
+        .replace(new RegExp(letter, 'g'), '(x)')
+        .replace(/(\d|\))\s*\(/g, '$1*(');
+    return Function('x', `return ${js};`)(x);
 }
-// GCSE notation: number before letter, no ×, e.g. "3g", "g − 4", "2q + 10".
-const wellWritten = text => /^(?:\d+)?[a-z](?: [+−] \d+)?$/.test(text);
+const valueOf = ([constant, linear, square], x) => constant + linear * x + square * x * x;
+const agrees = (label, model) => [2, 5, 11].every(x => evaluate(label, model.letter, x) === valueOf(model.target, x));
 
-// The expression each story describes, and its letter.
-function expected(type, prompt) {
+// The target an independent reader gets from the story's own numbers.
+function expected(q) {
+    const p = q.prompt;
     let m;
-    switch (type) {
-        case 'multiplyVariable':
-            m = prompt.match(/(twice|(\w+) times) as many (\w+) as \w+\. \w+ has ([a-z]) \3/);
-            return m && { letter: m[4], expression: `${multiplier(m[2] ?? 'twice')}${m[4]}` };
-        case 'twoStep':
-            m = prompt.match(/has ([a-z]) (\w+)\. \w+ has (twice|(\w+) times) as many \2 as \w+\. \w+ has (\d+) more \2 than/);
-            return m && { letter: m[1], expression: `${multiplier(m[4] ?? 'twice')}${m[1]} + ${m[5]}` };
-        case 'addFixedAmount':
-        case 'orderSensitive':
-            m = prompt.match(/has ([a-z]) [\w ]+?\. (?:\w+ )?(\d+) more [\w ]+ are added/);
-            if (m) return { letter: m[1], expression: `${m[1]} + ${m[2]}` };
-            m = prompt.match(/(?:have|has) ([a-z]) (\w+)\. \w+ (?:spend|eat|eats|uses|give away|gives away) (\d+)/);
-            return m && { letter: m[1], expression: `${m[1]} − ${m[3]}` };
-        case 'matchStory':
-            m = prompt.match(/costs £([a-z])\. A person buys (\d+) \w+ and pays a £(\d+) [\w ]+ once/);
-            return m && { letter: m[1], expression: `${m[2]}${m[1]} + ${m[3]}` };
-        case 'notation':
-            m = prompt.match(/"(\d+) lots of ([a-z])"/);
-            return m && { letter: m[2], expression: `${m[1]}${m[2]}` };
-    }
+    if (/multiplied by itself/.test(p)) return [0, 0, 1];
+    if ((m = p.match(/Add (\d+), then multiply the whole new amount by (\d+)/))) return [m[1] * m[2], Number(m[2]), 0];
+    if ((m = p.match(/(twice|three times|four times|five times|six times) as many\. \w+ has (\d+) more/))) return [Number(m[2]), WORDS[m[1]], 0];
+    if ((m = p.match(/has twice Miguel’s p songs\. Josh has (\d+) more/))) return [Number(m[1]), 2, 0];
+    if ((m = p.match(/(twice|three times|four times|five times|six times) as many/))) return [0, WORDS[m[1]], 0];
+    if ((m = p.match(/You buy (\w+) \w+ and pay (?:a )?£(\d+)/))) return [Number(m[2]), Number(m[1]) || WORDS[m[1]], 0];
+    if ((m = p.match(/start with £(\d+)\. Each game costs £(\d+)/i))) return [Number(m[1]), -Number(m[2]), 0];
+    if ((m = p.match(/You (gain|lose) (\d+) points/))) return [m[1] === 'gain' ? Number(m[2]) : -Number(m[2]), 1, 0];
+    if ((m = p.match(/You use (\d+) of them/))) return [-Number(m[1]), 1, 0];
+    if ((m = p.match(/^Write (\d+) lots of/))) return [0, Number(m[1]), 0];
+    if ((m = p.match(/writes (\d+) pens at \w+ pounds each/))) return [0, Number(m[1]), 0];
+    if ((m = p.match(/“\w add (\d+)”/))) return [Number(m[1]), 1, 0];
+    if ((m = p.match(/finds (\d+) more/))) return [Number(m[1]), 1, 0];
+    if ((m = p.match(/win (\d+) more/))) return [Number(m[1]), 1, 0];
+    if (/Two wins add 3 points each/.test(p)) return [6, 1, 0];
+    if ((m = p.match(/Write the number in (\w+) bags/))) return [0, WORDS[m[1]], 0];
+    if ((m = p.match(/^Start with \w\. Add (\d+)\.$/))) return [Number(m[1]), 1, 0];
+    if (/What expression do you start with/.test(p)) return [0, 1, 0];
+    throw new Error(`No independent reading for: ${p}`);
 }
 
-for (const type of ['multiplyVariable', 'twoStep', 'addFixedAmount', 'orderSensitive', 'matchStory', 'notation']) {
-    test(`${type}: the answer is the story's expression, written properly, and no distractor is equivalent`, () => {
-        for (const { seed, q } of questionsOf(folder, type)) {
-            const story = expected(type, q.prompt);
-            assert.ok(story, `unrecognised story, add a pattern for it: "${q.prompt}" (seed ${seed})`);
-            assert.ok(equivalent(q.answer, story.expression, story.letter), `"${q.prompt}" should be ${story.expression}, answer ${q.answer} (seed ${seed})`);
-            assert.ok(wellWritten(q.answer), `answer ${q.answer} is not in standard notation (seed ${seed})`);
-            for (const option of q.options.filter(option => option !== q.answer)) {
-                // An equivalent distractor is only fair if its notation is the mistake (e.g. "4 × x").
-                if (equivalent(option, story.expression, story.letter)) {
-                    assert.ok(!wellWritten(option), `distractor ${option} is also correct for "${q.prompt}" (seed ${seed})`);
-                }
+const generated = A.practiceTypes.flatMap(type => ['choice', 'custom'].flatMap(mode =>
+    Array.from({ length: 200 }, (_, seed) => ({
+        seed, mode, q: A.generate({ type, mode }, seededRandom(Math.imul(seed + 1, 2654435761) >>> 0))
+    }))));
+const fixed = [...A.examples().map(q => ({ seed: 'Try it', q })), ...A.checks().map(q => ({ seed: 'Check', q }))];
+const all = [...generated, ...fixed];
+const where = (q, seed) => `${q.prompt} (${seed})`;
+
+test('every Practice type is generated as a choice and as tiles, and mapped to a skill', () => {
+    for (const type of A.practiceTypes) {
+        assert.ok(generated.some(({ q, mode }) => q.questionType === type && mode === 'choice' && q.input === 'choice'), `${type} choice`);
+        assert.ok(generated.some(({ q, mode }) => q.questionType === type && mode === 'custom' && q.input === 'custom'), `${type} tiles`);
+        assert.ok(lesson.assessment.question_types[type], `${type} has no skill mapping`);
+    }
+});
+
+test('each question targets the expression its story describes', () => {
+    for (const { seed, q } of all) assert.deepEqual(q.model.target, expected(q), where(q, seed));
+});
+
+test('choice questions: four distinct options, one correct, and only the correct one has the right value in usual notation', () => {
+    for (const { seed, q } of all.filter(({ q }) => q.input === 'choice')) {
+        assert.equal(q.options.length, 4, where(q, seed));
+        assert.equal(q.options.filter(option => option.correct).length, 1, where(q, seed));
+        assert.equal(new Set(q.options.map(option => option.label)).size, 4, where(q, seed));
+        assert.equal(new Set(q.options.map(option => option.feedback)).size, 4, where(q, seed));
+        for (const option of q.options) {
+            if (option.correct) assert.ok(agrees(option.label, q.model), `${option.label} ${where(q, seed)}`);
+            else if (agrees(option.label, q.model)) {
+                // Same value is only wrong when the question asks for the usual short form.
+                assert.ok(q.model.usual && /×/.test(option.label), `${option.label} is also right ${where(q, seed)}`);
             }
         }
-    });
-}
-
-test('spotMistake: the pupil really is wrong and the answer gives the right expression', () => {
-    for (const { seed, q } of questionsOf(folder, 'spotMistake')) {
-        let m, right, written, letter;
-        if ((m = q.prompt.match(/"([a-z]) add (\d+)" can be written as (\S+)\./))) {
-            [letter, right, written] = [m[1], `${m[1]} + ${m[2]}`, m[3]];
-        } else if ((m = q.prompt.match(/has ([a-z]) marbles and finds (\d+) more\. \w+ writes the total as (\S+)\./))) {
-            [letter, right, written] = [m[1], `${m[1]} + ${m[2]}`, m[3]];
-        } else if ((m = q.prompt.match(/cost of (\d+) pens at £([a-z]) each as (\S+)\./))) {
-            [letter, right, written] = [m[2], `${m[1]}${m[2]}`, m[3]];
-        } else {
-            assert.fail(`unrecognised story, add a pattern for it: "${q.prompt}" (seed ${seed})`);
-        }
-        assert.ok(!(equivalent(written, right, letter) && wellWritten(written)), `the pupil's ${written} is actually right for "${q.prompt}" (seed ${seed})`);
-        assert.ok(q.answer.includes(right), `the answer should give ${right}: "${q.answer}" (seed ${seed})`);
     }
+});
+
+test('tile questions accept the intended construction and show it as written algebra', () => {
+    for (const { seed, q } of all.filter(({ q }) => q.input === 'custom')) {
+        const right = q.widget.correctValue();
+        assert.deepEqual(A.correctValue(q), right);
+        assert.equal(q.widget.mark(right).correct, true, where(q, seed));
+        assert.deepEqual(A.tileModel(right), q.model.target, where(q, seed));
+        assert.equal(q.widget.isEmpty(right), false);
+        assert.ok(agrees(q.widget.answerText(right), q.model), `${q.widget.answerText(right)} ${where(q, seed)}`);
+        assert.equal(q.widget.isEmpty(null), true);
+    }
+});
+
+test('tile questions reject the common mistakes', () => {
+    for (const { seed, q } of all.filter(({ q }) => q.input === 'custom')) {
+        const { kind, numbers, usual } = q.model;
+        const nums = { A: String(numbers[0] ?? ''), B: String(numbers[1] ?? '') };
+        const wrong = [];
+        if (kind === 'multiply') wrong.push(['letter', '+', 'A'], ['letter', 'A']);
+        if (kind === 'multiply' && usual) wrong.push(['A', '×', 'letter']);
+        if (kind === 'add') wrong.push(['A', 'letter'], ['letter', '−', 'A']);
+        if (kind === 'subtract') wrong.push(['A', '−', 'letter'], ['letter', '+', 'A']);
+        if (kind === 'twoStep') wrong.push(['A', 'letter'], ['letter', '+', 'B']);
+        if (kind === 'brackets') wrong.push(['letter', '+', 'B', '×', 'A'], ['A', 'letter', '+', 'B']);
+        if (kind === 'money') wrong.push(['A', '+', 'B', 'letter'], ['B', 'letter', '−', 'A']);
+        if (kind === 'square') wrong.push(['letter', '+', 'letter']);
+        for (const tokens of wrong) {
+            const result = q.widget.mark({ numbers: nums, tokens });
+            assert.equal(result.correct, false, `${tokens.join(' ')} accepted ${where(q, seed)}`);
+            assert.ok(result.feedback, where(q, seed));
+        }
+        for (const bad of [null, { numbers: nums, tokens: [] }, { numbers: { A: 'x', B: '' }, tokens: ['A', 'letter'] },
+            { numbers: nums, tokens: ['(', 'letter'] }]) {
+            assert.equal(q.widget.mark(bad).correct, false, `${JSON.stringify(bad)} ${where(q, seed)}`);
+        }
+    }
+});
+
+test('the tile layouts mean what they say', () => {
+    const n = (A_, B_) => ({ A: String(A_), B: String(B_ ?? '') });
+    const cases = [
+        [['A', 'letter'], n(3), [0, 3, 0]], [['letter', '+', 'A'], n(3), [3, 1, 0]], [['A', '+', 'letter'], n(3), [3, 1, 0]],
+        [['A', '−', 'letter'], n(3), [3, -1, 0]], [['A', '(', 'letter', '+', 'B', ')'], n(3, 2), [6, 3, 0]],
+        [['letter', '+', 'A', '×', 'B'], n(2, 3), [6, 1, 0]], [['A', '−', 'B', 'letter'], n(50, 4), [50, -4, 0]],
+        [['square'], n(''), [0, 0, 1]], [['letter', '×', 'letter'], n(''), [0, 0, 1]]
+    ];
+    for (const [tokens, numbers, target] of cases) assert.deepEqual(A.tileModel({ numbers, tokens }), target, tokens.join(' '));
+    assert.equal(A.tileModel({ numbers: n(3), tokens: ['letter', 'A'] }), null);
+    assert.equal(A.expressionText({ numbers: n(3, 2), tokens: ['A', '(', 'letter', '+', 'B', ')'] }, 'n'), '3(n + 2)');
+    assert.equal(A.numberValue('−4'), -4);
+    assert.equal(A.numberValue('4.5'), null);
+});
+
+test('text has no broken values, uses proper signs and its worked sums are right', () => {
+    for (const { seed, q } of all) {
+        for (const text of allStrings({ ...q, model: undefined, widget: undefined })) {
+            assert.doesNotMatch(text, /\b(?:undefined|NaN|null|Infinity)\b|\[object Object\]/, `${text} ${where(q, seed)}`);
+            assert.doesNotMatch(text, /(?:^|[\s(=,])-\d|\d\s*-\s*\d/, `hyphen used as a minus sign in "${text}"`);
+        }
+        const told = [q.prompt, q.feedback, ...(q.options || []).map(option => option.feedback)];
+        for (const text of told.filter(Boolean)) assert.deepEqual(wrongSums(text), [], `${text} ${where(q, seed)}`);
+    }
+});
+
+test('the correct option is not always in the same place after shuffling', () => {
+    const positions = new Set(generated.filter(({ q }) => q.input === 'choice').slice(0, 300)
+        .map(({ q, seed }) => A.prepare(q, seededRandom(seed + 7)).options.findIndex(option => option.correct)));
+    assert.ok(positions.size > 2, `answer positions: ${[...positions]}`);
+});
+
+test('a session has six questions from different types, mixing choices and tiles, and repeats from its seed', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+        const items = A.pick(seededRandom(seed));
+        assert.equal(items.length, lesson.question_bank.session_length ?? 6);
+        assert.equal(new Set(items.map(item => item.type)).size, items.length, `seed ${seed}`);
+        assert.ok(items.some(item => item.mode === 'choice') && items.some(item => item.mode !== 'choice'), `seed ${seed}`);
+        assert.deepEqual(A.pick(seededRandom(seed)), items, `seed ${seed} is not repeatable`);
+    }
+});
+
+test('Try it and Check each mix choices and tile questions', () => {
+    for (const set of [A.examples(), A.checks()]) {
+        assert.ok(set.filter(q => q.input === 'choice').length >= 2);
+        assert.ok(set.filter(q => q.input !== 'choice').length >= 2);
+    }
+    assert.equal(A.checks().length, 5);
+    assert.ok(A.examples().length <= 12);
+});
+
+test('Learn teaches every method the questions use, and its sums are right', () => {
+    const learn = A.learnScreens.flatMap(screen => [screen.title, ...screen.lines, ...screen.maths]).join(' ').toLowerCase();
+    for (const word of ['expression', 'number before the letter', '3n', 'n + 3', 'add the extra', 'once', 'brackets',
+        'squared', 'n²', 'take away', 'order matters']) {
+        assert.ok(learn.includes(word), `Learn never mentions "${word}"`);
+    }
+    for (const screen of A.learnScreens) for (const text of [...screen.lines, ...screen.maths]) assert.deepEqual(wrongSums(text), [], text);
 });

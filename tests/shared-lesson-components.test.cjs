@@ -725,41 +725,6 @@ test('seeded Practice keeps its skill evidence identity through reloads and chan
     assert.equal(id('check', 'page-one', 'final-check-1', state), 'check:page-one:final-check-1');
 });
 
-test('algebraic Practice recovers old question numbers and permutations without saving lesson wording', () => {
-    const { loadScript } = require('./helpers/lessons.cjs');
-    const pilot = loadScript(path.join(__dirname, '../content/algebraic-expressions/questions.js'), ['questionBank', 'practiceQuestions']);
-    const bank = pilot.practiceQuestions(10, window.Maths1to9LessonEngine);
-    const types = Object.keys(pilot.questionBank(() => .5).generators);
-    const history = Array.from({ length: 10 }, (_, index) => {
-        const type = types[index % types.length];
-        const question = pilot.questionBank(seededRandom(index + 503)).generators[type]();
-        return { type, question, selected: question.answerLabel, checked: true, correct: true,
-            firstCorrect: index === 0 ? false : index === 1 ? null : true,
-            attempts: index === 0 ? [{ selected: question.options.find(option => !option.correct).label, correct: false }] : [] };
-    });
-    for (const finished of [false, true]) {
-        const old = { contentVersion: 1, number: 10, sessionLength: 10, history, entry: history[9], finished };
-        const restored = bank.upgrade(old, 0);
-        assert.ok(restored);
-        assert.equal(restored.session, 1);
-        assert.equal(restored.index, finished ? 10 : 9);
-        assert.equal(restored.screen, restored.index);
-        for (let index = 0; index < 10; index++) {
-            const item = restored.items[index];
-            const definition = bank.question(item, seededRandom(item.seed));
-            assert.equal(definition.prompt, [history[index].question.prompt, history[index].question.display].filter(Boolean).join(' '));
-            assert.deepEqual(Array.from(definition.options, option => option.label), Array.from(history[index].question.options, option => option.label));
-            const card = restored.cards[`question-bank:1:${index + 1}`];
-            assert.equal(definition.options[card.selected].label, history[index].selected);
-            assert.equal(card.firstCorrect, history[index].firstCorrect);
-            assert.equal(item.question, undefined);
-            assert.equal(item.prompt, undefined);
-        }
-    }
-    assert.equal(bank.upgrade({ contentVersion: 1 }, 0), null);
-    assert.equal(bank.upgrade({}, 99), null);
-});
-
 test('finished question sets say All lessons only when no section follows', async () => {
     for (const lastSection of [false, true]) {
         const set = await setFixture(undefined, false, lastSection);
