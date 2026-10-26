@@ -29,7 +29,7 @@
         let model;
         if (type === 'singleLetterQuestion' || type === 'hiddenMultiplicationQuestion') {
             const { fixed, coefficient, value } = p, hidden = type === 'hiddenMultiplicationQuestion', letter = hidden ? 's' : 'h', result = 'C';
-            model = { type, params: p, result, context: hidden ? `Entry costs £${fixed}. Each snack costs £${coefficient}.` : 'A cost has a fixed charge and a charge for each hour.',
+            model = { type, params: p, result, context: hidden ? `Entry costs £${fixed}. Each snack costs £${coefficient}.` : `A hire costs £${fixed}, plus £${coefficient} for each hour.`,
                 formula: `${result} = ${fixed} + ${coefficient}${letter}`, givens: { [letter]: value },
                 parts: [`${result} = ${fixed} + ${coefficient} × `, slot(letter)], answer: fixed + coefficient * value,
                 unit: 'pounds', currency: true, fixedNumbers: [fixed, coefficient],
