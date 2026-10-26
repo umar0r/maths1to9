@@ -1,479 +1,202 @@
 (() => {
     'use strict';
 
-    const LEARN_ROOT_ID = 'function-machine-learn';
-    const TRY_ROOT_ID = 'function-machine-try-it';
-    const TRY_SECTION_ID = 'interactive';
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    function gateSection(sectionId) {
-        document.dispatchEvent(new CustomEvent('maths1to9:section-gate', {
+    function examples() {
+        return window.FunctionMachines.examples();
+    }
+
+    function sectionEvent(sectionId, name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
             detail: { sectionId }
         }));
     }
 
-    function completeSection(sectionId) {
-        document.dispatchEvent(new CustomEvent('maths1to9:section-complete', {
-            detail: { sectionId }
-        }));
-    }
-
-    function escapeHtml(value) {
-        return String(value).replace(/[&<>"']/g, (character) => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        })[character]);
-    }
-
-    function parseConfig(root) {
-        try {
-            return JSON.parse(root.dataset.config || '{}');
-        } catch (error) {
-            console.error('The function machine data is not valid JSON.', error);
-            return {};
-        }
-    }
-
-    function shuffle(items) {
-        const copy = [...items];
-        for (let index = copy.length - 1; index > 0; index -= 1) {
-            const swapIndex = Math.floor(Math.random() * (index + 1));
-            [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-        }
-        return copy;
-    }
-
-    function animateIn(element, options = {}) {
-        if (!element || typeof window.gsap === 'undefined') {
-            return;
-        }
-
-        window.gsap.fromTo(element, {
-            opacity: 0,
-            y: options.y ?? 12
-        }, {
-            opacity: 1,
-            y: 0,
-            duration: options.duration ?? 0.35,
-            ease: 'power2.out'
+    async function mountLearn() {
+        const screens = window.FunctionMachines.learnScreens;
+        const root = document.createElement('article');
+        document.getElementById('lesson-section-explanation').append(root);
+        const api = window.Maths1to9Lesson;
+        sectionEvent('explanation', 'gate');
+        const section = await api.useSectionState('learn', {
+            version: 2,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false }),
+            upgrade: () => null
         });
-    }
+        const state = section.state;
+        section.save();
 
-    function boxHtml(text, kind = 'value', label = '') {
-        const isOperation = kind === 'operation';
-        const isReverse = kind === 'reverse';
-        const border = isOperation ? '#677087' : '#5664D2';
-        const background = isOperation ? '#FFFFFF' : isReverse ? '#F1F4FF' : '#EEF2FF';
-
-        return `
-            <div style="min-width:84px;text-align:center;">
-                <div style="border:3px solid ${border};background:${background};border-radius:16px;padding:14px 18px;font-size:1.45rem;font-weight:800;line-height:1;white-space:nowrap;">
-                    ${escapeHtml(text)}
-                </div>
-                ${label ? `<div style="margin-top:7px;font-size:.85rem;font-weight:700;">${escapeHtml(label)}</div>` : ''}
-            </div>
-        `;
-    }
-
-    function machineGraphic(config) {
-        const values = Array.isArray(config.values) ? config.values : [];
-        const operations = Array.isArray(config.operations) ? config.operations : [];
-        const labels = Array.isArray(config.labels) ? config.labels : [];
-        const arrow = config.direction === 'backwards' ? '←' : '→';
-        const operationKind = config.direction === 'backwards' ? 'reverse' : 'operation';
-        const parts = [];
-
-        values.forEach((value, index) => {
-            parts.push(boxHtml(value, value === '?' ? 'unknown' : 'value', labels[index] || ''));
-
-            if (index < operations.length) {
-                parts.push(`<div aria-hidden="true" style="font-size:1.8rem;font-weight:900;line-height:1;">${arrow}</div>`);
-                parts.push(boxHtml(operations[index], operationKind));
-                parts.push(`<div aria-hidden="true" style="font-size:1.8rem;font-weight:900;line-height:1;">${arrow}</div>`);
+        function syncHash() {
+            if (api.getCurrentSection().id === 'explanation') {
+                api.setSlideHash(`learn-${state.screen + 1}`, { replace: true });
             }
-        });
-
-        return `
-            <div class="interactive-equation" style="overflow-x:auto;">
-                <div role="img" aria-label="${escapeHtml(config.ariaLabel || 'Function machine')}" style="display:flex;align-items:center;gap:12px;width:max-content;min-width:100%;justify-content:center;padding:12px 6px;">
-                    ${parts.join('')}
-                </div>
-                ${config.caption ? `<p style="margin:10px 0 0;text-align:center;font-weight:700;">${escapeHtml(config.caption)}</p>` : ''}
-            </div>
-        `;
-    }
-
-    function progressMachineGraphic(config) {
-        const values = Array.isArray(config.values) ? config.values.map(String) : [];
-        const operations = Array.isArray(config.operations) ? config.operations : [];
-        const solvedRows = Array.isArray(config.solvedRows) ? config.solvedRows : [];
-        const labels = Array.isArray(config.labels) ? config.labels : [];
-        const solvedCount = Math.min(solvedRows.length, operations.length);
-        const lastValueIndex = values.length - 1;
-        const revealFrom = Math.max(0, lastValueIndex - solvedCount);
-        const newestReversedOperation = operations.length - solvedCount;
-        const parts = [];
-
-        values.forEach((value, index) => {
-            const shownValue = index >= revealFrom ? value : '?';
-            parts.push(boxHtml(shownValue, shownValue === '?' ? 'unknown' : 'value', labels[index] || ''));
-
-            if (index >= operations.length) {
-                return;
-            }
-
-            const isReversed = index >= operations.length - solvedCount;
-            const solvedRowIndex = operations.length - 1 - index;
-            const operationText = isReversed
-                ? solvedRows[solvedRowIndex].reverse
-                : operations[index];
-            const arrow = isReversed ? '←' : '→';
-            const isNewest = isReversed && index === newestReversedOperation;
-
-            parts.push(`
-                <div
-                    ${isNewest ? 'data-new-reverse="true"' : ''}
-                    style="display:flex;align-items:center;gap:12px;"
-                >
-                    <div aria-hidden="true" style="font-size:1.8rem;font-weight:900;line-height:1;">${arrow}</div>
-                    ${boxHtml(operationText, isReversed ? 'reverse' : 'operation')}
-                    <div aria-hidden="true" style="font-size:1.8rem;font-weight:900;line-height:1;">${arrow}</div>
-                </div>
-            `);
-        });
-
-        return `
-            <div class="interactive-equation" style="overflow-x:auto;">
-                <div role="img" aria-label="${escapeHtml(config.ariaLabel || 'Function machine changing from forwards to backwards')}" style="display:flex;align-items:center;gap:12px;width:max-content;min-width:100%;justify-content:center;padding:12px 6px;">
-                    ${parts.join('')}
-                </div>
-            </div>
-        `;
-    }
-
-    function reverseTable(rows, currentRow = null, revealCurrent = false) {
-        const body = [];
-
-        rows.forEach((row) => {
-            body.push(`
-                <tr data-solved-row>
-                    <td><strong>${escapeHtml(row.machine)}</strong></td>
-                    <td><strong>${escapeHtml(row.reverse)}</strong></td>
-                    <td>${escapeHtml(row.working)}</td>
-                </tr>
-            `);
-        });
-
-        if (currentRow) {
-            body.push(`
-                <tr data-current-row>
-                    <td style="padding:12px 14px;border-bottom:1px solid #e7ebf4;"><strong>${escapeHtml(currentRow.machine_operation)}</strong></td>
-                    <td style="padding:12px 14px;border-bottom:1px solid #e7ebf4;">${revealCurrent ? `<strong>${escapeHtml(currentRow.reverse_operation)}</strong>` : '?'}</td>
-                    <td style="padding:12px 14px;border-bottom:1px solid #e7ebf4;">${revealCurrent ? escapeHtml(currentRow.calculation) : '?'}</td>
-                </tr>
-            `);
         }
 
-        if (body.length === 0) {
-            return '';
-        }
-
-        return `
-            <aside class="lesson-key-points">
-                <h4>Working backwards</h4>
-                <p>The machine says one operation. You use the reverse operation.</p>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;min-width:520px;border-collapse:separate;border-spacing:0;border:2px solid #dfe5f2;border-radius:14px;overflow:hidden;">
-                        <thead>
-                            <tr>
-                                <th scope="col" style="padding:12px 14px;text-align:left;background:#f5f7ff;border-bottom:2px solid #dfe5f2;">Machine says</th>
-                                <th scope="col" style="padding:12px 14px;text-align:left;background:#f5f7ff;border-bottom:2px solid #dfe5f2;">You do</th>
-                                <th scope="col" style="padding:12px 14px;text-align:left;background:#f5f7ff;border-bottom:2px solid #dfe5f2;">Working</th>
-                            </tr>
-                        </thead>
-                        <tbody>${body.join('')}</tbody>
-                    </table>
-                </div>
-            </aside>
-        `;
-    }
-
-    function paragraphsHtml(paragraphs) {
-        return (Array.isArray(paragraphs) ? paragraphs : [])
-            .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-            .join('');
-    }
-
-    function pairedGraphicsHtml(items) {
-        return (Array.isArray(items) ? items : []).map((item) => `
-            <section style="margin-top:18px;">
-                <h4>${escapeHtml(item.label || '')}</h4>
-                ${machineGraphic({
-                    values: item.values,
-                    operations: item.operations,
-                    direction: item.direction,
-                    ariaLabel: `${item.label || ''} function machine`
-                })}
-            </section>
-        `).join('');
-    }
-
-    function learnBlockHtml(block, index) {
-        const graphic = block.graphic
-            ? machineGraphic({
-                values: block.graphic.values,
-                operations: block.graphic.operations,
-                labels: block.graphic.labels,
-                caption: block.graphic.caption,
-                ariaLabel: block.title
-            })
-            : '';
-
-        const table = Array.isArray(block.reverse_rows)
-            ? reverseTable(block.reverse_rows)
-            : '';
-
-        const paired = pairedGraphicsHtml(block.paired_graphics);
-
-        const bigIdea = Array.isArray(block.big_idea)
-            ? `
-                <aside class="lesson-key-points">
-                    <h4>Big idea</h4>
-                    ${block.big_idea.map((line) => `<p><strong>${escapeHtml(line)}</strong></p>`).join('')}
-                </aside>
-            `
-            : '';
-
-        return `
-            <article class="worked-example" data-learn-block="${index}" style="width:100%;max-width:none;break-inside:avoid;">
-                <h3 class="worked-example__title">${escapeHtml(block.title || '')}</h3>
-                ${paragraphsHtml(block.paragraphs)}
-                ${graphic}
-                ${table}
-                ${paired}
-                ${bigIdea}
-            </article>
-        `;
-    }
-
-    function mountLearn(root) {
-        if (!root || root.dataset.mounted === 'true') {
-            return;
-        }
-
-        root.dataset.mounted = 'true';
-        const config = parseConfig(root);
-        const blocks = Array.isArray(config.blocks) ? config.blocks : [];
-
-        root.innerHTML = `
-            <p class="lesson-eyebrow">${escapeHtml(config.eyebrow || 'Learn')}</p>
-            <h2 class="lesson-section__title">${escapeHtml(config.title || 'What a function machine does')}</h2>
-            <div data-learn-stack style="display:flex;flex-direction:column;gap:1.25rem;width:100%;">
-                ${blocks.map(learnBlockHtml).join('')}
-            </div>
-        `;
-    }
-
-    async function mountTryIt(root) {
-        if (!root || root.dataset.mounted === 'true') {
-            return;
-        }
-
-        root.dataset.mounted = 'true';
-        gateSection(TRY_SECTION_ID);
-
-        const store = window.Maths1to9Progress;
-        const slug = 'function-machines-find-the-input';
-        let state = await store.getLessonActivityState(slug, TRY_SECTION_ID);
-        if (state?.contentVersion !== 1) {
-            const config = parseConfig(root);
-            config.steps = (config.steps || []).map(step => ({
-                ...step, options: shuffle(step.options || [])
-            }));
-            state = {
-                contentVersion: 1, config, answers: [],
-                stepIndex: 0, selected: '', correct: false, wrong: false,
-                startValue: '', solvedRows: []
-            };
-        }
-        // Keep the question snapshot with the pupil's answers.
-        const config = state.config;
-        const steps = Array.isArray(config.steps) ? config.steps : [];
-        const operations = Array.isArray(config.operations)
-            ? config.operations.map((operation) => operation.label)
-            : [];
-        const completion = config.completion || {};
-
-        function save() {
-            store.saveLessonActivityState(slug, TRY_SECTION_ID, state);
-        }
-
-        function advanceStep() {
-            const step = steps[state.stepIndex];
-            if (!state.correct || !step) return;
-            if (step.start_value) state.startValue = step.start_value;
-            if (step.machine_operation) {
-                state.solvedRows.push({
-                    machine: step.machine_operation,
-                    reverse: step.reverse_operation,
-                    working: step.calculation
-                });
-            }
-            state.stepIndex += 1;
-            state.selected = '';
-            state.correct = false;
-            state.wrong = false;
-            render();
-        }
-
-        function updateAction() {
-            let label = 'Choose an answer';
-            if (state.correct) label = 'Continue';
-            else if (state.wrong) label = 'Try again';
-            window.Maths1to9Lesson.setSectionAction(TRY_SECTION_ID, {
-                label,
-                disabled: !state.correct && !state.wrong,
-                onClick: () => {
-                    if (state.correct) advanceStep();
-                    else {
-                        state.selected = '';
-                        state.wrong = false;
-                        render();
-                    }
-                }
+        function showScreen(screen) {
+            section.update(state => {
+                state.screen = screen;
+                state.furthestScreen = Math.max(state.furthestScreen, screen);
+                if (screen === screens.length - 1) state.finished = true;
             });
-        }
-
-        function finish() {
-            save();
-            window.Maths1to9Lesson.clearSectionAction(TRY_SECTION_ID);
-            root.innerHTML = `
-                <article class="worked-example">
-                    <p class="worked-example__number">${escapeHtml(completion.eyebrow || 'Try it complete')}</p>
-                    <h3 class="worked-example__title">${escapeHtml(completion.title || 'The input is 10')}</h3>
-                    ${progressMachineGraphic({
-                        values: [String(config.input), String(config.middle_values?.[0] ?? 7), String(config.output)],
-                        operations,
-                        solvedRows: state.solvedRows,
-                        labels: ['Input', '', 'Output'],
-                        ariaLabel: 'Completed backwards function machine'
-                    })}
-                    ${reverseTable(state.solvedRows)}
-                    <div class="question-feedback is-visible is-correct">
-                        <strong>Check:</strong> ${escapeHtml(completion.check || '')}
-                    </div>
-                </article>
-            `;
-
-            completeSection(TRY_SECTION_ID);
-            animateIn(root.firstElementChild);
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
         function render() {
-            save();
-            const step = steps[state.stepIndex];
-            if (!step) {
-                finish();
-                return;
+            const screen = screens[state.screen];
+            const { escapeHtml } = window.Maths1to9LessonEngine;
+            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
+            for (const line of screen.lines) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = line;
+                root.append(paragraph);
             }
-
-            const currentRow = step.machine_operation ? step : null;
-            const options = (step.options || []).map((option) => `
-                <button
-                    class="button${state.selected === option && state.correct ? ' button--primary' : ''}"
-                    type="button"
-                    data-answer="${escapeHtml(option)}"
-                    aria-pressed="${state.selected === option}"
-                    ${state.correct ? 'disabled' : ''}
-                >
-                    ${escapeHtml(option)}
-                </button>
-            `).join('');
-
-            const feedback = state.wrong
-                ? '<div class="question-feedback is-visible is-incorrect">Not quite. Look at the machine and work backwards.</div>'
-                : state.correct
-                    ? `<div class="question-feedback is-visible is-correct"><strong>Correct.</strong> ${escapeHtml(step.feedback || '')}</div>`
-                    : '';
-
-
-            root.innerHTML = `
-                <article class="worked-example">
-                    <p class="worked-example__number">${escapeHtml(config.eyebrow || 'Try it')} · Step ${state.stepIndex + 1} of ${steps.length}</p>
-                    <h3 class="worked-example__title">${escapeHtml(config.title || 'Find the missing input')}</h3>
-                    ${state.stepIndex === 0 ? `<p>${escapeHtml(config.intro || '')}</p>` : ''}
-                    ${progressMachineGraphic({
-                        values: [String(config.input), String(config.middle_values?.[0] ?? 7), String(config.output)],
-                        operations,
-                        solvedRows: state.solvedRows,
-                        labels: ['Input', '', 'Output'],
-                        ariaLabel: 'Find the missing input by reversing one step at a time'
-                    })}
-                    ${reverseTable(state.solvedRows, currentRow, state.correct)}
-                    <p class="question-prompt">${escapeHtml(step.prompt || '')}</p>
-                    <div class="question-options" role="group" aria-label="Choose an answer">
-                        ${options}
-                    </div>
-                    ${feedback}
-                </article>
-            `;
-
-            animateIn(root.firstElementChild);
-            const newlyReversed = root.querySelector('[data-new-reverse="true"]');
-            if (newlyReversed && typeof window.gsap !== 'undefined') {
-                window.gsap.fromTo(newlyReversed, { opacity: 0, x: 18 }, {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.4,
-                    ease: 'power2.out'
+            const visual = document.createElement('div');
+            root.append(visual);
+            window.FunctionMachines.drawLearn(visual, state.screen, section);
+            api.setSectionBack('explanation', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('explanation', 'complete');
+            if (state.screen < state.furthestScreen) {
+                api.setSectionAction('explanation', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+            } else if (state.finished) {
+                api.clearSectionAction('explanation');
+            } else {
+                api.setSectionAction('explanation', {
+                    label: 'Next idea', onClick: () => showScreen(state.screen + 1)
                 });
             }
+            syncHash();
+        }
 
-            updateAction();
-            root.querySelectorAll('[data-answer]').forEach((button) => {
-                button.addEventListener('click', () => {
-                    if (state.correct) {
-                        return;
-                    }
-
-                    const selected = button.dataset.answer || '';
-                    state.selected = selected;
-                    state.correct = selected === step.answer;
-                    state.wrong = !state.correct;
-                    const answer = state.answers[state.stepIndex] ??= {
-                        selected: '', firstCorrect: state.correct, attempts: []
-                    };
-                    answer.selected = selected;
-                    answer.phase = state.correct ? 'correct' : 'wrong';
-                    answer.attempts.push({ selected, correct: state.correct });
-                    render();
-                });
+        screens.forEach((screen, index) => {
+            api.registerHashRoute(`learn-${index + 1}`, () => {
+                api.goToSection('explanation', { moveFocus: false });
+                showScreen(Math.min(index, state.furthestScreen));
             });
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
+        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
+        else render();
+    }
 
+    async function mountTryIt(root) {
+        const questions = examples();
+        const api = window.Maths1to9Lesson;
+        sectionEvent('interactive', 'gate');
+        api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('interactive', {
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
+        });
+        const state = section.state;
+        section.save();
+
+        function syncHash() {
+            if (api.getCurrentSection().id === 'interactive') {
+                api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true });
+            }
         }
 
-        if (steps.length === 0) {
-            root.textContent = 'The Try It activity could not be loaded.';
-            completeSection(TRY_SECTION_ID);
-            return;
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
+        function reportProgress() {
+            const card = state.cards[`example-${state.index + 1}`];
+            const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
+            api.setSectionProgress('interactive', completed, questions.length);
+        }
+
+        function continueExample() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === questions.length;
+            });
+            render();
+        }
+
+        function drawExample(container, index, readOnly) {
+            const example = questions[index];
+            const cardRoot = document.createElement('div');
+            container.append(cardRoot);
+            api.createQuestion(cardRoot, {
+                ...window.FunctionMachines.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
+                scored: false, readOnly,
+                onFeedback(result) {
+                    reportProgress();
+                },
+                onContinue: continueExample
+            });
+        }
+
+        function render() {
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
+            root.append(heading);
+            api.setSectionBack('interactive', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('interactive', 'complete');
+            if (state.screen === questions.length) {
+                questions.forEach((example, index) => {
+                    const completed = document.createElement('article');
+                    root.append(completed);
+                    drawExample(completed, index, true);
+                });
+                api.clearSectionAction('interactive');
+            } else {
+                const readOnly = state.screen < state.index;
+                drawExample(root, state.screen, readOnly);
+                if (readOnly) api.setSectionAction('interactive', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+            }
+            syncHash();
+        }
+
+        for (let index = 0; index <= questions.length; index++) {
+            api.registerHashRoute(`try-it-${index + 1}`, () => {
+                if (!api.goToSection('interactive', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
+                }
+                showScreen(Math.min(index, state.furthestScreen));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        reportProgress();
         render();
+        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
+            .find(index => initialHash === `#try-it-${index + 1}`);
+        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
+        }
     }
 
-    function mountAll() {
-        mountLearn(document.getElementById(LEARN_ROOT_ID));
-        mountTryIt(document.getElementById(TRY_ROOT_ID));
-    }
-
-    document.addEventListener('function-machines:roots-ready', mountAll);
-    document.addEventListener('maths1to9:lesson-rendered', mountAll);
-    document.addEventListener('lesson:rendered', mountAll);
-
-    const observer = new MutationObserver(mountAll);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-
-    mountAll();
+    window.Maths1to9Interactives ??= {};
+    window.Maths1to9Interactives[SLUG] = mountTryIt;
+    document.addEventListener('maths1to9:lesson-rendered', event => {
+        if (event.detail?.slug === SLUG) mountLearn();
+    });
 })();
