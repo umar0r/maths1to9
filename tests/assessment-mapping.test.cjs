@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { loadScript } = require('./helpers/lessons.cjs');
 const root = path.join(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'assets/js/lesson-engine.js'), 'utf8');
@@ -38,14 +39,16 @@ test('mapped answers record scores and one attempt per distinct skill, including
     }
 });
 test('every place-value final check question records the intended skills', () => {
-    const {createFinalCheckQuestions} = loadScript(path.join(root, 'content/place-value/questions.js'), ['createFinalCheckQuestions']);
+    const window = {};
+    vm.runInNewContext(source, {window, document:{body:{dataset:{lessonRenderer:'custom'}}}});
+    const {checks} = loadScript(path.join(root, 'content/place-value/place-value.js'), ['checks'], {window});
     const mapping = JSON.parse(fs.readFileSync(path.join(root, 'content/place-value/lesson.json'))).assessment.question_types;
     const h = harness(mapping);
-    const questions = createFinalCheckQuestions();
+    const questions = checks();
     const expected = [['place-value'], ['order-numbers','inequality-symbols'], ['order-numbers'], ['place-value'], ['place-value']];
     questions.forEach((q, i) => {
         const before = h.events.length;
-        assert.equal(h.record({questionType:q.assessmentType, questionId:`final-check-${i+1}`, correct:true}), true);
+        assert.equal(h.record({questionType:q.questionType, questionId:`final-check-${i+1}`, correct:true}), true);
         assert.deepEqual(h.events.slice(before).map(e=>e.detail.skillId), expected[i]);
     });
     assert.equal(h.scores.length, 5);

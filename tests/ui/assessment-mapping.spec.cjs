@@ -7,12 +7,16 @@ test('place-value final check sends each answer to its intended skills', async (
         document.addEventListener('maths1to9:skill-attempt', e => window.skillAttempts.push(e.detail));
     });
     await page.goto('content/place-value/#comparison', {waitUntil:'networkidle'});
-    const next = page.getByRole('button', {name:'Next question', exact:true});
+    await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
+    const main = page.locator('.lesson-controls button.button--primary:visible');
     for (let i = 1; i <= 5; i++) {
-        await expect(page.locator('.final-check-count')).toHaveText(`Question ${i} of 5`);
+        await expect(page.getByRole('heading', {name:`Question ${i} of 5`, exact:true})).toBeVisible();
         await solve(page, {});
-        await expect(next).toBeEnabled();
-        await next.click();
+        await expect(main).toHaveText('Check');
+        await expect(main).toBeEnabled();
+        await main.click();
+        await expect(main).toHaveText('Continue');
+        await main.click();
     }
     const attempts = await page.evaluate(() => window.skillAttempts);
     expect(attempts.map(a=>a.skillId)).toEqual([
