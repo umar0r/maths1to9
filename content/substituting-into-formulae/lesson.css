@@ -1,47 +1,12 @@
-.retained-results {
-    list-style: none;
-    counter-reset: result;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.retained-results > li {
-    counter-increment: result;
-    min-width: 0;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.retained-result {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 8px 16px;
-}
-
-.retained-result::before {
-    content: counter(result) ".";
-    color: var(--text-muted);
-}
-
-.retained-result > :first-child {
-    flex: 1 1 160px;
-}
-
-.retained-result__answer {
-    display: inline-flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-
-.retained-result__answer > :last-child {
-    white-space: nowrap;
-}
-
-.retained-result__explanation {
-    margin: 8px 0 0;
-    color: var(--text-muted);
-}
+/* Substitution pictures and value-placement controls. */
+.su-working { display: grid; gap: .6rem; justify-items: center; margin-block: 1.25rem; }
+.su-working-line { max-width: 100%; padding: .6rem .8rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; font-weight: 800; text-align: center; overflow-wrap: anywhere; }
+.su-rectangle { display: block; max-width: 100%; height: auto; margin: 1rem auto; font-family: inherit; font-size: 17px; fill: #172b3b; }
+.su-formula { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-block: 1rem; font-size: 1.2rem; font-weight: 800; white-space: pre-wrap; }
+.su-formula button, .su-value-bank button { min-width: 48px; min-height: 48px; padding: .5rem; border: 2px solid #64748b; border-radius: .45rem; background: #fff; color: #172b3b; font: inherit; font-weight: 800; }
+.su-formula button { border-style: dashed; background: #f0fdfa; }
+.su-value-bank { display: flex; flex-wrap: wrap; gap: .6rem; margin-block: 1rem; }
+.su-value-bank button[aria-pressed=true] { background: #ecfeff; border-color: #155e75; }
+.su-answer { display: grid; gap: .5rem; max-width: 230px; margin-block: 1rem; font-weight: 800; }
+.su-answer input { min-width: 0; width: 100%; min-height: 44px; padding: .5rem; border: 2px solid #64748b; border-radius: .45rem; font: inherit; }
+.su-formula button:focus-visible, .su-value-bank button:focus-visible, .su-answer input:focus-visible { outline: 3px solid #155e75; outline-offset: 3px; }

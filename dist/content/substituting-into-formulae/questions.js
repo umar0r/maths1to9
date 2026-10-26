@@ -1,1489 +1,163 @@
 (() => {
     'use strict';
 
-    const slug = 'substituting-into-formulae';
-    const completionTarget = 8;
+    const SLUG = document.body.dataset.lessonId;
+    const initialHash = window.location.hash;
 
-    function gateSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent(
-                'maths1to9:section-gate',
-                {
-                    detail: { sectionId }
-                }
-            )
-        );
+    function sectionEvent(name) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId: 'comparison' }
+        }));
     }
 
-    function completeSection(sectionId) {
-        document.dispatchEvent(
-            new CustomEvent(
-                'maths1to9:section-complete',
-                {
-                    detail: { sectionId }
-                }
-            )
-        );
-    }
-
-    function escapeHtml(value) {
-        return String(value).replace(
-            /[&<>"']/g,
-            (character) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            })[character]
-        );
-    }
-
-    function randomInt(minimum, maximum) {
-        return Math.floor(
-            Math.random() *
-            (maximum - minimum + 1)
-        ) + minimum;
-    }
-
-    function randomItem(items) {
-        return items[
-            randomInt(0, items.length - 1)
-        ];
-    }
-
-    function shuffle(items) {
-        const copy = [...items];
-
-        for (
-            let index = copy.length - 1;
-            index > 0;
-            index -= 1
-        ) {
-            const swapIndex = randomInt(
-                0,
-                index
-            );
-
-            [
-                copy[index],
-                copy[swapIndex]
-            ] = [
-                copy[swapIndex],
-                copy[index]
-            ];
-        }
-
-        return copy;
-    }
-
-    function formatNumber(value) {
-        return String(value).replace(
-            /-(?=\d)/g,
-            '−'
-        );
-    }
-
-    function normaliseNumber(value) {
-        return String(value)
-            .replace(/−/g, '-')
-            .trim();
-    }
-
-    function slot(
-        letter,
-        options = {}
-    ) {
-        return {
-            type: 'slot',
-            letter,
-            prefix: options.prefix || '',
-            suffix: options.suffix || '',
-            brackets:
-                options.brackets === true
-        };
-    }
-
-    function makeTiles(values, distractors) {
-        const unique = [];
-
-        [
-            ...values,
-            ...distractors
-        ].forEach((value) => {
-            const text =
-                formatNumber(value);
-
-            if (!unique.includes(text)) {
-                unique.push(text);
-            }
+    function mountPractice() {
+        const api = window.Maths1to9Lesson;
+        return api.runQuestionSet('question-bank', {
+            version: 2, count: api.getLesson().question_bank.session_length,
+            practiseAgain: true, heading: 'Your practice results',
+            pick: window.Substitution.pick,
+            question: (item, random) => window.Substitution.prepare(window.Substitution.generate(item, random), random),
+            upgrade: () => null
         });
-
-        return shuffle(unique);
     }
 
-    function makeOptions(
-        correct,
-        distractors
-    ) {
-        const unique = [];
-
-        [
-            correct,
-            ...distractors
-        ].forEach((value) => {
-            const text = formatNumber(value);
-
-            if (!unique.includes(text)) {
-                unique.push(text);
-            }
+    async function mountCheck(root, lesson) {
+        const api = window.Maths1to9Lesson;
+        const { renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
+        const questions = window.Substitution.checks();
+        const count = questions.length;
+        sectionEvent('gate');
+        api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
+        const section = await api.useSectionState('comparison', {
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
         });
+        const state = section.state;
+        section.save();
 
-        return shuffle(
-            unique.slice(0, 4)
-        );
-    }
-
-    function singleLetterQuestion() {
-        const fixed = randomInt(3, 8);
-        const coefficient = randomInt(2, 5);
-        const value = randomInt(2, 7);
-        const answer =
-            fixed + coefficient * value;
-
-        return {
-            label: 'One letter',
-            prompt:
-                'Replace c with its value.',
-            context:
-                'A game costs a fixed amount, plus a charge for each credit.',
-            formula:
-                `P = ${fixed} + ${coefficient}c`,
-            givens: {
-                c: value
-            },
-            parts: [
-                `P = ${fixed} + ${coefficient} × `,
-                slot('c')
-            ],
-            tiles: makeTiles(
-                [value],
-                [fixed, coefficient]
-            ),
-            substituted:
-                `P = ${fixed} + ${coefficient} × ${value}`,
-            answer:
-                `P = ${answer}`,
-            options: makeOptions(
-                `P = ${answer}`,
-                [
-                    `P = ${fixed + coefficient + value}`,
-                    `P = ${fixed * coefficient}`,
-                    `P = ${answer + coefficient}`
-                ]
-            ),
-            explanation:
-                `${coefficient} × ${value} = `
-                + `${coefficient * value}. `
-                + `Then add ${fixed}.`
-        };
-    }
-
-    function hiddenMultiplicationQuestion() {
-        const entry = randomInt(4, 9);
-        const price = randomInt(2, 5);
-        const snacks = randomInt(2, 7);
-        const answer =
-            entry + price * snacks;
-
-        return {
-            label: 'Hidden multiplication',
-            prompt:
-                'Replace s with its value.',
-            context:
-                `Entry costs £${entry}. Each snack costs £${price}.`,
-            formula:
-                `C = ${entry} + ${price}s`,
-            givens: {
-                s: snacks
-            },
-            parts: [
-                `C = ${entry} + ${price} × `,
-                slot('s')
-            ],
-            tiles: makeTiles(
-                [snacks],
-                [entry, price]
-            ),
-            substituted:
-                `C = ${entry} + ${price} × ${snacks}`,
-            answer:
-                `£${answer}`,
-            options: makeOptions(
-                `£${answer}`,
-                [
-                    `£${entry + price + snacks}`,
-                    `£${entry * price}`,
-                    `£${answer + price}`
-                ]
-            ),
-            explanation:
-                `${price}s means ${price} × s. `
-                + `The total is £${answer}.`
-        };
-    }
-
-    function areaQuestion() {
-        const length = randomInt(3, 10);
-        const width = randomInt(2, 9);
-        const answer =
-            length * width;
-
-        return {
-            label: 'Two letters',
-            prompt:
-                'Replace l and w with their values.',
-            context:
-                'Find the area of a rectangle.',
-            formula:
-                'A = lw',
-            givens: {
-                l: length,
-                w: width
-            },
-            parts: [
-                'A = ',
-                slot('l'),
-                ' × ',
-                slot('w')
-            ],
-            tiles: makeTiles(
-                [length, width],
-                [length + width, 2]
-            ),
-            substituted:
-                `A = ${length} × ${width}`,
-            answer:
-                `A = ${answer} cm²`,
-            options: makeOptions(
-                `A = ${answer} cm²`,
-                [
-                    `A = ${length + width} cm²`,
-                    `A = ${2 * (length + width)} cm`,
-                    `A = ${answer} cm`
-                ]
-            ),
-            explanation:
-                `${length} × ${width} = ${answer}. `
-                + `Area uses square units.`
-        };
-    }
-
-    function perimeterQuestion() {
-        const length = randomInt(4, 10);
-        const width = randomInt(2, 8);
-        const answer =
-            2 * length + 2 * width;
-
-        return {
-            label: 'Two letters',
-            prompt:
-                'Replace l and w with their values.',
-            context:
-                'Find the perimeter of a rectangle.',
-            formula:
-                'P = 2l + 2w',
-            givens: {
-                l: length,
-                w: width
-            },
-            parts: [
-                'P = 2 × ',
-                slot('l'),
-                ' + 2 × ',
-                slot('w')
-            ],
-            tiles: makeTiles(
-                [length, width],
-                [2, length + width]
-            ),
-            substituted:
-                `P = 2 × ${length} + 2 × ${width}`,
-            answer:
-                `P = ${answer} cm`,
-            options: makeOptions(
-                `P = ${answer} cm`,
-                [
-                    `P = ${length + width} cm`,
-                    `P = ${length * width} cm²`,
-                    `P = ${answer} cm²`
-                ]
-            ),
-            explanation:
-                `Calculate both multiplications, `
-                + `then add. Perimeter uses cm.`
-        };
-    }
-
-    function repeatedLetterQuestion() {
-        const x = randomInt(2, 6);
-        const coefficient = randomInt(2, 5);
-        const answer =
-            x * x + coefficient * x;
-
-        return {
-            label: 'Repeated letter',
-            prompt:
-                'Replace both copies of x.',
-            context:
-                'The same value is used twice.',
-            formula:
-                `y = x² + ${coefficient}x`,
-            givens: {
-                x
-            },
-            parts: [
-                'y = ',
-                slot(
-                    'x',
-                    { suffix: '²' }
-                ),
-                ` + ${coefficient} × `,
-                slot('x')
-            ],
-            tiles: makeTiles(
-                [x],
-                [coefficient, x * x]
-            ),
-            substituted:
-                `y = ${x}² + ${coefficient} × ${x}`,
-            answer:
-                `y = ${formatNumber(answer)}`,
-            options: makeOptions(
-                `y = ${formatNumber(answer)}`,
-                [
-                    `y = ${x + coefficient * x}`,
-                    `y = ${x * x + coefficient}`,
-                    `y = ${x * x * coefficient}`
-                ]
-            ),
-            explanation:
-                `Replace every copy of x. `
-                + `${x}² = ${x * x}.`
-        };
-    }
-
-    function bracketQuestion() {
-        const x = randomInt(2, 5);
-        const inside =
-            2 * x - 1;
-        const answer =
-            x * inside;
-
-        return {
-            label: 'Brackets',
-            prompt:
-                'Replace both copies of x and keep the bracket.',
-            context:
-                'Work inside the bracket before multiplying.',
-            formula:
-                'y = x(2x − 1)',
-            givens: {
-                x
-            },
-            parts: [
-                'y = ',
-                slot('x'),
-                ' × (2 × ',
-                slot('x'),
-                ' − 1)'
-            ],
-            tiles: makeTiles(
-                [x],
-                [2, 1, inside]
-            ),
-            substituted:
-                `y = ${x} × (2 × ${x} − 1)`,
-            answer:
-                `y = ${formatNumber(answer)}`,
-            options: makeOptions(
-                `y = ${formatNumber(answer)}`,
-                [
-                    `y = ${inside}`,
-                    `y = ${2 * x * x - 1}`,
-                    `y = ${x * (2 * x + 1)}`
-                ]
-            ),
-            explanation:
-                `Inside the bracket, `
-                + `2 × ${x} − 1 = ${inside}.`
-        };
-    }
-
-    function powerQuestion() {
-        const length = randomInt(3, 8);
-        const height = randomItem(
-            [6, 9, 12, 15, 18, 21, 24]
-        );
-        const answer =
-            length * length * height / 3;
-
-        return {
-            label: 'Power',
-            prompt:
-                'Replace l and h. Keep the square on l.',
-            context:
-                'Find the volume of a pyramid.',
-            formula:
-                'V = l²h ÷ 3',
-            givens: {
-                l: length,
-                h: height
-            },
-            parts: [
-                'V = ',
-                slot(
-                    'l',
-                    { suffix: '²' }
-                ),
-                ' × ',
-                slot('h'),
-                ' ÷ 3'
-            ],
-            tiles: makeTiles(
-                [length, height],
-                [3, length * length]
-            ),
-            substituted:
-                `V = ${length}² × ${height} ÷ 3`,
-            answer:
-                `V = ${answer} cm³`,
-            options: makeOptions(
-                `V = ${answer} cm³`,
-                [
-                    `V = ${length * height / 3} cm³`,
-                    `V = ${answer} cm`,
-                    `V = ${length * length * height} cm³`
-                ]
-            ),
-            explanation:
-                `l² becomes ${length}². `
-                + `Volume uses cubic units.`
-        };
-    }
-
-    function negativeQuestion() {
-        const coefficient = randomInt(2, 5);
-        const constant = randomInt(5, 12);
-        const n = -randomInt(2, 5);
-        const answer =
-            coefficient * n + constant;
-
-        return {
-            label: 'Negative value',
-            prompt:
-                'Replace n and keep its negative sign.',
-            context:
-                'A negative value goes inside brackets.',
-            formula:
-                `m = ${coefficient}n + ${constant}`,
-            givens: {
-                n
-            },
-            parts: [
-                `m = ${coefficient} × `,
-                slot(
-                    'n',
-                    { brackets: true }
-                ),
-                ` + ${constant}`
-            ],
-            tiles: makeTiles(
-                [n],
-                [Math.abs(n), coefficient, constant]
-            ),
-            substituted:
-                `m = ${coefficient} × (${formatNumber(n)}) + ${constant}`,
-            answer:
-                `m = ${formatNumber(answer)}`,
-            options: makeOptions(
-                `m = ${formatNumber(answer)}`,
-                [
-                    `m = ${coefficient * Math.abs(n) + constant}`,
-                    `m = ${coefficient + n + constant}`,
-                    `m = ${answer - constant}`
-                ]
-            ),
-            explanation:
-                `Keep ${formatNumber(n)} inside brackets. `
-                + `${coefficient} × (${formatNumber(n)}) `
-                + `is ${formatNumber(coefficient * n)}.`
-        };
-    }
-
-    function negativePowerQuestion() {
-        const x = -randomInt(2, 5);
-        const coefficient = randomInt(2, 4);
-        const answer =
-            x * x + coefficient * x;
-
-        return {
-            label: 'Negative value and a power',
-            prompt:
-                'Replace both copies of x. Use brackets.',
-            context:
-                'The brackets keep the negative sign with the number.',
-            formula:
-                `y = x² + ${coefficient}x`,
-            givens: {
-                x
-            },
-            parts: [
-                'y = ',
-                slot(
-                    'x',
-                    {
-                        suffix: '²',
-                        brackets: true
-                    }
-                ),
-                ` + ${coefficient} × `,
-                slot(
-                    'x',
-                    { brackets: true }
-                )
-            ],
-            tiles: makeTiles(
-                [x],
-                [Math.abs(x), coefficient, x * x]
-            ),
-            substituted:
-                `y = (${formatNumber(x)})² + `
-                + `${coefficient} × (${formatNumber(x)})`,
-            answer:
-                `y = ${formatNumber(answer)}`,
-            options: makeOptions(
-                `y = ${formatNumber(answer)}`,
-                [
-                    `y = ${-(x * x) + coefficient * x}`,
-                    `y = ${x * x + coefficient * Math.abs(x)}`,
-                    `y = ${x + coefficient * x}`
-                ]
-            ),
-            explanation:
-                `(${formatNumber(x)})² = ${x * x}. `
-                + `Keep the sign in both replacements.`
-        };
-    }
-
-    function divisionQuestion() {
-        const time = randomInt(2, 6);
-        const speed = randomInt(8, 25);
-        const distance =
-            time * speed;
-
-        return {
-            label: 'Division',
-            prompt:
-                'Replace d and t with their values.',
-            context:
-                'Speed equals distance divided by time.',
-            formula:
-                'v = d ÷ t',
-            givens: {
-                d: distance,
-                t: time
-            },
-            parts: [
-                'v = ',
-                slot('d'),
-                ' ÷ ',
-                slot('t')
-            ],
-            tiles: makeTiles(
-                [distance, time],
-                [speed, distance + time]
-            ),
-            substituted:
-                `v = ${distance} ÷ ${time}`,
-            answer:
-                `v = ${speed} mph`,
-            options: makeOptions(
-                `v = ${speed} mph`,
-                [
-                    `v = ${distance * time} mph`,
-                    `v = ${distance - time} mph`,
-                    `v = ${speed} miles`
-                ]
-            ),
-            explanation:
-                `${distance} ÷ ${time} = ${speed}.`
-        };
-    }
-
-    const generators = [
-        singleLetterQuestion,
-        hiddenMultiplicationQuestion,
-        areaQuestion,
-        perimeterQuestion,
-        repeatedLetterQuestion,
-        bracketQuestion,
-        powerQuestion,
-        negativeQuestion,
-        negativePowerQuestion,
-        divisionQuestion
-    ];
-
-    async function mountPractice(root) {
-        if (!root || root.dataset.mounted) {
-            return;
+        function syncHash() {
+            if (api.getCurrentSection().id === 'comparison') {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
+            }
         }
 
-        root.dataset.mounted = 'true';
-
-        gateSection('question-bank');
-
-        const store = window.Maths1to9Progress;
-        let state = await store.getLessonActivityState(slug, 'question-bank');
-        if (state?.contentVersion !== 1) state = {
-            contentVersion: 1, firstCorrect: null, attempts: [],
-            questionIndex: 0,
-            question: null,
-            questionId: '',
-            placements: [],
-            selectedTile: '',
-            phase: 'replace',
-            feedback: '',
-            selectedAnswer: '',
-            correctCount: 0,
-            completed: false,
-            history: []
-        };
-
-        function save() {
-            store.saveLessonActivityState(slug, 'question-bank', state);
+        function showScreen(screen) {
+            section.update(state => { state.screen = screen; });
+            render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
-        function renderSummary() {
-            save();
-            const rows = state.history.map(entry => {
-                const question = entry.question;
-                return `<li><div class="retained-result"><span>${escapeHtml([question.prompt, question.formula, question.context].filter(Boolean).join(' '))}</span><span class="retained-result__answer"><strong>${escapeHtml(entry.answer)}</strong><span>${entry.firstCorrect ? '✓' : '2nd try'}</span></span></div>${entry.firstCorrect ? '' : `<p class="retained-result__explanation">${escapeHtml(question.explanation)}</p>`}</li>`;
-            }).join('');
-            root.innerHTML = `<h3>Your practice results</h3><ol class="retained-results">${rows}</ol>`;
-            completeSection('question-bank');
-            window.Maths1to9Lesson.clearSectionAction('question-bank');
+        function reportProgress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress('comparison', state.finished ? count : state.index + Number(current?.correct === true), count);
         }
 
-        function newQuestion() {
-            if (state.completed) return;
-            state.firstCorrect = null;
-            state.attempts = [];
-            const generator =
-                state.questionIndex <
-                generators.length
-                    ? generators[
-                        state.questionIndex
-                    ]
-                    : randomItem(generators);
-
-            state.question = generator();
-            state.questionId =
-                `question-bank:${state.questionIndex + 1}`;
-            state.placements = Array(
-                state.question.parts.filter(
-                    (part) => (
-                        part &&
-                        typeof part === 'object' &&
-                        part.type === 'slot'
-                    )
-                ).length
-            ).fill(null);
-
-            state.selectedTile = '';
-            state.phase = 'replace';
-            state.feedback = '';
-            state.selectedAnswer = '';
-            state.questionIndex += 1;
-
+        function continueQuestion() {
+            section.update(state => {
+                state.index++;
+                state.screen = state.index;
+                state.furthestScreen = state.screen;
+                state.finished = state.index === count;
+            });
             render();
         }
 
-        function slots() {
-            return state.question.parts.filter(
-                (part) => (
-                    part &&
-                    typeof part === 'object' &&
-                    part.type === 'slot'
-                )
-            );
-        }
-
-        function expectedValue(index) {
-            return normaliseNumber(
-                state.question.givens[
-                    slots()[index].letter
-                ]
-            );
-        }
-
-        function replacementCorrect() {
-            return state.placements.every(
-                (value, index) => (
-                    value !== null &&
-                    normaliseNumber(value) ===
-                    expectedValue(index)
-                )
-            );
-        }
-
-        function allFilled() {
-            return state.placements.every(
-                (value) => value !== null
-            );
-        }
-
-        function displayPlacedValue(
-            slotData,
-            value
-        ) {
-            const displayed =
-                formatNumber(value);
-
-            return (
-                slotData.brackets
-                    ? `(${displayed})`
-                    : displayed
-            ) + slotData.suffix;
-        }
-
-        function formulaHtml() {
-            let slotIndex = 0;
-
-            return state.question.parts.map(
-                (part) => {
-                    if (
-                        typeof part === 'string'
-                    ) {
-                        return escapeHtml(part);
-                    }
-
-                    const currentIndex =
-                        slotIndex;
-
-                    slotIndex += 1;
-
-                    const value =
-                        state.placements[
-                            currentIndex
-                        ];
-
-                    let className =
-                        'button';
-
-                    if (
-                        state.phase ===
-                        'replace-wrong' &&
-                        value !== null
-                    ) {
-                        className += (
-                            normaliseNumber(value) ===
-                            expectedValue(
-                                currentIndex
-                            )
-                                ? ' is-correct'
-                                : ' is-incorrect'
-                        );
-                    }
-
-                    const text =
-                        value === null
-                            ? part.letter +
-                                part.suffix
-                            : displayPlacedValue(
-                                part,
-                                value
-                            );
-
-                    return `
-                        <button
-                            class="${className}"
-                            type="button"
-                            data-slot="${currentIndex}"
-                        >
-                            ${escapeHtml(text)}
-                        </button>
-                    `;
-                }
-            ).join('');
-        }
-
-        function givenHtml() {
-            return Object.entries(
-                state.question.givens
-            ).map(([letter, value]) => `
-                <span class="lx2-chip">
-                    ${escapeHtml(letter)}
-                    =
-                    ${escapeHtml(
-                        formatNumber(value)
-                    )}
-                </span>
-            `).join('');
-        }
-
-        function tilesHtml() {
-            return state.question.tiles.map(
-                (tile) => `
-                    <button
-                        class="lx2-chip lx2-chip--value ${
-                            state.selectedTile === tile
-                                ? 'is-armed'
-                                : ''
-                        }"
-                        type="button"
-                        draggable="true"
-                        data-tile="${escapeHtml(tile)}"
-                    >
-                        ${escapeHtml(tile)}
-                    </button>
-                `
-            ).join('');
-        }
-
-        function optionsHtml() {
-            if (
-                state.phase !== 'calculate' &&
-                state.phase !== 'answer-wrong' &&
-                state.phase !== 'complete'
-            ) {
-                return '';
-            }
-
-            return `
-                <div class="worked-example">
-                    <p class="question-prompt">
-                        Calculate the number-only expression.
-                    </p>
-
-                    <p class="lx2-formula">
-                        ${escapeHtml(
-                            state.question.substituted
-                        )}
-                    </p>
-
-                    <div class="question-options">
-                        ${state.question.options.map(
-                            (option) => {
-                                let className =
-                                    'question-option';
-
-                                if (
-                                    state.phase ===
-                                    'answer-wrong'
-                                ) {
-                                    if (
-                                        option ===
-                                        state.question.answer
-                                    ) {
-                                        className +=
-                                            ' is-correct-answer';
-                                    }
-
-                                    if (
-                                        option ===
-                                        state.selectedAnswer
-                                    ) {
-                                        className +=
-                                            ' is-incorrect';
-                                    }
-                                }
-
-                                if (
-                                    state.phase ===
-                                    'complete' &&
-                                    option ===
-                                    state.question.answer
-                                ) {
-                                    className +=
-                                        ' is-correct';
-                                }
-
-                                return `
-                                    <label
-                                        class="${className}"
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="substitution-answer"
-                                            value="${escapeHtml(option)}"
-                                            ${
-                                                state.selectedAnswer ===
-                                                option
-                                                    ? 'checked'
-                                                    : ''
-                                            }
-                                            ${
-                                                state.phase ===
-                                                'complete'
-                                                    ? 'disabled'
-                                                    : ''
-                                            }
-                                        >
-
-                                        <span>
-                                            ${escapeHtml(option)}
-                                        </span>
-                                    </label>
-                                `;
-                            }
-                        ).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function feedbackHtml() {
-            if (state.feedback === '') {
-                return '';
-            }
-
-            const correct =
-                state.phase ===
-                    'replace-correct' ||
-                state.phase ===
-                    'complete';
-
-            return `
-                <div
-                    class="
-                        question-feedback
-                        is-visible
-                        ${
-                            correct
-                                ? 'is-correct'
-                                : 'is-incorrect'
-                        }
-                    "
-                >
-                    ${escapeHtml(
-                        state.feedback
-                    )}
-                </div>
-            `;
-        }
-
-        function actionConfig() {
-            if (state.phase === 'replace') {
-                return {
-                    label:
-                        'Check substitution',
-                    disabled: !allFilled(),
-                    action: 'check-replace'
-                };
-            }
-
-            if (
-                state.phase ===
-                'replace-wrong'
-            ) {
-                return {
-                    label: 'Try again',
-                    disabled: false,
-                    action: 'retry-replace'
-                };
-            }
-
-            if (
-                state.phase ===
-                'replace-correct'
-            ) {
-                return {
-                    label: 'Continue',
-                    disabled: false,
-                    action: 'continue'
-                };
-            }
-
-            if (state.phase === 'calculate') {
-                return {
-                    label: 'Check answer',
-                    disabled:
-                        state.selectedAnswer === '',
-                    action: 'check-answer'
-                };
-            }
-
-            if (
-                state.phase ===
-                'answer-wrong'
-            ) {
-                return {
-                    label: 'Try again',
-                    disabled: false,
-                    action: 'retry-answer'
-                };
-            }
-
+        function questionConfig(index, readOnly) {
+            const question = questions[index];
             return {
-                label: 'Next question',
-                disabled: false,
-                action: 'next'
+                ...window.Substitution.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
+                sectionId: 'comparison', questionId: `final-check-${index + 1}`,
+                scored: true, readOnly,
+                onFeedback: reportProgress, onContinue: continueQuestion
             };
         }
 
-        function historyHtml() {
-            if (
-                state.history.length === 0
-            ) {
-                return '';
+        function renderEnding() {
+            const rows = questions.map((question, index) => {
+                const cardRoot = document.createElement('div');
+                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
+            });
+            const scorePanel = document.createElement('div');
+            const results = document.createElement('div');
+            root.append(scorePanel, results);
+            renderScorePanel(scorePanel, {
+                correct: rows.filter(row => row.firstCorrect === true).length, total: count
+            });
+            renderResults(results, rows, { heading: 'Your Check results' });
+            const summary = document.createElement('section');
+            summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
+            for (const point of lesson.comparison.summary.points) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = point.text;
+                summary.append(paragraph);
             }
-
-            return `
-                <details class="question-history">
-                    <summary class="button">
-                        Previous questions
-                        (${state.history.length})
-                    </summary>
-
-                    <div class="worked-example-list">
-                        ${[...state.history]
-                            .reverse()
-                            .map((entry) => `
-                                <article class="worked-example">
-                                    <p class="worked-example__number">
-                                        ${escapeHtml(entry.label)}
-                                    </p>
-
-                                    <h3 class="worked-example__title">
-                                        ${escapeHtml(entry.formula)}
-                                    </h3>
-
-                                    <ol class="worked-example__steps">
-                                        <li>
-                                            ${escapeHtml(entry.substituted)}
-                                        </li>
-                                        <li>
-                                            ${escapeHtml(entry.answer)}
-                                        </li>
-                                    </ol>
-                                </article>
-                            `).join('')}
-                    </div>
-                </details>
-            `;
+            root.append(summary);
+            api.setSectionAction('comparison', {
+                label: 'All lessons',
+                async onClick() {
+                    if (state.finished) api.completeLesson();
+                    await window.Maths1to9Progress.saveCurrentLesson();
+                    window.location.assign(new URL('../../', window.location.href).href);
+                }
+            });
         }
 
         function render() {
-            save();
-            if (state.completed) {
-                renderSummary();
-                return;
+            root.replaceChildren();
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
+            root.append(heading);
+            api.setSectionBack('comparison', state.screen > 0 ? {
+                onClick: () => showScreen(state.screen - 1)
+            } : null);
+            if (state.finished) sectionEvent('complete');
+            if (state.screen === count && state.finished) {
+                renderEnding();
+            } else {
+                const cardRoot = document.createElement('div');
+                root.append(cardRoot);
+                const readOnly = state.screen < state.index;
+                api.createQuestion(cardRoot, questionConfig(state.screen, readOnly));
+                if (readOnly) api.setSectionAction('comparison', {
+                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
             }
-            const action =
-                actionConfig();
-
-            root.innerHTML = `
-                <article class="question-card">
-                    <p class="question-number">
-                        Question ${state.questionIndex}
-                        · ${state.correctCount} correct
-                    </p>
-
-                    <p class="lesson-eyebrow">
-                        ${escapeHtml(
-                            state.question.label
-                        )}
-                    </p>
-
-                    <h3 class="worked-example__title">
-                        ${escapeHtml(
-                            state.question.prompt
-                        )}
-                    </h3>
-
-                    <p>
-                        ${escapeHtml(
-                            state.question.context
-                        )}
-                    </p>
-
-                    <p class="lx2-formula">
-                        ${escapeHtml(
-                            state.question.formula
-                        )}
-                    </p>
-
-                    <div class="lx2-chip-row">
-                        ${givenHtml()}
-                    </div>
-
-                    <p class="question-prompt">
-                        Drag each value into its letter space.
-                        You can also tap a value and then tap a space.
-                    </p>
-
-                    <div class="lx2-formula">
-                        ${formulaHtml()}
-                    </div>
-
-                    <div class="lx2-chip-row">
-                        ${tilesHtml()}
-                    </div>
-
-                    ${optionsHtml()}
-                    ${feedbackHtml()}
-                </article>
-
-                ${historyHtml()}
-            `;
-
-            const actionButton =
-                document.createElement('button');
-
-            actionButton.type = 'button';
-            actionButton.dataset.action = action.action;
-            actionButton.textContent = action.label;
-            actionButton.disabled = action.disabled;
-
-            bindHandlers(actionButton);
-
-            window.Maths1to9Lesson
-                ?.useButtonAsSectionAction?.(
-                    'question-bank',
-                    actionButton
-                );
+            syncHash();
         }
 
-        function placeValue(
-            slotIndex,
-            value
-        ) {
-            if (
-                state.phase !== 'replace' &&
-                state.phase !==
-                    'replace-wrong'
-            ) {
-                return;
-            }
-
-            state.placements[
-                slotIndex
-            ] = value;
-
-            state.selectedTile = '';
-            state.phase = 'replace';
-            state.feedback = '';
-
-            render();
-        }
-
-        function bindHandlers(actionButton) {
-            root.querySelectorAll(
-                '[data-tile]'
-            ).forEach((tile) => {
-                const value =
-                    tile.dataset.tile;
-
-                tile.addEventListener(
-                    'click',
-                    () => {
-                        state.selectedTile =
-                            state.selectedTile ===
-                            value
-                                ? ''
-                                : value;
-
-                        render();
-                    }
-                );
-
-                tile.addEventListener(
-                    'dragstart',
-                    (event) => {
-                        event.dataTransfer
-                            .setData(
-                                'text/plain',
-                                value
-                            );
-                    }
-                );
-            });
-
-            root.querySelectorAll(
-                '[data-slot]'
-            ).forEach((slotElement) => {
-                const slotIndex = Number(
-                    slotElement.dataset.slot
-                );
-
-                slotElement.addEventListener(
-                    'click',
-                    () => {
-                        if (
-                            state.selectedTile !== ''
-                        ) {
-                            placeValue(
-                                slotIndex,
-                                state.selectedTile
-                            );
-                        } else if (
-                            state.placements[
-                                slotIndex
-                            ] !== null
-                        ) {
-                            state.placements[
-                                slotIndex
-                            ] = null;
-
-                            state.phase = 'replace';
-                            state.feedback = '';
-
-                            render();
-                        }
-                    }
-                );
-
-                slotElement.addEventListener(
-                    'dragover',
-                    (event) => {
-                        event.preventDefault();
-                    }
-                );
-
-                slotElement.addEventListener(
-                    'drop',
-                    (event) => {
-                        event.preventDefault();
-
-                        placeValue(
-                            slotIndex,
-                            event.dataTransfer
-                                .getData(
-                                    'text/plain'
-                                )
-                        );
-                    }
-                );
-            });
-
-            root.querySelectorAll(
-                'input[name="substitution-answer"]'
-            ).forEach((input) => {
-                input.addEventListener(
-                    'change',
-                    (event) => {
-                        state.selectedAnswer =
-                            event.currentTarget
-                                .value;
-
-                        if (
-                            state.phase ===
-                            'answer-wrong'
-                        ) {
-                            state.phase =
-                                'calculate';
-                            state.feedback = '';
-                        }
-
-                        render();
-                    }
-                );
-            });
-
-            actionButton.addEventListener(
-                'click',
-                (event) => {
-                    const action =
-                        event.currentTarget
-                            .dataset.action;
-
-                    if (
-                        action ===
-                        'check-replace'
-                    ) {
-                        const correct = replacementCorrect();
-                        if (state.firstCorrect === null) state.firstCorrect = correct;
-                        if (!correct) state.firstCorrect = false;
-                        state.attempts.push({ phase: 'replace', placements: [...state.placements], correct });
-
-                        window.Maths1to9Lesson?.recordAssessment?.({
-                            questionType: 'replace-values',
-                            questionId: state.questionId,
-                            correct
-                        });
-
-                        if (correct) {
-                            state.phase =
-                                'replace-correct';
-
-                            state.feedback =
-                                'Correct. Every letter has been replaced.';
-                        } else {
-                            state.phase =
-                                'replace-wrong';
-
-                            state.feedback =
-                                'Not quite. Check which value belongs to each letter.';
-                        }
-
-                        render();
-                        return;
-                    }
-
-                    if (
-                        action ===
-                        'retry-replace'
-                    ) {
-                        state.placements =
-                            state.placements.map(
-                                (value, index) => (
-                                    value !== null &&
-                                    normaliseNumber(
-                                        value
-                                    ) ===
-                                    expectedValue(
-                                        index
-                                    )
-                                        ? value
-                                        : null
-                                )
-                            );
-
-                        state.phase =
-                            'replace';
-
-                        state.feedback = '';
-                        render();
-                        return;
-                    }
-
-                    if (
-                        action ===
-                        'continue'
-                    ) {
-                        state.phase =
-                            'calculate';
-
-                        state.feedback = '';
-                        render();
-                        return;
-                    }
-
-                    if (
-                        action ===
-                        'check-answer'
-                    ) {
-                        const correct = state.selectedAnswer === state.question.answer;
-                        if (!correct) state.firstCorrect = false;
-                        state.attempts.push({ phase: 'calculate', selected: state.selectedAnswer, correct });
-                        if (correct) {
-                            state.phase =
-                                'complete';
-
-                            state.feedback =
-                                state.question
-                                    .explanation;
-
-                            state.correctCount += 1;
-
-                            state.history.push({
-                                question: state.question,
-                                placements: [...state.placements],
-                                attempts: state.attempts,
-                                firstCorrect: state.firstCorrect,
-                                label:
-                                    state.question.label,
-                                formula:
-                                    state.question.formula,
-                                substituted:
-                                    state.question
-                                        .substituted,
-                                answer:
-                                    state.question.answer
-                            });
-
-                            if (
-                                !state.completed &&
-                                state.correctCount >=
-                                completionTarget
-                            ) {
-                                state.completed = true;
-
-                                completeSection(
-                                    'question-bank'
-                                );
-                            }
-                        } else {
-                            state.phase =
-                                'answer-wrong';
-
-                            state.feedback =
-                                state.question
-                                    .explanation;
-                        }
-
-                        render();
-                        return;
-                    }
-
-                    if (
-                        action ===
-                        'retry-answer'
-                    ) {
-                        state.phase =
-                            'calculate';
-
-                        state.selectedAnswer =
-                            '';
-
-                        state.feedback = '';
-                        render();
-                        return;
-                    }
-
-                    if (
-                        action === 'next'
-                    ) {
-                        newQuestion();
-                    }
+        questions.forEach((question, index) => {
+            api.registerHashRoute(`check-${index + 1}`, () => {
+                if (!api.goToSection('comparison', { moveFocus: false })) {
+                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                    return;
                 }
-            );
-        }
-
-        document.addEventListener('maths1to9:lesson-complete', () => {
-            if (!state.completed) return;
-            state.lessonFinished = true;
-            save();
+                showScreen(Math.min(index, state.furthestScreen));
+            });
         });
-        if (state.lessonFinished) window.Maths1to9Lesson.completeLesson();
-        if (state.question || state.completed) render();
-        else newQuestion();
-    }
-
-    function mountAll() {
-        const root =
-            document.getElementById(
-                `${slug}-questions`
-            );
-
-        if (
-            root &&
-            !root.dataset.mounted
-        ) {
-            mountPractice(root);
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        document.addEventListener('maths1to9:comparison-view', () => {
+            if (root.dataset.view === 'summary' && state.finished) showScreen(count);
+        });
+        reportProgress();
+        render();
+        const requested = questions.findIndex((question, index) => initialHash === `#check-${index + 1}`);
+        if (initialHash === '#summary' && state.finished) {
+            if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
+        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
+            showScreen(Math.min(requested, state.furthestScreen));
         }
     }
 
-    document.addEventListener(
-        'maths1to9:lesson-rendered',
-        mountAll
-    );
-
-    document.addEventListener(
-        'lesson:rendered',
-        mountAll
-    );
-
-    mountAll();
+    document.addEventListener('maths1to9:lesson-rendered', event => {
+        if (event.detail?.slug !== SLUG) return;
+        mountPractice();
+        mountCheck(document.getElementById(`${SLUG}-comparison`), event.detail.lesson);
+    });
 })();
