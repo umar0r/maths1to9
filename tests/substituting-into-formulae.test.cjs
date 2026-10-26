@@ -74,7 +74,7 @@ test('choice answers carry the right unit and only the correct option has the ri
     }
 });
 
-test('a money answer says so in the question, not only in the options', { skip: 'Codex is adding pounds to the hourly-cost wording (lesson 11 fix)' }, () => {
+test('a money answer says so in the question, not only in the options', () => {
     for (const { seed, q } of formulaCards.filter(({ q }) => q.model.currency)) {
         assert.match(q.prompt, /£|pounds/, `the question never says the answer is money ${where(q, seed)}`);
     }
