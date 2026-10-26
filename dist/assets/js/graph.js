@@ -56,6 +56,12 @@
     }
 
     function create(host, options = {}) {
+        if (options.aspect !== undefined && !options.step) {
+            throw new TypeError('Graph aspect requires step.');
+        }
+        if (options.aspect !== undefined && (!Number.isFinite(options.aspect) || options.aspect <= 0)) {
+            throw new RangeError('Graph aspect must be a positive finite number.');
+        }
         if (!window.JXG) {
             throw new Error('Load vendor/jsxgraph/jsxgraphcore.js before creating a graph.');
         }
@@ -79,6 +85,9 @@
             const rows = (y[1] - y[0]) / step.y + 1.6;
             surface.style.setProperty('--maths-graph-aspect', String(columns / rows));
         }
+        const namedAxes = options.axisNames !== undefined;
+        const fitted = namedAxes || options.aspect !== undefined;
+        if (namedAxes) surface.classList.add('maths-graph__board--named');
         const live = document.createElement('p');
         live.className = 'maths-graph__description';
         live.setAttribute('aria-live', 'polite');
@@ -98,12 +107,29 @@
         const extent = Math.max(x[1] - x[0], y[1] - y[0]) / 2 + 0.8;
         const cx = (x[0] + x[1]) / 2;
         const cy = (y[0] + y[1]) / 2;
-        const boundingBox = options.step
+        let boundingBox = options.step
             ? [x[0] - 0.8 * step.x, y[1] + 0.8 * step.y, x[1] + 0.8 * step.x, y[0] - 0.8 * step.y]
             : [cx - extent, cy + extent, cx + extent, cy - extent];
+        // Named axes reserve pixels for their text independently of the unit scales.
+        // Boards that do not opt in keep their existing size and bounding box.
+        function fitBoard() {
+            if (!fitted) return;
+            const width = surface.clientWidth || 440;
+            const margins = { left: 40, right: 20, top: 36, bottom: 48 };
+            const gridWidth = Math.max(1, width - margins.left - margins.right);
+            const aspect = options.aspect ?? ((x[1] - x[0]) / step.x) / ((y[1] - y[0]) / step.y);
+            const gridHeight = gridWidth / aspect;
+            const height = gridHeight + margins.top + margins.bottom;
+            surface.style.setProperty('--maths-graph-aspect', String(width / height));
+            const unitX = gridWidth / (x[1] - x[0]);
+            const unitY = gridHeight / (y[1] - y[0]);
+            boundingBox = [x[0] - margins.left / unitX, y[1] + margins.top / unitY,
+                x[1] + margins.right / unitX, y[0] - margins.bottom / unitY];
+        }
+        fitBoard();
         const board = window.JXG.JSXGraph.initBoard(surface, {
             boundingbox: boundingBox,
-            axis: false, grid: false, keepaspectratio: !options.step,
+            axis: false, grid: false, keepaspectratio: !options.step && !fitted,
             showNavigation: false, showCopyright: false, showInfobox: false,
             pan: { enabled: false }, zoom: { enabled: false, wheel: false },
             keyboard: { enabled: false }, registerEvents: false,
@@ -177,9 +203,21 @@
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
         segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
-        axisText([0, 0], '0', { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
-        text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
-        text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
+        const firstQuadrantNames = namedAxes && x[0] === 0 && y[0] === 0;
+        axisText([0, 0], '0', firstQuadrantNames
+            ? { anchorX: 'right', anchorY: 'top', offset: [-26, -6] }
+            : { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
+        if (namedAxes) {
+            axisText([(x[0] + x[1]) / 2, 0], escapeHtml(options.axisNames.x ?? 'x'), {
+                anchorX: 'middle', anchorY: 'top', offset: [0, -28]
+            });
+            axisText([0, y[1]], escapeHtml(options.axisNames.y ?? 'y'), {
+                anchorX: 'left', anchorY: 'bottom', offset: [0, 20]
+            });
+        } else {
+            text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
+            text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
+        }
 
         const items = new Set();
         const labelLayouts = new Map();
@@ -208,7 +246,7 @@
         function markedLabel(label, tone) {
             return label ? `${label}${tone === 'correct' ? ' ✓' : tone === 'incorrect' ? ' ✗' : ''}` : '';
         }
-        function pointLabel(position, content, settings, attributes, arrow = null) {
+        function pointLabel(position, content, settings, attributes, arrow = null, avoidPoints = false) {
             const centred = arrow !== null;
             const order = labelOrder++;
             let label;
@@ -255,6 +293,15 @@
                             const bounds = layout.bounds();
                             obstacles.push({ left: bounds.left - 4, right: bounds.right + 4,
                                 top: bounds.top - 4, bottom: bounds.bottom + 4 });
+                        }
+                    }
+                    if (avoidPoints) {
+                        for (const entry of items) {
+                            if (entry.kind !== 'point') continue;
+                            const [px, py] = pixels(entry.value);
+                            const radius = (entry.settings.size === 'large' ? 5 : 3) + 6;
+                            obstacles.push({ left: px - radius, right: px + radius,
+                                top: py - radius, bottom: py + radius });
                         }
                     }
                     function fit(candidate) {
@@ -413,6 +460,7 @@
                     }
                     let anchor;
                     let labelAttributes = {};
+                    const placedSegment = kind === 'segment' && style.labelSide !== undefined;
                     if (kind === 'point') {
                         objects.push(board.create('point', value, { ...attributes, name: '',
                             size: style.size === 'large' ? 5 : 3, showInfobox: false }));
@@ -434,7 +482,7 @@
                         objects.push(board.create(type, endpoints, attributes), ...endpoints);
                         anchor = [(ends[0][0] + ends[1][0]) / 2 + 0.2, (ends[0][1] + ends[1][1]) / 2 + 0.3];
                         const orientation = classify({ from: ends[0], to: ends[1] });
-                        if (kind === 'arrow') {
+                        if (kind === 'arrow' || placedSegment) {
                             anchor = [(ends[0][0] + ends[1][0]) / 2, (ends[0][1] + ends[1][1]) / 2];
                         } else if (orientation.kind === 'horizontal') {
                             anchor = [Math.max(ends[0][0], ends[1][0]), orientation.value];
@@ -457,8 +505,9 @@
                         label = `(${coordinates.join(', ')})`;
                     } else if (label) label = escapeHtml(label);
                     if (label) {
+                        const labelTone = kind === 'segment' ? style.labelTone ?? style.tone : style.tone;
                         const appearance = {
-                            strokeColor: style.tone === 'muted' ? colour('--text-muted') : attributes.strokeColor,
+                            strokeColor: labelTone === 'muted' ? colour('--text-muted') : tones[labelTone] || attributes.strokeColor,
                             layer: 10, ...labelAttributes
                         };
                         const content = markedLabel(label, style.tone);
@@ -467,8 +516,9 @@
                             : kind === 'arrow' ? pointLabel(anchor, content, {
                                 ...style, labelSide: style.labelSide || (value.from[1] === value.to[1] ? 'below' : 'right')
                             }, appearance, value)
-                                : text(anchor, content, appearance);
-                        if (kind !== 'point' && kind !== 'arrow') {
+                                : placedSegment ? pointLabel(anchor, content, style, appearance, value, true)
+                                    : text(anchor, content, appearance);
+                        if (kind !== 'point' && kind !== 'arrow' && !placedSegment) {
                             labelLayouts.set(labelObject, { fixed: true, bounds() {
                                 const [px, py] = pixels(anchor);
                                 const bounds = labelObject.rendNode.getBoundingClientRect();
@@ -767,8 +817,9 @@
         surface.addEventListener('focus', focus);
         const resize = new ResizeObserver(() => {
             if (surface.clientWidth) {
-                board.resizeContainer(surface.clientWidth, options.step ? surface.clientHeight : surface.clientWidth, true, true);
-                board.setBoundingBox(boundingBox, !options.step);
+                fitBoard();
+                board.resizeContainer(surface.clientWidth, options.step || fitted ? surface.clientHeight : surface.clientWidth, true, true);
+                board.setBoundingBox(boundingBox, !options.step && !fitted);
             }
         });
         resize.observe(surface);

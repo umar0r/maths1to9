@@ -396,3 +396,20 @@ axis. Arrow keys move one minor step. The board size still follows the
 main grid. Without `subdivide`, existing graphs work as before.
 `snap([0.49, 3.1], { x: 1, y: 2 }, { x: 2, y: 2 })` gives `[0.5, 3]`.
 Snapped coordinates and labels remove floating-point noise.
+
+### Named axes and segment labels (added 2026-10-26)
+
+- `create(host, { step: { x: 1, y: 2 }, axisNames: { x: 'Time (s)',
+  y: 'Distance (m)' }, aspect: 1 })` uses readable axis names instead of
+  x and y. The x name is centred below the numbers; the y name reads
+  horizontally above the axis. Named boards reserve room for labels on
+  resize, with a separate origin label on first-quadrant graphs.
+- `aspect` is the grid area's width divided by its height. It requires
+  `step` (otherwise a TypeError) and must be positive and finite. Without
+  either option, the existing board layout stays unchanged. Subdivisions,
+  snapping, dragging and keyboard movement still use the configured steps.
+- `graph.segment(from, to, { label: 'A', labelSide: 'above',
+  labelTone: 'ink', tone: 'muted' })` opts into collision-aware placement
+  at the segment midpoint. The label avoids points, lines and axis labels.
+  `labelSide` accepts above, below, left or right; `labelTone` independently
+  sets the text tone. Omitting these options keeps the existing layout.

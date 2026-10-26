@@ -74,6 +74,7 @@
         {"folder":"drawing-reciprocal-graphs","title":"Drawing reciprocal graphs","subtitle":"Draw the two separate curves of y = 1/x.","skills":["reciprocal-graphs"]},
         {"folder":"recognising-graph-types","title":"Recognising graph types","subtitle":"Use a graph's shape to match it to its equation.","skills":["cubic-reciprocal-graphs"]},
         {"folder":"solutions-from-graphs","title":"Solutions from graphs","subtitle":"Use intersections and roots to find approximate solutions.","skills":["graphical-solutions-linear","graphical-solutions-quadratic"]},
+        {"folder":"speed-from-distance-time-graphs","title":"Speed from a distance–time graph","subtitle":"Work out speed from a straight section of a distance–time graph.","skills":["speed-from-distance-time-graph"]},
         {"folder":"real-life-and-kinematic-graphs","title":"Real-life and kinematic graphs","subtitle":"Interpret changing quantities from graphs in context.","skills":["real-context-graphs","kinematic-graphs"]},
         {"folder":"sequences","title":"Generating and recognising sequences","subtitle":"Continue sequences from term-to-term and position rules.","skills":["generate-sequences","recognise-special-sequences"]},
         {"folder":"nth-term","title":"The nth term","subtitle":"Use and find position-to-term rules for linear sequences.","skills":["use-nth-term","find-linear-nth-term"]}
