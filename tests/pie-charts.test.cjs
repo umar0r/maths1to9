@@ -28,7 +28,7 @@ test('pie-charts: every fixed and generated answer follows from the table or kno
         if (q.questionType === 'share') assert.equal(fractionValue(answerOf(q)), q.data[q.index].count / t, q.prompt);
         else if (q.questionType === 'error') assert.equal(answerOf(q), 'A full circle has 360°. Multiply each share by 360.');
         else {
-            const expected = q.questionType === 'total' ? t : q.questionType === 'per-item' ? 360 / t : q.questionType === 'angle' ? degrees(q.data)[q.index] : 360 - q.known.reduce((a, b) => a + b, 0);
+            const expected = q.questionType.startsWith('read-') ? q.data[q.index].count : q.questionType === 'total' ? t : q.questionType === 'per-item' ? 360 / t : q.questionType === 'angle' ? degrees(q.data)[q.index] : 360 - q.known.reduce((a, b) => a + b, 0);
             assert.equal(numeric(answerOf(q)), expected, q.prompt);
         }
     }
@@ -48,7 +48,7 @@ test('pie-charts: all choices have four distinct options, one correct answer and
         } else if (q.questionType !== 'error') {
             assert.equal(q.options.filter(o => numeric(o.label) === numeric(answerOf(q))).length, 1);
             assert.ok(q.options.every(o => Number.isInteger(numeric(o.label))));
-            if (q.questionType !== 'total') assert.ok(q.options.every(o => numeric(o.label) >= 0 && numeric(o.label) <= 360));
+            if (q.questionType !== 'total' && !q.questionType.startsWith('read-')) assert.ok(q.options.every(o => numeric(o.label) >= 0 && numeric(o.label) <= 360));
         }
     }
 });
@@ -67,8 +67,10 @@ test('pie-charts: 200 seeds per type give positive frequencies, permitted totals
     const totals = new Set();
     for (const q of generated.filter(q => q.data)) {
         const t = Q.total(q.data);
-        totals.add(t);
-        assert.ok(Array.from(Q.allowedTotals).includes(t));
+        if (!q.questionType.startsWith('read-')) totals.add(t);
+        assert.ok(q.questionType.startsWith('read-')
+            ? t <= 540 && Array.from(Q.allowedTotals).some(base => Number.isInteger(t / base) && t / base >= 1 && t / base <= 6)
+            : Array.from(Q.allowedTotals).includes(t));
         assert.ok(q.data.every(row => Number.isInteger(row.count) && row.count > 0));
         const expected = degrees(q.data);
         assert.ok(expected.every(angle => Number.isInteger(angle) && angle > 0 && angle < 360));
@@ -106,10 +108,10 @@ test('pie-charts: drawing marking checks every angle as well as the sum', () => 
     assert.match(widget.mark({ angles: ['179', '90', '90'] }).feedback, /add to 359/);
 });
 
-test('pie-charts: generated data, options and six-question sessions are deterministic and assess only construction', () => {
+test('pie-charts: generated data, options and eight-question sessions are deterministic and assess both chart skills', () => {
     const serialise = q => JSON.stringify(q, (key, value) => typeof value === 'function' ? undefined : value);
     for (const type of Q.practiceTypes) {
-        assert.equal(lesson.assessment.question_types[type], 'construct-pie-charts');
+        assert.equal(lesson.assessment.question_types[type], type.startsWith('read-') ? 'interpret-pie-charts' : 'construct-pie-charts');
         for (let seed = 0; seed < 200; seed++) {
             const entry = { type, mode: type === 'draw' ? 'custom' : type === 'share' ? 'choice' : seed % 2 ? 'choice' : 'number' };
             assert.equal(serialise(Q.generate(entry, seededRandom(seed))), serialise(Q.generate(entry, seededRandom(seed))));
@@ -118,15 +120,15 @@ test('pie-charts: generated data, options and six-question sessions are determin
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
         assert.equal(items.length, lesson.question_bank.session_length);
-        assert.equal(items.length, 6);
+        assert.equal(items.length, 8);
         const inputs = items.map(item => Q.generate(item, seededRandom(item.seed)).input);
-        assert.equal(inputs.filter(input => input === 'choice').length, 2);
-        assert.equal(inputs.filter(input => input === 'number').length, 3);
+        assert.equal(inputs.filter(input => input === 'choice').length, 3);
+        assert.equal(inputs.filter(input => input === 'number').length, 4);
         assert.equal(inputs.filter(input => input === 'custom').length, 1);
     }
     for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number', 'custom']));
-    assert.equal(Q.examples().length, 5);
-    assert.equal(Q.checks().length, 5);
+    assert.equal(Q.examples().length, 7);
+    assert.equal(Q.checks().length, 7);
 });
 
 test('pie-charts: geometry handles empty, small, large and full-circle slices without broken paths', () => {
@@ -141,8 +143,8 @@ test('pie-charts: geometry handles empty, small, large and full-circle slices wi
     }
 });
 
-test('pie-charts: Learn keeps the five construction steps and all model angles agree', () => {
-    assert.deepEqual(Array.from(Q.learnScreens, screen => screen.title), ['Find the total', 'Write each share as a fraction', 'Turn the share into an angle', 'Check the angles', 'Draw the chart']);
+test('pie-charts: Learn keeps construction steps, adds reading, and all model angles agree', () => {
+    assert.deepEqual(Array.from(Q.learnScreens, screen => screen.title), ['Find the total', 'Write each share as a fraction', 'Turn the share into an angle', 'Check the angles', 'Draw the chart', 'Read a pie chart', 'Use a slice you know']);
     assert.equal(Q.total(Q.learnData), 12);
     assert.deepEqual(Array.from(Q.angles(Q.learnData)), [90, 270]);
     assert.equal(Q.fraction(3, 12), '1/4');
@@ -152,12 +154,12 @@ test('pie-charts: Learn keeps the five construction steps and all model angles a
     assert.ok(Q.learnScreens[2].lines.some(line => line.includes('An angle is the turn')));
 });
 
-test('pie-charts: live registration is after frequency tables, uses one skill and matches the static build', () => {
+test('pie-charts: live registration is after frequency tables, uses both skills and matches the static build', () => {
     const curriculum = JSON.parse(fs.readFileSync(path.join(contentDir, 'curriculum.json')));
     const statistics = curriculum.categories.find(category => category.id === 'statistics');
     const index = statistics.lessons.findIndex(entry => entry.folder === 'frequency-tables-and-charts');
-    assert.deepEqual(statistics.lessons[index + 1], { folder: 'pie-charts', title: 'Pie charts', subtitle: 'Turn a frequency table into angles, then draw the chart.', skills: ['construct-pie-charts'] });
-    assert.ok(Object.values(lesson.assessment.question_types).every(skill => skill === 'construct-pie-charts'));
+    assert.deepEqual(statistics.lessons[index + 1], { folder: 'pie-charts', title: 'Pie charts', subtitle: 'Draw a pie chart from a table, and read numbers from one.', skills: ['construct-pie-charts', 'interpret-pie-charts'] });
+    assert.deepEqual(new Set(Object.values(lesson.assessment.question_types)), new Set(['construct-pie-charts', 'interpret-pie-charts']));
     assert.deepEqual(lesson.navigation_stages.map(stage => stage.label), ['Learn', 'Try it', 'Practice', 'Check']);
     assert.equal(lesson.navigation.back_button, true);
     assert.ok(!fs.existsSync(path.join(contentDir, '_pie-charts')));

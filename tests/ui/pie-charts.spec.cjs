@@ -139,8 +139,8 @@ for (const width of [1280, 375]) {
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
-            expect(penalty).toBe(40);
-            expect(earned).toBe(155 - penalty);
+            expect(penalty).toBe(50);
+            expect(earned).toBe(205 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#pie-charts-comparison .retained-results')).toContainText('2nd try');
@@ -193,7 +193,7 @@ for (const width of [1280, 375]) {
         await expect(prompt(page)).toHaveCount(0);
         await expect(page.locator('.pie-people:visible span')).toHaveCount(12);
         await page.screenshot({ path: `/private/tmp/pie-learn-total-${width}.png`, fullPage: true });
-        for (let index = 1; index < 5; index++) {
+        for (let index = 1; index < 7; index++) {
             await mainAction(page).click();
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             if (index === 2) {
@@ -209,7 +209,7 @@ for (const width of [1280, 375]) {
             if (await solve(page)) continue;
             await mainAction(page).click();
         }
-        await expect(page.getByRole('heading', { name: 'Step 5 of 5', exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Step 5 of 7', exact: true })).toBeVisible();
         await expect(mainAction(page)).toBeDisabled();
         const svg = page.locator('.pie-drawing-svg:visible');
         for (const path of await svg.locator('path').all()) await expect(path).toHaveAttribute('d', '');
@@ -263,6 +263,11 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.pie-angle-sum:visible')).toHaveText('Total of angles entered: 360°');
         await page.screenshot({ path: `/private/tmp/pie-widget-complete-${width}.png`, fullPage: true });
         await mainAction(page).click();
+        for (let step = 0; step < 12; step++) {
+            if (await page.getByRole('heading', { name: 'Your completed work', exact: true }).isVisible()) break;
+            if (await solve(page)) continue;
+            await mainAction(page).click();
+        }
         await expect(page.getByRole('heading', { name: 'Your completed work', exact: true })).toBeVisible();
         await expect(page.locator('.pie-drawing-widget:visible')).toHaveCount(1);
         await goBackAndForward(page);
@@ -279,8 +284,8 @@ for (const path of ['', 'dist/']) {
         await expect(statistics.getByRole('heading', { name: 'Statistics', exact: true })).toBeVisible();
         const link = statistics.locator('a.lesson-card[href="content/pie-charts/"]');
         await expect(link).toContainText('Pie charts');
-        await expect(link).toContainText('Turn a frequency table into angles, then draw the chart.');
-        await expect(link).toHaveAttribute('data-skills', 'construct-pie-charts');
+        await expect(link).toContainText('Draw a pie chart from a table, and read numbers from one.');
+        await expect(link).toHaveAttribute('data-skills', 'construct-pie-charts,interpret-pie-charts');
         await link.click();
         await expect(page).toHaveURL(/content\/pie-charts\/#learn-1$/);
         await expect(page.getByRole('heading', { name: 'Find the total', exact: true })).toBeVisible();

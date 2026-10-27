@@ -13,7 +13,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 1, count: api.getLesson().question_bank.session_length,
+            version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.PieCharts.pick,
             question: window.PieCharts.generate,
@@ -30,7 +30,7 @@
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('comparison', {
-            version: 1,
+            version: 2,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
