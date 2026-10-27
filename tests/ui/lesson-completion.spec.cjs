@@ -20,9 +20,9 @@ for (const base of ['content', 'dist/content']) {
             await expect(main).toHaveText('All lessons');
             await expect(main).toBeEnabled();
             const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
-            // Both fixtures now isolate the five shared Check cards. The full
+            // These fixtures isolate each lesson’s shared Check cards. The full
             // Practice + Check score is covered by engine-runs.spec.cjs.
-            const expectedAnswers = 5;
+            const expectedAnswers = lesson === 'place-value' ? 7 : 5;
             expect(score.answered).toBe(expectedAnswers);
             expect(score.answerPoints).toBe(expectedAnswers * 10);
             await main.click();

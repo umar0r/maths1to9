@@ -2,7 +2,7 @@
     "id": "pie-charts",
     "slug": "pie-charts",
     "title": "Pie charts",
-    "subtitle": "Turn a frequency table into angles, then draw the chart.",
+    "subtitle": "Draw a pie chart from a table, and read numbers from one.",
     "navigation": {
         "back_button": true
     },
@@ -14,7 +14,9 @@
             "angle": "construct-pie-charts",
             "missing": "construct-pie-charts",
             "draw": "construct-pie-charts",
-            "error": "construct-pie-charts"
+            "error": "construct-pie-charts",
+            "read-count": "interpret-pie-charts",
+            "read-from-known": "interpret-pie-charts"
         }
     },
     "explanation": {
@@ -30,7 +32,7 @@
         "eyebrow": "Practice",
         "title": "Practise making pie charts",
         "intro": "",
-        "session_length": 6
+        "session_length": 8
     },
     "section_order": [
         "explanation",
@@ -87,6 +89,12 @@
             },
             {
                 "type": "draw"
+            },
+            {
+                "type": "read-count"
+            },
+            {
+                "type": "read-from-known"
             }
         ],
         "summary": {
@@ -113,6 +121,14 @@
         },
         {
             "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
             "kind": "guided"
         }
     ]

@@ -195,7 +195,94 @@
         const E = window.Maths1to9LessonEngine;
         return powerOfTenQuestion(E.randomInt(101, 99999, random), E.randomInt(0, 3, random), E.randomInt(1, 3, random) * (E.randomInt(0, 1, random) ? 1 : -1), mode);
     }
+    const displayNegative = value => String(value).replace('-', '−');
+    function negativeValues(random) {
+        const E = window.Maths1to9LessonEngine;
+        const negatives = E.shuffle(Array.from({ length: 12 }, (_, i) => -i - 1), random).slice(0, 2);
+        const positive = E.randomInt(1, 9, random);
+        const remaining = Array.from({ length: 22 }, (_, i) => i - 12).filter(n => !negatives.includes(n) && n !== positive);
+        return E.shuffle([...negatives, positive, remaining[E.randomInt(0, remaining.length - 1, random)]], random);
+    }
+    function negativeOrderQuestion(values, prompt = 'Put these numbers in order from smallest to largest.') {
+        const written = values.map(displayNegative);
+        const question = orderingQuestion(written, 'custom', prompt);
+        const originalMark = question.widget.mark;
+        question.widget.mark = value => {
+            const result = originalMark(value);
+            return result.correct ? result : { ...result, feedback: 'Start with the number furthest left on the number line. Numbers closer to 0 are greater than numbers further below 0.' };
+        };
+        return { ...question, questionType: 'negOrder' };
+    }
+    function negativeSymbolQuestion(a, b) {
+        const left = displayNegative(a), right = displayNegative(b), sign = a < b ? '<' : '>';
+        return { questionType: 'negSymbol', input: 'choice', prompt: 'Which is correct?', values: [a, b],
+            options: [
+                option(`${left} ${sign} ${right}`, `${displayNegative(Math.min(a, b))} is further left on the number line.`, true),
+                option(`${left} ${sign === '<' ? '>' : '<'} ${right}`, 'That compares the numbers without their minus signs. On a number line, the number further left is smaller.'),
+                option(`${left} = ${right}`, 'These are different numbers. One is further left on the number line.'),
+                option("You can't compare negative numbers", 'You can. The number further left on the number line is smaller.')
+            ] };
+    }
+    function generateNegative(item, random) {
+        const E = window.Maths1to9LessonEngine;
+        const values = negativeValues(random);
+        if (item.type === 'negOrder') return negativeOrderQuestion(values);
+        if (item.type === 'negSymbol') {
+            const pair = values.filter(n => n < 0).slice(0, 2);
+            return negativeSymbolQuestion(pair[0], pair[1]);
+        }
+        if (item.type === 'negCoolest') {
+            const sorted = [...values].sort((a, b) => a - b), answer = sorted[0];
+            const nearestNegative = sorted.filter(n => n < 0).at(-1), largest = sorted.at(-1);
+            const remaining = sorted.find(n => ![answer, nearestNegative, largest].includes(n));
+            return makeQuestion({ type: item.type, mode: 'choice', values,
+                prompt: `Here are four temperatures: ${values.map(n => `${displayNegative(n)} °C`).join(', ')}. Which is the coldest?`,
+                answer: displayNegative(answer),
+                wrong: [
+                    [displayNegative(nearestNegative), 'That has the smallest number after the minus sign, but it is closest to 0. The further below 0, the colder.'],
+                    [displayNegative(largest), 'That is the warmest. The coldest is the lowest number.'],
+                    [displayNegative(remaining), 'There is a number further left on the number line. Look for the one furthest below 0.']
+                ], feedback: `${displayNegative(answer)} °C is the coldest. It is the lowest temperature.` });
+        }
+        const decimal = random() < 0.5;
+        const first = E.randomInt(1, decimal ? 9 : 12, random);
+        const others = Array.from({ length: decimal ? 9 : 12 }, (_, i) => i + 1).filter(n => n !== first);
+        const second = others[E.randomInt(0, others.length - 1, random)];
+        const pair = [first, second].map(n => -n / (decimal ? 10 : 1));
+        const answer = Math.max(...pair), smaller = Math.min(...pair);
+        return makeQuestion({ type: 'negGreatest', mode: 'number', values: pair,
+            prompt: `Which is greater: ${displayNegative(pair[0])} or ${displayNegative(pair[1])}? Type the number.`,
+            answer: displayNegative(answer), wrong: [
+                [displayNegative(smaller), 'That one is further below 0, so it is smaller. Choose the number closer to 0.'],
+                [displayNegative(-answer), 'Keep the minus sign. Both numbers are below 0.']
+            ], feedback: `${displayNegative(answer)} is greater. It is further right on the number line.`,
+            fallback: 'On a number line, the greater number is further right.' });
+    }
+    function negativeNumberLine(host) {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('viewBox', '0 0 360 95');
+        svg.setAttribute('class', 'pv-negative-line');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', 'Number line from minus eight to four. Marked points: minus seven, minus two, zero and three.');
+        function node(tag, attrs) {
+            const element = document.createElementNS(ns, tag);
+            for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, String(value));
+            svg.append(element);
+            return element;
+        }
+        node('line', { x1: 20, y1: 40, x2: 340, y2: 40, stroke: '#26344d', 'stroke-width': 2 });
+        for (let value = -8; value <= 4; value++) {
+            const x = 24 + (value + 8) * 26;
+            node('line', { x1: x, y1: 35, x2: x, y2: 45, stroke: '#26344d' });
+            const label = node('text', { x, y: 65, 'text-anchor': 'middle', fill: '#26344d', 'font-size': 13 });
+            label.textContent = displayNegative(value);
+            if ([-7, -2, 0, 3].includes(value)) node('circle', { cx: x, cy: 40, r: 4, fill: '#2769c5' });
+        }
+        host.append(svg);
+    }
     function generate(item, random) {
+        if (item.type.startsWith('neg')) return prepare(generateNegative(item, random), random);
         const generators = { digitValue: generateDigitValueQuestion, compare: generateComparisonQuestion, order: generateOrderingQuestion,
             scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion };
         return generators[item.type](random, item.mode || 'choice');
@@ -203,7 +290,8 @@
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
         return E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
-            { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' }], random)
+            { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' },
+            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random)
             .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
     }
     const prepare = (question, random) => question.options
@@ -421,7 +509,7 @@
             wrong: [['7', '7 is in the tens column.'], ['6', '6 is in the hundreds column.'], ['670', 'That is the whole number. Give just the ones digit.']],
             feedback: 'The ones digit is 0. Zero holds this place.', fallback: 'The ones column is just to the left of the decimal point, or at the right end of a whole number.' });
         return [tens, ones, digitQuestion('670', 6, 'number'), digitQuestion('46.275', 4, 'choice'), digitQuestion('46.275', 7, 'number'),
-            scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
+            negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
     }
     function checks() {
         const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',
@@ -441,7 +529,8 @@
         divide.prompt = 'A machine divides its input by 10. The input is 438. What is the output?';
         const reverse = powerOfTenQuestion(4270, 0, 2);
         reverse.prompt = 'A number is multiplied by 100. The result is 4,270. What was the original number?';
-        return [number, reason, orderingQuestion(['2.8', '2.75', '2.805', '2.79'], 'custom', 'Put these long-jump distances in metres in order from shortest to longest.'), divide, reverse];
+        return [number, reason, orderingQuestion(['2.8', '2.75', '2.805', '2.79'], 'custom', 'Put these long-jump distances in metres in order from shortest to longest.'),
+            negativeSymbolQuestion(-6, -11), negativeOrderQuestion([-4, 2, -9, 0, -1], 'Put these temperatures in order, coldest first.'), divide, reverse];
     }
 
     const explorerNumber = '107389.4828';
@@ -466,6 +555,12 @@
             '0.8 = 0.800. Compare from left to right. The first different column shows that 0.800 < 0.809.',
             '< means “is smaller than”. > means “is greater than”. = means “is equal to”.',
             'To put numbers in order, use the same method. From smallest to largest: 0.405 < 0.450 < 0.500. So 0.405 < 0.45 < 0.5.'
+        ] },
+        { title: 'Numbers below zero', lines: [
+            'Negative numbers are less than zero. They have a minus sign, like −3.',
+            'On a number line, numbers get bigger as you go right and smaller as you go left.',
+            '−7 is further left than −2, so −7 < −2. It is the smaller number, even though 7 is bigger than 2.',
+            'Think of temperatures. −7 °C is colder than −2 °C.'
         ] },
         { title: 'Multiply and divide by powers of 10', lines: [
             'Multiplying by 10, 100 or 1,000 moves every digit 1, 2 or 3 columns left. Dividing moves the digits right. The decimal point stays fixed.',
@@ -551,12 +646,13 @@
             const row = element('div', '', 'pv-comparison-picture');
             for (const number of ['0.405', '0.450', '0.500']) row.append(element('span', number, 'pv-example-tile'));
             host.append(element('p', '0.800 < 0.809', 'pv-equation'), row);
-        } else if (screen === 4) {
+        } else if (screen === 4) negativeNumberLine(host);
+        else if (screen === 5) {
             host.append(numberChart('38.4'), element('p', 'Multiply by 100', 'pv-equation'), numberChart('3840'));
-        } else learnedScaling(host, [[1, 1], [-1, 1], [2, 2]][screen - 5]);
+        } else learnedScaling(host, [[1, 1], [-1, 1], [2, 2]][screen - 6]);
     }
 
-    Object.assign(window.PlaceValue ??= {}, { types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, compareDecimals,
+    Object.assign(window.PlaceValue ??= {}, { negativeValues, generateNegative, negativeOrderQuestion, negativeSymbolQuestion, types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, compareDecimals,
         digitValueWords, digitQuestion, comparisonQuestion, orderingQuestion, scaledProductQuestion, powerOfTenQuestion,
         generate, pick, prepare, examples, checks, learnScreens, drawLearn, orderingWidget, scalingWidget, shiftedCells });
 })();

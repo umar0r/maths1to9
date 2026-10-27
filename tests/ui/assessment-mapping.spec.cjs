@@ -9,8 +9,8 @@ test('place-value final check sends each answer to its intended skills', async (
     await page.goto('content/place-value/#comparison', {waitUntil:'networkidle'});
     await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
     const main = page.locator('.lesson-controls button.button--primary:visible');
-    for (let i = 1; i <= 5; i++) {
-        await expect(page.getByRole('heading', {name:`Question ${i} of 5`, exact:true})).toBeVisible();
+    for (let i = 1; i <= 7; i++) {
+        await expect(page.getByRole('heading', {name:`Question ${i} of 7`, exact:true})).toBeVisible();
         await solve(page, {});
         await expect(main).toHaveText('Check');
         await expect(main).toBeEnabled();
@@ -20,10 +20,11 @@ test('place-value final check sends each answer to its intended skills', async (
     }
     const attempts = await page.evaluate(() => window.skillAttempts);
     expect(attempts.map(a=>a.skillId)).toEqual([
-        'place-value', 'order-numbers', 'inequality-symbols', 'order-numbers', 'place-value', 'place-value'
+        'place-value', 'order-numbers', 'inequality-symbols', 'order-numbers',
+        'order-negative-numbers', 'inequality-symbols', 'order-negative-numbers', 'place-value', 'place-value'
     ]);
     expect(attempts.every(a=>a.correct)).toBe(true);
-    expect(new Set(attempts.map(a=>a.questionId)).size).toBe(5);
+    expect(new Set(attempts.map(a=>a.questionId)).size).toBe(7);
 });
 
 test('unknown assessment types are rejected with a warning before scoring', async ({page}) => {

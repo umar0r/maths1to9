@@ -45,12 +45,13 @@ test('every place-value final check question records the intended skills', () =>
     const mapping = JSON.parse(fs.readFileSync(path.join(root, 'content/place-value/lesson.json'))).assessment.question_types;
     const h = harness(mapping);
     const questions = checks();
-    const expected = [['place-value'], ['order-numbers','inequality-symbols'], ['order-numbers'], ['place-value'], ['place-value']];
+    const expected = [['place-value'], ['order-numbers','inequality-symbols'], ['order-numbers'],
+        ['order-negative-numbers','inequality-symbols'], ['order-negative-numbers'], ['place-value'], ['place-value']];
     questions.forEach((q, i) => {
         const before = h.events.length;
         assert.equal(h.record({questionType:q.questionType, questionId:`final-check-${i+1}`, correct:true}), true);
         assert.deepEqual(h.events.slice(before).map(e=>e.detail.skillId), expected[i]);
     });
-    assert.equal(h.scores.length, 5);
+    assert.equal(h.scores.length, 7);
     assert.equal(h.warnings.length, 0);
 });
