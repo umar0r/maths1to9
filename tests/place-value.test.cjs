@@ -14,11 +14,11 @@ const samples = Q.types.flatMap(type => ['choice', 'number', ...(type === 'order
 }))));
 const questionsOf = type => samples.filter(({ q }) => q.questionType === type);
 const answerOf = q => q.input === 'choice' ? q.options.find(option => option.correct).label : q.answer;
-const num = text => Number(String(text).replace(/,/g, ''));
+const num = text => Number(String(text).replace(/,/g, '').replace(/−/g, '-'));
 
 // Exact decimals: { digits: BigInt, places } <-> "1,234.5".
 const toExact = text => {
-    const [whole, fraction = ''] = String(text).replace(/,/g, '').split('.');
+    const [whole, fraction = ''] = String(text).replace(/,/g, '').replace(/−/g, '-').split('.');
     return { digits: BigInt(whole + fraction), places: fraction.length };
 };
 const format = ({ digits, places }) => {
@@ -122,13 +122,13 @@ test('typed cards preserve exact decimal values and have misconception rules and
         for (const rule of q.rules) { assert(rule.feedback); assert.notEqual(num(rule.value), num(q.answer)); }
     }
 });
-test('sessions contain six seeded items, all five types and mixed answer modes', () => {
+test('sessions contain eight seeded items, all seven types and mixed answer modes', () => {
     for (let seed = 0; seed < 200; seed++) {
         const session = Q.pick(seededRandom(seed));
-        assert.equal(session.length, 6);
-        assert.equal(new Set(session.map(item => item.type)).size, 5);
-        assert.equal(session.filter(item => item.mode === 'choice').length, 2);
-        assert.equal(session.filter(item => item.mode === 'number').length, 3);
+        assert.equal(session.length, 8);
+        assert.equal(new Set(session.map(item => item.type)).size, 7);
+        assert.equal(session.filter(item => item.mode === 'choice').length, 3);
+        assert.equal(session.filter(item => item.mode === 'number').length, 4);
         assert.equal(session.filter(item => item.mode === 'custom').length, 1);
         assert.equal(JSON.stringify(session), JSON.stringify(Q.pick(seededRandom(seed))));
         for (const item of session) {
@@ -174,8 +174,8 @@ test('number formatting fuzz checks now run in tests instead of on every page lo
         }
     }
 });
-test('Learn has eight screens and teaches every question method before it is asked', () => {
-    assert.equal(Q.learnScreens.length, 8);
+test('Learn has nine screens and teaches every question method before it is asked', () => {
+    assert.equal(Q.learnScreens.length, 9);
     const text = JSON.stringify(Q.learnScreens).toLowerCase();
     for (const keyword of ['digit', 'column', 'zero', 'tenths', 'hundredths', 'thousandths', 'compare', 'order', 'decimal point stays fixed', 'divide by 100', 'factor', 'product', 'cancel', '10,000']) assert(text.includes(keyword), keyword);
     for (const line of allStrings(Q.learnScreens)) assert.deepEqual(wrongSums(line), [], line);

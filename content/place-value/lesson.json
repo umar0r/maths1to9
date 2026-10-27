@@ -2,7 +2,7 @@
     "id": "place-value-01",
     "slug": "place-value",
     "title": "Place value",
-    "subtitle": "See how a digit's position changes its value.",
+    "subtitle": "Understand what each digit is worth and put numbers in order, including negatives.",
     "navigation": {
         "back_button": true
     },
@@ -15,7 +15,14 @@
             ],
             "order": "order-numbers",
             "scaledProduct": "place-value",
-            "powerOfTen": "place-value"
+            "powerOfTen": "place-value",
+            "negCoolest": "order-negative-numbers",
+            "negSymbol": [
+                "order-negative-numbers",
+                "inequality-symbols"
+            ],
+            "negGreatest": "order-negative-numbers",
+            "negOrder": "order-negative-numbers"
         }
     },
     "explanation": {
@@ -31,7 +38,7 @@
         "eyebrow": "Practice",
         "title": "Practise place value",
         "intro": "",
-        "session_length": 6
+        "session_length": 8
     },
     "section_order": [
         "explanation",
@@ -84,6 +91,12 @@
                 "type": "order"
             },
             {
+                "type": "negSymbol"
+            },
+            {
+                "type": "negOrder"
+            },
+            {
                 "type": "powerOfTen"
             },
             {
@@ -126,6 +139,10 @@
         },
         {
             "id": "step:interactive:7",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:8",
             "kind": "guided"
         },
         {

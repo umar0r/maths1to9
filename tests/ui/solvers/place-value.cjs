@@ -1,5 +1,5 @@
 // Read each answer from the visible card and manipulate its input controls.
-const num = text => Number(String(text).replace(/,/g, ''));
+const num = text => Number(String(text).replace(/,/g, '').replace(/−/g, '-'));
 const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
 const tens = ['', 'ten', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 const places = { 3: 'thousand', 2: 'hundred', '-1': 'tenth', '-2': 'hundredth', '-3': 'thousandth' };
@@ -16,6 +16,13 @@ const shift = (value, power) => power >= 0 ? { digits: value.digits * 10n ** Big
     : { digits: value.digits, places: value.places - power };
 function answerFor(prompt, choice) {
     let match;
+    if (prompt.startsWith('Here are four temperatures:')) {
+        return String(Math.min(...Array.from(prompt.matchAll(/([−-]?\d+) °C/g), m => num(m[1])))).replace('-', '−');
+    }
+    if (prompt === 'Which is correct?') return null;
+    if ((match = prompt.match(/Which is greater: ([−-]?[\d.]+) or ([−-]?[\d.]+)\?/))) {
+        return num(match[1]) > num(match[2]) ? match[1] : match[2];
+    }
     if ((match = prompt.match(/In ([\d,.]+), which digit is in the (tens|ones) column/))) {
         const whole = match[1].replace(/,/g, '').split('.')[0];
         return whole.at(match[2] === 'tens' ? -2 : -1);
@@ -82,7 +89,14 @@ async function solve(page, memory = {}) {
     if (await main.isEnabled()) return false;
     const options = card.locator('.question-card-options button');
     const choice = await options.count() > 0;
-    const answer = answerFor(prompt, choice);
+    let answer = answerFor(prompt, choice);
+    if (answer === null) {
+        const labels = await options.allTextContents();
+        answer = labels.find(label => {
+            const m = label.match(/^([−-]?[\d.]+) ([<>]) ([−-]?[\d.]+)$/);
+            return m && (m[2] === '<' ? num(m[1]) < num(m[3]) : num(m[1]) > num(m[3]));
+        });
+    }
     if (choice) await options.filter({ hasText: new RegExp(`^${answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).click();
     else await card.locator('input[type=text]').fill(answer);
     return true;
