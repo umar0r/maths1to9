@@ -42,3 +42,5 @@
 .pv-shift-cell { position: relative; }
 .pv-shift-cell.pv-decimal-start::before { content: '.'; position: absolute; left: -7px; bottom: 5px; color: #155e75; font-size: 1.5rem; font-weight: 800; z-index: 1; }
 .pv-moving-digit { display: inline-block; }
+
+.pv-negative-line { display: block; width: 100%; max-width: 36rem; margin: 1rem auto; }

@@ -6,7 +6,7 @@
     const allowedTotals = [12, 18, 20, 24, 30, 36, 40, 45, 60, 72, 90, 120, 180];
     const option = (label, feedback, correct = false) => ({ label, feedback, correct });
     const total = data => data.reduce((sum, row) => sum + row.count, 0);
-    const angles = data => data.map(row => 360 / total(data) * row.count);
+    const angles = data => data.map(row => 360 * row.count / total(data));
     const gcd = (a, b) => b ? gcd(b, a % b) : a;
     const fraction = (a, b) => `${a / gcd(a, b)}/${b / gcd(a, b)}`;
     const tidy = value => String(Number(value.toFixed(4)));
@@ -370,9 +370,94 @@
             figure: host => drawTable(host, data), widget: drawingWidget(data)
         };
     }
+    function readingChart(host, data, { highlighted = [], split = false } = {}) {
+        const values = angles(data);
+        const picture = chart(host, data, values, {
+            label: data.map((row, index) => `${row.name} ${tidy(values[index])} degrees`).join(', ')
+        });
+        const paths = picture.svg.querySelectorAll('path');
+        paths.forEach((path, index) => {
+            if (highlighted.includes(index)) {
+                path.setAttribute('stroke', '#172b4d');
+                path.setAttribute('stroke-width', '4');
+            }
+        });
+        if (split) {
+            let start = 0;
+            values.forEach((angle, index) => {
+                if (highlighted.includes(index)) {
+                    for (let offset = 30; offset < angle; offset += 30) {
+                        const end = point(start + offset);
+                        picture.svg.append(svgNode('line', { x1: 170, y1: 170, x2: end.x, y2: end.y,
+                            stroke: '#fff', 'stroke-width': 1, 'aria-hidden': true }));
+                    }
+                }
+                start += angle;
+            });
+        }
+        const key = document.createElement('ul');
+        key.className = 'pie-angle-key';
+        data.forEach((row, index) => {
+            const item = document.createElement('li');
+            const swatch = document.createElement('span');
+            swatch.className = 'pie-key-swatch';
+            swatch.style.background = row.colour;
+            swatch.setAttribute('aria-hidden', 'true');
+            item.append(swatch, document.createTextNode(`${row.name} ${tidy(values[index])}°`));
+            key.append(item);
+        });
+        host.append(key);
+    }
+    function readingQuestion(data, type, index = 0, knownIndex = 0, input = 'number') {
+        const values = angles(data), n = total(data), row = data[index], angle = values[index];
+        const answer = row.count;
+        let prompt, feedback, candidates;
+        if (type === 'read-count') {
+            prompt = `This pie chart shows how ${n} pupils chose a colour. How many chose ${row.name}?`;
+            feedback = `${row.name} is ${tidy(angle)}° out of 360°. ${tidy(angle)} ÷ 360 × ${n} = ${answer}.`;
+            candidates = [
+                [angle, `That is the angle, not the number of pupils. Find the angle's share of 360°, then use that share of ${n}.`],
+                [n - answer, `That is everyone who did not choose ${row.name}. Use the ${row.name} slice only.`],
+                [angle / 100 * n, 'That treats the angle like a percentage. A full circle is 360°, not 100.'],
+                [n / data.length, `That shares the pupils out equally. The slices are different sizes, so use ${row.name}'s angle.`]
+            ];
+        } else {
+            const known = data[knownIndex], k = values[knownIndex], c = known.count;
+            if (k === angle) return null;
+            prompt = `${known.name} is ${tidy(k)}° and stands for ${c} pupils. ${row.name} is ${tidy(angle)}°. How many pupils chose ${row.name}?`;
+            feedback = `${tidy(k)}° is ${c} pupils, so ${tidy(angle)}° is ${tidy(angle)} ÷ ${tidy(k)} × ${c} = ${answer} pupils.`;
+            candidates = [
+                [angle, `That is ${row.name}'s angle. Turn the angle into a number of pupils.`],
+                [c, `That is the number for ${known.name}. ${row.name}'s slice is a different size.`],
+                [360 / k * c, `That is the number for the whole circle. Find just the ${row.name} slice.`],
+                [c + (angle - k), `That adds the difference in degrees to the number of pupils. Degrees and pupils are different things. Scale ${known.name}'s number instead.`]
+            ];
+        }
+        const wrong = candidates.filter(([value], i, list) => Number.isInteger(value) && value > 0 && value !== answer
+            && list.findIndex(([other]) => other === value) === i);
+        if (wrong.length < 3) return null;
+        return { ...numeric(prompt, answer, wrong, feedback, input, type, data), index, knownIndex,
+            figure: host => readingChart(host, data) };
+    }
+    function generateReading(item, random) {
+        const { randomInt } = window.Maths1to9LessonEngine;
+        for (;;) {
+            const t = allowedTotals[randomInt(0, allowedTotals.length - 1, random)];
+            const a = randomInt(1, t - 2, random), b = randomInt(a + 1, t - 1, random);
+            const scale = randomInt(1, Math.min(6, Math.floor(540 / t)), random);
+            const data = dataset([a, b - a, t - b].map(count => count * scale));
+            const index = randomInt(0, 2, random);
+            const knownIndex = (index + randomInt(1, 2, random)) % 3;
+            const input = item.mode || (item.type === 'read-count' ? 'number' : 'choice');
+            const question = readingQuestion(data, item.type, index, knownIndex, input);
+            if (question) return question;
+        }
+    }
     function examples() {
         const data = dataset([6, 3, 3]);
-        return [totalQuestion(data), shareQuestion(data), perItemQuestion(data), angleQuestion(data, 0, 'choice'), drawingQuestion(data)];
+        return [totalQuestion(data), shareQuestion(data), perItemQuestion(data), angleQuestion(data, 0, 'choice'), drawingQuestion(data),
+            readingQuestion(dataset([12, 18, 30]), 'read-count', 0, 0, 'choice'),
+            readingQuestion(dataset([10, 30, 20]), 'read-from-known', 2, 0, 'number')];
     }
     function checks() {
         const data = dataset([8, 6, 4]);
@@ -384,15 +469,18 @@
                 option('Divide 360 by each row\'s number.', 'Divide by the total to find one pupil\'s angle. Then multiply by this row.'),
                 option('Give every row the angle for one pupil.', 'A row with several pupils needs several pupils\' shares of the circle.')
             ] },
-            missingQuestion([90, 150]), drawingQuestion(dataset([5, 4, 3]))
+            missingQuestion([90, 150]), drawingQuestion(dataset([5, 4, 3])),
+            readingQuestion(dataset([20, 40, 60]), 'read-count', 0, 0, 'choice'),
+            readingQuestion(dataset([12, 24, 36]), 'read-from-known', 1, 0, 'number')
         ];
     }
-    const practiceTypes = ['total', 'share', 'per-item', 'angle', 'missing', 'draw'];
+    const practiceTypes = ['total', 'share', 'per-item', 'angle', 'missing', 'draw', 'read-count', 'read-from-known'];
     function pick(random) {
         const { randomInt } = window.Maths1to9LessonEngine;
-        return practiceTypes.map(type => ({ type, mode: ['total', 'share'].includes(type) ? 'choice' : type === 'draw' ? 'custom' : 'number', seed: randomInt(0, 4294967295, random) }));
+        return practiceTypes.map(type => ({ type, mode: ['total', 'share', 'read-from-known'].includes(type) ? 'choice' : type === 'draw' ? 'custom' : 'number', seed: randomInt(0, 4294967295, random) }));
     }
     function generate(item, random) {
+        if (item.type.startsWith('read-')) return prepare(generateReading(item, random), random);
         const integer = (min, max) => window.Maths1to9LessonEngine.randomInt(min, max, random);
         const t = allowedTotals[integer(0, allowedTotals.length - 1)];
         const first = integer(1, t - 2);
@@ -415,6 +503,10 @@
         if (!question.data) return undefined;
         const host = document.createElement('div');
         host.className = 'pie-result-visual';
+        if (question.questionType.startsWith('read-')) {
+            readingChart(host, question.data);
+            return host;
+        }
         drawTable(host, question.data, { compact: true });
         if (question.input === 'custom') {
             const values = value ? normalise(value, question.data.length).angles : angles(question.data);
@@ -430,10 +522,24 @@
         { title: 'Write each share as a fraction', lines: ['Put the number in the row on top. Put the total number underneath.', 'Blue is 3 out of 12 pupils. That is 3/12, or one quarter. Green is 9/12, or three quarters.'] },
         { title: 'Turn the share into an angle', lines: ['An angle is the turn between two lines that meet. We measure it in degrees (°). A full circle has 360°.', 'Multiply each share by 360°. This gives the angle for that slice.'] },
         { title: 'Check the angles', lines: ['The angles must add to 360°.', 'Together, the slices fill the whole circle. No gaps. No slices on top of each other.'] },
-        { title: 'Draw the chart', lines: ['Draw a line from the centre to the edge. A protractor is a tool for measuring angles.', 'Measure the first angle from your line. Draw the next line from the centre. Measure the next angle from that new line.', 'Colour the slices. Add labels or a colour key so people know what each slice shows.'] }
+        { title: 'Draw the chart', lines: ['Draw a line from the centre to the edge. A protractor is a tool for measuring angles.', 'Measure the first angle from your line. Draw the next line from the centre. Measure the next angle from that new line.', 'Colour the slices. Add labels or a colour key so people know what each slice shows.'] },
+        { title: 'Read a pie chart', lines: [
+            "You can also work backwards. Each slice's angle tells you its share of the whole circle.",
+            'This chart shows 60 pupils. Blue is 90°. 90° out of 360° is one quarter of the circle.',
+            'So one quarter of the pupils chose Blue. 60 ÷ 4 = 15 pupils.',
+            'The quick way: angle ÷ 360 × total. 90 ÷ 360 × 60 = 15.'
+        ] },
+        { title: 'Use a slice you know', lines: [
+            'Sometimes you know how many people one slice stands for, but not the total.',
+            'Blue is 90° and stands for 15 pupils. So 90° is 15 pupils.',
+            "Split the slices into equal parts of 30°. Blue's 90° is 3 parts, so each part is 15 ÷ 3 = 5 pupils.",
+            "Red's 120° is 4 parts. 4 × 5 = 20 pupils chose Red."
+        ] }
     ];
     function drawLearn(host, index) {
-        if (index === 0) {
+        if (index >= 5) {
+            readingChart(host, dataset([15, 25, 20]), { highlighted: index === 5 ? [0] : [0, 2], split: index === 6 });
+        } else if (index === 0) {
             drawTable(host, learnData);
             const people = document.createElement('div');
             people.className = 'pie-people';
@@ -468,5 +574,5 @@
             text(host, 'p', 'The blue slice starts at 0° and ends at 90°. The green slice fills the rest.', 'pie-caption');
         }
     }
-    window.PieCharts = { total, angles, fraction, allowedTotals, dataset, point, sectorPath, drawingWidget, totalQuestion, shareQuestion, perItemQuestion, angleQuestion, missingQuestion, drawingQuestion, examples, checks, practiceTypes, pick, prepare, generate, resultVisual, practiceResultVisual, learnScreens, drawLearn };
+    window.PieCharts = { readingChart, readingQuestion, generateReading, chart, total, angles, fraction, allowedTotals, dataset, point, sectorPath, drawingWidget, totalQuestion, shareQuestion, perItemQuestion, angleQuestion, missingQuestion, drawingQuestion, examples, checks, practiceTypes, pick, prepare, generate, resultVisual, practiceResultVisual, learnScreens, drawLearn };
 })();
