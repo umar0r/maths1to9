@@ -241,6 +241,8 @@
     {"id":"frequency-tables","title":"Construct and interpret frequency tables","content_references":["S2"]},
     {"id":"bar-and-line-charts","title":"Construct and interpret bar and vertical line charts","content_references":["S2"]},
     {"id":"pictograms","title":"Construct and interpret pictograms","content_references":["S2"]},
+    {"id":"stem-and-leaf-diagrams","title":"Construct and interpret stem-and-leaf diagrams","content_references":["S2","S4"],"recommended_prerequisites":["order-numbers"]},
+    {"id":"frequency-polygons","title":"Draw and interpret frequency polygons","content_references":["S4"],"recommended_prerequisites":["frequency-tables"]},
     {"id":"interpret-pie-charts","title":"Interpret pie charts","content_references":["S2"]},
     {"id":"construct-pie-charts","title":"Construct pie charts","content_references":["S2"]},
     {"id":"mean-median-mode","title":"Calculate mean, median and mode","content_references":["S4"]},

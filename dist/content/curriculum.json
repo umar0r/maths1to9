@@ -156,7 +156,7 @@
       "description": "Collect, represent, analyse and compare data.",
       "lessons": [
         {"folder":"sampling-and-data","title":"Sampling and types of data","subtitle":"Use samples carefully and recognise the data being collected.","skills":["populations-and-samples","sampling-limitations","data-types"]},
-        {"folder":"frequency-tables-and-charts","title":"Frequency tables and charts","subtitle":"Organise and display categorical and discrete data clearly.","skills":["frequency-tables","bar-and-line-charts","pictograms"]},
+        {"folder":"frequency-tables-and-charts","title":"Frequency tables and charts","subtitle":"Organise and display categorical and discrete data clearly.","skills":["frequency-tables","bar-and-line-charts","pictograms","stem-and-leaf-diagrams","frequency-polygons"]},
         {"folder":"pie-charts","title":"Pie charts","subtitle":"Draw a pie chart from a table, and read numbers from one.","skills":["construct-pie-charts","interpret-pie-charts"]},
         {"folder":"averages-and-range","title":"Averages and range","subtitle":"Calculate and choose suitable measures of centre and spread.","skills":["mean-median-mode","range-and-outliers","choose-average"]},
         {"folder":"averages-from-tables","title":"Averages from tables","subtitle":"Calculate averages from frequency and grouped tables.","skills":["mean-frequency-table","estimated-mean-grouped","modal-class"]},
