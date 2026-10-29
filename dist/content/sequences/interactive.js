@@ -51,13 +51,15 @@
             const heading = S.node('h3', screen.title);
             heading.dataset.screenHeading = '';
             root.append(heading);
+            const delayedRule = state.screen === 1 || state.screen === 3;
+            const ruleText = S.node('div');
             for (const line of screen.lines) {
                 const paragraph = S.node('p');
                 if (state.screen === 1) {
                     const [before, after] = line.split('term-to-term rule');
                     paragraph.append(before, S.node('strong', 'term-to-term rule'), after);
                 } else paragraph.textContent = line;
-                root.append(paragraph);
+                (delayedRule ? ruleText : root).append(paragraph);
             }
             if (state.screen === 3) root.append(S.node('p', screen.callout, 'sequence-callout'));
 
@@ -73,9 +75,11 @@
             controls.append(S.node('span', screen.slider), slider, output);
             const picture = S.node('div', '', 'sequence-picture');
             root.append(controls, picture);
+            if (delayedRule) root.append(ruleText);
             function paint() {
                 output.textContent = `Showing: ${slider.value}`;
                 S.drawLearnPicture(picture, state.screen, Number(slider.value));
+                ruleText.hidden = delayedRule && Number(slider.value) !== screen.max;
             }
             slider.addEventListener('input', () => {
                 section.update(state => { state.sliders[state.screen] = Number(slider.value); });
@@ -91,8 +95,7 @@
             if (screen.callout && state.screen !== 3) {
                 root.append(S.node('p', screen.callout, 'sequence-callout'));
                 if (state.screen === 4) {
-                    const counterexample = S.node('p', '', 'sequence-counterexample');
-                    counterexample.append(S.node('s', '6 + 4 = 10'), S.node('span', '18'));
+                    const counterexample = S.node('p', '6 + 4 = 10, not 18 ✗', 'sequence-counterexample');
                     root.append(counterexample);
                 }
             }

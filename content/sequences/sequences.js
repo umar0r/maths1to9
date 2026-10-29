@@ -215,22 +215,25 @@
             });
         } else if (item.type === 'next-multiply') {
             const r = int(2, 4), divide = random() < 0.5;
-            // Even starts make the wrong divide options whole numbers too.
-            const starts = divide ? (r === 2 ? [4, 6, 8] : r === 3 ? [2, 4, 6, 8] : [1, 2, 3, 4, 5, 6, 7, 8]) : [1, 2, 3, 4, 5, 6, 7, 8];
-            const a = starts[int(0, starts.length - 1)];
-            const terms = divide ? [a * r ** 4, a * r ** 3, a * r ** 2, a * r] : [a, a * r, a * r ** 2, a * r ** 3];
-            const last = terms[3], answer = divide ? a : a * r ** 4;
+            let a, terms, last, answer, wrong, values;
+            do {
+                a = int(1, 8);
+                terms = divide ? [a * r ** 4, a * r ** 3, a * r ** 2, a * r] : [a, a * r, a * r ** 2, a * r ** 3];
+                last = terms[3];
+                answer = divide ? a : a * r ** 4;
+                wrong = divide ? [
+                    option(number(last - r), `That subtracts ${r}. Check the first pair: it divides by ${r}.`),
+                    option(number(a * r ** 2), 'That multiplies. The terms are getting smaller, so divide.'),
+                    option(number(last / (r === 2 ? 4 : 2)), 'That divides by the wrong number. Check the first pair.')
+                ] : [
+                    option(number(last + last - terms[2]), "That adds the last gap again. The gaps aren't the same, so multiply."),
+                    option(number(last + r), `That adds ${r} instead of multiplying by ${r}.`),
+                    option(number(last * (r + 1)), 'That multiplies by the wrong number. Check the first pair.')
+                ];
+                values = [answer, ...wrong.map(option => Number(option.label))];
+            } while (values.some(value => !Number.isInteger(value)) || new Set(values).size !== 4);
             const context = !divide && random() < 0.5 ? (r === 3 ? 'A culture triples in size every hour.' : r === 2 ? 'A prize doubles each round.' : 'A prize is multiplied by 4 each round.') : '';
             const feedback = `${last} ${divide ? '÷' : '×'} ${r} = ${answer}.`;
-            const wrong = divide ? [
-                option(number(last - r), `That subtracts ${r}. Check the first pair: it divides by ${r}.`),
-                option(number(a * r ** 2), 'That multiplies. The terms are getting smaller, so divide.'),
-                option(number(last / (r === 2 ? 4 : 2)), 'That divides by the wrong number. Check the first pair.')
-            ] : [
-                option(number(last + last - terms[2]), "That adds the last gap again. The gaps aren't the same, so multiply."),
-                option(number(last + r), `That adds ${r} instead of multiplying by ${r}.`),
-                option(number(last * (r - 1)), 'That multiplies by the wrong number. Check the first pair.')
-            ];
             question = card(item.type, terms, { op: divide ? 'divide' : 'multiply', value: r }, next, {
                 bankId: 'sequences-04', input: 'choice', context, prompt: 'What is the next term?',
                 options: [option(number(answer), feedback, true), ...wrong]

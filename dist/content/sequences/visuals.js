@@ -18,19 +18,66 @@
         const list = node('div', '', 'sequence-chain');
         list.setAttribute('role', 'img');
         list.setAttribute('aria-label', terms.map((term, i) => `${S.number(term)}${i < shown && labels[i] ? `, ${labels[i]}, then` : ','}`).join(' '));
-        terms.forEach((term, index) => {
-            const group = node('div', '', 'sequence-chain__item');
-            group.append(node('span', S.number(term), 'sequence-box'));
-            if (index < terms.length - 1) {
+        if (labels.some(label => label.length > 5)) list.style.setProperty('--sequence-gap', '7rem');
+        host.append(list);
+
+        function drawRow(start, end) {
+            const row = node('div', '', 'sequence-chain__row');
+            for (let index = start; index <= end; index++) {
+                row.append(node('span', S.number(terms[index]), 'sequence-box'));
+                if (index === end) continue;
                 const jump = node('span', '', 'sequence-jump');
                 if (index < shown && labels[index]) {
-                    jump.append(node('span', labels[index], 'sequence-jump__label'), node('span', '⤴', 'sequence-jump__curve'));
+                    const label = node('span', labels[index], 'sequence-jump__label');
+                    if (labels[index].startsWith('+')) label.classList.add('sequence-label--add');
+                    const svg = svgElement('svg', { viewBox: '0 0 64 52', 'aria-hidden': 'true', class: 'sequence-jump__curve' });
+                    svg.append(
+                        svgElement('path', { d: 'M 3 45 Q 32 0 61 45' }),
+                        svgElement('path', { d: 'M 51 41 L 61 45 L 60 34' })
+                    );
+                    jump.append(label, svg);
                 }
-                group.append(jump);
+                row.append(jump);
             }
-            list.append(group);
+            list.append(row);
+        }
+
+        function layout(boxesPerRow) {
+            list.replaceChildren();
+            if (terms.length === 1) drawRow(0, 0);
+            for (let start = 0; start < terms.length - 1;) {
+                const end = Math.min(terms.length - 1, start + boxesPerRow - 1);
+                drawRow(start, end);
+                // Repeat the boundary term on the new row, keeping every gap
+                // and its curved arrow together between the same two boxes.
+                start = end;
+            }
+        }
+
+        layout(2);
+        let previousWidth = -1;
+        const observer = new ResizeObserver(entries => {
+            if (!list.isConnected) { observer.disconnect(); return; }
+            const width = Math.floor(entries[0].contentRect.width);
+            if (width === previousWidth || width === 0) return;
+            previousWidth = width;
+            const boxes = Array.from(list.querySelectorAll('.sequence-box'));
+            const boxWidth = Math.max(...boxes.map(box => box.getBoundingClientRect().width));
+            const gapWidth = list.querySelector('.sequence-jump')?.getBoundingClientRect().width || 0;
+            const count = Math.max(2, Math.floor((width + gapWidth) / (boxWidth + gapWidth)));
+            layout(count);
+            // Keep Learn 4's red gap labels and green multiplication labels.
+            if (host.dataset.multiplyGaps === 'true') colourMultiplyGaps(host);
         });
-        host.append(list);
+        observer.observe(list);
+    }
+
+    function colourMultiplyGaps(host) {
+        host.querySelectorAll('.sequence-jump__label').forEach(label => {
+            const wrong = label.textContent.startsWith('+');
+            label.classList.add(wrong ? 'sequence-label--wrong' : 'sequence-label--right');
+            label.parentElement.classList.add(wrong ? 'sequence-label--wrong' : 'sequence-label--right');
+        });
     }
 
     function drawCardVisual(host, question, correct = false) {
@@ -114,10 +161,9 @@
             const terms = [2, 6, 18, 54, 162].slice(0, value === 4 ? 5 : 4);
             const labels = ['+4', '+12', '', ''];
             for (let i = 0; i < value; i++) labels[i] = '×3';
+            host.dataset.multiplyGaps = 'true';
             drawChain(host, terms, labels);
-            host.querySelectorAll('.sequence-jump__label').forEach(label => {
-                label.classList.add(label.textContent.startsWith('+') ? 'sequence-label--wrong' : 'sequence-label--right');
-            });
+            colourMultiplyGaps(host);
             if (value === 4) host.append(node('p', '54 × 3 = 162', 'sequence-working'));
         } else if (index === 4) {
             const terms = [80, 40, 20, 10, 5].slice(0, value === 4 ? 5 : 4);

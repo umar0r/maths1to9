@@ -135,10 +135,16 @@
             } else {
                 const cardRoot = document.createElement('div');
                 const visual = document.createElement('div');
-                window.Sequences.drawCardVisual(visual, questions[state.screen]);
+                window.Sequences.drawCardVisual(visual, questions[state.screen], state.cards[`final-check-${state.screen + 1}`]?.correct === true);
                 root.append(visual, cardRoot);
                 const readOnly = state.screen < state.index;
-                api.createQuestion(cardRoot, questionConfig(state.screen, readOnly));
+                api.createQuestion(cardRoot, {
+                    ...questionConfig(state.screen, readOnly),
+                    onFeedback(result) {
+                        reportProgress();
+                        window.Sequences.drawCardVisual(visual, questions[state.screen], result.correct);
+                    }
+                });
                 if (readOnly) api.setSectionAction('comparison', {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
