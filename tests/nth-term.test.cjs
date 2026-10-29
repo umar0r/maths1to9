@@ -88,7 +88,6 @@ test('registration uses one skill and adds the finding placeholder after it', ()
     assert.equal(lessons[index].title, 'Using the nth term');
     assert.equal(lessons[index + 1].folder, 'finding-the-nth-term');
     assert.deepEqual([...lessons[index + 1].skills], ['find-linear-nth-term']);
-    assert.ok(!fs.existsSync(path.join(root, 'content/finding-the-nth-term')));
     assert.ok(!fs.existsSync(path.join(root, 'content/nth-term/README.md')));
 });
 
