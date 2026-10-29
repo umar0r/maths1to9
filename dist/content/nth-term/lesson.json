@@ -1,0 +1,164 @@
+{
+    "id": "nth-term",
+    "slug": "nth-term",
+    "title": "Using the nth term",
+    "subtitle": "Use a rule to find any term in a sequence.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "linear-term": "use-nth-term",
+            "take-away": "use-nth-term",
+            "square-rule": "use-nth-term",
+            "term-choice": "use-nth-term",
+            "first-terms": "use-nth-term",
+            "every-term": "use-nth-term",
+            "position-step": "use-nth-term",
+            "multiply-step": "use-nth-term",
+            "try-linear": "use-nth-term",
+            "try-take-away": "use-nth-term",
+            "try-bank": "use-nth-term",
+            "try-square": "use-nth-term",
+            "try-double-square": "use-nth-term",
+            "try-parts": "use-nth-term",
+            "try-total": "use-nth-term",
+            "amir": "use-nth-term",
+            "check-linear": "use-nth-term",
+            "ella": "use-nth-term",
+            "check-take-away": "use-nth-term",
+            "check-every-n": "use-nth-term"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Using the nth term"
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Use the position to find the term",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise using nth-term rules",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "amir"
+            },
+            {
+                "type": "check-linear"
+            },
+            {
+                "type": "ella"
+            },
+            {
+                "type": "check-take-away"
+            },
+            {
+                "type": "check-every-n"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "n is the position of the term: 1st, 2nd, 3rd and so on."
+                },
+                {
+                    "text": "To find a term, put its position in place of every n."
+                },
+                {
+                    "text": "3n means 3 × n. n² means n × n."
+                },
+                {
+                    "text": "Work it out in order: squares first, then ×, then + or −."
+                },
+                {
+                    "text": "A term can be below zero."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:8",
+            "kind": "guided"
+        }
+    ]
+}
