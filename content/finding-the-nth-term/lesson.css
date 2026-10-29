@@ -1,0 +1,278 @@
+.nth-rule,
+.nth-working {
+    font-size: clamp(1.15rem, 4.5vw, 1.6rem);
+    font-weight: 800;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.nth-rule {
+    color: #24355e;
+    margin: .75rem 0;
+}
+
+.nth-picture,
+.nth-callout {
+    padding: 1.2rem;
+    background: #f5f7fc;
+    border-radius: .75rem;
+    margin: 1rem 0;
+}
+
+.nth-callout {
+    border-left: 4px solid #536caf;
+}
+
+.nth-slider {
+    display: grid;
+    gap: .65rem;
+    margin: 1rem 0;
+    font-weight: 700;
+}
+
+.nth-slider input {
+    width: 100%;
+    min-height: 44px;
+    accent-color: #536caf;
+}
+
+.nth-slider input:focus-visible {
+    outline: 3px solid #365cac;
+    outline-offset: 3px;
+}
+
+.nth-slider output {
+    font-weight: 400;
+}
+
+.nth-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+}
+
+.nth-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+}
+
+.nth-box {
+    display: grid;
+    place-items: center;
+    min-width: 2.6rem;
+    min-height: 2.6rem;
+    padding: .25rem .5rem;
+    border: 2px solid #536caf;
+    border-radius: .5rem;
+    background: white;
+    color: #24355e;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+.nth-position {
+    font-size: .9rem;
+}
+
+.nth-entry.is-active .nth-box {
+    background: #365cac;
+    color: white;
+    border-color: #24355e;
+}
+
+.nth-entry.is-active .nth-position {
+    font-weight: 900;
+    color: #24355e;
+}
+
+.nth-substitute {
+    padding: 0 .15rem;
+    color: #7339a0;
+    background: #eee2fb;
+    border-radius: .2rem;
+}
+
+.nth-tiles {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+}
+
+.nth-square {
+    display: grid;
+    grid-template-columns: repeat(var(--tile-count), 1fr);
+    gap: .2rem;
+    width: calc(var(--tile-count) * 1.5rem);
+    max-width: 65%;
+}
+
+.nth-tile {
+    display: block;
+    aspect-ratio: 1;
+    border: 1px solid #365cac;
+    border-radius: .1rem;
+    background: #bed1f5;
+}
+
+.nth-extra {
+    display: flex;
+    gap: .2rem;
+}
+
+.nth-extra .nth-tile {
+    width: 1.2rem;
+}
+
+.nth-tile--extra {
+    background: #eed39a;
+    border-color: #866417;
+}
+
+.nth-plus {
+    font-size: 1.5rem;
+}
+
+.nth-method li {
+    margin: .6rem 0;
+}
+
+@media (max-width: 420px) {
+    .nth-picture {
+        padding: .65rem;
+    }
+
+    .nth-row {
+        gap: .45rem;
+    }
+
+    .nth-box {
+        min-width: 2.25rem;
+        min-height: 2.25rem;
+        padding: .2rem .35rem;
+        font-size: 1rem;
+    }
+}
+
+.nth-row--four {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.find-jump {
+    min-height: 1.8rem;
+    font-weight: 800;
+    color: #536caf;
+    align-self: flex-end;
+    transform: translateX(55%);
+}
+
+.find-table {
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: .2rem .4rem;
+    width: 100%;
+    font-size: clamp(.85rem, 3.3vw, 1.15rem);
+    text-align: center;
+}
+
+.find-table caption {
+    text-align: left;
+    font-size: .9rem;
+    margin-bottom: .5rem;
+}
+
+.find-table th {
+    width: 20%;
+    overflow-wrap: anywhere;
+}
+
+.find-table td {
+    padding: .35rem .1rem;
+    background: white;
+    border-radius: .3rem;
+    font-weight: 800;
+}
+
+.find-table__arrows td {
+    height: 3rem;
+    color: #7339a0;
+    background: transparent;
+}
+
+.find-table__arrows span {
+    display: block;
+}
+
+.find-sums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .2rem 1rem;
+    font-size: .95rem;
+}
+
+.find-sums p {
+    margin: .3rem 0;
+}
+
+.find-match {
+    color: #237346;
+}
+
+.find-patterns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.find-patterns figure {
+    margin: 0;
+}
+
+.find-patterns figcaption {
+    margin-bottom: .6rem;
+    font-weight: 800;
+}
+
+.find-dot-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), .7rem);
+    gap: .3rem;
+}
+
+.find-dot {
+    display: block;
+    width: .7rem;
+    height: .7rem;
+    background: #c33f49;
+    border-radius: 50%;
+}
+
+.find-blue-dots {
+    display: flex;
+    gap: .3rem;
+    margin-top: .7rem;
+}
+
+.find-dot--blue {
+    background: #365cac;
+}
+
+
+.nth-inline-rule,
+.nth-rule {
+    white-space: nowrap;
+}
+
+.find-table th {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    font-size: clamp(.68rem, 2.6vw, .95rem);
+}
+
+.find-table td {
+    height: 1.75rem;
+}
