@@ -169,6 +169,8 @@ plus `below-zero`, `two-step`, and one of `next-two` or `pattern-k`
    only. Check 12 to 36."*) / *"No. The rule is add 24."* (*"Add 24 works
    for 12 to 36 only. Check 4 to 12."*) / *"No. The rule is multiply by
    4."* (*"4 × 4 = 16, not 12."*)
+   Right feedback: *"Add 8 only works for the first pair. Each term is 3
+   times the one before."*
 3. Typed: same sequence. "What is the next term?" 324. Rules: 116 →
    *"That's Sam's add 8. Multiply by 3."*; 180 → *"That adds the last gap,
    72. The gaps aren't the same, so multiply."*; 432 → *"That multiplies
@@ -180,6 +182,8 @@ plus `below-zero`, `two-step`, and one of `next-two` or `pattern-k`
    terms are 0 and −1."* (*"That subtracts 1. The rule is divide by
    2."*) / *"No. The next two terms are 2 and 4."* (*"That goes backwards
    by doubling. Keep dividing by 2."*)
+   Right feedback: *"Halving never has to stop: 1 ÷ 2 = 0.5, then
+   0.5 ÷ 2 = 0.25."*
 5. Typed: *"The rule is: multiply by 3, then subtract 2. The first term is
    4. What is the third term?"* 28. Rules: 10 → *"That's the second term.
    Use the rule once more."*; 12 → *"You subtracted first. Multiply by 3,

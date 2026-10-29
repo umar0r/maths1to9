@@ -142,7 +142,7 @@
             }),
             card('sam', [4, 12, 36, 108], { op: 'multiply', value: 3 }, { kind: 'rule' }, {
                 input: 'choice', prompt: 'Sam says the rule is add 8, because 4 + 8 = 12. Is Sam right?', options: [
-                    option('No. 12 + 8 = 20, not 36. The rule is multiply by 3.', 'No. 12 + 8 = 20, not 36. The rule is multiply by 3.', true),
+                    option('No. 12 + 8 = 20, not 36. The rule is multiply by 3.', 'Add 8 only works for the first pair. Each term is 3 times the one before.', true),
                     option('Yes. 4 + 8 = 12.', 'It works for the first pair only. Check 12 to 36.'),
                     option('No. The rule is add 24.', 'Add 24 works for 12 to 36 only. Check 4 to 12.'),
                     option('No. The rule is multiply by 4.', '4 × 4 = 16, not 12.')
@@ -158,7 +158,7 @@
             }),
             card('aisha', [64, 32, 16, 8, 4, 2, 1], { op: 'divide', value: 2 }, { kind: 'term', positions: [8, 9] }, {
                 input: 'choice', prompt: "A sequence starts at 64. Its rule is divide by 2. Aisha says it must stop at 1, because you can't halve 1. Is Aisha right?", options: [
-                    option('No. The next two terms are 0.5 and 0.25.', 'No. The next two terms are 0.5 and 0.25.', true),
+                    option('No. The next two terms are 0.5 and 0.25.', 'Halving never has to stop: 1 ÷ 2 = 0.5, then 0.5 ÷ 2 = 0.25.', true),
                     option("Yes. You can't halve 1.", 'Half of 1 is 0.5. Terms can be decimals.'),
                     option('No. The next two terms are 0 and −1.', 'That subtracts 1. The rule is divide by 2.'),
                     option('No. The next two terms are 2 and 4.', 'That goes backwards by doubling. Keep dividing by 2.')
