@@ -77,9 +77,10 @@
         {"folder":"speed-from-distance-time-graphs","title":"Speed from a distance–time graph","subtitle":"Work out speed from a straight section of a distance–time graph.","skills":["speed-from-distance-time-graph"]},
         {"folder":"real-life-and-kinematic-graphs","title":"Real-life and kinematic graphs","subtitle":"Interpret changing quantities from graphs in context.","skills":["real-context-graphs","kinematic-graphs"]},
         {"folder":"sequences","title":"Continuing a sequence","subtitle":"Find the rule and use it to work out the next terms.","skills":["generate-sequences"]},
-        {"folder":"special-sequences","title":"Special sequences","subtitle":"Recognise square, cube, triangular and Fibonacci-type sequences.","skills":["recognise-special-sequences"]},
+        {"folder":"special-sequences","title":"Special sequences","subtitle":"Recognise square, cube and triangular numbers.","skills":["recognise-special-sequences"]},
         {"folder":"nth-term","title":"Using the nth term","subtitle":"Use a rule to find any term in a sequence.","skills":["use-nth-term"]},
-        {"folder":"finding-the-nth-term","title":"Finding the nth term","subtitle":"Work out the rule for a sequence that goes up or down by the same amount.","skills":["find-linear-nth-term"]}
+        {"folder":"finding-the-nth-term","title":"Finding the nth term","subtitle":"Work out the rule for a sequence that goes up or down by the same amount.","skills":["find-linear-nth-term"]},
+        {"folder":"fibonacci-sequences","title":"Fibonacci-type sequences","subtitle":"Add the two terms before to find the next term.","skills":["continue-fibonacci-sequences"]}
       ]
     },
     {
