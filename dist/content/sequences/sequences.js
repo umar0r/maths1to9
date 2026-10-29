@@ -18,6 +18,7 @@
         },
         {
             title: 'Find the rule.',
+            instruction: 'Move the slider to see how you get from each term to the next.',
             lines: ["Look at how you get from each term to the next. It's add 4 every time. This is the term-to-term rule: it tells you how to get the next term from the one before. To find the next term, use the rule on the last term."],
             maths: ['3, 7, 11, 15, …', '15 + 4 = 19'], slider: 'Show jumps: 0 to 4', min: 0, max: 4
         },
@@ -34,6 +35,7 @@
         },
         {
             title: 'Sometimes you divide. Check every pair.', lines: [],
+            instruction: 'Move the slider to see how you get from 80 to 10.',
             callout: 'Always check your rule on every pair. For 2, 6, 18, 54, add 4 works for 2 to 6, but not for 6 to 18.',
             maths: ['80, 40, 20, 10, …', '10 ÷ 2 = 5', '6 + 4 = 10', '18'], slider: 'Show ÷2: 0 to 4', min: 0, max: 4
         },

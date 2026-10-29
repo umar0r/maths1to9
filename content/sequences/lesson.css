@@ -18,6 +18,10 @@
     margin: 1rem 0;
 }
 
+.sequence-card-visual .sequence-chain {
+    margin-bottom: 2rem;
+}
+
 .sequence-chain__row {
     display: flex;
     align-items: flex-end;

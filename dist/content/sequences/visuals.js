@@ -24,7 +24,9 @@
         function drawRow(start, end) {
             const row = node('div', '', 'sequence-chain__row');
             for (let index = start; index <= end; index++) {
-                row.append(node('span', S.number(terms[index]), 'sequence-box'));
+                const box = node('span', S.number(terms[index]), 'sequence-box');
+                if (start > 0 && index === start) box.setAttribute('aria-hidden', 'true');
+                row.append(box);
                 if (index === end) continue;
                 const jump = node('span', '', 'sequence-jump');
                 if (index < shown && labels[index]) {
@@ -81,6 +83,7 @@
     }
 
     function drawCardVisual(host, question, correct = false) {
+        host.classList.add('sequence-card-visual');
         host.replaceChildren();
         if (question.context) host.append(node('p', question.context));
         if (question.table) {

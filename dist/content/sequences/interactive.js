@@ -51,6 +51,7 @@
             const heading = S.node('h3', screen.title);
             heading.dataset.screenHeading = '';
             root.append(heading);
+            if (screen.instruction) root.append(S.node('p', screen.instruction));
             const delayedRule = state.screen === 1 || state.screen === 3;
             const ruleText = S.node('div');
             for (const line of screen.lines) {
