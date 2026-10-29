@@ -31,6 +31,7 @@
         {
             title: 'No nth term this time.',
             lines: ["The top row goes up by 3 every time, so it has an nth term: 3n − 1. The bottom row's gaps keep changing. So a Fibonacci-type sequence has no nth term like that. To find a term further along, keep adding until you get there."],
+            rowLabels: ['Adds 3 each time', 'Fibonacci-type'],
             maths: ['2, 5, 8, 11, …', '+3, +3, +3', '2, 5, 7, 12, …', '+3, +2, +5'],
             slider: 'Show the gaps: 0 to 3', min: 0, max: 3
         },
@@ -266,7 +267,7 @@
                         return option(`The ${ordinal(position)} term`, position === wrongPosition ? fail
                             : `The ${ordinal(position)} term is right: ${terms[i - 2]} + ${terms[i - 1]} = ${terms[i]}.`, position === wrongPosition);
                     }),
-                    option('None of them', fail)
+                    option('None of them', `One sum fails: ${fail} So the ${ordinal(wrongPosition)} term is wrong.`)
                 ]
             });
         } else if (item.type === 'which-is-fib') {
@@ -281,7 +282,7 @@
                 sequences, showTerms: false, input: 'choice', prompt: 'Which of these is a Fibonacci-type sequence?', options: [
                     option(`${list(terms)}, …`, `${a} + ${b} = ${terms[2]} and ${b} + ${terms[2]} = ${terms[3]}`, true),
                     option(`${list(sequences[1])}, …`, 'That adds the same amount each time, so it has an nth term.'),
-                    option(`${list(sequences[2])}, …`, 'That doubles each time.'),
+                    option(`${list(sequences[2])}, …`, `After ${b}, that doubles each time.`),
                     option(`${list(sequences[3])}, …`, `That keeps adding ${a}. Each term must be the two terms before added together.`)
                 ]
             });

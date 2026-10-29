@@ -49,7 +49,9 @@
     function drawLearnPicture(host, index, value) {
         host.replaceChildren();
         if (index === 2) {
+            host.append(node('h4', S.learnScreens[index].rowLabels[0]));
             gapRow(host, [2, 5, 8, 11], [3, 3, 3], value);
+            host.append(node('h4', S.learnScreens[index].rowLabels[1]));
             gapRow(host, [2, 5, 7, 12], [3, 2, 5], value);
             return;
         }
