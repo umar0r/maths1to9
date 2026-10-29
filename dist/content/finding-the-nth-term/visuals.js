@@ -42,7 +42,7 @@
         bottomLabel.scope = 'row';
         bottom.append(bottomLabel);
         for (let n = 1; n <= 4; n++) {
-            top.append(node('td', n <= filled ? S.number(rule.d * n) : '□'));
+            top.append(node('td', n <= filled ? S.number(rule.d * n) : ''));
             const arrow = node('td');
             if (n <= compared) arrow.append(node('span', `${rule.c < 0 ? '−' : '+'}${Math.abs(rule.c)}`), node('span', '↓'));
             arrows.append(arrow);

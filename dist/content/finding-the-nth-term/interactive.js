@@ -14,6 +14,19 @@
         }));
     }
 
+    function appendTeachingText(host, text) {
+        const parts = text.split(/(\d+ − \d+n|−?\d+n(?: [＋+−] \d+)?|(?<![A-Za-z0-9−-])(?:nth term|term|position|n)(?=[ .,:]|$))/);
+        for (const part of parts) {
+            if (/^(?:\d+ − \d+n|−?\d+n(?: [＋+−] \d+)?)$/.test(part)) {
+                host.append(S.node('span', part, 'nth-inline-rule'));
+            } else if (['term', 'position', 'nth term', 'n'].includes(part)) {
+                host.append(S.node('strong', part));
+            } else {
+                host.append(document.createTextNode(part));
+            }
+        }
+    }
+
     async function mountLearn() {
         const root = S.node('article');
         document.getElementById('lesson-section-explanation').append(root);
@@ -53,11 +66,7 @@
             root.append(heading);
             for (const line of screen.lines) {
                 const paragraph = S.node('p');
-                const words = line.split(/(?<![A-Za-z])(nth term|term|position|n)(?=[ .,:]|$)/);
-                for (const word of words) {
-                    paragraph.append(['term', 'position', 'nth term', 'n'].includes(word)
-                        ? S.node('strong', word) : document.createTextNode(word));
-                }
+                appendTeachingText(paragraph, line);
                 root.append(paragraph);
             }
             if (screen.ruleText) root.append(S.node('p', screen.ruleText, 'nth-rule'));
@@ -84,7 +93,7 @@
             paint();
             if (screen.callout) {
                 const callout = S.node('p', '', 'nth-callout');
-                callout.textContent = screen.callout;
+                appendTeachingText(callout, screen.callout);
                 root.append(callout);
             }
             if (screen.secondCallout) root.append(S.node('p', screen.secondCallout, 'nth-callout'));
