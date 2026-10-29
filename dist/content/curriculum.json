@@ -78,7 +78,8 @@
         {"folder":"real-life-and-kinematic-graphs","title":"Real-life and kinematic graphs","subtitle":"Interpret changing quantities from graphs in context.","skills":["real-context-graphs","kinematic-graphs"]},
         {"folder":"sequences","title":"Continuing a sequence","subtitle":"Find the rule and use it to work out the next terms.","skills":["generate-sequences"]},
         {"folder":"special-sequences","title":"Special sequences","subtitle":"Recognise square, cube, triangular and Fibonacci-type sequences.","skills":["recognise-special-sequences"]},
-        {"folder":"nth-term","title":"The nth term","subtitle":"Use and find position-to-term rules for linear sequences.","skills":["use-nth-term","find-linear-nth-term"]}
+        {"folder":"nth-term","title":"Using the nth term","subtitle":"Use a rule to find any term in a sequence.","skills":["use-nth-term"]},
+        {"folder":"finding-the-nth-term","title":"Finding the nth term","subtitle":"Work out the rule for a sequence that goes up or down by the same amount.","skills":["find-linear-nth-term"]}
       ]
     },
     {
