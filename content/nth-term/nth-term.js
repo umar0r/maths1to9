@@ -207,7 +207,7 @@
             question = card(item.type, rule(0, a, offset), k, ruleText, {
                 bankId: 'nth-term-01', input: 'number',
                 prompt: words ? `Pattern n uses ${ruleText} sticks. How many sticks does Pattern ${k} use?`
-                    : `The nth term is ${ruleText}. Find the ${ordinal(k)} term.`,
+                    : `Find the ${ordinal(k)} term.`,
                 answer: String(a * k + offset), rules,
                 feedback: `${a} × ${k} ${sign} ${b} = ${a * k} ${sign} ${b} = ${number(a * k + offset)}`
             });

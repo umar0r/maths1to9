@@ -53,7 +53,7 @@
             root.append(heading);
             for (const line of screen.lines) {
                 const paragraph = S.node('p');
-                const words = line.split(/(term|position|nth term|n)(?=[ .,:]|$)/);
+                const words = line.split(/(?<![A-Za-z])(nth term|term|position|n)(?=[ .,:]|$)/);
                 for (const word of words) {
                     paragraph.append(['term', 'position', 'nth term', 'n'].includes(word)
                         ? S.node('strong', word) : document.createTextNode(word));
