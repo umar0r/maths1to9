@@ -113,6 +113,7 @@
     {"id":"speed-from-distance-time-graph","title":"Find speed from a straight section of a distance–time graph","content_references":["A14","R11","R14"],"recommended_prerequisites":["calculate-gradient","speed-distance-time"]},
     {"id":"generate-sequences","title":"Generate sequences from term and position rules","content_references":["A23"]},
     {"id":"recognise-special-sequences","title":"Recognise arithmetic and special sequences","content_references":["A24"]},
+    {"id":"continue-fibonacci-sequences","title":"Continue Fibonacci-type sequences","content_references":["A24"],"recommended_prerequisites":["generate-sequences"]},
     {"id":"use-nth-term","title":"Use an nth-term expression","content_references":["A23"]},
     {"id":"find-linear-nth-term","title":"Deduce the nth term of a linear sequence","content_references":["A25"],"recommended_prerequisites":["generate-sequences"]},
 
