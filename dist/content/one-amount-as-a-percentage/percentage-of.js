@@ -11,33 +11,33 @@
             title: 'How much of the whole?',
             lines: ['You score 18 marks on a test out of 30. Is that good? To compare, we use a percentage. The whole test, all 30 marks, is 100%. You can use a calculator in this lesson.'],
             maths: ['30 marks = 100%', '18 out of 30'],
-            slider: 'Marks scored: 0 to 30', min: 0, max: 30
+            slider: 'Marks scored', min: 0, max: 30
         },
         {
-            title: 'Turn it into a percentage.',
+            title: 'Turn it into a percentage',
             lines: ['You already know how to turn a fraction into a percentage. Divide the top by the bottom, then multiply by 100.'],
             maths: ['18 ÷ 30 = 0.6', '0.6 × 100 = 60', '18 out of 30 is 60%'],
-            slider: 'Marks scored: 0 to 30 in steps of 3', min: 0, max: 30, step: 3
+            slider: 'Marks scored', min: 0, max: 30, step: 3
         },
         {
-            title: 'Divide by the whole.',
+            title: 'Divide by the whole',
             lines: ['To find A as a percentage of B, work out A ÷ B × 100. B is the whole: the amount that is 100%.'],
             maths: ['£50 = 100%', '20 ÷ 50 × 100 = 40', '£20 is 40% of £50'],
             callout: "Don't divide the other way. 50 ÷ 20 × 100 = 250%. That can't be right: £20 is less than £50, so the answer must be under 100%. Answers can have decimals too, like 22.5%.",
-            slider: 'Money spent: £0 to £50 in £5 steps', min: 0, max: 50, step: 5
+            slider: 'Money spent', min: 0, max: 50, step: 5
         },
         {
-            title: 'More than 100%.',
+            title: 'More than 100%',
             lines: ["We compare with last year, so last year's 20 is 100%. More than the whole gives more than 100%."],
             maths: ['Last year: 20 members = 100%', '25 ÷ 20 × 100 = 125', 'This year is 125% of last year'],
-            slider: 'Members this year: 10 to 30', min: 10, max: 30
+            slider: 'Members this year', min: 10, max: 30
         },
         {
-            title: 'Find the whole first.',
+            title: 'Find the whole first',
             lines: ['A shop has 84 insulated bottles and 36 plain ones.', "Sometimes the question doesn't give the whole. Add up the groups to find it first."],
             maths: ['84 + 36 = 120 bottles = 100%', '84 ÷ 120 × 100 = 70', '70% of the bottles are insulated'],
             callout: "Don't divide by the other group: 84 ÷ 36 × 100 is wrong.",
-            slider: 'Show the steps: 1 to 3', min: 1, max: 3
+            slider: 'Step', min: 1, max: 3
         }
     ];
 
@@ -231,11 +231,30 @@
             if (['part-of-whole', 'find-the-whole', 'more-than-100'].includes(type) && rules.length < 2) continue;
             break;
         } while (true);
-        const [setup, ask] = context(part, whole, int(0, 4));
+        const contextKind = int(0, 4);
+        const [setup, ask] = context(part, whole, contextKind);
+        const otherPart = [
+            "That's the marks you didn't get.",
+            "That's the seats that aren't empty.",
+            "That's the apples that aren't green.",
+            "That's the pupils who don't go by bus.",
+            "That's the money you kept."
+        ][contextKind];
         const working = `${part} ÷ ${whole} × 100 = ${number(answer)}`;
         if (type === 'part-of-whole') {
+            const useContext = int(0, 1);
+            rules = rules.map(rule => {
+                let feedback = rule.feedback;
+                if (feedback === 'Now multiply by 100.') feedback = `That's ${part} ÷ ${whole}. Now multiply by 100.`;
+                if (feedback === "That's the other part.") feedback = useContext
+                    ? otherPart : `That's the rest: ${whole} − ${part} out of ${whole}.`;
+                if (useContext && contextKind === 4 && feedback === `${part} is the amount, not the percentage.`) {
+                    feedback = `£${part} is the money spent, not the percentage.`;
+                }
+                return { ...rule, feedback };
+            });
             question = card(type, part, whole, 'percent', {
-                input: 'number', prompt: int(0, 1) ? `${setup} ${ask}` : `Express ${part} as a percentage of ${whole}.`,
+                input: 'number', prompt: useContext ? `${setup} ${ask}` : `Express ${part} as a percentage of ${whole}.`,
                 answer: number(answer), rules, feedback: working
             });
         } else if (type === 'find-the-whole') {
@@ -243,6 +262,15 @@
                 [`A shop has ${part} insulated bottles and ${whole - part} plain ones.`, 'What percentage are insulated?'],
                 [`A shop has ${part} red pens and ${whole - part} blue pens.`, 'What percentage of the pens are red?']
             ]);
+            const bottles = groups[0].includes('bottles');
+            rules = rules.map(rule => ({
+                ...rule,
+                feedback: rule.feedback === "That's the other group."
+                    ? `That's the ${bottles ? 'plain bottles' : 'blue pens'}. The whole is ${part} + ${whole - part} = ${whole}.`
+                    : rule.feedback === "That's a count, not a percentage."
+                        ? `${part} is a number of ${bottles ? 'bottles' : 'pens'}. Work out ${part} ÷ ${whole} × 100.`
+                        : rule.feedback
+            }));
             question = card(type, part, whole, 'percent', {
                 bankId: 'convert-a-fraction-to-a-percentage-08', input: 'number', prompt: groups.join(' '),
                 answer: number(answer), rules, feedback: `${part} + ${whole - part} = ${whole}. ${working}`
@@ -254,7 +282,16 @@
                 `A group planned to walk ${whole} km. It walked ${part} km. Express the distance walked as a percentage of the planned distance.`,
                 `A club had ${whole} members last year. It has ${part} this year. Express this year's number as a percentage of last year's number.`
             ];
-            if (kind === 2) rules = rules.map(rule => ({ ...rule, feedback: rule.feedback.replace(`The plan, ${whole}`, `Last year's number, ${whole}`) }));
+            const unit = ['tickets', 'km', 'members'][kind];
+            rules = rules.map(rule => {
+                let feedback = rule.feedback;
+                if (feedback === 'Now multiply by 100.') feedback = `That's ${part} ÷ ${whole}. Now multiply by 100.`;
+                if (feedback === `That's only the extra. Use all of ${part}.`) {
+                    feedback = `That's only the extra ${part - whole} ${unit}. Use all ${part} ${unit}.`;
+                }
+                if (kind === 2) feedback = feedback.replace(`The plan, ${whole}`, `Last year's number, ${whole}`);
+                return { ...rule, feedback };
+            });
             question = card(type, part, whole, 'percent', {
                 input: 'number', prompt: prompts[kind], answer: number(answer), rules, feedback: working
             });
@@ -281,8 +318,10 @@
                 bankId: 'percentages-of-amounts-04', input: 'choice', prompt: `${setup} ${ask}`, options: [
                     option(`${number(answer)}%`, working, true),
                     option(`${number(answer / 100)}%`, `That's ${part} ÷ ${whole}. Multiply by 100.`),
-                    option(`${number(100 - answer)}%`, "That's the other part."),
-                    option(`${part}%`, `${part} is a count. Compare it with ${whole}.`)
+                    option(`${number(100 - answer)}%`, otherPart),
+                    option(`${part}%`, contextKind === 4
+                        ? `£${part} is the money spent, not the percentage. Compare it with £${whole}.`
+                        : `${part} is a count. Compare it with ${whole}.`)
                 ]
             });
         }
@@ -328,7 +367,7 @@
                 add(`${value} out of 30 is ${number(percent(value, 30))}%`);
             }
         } else if (screen === 2) {
-            bar('£50 = 100%', 10, value / 5, 10, `£${value} spent — each block is £5`);
+            bar('£50 = 100%', 10, value / 5, 10, `£${value} spent. Each block is £5.`);
             add(`${value} ÷ 50 × 100 = ${number(percent(value, 50))}`);
             add(`£${value} is ${number(percent(value, 50))}% of £50`);
         } else if (screen === 3) {

@@ -74,7 +74,7 @@
             const picture = S.node('div', '', 'nth-picture');
             root.append(controls, picture);
             function paint() {
-                output.textContent = `${screen.slider.split(':')[0]}: ${slider.value}`;
+                output.textContent = `${screen.slider}: ${state.screen === 2 ? '£' : ''}${slider.value}`;
                 S.drawLearnPicture(picture, state.screen, Number(slider.value));
             }
             slider.addEventListener('input', () => {
@@ -84,7 +84,11 @@
             paint();
             if (screen.callout) {
                 const callout = S.node('p', '', 'nth-callout');
-                callout.textContent = screen.callout;
+                const pieces = screen.callout.split(/(\d+ ÷ \d+ × \d+(?: = \d+%?)?)/);
+                for (const piece of pieces) {
+                    callout.append(/^\d+ ÷/.test(piece)
+                        ? S.node('span', piece, 'percentage-sum') : document.createTextNode(piece));
+                }
                 root.append(callout);
             }
             if (screen.secondCallout) root.append(S.node('p', screen.secondCallout, 'nth-callout'));

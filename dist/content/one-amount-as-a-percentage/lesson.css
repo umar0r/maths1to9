@@ -103,3 +103,7 @@
         height: 2rem;
     }
 }
+
+.percentage-sum {
+    white-space: nowrap;
+}
