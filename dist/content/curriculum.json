@@ -93,6 +93,7 @@
         {"folder":"ratio-problems","title":"Solving ratio problems","subtitle":"Use ratio to compare, scale, mix and find missing amounts.","skills":["ratio-missing-amounts","ratio-contexts","best-buys"]},
         {"folder":"proportion-and-unitary-method","title":"Proportion and the unitary method","subtitle":"Find the value of one unit, then scale to what is needed.","skills":["equality-of-ratios","unitary-method","proportion-contexts"]},
         {"folder":"percentages-of-amounts","title":"Percentages of amounts","subtitle":"Understand parts per hundred and find percentages using fractions, mental methods and multipliers.","skills":["percentage-as-operator","percentage-of-amount"]},
+        {"folder":"one-amount-as-a-percentage","title":"One amount as a percentage of another","subtitle":"Divide by the amount that is 100%, then multiply by 100.","skills":["express-as-percentage"]},
         {"folder":"percentage-change","title":"Percentage change","subtitle":"Calculate and interpret percentage increases and decreases.","skills":["percentage-increase-decrease","express-change-percentage"]},
         {"folder":"percentage-multipliers","title":"Percentage multipliers","subtitle":"Use one multiplication to apply percentage change.","skills":["decimal-multipliers","repeated-percentage-change"]},
         {"folder":"reverse-percentages","title":"Reverse percentages","subtitle":"Work backwards from a changed amount to the original.","skills":["original-value-percentages"]},

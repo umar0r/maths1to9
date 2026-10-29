@@ -130,6 +130,7 @@
     {"id":"proportion-contexts","title":"Solve proportional problems in context","content_references":["R10"]},
     {"id":"percentage-as-operator","title":"Interpret a percentage as an operator","content_references":["N12","R9"]},
     {"id":"percentage-of-amount","title":"Find percentages of amounts","content_references":["N12","R9"]},
+    {"id":"express-as-percentage","title":"Express one amount as a percentage of another","content_references":["R9"],"recommended_prerequisites":["fraction-percentage-conversion"]},
     {"id":"percentage-increase-decrease","title":"Increase and decrease quantities by percentages","content_references":["R9"]},
     {"id":"express-change-percentage","title":"Express change as a percentage","content_references":["R9"]},
     {"id":"decimal-multipliers","title":"Use decimal multipliers for percentage change","content_references":["N12","R9"]},

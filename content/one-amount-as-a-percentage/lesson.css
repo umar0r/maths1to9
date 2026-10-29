@@ -1,0 +1,109 @@
+.percentage-bar,
+.percentage-bottles {
+    margin: 1.5rem 0;
+    min-width: 0;
+}
+.percentage-bar figcaption,
+.percentage-bottles figcaption {
+    font-weight: 800;
+    margin-bottom: .6rem;
+}
+.percentage-part-label {
+    margin: .4rem 0;
+    color: #215fc4;
+    font-weight: 700;
+}
+.percentage-blocks {
+    display: grid;
+    grid-template-columns: repeat(var(--blocks), minmax(0, 1fr));
+    gap: 2px;
+    width: 100%;
+}
+.percentage-blocks span {
+    min-width: 0;
+    height: 2.6rem;
+    border: 1px solid #aab8cc;
+    background: #edf2f8;
+    border-radius: 2px;
+}
+.percentage-blocks .is-shaded {
+    background: #3874d9;
+    border-color: #215fc4;
+}
+.percentage-working {
+    font-size: 1.15rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.nth-slider {
+    display: grid;
+    gap: .7rem;
+    margin: 1.5rem 0;
+}
+.nth-slider input {
+    width: 100%;
+    min-height: 44px;
+    accent-color: #3874d9;
+}
+.nth-slider output {
+    font-weight: 800;
+}
+.nth-callout {
+    padding: 1rem;
+    background: #f0f5ff;
+    border-left: 4px solid #3874d9;
+    border-radius: .4rem;
+}
+.percentage-scale {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    border-top: 2px solid #55677f;
+    padding-top: .8rem;
+    margin-top: -.8rem;
+}
+.percentage-marker {
+    position: absolute;
+    top: -.5rem;
+    width: 3px;
+    height: 1rem;
+    background: #163c79;
+    transform: translateX(-50%);
+}
+.percentage-groups {
+    display: grid;
+    grid-template-columns: 7fr 3fr;
+    gap: .7rem;
+    align-items: stretch;
+}
+.percentage-groups.is-joined {
+    gap: 0;
+}
+.percentage-groups > div {
+    min-width: 0;
+    padding: 1rem .3rem;
+    text-align: center;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.percentage-insulated {
+    background: #3874d9;
+    color: #fff;
+}
+.percentage-plain {
+    background: #edf2f8;
+    color: #233a59;
+    border: 1px solid #aab8cc;
+}
+@media (max-width: 400px) {
+    .percentage-blocks {
+        gap: 1px;
+    }
+    .percentage-blocks span {
+        height: 2rem;
+    }
+}
+
+.percentage-sum {
+    white-space: nowrap;
+}
