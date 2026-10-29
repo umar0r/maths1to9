@@ -260,3 +260,19 @@
 .find-dot--blue {
     background: #365cac;
 }
+
+
+.nth-inline-rule,
+.nth-rule {
+    white-space: nowrap;
+}
+
+.find-table th {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    font-size: clamp(.68rem, 2.6vw, .95rem);
+}
+
+.find-table td {
+    height: 1.75rem;
+}
