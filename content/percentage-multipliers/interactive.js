@@ -124,7 +124,7 @@
                     : { kept: 80, cut: 20, labels: { kept: '£80', cut: '−£20' } }, 100, {
                     noteText: step === 1 ? '£100' : '20% of £100 = £20 off. Now £80.'
                 });
-                result([step === 3 ? 'Shop A: £81. Shop B: £80. Shop B is cheaper.' : '']);
+                result([step === 3 ? screens[0].maths[1] : '']);
             };
         },
         function whole(host) {

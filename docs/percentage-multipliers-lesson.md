@@ -63,6 +63,12 @@ lines under it.
 
 ## Wording rules for the whole lesson
 
+**The wording in `multipliers.js` is the final version.** On 2026-10-31 Umar
+asked for every line to be rewritten in plain, everyday English for GCSE
+Foundation pupils ("times by", "comes off", "100% means all of it"). Where
+the quotes below differ from `learnScreens` and the card text, the code
+wins.
+
 - "Multiplier" is new. On Learn 2 say once: "The number you multiply by
   is called the **multiplier**." After that, use it freely.
 - Say "goes up by" / "increase" and "goes down by" / "decrease". Don't say
@@ -95,27 +101,32 @@ an answer. Each screen starts on the value given.
      first (`10% of £90 = £9 off`, now £81). A line under both: "Shop A:
      £81. Shop B: £80. Shop B is cheaper."
 
-   Text: "Two 10% cuts sound like one 20% cut. They aren't the same. The
-   second 10% is taken from £90, not £100. In this lesson you'll learn one
-   number that does any percentage change in one step. You can use a
-   calculator."
+   Text: "A pair of trainers costs £100. Shop A takes 10% off, then
+   another 10% off at the till. Shop B takes 20% off. Move the slider to
+   see which shop is cheaper. In this lesson, you'll learn a quick way to
+   increase or decrease an amount by a percentage. You can use a
+   calculator." Step 3's result line adds: "The second 10% came off £90,
+   not £100."
 2. **The whole is 1.** One bar, "£200 = 100%". Slider "Percentage: 0% to
    100% in steps of 10" (starts on 100). The bar shades that part and
    shows `60% = 0.6` and `200 × 0.6 = 120`. At 100% it shows
    `100% = 1` and `200 × 1 = 200`, and a line: "Multiplying by 1 keeps
-   all of it." Text: "To find a percentage of an amount, divide the
-   percentage by 100 and multiply. The whole amount is 100%, and 100% is
-   1. The number you multiply by is called the **multiplier**."
+   all of it." Text: "To find a percentage of an amount, change the
+   percentage to a decimal. Then multiply the amount by it. All of the
+   amount is 100%. As a decimal, 100% is 1. The number you multiply by is
+   called the **multiplier**."
 3. **Going up: add to 100%.** The £200 bar with a green block on the end.
    Slider "Increase: 0% to 50%" (starts on 8). The green block grows and
    the working shows `100% + 8% = 108%` → `× 1.08` →
-   `200 × 1.08 = 216`. Text: "To increase by 8%, you keep all 100% and
-   add 8% more. That's 108%, so the multiplier is 1.08." Callout: "8% is
+   `200 × 1.08 = 216`. Text: "To increase by 8%, you keep the whole amount
+   (100%) and add 8% on top. That makes 108%, so the multiplier is
+   1.08." Callout: "8% is
    0.08, so 108% is 1.08. Not 1.8: that would be 180%."
 4. **Going down: take away from 100%.** The same bar, with the red part
    cut off the end. Slider "Decrease: 0% to 50%" (starts on 7). Working:
    `100% − 7% = 93%` → `× 0.93` → `200 × 0.93 = 186`. Text: "To decrease
-   by 7%, you take 7% away. 93% is left, so the multiplier is 0.93."
+   by 7%, you take 7% away from 100%. That leaves 93%, so the multiplier
+   is 0.93."
    Callout: "Don't multiply by 0.07. That finds the £14 you take off, not
    what's left."
 5. **Up or down? Then multiply.** The bar now starts at "£240 = 100%". An
@@ -130,8 +141,8 @@ an answer. Each screen starts on the value given.
 
    A check line under the steps, always shown and changing with the
    toggle: "Up, so the answer must be more than £240 ✓" / "Down, so the
-   answer must be less than £240 ✓". Text: "This works for any
-   percentage, even ones with decimals."
+   answer must be less than £240 ✓". Text: "Use these three steps for
+   any percentage, even one with a decimal like 12.5%."
 6. **The same change again and again.** A car is worth £12 000. It loses
    15% of its value every year. Slider "Years: 0 to 5" (starts on 3).
    One bar per year, stacked downward, each shorter than the one above,
@@ -139,9 +150,9 @@ an answer. Each screen starts on the value given.
    "Year 1: £10 200", "Year 2: £8670", "Year 3: £7369.50", "Year 4:
    £6264.08", "Year 5: £5324.46". Working: `12 000 × 0.85 × 0.85 × 0.85`
    = `12 000 × 0.85³ = £7369.50` (the power matches the slider; at 0
-   years show "£12 000, no change yet"). Text: "Each year you multiply by
-   0.85 again. For 3 years, that's 0.85 three times: 0.85³. Type it on a
-   calculator in one go." Callout: "Don't add the percentages. 3 years of
+   years show "£12 000, no change yet"). Text: "Each year, you multiply by
+   0.85 again. For 3 years, you multiply by 0.85 three times. You can
+   write that as 0.85³." Callout: "Don't add the percentages. 3 years of
    15% is not 45% off. Each cut is taken from a smaller amount, like Shop
    A. Round only at the end." Years 4 and 5 show "(to the nearest penny)".
 7. **Two different changes.** A coat costs £500. In a sale the price goes
@@ -152,9 +163,10 @@ an answer. Each screen starts on the value given.
    - Step 3: a green 10% block added to the £400 bar (visibly shorter than
      the red cut): `400 × 1.1 = 440`.
 
-   Working at step 3: `500 × 0.8 × 1.1 = £440`. Text: "Two changes? Use
-   two multipliers, one after the other. You can multiply them straight
-   away: 0.8 × 1.1 = 0.88." Callout: "It isn't back to £500. The 10% is
+   Working at step 3: `500 × 0.8 × 1.1 = £440`. Text: "For two changes,
+   use two multipliers, one after the other: × 0.8, then × 1.1. You can
+   also multiply the two multipliers first: 0.8 × 1.1 = 0.88. So the
+   final price is 88% of £500." Callout: "It isn't back to £500. The 10% is
    taken from £400, which is smaller."
 
 ## Try it (10 cards: 4 choice, 6 typed)
@@ -203,7 +215,7 @@ an answer. Each screen starts on the value given.
    what they're worth."* Fallback: *"Use two multipliers: 0.88, then
    0.75."* Right: *"3600 × 0.88 × 0.75 = £2376"*
 9. Choice: "A town has 8000 people. The number goes up by 4% every year.
-   Which works out the number after 5 years?" `8000 × 1.04⁵` ✓ /
+   Which calculation gives the number after 5 years?" `8000 × 1.04⁵` ✓ /
    `8000 × 1.2` (*"That adds 5 × 4% = 20%. Each year's 4% is of a bigger
    number."*) / `8000 × 1.04 × 5` (*"That multiplies by 5. Multiply by
    1.04 five times: 1.04⁵."*) / `8000 × 0.04⁵` (*"0.04 is only the 4%
@@ -238,8 +250,8 @@ Percentages P come from these lists:
 | `which-multiplier` | `decimal-multipliers` | choice | "Which multiplier increases / decreases an amount by P%?" Up: P from small or with a half. Down: P from small. Right: the multiplier. Wrong: P/100 (*"That's only the P%."*), the other direction's multiplier (*"That's for a decrease / an increase."*), and the decimal slip (*"P% is P ÷ 100, so the multiplier is …"*): up, small P → 1 + P/10 (8% → 1.8); up, 2.5 → 1.25, 12.5 → 1.25, 17.5 → 1.75; down, small P → P/10 (7% → 0.7). |
 | `single-change` | `decimal-multipliers` | typed | Start amount A: 20 to 5000, a multiple of 4 (so the answer has at most 2 decimal places for any P in the lists). Half the time bare ("Increase 360 by 15%."), half the time money ("A phone costs £360. Its price goes up by 15%. What is the new price?"), with `inputLabel: 'Pounds (no £ sign)'` and `tolerance: 0.01`. Answer A × multiplier. Rules: A × P/100 (*"That's just the change. Multiply by the multiplier to keep the rest too."*), A × the other multiplier (*"That's an increase / a decrease."*), and for small P going up, A × (1 + P/10) (*"P% is 0.0P, not 0.P."*). |
 | `repeated-change` | `repeated-percentage-change` | typed | A whole-number P from 2 to 20, n from 2 to 5, up or down. Contexts: a car's value falls (money, A from 4000 to 30 000 in 500s); a house's value rises (money, 150 000 to 400 000 in 5000s); birds in a wood, people in a town (counts, 500 to 20 000). Prompt says "after n years". Money: answer A × mⁿ to 2 dp, `tolerance: 0.01`. Counts: "Round to the nearest whole number", answer the rounded value with `tolerance: 0.5`. Rules (rounded the same way): A × (1 ± nP/100) (*"That adds the percentages. Each year's change is of a new amount: use a power."*), A × m (*"That's only one year. Use a power for n years."*), A × (P/100)ⁿ (*"P/100 is only the part that changes. Use the multiplier m."*). |
-| `which-calculation` | `repeated-percentage-change` | choice | Same contexts and numbers. "Which works out the value after n years?" Right: `A × mⁿ`. Wrong: `A × (1 ± nP/100)` written as a number, e.g. `8000 × 1.2` (*"That adds n × P%. Each year's change is of a new amount."*), `A × m × n` (*"That multiplies by n. Multiply by m, n times: mⁿ."*), `A × (P/100)ⁿ` (*"P/100 is only the change. Use the multiplier m."*). |
-| `two-changes` | `repeated-percentage-change` | choice | From bank `percentage-change-06` and `percentage-multipliers-04`. A price A from 100 to 1000 in 20s. A cut of a% from 10, 15, 20, 25, then either a second cut of b% from 5, 10, 15 or a rise of b% from 5, 10, 20 (50/50). "A desk costs £A. Its price is cut by a%. Then the new price is cut by / goes up by b%. What is the final price?" Right: A × m₁ × m₂. Wrong: A × (1 − (a ± b)/100), i.e. adding the percentages (*"That changes the first price by a% and b% in one go. The b% is of the new price."*); A × m₁ (*"That's only the first change."*); A − A × m₁ × m₂, the amount it went down (*"That's how much the price has gone down altogether. The question asks for the final price."*). Money to 2 dp. Redraw if two options match. (Taking the second change from A gives the same number as adding the percentages, so it can't be a fourth option.) |
+| `which-calculation` | `repeated-percentage-change` | choice | Same contexts and numbers. "Which calculation gives the value after n years?" Right: `A × mⁿ`. Wrong: `A × (1 ± nP/100)` written as a number, e.g. `8000 × 1.2` (*"That adds n × P%. Each year's change is of a new amount."*), `A × m × n` (*"That multiplies by n. Multiply by m, n times: mⁿ."*), `A × (P/100)ⁿ` (*"P/100 is only the change. Use the multiplier m."*). |
+| `two-changes` | `repeated-percentage-change` | choice | From bank `percentage-change-06` and `percentage-multipliers-04`. A price A from 100 to 1000 in 20s. A cut of a% from 10, 15, 20, 25, then either a second cut of b% from 5, 10, 15 or a rise of b% from 5, 10, 20 (50/50). "A desk costs £A. Its price is cut by a%. Then the new price is cut by / goes up by b%. What is the final price?" Right: A × m₁ × m₂. Wrong: A × (1 − (a ± b)/100), i.e. adding the percentages (*"That does both changes to £A in one go. The b% is a percentage of the new price, not £A."*); A × m₁ (*"That's only the first change."*); A − A × m₁ × m₂, the amount it went down (*"That's how much the price has gone down altogether. The question asks for the final price."*). Money to 2 dp. Redraw if two options match. (Taking the second change from A gives the same number as adding the percentages, so it can't be a fourth option.) |
 
 Each session has all six types once (3 choice, 3 typed), in a mixed order
 picked with the seeded `random`.
@@ -277,8 +289,8 @@ picked with the seeded `random`.
    goes. 87% is left each term: use 0.87."*)
 5. Typed (bank `percentage-multipliers-03`), `inputLabel: 'Percentage (no
    % sign)'`: "A club's members go up by 8% one year. The next year they
-   go up by 15%. What is the increase over the two years, as a
-   percentage?" 24.2. Rules: 23 → *"That adds 8 and 15. Multiply the
+   go up by 15%. What is the total percentage increase over the two
+   years?" 24.2. Rules: 23 → *"That adds 8 and 15. Multiply the
    multipliers: 1.08 × 1.15."*; 124.2 → *"124.2% is the new total. Take
    away the 100% you started with."*; 1.242 → *"1.242 is the multiplier.
    Turn it into an increase: 124.2% − 100%."* Right: *"1.08 × 1.15 =

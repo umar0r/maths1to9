@@ -115,7 +115,7 @@ test('multiplier() and apply() give clean values', () => {
 test('Learn has seven screens, and all the working on them is right', () => {
     assert.equal(M.learnScreens.length, 7);
     const text = JSON.stringify(M.learnScreens);
-    for (const idea of ['£81', '£80', 'calculator', 'multiplier', '1.08', 'Not 1.8', '0.93', '0.07',
+    for (const idea of ['£81', '£80', 'calculator', 'multiplier', '1.08', "It isn't 1.8", '0.93', '0.07',
         '1.125', '0.85³', '£7369.50', "Don't add the percentages", 'Round only at the end', '0.8 × 1.1']) {
         assert.ok(text.includes(idea), `Learn mentions "${idea}"`);
     }
