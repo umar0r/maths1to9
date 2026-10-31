@@ -79,7 +79,7 @@ find "$DIST_DIR" -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -
 
 cp 404.html "$DIST_DIR/404.html"
 
-if rg -n '/maths1to9/' "$DIST_DIR"; then
+if grep -rn '/maths1to9/' "$DIST_DIR"; then
     echo "Unrewritten /maths1to9/ paths remain in dist." >&2
     exit 1
 fi
