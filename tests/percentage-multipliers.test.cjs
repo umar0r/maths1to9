@@ -154,7 +154,7 @@ test('every Practice type makes sound questions for 2,000 real seeds', () => {
             assert.equal(q.input, M.CHOICE_TYPES.includes(type) ? 'choice' : 'number', where);
             assert.equal(q.questionType, type, where);
             assertCard(q, where);
-            for (const word of ['interest', 'compound', 'undefined', 'NaN', '%DIR%']) {
+            for (const word of ['interest', 'compound', 'undefined', 'NaN', '%DIR%', '£-', '£0 ']) {
                 assert.ok(!JSON.stringify(q).includes(word), `${where}: no "${word}"`);
             }
         }

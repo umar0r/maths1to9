@@ -123,7 +123,7 @@
             }),
             card('try-4', 450, change(12, 'down'), 'final', {
                 input: 'number', prompt: 'Decrease 450 by 12%.', answer: '396', rules: [
-                    mistake(54, "That's the 12% you take off. Multiply by 0.88 to find what's left."),
+                    mistake(54, "That's the 12% you take off. Times 450 by 0.88 to find what's left."),
                     mistake(504, "That's an increase. A decrease makes it smaller.")
                 ], fallback: '100% − 12% = 88%. Times 450 by 0.88.', feedback: '100% − 12% = 88%. 450 × 0.88 = 396'
             }),
@@ -314,11 +314,13 @@
                 ? `A ${thing} costs £${amount(start)}. Its price goes ${direction} by ${number(percent)}%. What is the new price?`
                 : `${direction === 'up' ? 'Increase' : 'Decrease'} ${amount(start)} by ${number(percent)}%.`;
             const rules = [
-                mistake(round(start * percent / 100, 2), `That's only the part that changes. Times by ${number(m)} so you keep the rest too.`),
-                mistake(round(start * multiplier(percent, other(direction)), 2), `That's ${otherWord(direction)}. Use ${number(m)}.`)
+                mistake(round(start * percent / 100, 2), `That's only the ${number(percent)}% on its own. Times by ${number(m)} so you keep the ${isMoney ? '£' : ''}${amount(start)} as well.`),
+                mistake(round(start * multiplier(percent, other(direction)), 2), direction === 'up'
+                    ? `That takes ${number(percent)}% off. It should go up, so times by ${number(m)}.`
+                    : `That adds ${number(percent)}% on. It should go down, so times by ${number(m)}.`)
             ];
             if (direction === 'up' && Number.isInteger(percent) && percent < 10) {
-                rules.push(mistake(round(start * slip(percent, 'up'), 2), `${percent}% is 0.0${percent}, not 0.${percent}. Use ${number(m)}.`));
+                rules.push(mistake(round(start * slip(percent, 'up'), 2), `${percent}% is 0.0${percent}, not 0.${percent}. So times by ${number(m)}.`));
             }
             question = card(type, start, change(percent, direction), 'final', {
                 input: 'number', label: isMoney ? 'money' : 'count', prompt, answer: number(answer),
@@ -331,8 +333,8 @@
             const settings = [
                 { direction: 'down', money: true, start: () => 500 * int(8, 60), text: s => `A car is worth £${amount(s)}. Its value goes down by`, what: 'What is it worth' },
                 { direction: 'up', money: true, start: () => 5000 * int(30, 80), text: s => `A house is worth £${amount(s)}. Its value goes up by`, what: 'What is it worth' },
-                { direction: choose(['up', 'down']), money: false, start: () => 100 * int(5, 200), text: s => `A wood has ${amount(s)} birds. The number goes %DIR% by`, what: 'How many birds are there' },
-                { direction: choose(['up', 'down']), money: false, start: () => 100 * int(5, 200), text: s => `A town has ${amount(s)} people. The number goes %DIR% by`, what: 'How many people are there' }
+                { direction: choose(['up', 'down']), money: false, start: () => 100 * int(5, 200), text: s => `A wood has ${amount(s)} birds. The number goes %DIR% by`, what: 'How many birds are there', unit: 'birds' },
+                { direction: choose(['up', 'down']), money: false, start: () => 100 * int(5, 200), text: s => `A town has ${amount(s)} people. The number goes %DIR% by`, what: 'How many people are there', unit: 'people' }
             ];
             do {
                 setting = choose(settings);
@@ -349,7 +351,7 @@
                 rules = cleanRules(answer, [
                     mistake(shown(start * added), `That just adds the percentages. Each year's ${percent}% is ${percent}% of a new amount, so use ${power(m, years)}.`),
                     mistake(shown(start * m), `That's only one year. Use ${power(m, years)} for ${years} years.`),
-                    mistake(shown(start * (percent / 100) ** years), `${number(percent / 100)} is only the part that changes. Use the multiplier ${number(m)}.`)
+                    mistake(shown(start * (percent / 100) ** years), `${number(percent / 100)} is only the ${percent}% that changes. Times by ${number(m)} instead.`)
                 ], tolerance);
                 if (direction === 'down' && percent * years >= 100) continue;
                 if (rules.length >= 2) break;
@@ -363,7 +365,7 @@
                     prompt: `${prompt} ${setting.what} after ${years} years?${setting.money ? '' : ' Round to the nearest whole number.'}`,
                     answer: number(answer), rules,
                     fallback: `Times by ${number(m)} once for each year: ${power(m, years)}.`,
-                    feedback: `${amount(start)} × ${power(m, years)} = ${setting.money ? pounds(answer) : number(round(apply(start, Array(years).fill(m)), 2))}${setting.money ? '' : `, so about ${amount(answer)}`}`
+                    feedback: `${amount(start)} × ${power(m, years)} = ${setting.money ? pounds(answer) : number(round(apply(start, Array(years).fill(m)), 2))}${setting.money ? '' : `, so about ${amount(answer)} ${setting.unit}`}`
                 });
             } else {
                 const added = multiplier(percent * years, direction);
@@ -372,7 +374,7 @@
                         option(`${amount(start)} × ${power(m, years)}`, `Times by ${number(m)} once for each year: ${power(m, years)}.`, true),
                         option(`${amount(start)} × ${number(added)}`, `That adds ${years} × ${percent}% = ${percent * years}%. Each year's ${percent}% is ${percent}% of a new amount.`),
                         option(`${amount(start)} × ${number(m)} × ${years}`, `That times by ${years}. You need to times by ${number(m)}, ${years} times: ${power(m, years)}.`),
-                        option(`${amount(start)} × ${power(percent / 100, years)}`, `${number(percent / 100)} is only the part that changes. Use the multiplier ${number(m)}.`)
+                        option(`${amount(start)} × ${power(percent / 100, years)}`, `${number(percent / 100)} is only the ${percent}% that changes. Times by ${number(m)} instead.`)
                     ]
                 });
             }
@@ -391,20 +393,23 @@
                     answer,
                     round(start * multiplier(together, 'down'), 2),
                     round(start * m1, 2),
-                    round(start - answer, 2)
+                    round(Math.abs(start - answer), 2)
                 ];
-            } while (new Set(labels).size !== 4);
+            } while (answer === start || new Set(labels).size !== 4);
             const m1 = multiplier(first, 'down');
             const m2 = multiplier(second, secondDirection);
             const verb = secondDirection === 'down' ? 'is cut by' : 'goes up by';
+            const price = `£${amount(start)}`;
             question = card(type, start, [{ percent: first, direction: 'down' }, { percent: second, direction: secondDirection }], 'final', {
                 bankId: 'percentage-change-06', input: 'choice',
-                prompt: `A desk costs £${amount(start)}. Its price is cut by ${first}%. Then the new price ${verb} ${second}%. What is the final price?`,
+                prompt: `A desk costs ${price}. Its price is cut by ${first}%. Then the new price ${verb} ${second}%. What is the final price?`,
                 options: [
                     option(pounds(labels[0]), `${amount(start)} × ${number(m1)} × ${number(m2)} = ${pounds(answer)}`, true),
-                    option(pounds(labels[1]), `That does both changes to £${amount(start)} in one go. The ${second}% is a percentage of the new price, not £${amount(start)}.`),
+                    option(pounds(labels[1]), secondDirection === 'down'
+                        ? `That takes ${first + second}% off ${price} in one go. The ${second}% comes off the new price, not ${price}.`
+                        : `That uses ${price} for both changes. The ${second}% is ${second}% of the new price, not ${price}.`),
                     option(pounds(labels[2]), `That's only the first change. Now times by ${number(m2)}.`),
-                    option(pounds(labels[3]), `That's how much the price has gone down altogether. The question asks for the final price.`)
+                    option(pounds(labels[3]), `That's how much the price has gone ${answer < start ? 'down' : 'up'} overall. The question asks for the final price.`)
                 ]
             });
         }

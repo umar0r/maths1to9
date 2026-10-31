@@ -107,16 +107,16 @@
             "title": "What you have learnt",
             "points": [
                 {
-                    "text": "Increase: add the percentage to 100%. Decrease: take it from 100%."
+                    "text": "Going up: add the percentage to 100%. Going down: take it away from 100%."
                 },
                 {
-                    "text": "Divide by 100 to get the multiplier: 108% → 1.08, 93% → 0.93."
+                    "text": "Divide by 100 to get the multiplier: 108% is 1.08, and 93% is 0.93."
                 },
                 {
-                    "text": "Multiply the amount by the multiplier, in one step."
+                    "text": "Times the amount by the multiplier. One step does it."
                 },
                 {
-                    "text": "The same change n times: multiply by the multiplier to the power n. Don't add the percentages. Round only at the end."
+                    "text": "If the same change happens every year, use a power. 3 years of 15% off is × 0.85³. Don't add the percentages, and round only at the end."
                 }
             ]
         }

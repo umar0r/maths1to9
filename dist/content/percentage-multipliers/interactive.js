@@ -136,7 +136,7 @@
                     noteText: `${percent}% of £200`
                 });
                 working([`${percent}% = ${number(m)}`, `200 × ${number(m)} = ${number(200 * m)}`,
-                    percent === 100 ? 'Multiplying by 1 keeps all of it.' : '']);
+                    percent === 100 ? screens[1].maths[4] : '']);
             };
         },
         function increase(host) {
@@ -200,7 +200,7 @@
                 items[1].textContent = `${number(kept)}% → ${number(m)}`;
                 items[2].textContent = `240 × ${number(m)} = ${number(Math.round(240 * m * 100) / 100)}`;
                 check.textContent = direction === 'up'
-                    ? 'Up, so the answer must be more than £240 ✓' : 'Down, so the answer must be less than £240 ✓';
+                    ? screens[4].maths[3] : screens[4].maths[4];
             }
             buttons.forEach(button => button.addEventListener('click', () => {
                 save(state => { state.direction = button.dataset.direction; });
