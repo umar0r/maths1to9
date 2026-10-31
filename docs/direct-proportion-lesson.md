@@ -67,8 +67,9 @@ moves, two or three short lines under it.
 - **Labels must fit at 375 px.** A tile shows its label only when the
   label fits inside it. If the tiles get too narrow, hide the tile labels
   and show the label once above the row instead ("48p each").
-- **Money:** under £1 write pence (`45p`, `7.5p`); £1 or more write pounds
-  with 2 decimal places (`£1.44`, `£2.00`, `£31.50`). Working may switch
+- **Money:** under £1 write pence (`45p`, `7.5p`); whole pounds have no
+  pence (`£2`, `£28`); other amounts of £1 or more have 2 decimal places
+  (`£1.44`, `£31.50`). Working may switch
   between them, as written below.
 
 ## Wording rules for the whole lesson
@@ -190,14 +191,14 @@ optional callout.
    ride still costs £3. So the taxi price is not in direct proportion to
    the miles."
 
-7. **Two steps, every time.** Question at the top: "6 eggs cost £1.20.
+7. **Three steps, every time.** Question at the top: "6 eggs cost £1.20.
    How much do 10 eggs cost?" Slider "Show the steps: 1 to 3" (starts on
    1). Each step lights up (grey, then blue, then green) with its
    working:
    1. **Find one of what?** "You want 10 eggs, so find the price of 1
       egg."
    2. **Find one: divide.** `£1.20 ÷ 6 = £0.20`
-   3. **Times by how many you want.** `£0.20 × 10 = £2.00`
+   3. **Times by how many you want.** `£0.20 × 10 = £2`
 
    At step 3 a check line: "Check: 10 eggs is less than double 6 eggs, so
    the price is less than £2.40 ✓". Text: "Use these steps for every
@@ -314,9 +315,9 @@ the money rule above.
 |---|---|---|
 | `price-of-one` | typed, money | "6 notebooks cost £7.50. What is the price of 1 notebook?" u from 10p to £5 in steps of 5p; a from 2 to 12; T = a × u. Answer u. Rules: a ÷ T rounded to 2 dp (*"That's the wrong way round. You want pounds for each notebook, so share £T between a notebooks: T ÷ a."*), T × a (*"That multiplies. Share £T between a notebooks: divide."*). |
 | `scale-price` | typed, money | "4 tickets cost £18. How much do 7 tickets cost?" u and a as above; b from 2 to 20, b ≠ a. Answer u × b. Rules: T + (b − a) (*"That changes the price by the same number as the items. Find the price of 1 first."*), u (*"That's the price of 1. Now times it by b."*), T × b (*"That times £T by b. Find the price of 1 first."*). |
-| `scale-amount` | typed, `unit: 'g'` | "A recipe for 5 people needs 300 g of pasta. How much pasta for 8 people?" Amount for 1 person from 5 g to 100 g in steps of 5 g; a and b from 2 to 12, b ≠ a. Answer (1 person) × b. Rules: m + (b − a), the amount for 1, m × b, with feedback as `scale-price` but about people and grams. |
+| `scale-amount` | typed, `unit: 'g'` | "A recipe for 5 people needs 300 g of pasta. How many grams of pasta do you need for 8 people?" Amount for 1 person from 5 g to 100 g in steps of 5 g; a and b from 2 to 12, b ≠ a. Answer (1 person) × b. Rules: m + (b − a), the amount for 1, m × b, with feedback as `scale-price` but about people and grams. |
 | `which-calculation` | choice | Half the time "a items cost £T. Which calculation finds the price of 1?": `£T ÷ a` ✓, `a ÷ £T`, `£T × a`, `£T − a` (feedback as Try it 3). Half the time "… Which calculation finds the price of b?": `£T ÷ a × b` ✓, `£T ÷ b × a` (*"That finds the price of 1 by sharing between b. You have the price of a items, so divide by a."*), `£T + (b − a)` (*"You can't add items to pounds. Find the price of 1 first."*), `£T × b` (*"That's the price of a × b items. Divide by a first."*). |
-| `adding-trap` | choice | "4 biscuits cost 30p. How much do 6 biscuits cost?" a from 2 to 6; b = a + 1 to a + 4, b ≠ 2a; u whole pence from 6p to 40p, or a half (7.5p, 12.5p, 17.5p). Right: u × b. Wrong: T + (b − a) pence (*"That adds the same number to the pence as to the items. Each one costs u, not 1p."*); T × 2 (*"That doubles the price, but b isn't double a."*); T × b (*"That times the price of a by b. Find the price of 1 first."*). Redraw if two options match. |
+| `adding-trap` | choice | "4 biscuits cost 30p. How much do 6 biscuits cost?" a from 2 to 6; b = a + 1 to a + 4, b ≠ 2a; u whole pence from 6p to 40p, or a half (7.5p, 12.5p, 17.5p). With a half, a and b must both be even, so no price has half a penny. Right: u × b. Wrong: T + (b − a) pence (*"That adds the same number to the pence as to the items. Each one costs u, not 1p."*); T × 2 (*"That doubles the price, but b isn't double a."*); T × b (*"That times the price of a by b. Find the price of 1 first."*). Redraw if two options match. |
 | `is-proportional` | choice | "2 bags of sweets cost £6. 5 bags cost £15. 7 bags cost £22. Are the bags and the price in direct proportion?" u whole pounds from 2 to 9; three different counts from 1 to 10, smallest first. Half the time all three prices are count × u (answer yes). Half the time the last price is count × u + d, d from 1 to 3 (answer no). See below for the options. |
 
 **`is-proportional` options.** c3 is the last count, P3 its price in the
@@ -352,7 +353,7 @@ When the answer is **no**:
    notebook. Now times it by 4."*; 42 → *"That times £10.50 by 4. Find the
    price of 1 notebook first."* Fallback: *"£10.50 ÷ 7 is the price of 1
    notebook."* Right: *"£10.50 ÷ 7 = £1.50 for 1 notebook. £1.50 × 4 =
-   £6.00"*
+   £6"*
 2. Choice: "Which of these is in direct proportion?"
    - "The price of petrol and the litres you buy" ✓ *"Twice the litres
      costs twice as much, and 0 litres costs £0."*
@@ -422,7 +423,7 @@ with:
 - `checks()`: the 6 Check card configs
 - `prepare(question, random)`: shuffles a choice card's options
 - `money(pounds)`: the money rule (`0.45` → `45p`, `0.075` → `7.5p`,
-  `1.44` → `£1.44`, `2` → `£2.00`)
+  `1.44` → `£1.44`, `2` → `£2`)
 
 Every card config also carries `values`: `{ count, total, want }` (a
 items cost T, b wanted; `want: null` when it asks for the price of 1;

@@ -71,7 +71,7 @@ $pageTitle = 'Direct proportion';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./proportion.js?v=1"></script>
+    <script src="./proportion.js?v=2"></script>
     <script src="./questions.js?v=1"></script>
     <script src="./interactive.js?v=1"></script>
 

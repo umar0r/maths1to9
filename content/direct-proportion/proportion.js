@@ -9,10 +9,11 @@
     const practiceTypes = ['price-of-one', 'scale-price', 'scale-amount', 'which-calculation', 'adding-trap', 'is-proportional'];
     const MONEY_LABEL = 'Pounds (no £ sign)';
 
-    // 0.45 → "45p", 0.075 → "7.5p", 1.44 → "£1.44", 2 → "£2.00".
+    // 0.45 → "45p", 0.075 → "7.5p", 1.44 → "£1.44", 2 → "£2".
     function money(pounds) {
         const pence = round(pounds * 100, 2);
         if (pence < 100) return `${number(pence)}p`;
+        if (Number.isInteger(pence / 100)) return `£${pence / 100}`;
         return `£${round(pounds, 2).toFixed(2)}`;
     }
 
@@ -63,13 +64,13 @@
             slider: 'How many', min: 0, max: 5, step: 1, start: 1
         },
         {
-            title: 'Two steps, every time',
+            title: 'Three steps, every time',
             question: '6 eggs cost £1.20. How much do 10 eggs cost?',
             lines: ['Use these steps for every direct proportion question.'],
             steps: [
                 { title: 'Find one of what?', text: 'You want 10 eggs, so find the price of 1 egg.' },
                 { title: 'Find one: divide.', text: '£1.20 ÷ 6 = £0.20' },
-                { title: 'Times by how many you want.', text: '£0.20 × 10 = £2.00' }
+                { title: 'Times by how many you want.', text: '£0.20 × 10 = £2' }
             ],
             check: 'Check: 10 eggs is less than double 6 eggs, so the price is less than £2.40 ✓',
             slider: 'Show the steps', min: 1, max: 3, step: 1, start: 1
@@ -206,7 +207,7 @@
                     mistake(42, 'That times £10.50 by 4. Find the price of 1 notebook first.')
                 ],
                 fallback: '£10.50 ÷ 7 is the price of 1 notebook.',
-                feedback: '£10.50 ÷ 7 = £1.50 for 1 notebook. £1.50 × 4 = £6.00'
+                feedback: '£10.50 ÷ 7 = £1.50 for 1 notebook. £1.50 × 4 = £6'
             }),
             card('check-2', null, 'proportional', {
                 input: 'choice',
@@ -356,7 +357,7 @@
             rules.push(mistake(total * want, `That times ${total} g by ${want}. Find the amount for 1 person first.`));
             question = card(type, { count, total, want }, 'scaled', {
                 input: 'number', unit: 'g',
-                prompt: `A recipe for ${count} people needs ${total} g of ${thing}. How much ${thing} for ${want} people?`,
+                prompt: `A recipe for ${count} people needs ${total} g of ${thing}. How many grams of ${thing} do you need for ${want} people?`,
                 answer: number(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Find the ${thing} for 1 person: ${total} ÷ ${count}.`,
@@ -403,6 +404,8 @@
                 const eachPence = int(0, 3) === 0 ? choose(HALF_PENCE) : int(6, 40);
                 const totalPence = count * eachPence;
                 const answerPence = want * eachPence;
+                // A price with half a penny isn't a real price: draw again.
+                if (!Number.isInteger(totalPence) || !Number.isInteger(answerPence)) continue;
                 prompt = `${count} biscuits cost ${cash(totalPence)}. How much do ${want} biscuits cost?`;
                 options = [
                     option(cash(answerPence), `${cash(totalPence)} ÷ ${count} = ${cash(eachPence)} for 1 biscuit. ${cash(eachPence)} × ${want} = ${cash(answerPence)}.`, true),
