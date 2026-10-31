@@ -1,0 +1,176 @@
+{
+    "id": "inverse-proportion",
+    "slug": "inverse-proportion",
+    "title": "Inverse proportion",
+    "subtitle": "Find the total job, then share it out.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {
+            "find-time": "inverse-proportion-numerical",
+            "find-workers": "inverse-proportion-numerical",
+            "inverse-xy": "inverse-proportion-numerical",
+            "double-halve": "inverse-proportion-numerical",
+            "does-it-apply": "inverse-proportion-numerical",
+            "is-it-inverse": "inverse-proportion-numerical",
+            "try-1": "inverse-proportion-numerical",
+            "try-2": "inverse-proportion-numerical",
+            "try-3": "inverse-proportion-numerical",
+            "try-4": "inverse-proportion-numerical",
+            "try-5": "inverse-proportion-numerical",
+            "try-6": "inverse-proportion-numerical",
+            "try-7": "inverse-proportion-numerical",
+            "try-8": "inverse-proportion-numerical",
+            "try-9": "inverse-proportion-numerical",
+            "try-10": "inverse-proportion-numerical",
+            "check-1": "inverse-proportion-numerical",
+            "check-2": "inverse-proportion-numerical",
+            "check-3": "inverse-proportion-numerical",
+            "check-4": "inverse-proportion-numerical",
+            "check-5": "inverse-proportion-numerical",
+            "check-6": "inverse-proportion-numerical"
+        }
+    },
+    "explanation": {
+        "eyebrow": "Learn",
+        "title": "Inverse proportion"
+    },
+    "interactive": {
+        "eyebrow": "Try it",
+        "title": "Try inverse proportion",
+        "intro": ""
+    },
+    "question_bank": {
+        "eyebrow": "Practice",
+        "title": "Practise inverse proportion",
+        "intro": "",
+        "session_length": 6
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "eyebrow": "Check",
+        "title": "Check what you have learnt",
+        "intro": "",
+        "questions": [
+            {
+                "type": "check-1"
+            },
+            {
+                "type": "check-2"
+            },
+            {
+                "type": "check-3"
+            },
+            {
+                "type": "check-4"
+            },
+            {
+                "type": "check-5"
+            },
+            {
+                "type": "check-6"
+            }
+        ],
+        "summary": {
+            "title": "What you have learnt",
+            "points": [
+                {
+                    "text": "Inverse proportion: two amounts always times to the same total. When one goes up, the other goes down."
+                },
+                {
+                    "text": "Find the total job first: times. Then share it out: divide."
+                },
+                {
+                    "text": "Double one and the other halves."
+                },
+                {
+                    "text": "Fewer workers take longer. Don't halve the time when you halve the workers."
+                },
+                {
+                    "text": "Ask: does more help? More chefs can't boil an egg faster."
+                },
+                {
+                    "text": "You can't have part of a worker. Round up."
+                }
+            ]
+        }
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:8",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:9",
+            "kind": "guided"
+        }
+    ]
+}
