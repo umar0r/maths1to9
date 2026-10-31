@@ -81,9 +81,11 @@
             blocks.forEach((element, index) => {
                 element.textContent = fits && list[index] ? list[index].label : '';
             });
+            // Use "1 h" tags when they all fit. If not, just number the hours.
+            const tagsFit = list.every(block => width * block.size / scale >= (block.tag || '').length * 8 + 6);
             tags.forEach((element, index) => {
-                const room = list[index] ? width * list[index].size / scale : 0;
-                element.textContent = list[index] && room >= 22 ? list[index].tag || '' : '';
+                const tag = list[index]?.tag || '';
+                element.textContent = tagsFit ? tag : tag.endsWith(' h') ? tag.slice(0, -2) : '';
             });
             above.textContent = !fits && list.length ? `${list[0].label} in each hour` : '';
         }
@@ -102,7 +104,8 @@
                 tags.forEach((element, index) => {
                     element.style.width = list[index] ? `${list[index].size / scale * 100}%` : '0';
                 });
-                car.style.left = `${driven / scale * 100}%`;
+                // Before the car moves, keep it on the road, not hanging off the left edge.
+                car.style.left = `max(44px, ${driven / scale * 100}%)`;
                 note.textContent = noteText;
                 track.setAttribute('aria-label', label || `${title.textContent} ${noteText}`.trim());
                 labels(list, scale);
@@ -131,6 +134,7 @@
             return ({ hours: time }) => {
                 const aHours = Math.min(time, 2);
                 a.set(repeat(aHours, 60, '60 km'), 150, {
+                    road: 120,
                     noteText: time === 0 ? 'Not started' : `${aHours * 60} km so far${time > 2 ? '. Finished after 2 hours.' : ''}`
                 });
                 b.set(repeat(time, 50, '50 km'), 150, {
