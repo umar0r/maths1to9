@@ -332,7 +332,11 @@
         } else if (type === 'which-calculation') {
             const place = choose(SETTINGS);
             const speed = choose(place.speeds);
-            const time = int(2, 6);
+            // Speed and time must be different numbers, or two buttons both say "5 ÷ 5".
+            let time;
+            do {
+                time = int(2, 6);
+            } while (time === speed);
             const distance = speed * time;
             const unknown = choose(['speed', 'time', 'distance']);
             const d = `${distance}`;
