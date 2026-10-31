@@ -88,7 +88,8 @@
       "title": "Ratio, proportion and rates of change",
       "description": "Compare quantities and work with proportional change, percentages and rates.",
       "lessons": [
-        {"folder":"ratio-basics","title":"Understanding and simplifying ratio","subtitle":"Describe multiplicative comparisons and write ratios simply.","skills":["ratio-notation","simplify-ratios","ratio-as-fraction"]},
+        {"folder":"ratio-basics","title":"Understanding and simplifying ratio","subtitle":"A ratio counts parts. Divide both parts by the same number to simplify it.","skills":["ratio-notation","simplify-ratios","ratio-as-fraction"]},
+        {"folder":"scaling-a-ratio","title":"Scaling a ratio","subtitle":"Find what one part is worth. Then multiply every part.","skills":["ratio-missing-amounts"]},
         {"folder":"sharing-in-a-ratio","title":"Sharing in a ratio","subtitle":"Use the total number of parts to divide an amount fairly.","skills":["share-part-part-ratio","share-part-whole-ratio"]},
         {"folder":"ratio-problems","title":"Solving ratio problems","subtitle":"Use ratio to compare, scale, mix and find missing amounts.","skills":["ratio-missing-amounts","ratio-contexts","best-buys"]},
         {"folder":"proportion-and-unitary-method","title":"Proportion and the unitary method","subtitle":"Find the value of one unit, then scale to what is needed.","skills":["equality-of-ratios","unitary-method","proportion-contexts"]},
