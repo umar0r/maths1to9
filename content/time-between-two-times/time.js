@@ -55,7 +55,7 @@
                 'A normal number goes up to 159, then 160. A clock goes up to 01:59, then 02:00. Clock minutes only go up to 59. Then the clock moves on to the next hour.'
             ],
             callout: '60 minutes = 1 hour.',
-            slider: 'Add 1 minute: 0 to 4',
+            slider: 'Add 1 minute',
             values: [0, 1, 2, 3, 4],
             start: 0,
             counters: { number: 158, clock: '01:58' }
@@ -63,7 +63,7 @@
         {
             kind: 'compare',
             title: 'Why taking away goes wrong',
-            slider: 'Example: 1 or 2',
+            slider: 'Example',
             values: [1, 2],
             start: 1,
             examples: [
@@ -118,7 +118,7 @@
                 "First, hop to the next o'clock. That's the next time that ends in :00. From 08:50, the next o'clock is 09:00.",
                 'Then land on the end time. Add the jumps to find how long.'
             ],
-            slider: 'Show the jumps: 1 to 3',
+            slider: 'Show the jumps',
             start: 1
         },
         {
@@ -129,7 +129,7 @@
                 'From 14:45 you need 15 more minutes to make 60. So the hop is 15 minutes.'
             ],
             callout: 'Use 60, not 100. From 14:45 the hop is 15 minutes, not 55.',
-            slider: 'Start time: 14:05 to 14:55',
+            slider: 'Start time',
             values: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
             start: 45,
             hour: 14,
@@ -171,7 +171,7 @@
                 'Sometimes there are whole hours in the middle. Skip them all in one jump. This is the skip.',
                 'From 10:00 to 11:00 is 1 hour.'
             ],
-            slider: 'Show the jumps: 1 to 4',
+            slider: 'Show the jumps',
             start: 1
         },
         {
@@ -198,7 +198,7 @@
                 "Every 60 minutes make 1 hour. Take 60 away, and what's left is the minutes."
             ],
             callout: 'Count in 60s, not 100s. 68 minutes is 1 hour 8 minutes.',
-            slider: 'Show the steps: 1 to 3',
+            slider: 'Show the steps',
             start: 1
         },
         {
@@ -213,11 +213,13 @@
             ],
             steps: [
                 {
-                    stops: [0, 1], arcs: 1,
+                    // The whole journey stays on the line; each step adds its
+                    // arc and the time it reaches.
+                    stops: [0, 1, 3], arcs: 1,
                     lines: [{ label: 'Hop', text: '13:36 → 14:00 = 24 minutes', tone: 'blue' }]
                 },
                 {
-                    stops: [0, 1, 2], arcs: 2,
+                    stops: [0, 1, 2, 3], arcs: 2,
                     lines: [
                         { label: 'Hop', text: '13:36 → 14:00 = 24 minutes', tone: 'blue' },
                         { label: 'Skip', text: '14:00 → 16:00 = 2 hours', tone: 'purple' }
@@ -256,7 +258,7 @@
                 'Use these steps for every question.',
                 'If the question asks for minutes, turn each hour into 60 minutes.'
             ],
-            slider: 'Show the steps: 1 to 5',
+            slider: 'Show the steps',
             start: 1
         }
     ];
