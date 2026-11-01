@@ -1,0 +1,343 @@
+.tb-learn {
+    --tb-blue: #1d5fd1;
+    --tb-purple: #7a3fd1;
+    --tb-green: #1f8a4c;
+    --tb-grey: #5d6d84;
+    --tb-dark: #33415a;
+    min-width: 0;
+    max-width: 100%;
+}
+.tb-slider {
+    display: grid;
+    gap: .7rem;
+    margin: 1.5rem 0;
+    min-width: 0;
+    max-width: 100%;
+}
+.tb-slider input {
+    width: 100%;
+    min-height: 44px;
+    accent-color: var(--tb-purple);
+}
+.tb-slider output {
+    font-weight: 800;
+}
+.tb-question {
+    font-size: 1.15rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.tb-text {
+    margin: .6rem 0;
+    overflow-wrap: anywhere;
+}
+.tb-picture {
+    display: grid;
+    gap: .7rem;
+    min-width: 0;
+    max-width: 100%;
+    justify-items: center;
+}
+.tb-lines {
+    display: grid;
+    gap: .25rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+.tb-working {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.tb-blue {
+    color: var(--tb-blue);
+}
+.tb-purple {
+    color: var(--tb-purple);
+}
+.tb-green {
+    color: var(--tb-green);
+}
+.tb-grey {
+    color: var(--tb-grey);
+}
+.tb-dark {
+    color: var(--tb-dark);
+}
+
+/* The time line: dots on a line, one arc above it for each jump. */
+.tb-timeline {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+}
+.tb-axis {
+    stroke: #b9c3d1;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+.tb-dot {
+    fill: var(--tb-dark);
+}
+.tb-time {
+    font-size: 16px;
+    font-weight: 800;
+    fill: var(--tb-dark);
+}
+.tb-arc {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 300ms linear;
+}
+.tb-arc.tb-blue {
+    stroke: var(--tb-blue);
+}
+.tb-arc.tb-purple {
+    stroke: var(--tb-purple);
+}
+.tb-arc.tb-green {
+    stroke: var(--tb-green);
+}
+.tb-arc-label {
+    font-size: 15px;
+    font-weight: 800;
+}
+.tb-blue-text {
+    fill: var(--tb-blue);
+}
+.tb-purple-text {
+    fill: var(--tb-purple);
+}
+.tb-green-text {
+    fill: var(--tb-green);
+}
+
+/* Learn 1: the two counters. */
+.tb-counters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+.tb-counter {
+    display: grid;
+    gap: .3rem;
+    justify-items: center;
+    padding: .7rem .3rem;
+    border-radius: .5rem;
+    background: #f3f6fb;
+    border: 2px solid #dbe3ee;
+    box-sizing: border-box;
+    min-width: 0;
+}
+.tb-counter-label {
+    margin: 0;
+    font-size: .85rem;
+    font-weight: 800;
+    color: var(--tb-grey);
+    text-align: center;
+}
+.tb-digits {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .04em;
+    color: var(--tb-dark);
+    white-space: nowrap;
+}
+.tb-digit {
+    display: inline-block;
+    border-radius: .15rem;
+}
+@keyframes tb-flash {
+    from {
+        background: #ffe08a;
+    }
+    to {
+        background: transparent;
+    }
+}
+.tb-digit.tb-flash {
+    animation: tb-flash 400ms ease-out;
+}
+
+/* Learn 2: the two examples. */
+.tb-compare {
+    display: grid;
+    gap: .5rem;
+    justify-items: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: .8rem;
+    border-radius: .5rem;
+    background: #f7f9fc;
+    border: 2px solid #dbe3ee;
+    box-sizing: border-box;
+}
+.tb-compare[hidden] {
+    display: none;
+}
+.tb-compare.tb-green {
+    border-color: #bfe3cd;
+}
+.tb-compare.tb-red {
+    border-color: #f0c2c2;
+}
+.tb-clock-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem;
+    min-width: 0;
+}
+.tb-clock {
+    display: inline-block;
+    padding: .3rem .7rem;
+    border-radius: .45rem;
+    background: #fff;
+    border: 2px solid #dbe3ee;
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--tb-dark);
+    white-space: nowrap;
+}
+.tb-compare.tb-green .tb-clock {
+    border-color: #8fcca7;
+}
+.tb-compare.tb-red .tb-clock {
+    border-color: #e79b9b;
+}
+.tb-mark {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+.tb-calculator {
+    padding: .5rem .8rem;
+    border-radius: .45rem;
+    background: #3b4b61;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.tb-calculator-screen {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.05rem;
+    color: #d9f2c4;
+    overflow-wrap: anywhere;
+}
+.tb-wrong {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    font-weight: 800;
+    color: #b3261e;
+    overflow-wrap: anywhere;
+}
+.tb-compare .tb-text {
+    margin: 0;
+}
+
+/* Minutes shown as small cells, one per minute. */
+.tb-cells-figure {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+}
+.tb-cells-figure[hidden] {
+    display: none;
+}
+.tb-cells-caption {
+    margin-bottom: .3rem;
+    font-size: .85rem;
+    font-weight: 800;
+    color: var(--tb-grey);
+}
+.tb-cells {
+    display: flex;
+    gap: 1px;
+    height: 22px;
+    width: 100%;
+    min-width: 0;
+}
+.tb-cell {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 1px;
+    background: #dbe3ee;
+}
+.tb-cell-grey {
+    background: #aab6c6;
+}
+.tb-cell-blue {
+    background: var(--tb-blue);
+}
+.tb-cell-purple {
+    background: var(--tb-purple);
+}
+.tb-brackets {
+    display: flex;
+    width: 100%;
+}
+.tb-bracket {
+    padding-top: .1rem;
+    border-top: 3px solid currentColor;
+    font-size: .78rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+.tb-bracket.tb-purple {
+    flex: 0 0 88.2%;
+    text-align: center;
+}
+.tb-bracket.tb-grey-right {
+    flex: 1 1 auto;
+    text-align: right;
+    color: var(--tb-grey);
+}
+.tb-bracket[hidden] {
+    display: none;
+}
+.tb-callout {
+    margin: .8rem 0 0;
+    padding: 1rem;
+    background: #f0f5ff;
+    border-left: 4px solid var(--tb-blue);
+    border-radius: .4rem;
+    overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tb-arc {
+        transition: none;
+    }
+    .tb-digit.tb-flash {
+        animation: none;
+        background: transparent;
+    }
+}
+@media (max-width: 400px) {
+    .tb-working {
+        font-size: 1rem;
+    }
+    .tb-digits {
+        font-size: 1.5rem;
+    }
+    .tb-clock {
+        font-size: 1.25rem;
+    }
+    .tb-cells {
+        height: 18px;
+    }
+}
