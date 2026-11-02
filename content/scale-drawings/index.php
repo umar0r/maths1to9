@@ -33,6 +33,7 @@ $pageTitle = 'Scale drawings';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=40">
+    <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
 <body
@@ -81,6 +82,7 @@ $pageTitle = 'Scale drawings';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
+    <script src="./scale.js?v=1"></script>
     <script src="./questions.js?v=11"></script>
     <script src="./interactive.js?v=11"></script>
 

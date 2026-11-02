@@ -1,0 +1,44 @@
+.sd-learn {
+    --sd-drawing: #1d5fd1;
+    --sd-real: #137d49;
+    --sd-grey: #536474;
+}
+.sd-picture { margin: 1.2rem 0; min-width: 0; }
+.sd-scale { display: table; padding: .35rem .65rem; border: 1px solid #c6d2e0; border-radius: .35rem; background: #f5f8fc; font-weight: 800; }
+.sd-label { margin: .6rem 0 .3rem; font-weight: 800; }
+.sd-bedroom { display: block; width: min(22.5rem, 100%); height: auto; }
+.sd-furniture { display: block; width: min(31rem, 100%); height: auto; overflow: visible; touch-action: none; }
+.sd-map-svg { display: block; width: min(34rem, 100%); height: auto; touch-action: none; }
+.sd-paper { fill: #fff; }
+.sd-grid-line { stroke: #a8bfda; stroke-width: 1; }
+.sd-half-grid { stroke: #dfebf6; stroke-width: .7; }
+.sd-square { fill: transparent; stroke: var(--sd-drawing); stroke-width: 1.5; cursor: pointer; transition: fill .3s; }
+.sd-square.is-lit { fill: #9bc3ff; }
+.sd-square:focus-visible, .sd-piece:focus-visible, .sd-handle:focus-visible { outline: 3px solid var(--sd-drawing); outline-offset: 2px; }
+.sd-caption { fill: var(--sd-grey); font: 11px Nunito, sans-serif; }
+.sd-svg-label { fill: var(--sd-grey); font: 800 14px Nunito, sans-serif; }
+.sd-bar { display: flex; max-width: 18rem; min-height: 2.5rem; border: 2px solid var(--sd-real); border-radius: .3rem; overflow: hidden; }
+.sd-block { flex: 1; display: flex; justify-content: center; align-items: center; color: transparent; background: #f5faf6; transition: background .3s, color .3s; }
+.sd-block.is-lit { background: var(--sd-real); color: white; box-shadow: inset -2px 0 white; }
+.sd-total { margin: .3rem 0; font-weight: 800; }
+.sd-drawing { color: var(--sd-drawing); }
+.sd-real { color: var(--sd-real); }
+.sd-working { font-size: 1.1rem; font-weight: 800; overflow-wrap: anywhere; }
+.sd-workings p[hidden], .sd-callout[hidden] { display: none; }
+.sd-callout { padding: 1rem; background: #f0f5ff; border-left: 4px solid var(--sd-drawing); border-radius: .4rem; }
+.sd-room { fill: #f4f7f4; stroke: var(--sd-grey); stroke-width: 2; }
+.sd-outline { fill: none; stroke: #788a9a; stroke-dasharray: 3 2; stroke-width: 1.5; }
+.sd-piece { cursor: grab; touch-action: none; transition: transform .3s ease; }
+.sd-piece.is-dragging { cursor: grabbing; transition: none; }
+.sd-piece rect { fill: #b7dec6; stroke: var(--sd-real); stroke-width: 2; }
+.sd-piece.is-placed rect { fill: #c6ddff; stroke: var(--sd-drawing); }
+.sd-piece-name { fill: #173a29; text-anchor: middle; font: 800 12px Nunito, sans-serif; pointer-events: none; }
+.sd-piece.is-placed .sd-piece-name { display: none; }
+.sd-furniture-labels p { margin: .15rem 0; font-weight: 800; }
+.sd-lake { fill: #d2e9f9; stroke: #5495be; stroke-width: 2; transition: stroke .3s, filter .3s; }
+.sd-lake.is-complete { stroke: var(--sd-real); stroke-width: 4; filter: drop-shadow(0 0 4px #40b675); }
+.sd-tape { stroke: var(--sd-drawing); stroke-width: 5; }
+.sd-handle { fill: var(--sd-drawing); stroke: white; stroke-width: 2; cursor: grab; touch-action: none; }
+@media (prefers-reduced-motion: reduce) {
+    .sd-square, .sd-block, .sd-piece, .sd-lake { transition: none; }
+}
