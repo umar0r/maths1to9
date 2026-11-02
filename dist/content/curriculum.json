@@ -116,7 +116,8 @@
       "lessons": [
         {"folder":"time-between-two-times","title":"How long between two times","subtitle":"Hop to the next o'clock, skip whole hours, then land.","skills":["time-calculations"]},
         {"folder":"measures-time-and-timetables","title":"Measures and timetables","subtitle":"Read scales and units, and use timetables.","skills":["standard-measures","timetables"]},
-        {"folder":"scale-drawings-and-maps","title":"Scale drawings and maps","subtitle":"Use scales to move between drawings and real dimensions.","skills":["scale-drawings","map-scales"]},
+        {"folder":"scale-drawings","title":"Scale drawings","subtitle":"Times to get real life. Divide to get the drawing.","skills":["scale-drawings"]},
+        {"folder":"scale-drawings-and-maps","title":"Map scales as ratios","subtitle":"Use scales like 1 : 25 000 to find real distances.","skills":["map-scales"]},
         {"folder":"angle-facts","title":"Angle facts","subtitle":"Use angles around points, on lines and across parallel lines.","skills":["angles-point-line","vertically-opposite-angles","parallel-line-angles"]},
         {"folder":"triangles-and-quadrilaterals","title":"Triangles and quadrilaterals","subtitle":"Use the names, properties and angle facts of common shapes.","skills":["triangle-properties","quadrilateral-properties","angles-in-triangles"]},
         {"folder":"polygons","title":"Polygons","subtitle":"Calculate interior and exterior angles of polygons.","skills":["polygon-angle-sums","regular-polygon-angles"]},
