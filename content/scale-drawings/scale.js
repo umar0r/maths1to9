@@ -35,11 +35,16 @@
                 "Map B's lake looks twice as big. Measure both.",
                 'Map B is zoomed in. It draws everything bigger, so each centimetre stands for less.'
             ],
-            callout: 'Same lake: 200 m across. On Map B, 200 m is drawn as 8 cm, so 1 cm stands for 200 ÷ 8 = 25 m. A length on a map means nothing without its scale.'
+            callout: 'Same lake: 200 m across. On Map B, 200 m is drawn as 8 cm, so 1 cm stands for ' +
+                '200 ÷ 8 = 25 m. A length on a map means nothing without its scale.'
         },
         {
             title: 'Which way: times or divide?',
-            lines: ['Real things are big. Drawings are small.', 'Going to real life, the number gets bigger. Times by 5.', 'Going to the drawing, the number gets smaller. Divide by 5.'],
+            lines: [
+                'Real things are big. Drawings are small.',
+                'Going to real life, the number gets bigger. Times by 5.',
+                'Going to the drawing, the number gets smaller. Divide by 5.'
+            ],
             callout: 'Check your answer. A real length should be bigger than the number of cm on the drawing.'
         },
         {
@@ -49,13 +54,18 @@
         },
         {
             title: 'Area: change the lengths first',
-            lines: ['m² means square metres.', "Each 1 cm square on the plan becomes a 2 m by 2 m square in real life. That's 4 m², not 2 m².", 'So change the lengths to real life first. Then find the area.'],
+            lines: [
+                'm² means square metres.',
+                "Each 1 cm square on the plan becomes a 2 m by 2 m square in real life. That's 4 m², not 2 m².",
+                'So change the lengths to real life first. Then find the area.'
+            ],
             callout: 'The plan is 6 cm². The real garden is 24 m², not 6 × 2 = 12 m².'
         },
         {
             title: 'A path in two parts',
             lines: ['You walk along the path, so find each part, then add.', 'You could also add the cm first: 3 + 4 = 7 cm, and 7 × 50 = 350 m.'],
-            callout: 'Every time: 1. Read the scale: what does 1 cm stand for? 2. Going to real life? Times. Going to the drawing? Divide. 3. Check: real lengths should be bigger.'
+            callout: 'Every time: 1. Read the scale: what does 1 cm stand for? 2. Going to real life? Times. ' +
+                'Going to the drawing? Divide. 3. Check: real lengths should be bigger.'
         }
     ];
 
@@ -82,7 +92,9 @@
                 ]
             }),
             card('try-2', { scale: 8, scaleUnit: 'km', drawing: 6.5, real: null }, 'to-real', {
-                input: 'number', unit: 'km', prompt: 'A map uses the scale 1 cm represents 8 km. Two camps are 6.5 cm apart on the map. How far apart are they in real life?',
+                input: 'number', unit: 'km',
+                prompt: 'A map uses the scale 1 cm represents 8 km. Two camps are 6.5 cm apart on the map. ' +
+                    'How far apart are they in real life?',
                 answer: '52', rules: [
                     mistake(6.5, '6.5 is the length on the map. Each cm stands for 8 km. Times by 8.'),
                     mistake(0.8125, 'That divides. Real life is bigger than the map. Times by 8.'),
@@ -117,7 +129,9 @@
                 ]
             }),
             card('try-6', { scale: 20, scaleUnit: 'm', drawing: [5, 3], real: null }, 'route', {
-                input: 'number', unit: 'm', prompt: 'A path on a map goes 5 cm east, then 3 cm north. The scale is 1 cm represents 20 m. How far do you walk along the path?',
+                input: 'number', unit: 'm',
+                prompt: 'A path on a map goes 5 cm east, then 3 cm north. The scale is 1 cm represents 20 m. ' +
+                    'How far do you walk along the path?',
                 answer: '160', rules: [
                     mistake(100, "That's only the east part. Add the north part: 3 × 20 = 60 m."),
                     mistake(60, "That's only the north part. Add the east part: 5 × 20 = 100 m."),
@@ -147,7 +161,9 @@
                 widget: drawWidget({ scale: 2, real: [6, 4], answer: [3, 2], marking: true }), feedback: '6 ÷ 2 = 3 cm. 4 ÷ 2 = 2 cm.'
             }),
             card('try-10', { scale: 3, scaleUnit: 'm', drawing: [2, 4], real: null }, 'area', {
-                input: 'number', unit: 'm²', prompt: 'A plan of a garden is 2 cm by 4 cm. The scale is 1 cm represents 3 m. What is the real area of the garden?',
+                input: 'number', unit: 'm²',
+                prompt: 'A plan of a garden is 2 cm by 4 cm. The scale is 1 cm represents 3 m. ' +
+                    'What is the real area of the garden?',
                 answer: '72', rules: [
                     mistake(24, "That times the plan's area by 3. Change each length first: 2 × 3 = 6 m and 4 × 3 = 12 m."),
                     mistake(8, '8 cm² is the area on the plan. Change the lengths to real life first.'),
@@ -212,9 +228,13 @@
             const { isMap, unit, scale, thing, drawing, real, target, wrong } = generated;
             const shown = value => number(value);
             const prefix = isMap ? `A map uses the scale 1 cm represents ${scale} km.` : `A plan uses the scale 1 cm represents ${scale} m.`;
+            const mapEnd = toReal ? 'cm apart on the map. How far apart are they in real life?'
+                : 'km apart in real life. How far apart are they on the map?';
+            const planEnd = toReal ? `cm long on the plan. How long is the real ${thing}?`
+                : `m long in real life. How long is the ${thing} on the plan?`;
             const prompt = isMap
-                ? `${prefix} Two ${thing} are ${shown(toReal ? drawing : real)} ${toReal ? 'cm apart on the map. How far apart are they in real life?' : 'km apart in real life. How far apart are they on the map?'}`
-                : `${prefix} A ${thing} is ${shown(toReal ? drawing : real)} ${toReal ? `cm long on the plan. How long is the real ${thing}?` : `m long in real life. How long is the ${thing} on the plan?`}`;
+                ? `${prefix} Two ${thing} are ${shown(toReal ? drawing : real)} ${mapEnd}`
+                : `${prefix} A ${thing} is ${shown(toReal ? drawing : real)} ${planEnd}`;
             const addition = `That adds. Each cm stands for ${scale} ${unit}, so times: ${shown(drawing)} × ${scale}.`;
             const divided = `That divides. Real life is bigger than the drawing. Times by ${scale}.`;
             const length = `That's the length on the drawing. Each cm stands for ${scale} ${unit}. Times by ${scale}.`;
@@ -242,25 +262,42 @@
             const scale = choose(planScales);
             const a = choose(steps(1, 8, 0.5));
             let b;
-            for (let attempt = 0; attempt < 50; attempt++) { b = choose(steps(1, 8, 0.5)); if (a !== b) break; }
+            for (let attempt = 0; attempt < 50; attempt++) {
+                b = choose(steps(1, 8, 0.5));
+                if (a !== b) break;
+            }
             if (a === b) throw new Error('Could not generate different route lengths in 50 tries');
             const horizontal = choose(['east', 'west']), vertical = choose(['north', 'south']);
             const answer = (a + b) * scale;
             question = card(type, { scale, scaleUnit: 'm', drawing: [a, b], real: null }, 'route', {
-                input: 'number', unit: 'm', prompt: `A path on a map goes ${number(a)} cm ${horizontal}, then ${number(b)} cm ${vertical}. The scale is 1 cm represents ${scale} m. How far do you walk along the path?`, answer: number(answer),
-                rules: cleanRules(answer, [mistake(a * scale, `That's only the first part. Add the second part: ${number(b)} × ${scale}.`), mistake(b * scale, `That's only the second part. Add the first part: ${number(a)} × ${scale}.`), mistake(a + b + scale, `That adds the scale. Times: ${number(a + b)} × ${scale}.`)]),
-                fallback: 'Find each part in real life, then add.', feedback: `${number(a)} + ${number(b)} = ${number(a + b)} cm. ${number(a + b)} × ${scale} = ${number(answer)} m`
+                input: 'number', unit: 'm',
+                prompt: `A path on a map goes ${number(a)} cm ${horizontal}, then ${number(b)} cm ${vertical}. ` +
+                    `The scale is 1 cm represents ${scale} m. How far do you walk along the path?`,
+                answer: number(answer),
+                rules: cleanRules(answer, [
+                    mistake(a * scale, `That's only the first part. Add the second part: ${number(b)} × ${scale}.`),
+                    mistake(b * scale, `That's only the second part. Add the first part: ${number(a)} × ${scale}.`),
+                    mistake(a + b + scale, `That adds the scale. Times: ${number(a + b)} × ${scale}.`)
+                ]),
+                fallback: 'Find each part in real life, then add.',
+                feedback: `${number(a)} + ${number(b)} = ${number(a + b)} cm. ` +
+                    `${number(a + b)} × ${scale} = ${number(answer)} m`
             });
         } else if (type === 'draw') {
             const scale = choose([2, 4, 5, 10]), width = choose(steps(2, 7, 0.5));
             let height;
-            for (let attempt = 0; attempt < 50; attempt++) { height = choose(steps(1.5, 6, 0.5)); if (width !== height) break; }
+            for (let attempt = 0; attempt < 50; attempt++) {
+                height = choose(steps(1.5, 6, 0.5));
+                if (width !== height) break;
+            }
             if (width === height) throw new Error('Could not generate different drawing lengths in 50 tries');
             const real = [width * scale, height * scale], answer = [width, height];
             const thing = choose(['playground', 'garden', 'car park', 'room']);
             question = card(type, { scale, scaleUnit: 'm', drawing: answer, real }, 'draw', {
                 input: 'custom', prompt: `A ${thing} is ${number(real[0])} m by ${number(real[1])} m. Draw it using the scale 1 cm represents ${scale} m.`,
-                widget: drawWidget({ scale, real, answer, marking: true }), feedback: `${number(real[0])} ÷ ${scale} = ${number(width)} cm. ${number(real[1])} ÷ ${scale} = ${number(height)} cm.`
+                widget: drawWidget({ scale, real, answer, marking: true }),
+                feedback: `${number(real[0])} ÷ ${scale} = ${number(width)} cm. ` +
+                    `${number(real[1])} ÷ ${scale} = ${number(height)} cm.`
             });
         } else {
             let data;
@@ -276,8 +313,13 @@
             const { scale, a, b, answers } = data;
             const thing = choose(['garden', 'playground', 'field']);
             question = card(type, { scale, scaleUnit: 'm', drawing: [a, b], real: null }, 'area', {
-                input: 'choice', prompt: `A plan of a ${thing} is ${a} cm by ${b} cm. The scale is 1 cm represents ${scale} m. What is the real area?`, options: [
-                    option(`${number(answers[0])} m²`, `${a} × ${scale} = ${number(a * scale)} m. ${b} × ${scale} = ${number(b * scale)} m. ${number(a * scale)} × ${number(b * scale)} = ${number(answers[0])} m²`, true),
+                input: 'choice',
+                prompt: `A plan of a ${thing} is ${a} cm by ${b} cm. ` +
+                    `The scale is 1 cm represents ${scale} m. What is the real area?`,
+                options: [
+                    option(`${number(answers[0])} m²`,
+                        `${a} × ${scale} = ${number(a * scale)} m. ${b} × ${scale} = ${number(b * scale)} m. ` +
+                        `${number(a * scale)} × ${number(b * scale)} = ${number(answers[0])} m²`, true),
                     option(`${number(answers[1])} m²`, `That times the plan's area by ${scale}. Change each length to real life first.`),
                     option(`${number(answers[2])} m²`, "That's the area on the plan, in cm². Change the lengths to real life first."),
                     option(`${number(answers[3])} m²`, 'That adds the two real sides. Area is length times width.')
@@ -289,29 +331,66 @@
     function checks() {
         return [
             card('check-1', { scale: 80, scaleUnit: 'm', drawing: null, real: 360 }, 'to-drawing', {
-                input: 'number', unit: 'cm', prompt: 'A beacon is 360 m east of a gate. A plan uses the scale 1 cm represents 80 m. How far east of the gate should the beacon go on the plan?', answer: '4.5',
-                rules: [mistake(28800, 'That times. The plan is smaller than real life. Divide by 80.'), mistake(280, 'That takes away 80. Divide: 360 ÷ 80.'), mistake(4, '360 ÷ 80 is 4.5, not 4. Keep the half.')],
+                input: 'number', unit: 'cm',
+                prompt: 'A beacon is 360 m east of a gate. A plan uses the scale 1 cm represents 80 m. ' +
+                    'How far east of the gate should the beacon go on the plan?',
+                answer: '4.5',
+                rules: [
+                    mistake(28800, 'That times. The plan is smaller than real life. Divide by 80.'),
+                    mistake(280, 'That takes away 80. Divide: 360 ÷ 80.'),
+                    mistake(4, '360 ÷ 80 is 4.5, not 4. Keep the half.')
+                ],
                 fallback: 'Going to the plan, divide by 80.', feedback: '360 ÷ 80 = 4.5 cm'
             }),
             card('check-2', { scale: 5, scaleUnit: 'km', drawing: 7.5, real: null }, 'to-real', {
-                input: 'choice', prompt: 'A map uses the scale 1 cm represents 5 km. Two villages are 7.5 cm apart on the map. How far apart are they in real life?',
-                options: [option('37.5 km', '7.5 × 5 = 37.5 km', true), option('12.5 km', 'That adds. Each cm stands for 5 km, so times: 7.5 × 5.'), option('1.5 km', 'That divides. Going to real life, times by 5.'), option('35 km', 'That leaves out the half cm. 7 × 5 = 35, and 0.5 × 5 = 2.5 more.')]
+                input: 'choice',
+                prompt: 'A map uses the scale 1 cm represents 5 km. Two villages are 7.5 cm apart on the map. ' +
+                    'How far apart are they in real life?',
+                options: [
+                    option('37.5 km', '7.5 × 5 = 37.5 km', true),
+                    option('12.5 km', 'That adds. Each cm stands for 5 km, so times: 7.5 × 5.'),
+                    option('1.5 km', 'That divides. Going to real life, times by 5.'),
+                    option('35 km', 'That leaves out the half cm. 7 × 5 = 35, and 0.5 × 5 = 2.5 more.')
+                ]
             }),
             card('check-3', { scale: 250, scaleUnit: 'm', drawing: [4, 3, 6], real: null }, 'route', {
-                input: 'number', unit: 'm', prompt: 'On a map, the straight road between two towns is 4 cm long. The road through a village has two parts: 3 cm and 6 cm. The scale is 1 cm represents 250 m. How much further is the road through the village?', answer: '1250',
-                rules: [mistake(2250, '2250 m is the whole village road. Take away the straight road: 4 × 250 = 1000 m.'), mistake(3250, 'That adds the straight road. Take it away instead.'), mistake(5, '5 cm is the gap on the map. Times by 250 to get real life.')],
+                input: 'number', unit: 'm',
+                prompt: 'On a map, the straight road between two towns is 4 cm long. ' +
+                    'The road through a village has two parts: 3 cm and 6 cm. ' +
+                    'The scale is 1 cm represents 250 m. How much further is the road through the village?',
+                answer: '1250',
+                rules: [
+                    mistake(2250, '2250 m is the whole village road. Take away the straight road: 4 × 250 = 1000 m.'),
+                    mistake(3250, 'That adds the straight road. Take it away instead.'),
+                    mistake(5, '5 cm is the gap on the map. Times by 250 to get real life.')
+                ],
                 fallback: 'Find the gap on the map, then times by 250.', feedback: '3 + 6 = 9 cm. 9 − 4 = 5 cm. 5 × 250 = 1250 m'
             }),
             card('check-4', { scale: 4, scaleUnit: 'm', drawing: [3, 5], real: null }, 'area', {
                 input: 'choice', prompt: 'A plan of a playground is 3 cm by 5 cm. The scale is 1 cm represents 4 m. What is the real area of the playground?',
-                options: [option('240 m²', '3 × 4 = 12 m. 5 × 4 = 20 m. 12 × 20 = 240 m²', true), option('60 m²', "That times the plan's area by 4. Change each length first: 12 m and 20 m."), option('15 m²', '15 cm² is the area on the plan. Change the lengths to real life first.'), option('32 m²', '12 + 20 adds the sides. Area is length times width.')]
+                options: [
+                    option('240 m²', '3 × 4 = 12 m. 5 × 4 = 20 m. 12 × 20 = 240 m²', true),
+                    option('60 m²', "That times the plan's area by 4. Change each length first: 12 m and 20 m."),
+                    option('15 m²', '15 cm² is the area on the plan. Change the lengths to real life first.'),
+                    option('32 m²', '12 + 20 adds the sides. Area is length times width.')
+                ]
             }),
             card('check-5', { scale: 20, scaleUnit: 'm', drawing: [5, 3], real: [100, 60] }, 'draw', {
-                input: 'custom', prompt: 'A football pitch is 100 m by 60 m. Draw it using the scale 1 cm represents 20 m.', widget: drawWidget({ scale: 20, real: [100, 60], answer: [5, 3], marking: true }), feedback: '100 ÷ 20 = 5 cm. 60 ÷ 20 = 3 cm.'
+                input: 'custom',
+                prompt: 'A football pitch is 100 m by 60 m. Draw it using the scale 1 cm represents 20 m.',
+                widget: drawWidget({ scale: 20, real: [100, 60], answer: [5, 3], marking: true }),
+                feedback: '100 ÷ 20 = 5 cm. 60 ÷ 20 = 3 cm.'
             }),
             card('check-6', { scale: 40, scaleUnit: 'm', drawing: [3, 6], real: null }, 'find-scale', {
-                input: 'choice', prompt: "Ali measures a lake on two maps. On Map A, it's 3 cm wide. On Map B, it's 6 cm wide. Map A uses the scale 1 cm represents 40 m. What does 1 cm represent on Map B?",
-                options: [option('20 m', 'The lake is 3 × 40 = 120 m wide. On Map B, 120 ÷ 6 = 20 m.', true), option('80 m', 'The lake looks twice as big on Map B, so each cm stands for less, not more.'), option('40 m', "Then the lake would be 6 × 40 = 240 m. It's the same lake: 120 m."), option('120 m', '120 m is the real lake. Divide by 6 to find what 1 cm stands for.')]
+                input: 'choice',
+                prompt: "Ali measures a lake on two maps. On Map A, it's 3 cm wide. On Map B, it's 6 cm wide. " +
+                    'Map A uses the scale 1 cm represents 40 m. What does 1 cm represent on Map B?',
+                options: [
+                    option('20 m', 'The lake is 3 × 40 = 120 m wide. On Map B, 120 ÷ 6 = 20 m.', true),
+                    option('80 m', 'The lake looks twice as big on Map B, so each cm stands for less, not more.'),
+                    option('40 m', "Then the lake would be 6 × 40 = 240 m. It's the same lake: 120 m."),
+                    option('120 m', '120 m is the real lake. Divide by 6 to find what 1 cm stands for.')
+                ]
             })
         ];
     }
@@ -336,10 +415,13 @@
             mark(value) {
                 if (samePair(value, answer)) return {
                     correct: true,
-                    feedback: `${number(real[0])} ÷ ${number(scale)} = ${number(answer[0])} cm. ${number(real[1])} ÷ ${number(scale)} = ${number(answer[1])} cm.`
+                    feedback: `${number(real[0])} ÷ ${number(scale)} = ${number(answer[0])} cm. ` +
+                        `${number(real[1])} ÷ ${number(scale)} = ${number(answer[1])} cm.`
                 };
                 if (samePair(value, real)) return { correct: false, feedback: `That's the real size in metres. Divide each length by ${number(scale)}.` };
-                if (value && (answer.includes(value.width) || answer.includes(value.height))) return { correct: false, feedback: `One side is right. Now divide the other real length by ${number(scale)}.` };
+                if (value && (answer.includes(value.width) || answer.includes(value.height))) {
+                    return { correct: false, feedback: `One side is right. Now divide the other real length by ${number(scale)}.` };
+                }
                 return { correct: false, feedback: `Divide each real length by ${number(scale)}. Then drag the corner to those lengths.` };
             },
             render(host, { value, editable, onChange }) {
@@ -348,8 +430,18 @@
                 const picture = element('svg', { viewBox: '0 0 360 260', class: 'sd-draw-svg', 'aria-label': 'Squared paper with a rectangle' });
                 const x = 50, y = 40, size = 29;
                 picture.append(element('rect', { x, y, width: 10 * size, height: 7 * size, class: 'sd-paper' }));
-                for (let i = 0; i <= 20; i++) picture.append(element('line', { x1: x + i * size / 2, x2: x + i * size / 2, y1: y, y2: y + 7 * size, class: i % 2 ? 'sd-half-grid' : 'sd-grid-line' }));
-                for (let i = 0; i <= 14; i++) picture.append(element('line', { x1: x, x2: x + 10 * size, y1: y + i * size / 2, y2: y + i * size / 2, class: i % 2 ? 'sd-half-grid' : 'sd-grid-line' }));
+                for (let i = 0; i <= 20; i++) {
+                    picture.append(element('line', {
+                        x1: x + i * size / 2, x2: x + i * size / 2, y1: y, y2: y + 7 * size,
+                        class: i % 2 ? 'sd-half-grid' : 'sd-grid-line'
+                    }));
+                }
+                for (let i = 0; i <= 14; i++) {
+                    picture.append(element('line', {
+                        x1: x, x2: x + 10 * size, y1: y + i * size / 2, y2: y + i * size / 2,
+                        class: i % 2 ? 'sd-half-grid' : 'sd-grid-line'
+                    }));
+                }
                 const rectangle = element('rect', { x, y, class: 'sd-draw-rectangle' });
                 const widthLabel = element('text', { class: 'sd-draw-blue', 'text-anchor': 'middle' });
                 const widthReal = element('text', { class: 'sd-draw-green', 'text-anchor': 'middle' });
@@ -395,7 +487,10 @@
                 }
                 function set(width, height) {
                     if (!canEdit) return;
-                    const next = { width: Math.max(0.5, Math.min(10, Math.round(width * 2) / 2)), height: Math.max(0.5, Math.min(7, Math.round(height * 2) / 2)) };
+                    const next = {
+                        width: Math.max(0.5, Math.min(10, Math.round(width * 2) / 2)),
+                        height: Math.max(0.5, Math.min(7, Math.round(height * 2) / 2))
+                    };
                     if (next.width === current.width && next.height === current.height) return;
                     current = next;
                     paint();

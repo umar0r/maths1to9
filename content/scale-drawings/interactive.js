@@ -31,10 +31,16 @@
     function grid(picture, x, y, width, height, size) {
         picture.append(svg('rect', { x, y, width: width * size, height: height * size, class: 'sd-paper' }));
         for (let i = 0; i <= width * 2; i++) {
-            picture.append(svg('line', { x1: x + i * size / 2, x2: x + i * size / 2, y1: y, y2: y + height * size, class: i % 2 ? 'sd-half-grid' : 'sd-grid-line' }));
+            picture.append(svg('line', {
+                x1: x + i * size / 2, x2: x + i * size / 2, y1: y, y2: y + height * size,
+                class: i % 2 ? 'sd-half-grid' : 'sd-grid-line'
+            }));
         }
         for (let i = 0; i <= height * 2; i++) {
-            picture.append(svg('line', { x1: x, x2: x + width * size, y1: y + i * size / 2, y2: y + i * size / 2, class: i % 2 ? 'sd-half-grid' : 'sd-grid-line' }));
+            picture.append(svg('line', {
+                x1: x, x2: x + width * size, y1: y + i * size / 2, y2: y + i * size / 2,
+                class: i % 2 ? 'sd-half-grid' : 'sd-grid-line'
+            }));
         }
     }
     function working(host, drawing, real) {
@@ -54,7 +60,10 @@
         grid(picture, 30, 5, 3, 2, 40);
         const squares = [];
         for (let i = 0; i < 3; i++) {
-            const square = svg('rect', { x: 30 + i * 40, y: 45, width: 40, height: 40, class: 'sd-square', tabindex: '0', role: 'button', 'aria-label': `Centimetre ${i + 1}` });
+            const square = svg('rect', {
+                x: 30 + i * 40, y: 45, width: 40, height: 40, class: 'sd-square',
+                tabindex: '0', role: 'button', 'aria-label': `Centimetre ${i + 1}`
+            });
             const activate = () => {
                 if (i < state.values[0].lit) return;
                 save(s => { s.values[0].lit++; });
@@ -62,7 +71,10 @@
             };
             square.addEventListener('click', activate);
             square.addEventListener('keydown', event => {
-                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    activate();
+                }
             });
             picture.append(square);
             squares.push(square);
@@ -99,9 +111,12 @@
         picture.append(svg('text', { x: 10, y: 260, class: 'sd-svg-label' }, "Sam's plan: 3 cm by 2 cm"));
         grid(picture, 10, 280, 3, 2, 60);
         const items = [
-            { id: 'bed', name: 'Bed', x: 20, y: 40, px: 15, py: 285, w: 100, h: 50, real: '2 m by 1 m', drawn: '1 cm by 0.5 cm', work: '2 ÷ 2 = 1 cm and 1 ÷ 2 = 0.5 cm' },
-            { id: 'rug', name: 'Rug', x: 140, y: 65, px: 90, py: 320, w: 150, h: 100, real: '3 m by 2 m', drawn: '1.5 cm by 1 cm', work: '3 ÷ 2 = 1.5 cm and 2 ÷ 2 = 1 cm' },
-            { id: 'desk', name: 'Desk', x: 20, y: 165, px: 15, py: 360, w: 50, h: 50, real: '1 m by 1 m', drawn: '0.5 cm by 0.5 cm', work: '1 ÷ 2 = 0.5 cm and 1 ÷ 2 = 0.5 cm' }
+            { id: 'bed', name: 'Bed', x: 20, y: 40, px: 15, py: 285, w: 100, h: 50,
+                real: '2 m by 1 m', drawn: '1 cm by 0.5 cm', work: '2 ÷ 2 = 1 cm and 1 ÷ 2 = 0.5 cm' },
+            { id: 'rug', name: 'Rug', x: 140, y: 65, px: 90, py: 320, w: 150, h: 100,
+                real: '3 m by 2 m', drawn: '1.5 cm by 1 cm', work: '3 ÷ 2 = 1.5 cm and 2 ÷ 2 = 1 cm' },
+            { id: 'desk', name: 'Desk', x: 20, y: 165, px: 15, py: 360, w: 50, h: 50,
+                real: '1 m by 1 m', drawn: '0.5 cm by 0.5 cm', work: '1 ÷ 2 = 0.5 cm and 1 ÷ 2 = 0.5 cm' }
         ];
         items.forEach(item => picture.append(svg('rect', { x: item.px, y: item.py, width: item.w * 0.6, height: item.h * 0.6, class: 'sd-outline' })));
         const labels = node('div', '', 'sd-furniture-labels');
@@ -124,7 +139,10 @@
             let drag = null;
             function position(x, y, scale) { group.setAttribute('transform', `translate(${x} ${y}) scale(${scale})`); }
             function setPlaced(placed) {
-                if (state.values[1].order.includes(item.id) === placed) { paint(); return; }
+                if (state.values[1].order.includes(item.id) === placed) {
+                    paint();
+                    return;
+                }
                 save(s => {
                     const order = s.values[1].order.filter(id => id !== item.id);
                     if (placed) order.push(item.id);
@@ -163,7 +181,11 @@
                 group.classList.remove('is-dragging');
                 setPlaced(next);
             });
-            group.addEventListener('lostpointercapture', () => { drag = null; group.classList.remove('is-dragging'); paint(); });
+            group.addEventListener('lostpointercapture', () => {
+                drag = null;
+                group.classList.remove('is-dragging');
+                paint();
+            });
             group.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -199,7 +221,11 @@
             grid(picture, 30, 16, map.length, 2, 30);
             const lake = svg('ellipse', { cx: 30 + map.length * 15, cy: 46, rx: map.length * 15, ry: 26, class: 'sd-lake' });
             const tape = svg('line', { x1: 30, y1: 46, x2: 30, y2: 46, class: 'sd-tape' });
-            const handle = svg('circle', { cx: 30, cy: 46, r: 10, tabindex: '0', role: 'slider', 'aria-label': `Map ${map.name} tape measure`, 'aria-valuemin': 0, 'aria-valuemax': map.length, class: 'sd-handle' });
+            const handle = svg('circle', {
+                cx: 30, cy: 46, r: 10, tabindex: '0', role: 'slider',
+                'aria-label': `Map ${map.name} tape measure`, 'aria-valuemin': 0,
+                'aria-valuemax': map.length, class: 'sd-handle'
+            });
             picture.append(lake, tape, handle);
             holder.append(picture, node('p', 'Each square is 1 cm', 'sd-grid-label'));
             const line = working(holder, '', '');
@@ -320,10 +346,18 @@
                 else paint();
             });
             card.addEventListener('lostpointercapture', () => {
-                if (drag) { drag = null; card.classList.remove('is-dragging'); card.style.transform = ''; paint(); }
+                if (drag) {
+                    drag = null;
+                    card.classList.remove('is-dragging');
+                    card.style.transform = '';
+                    paint();
+                }
             });
             card.addEventListener('keydown', event => {
-                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); change(); }
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    change();
+                }
             });
             return { card, line, source, operator, result, item, side };
         });
@@ -368,7 +402,10 @@
         }
         handle = widget.render(widgetHost, {
             value: state.values[4].value, editable: true,
-            onChange(value) { save(s => { s.values[4].value = value; }); paint(); }
+            onChange(value) {
+                save(s => { s.values[4].value = value; });
+                paint();
+            }
         });
         [['8', '4 cm'], ['5', '2.5 cm']].forEach(([real, drawn]) => {
             const line = node('p', '', 'sd-working');
@@ -391,20 +428,32 @@
         const cells = [], realCells = [];
         for (let index = 0; index < 6; index++) {
             const col = index % 2, row = Math.floor(index / 2);
-            const cell = svg('rect', { x: 10 + col * 50, y: 10 + row * 50, width: 50, height: 50, class: 'sd-square', role: 'button', tabindex: 0, 'aria-label': `Plan square ${index + 1}` });
+            const cell = svg('rect', {
+                x: 10 + col * 50, y: 10 + row * 50, width: 50, height: 50,
+                class: 'sd-square', role: 'button', tabindex: 0, 'aria-label': `Plan square ${index + 1}`
+            });
             function activate() {
                 if (state.values[5].squares[index]) return;
                 save(s => { s.values[5].squares[index] = true; });
                 paint();
             }
             cell.addEventListener('click', activate);
-            cell.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); } });
+            cell.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    activate();
+                }
+            });
             planSvg.append(cell);
             cells.push(cell);
             const x = 10 + col * 70, y = 10 + row * 70;
             const group = svg('g', { class: 'sd-real-cell' });
             const fill = svg('rect', { x, y, width: 70, height: 70, class: 'sd-real-cell-fill' });
-            group.append(fill, svg('line', { x1: x + 35, x2: x + 35, y1: y, y2: y + 70, class: 'sd-real-grid' }), svg('line', { x1: x, x2: x + 70, y1: y + 35, y2: y + 35, class: 'sd-real-grid' }));
+            group.append(
+                fill,
+                svg('line', { x1: x + 35, x2: x + 35, y1: y, y2: y + 70, class: 'sd-real-grid' }),
+                svg('line', { x1: x, x2: x + 70, y1: y + 35, y2: y + 35, class: 'sd-real-grid' })
+            );
             const label = svg('text', { x: x + 35, y: y + 30, class: 'sd-real-cell-label', 'text-anchor': 'middle' }, '2 m by 2 m');
             const label2 = svg('text', { x: x + 35, y: y + 45, class: 'sd-real-cell-label', 'text-anchor': 'middle' }, '= 4 m²');
             group.append(svg('rect', { x: x + 3, y: y + 17, width: 64, height: 34, rx: 4, class: 'sd-real-label-bg' }), label, label2);
@@ -417,9 +466,16 @@
         layout.append(plan, real);
         const work = node('div', '', 'sd-workings');
         const lengths = node('p', '', 'sd-working');
-        lengths.append(node('span', '2', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'), node('span', '4 m', 'sd-real'), node('span', ' and ', 'sd-grey'), node('span', '3', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'), node('span', '6 m', 'sd-real'));
+        lengths.append(
+            node('span', '2', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'), node('span', '4 m', 'sd-real'),
+            node('span', ' and ', 'sd-grey'), node('span', '3', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'),
+            node('span', '6 m', 'sd-real')
+        );
         const areaWork = node('p', '', 'sd-working');
-        areaWork.append(node('span', '4', 'sd-real'), node('span', ' × ', 'sd-grey'), node('span', '6', 'sd-real'), node('span', ' = ', 'sd-grey'), node('span', '24 m²', 'sd-real'));
+        areaWork.append(
+            node('span', '4', 'sd-real'), node('span', ' × ', 'sd-grey'), node('span', '6', 'sd-real'),
+            node('span', ' = ', 'sd-grey'), node('span', '24 m²', 'sd-real')
+        );
         work.append(lengths, areaWork);
         host.append(layout, work);
         function paint() {
@@ -444,10 +500,17 @@
             { x1: 180, y1: 220, x2: 180, y2: 60, name: 'North path', count: 4, result: '200 m', wx: 184, wy: 129 }
         ];
         const segments = specs.map((part, index) => {
-            const line = svg('line', { x1: part.x1, y1: part.y1, x2: part.x2, y2: part.y2, class: 'sd-path-line', role: 'button', tabindex: 0, 'aria-label': part.name });
+            const line = svg('line', {
+                x1: part.x1, y1: part.y1, x2: part.x2, y2: part.y2,
+                class: 'sd-path-line', role: 'button', tabindex: 0, 'aria-label': part.name
+            });
             const label = svg('g', { class: 'sd-path-work' });
             const text = svg('text', { x: part.wx + 3, y: part.wy, class: 'sd-path-text' });
-            text.append(svg('tspan', { class: 'sd-svg-drawing' }, part.count), svg('tspan', { class: 'sd-svg-grey' }, ' × 50 = '), svg('tspan', { class: 'sd-svg-real' }, part.result));
+            text.append(
+                svg('tspan', { class: 'sd-svg-drawing' }, part.count),
+                svg('tspan', { class: 'sd-svg-grey' }, ' × 50 = '),
+                svg('tspan', { class: 'sd-svg-real' }, part.result)
+            );
             label.append(svg('rect', { x: part.wx, y: part.wy - 13, width: 116, height: 18, rx: 4, class: 'sd-path-label-bg' }), text);
             function activate() {
                 if (state.values[6].parts[index]) return;
@@ -455,16 +518,27 @@
                 paint();
             }
             line.addEventListener('click', activate);
-            line.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); } });
+            line.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    activate();
+                }
+            });
             picture.append(line, label);
             return { line, label };
         });
-        picture.append(svg('rect', { x: 190, y: 45, width: 44, height: 18, rx: 4, class: 'sd-path-label-bg' }), svg('text', { x: 193, y: 58, class: 'sd-svg-label' }, 'Café'));
+        picture.append(
+            svg('rect', { x: 190, y: 45, width: 44, height: 18, rx: 4, class: 'sd-path-label-bg' }),
+            svg('text', { x: 193, y: 58, class: 'sd-svg-label' }, 'Café')
+        );
         const total = node('p', '150 + 200 = 350 m', 'sd-working sd-real');
         host.append(picture, node('p', 'Each square is 1 cm', 'sd-grid-label'), total);
         function paint() {
             const parts = state.values[6].parts;
-            segments.forEach(({ line, label }, index) => { line.classList.toggle('is-lit', parts[index]); label.style.display = parts[index] ? '' : 'none'; });
+            segments.forEach(({ line, label }, index) => {
+                line.classList.toggle('is-lit', parts[index]);
+                label.style.display = parts[index] ? '' : 'none';
+            });
             total.hidden = !parts.every(Boolean);
             callout.hidden = false;
         }
@@ -527,7 +601,8 @@
             if (state.screen === 6) {
                 callout.append(node('p', 'Every time:'));
                 const list = node('ol');
-                ['Read the scale: what does 1 cm stand for?', 'Going to real life? Times. Going to the drawing? Divide.', 'Check: real lengths should be bigger.']
+                ['Read the scale: what does 1 cm stand for?',
+                    'Going to real life? Times. Going to the drawing? Divide.', 'Check: real lengths should be bigger.']
                     .forEach(text => list.append(node('li', text)));
                 callout.append(list);
             } else {
