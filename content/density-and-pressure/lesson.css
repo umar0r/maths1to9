@@ -51,6 +51,9 @@
     font-weight: 800;
     margin-bottom: .3rem;
 }
+.dp-tray-name:empty {
+    display: none;
+}
 .dp-above {
     margin: 0 0 .3rem;
     min-height: 1.2em;

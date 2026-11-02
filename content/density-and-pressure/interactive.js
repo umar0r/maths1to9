@@ -42,8 +42,9 @@
     }
 
     // A tray of 1 cm³ cubes in rows of up to 6, each labelled with its mass.
-    // Labels go on the cubes when they fit, or once above the tray.
-    function makeTray(host, tone, caption = '') {
+    // Labels go on the cubes when they fit, or once above the tray. With
+    // eachLine the "X g in each cm³" line always sits above the tray too.
+    function makeTray(host, tone, caption = '', eachLine = false) {
         const figure = node('figure', '', `dp-tray dp-tray-${tone}`);
         const title = node('figcaption', caption, 'dp-tray-name');
         const above = node('p', '', 'dp-above');
@@ -75,7 +76,7 @@
                 mass.textContent = shown ? label : '';
                 cube.classList.toggle('is-bare', !shown);
             });
-            above.textContent = shown ? '' : `${label} in each cm³`;
+            above.textContent = eachLine || !shown ? `${label} in each cm³` : '';
         }
 
         return {
@@ -102,9 +103,8 @@
     const pictures = [
         function twoTrays(host) {
             const row = node('div', '', 'dp-trays');
-            host.append(row);
-            const wood = makeTray(row, 'wood', 'Wood');
-            const metal = makeTray(row, 'metal', 'Metal');
+            host.append(row);                const wood = makeTray(row, 'wood', 'Wood', true);
+                const metal = makeTray(row, 'metal', 'Metal', true);
             const result = lines(host, 'dp-result');
             return ({ volume }) => {
                 wood.set(volume, 0.5, `Wood: ${volume} × 0.5 = ${number(0.5 * volume)} g`);
@@ -116,7 +116,6 @@
             const tray = makeTray(host, 'stone');
             const working = lines(host);
             return ({ density, volume }) => {
-                tray.figure.querySelector('.dp-tray-name').textContent = `Density: ${number(density)} g/cm³`;
                 tray.set(volume, density, '');
                 working([`${number(density)} × ${volume} = ${number(density * volume)} g`]);
             };

@@ -95,11 +95,11 @@ two or three short lines under it.
    size. The metal is 16 times heavier, because each cm³ of metal is
    heavier."
 
-   Text: "Mass is how heavy something is. It's measured in grams (g) or
-   kilograms (kg). 1 cm³ is a tiny cube, 1 cm long, 1 cm wide and 1 cm
-   tall. These two blocks are the same size. Move the slider and compare
-   them. In this lesson, you'll learn how to work out density and
-   pressure. You can use a calculator."
+   Text: "In this lesson, you'll learn how to work out density and
+   pressure. You can use a calculator. Mass is how heavy something is.
+   It's measured in grams (g) or kilograms (kg). 1 cm³ is a tiny cube,
+   1 cm long, 1 cm wide and 1 cm tall. These two blocks are the same
+   size. Move the slider and compare them."
 2. **8 g/cm³ means 8 g in each cm³.** One tray. Slider "Density: 1 to 10
    g/cm³" (starts on 8) and slider "Volume: 1 to 12 cm³" (starts on 6).
    Working: `8 × 6 = 48 g`.
