@@ -27,10 +27,10 @@
         {
             title: 'Same size, different mass',
             lines: [
+                "In this lesson, you'll learn how to work out density and pressure. You can use a calculator.",
                 'Mass is how heavy something is. It is measured in grams (g) or kilograms (kg).',
                 '1 cm³ is a tiny cube, 1 cm long, 1 cm wide and 1 cm tall.',
-                'These two blocks are the same size. Move the slider and compare them.',
-                "In this lesson, you'll learn how to work out density and pressure. You can use a calculator."
+                'These two blocks are the same size. Move the slider and compare them.'
             ],
             trays: [
                 { name: 'Wood', density: 0.5, tone: 'wood' },
