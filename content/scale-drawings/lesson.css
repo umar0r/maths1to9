@@ -14,7 +14,8 @@
 .sd-half-grid { stroke: #dfebf6; stroke-width: .7; }
 .sd-square { fill: transparent; stroke: var(--sd-drawing); stroke-width: 1.5; cursor: pointer; transition: fill .3s; }
 .sd-square.is-lit { fill: #9bc3ff; }
-.sd-square:focus-visible, .sd-piece:focus-visible, .sd-handle:focus-visible { outline: 3px solid var(--sd-drawing); outline-offset: 2px; }
+.sd-square:focus-visible { outline: none; stroke: #123eaa; stroke-width: 3; }
+.sd-piece:focus-visible, .sd-handle:focus-visible { outline: 3px solid var(--sd-drawing); outline-offset: 2px; }
 .sd-caption { fill: var(--sd-grey); font: 11px Nunito, sans-serif; }
 .sd-grid-label { margin: .25rem 0 .7rem; color: var(--sd-grey); font-size: 14px; }
 .sd-svg-label { fill: var(--sd-grey); font: 800 14px Nunito, sans-serif; }
@@ -25,6 +26,7 @@
 .sd-total { margin: .3rem 0; font-weight: 800; }
 .sd-drawing { color: var(--sd-drawing); }
 .sd-real { color: var(--sd-real); }
+.sd-grey { color: var(--sd-grey); }
 .sd-working { font-size: 1.1rem; font-weight: 800; overflow-wrap: anywhere; }
 .sd-workings p[hidden], .sd-callout[hidden] { display: none; }
 .sd-callout { padding: 1rem; background: #f0f5ff; border-left: 4px solid var(--sd-drawing); border-radius: .4rem; }
@@ -72,12 +74,18 @@
 .sd-real-grid { stroke: #aab6bd; stroke-width: 1; }
 .sd-real-cell.is-lit .sd-real-cell-fill { fill: #b5e0c6; }
 .sd-real-cell-label { fill: var(--sd-real); font: 800 9px Nunito, sans-serif; opacity: 0; }
+.sd-real-label-bg { fill: #b5e0c6; opacity: 0; }
+.sd-real-cell.is-lit .sd-real-label-bg { opacity: 1; }
 .sd-real-cell.is-lit .sd-real-cell-label { opacity: 1; }
 .sd-path-map { display: block; width: min(30rem, 100%); height: auto; }
 .sd-path-line { stroke: #9aa8af; stroke-width: 12; stroke-linecap: round; cursor: pointer; transition: stroke .3s; }
 .sd-path-line.is-lit { stroke: var(--sd-real); }
 .sd-path-line:focus-visible { outline: 3px solid var(--sd-drawing); }
-.sd-path-work { fill: var(--sd-real); font: 800 12px Nunito, sans-serif; }
+.sd-path-label-bg { fill: white; }
+.sd-path-text { font: 800 11px Nunito, sans-serif; white-space: pre; }
+.sd-svg-drawing { fill: var(--sd-drawing); }
+.sd-svg-real { fill: var(--sd-real); }
+.sd-svg-grey { fill: var(--sd-grey); }
 .sd-callout ol { margin: .5rem 0 0; padding-left: 1.4rem; }
 .sd-callout p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {

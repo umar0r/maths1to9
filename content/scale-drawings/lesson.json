@@ -9,7 +9,17 @@
     },
     "assessment": {
         "question_types": {
-            "sample": "scale-drawings"
+            "sample": "scale-drawings",
+            "try-1": "scale-drawings",
+            "try-2": "scale-drawings",
+            "try-3": "scale-drawings",
+            "try-4": "scale-drawings",
+            "try-5": "scale-drawings",
+            "try-6": "scale-drawings",
+            "try-7": "scale-drawings",
+            "try-8": "scale-drawings",
+            "try-9": "scale-drawings",
+            "try-10": "scale-drawings"
         }
     },
     "explanation": {
@@ -24,7 +34,7 @@
     },
     "interactive": {
         "eyebrow": "Try it",
-        "title": "Count both groups",
+        "title": "Use a scale both ways",
         "intro": ""
     },
     "question_bank": {
@@ -109,6 +119,38 @@
         },
         {
             "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:6",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:7",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:8",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:9",
             "kind": "guided"
         }
     ]

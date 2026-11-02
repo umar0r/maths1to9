@@ -4,43 +4,14 @@
     const SLUG = document.body.dataset.lessonId;
     const initialHash = window.location.hash;
 
-    const screens = window.ScaleDrawings.learnScreens;
-
-    // CHANGE: replace these examples and their real misconception options.
-    const examples = [
-        {
-            number: 5, prompt: 'What is 2 × 5?', input: 'choice',
-            options: [
-                { label: '10', correct: true, feedback: 'Two groups of 5 make 10.' },
-                { label: '7', feedback: 'You added 2 instead of making two equal groups.' },
-                { label: '5', feedback: 'That counts only one group.' },
-                { label: '15', feedback: 'That counts three groups instead of two.' }
-            ]
-        },
-        {
-            number: 6, prompt: 'What is 2 × 6?', input: 'number', answer: '12',
-            rules: [
-                { value: '8', feedback: 'You added 2 instead of doubling.' },
-                { value: '6', feedback: 'Count both groups, not just one.' }
-            ],
-            fallback: 'Add the two equal groups: 6 + 6.'
-        }
-    ];
+    const S = window.ScaleDrawings;
+    const screens = S.learnScreens;
+    const examples = S.examples();
 
     function sectionEvent(sectionId, name) {
         document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
             detail: { sectionId }
         }));
-    }
-
-    function drawGroups(container, number) {
-        // CHANGE: draw this lesson's own visual here. Shared cards own inputs.
-        const visual = document.createElement('p');
-        visual.className = 'interactive-equation';
-        visual.setAttribute('role', 'img');
-        visual.setAttribute('aria-label', `Two equal groups of ${number} counters`);
-        visual.textContent = `${'● '.repeat(number).trim()}  +  ${'● '.repeat(number).trim()}`;
-        container.append(visual);
     }
 
     const SVG = 'http://www.w3.org/2000/svg';
@@ -69,10 +40,12 @@
     function working(host, drawing, real) {
         const line = node('p', '', 'sd-working');
         const blue = node('span', drawing, 'sd-drawing');
+        const calculation = node('span', '', 'sd-drawing');
+        const operator = node('span', '', 'sd-grey');
         const green = node('span', real, 'sd-real');
-        line.append(blue, document.createTextNode(' → '), green);
+        line.append(blue, node('span', ' → ', 'sd-grey'), calculation, operator, green);
         host.append(line);
-        return { line, blue, green };
+        return { line, blue, calculation, operator, green };
     }
 
     function bedroom(host, state, save, callout) {
@@ -111,7 +84,9 @@
             blocks.forEach((block, i) => block.classList.toggle('is-lit', i < count));
             total.textContent = display(`${count * 2} m`);
             line.blue.textContent = display(`${count} cm`);
-            line.green.textContent = display(count === 3 ? '3 × 2 = 6 m' : `${count * 2} m`);
+            line.calculation.textContent = count === 3 ? '3' : '';
+            line.operator.textContent = count === 3 ? ' × 2 = ' : '';
+            line.green.textContent = display(`${count * 2} m`);
             callout.hidden = count !== 3;
         }
         return paint;
@@ -142,7 +117,8 @@
             item.work.split(' and ').forEach((part, index) => {
                 if (index) line.append(document.createTextNode(' and '));
                 const [real, drawing] = part.split(' = ');
-                line.append(node('span', real, 'sd-real'), document.createTextNode(' = '), node('span', drawing, 'sd-drawing'));
+                const [length, divisor] = real.split(' ÷ ');
+                line.append(node('span', length, 'sd-real'), node('span', ` ÷ ${divisor} = `, 'sd-grey'), node('span', drawing, 'sd-drawing'));
             });
             labels.append(label);
             let drag = null;
@@ -267,7 +243,9 @@
                 handle.setAttribute('aria-valuetext', `${value} cm`);
                 lake.classList.toggle('is-complete', value === map.length);
                 line.blue.textContent = display(`${value} cm`);
-                line.green.textContent = display(`${value} × ${map.scale} = ${value * map.scale} m`);
+                line.calculation.textContent = value;
+                line.operator.textContent = ` × ${map.scale} = `;
+                line.green.textContent = display(`${value * map.scale} m`);
             });
             callout.hidden = state.values[2].tapes.some((value, index) => value !== maps[index].length);
         }
@@ -297,8 +275,9 @@
             card.type = 'button';
             const line = node('p', '', 'sd-working');
             const source = node('span');
+            const operator = node('span', '', 'sd-grey');
             const result = node('span');
-            line.append(source, document.createTextNode(' = '), result);
+            line.append(source, operator, result);
             workingBox.append(line);
             let drag = null;
             function side() { return state.values[3].moved[index] ? (item.start === 'drawing' ? 'real' : 'drawing') : item.start; }
@@ -346,11 +325,11 @@
             card.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); change(); }
             });
-            return { card, line, source, result, item, side };
+            return { card, line, source, operator, result, item, side };
         });
         function paint() {
             const values = state.values[3];
-            cards.forEach(({ card, line, source, result, item, side }, index) => {
+            cards.forEach(({ card, line, source, operator, result, item, side }, index) => {
                 const current = side();
                 const converted = current !== item.start;
                 const shown = converted ? (current === 'real' ? item.value * 5 : item.value / 5) : item.value;
@@ -361,8 +340,9 @@
                 line.hidden = !previous;
                 if (previous) {
                     const starting = current === 'real' ? shown / 5 : shown * 5;
-                    source.textContent = display(`${window.ScaleDrawings.number(starting)} ${previous === 'drawing' ? '×' : '÷'} 5`);
+                    source.textContent = display(window.ScaleDrawings.number(starting));
                     source.className = previous === 'drawing' ? 'sd-drawing' : 'sd-real';
+                    operator.textContent = ` ${previous === 'drawing' ? '×' : '÷'} 5 = `;
                     result.textContent = display(`${window.ScaleDrawings.number(shown)} ${current === 'real' ? 'm' : 'cm'}`);
                     result.className = current === 'real' ? 'sd-real' : 'sd-drawing';
                 }
@@ -390,9 +370,9 @@
             value: state.values[4].value, editable: true,
             onChange(value) { save(s => { s.values[4].value = value; }); paint(); }
         });
-        [['8 ÷ 2', '4 cm'], ['5 ÷ 2', '2.5 cm']].forEach(([real, drawn]) => {
+        [['8', '4 cm'], ['5', '2.5 cm']].forEach(([real, drawn]) => {
             const line = node('p', '', 'sd-working');
-            line.append(node('span', real, 'sd-real'), document.createTextNode(' = '), node('span', drawn, 'sd-drawing'));
+            line.append(node('span', real, 'sd-real'), node('span', ' ÷ 2 = ', 'sd-grey'), node('span', drawn, 'sd-drawing'));
             host.append(line);
         });
         return paint;
@@ -427,7 +407,7 @@
             group.append(fill, svg('line', { x1: x + 35, x2: x + 35, y1: y, y2: y + 70, class: 'sd-real-grid' }), svg('line', { x1: x, x2: x + 70, y1: y + 35, y2: y + 35, class: 'sd-real-grid' }));
             const label = svg('text', { x: x + 35, y: y + 30, class: 'sd-real-cell-label', 'text-anchor': 'middle' }, '2 m by 2 m');
             const label2 = svg('text', { x: x + 35, y: y + 45, class: 'sd-real-cell-label', 'text-anchor': 'middle' }, '= 4 m²');
-            group.append(label, label2);
+            group.append(svg('rect', { x: x + 3, y: y + 17, width: 64, height: 34, rx: 4, class: 'sd-real-label-bg' }), label, label2);
             realSvg.append(group);
             realCells.push(group);
         }
@@ -436,7 +416,11 @@
         real.append(realSvg, total);
         layout.append(plan, real);
         const work = node('div', '', 'sd-workings');
-        work.append(node('p', '2 × 2 = 4 m and 3 × 2 = 6 m', 'sd-working sd-real'), node('p', '4 × 6 = 24 m²', 'sd-working sd-real'));
+        const lengths = node('p', '', 'sd-working');
+        lengths.append(node('span', '2', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'), node('span', '4 m', 'sd-real'), node('span', ' and ', 'sd-grey'), node('span', '3', 'sd-drawing'), node('span', ' × 2 = ', 'sd-grey'), node('span', '6 m', 'sd-real'));
+        const areaWork = node('p', '', 'sd-working');
+        areaWork.append(node('span', '4', 'sd-real'), node('span', ' × ', 'sd-grey'), node('span', '6', 'sd-real'), node('span', ' = ', 'sd-grey'), node('span', '24 m²', 'sd-real'));
+        work.append(lengths, areaWork);
         host.append(layout, work);
         function paint() {
             const values = state.values[5].squares;
@@ -454,14 +438,17 @@
         host.append(node('p', 'Scale: 1 cm represents 50 m', 'sd-scale'));
         const picture = svg('svg', { viewBox: '0 0 320 300', class: 'sd-path-map' });
         grid(picture, 20, 20, 6, 6, 40);
-        picture.append(svg('text', { x: 20, y: 286, class: 'sd-svg-label' }, 'Gate'), svg('text', { x: 145, y: 90, class: 'sd-svg-label' }, 'Café'));
+        picture.append(svg('text', { x: 28, y: 244, class: 'sd-svg-label' }, 'Gate'), svg('text', { x: 185, y: 58, class: 'sd-svg-label' }, 'Café'));
         const specs = [
-            { x1: 20, y1: 260, x2: 140, y2: 260, name: 'East path', work: '3 × 50 = 150 m', wx: 25, wy: 250 },
-            { x1: 140, y1: 260, x2: 140, y2: 100, name: 'North path', work: '4 × 50 = 200 m', wx: 150, wy: 145 }
+            { x1: 60, y1: 220, x2: 180, y2: 220, name: 'East path', count: 3, result: '150 m', wx: 62, wy: 210 },
+            { x1: 180, y1: 220, x2: 180, y2: 60, name: 'North path', count: 4, result: '200 m', wx: 184, wy: 129 }
         ];
         const segments = specs.map((part, index) => {
             const line = svg('line', { x1: part.x1, y1: part.y1, x2: part.x2, y2: part.y2, class: 'sd-path-line', role: 'button', tabindex: 0, 'aria-label': part.name });
-            const label = svg('text', { x: part.wx, y: part.wy, class: 'sd-path-work' }, part.work);
+            const label = svg('g', { class: 'sd-path-work' });
+            const text = svg('text', { x: part.wx + 3, y: part.wy, class: 'sd-path-text' });
+            text.append(svg('tspan', { class: 'sd-svg-drawing' }, part.count), svg('tspan', { class: 'sd-svg-grey' }, ' × 50 = '), svg('tspan', { class: 'sd-svg-real' }, part.result));
+            label.append(svg('rect', { x: part.wx, y: part.wy - 13, width: 116, height: 18, rx: 4, class: 'sd-path-label-bg' }), text);
             function activate() {
                 if (state.values[6].parts[index]) return;
                 save(s => { s.values[6].parts[index] = true; });
@@ -584,10 +571,15 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
-            initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} })
+            version: 2,
+            initial: () => ({
+                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+            }),
+            upgrade: () => null
         });
         const state = section.state;
+        section.save();
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
@@ -598,6 +590,9 @@
         function showScreen(screen) {
             section.update(state => { state.screen = screen; });
             render();
+            const heading = root.querySelector('h3');
+            heading.tabIndex = -1;
+            heading.focus();
         }
 
         function reportProgress() {
@@ -618,20 +613,14 @@
 
         function drawExample(container, index, readOnly) {
             const example = examples[index];
-            const visual = document.createElement('div');
-            drawGroups(visual, example.number);
-            container.append(visual);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
-                ...example, sectionId: 'interactive', questionId: `example-${index + 1}`,
+                ...S.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
+                sectionId: 'interactive', questionId: `example-${index + 1}`,
                 scored: false, readOnly,
                 onFeedback(result) {
                     reportProgress();
-                    // CHANGE: update the lesson visual in place in response to
-                    // result.correct / result.value / result.option (e.g. flash
-                    // a missed tile). Don't rebuild the shared card here.
-                    visual.setAttribute('aria-label', result.correct ? 'Both groups counted' : 'Count both equal groups');
                 },
                 onContinue: continueExample
             });
