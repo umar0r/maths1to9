@@ -2,11 +2,6 @@
 
 declare(strict_types=1);
 
-/*
- * CHANGE: slug and title. The slug must match:
- *   - "slug" in lesson.json
- * JavaScript reads the slug from data-lesson-id.
- */
 $lessonId = 'scale-drawings';
 $pageTitle = 'Scale drawings';
 ?>
@@ -72,19 +67,13 @@ $pageTitle = 'Scale drawings';
         </div>
     </noscript>
 
-    <!-- CHANGE: uncomment only when this lesson renders maths with KaTeX.
-    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
-    <script src="../../vendor/katex/katex.min.js"></script>
-    Render whole expressions, including the left side, using katex.render().
-    -->
-
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./scale.js?v=3"></script>
-    <script src="./questions.js?v=11"></script>
-    <script src="./interactive.js?v=3"></script>
+    <script src="./scale.js?v=4"></script>
+    <script src="./questions.js?v=4"></script>
+    <script src="./interactive.js?v=4"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=46"></script>

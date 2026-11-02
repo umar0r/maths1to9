@@ -59,7 +59,7 @@
         }
     ];
 
-    const practiceTypes = [];
+    const practiceTypes = ['to-real', 'to-drawing', 'scale-choice', 'route', 'draw', 'area'];
     const text = value => String(value).replace(/(\d) (?=(?:cm²|cm|km|m²|m)(?![a-zA-Z\d]))/g, '$1\u00a0');
     const option = (label, feedback, correct = false) => ({ label: text(label), feedback: text(feedback), correct });
     const mistake = (value, feedback) => ({ value: String(value), feedback: text(feedback) });
@@ -160,7 +160,161 @@
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
     }
-    const checks = () => [];
+
+    const steps = (from, to, by) => Array.from({ length: Math.round((to - from) / by) + 1 }, (_, index) => from + index * by);
+    const planScales = [2, 4, 5, 10, 20, 25, 50];
+    const mapScales = [2, 5, 8, 10];
+    const planThings = ['kitchen', 'garden', 'car park', 'playground', 'swimming pool'];
+    const mapThings = ['towns', 'villages', 'campsites'];
+
+    function pick(random) {
+        const { shuffle, randomInt } = window.Maths1to9LessonEngine;
+        return shuffle(practiceTypes.map(type => ({ type, seed: randomInt(0, 4294967295, random) })), random);
+    }
+
+    function cleanRules(answer, rules, tolerance = 0) {
+        const kept = [];
+        for (const rule of rules) {
+            const value = Number(rule.value);
+            if (value <= 0) continue;
+            if ([answer, ...kept.map(each => Number(each.value))].some(other => Math.abs(other - value) <= tolerance + 1e-9)) continue;
+            kept.push(rule);
+        }
+        return kept;
+    }
+
+    function generate(item, random) {
+        const { randomInt } = window.Maths1to9LessonEngine;
+        const int = (low, high) => randomInt(low, high, random);
+        const choose = list => list[int(0, list.length - 1)];
+        const type = item.type;
+        if (!practiceTypes.includes(type)) throw new TypeError(`Unknown scale question type: ${type}`);
+        let question;
+
+        if (['to-real', 'to-drawing', 'scale-choice'].includes(type)) {
+            const toReal = type === 'to-real' || (type === 'scale-choice' && int(0, 1) === 0);
+            let generated;
+            for (let attempt = 0; attempt < 50; attempt++) {
+                const isMap = int(0, 1) === 1;
+                const unit = isMap ? 'km' : 'm';
+                const scale = choose(isMap ? mapScales : planScales);
+                const thing = choose(isMap ? mapThings : planThings);
+                const drawing = choose(toReal ? steps(1, 10, 0.5) : steps(1.5, 12, 0.5));
+                const real = drawing * scale;
+                const target = toReal ? real : drawing;
+                const wrong = toReal ? [drawing + scale, drawing / scale, drawing] : [real * scale, real - scale, real];
+                const distinct = [target, ...wrong].map(value => number(value));
+                if (type === 'scale-choice' && new Set(distinct).size !== 4) continue;
+                generated = { isMap, unit, scale, thing, drawing, real, target, wrong };
+                break;
+            }
+            if (!generated) throw new Error('Could not generate four different scale options in 50 tries');
+            const { isMap, unit, scale, thing, drawing, real, target, wrong } = generated;
+            const shown = value => number(value);
+            const prefix = isMap ? `A map uses the scale 1 cm represents ${scale} km.` : `A plan uses the scale 1 cm represents ${scale} m.`;
+            const prompt = isMap
+                ? `${prefix} Two ${thing} are ${shown(toReal ? drawing : real)} ${toReal ? 'cm apart on the map. How far apart are they in real life?' : 'km apart in real life. How far apart are they on the map?'}`
+                : `${prefix} A ${thing} is ${shown(toReal ? drawing : real)} ${toReal ? `cm long on the plan. How long is the real ${thing}?` : `m long in real life. How long is the ${thing} on the plan?`}`;
+            const addition = `That adds. Each cm stands for ${scale} ${unit}, so times: ${shown(drawing)} × ${scale}.`;
+            const divided = `That divides. Real life is bigger than the drawing. Times by ${scale}.`;
+            const length = `That's the length on the drawing. Each cm stands for ${scale} ${unit}. Times by ${scale}.`;
+            const multiplied = `That times. The drawing is smaller than real life. Divide by ${scale}.`;
+            const subtracted = `That takes away ${scale}. Divide: ${shown(real)} ÷ ${scale}.`;
+            const realLength = `That's the real length. Divide by ${scale} to get the drawing length.`;
+            const feedback = toReal ? `${shown(drawing)} × ${scale} = ${shown(real)} ${unit}` : `${shown(real)} ÷ ${scale} = ${shown(drawing)} cm`;
+            const outputUnit = toReal ? unit : 'cm';
+            const values = { scale, scaleUnit: unit, drawing: toReal ? drawing : null, real: toReal ? null : real };
+            const asked = toReal ? 'to-real' : 'to-drawing';
+            if (type === 'scale-choice') {
+                const messages = toReal ? [addition, divided, length] : [multiplied, subtracted, realLength];
+                question = card(type, values, asked, { input: 'choice', prompt, options: [
+                    option(`${shown(target)} ${outputUnit}`, feedback, true),
+                    ...wrong.map((value, index) => option(`${shown(value)} ${outputUnit}`, messages[index]))
+                ] });
+            } else {
+                const rules = toReal
+                    ? [mistake(drawing, length), mistake(Number(number(drawing / scale)), divided), mistake(drawing + scale, addition)]
+                    : [mistake(real * scale, multiplied), mistake(real - scale, subtracted), mistake(real, realLength)];
+                question = card(type, values, asked, { input: 'number', unit: outputUnit, prompt, answer: shown(target), rules: cleanRules(target, rules),
+                    fallback: toReal ? `Each cm stands for ${scale} ${unit}. Times by ${scale}.` : `Going to the drawing, divide by ${scale}.`, feedback });
+            }
+        } else if (type === 'route') {
+            const scale = choose(planScales);
+            const a = choose(steps(1, 8, 0.5));
+            let b;
+            for (let attempt = 0; attempt < 50; attempt++) { b = choose(steps(1, 8, 0.5)); if (a !== b) break; }
+            if (a === b) throw new Error('Could not generate different route lengths in 50 tries');
+            const horizontal = choose(['east', 'west']), vertical = choose(['north', 'south']);
+            const answer = (a + b) * scale;
+            question = card(type, { scale, scaleUnit: 'm', drawing: [a, b], real: null }, 'route', {
+                input: 'number', unit: 'm', prompt: `A path on a map goes ${number(a)} cm ${horizontal}, then ${number(b)} cm ${vertical}. The scale is 1 cm represents ${scale} m. How far do you walk along the path?`, answer: number(answer),
+                rules: cleanRules(answer, [mistake(a * scale, `That's only the first part. Add the second part: ${number(b)} × ${scale}.`), mistake(b * scale, `That's only the second part. Add the first part: ${number(a)} × ${scale}.`), mistake(a + b + scale, `That adds the scale. Times: ${number(a + b)} × ${scale}.`)]),
+                fallback: 'Find each part in real life, then add.', feedback: `${number(a)} + ${number(b)} = ${number(a + b)} cm. ${number(a + b)} × ${scale} = ${number(answer)} m`
+            });
+        } else if (type === 'draw') {
+            const scale = choose([2, 4, 5, 10]), width = choose(steps(2, 7, 0.5));
+            let height;
+            for (let attempt = 0; attempt < 50; attempt++) { height = choose(steps(1.5, 6, 0.5)); if (width !== height) break; }
+            if (width === height) throw new Error('Could not generate different drawing lengths in 50 tries');
+            const real = [width * scale, height * scale], answer = [width, height];
+            const thing = choose(['playground', 'garden', 'car park', 'room']);
+            question = card(type, { scale, scaleUnit: 'm', drawing: answer, real }, 'draw', {
+                input: 'custom', prompt: `A ${thing} is ${number(real[0])} m by ${number(real[1])} m. Draw it using the scale 1 cm represents ${scale} m.`,
+                widget: drawWidget({ scale, real, answer, marking: true }), feedback: `${number(real[0])} ÷ ${scale} = ${number(width)} cm. ${number(real[1])} ÷ ${scale} = ${number(height)} cm.`
+            });
+        } else {
+            let data;
+            for (let attempt = 0; attempt < 50; attempt++) {
+                const scale = choose([2, 3, 4, 5, 10]), a = int(1, 6), b = int(1, 6);
+                if (a === b) continue;
+                const answers = [a * scale * b * scale, a * b * scale, a * b, a * scale + b * scale];
+                if (new Set(answers).size !== 4) continue;
+                data = { scale, a, b, answers };
+                break;
+            }
+            if (!data) throw new Error('Could not generate four different area options in 50 tries');
+            const { scale, a, b, answers } = data;
+            const thing = choose(['garden', 'playground', 'field']);
+            question = card(type, { scale, scaleUnit: 'm', drawing: [a, b], real: null }, 'area', {
+                input: 'choice', prompt: `A plan of a ${thing} is ${a} cm by ${b} cm. The scale is 1 cm represents ${scale} m. What is the real area?`, options: [
+                    option(`${number(answers[0])} m²`, `${a} × ${scale} = ${number(a * scale)} m. ${b} × ${scale} = ${number(b * scale)} m. ${number(a * scale)} × ${number(b * scale)} = ${number(answers[0])} m²`, true),
+                    option(`${number(answers[1])} m²`, `That times the plan's area by ${scale}. Change each length to real life first.`),
+                    option(`${number(answers[2])} m²`, "That's the area on the plan, in cm². Change the lengths to real life first."),
+                    option(`${number(answers[3])} m²`, 'That adds the two real sides. Area is length times width.')
+                ]
+            });
+        }
+        return prepare(question, random);
+    }
+    function checks() {
+        return [
+            card('check-1', { scale: 80, scaleUnit: 'm', drawing: null, real: 360 }, 'to-drawing', {
+                input: 'number', unit: 'cm', prompt: 'A beacon is 360 m east of a gate. A plan uses the scale 1 cm represents 80 m. How far east of the gate should the beacon go on the plan?', answer: '4.5',
+                rules: [mistake(28800, 'That times. The plan is smaller than real life. Divide by 80.'), mistake(280, 'That takes away 80. Divide: 360 ÷ 80.'), mistake(4, '360 ÷ 80 is 4.5, not 4. Keep the half.')],
+                fallback: 'Going to the plan, divide by 80.', feedback: '360 ÷ 80 = 4.5 cm'
+            }),
+            card('check-2', { scale: 5, scaleUnit: 'km', drawing: 7.5, real: null }, 'to-real', {
+                input: 'choice', prompt: 'A map uses the scale 1 cm represents 5 km. Two villages are 7.5 cm apart on the map. How far apart are they in real life?',
+                options: [option('37.5 km', '7.5 × 5 = 37.5 km', true), option('12.5 km', 'That adds. Each cm stands for 5 km, so times: 7.5 × 5.'), option('1.5 km', 'That divides. Going to real life, times by 5.'), option('35 km', 'That leaves out the half cm. 7 × 5 = 35, and 0.5 × 5 = 2.5 more.')]
+            }),
+            card('check-3', { scale: 250, scaleUnit: 'm', drawing: [4, 3, 6], real: null }, 'route', {
+                input: 'number', unit: 'm', prompt: 'On a map, the straight road between two towns is 4 cm long. The road through a village has two parts: 3 cm and 6 cm. The scale is 1 cm represents 250 m. How much further is the road through the village?', answer: '1250',
+                rules: [mistake(2250, '2250 m is the whole village road. Take away the straight road: 4 × 250 = 1000 m.'), mistake(3250, 'That adds the straight road. Take it away instead.'), mistake(5, '5 cm is the gap on the map. Times by 250 to get real life.')],
+                fallback: 'Find the gap on the map, then times by 250.', feedback: '3 + 6 = 9 cm. 9 − 4 = 5 cm. 5 × 250 = 1250 m'
+            }),
+            card('check-4', { scale: 4, scaleUnit: 'm', drawing: [3, 5], real: null }, 'area', {
+                input: 'choice', prompt: 'A plan of a playground is 3 cm by 5 cm. The scale is 1 cm represents 4 m. What is the real area of the playground?',
+                options: [option('240 m²', '3 × 4 = 12 m. 5 × 4 = 20 m. 12 × 20 = 240 m²', true), option('60 m²', "That times the plan's area by 4. Change each length first: 12 m and 20 m."), option('15 m²', '15 cm² is the area on the plan. Change the lengths to real life first.'), option('32 m²', '12 + 20 adds the sides. Area is length times width.')]
+            }),
+            card('check-5', { scale: 20, scaleUnit: 'm', drawing: [5, 3], real: [100, 60] }, 'draw', {
+                input: 'custom', prompt: 'A football pitch is 100 m by 60 m. Draw it using the scale 1 cm represents 20 m.', widget: drawWidget({ scale: 20, real: [100, 60], answer: [5, 3], marking: true }), feedback: '100 ÷ 20 = 5 cm. 60 ÷ 20 = 3 cm.'
+            }),
+            card('check-6', { scale: 40, scaleUnit: 'm', drawing: [3, 6], real: null }, 'find-scale', {
+                input: 'choice', prompt: "Ali measures a lake on two maps. On Map A, it's 3 cm wide. On Map B, it's 6 cm wide. Map A uses the scale 1 cm represents 40 m. What does 1 cm represent on Map B?",
+                options: [option('20 m', 'The lake is 3 × 40 = 120 m wide. On Map B, 120 ÷ 6 = 20 m.', true), option('80 m', 'The lake looks twice as big on Map B, so each cm stands for less, not more.'), option('40 m', "Then the lake would be 6 × 40 = 240 m. It's the same lake: 120 m."), option('120 m', '120 m is the real lake. Divide by 6 to find what 1 cm stands for.')]
+            })
+        ];
+    }
 
     function drawWidget(config) {
         const { scale, real, answer, marking } = config;
@@ -283,5 +437,5 @@
             }
         };
     }
-    window.ScaleDrawings = { number, learnScreens, practiceTypes, examples, checks, drawWidget, prepare };
+    window.ScaleDrawings = { number, learnScreens, practiceTypes, examples, checks, drawWidget, prepare, pick, generate };
 })();

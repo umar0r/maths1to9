@@ -438,7 +438,7 @@
         host.append(node('p', 'Scale: 1 cm represents 50 m', 'sd-scale'));
         const picture = svg('svg', { viewBox: '0 0 320 300', class: 'sd-path-map' });
         grid(picture, 20, 20, 6, 6, 40);
-        picture.append(svg('text', { x: 28, y: 244, class: 'sd-svg-label' }, 'Gate'), svg('text', { x: 185, y: 58, class: 'sd-svg-label' }, 'Café'));
+        picture.append(svg('text', { x: 28, y: 244, class: 'sd-svg-label' }, 'Gate'));
         const specs = [
             { x1: 60, y1: 220, x2: 180, y2: 220, name: 'East path', count: 3, result: '150 m', wx: 62, wy: 210 },
             { x1: 180, y1: 220, x2: 180, y2: 60, name: 'North path', count: 4, result: '200 m', wx: 184, wy: 129 }
@@ -459,6 +459,7 @@
             picture.append(line, label);
             return { line, label };
         });
+        picture.append(svg('rect', { x: 190, y: 45, width: 44, height: 18, rx: 4, class: 'sd-path-label-bg' }), svg('text', { x: 193, y: 58, class: 'sd-svg-label' }, 'Café'));
         const total = node('p', '150 + 200 = 350 m', 'sd-working sd-real');
         host.append(picture, node('p', 'Each square is 1 cm', 'sd-grid-label'), total);
         function paint() {

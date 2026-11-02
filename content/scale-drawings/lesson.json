@@ -1,15 +1,19 @@
 {
-    "_change": "CHANGE: replace all lesson content, titles, skill mapping and examples; keep the four sections and shared wiring.",
     "id": "scale-drawings",
     "slug": "scale-drawings",
     "title": "Scale drawings",
-    "subtitle": "Two equal groups make double.",
+    "subtitle": "Times to get real life. Divide to get the drawing.",
     "navigation": {
         "back_button": true
     },
     "assessment": {
         "question_types": {
-            "sample": "scale-drawings",
+            "to-real": "scale-drawings",
+            "to-drawing": "scale-drawings",
+            "scale-choice": "scale-drawings",
+            "route": "scale-drawings",
+            "draw": "scale-drawings",
+            "area": "scale-drawings",
             "try-1": "scale-drawings",
             "try-2": "scale-drawings",
             "try-3": "scale-drawings",
@@ -19,18 +23,18 @@
             "try-7": "scale-drawings",
             "try-8": "scale-drawings",
             "try-9": "scale-drawings",
-            "try-10": "scale-drawings"
+            "try-10": "scale-drawings",
+            "check-1": "scale-drawings",
+            "check-2": "scale-drawings",
+            "check-3": "scale-drawings",
+            "check-4": "scale-drawings",
+            "check-5": "scale-drawings",
+            "check-6": "scale-drawings"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Scale drawings",
-        "video": {
-            "youtube_id": "",
-            "title": "Lesson video",
-            "caption": "",
-            "_change": "CHANGE: set youtube_id or mp4 if there is a video, otherwise remove this optional block."
-        }
+        "title": "Scale drawings"
     },
     "interactive": {
         "eyebrow": "Try it",
@@ -39,10 +43,9 @@
     },
     "question_bank": {
         "eyebrow": "Practice",
-        "title": "Practise doubling",
+        "title": "Practise scale drawings",
         "intro": "",
-        "session_length": 5,
-        "_change": "CHANGE: choose session_length; optionally add ready_score (e.g. 4), or leave it out."
+        "session_length": 6
     },
     "section_order": [
         "explanation",
@@ -86,29 +89,25 @@
         "intro": "",
         "questions": [
             {
-                "type": "sample",
-                "prompt": "What is 2 × 7?",
-                "options": [
-                    "14",
-                    "9",
-                    "7",
-                    "21"
-                ],
-                "feedback": [
-                    "Two groups of 7 make 14.",
-                    "You added 2 instead of doubling.",
-                    "That counts only one group.",
-                    "That counts three groups instead of two."
-                ],
-                "answer": 0
-            }
+                "type": "check-1"
+            },
+            { "type": "check-2" },
+            { "type": "check-3" },
+            { "type": "check-4" },
+            { "type": "check-5" },
+            { "type": "check-6" }
         ],
         "summary": {
             "title": "What you have learnt",
             "points": [
                 {
-                    "text": "Two equal groups make double the number in one group."
-                }
+                    "text": "A scale tells you what 1 cm on the drawing stands for in real life."
+                },
+                { "text": "In a scale drawing, every length shrinks the same way." },
+                { "text": "Going to real life: times. Going to the drawing: divide." },
+                { "text": "Check: real lengths should be bigger." },
+                { "text": "A route in parts: find each part, then add." },
+                { "text": "For area, change the lengths to real life first." }
             ]
         }
     },
