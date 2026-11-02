@@ -108,6 +108,32 @@ test('snapAngle rounds to the nearest step and wraps into one turn', () => {
     }
 });
 
+test('protractor marks run anticlockwise or clockwise from the zero line', () => {
+    const unit = point => {
+        const one = diagram.protractorPoint(...point);
+        close(Math.hypot(one[0], one[1]), 1, `mark ${point.join(' ')} is one unit out`);
+        return one;
+    };
+    // A half protractor on an angle: zero points right, the scale goes up.
+    const up = unit([0, 'anticlockwise', 90]);
+    close(up[0], 0, 'anticlockwise 90 has no sideways part');
+    close(up[1], 1, 'anticlockwise 90 is up');
+    const tilted = unit([0, 'anticlockwise', 58]);
+    assert.ok(tilted[1] > 0, 'anticlockwise 58 is above the zero line');
+    // A full clockwise protractor at a north line: 90 sits at east, 10 goes
+    // right (clockwise), never left.
+    const east = unit([90, 'clockwise', 90]);
+    close(east[0], 1, 'clockwise 90 from north is east');
+    close(east[1], 0, 'clockwise 90 from north has no upward part');
+    assert.ok(unit([90, 'clockwise', 10])[0] > 0, 'clockwise 10 from north goes right');
+    assert.ok(unit([90, 'anticlockwise', 10])[0] < 0, 'anticlockwise 10 from north goes left');
+    close(unit([90, 'anticlockwise', 90])[0], -1, 'anticlockwise 90 from north is west');
+    close(unit([0, 'clockwise', 90])[1], -1, 'clockwise 90 is below the zero line');
+    // The default is anticlockwise.
+    close(unit([0, undefined, 90])[1], 1, 'no turn means anticlockwise');
+    close(unit([45, 'anticlockwise', 45])[1], 1, 'half a turn from the diagonal is up');
+});
+
 test('formatNumber uses a real minus sign', () => {
     assert.equal(diagram.formatNumber(-2.5), '−2.5');
     assert.equal(diagram.formatNumber(-0), '0');

@@ -94,6 +94,23 @@
         return normaliseHeading(Math.round(angle / size) * size);
     }
 
+    // A protractor's numbers run from the zero line in the chosen direction:
+    // anticlockwise grows the maths angle, clockwise shrinks it.
+    function protractorTurn(turn) {
+        return turn === 'clockwise' ? -1 : 1;
+    }
+
+    function protractorDirection(zero, turn, step) {
+        return normaliseHeading(zero + protractorTurn(turn) * step);
+    }
+
+    // Where a protractor mark sits, as a point one unit from the centre in
+    // maths coordinates (y up), so a test can check which way the scale runs.
+    function protractorPoint(zero, turn, step) {
+        const radians = toRadians(protractorDirection(zero, turn, step));
+        return [Math.cos(radians), Math.sin(radians)];
+    }
+
     // ---------------------------------------------------------------
     // The diagram
     // ---------------------------------------------------------------
@@ -267,14 +284,19 @@
             const start = settings.from || 0;
             const gap = settings.gap ?? 8;
             const clearance = settings.clearance ?? 4;
+            // Labels that must stay on one side (an angle inside its sector, a
+            // side label outside its side) grow the view instead of moving.
+            const mayGrow = settings.grow === true;
             text.setAttribute('x', '0');
             text.setAttribute('y', '0');
             const size = text.getBBox();
             const segments = labelSegments();
             const rects = labelRects(text);
             let fallback = null;
-            let inside = null;
-            for (const direction of directions) {
+            let clipped = null;
+            let clippedAt = -1;
+            let crowded = null;
+            for (const [index, direction] of directions.entries()) {
                 const radians = toRadians(direction);
                 const extent = (Math.abs(Math.cos(radians)) * size.width +
                     Math.abs(Math.sin(radians)) * size.height) / 2;
@@ -289,14 +311,26 @@
                     const rect = { left: bounds.x - clearance, top: bounds.y - clearance,
                         right: bounds.x + bounds.width + clearance,
                         bottom: bounds.y + bounds.height + clearance };
-                    if (!insideDrawing(rect)) continue;
-                    if (!inside) inside = [x, y];
-                    if (rects.some(other => overlap(rect, other))) continue;
-                    if (segments.some(segment => segmentNearRect(segment, rect))) continue;
-                    return;
+                    const free = !rects.some(other => overlap(rect, other)) &&
+                        !segments.some(segment => segmentNearRect(segment, rect));
+                    const fits = insideDrawing(rect);
+                    if (free && fits) {
+                        // An earlier, preferred direction already has a clear
+                        // spot only just past the edge: keep that one and let
+                        // the fitted view grow, rather than swapping sides.
+                        if (mayGrow && clipped && clippedAt < index) break;
+                        return;
+                    }
+                    // Clear of everything but past the edge: keep it here and
+                    // let the fitted view grow instead of moving the label.
+                    if (mayGrow && free && !clipped) {
+                        clipped = [x, y];
+                        clippedAt = index;
+                    }
+                    if (fits && !crowded) crowded = [x, y];
                 }
             }
-            const chosen = inside || fallback;
+            const chosen = clipped || crowded || fallback;
             if (chosen) {
                 text.setAttribute('x', attributeNumber(chosen[0]));
                 text.setAttribute('y', attributeNumber(chosen[1]));
@@ -438,13 +472,51 @@
             }
         }
 
+        // Arcs, labels and north arrows reach past the points they belong to,
+        // so after painting, grow the view until nothing is clipped.
+        function growToContent() {
+            let bounds;
+            try {
+                bounds = svg.getBBox();
+            } catch (unused) {
+                return false;
+            }
+            if (!bounds || !bounds.width) return false;
+            let grow = false;
+            const left = Math.max(0, -bounds.x);
+            const right = Math.max(0, bounds.x + bounds.width - drawing.width);
+            const top = Math.max(0, -bounds.y);
+            const bottom = Math.max(0, bounds.y + bounds.height - drawing.height);
+            const margin = 10;
+            if (left > 1) {
+                box.x[0] -= (left + margin) / drawing.scale;
+                grow = true;
+            }
+            if (right > 1) {
+                box.x[1] += (right + margin) / drawing.scale;
+                grow = true;
+            }
+            if (top > 1) {
+                box.y[1] += (top + margin) / drawing.scale;
+                grow = true;
+            }
+            if (bottom > 1) {
+                box.y[0] -= (bottom + margin) / drawing.scale;
+                grow = true;
+            }
+            return grow;
+        }
+
         function paint() {
             if (destroyed) return;
             if (box === null) box = fitBox();
-            measure();
-            paintGrid();
-            drawing.ready = true;
-            for (const item of items) item.paint();
+            for (let pass = 0; pass < 3; pass++) {
+                measure();
+                paintGrid();
+                drawing.ready = true;
+                for (const item of items) item.paint();
+                if (options.view || !growToContent()) break;
+            }
             const interactive = items.some(item => item.settings.select) ||
                 items.some(item => item.kind === 'point' && item.settings.drag);
             svg.setAttribute('role', interactive ? 'group' : 'img');
@@ -465,7 +537,17 @@
                 item.paint();
                 item.dependents.forEach(dependent => dependent.paint());
             };
-            item.extent = () => [item.current];
+            item.extent = () => {
+                const drag = item.settings.drag;
+                if (drag && drag.around) {
+                    const middle = resolve(drag.around);
+                    const distance = Math.hypot(item.current[0] - middle[0],
+                        item.current[1] - middle[1]);
+                    return [[middle[0] - distance, middle[1] - distance],
+                        [middle[0] + distance, middle[1] + distance]];
+                }
+                return [item.current];
+            };
             if (item.settings.drag) {
                 item.group.setAttribute('tabindex', '0');
                 item.group.setAttribute('role', 'slider');
@@ -537,7 +619,7 @@
                 const text = labelText(settings.label);
                 group.append(text);
                 placeLabel(text, [x, y], pointSides(item),
-                    { from: arcReach(item), gap: 10, clearance: 4 });
+                    { from: arcReach(item), gap: 10, clearance: 4, grow: true });
             }
             if (settings.select) {
                 group.setAttribute('data-select', settings.name);
@@ -554,15 +636,49 @@
             }
         }
 
+        function insideSector(direction, sectors) {
+            return sectors.some(sector => {
+                const offset = normaliseHeading(direction - sector.start);
+                return sector.sweep >= 0
+                    ? offset <= sector.sweep
+                    : normaliseHeading(sector.start - direction) <= -sector.sweep;
+            });
+        }
+
+        // The middle of the widest gap that is not inside a drawn angle. Only
+        // when every gap is taken does it fall back to the widest gap.
+        function freeDirection(directions, sectors) {
+            if (!directions.length) return 45;
+            const sorted = [...new Set(directions.map(normaliseHeading))].sort((a, b) => a - b);
+            let best = null;
+            let bestGap = -1;
+            for (let index = 0; index < sorted.length; index++) {
+                const start = sorted[index];
+                const end = index === sorted.length - 1 ? sorted[0] + 360 : sorted[index + 1];
+                const gap = end - start;
+                const middle = start + gap / 2;
+                if (insideSector(middle, sectors)) continue;
+                if (gap > bestGap) {
+                    bestGap = gap;
+                    best = middle;
+                }
+            }
+            if (best === null) return labelDirection(directions);
+            return normaliseHeading(best);
+        }
+
         function pointSides(item) {
             if (item.settings.labelSide) {
                 const fixed = { above: 90, below: 270, left: 180, right: 0 }[item.settings.labelSide];
                 return [fixed ?? 45];
             }
             const directions = [];
+            const sectors = [];
             for (const other of items) {
                 if (other === item || !other.visible) continue;
                 if (other.kind === 'angle' && other.settings.vertex === item) {
+                    const geometry = angleGeometry(other);
+                    sectors.push({ start: geometry.start, sweep: geometry.sweep });
                     directions.push(...other.edges());
                 } else if (other.kind === 'north' && other.settings.from === item) {
                     directions.push(90);
@@ -572,7 +688,7 @@
                     directions.push(directionFrom(item.current, resolve(far)));
                 }
             }
-            const middle = labelDirection(directions);
+            const middle = freeDirection(directions, sectors);
             return [middle, middle + 18, middle - 18, middle + 36, middle - 36, middle + 180];
         }
 
@@ -670,6 +786,15 @@
             return item;
         }
 
+        // The middle of everything drawn, in maths units.
+        function drawingCentre() {
+            const points = [];
+            for (const item of items) points.push(...item.extent());
+            if (!points.length) return [(box.x[0] + box.x[1]) / 2, (box.y[0] + box.y[1]) / 2];
+            return [points.reduce((total, point) => total + point[0], 0) / points.length,
+                points.reduce((total, point) => total + point[1], 0) / points.length];
+        }
+
         function segmentSides(item, a, b) {
             const from = resolve(item.settings.from);
             const to = resolve(item.settings.to);
@@ -682,8 +807,10 @@
             }
             const across = [-(b[1] - a[1]), b[0] - a[0]];
             const middle = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-            const centre = [drawing.width / 2, drawing.height / 2];
-            if (across[0] * (middle[0] - centre[0]) + across[1] * (middle[1] - centre[1]) < 0) {
+            // A polygon side goes away from its polygon's own middle; a lone
+            // segment goes away from the middle of everything drawn.
+            const inside = project(item.settings.awayFrom || drawingCentre());
+            if (across[0] * (middle[0] - inside[0]) + across[1] * (middle[1] - inside[1]) < 0) {
                 across[0] = -across[0];
                 across[1] = -across[1];
             }
@@ -715,7 +842,7 @@
                 const text = labelText(settings.label);
                 group.append(text);
                 placeLabel(text, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
-                    segmentSides(item, a, b), { gap: 7, clearance: 4 });
+                    segmentSides(item, a, b), { gap: 7, clearance: 4, grow: true });
             }
             if (settings.select) {
                 group.setAttribute('data-select', settings.name);
@@ -755,7 +882,10 @@
                 }));
             });
             fill.extent = () => points;
-            const sideSettings = { ...settings, fill: undefined, select: undefined, name: undefined };
+            const middle = points.reduce((total, point) =>
+                [total[0] + point[0] / points.length, total[1] + point[1] / points.length], [0, 0]);
+            const sideSettings = { ...settings, fill: undefined, select: undefined,
+                name: undefined, awayFrom: middle };
             const sides = points.map((unused, index) =>
                 segment(corners[index], corners[(index + 1) % points.length], sideSettings));
             if (!settings.fill) fill.hide();
@@ -798,6 +928,13 @@
         function arcRadius(item, sweep) {
             if (item.settings.radius) return item.settings.radius;
             return Math.abs(sweep) < 35 ? SMALL_ANGLE_ARC : ARC_RADIUS;
+        }
+
+        // Arcs stop short of both lines so each angle reads as its own arc:
+        // min(5 px, a fifth of the arc).
+        function arcTrim(radiusPixels, sweep) {
+            const byLength = toDegrees(Math.min(5 / radiusPixels, 0.2 * Math.abs(toRadians(sweep))));
+            return Math.min(byLength, Math.abs(sweep) / 2 - 0.5);
         }
 
         function arcPoint(vertex, direction, radiusPixels) {
@@ -878,12 +1015,15 @@
                 }));
             } else {
                 const count = Math.max(1, Math.min(3, settings.arcs || 1));
+                const trim = arcTrim(radius, geometry.sweep);
+                const step = Math.sign(geometry.sweep || 1);
                 for (let index = 0; index < count; index++) {
                     const here = radius + index * 5;
                     group.append(element('path', {
-                        d: arcPath(arcPoint(geometry.vertex, geometry.start, here),
-                            arcPoint(geometry.vertex, geometry.start + geometry.sweep, here),
-                            here, geometry.sweep),
+                        d: arcPath(arcPoint(geometry.vertex, geometry.start + step * trim, here),
+                            arcPoint(geometry.vertex,
+                                geometry.start + geometry.sweep - step * trim, here),
+                            here, geometry.sweep - step * trim * 2),
                         stroke: tone, 'stroke-width': width, fill: 'none'
                     }));
                 }
@@ -902,11 +1042,14 @@
             if (label) {
                 const text = labelText(label);
                 group.append(text);
+                // Always inside its own sector, hugging the arc: a small nudge
+                // either side of the bisector, never past the sector's lines.
                 const bisector = geometry.start + geometry.sweep / 2;
                 const extra = square ? 0 : Math.max(1, Math.min(3, settings.arcs || 1)) - 1;
-                const around = [0, 12, -12, 24, -24, 36, -36, 50, -50, 64, -64, 78, -78, 180];
+                const nudge = Math.min(8, Math.max(0, Math.abs(geometry.sweep) / 2 - 2));
+                const around = nudge > 2 ? [0, nudge, -nudge] : [0];
                 placeLabel(text, corner, around.map(offset => bisector + offset),
-                    { from: radius + extra * 5, gap: 10, clearance: 4 });
+                    { from: radius + extra * 5, gap: 4, clearance: 3, grow: true });
             }
             if (settings.select) {
                 const reach = Math.max(radius + 22, 44);
@@ -990,7 +1133,7 @@
         function protractor(base, settings = {}) {
             const centre = resolve(base);
             const full = settings.full === true;
-            const turn = settings.turn === 'clockwise' ? 1 : -1;
+            const turn = settings.turn === 'clockwise' ? 'clockwise' : 'anticlockwise';
             const zero = typeof settings.zero === 'number'
                 ? settings.zero : directionFrom(centre, resolve(settings.zero));
             const reach = settings.radius ?? 3.2;
@@ -1002,21 +1145,22 @@
                 const tone = palette.neutral;
                 const span = full ? 360 : 180;
                 const arcs = full ? 2 : 1;
+                const sign = protractorTurn(turn);
                 for (let index = 0; index < arcs; index++) {
-                    const from = zero + turn * index * 180;
-                    const to = zero + turn * (index * 180 + 180);
+                    const from = zero + sign * index * 180;
+                    const to = zero + sign * (index * 180 + 180);
                     const fromPx = [cx + radius * Math.cos(toRadians(from)),
                         cy - radius * Math.sin(toRadians(from))];
                     const toPx = [cx + radius * Math.cos(toRadians(to)),
                         cy - radius * Math.sin(toRadians(to))];
                     group.append(element('path', {
-                        d: arcPath(fromPx, toPx, radius, turn === 1 ? -180 : 180),
+                        d: arcPath(fromPx, toPx, radius, sign * 180),
                         fill: 'none', stroke: tone, 'stroke-width': 1.5, 'stroke-opacity': 0.5
                     }));
                 }
                 const written = [];
                 for (let step = 0; step <= span; step++) {
-                    const direction = zero + turn * step;
+                    const direction = protractorDirection(zero, turn, step);
                     const long = step % 5 === 0;
                     const inner = radius - (long ? 9 : 5);
                     const fromPx = [cx + inner * Math.cos(toRadians(direction)),
@@ -1089,9 +1233,16 @@
             return items.filter(item => item.kind === 'point' && item.settings.drag);
         }
 
+        function bearingOfPosition(item) {
+            return normaliseHeading(90 - angularPosition(item));
+        }
+
         function ariaText(item) {
             const drag = item.settings.drag;
-            if (drag && drag.around) return `Turned to ${formatAngle(angularPosition(item))}.`;
+            if (drag && drag.around) {
+                if (drag.measure === 'bearing') return `Bearing ${formatBearing(bearingOfPosition(item))}.`;
+                return `Turned to ${formatAngle(angularPosition(item))}.`;
+            }
             return `${item.settings.label ? `Point ${item.settings.label}` : 'Point'} at ${formatPoint(item.current)}.`;
         }
 
@@ -1355,8 +1506,11 @@
                         if (config.answer === 'drag') {
                             const [item] = diagram.draggablePoints();
                             if (next) item.moveTo(next);
-                            item.setTone(phase === 'answer' ? 'neutral'
-                                : phase === 'correct' ? 'correct' : 'incorrect');
+                            const tone = phase === 'answer' ? 'neutral'
+                                : phase === 'correct' ? 'correct' : 'incorrect';
+                            // The ray and anything else drawn from it take the
+                            // same tone as the point the pupil dragged.
+                            [item, ...item.dependents].forEach(drawn => drawn.setTone(tone));
                             return;
                         }
                         const item = next ? diagram.find(next) : null;
@@ -1379,7 +1533,7 @@
     const api = {
         create, questionWidget, fromBearing, bearingOf, angleAt, formatAngle,
         formatBearing, formatNumber, formatPoint, regularPolygon, labelDirection,
-        snapAngle
+        snapAngle, protractorPoint
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
