@@ -47,24 +47,32 @@
     // Each Learn screen shows, then offers a slider. Nothing is asked.
     const learnScreens = [
         {
-            kind: 'counters',
-            title: 'Clocks only count to 59',
+            kind: 'compare',
+            title: 'How long is the film?',
             lines: [
-                "In this lesson, you'll learn how to work out how long it is from one time to another. For example, how long a film lasts.",
-                'Move the slider to add 1 each time.',
-                'A normal number goes up to 159, then 160. A clock goes up to 01:59, then 02:00. Clock minutes only go up to 59. Then the clock moves on to the next hour.'
+                "In this lesson, you'll learn how to work out how long something lasts, like a film or a bus journey.",
+                'A film starts at 10:35 and finishes at 13:10. How long is it?'
             ],
-            callout: '60 minutes = 1 hour.',
-            slider: 'Add 1 minute',
-            values: [0, 1, 2, 3, 4],
-            start: 0,
-            counters: { number: 158, clock: '01:58' }
+            values: [1],
+            start: 1,
+            examples: [
+                {
+                    tone: 'red',
+                    clocks: ['10:35', '13:10'],
+                    calculator: '13.10 − 10.35 = 2.75',
+                    wrong: '2 hours 75 minutes?',
+                    lines: [
+                        "Lots of people take the times away on a calculator. That would mean 2 hours 75 minutes, which can't be right, because an hour only has 60 minutes.",
+                        'The calculator goes wrong because it counts in 100s, but clocks count in 60s. So instead of taking away, we count up from the start time to the end time.'
+                    ]
+                }
+            ]
         },
         {
             kind: 'compare',
-            title: 'Why taking away goes wrong',
-            slider: 'Example',
-            values: [1, 2],
+            title: 'When you can just take away',
+            lines: ['If both times are in the same hour, you can just take away the minutes.'],
+            values: [1],
             start: 1,
             examples: [
                 {
@@ -73,17 +81,8 @@
                     working: '47 − 12 = 35 minutes',
                     mark: '✓',
                     lines: [
-                        'A bus leaves at 10:12 and arrives at 10:47. Both times are in the same hour. So you can just take away the minutes: 35 minutes.'
-                    ]
-                },
-                {
-                    tone: 'red',
-                    clocks: ['10:35', '13:10'],
-                    calculator: '13.10 − 10.35 = 2.75',
-                    wrong: '2 hours 75 minutes?',
-                    lines: [
-                        'A film starts at 10:35 and ends at 13:10. The hour changes, so taking away goes wrong. A calculator thinks an hour has 100 minutes. But a clock never shows 75 minutes.',
-                        'So when the hour changes, count up in jumps instead.'
+                        'A bus leaves at 10:12 and arrives at 10:47. Both times are in the 10 o\'clock hour, so take away the minutes: 47 − 12 = 35 minutes.',
+                        'You only need to count up when the hour changes.'
                     ]
                 }
             ]
@@ -103,20 +102,21 @@
                 },
                 {
                     stops: [0, 1, 2], arcs: 1,
-                    lines: [{ text: 'Hop to 09:00: 10 minutes.', tone: 'blue' }]
+                    lines: [{ text: 'Hop from 08:50 to 09:00. That\'s 10 minutes.', tone: 'blue' }]
                 },
                 {
                     stops: [0, 1, 2], arcs: 2,
                     lines: [
-                        { text: 'Hop to 09:00: 10 minutes.', tone: 'blue' },
-                        { text: 'Land on 09:10: 10 minutes.', tone: 'green' },
+                        { text: 'Hop from 08:50 to 09:00. That\'s 10 minutes.', tone: 'blue' },
+                        { text: 'Land from 09:00 on 09:10. That\'s 10 minutes.', tone: 'green' },
                         { text: '10 + 10 = 20 minutes', tone: 'dark' }
                     ]
                 }
             ],
             lines: [
-                "First, hop to the next o'clock. That's the next time that ends in :00. From 08:50, the next o'clock is 09:00.",
-                'Then land on the end time. Add the jumps to find how long.'
+                'A bus leaves at 08:50 and arrives at 09:10. How long is the journey?',
+                "First, hop from the start time to the next o'clock. That's the next time ending in :00, so from 08:50 it's 09:00.",
+                'Then land on the end time, and add the two jumps together.'
             ],
             slider: 'Show the jumps',
             start: 1
@@ -125,10 +125,10 @@
             kind: 'hop-size',
             title: 'How long is the hop?',
             lines: [
-                'The hop is the number of minutes you need to make 60.',
-                'From 14:45 you need 15 more minutes to make 60. So the hop is 15 minutes.'
+                "To work out the hop, ask yourself: how many more minutes until it's 60?",
+                'From 14:45, you need 15 more minutes to get to 60, so the hop to 15:00 is 15 minutes.'
             ],
-            callout: 'Use 60, not 100. From 14:45 the hop is 15 minutes, not 55.',
+            callout: "Be careful to count to 60, not 100. A lot of people say 55, but that's counting to 100.",
             slider: 'Start time',
             values: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
             start: 45,
@@ -137,7 +137,7 @@
         },
         {
             kind: 'timeline',
-            title: 'Skip whole hours',
+            title: 'Skip the whole hours',
             times: ['09:40', '10:00', '11:00', '11:15'],
             arcs: [
                 { from: 0, to: 1, label: '+20 min', tone: 'blue' },
@@ -148,35 +148,35 @@
                 { stops: [0, 3], arcs: 0, lines: [] },
                 {
                     stops: [0, 1, 3], arcs: 1,
-                    lines: [{ text: 'Hop to 10:00: 20 minutes.', tone: 'blue' }]
+                    lines: [{ text: 'Hop from 09:40 to 10:00. That\'s 20 minutes.', tone: 'blue' }]
                 },
                 {
                     stops: [0, 1, 2, 3], arcs: 2,
                     lines: [
-                        { text: 'Hop to 10:00: 20 minutes.', tone: 'blue' },
-                        { text: 'Skip to 11:00: 1 hour.', tone: 'purple' }
+                        { text: 'Hop from 09:40 to 10:00. That\'s 20 minutes.', tone: 'blue' },
+                        { text: 'Skip from 10:00 to 11:00. That\'s 1 hour.', tone: 'purple' }
                     ]
                 },
                 {
                     stops: [0, 1, 2, 3], arcs: 3,
                     lines: [
-                        { text: 'Hop to 10:00: 20 minutes.', tone: 'blue' },
-                        { text: 'Skip to 11:00: 1 hour.', tone: 'purple' },
-                        { text: 'Land on 11:15: 15 minutes.', tone: 'green' },
-                        { text: '20 + 15 = 35 minutes, plus 1 hour = 1 hour 35 minutes', tone: 'dark' }
+                        { text: 'Hop from 09:40 to 10:00. That\'s 20 minutes.', tone: 'blue' },
+                        { text: 'Skip from 10:00 to 11:00. That\'s 1 hour.', tone: 'purple' },
+                        { text: 'Land from 11:00 on 11:15. That\'s 15 minutes.', tone: 'green' },
+                        { text: '20 + 15 = 35 minutes, plus the 1 hour = 1 hour 35 minutes', tone: 'dark' }
                     ]
                 }
             ],
             lines: [
-                'Sometimes there are whole hours in the middle. Skip them all in one jump. This is the skip.',
-                'From 10:00 to 11:00 is 1 hour.'
+                'Some journeys have whole hours in the middle. You can skip all of them in one jump.',
+                'A train leaves at 09:40 and arrives at 11:15. How long does it take?'
             ],
             slider: 'Show the jumps',
             start: 1
         },
         {
             kind: 'timeline',
-            title: '60 minutes make 1 hour',
+            title: 'When the minutes go over 60',
             times: ['08:14', '09:00', '09:22'],
             arcs: [
                 { from: 0, to: 1, label: '+46 min', tone: 'blue' },
@@ -195,16 +195,16 @@
             ],
             lines: [
                 'Sometimes the hop and the land add up to 60 minutes or more.',
-                "Every 60 minutes make 1 hour. Take 60 away, and what's left is the minutes."
+                "A lesson starts at 08:14 and finishes at 09:22. The hop is 46 minutes and the land is 22 minutes. Take 60 minutes out to make 1 hour, and what's left over is the minutes."
             ],
-            callout: 'Count in 60s, not 100s. 68 minutes is 1 hour 8 minutes.',
+            callout: 'So 68 minutes is 1 hour 8 minutes, not 1 hour 68 minutes.',
             slider: 'Show the steps',
             start: 1
         },
         {
             kind: 'timeline',
-            title: 'Hop, skip, land, add',
-            question: 'A coach leaves at 13:36 and arrives at 16:20. How long is the journey?',
+            title: 'Putting it all together',
+            question: 'A coach leaves at 13:36 and arrives at 16:20. How long does it take?',
             times: ['13:36', '14:00', '16:00', '16:20'],
             arcs: [
                 { from: 0, to: 1, label: '+24 min', tone: 'blue' },
@@ -255,8 +255,8 @@
                 }
             ],
             lines: [
-                'Use these steps for every question.',
-                'If the question asks for minutes, turn each hour into 60 minutes.'
+                'You can use these steps for any question like this.',
+                'If the question wants the answer in minutes, count each hour as 60 minutes.'
             ],
             slider: 'Show the steps',
             start: 1

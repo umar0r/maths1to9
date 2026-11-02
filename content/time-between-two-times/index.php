@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $lessonId = 'time-between-two-times';
-$pageTitle = 'How long between two times';
+$pageTitle = 'How long does it take?';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +28,7 @@ $pageTitle = 'How long between two times';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=40">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
@@ -71,9 +71,9 @@ $pageTitle = 'How long between two times';
     <script src="../../assets/js/progress.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./time.js?v=1"></script>
+    <script src="./time.js?v=2"></script>
     <script src="./questions.js?v=1"></script>
-    <script src="./interactive.js?v=1"></script>
+    <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=46"></script>

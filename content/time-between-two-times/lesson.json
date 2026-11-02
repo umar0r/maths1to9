@@ -1,8 +1,8 @@
 {
     "id": "time-between-two-times",
     "slug": "time-between-two-times",
-    "title": "How long between two times",
-    "subtitle": "Hop to the next o'clock, skip whole hours, then land.",
+    "title": "How long does it take?",
+    "subtitle": "Work out how long a film, a journey or a lesson lasts.",
     "navigation": {
         "back_button": true
     },
@@ -34,16 +34,16 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "How long between two times"
+        "title": "How long does it take?"
     },
     "interactive": {
         "eyebrow": "Try it",
-        "title": "Try how long between two times",
+        "title": "Work out how long things take",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
-        "title": "Practise how long between two times",
+        "title": "Practise working out how long things take",
         "intro": "",
         "session_length": 6
     },
@@ -111,19 +111,19 @@
             "title": "What you have learnt",
             "points": [
                 {
-                    "text": "Clock minutes only go up to 59. Then the clock moves on to the next hour."
+                    "text": "An hour has 60 minutes, not 100, so a calculator gives the wrong answer when the hour changes."
                 },
                 {
-                    "text": "Don't take away times like normal numbers when the hour changes."
+                    "text": "If both times are in the same hour, you can just take away the minutes."
                 },
                 {
-                    "text": "Hop to the next o'clock. Skip whole hours. Land on the end time."
+                    "text": "If the hour changes, count up: hop to the next o'clock, skip the whole hours, then land on the end time."
                 },
                 {
-                    "text": "Add the jumps. Every 60 minutes make 1 hour."
+                    "text": "Add up the jumps. If the minutes come to 60 or more, take 60 out to make an hour."
                 },
                 {
-                    "text": "If the question asks for minutes, each hour is 60 minutes."
+                    "text": "If the question wants the answer in minutes, count each hour as 60 minutes."
                 }
             ]
         }
