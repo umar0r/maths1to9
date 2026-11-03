@@ -236,9 +236,7 @@
                 if (found) {
                     const top = built.top.position();
                     const bottom = built.bottom.position();
-                    shape(built.diagram, [
-                        [top[0] - 1.7, top[1]], top, bottom, [bottom[0] + 1.7, bottom[1]]
-                    ]);
+                    shape(built.diagram, S.shapeThrough(top, bottom, 'top-above-right', 'bottom-above-right'));
                 }
                 lines([found ? 'x = 60°. Corresponding angles are equal.' : '']);
                 return {
@@ -267,9 +265,7 @@
                 if (found) {
                     const top = built.top.position();
                     const bottom = built.bottom.position();
-                    shape(built.diagram, [
-                        [top[0] + 1.7, top[1]], top, bottom, [bottom[0] - 1.7, bottom[1]]
-                    ]);
+                    shape(built.diagram, S.shapeThrough(top, bottom, 'top-below-right', 'bottom-above-left'));
                 }
                 lines([found ? 'y = 120°. Alternate angles are equal.' : '']);
                 return {
@@ -302,9 +298,7 @@
                 if (marked) {
                     const top = built.top.position();
                     const bottom = built.bottom.position();
-                    shape(built.diagram, [
-                        [top[0] - 1.7, top[1]], top, bottom, [bottom[0] - 1.7, bottom[1]]
-                    ]);
+                    shape(built.diagram, S.shapeThrough(top, bottom, 'top-below-right', 'bottom-above-right'));
                 }
                 lines([
                     marked && !found ? '120° and z make a straight line.' : '',
