@@ -313,6 +313,7 @@
             note: config.note,
             vertex: [0, 0],
             lines: config.lines,
+            rays: config.rays,
             sectors: config.sectors
         });
     }
@@ -419,7 +420,7 @@
                 figure: aroundPointFigure({
                     note: 'Not drawn accurately',
                     label: 'Three lines from a point, angles 92 degrees, 146 degrees and x',
-                    rays: [92, 238],
+                    rays: [0, 92, 238],
                     sectors: [
                         { from: 0, to: 92, label: '92°' },
                         { from: 92, to: 238, label: '146°' },
@@ -592,7 +593,7 @@
                 figure: aroundPointFigure({
                     note: 'Not drawn accurately',
                     label: 'Three lines from a point, angles 95 degrees, 125 degrees and 130 degrees',
-                    rays: [95, 220],
+                    rays: [0, 95, 220],
                     sectors: [
                         { from: 0, to: 95, label: '95°' },
                         { from: 95, to: 220, label: '125°' },
@@ -614,7 +615,7 @@
                 figure: crossingFigure({
                     note: 'Not drawn accurately',
                     label: 'Two lines from a point, the small angle 64 degrees and the reflex angle x',
-                    lines: [[0, 180], [64, 244]],
+                    rays: [0, 64],
                     sectors: [
                         { from: 0, to: 64, label: '64°' },
                         { from: 64, to: 360, label: 'x', tone: 'highlight' }
@@ -902,7 +903,7 @@
                 figure: aroundPointFigure({
                     note,
                     label: `Lines from a point, angles ${values.join(' degrees, ')} degrees and x`,
-                    rays: sectors.slice(0, -1).map(sector => sector.to),
+                    rays: [0, ...sectors.slice(0, -1).map(sector => sector.to)],
                     sectors
                 })
             };
@@ -988,7 +989,7 @@
                     note,
                     label: `Two parallel lines crossed by a line, angles ${Object.values(lettersAt).join(', ')}`,
                     parallel: { theta, corners: Object.fromEntries(Object.entries(lettersAt).map(([name, letter]) => [
-                        name, { label: letter, letter: true, select: true, name: letter }
+                        name, { label: letter, letter: true, select: true, name: letter, ...(letter === 'a' ? { tone: 'highlight' } : {}) }
                     ])) },
                     marks: { ...marks }
                 })

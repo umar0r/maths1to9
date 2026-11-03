@@ -100,12 +100,11 @@
             draw(host, steps, lines) {
                 const card = screenCard(steps[0]);
                 const built = S.buildAngles(S.open(host, {
-                    label: `One angle, turned to ${card.size} degrees`,
-                    view: { x: [-4.4, 4.4], y: [-4.4, 2.6] }
+                    label: `One angle, turned to ${card.size} degrees`
                 }), {
                     vertex: [0, 0],
                     rays: [0, card.size],
-                    sectors: [{ from: 0, to: card.size, label: degrees(card.size), tone: 'highlight' }]
+                    sectors: [{ from: 0, to: card.size, label: degrees(card.size), tone: 'highlight', square: card.key === 'right' }]
                 });
                 lines([card.says]);
                 return { built, size: card.size, mover: built.pointAt(card.size), label: built.sectors[0].handle };
@@ -118,21 +117,18 @@
                 const found = steps.includes('x');
                 const built = S.buildAngles(S.open(host, {
                     label: 'A straight line with a line coming out of it, angles 130 degrees and x',
-                    view: { x: [-1.2, 7.2], y: [-2.4, 4.4] }
+                    note: 'The whole straight line is 180°.'
                 }), {
                     vertex: [2.6, 0],
                     lines: [[0, 180]],
                     rays: [130],
-                    protractor: { zero: 0, turn: 'anticlockwise', full: false },
                     sectors: [
                         { from: 0, to: 130, label: '130°', tone: known ? 'highlight' : 'neutral', select: true, name: 'known' },
-                        { from: 130, to: 180, label: found ? '50°' : 'x', tone: found ? 'correct' : 'neutral', select: true, name: 'x' }
+                        { from: 130, to: 180, label: found ? '50°' : 'x', tone: found ? 'highlight' : 'neutral', select: true, name: 'x' }
                     ]
                 });
-                if (known) built.diagram.select(built.sectors[0].handle);
-                if (found) built.diagram.select(built.sectors[1].handle);
                 lines([
-                    known ? 'The whole half turn is 180°.' : '',
+                    known ? '130 + x = 180°' : '',
                     found ? 'x = 180 − 130 = 50°' : ''
                 ]);
                 return {
@@ -153,20 +149,19 @@
                 const found = steps.includes('x');
                 const built = S.buildAngles(S.open(host, {
                     label: 'Three lines from a point, angles 100 degrees, 120 degrees and x',
-                    view: { x: [-1.6, 4.8], y: [-3.4, 3.4] }
+                    note: 'All the way round is 360°.'
                 }), {
                     vertex: [1.4, 0],
                     rays: [0, 100, 220],
-                    protractor: { zero: 0, turn: 'anticlockwise', full: true },
                     sectors: [
                         { from: 0, to: 100, label: '100°', tone: first ? 'highlight' : 'neutral', select: true, name: 'a' },
                         { from: 100, to: 220, label: '120°', tone: second ? 'highlight' : 'neutral', select: true, name: 'b' },
-                        { from: 220, to: 360, label: found ? '140°' : 'x', tone: found ? 'correct' : 'neutral', select: true, name: 'x' }
+                        { from: 220, to: 360, label: found ? '140°' : 'x', tone: found ? 'highlight' : 'neutral', select: true, name: 'x' }
                     ]
                 });
                 lines([
-                    first && !second ? '100' : '',
-                    second ? '100 + 120 = 220' : '',
+                    first && !second ? '100°' : '',
+                    second ? '100 + 120 = 220°' : '',
                     found ? 'x = 360 − 220 = 140°' : ''
                 ]);
                 return {
@@ -506,7 +501,7 @@
             busy = true;
             move(600, done => {
                 const size = start + (card.size - start) * done;
-                picture.mover.moveTo(polar([0, 0], size, 3.4));
+                picture.mover.moveTo(polar([0, 0], size, 2.6));
                 picture.label.setLabel(degrees(Math.round(size)));
             }).then(() => {
                 busy = false;
