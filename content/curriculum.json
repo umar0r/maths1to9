@@ -118,7 +118,7 @@
         {"folder":"measures-time-and-timetables","title":"Measures and timetables","subtitle":"Read scales and units, and use timetables.","skills":["standard-measures","timetables"]},
         {"folder":"scale-drawings","title":"Scale drawings","subtitle":"Times to get real life. Divide to get the drawing.","skills":["scale-drawings"]},
         {"folder":"scale-drawings-and-maps","title":"Map scales as ratios","subtitle":"Use scales like 1 : 25 000 to find real distances.","skills":["map-scales"]},
-        {"folder":"angle-facts","title":"Angle facts","subtitle":"Use angles around points, on lines and across parallel lines.","skills":["angles-point-line","vertically-opposite-angles","parallel-line-angles"]},
+        {"folder":"angle-rules","title":"Rules of angles","subtitle":"Find missing angles on lines, round points and on parallel lines.","skills":["angles-point-line","vertically-opposite-angles","parallel-line-angles"]},
         {"folder":"triangles-and-quadrilaterals","title":"Triangles and quadrilaterals","subtitle":"Use the names, properties and angle facts of common shapes.","skills":["triangle-properties","quadrilateral-properties","angles-in-triangles"]},
         {"folder":"polygons","title":"Polygons","subtitle":"Calculate interior and exterior angles of polygons.","skills":["polygon-angle-sums","regular-polygon-angles"]},
         {"folder":"bearings","title":"Bearings","subtitle":"Measure and use three-figure bearings.","skills":["compass-directions","three-figure-bearings"]},
