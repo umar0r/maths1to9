@@ -272,3 +272,67 @@ test('angle facts: curriculum lists the three skills and the plain subtitle', ()
     assert.deepEqual(entry.skills, ['angles-point-line', 'vertically-opposite-angles', 'parallel-line-angles']);
     assert.equal(entry.subtitle, 'Use angles on a line, round a point and on parallel lines.');
 });
+
+// A stand-in for the shared diagram that records what a picture draws,
+// so the test can see whether every angle really has a line on both sides.
+function spyDiagram() {
+    const drawn = [];
+    const arcs = [];
+    const makePoint = position => {
+        const point = {
+            position: () => position.slice(),
+            moveTo(next) { position = next.slice(); },
+            label() { return point; }
+        };
+        return point;
+    };
+    const diagram = {
+        point: position => makePoint(position),
+        segment(a, b) { drawn.push([a.position(), b.position()]); return {}; },
+        line(a, b) { drawn.push([a.position(), b.position()]); return {}; },
+        angle(one, vertex, two) {
+            arcs.push([one.position(), vertex.position(), two.position()]);
+            return { setLabel() {}, position: () => ({ x: 0, y: 0 }), settings: {} };
+        },
+        protractor() { return {}; },
+        arrow() { return {}; },
+        select() {},
+        describe() {},
+        questionWidget: () => null
+    };
+    return { diagram, drawn, arcs };
+}
+
+// True when a point sits on one of the drawn lines or rays.
+function onLine([x, y], drawn) {
+    return drawn.some(([[ax, ay], [bx, by]]) => {
+        const dx = bx - ax;
+        const dy = by - ay;
+        const length = Math.hypot(dx, dy);
+        if (!length) return false;
+        const along = ((x - ax) * dx + (y - ay) * dy) / (length * length);
+        if (along < -1e-9 || along > 1 + 1e-9) return false;
+        return Math.abs((x - ax) * dy - (y - ay) * dx) / length < 1e-9;
+    });
+}
+
+test('angle facts: every angle in a card has a line on both sides', () => {
+    const realCreate = window.Maths1to9Diagram.create;
+    for (const type of ['straight-line', 'around-point', 'opposite']) {
+        for (let n = 1; n <= 150; n++) {
+            const question = generated(type, n);
+            const spy = spyDiagram();
+            window.Maths1to9Diagram.create = () => spy.diagram;
+            try {
+                question.figure('host');
+            } finally {
+                window.Maths1to9Diagram.create = realCreate;
+            }
+            assert.ok(spy.arcs.length >= 2, `${type} ${n}: at least two angles drawn`);
+            for (const [one, vertex, two] of spy.arcs) {
+                assert.ok(onLine(one, spy.drawn), `${type} ${n}: one side of an angle has a line`);
+                assert.ok(onLine(two, spy.drawn), `${type} ${n}: the other side has a line`);
+            }
+        }
+    }
+});
