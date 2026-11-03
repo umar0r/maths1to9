@@ -101,6 +101,16 @@
     // Two parallel lines with a crossing line rising to the right at
     // `theta`. `corners` names the angles to draw, such as
     // 'top-below-right' or 'bottom-above-left'.
+    // The two directions round one corner of two parallel lines. The
+    // crossing line rises to the right at `theta`, so above-right and
+    // below-left are the narrow pair, and above-left and below-right the
+    // wide pair.
+    function cornerSector(theta, corner) {
+        const [, side, end] = corner.split('-');
+        if (side === 'above') return end === 'right' ? [0, theta] : [theta, 180];
+        return end === 'left' ? [180, 180 + theta] : [180 + theta, 360];
+    }
+
     function buildParallel(diagram, config) {
         const theta = config.theta;
         const gap = config.gap ?? 3.6;
@@ -123,13 +133,11 @@
         const corners = new Map();
         for (const [name, settings] of Object.entries(config.corners || {})) {
             const atTop = name.startsWith('top');
-            const right = name.endsWith('right');
             const vertex = atTop ? above : below;
-            const across = right ? 0 : 180;
-            const alongCross = right ? (atTop ? theta : 180 + theta) : (atTop ? 180 + theta : theta);
+            const [from, to] = cornerSector(theta, name);
             const here = vertex.position();
-            const one = diagram.point(along(here, across, 1.15), { mark: 'none' });
-            const two = diagram.point(along(here, amod(alongCross), 1.15), { mark: 'none' });
+            const one = diagram.point(along(here, from, 1.15), { mark: 'none' });
+            const two = diagram.point(along(here, to, 1.15), { mark: 'none' });
             const handle = diagram.angle(one, vertex, two, {
                 turn: 'anticlockwise',
                 label: settings.letter ? '' : settings.label,
@@ -141,8 +149,7 @@
                 // The letter goes in the middle of its own corner, with a
                 // fixed side, so four letters round one crossing never swap
                 // places with each other.
-                const sweep = amod(alongCross - across);
-                const middle = amod(across + sweep / 2);
+                const middle = amod(from + amod(to - from) / 2);
                 diagram.point(along(here, middle, 1), {
                     label: settings.label, labelSide: sideFor(middle), mark: 'none'
                 });
