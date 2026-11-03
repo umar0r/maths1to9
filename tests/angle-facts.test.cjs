@@ -336,3 +336,25 @@ test('angle facts: every angle in a card has a line on both sides', () => {
         }
     }
 });
+
+test('angle facts: the F, C and Z shapes sit on the side of the corner they show', () => {
+    const top = [4.2, 2.6];
+    const bottom = [2.8, 0];
+    const shapes = {
+        F: ['top-above-right', 'bottom-above-right'],
+        Z: ['top-below-right', 'bottom-above-left'],
+        C: ['top-below-right', 'bottom-above-right']
+    };
+    for (const [name, [topCorner, bottomCorner]] of Object.entries(shapes)) {
+        const points = A.shapeThrough(top, bottom, topCorner, bottomCorner);
+        assert.equal(points.length, 4, `${name}: four points`);
+        assert.deepEqual(points[1], top, `${name}: touches the top crossing`);
+        assert.deepEqual(points[2], bottom, `${name}: touches the bottom crossing`);
+        const topRight = points[0][0] > top[0];
+        const bottomRight = points[3][0] > bottom[0];
+        assert.equal(topRight, topCorner.endsWith('right'), `${name}: the top piece goes to its own side`);
+        assert.equal(bottomRight, bottomCorner.endsWith('right'), `${name}: the bottom piece goes to its own side`);
+        if (name === 'Z') assert.notEqual(topRight, bottomRight, 'Z: the pieces are on opposite sides');
+        else assert.equal(topRight, bottomRight, `${name}: both pieces are on the same side`);
+    }
+});

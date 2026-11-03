@@ -330,6 +330,16 @@
     }
 
     // The angle each sector covers, from its two directions.
+    // The F, C and Z drawn through two corners: a piece of each parallel
+    // line, starting at its own crossing and going towards the side its
+    // angle is on, joined by the crossing line between the two crossings.
+    function shapeThrough(top, bottom, topCorner, bottomCorner, reach = 1.7) {
+        const piece = (corner, crossing) => [
+            crossing[0] + (corner.endsWith('right') ? reach : -reach), crossing[1]
+        ];
+        return [piece(topCorner, top), top, bottom, piece(bottomCorner, bottom)];
+    }
+
     function sectorEnds(letters) {
         const starts = Object.values(letters).slice().sort((a, b) => a - b);
         const sectors = [];
@@ -1086,7 +1096,7 @@
 
     window.AngleFacts = {
         number, REASONS, REASON_LIST, learnScreens, examples, checks,
-        practiceTypes, pick, generate, prepare, cornerAngle,
+        practiceTypes, pick, generate, prepare, cornerAngle, shapeThrough,
         open, drawAngles, drawParallel, buildAngles, buildParallel
     };
 })();
