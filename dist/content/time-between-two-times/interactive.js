@@ -157,33 +157,6 @@
         };
     }
 
-    // One big counter, for Learn 1. Only the digits that change flash.
-    function makeCounter(label) {
-        const box = node('div', '', 'tb-counter');
-        box.append(node('p', label, 'tb-counter-label'));
-        const digits = node('div', '', 'tb-digits');
-        box.append(digits);
-        let shown = [];
-        return {
-            box,
-            set(value) {
-                const characters = value.split('');
-                if (characters.length !== shown.length) {
-                    digits.replaceChildren(...characters.map(() => node('span', '', 'tb-digit')));
-                }
-                const spans = Array.from(digits.children);
-                characters.forEach((character, index) => {
-                    if (spans[index].textContent === character) return;
-                    spans[index].textContent = character;
-                    spans[index].classList.remove('tb-flash');
-                    void spans[index].offsetWidth;
-                    spans[index].classList.add('tb-flash');
-                });
-                shown = characters;
-            }
-        };
-    }
-
     function makeClock(value, tone = '') {
         return node('span', value, `tb-clock ${tone}`.trim());
     }
@@ -191,21 +164,7 @@
     // Every screen builds its picture once and returns paint(value), which only
     // changes positions, colours and text. The slider keeps focus while dragged.
     const pictures = [
-        // Learn 1. Two counters side by side.
-        function counters(host, screen) {
-            const row = node('div', '', 'tb-counters');
-            const normal = makeCounter('A normal number');
-            const clocked = makeCounter('A clock');
-            row.append(normal.box, clocked.box);
-            host.append(row);
-            const base = screen.counters.number;
-            const clockMinutes = S.minutesOf(screen.counters.clock);
-            return step => {
-                normal.set(String(base + step));
-                clocked.set(S.clock(Math.floor((clockMinutes + step) / 60), (clockMinutes + step) % 60));
-            };
-        },
-        // Learn 2. Two examples, one green and one red.
+        // Learn 1 and 2. One worked example each, red or green.
         function compare(host, screen) {
             const blocks = screen.examples.map(example => {
                 const block = node('article', '', `tb-compare tb-${example.tone}`);
@@ -285,14 +244,14 @@
                 working([{ text: `${minutes} + ${hop} = 60, so the hop is ${hop} minutes`, tone: 'dark' }]);
                 cells.paint(index => index < minutes ? 'grey' : 'blue');
                 if (textLines[1]) {
-                    textLines[1].textContent = `From ${start} you need ${hop} more minutes to make 60. So the hop is ${hop} minutes.`;
+                    textLines[1].textContent = `From ${start}, you need ${hop} more minutes to get to 60, so the hop to ${screen.end} is ${hop} minutes.`;
                 }
             };
         }
     ];
 
-    // Learn 3, 5, 6 and 7 all use the time line (pictures[2]); 1 is counters.
-    const pictureFor = [0, 1, 2, 3, 2, 2, 2];
+    // Learn 1 and 2 use the example card; 3, 5, 6 and 7 the time line.
+    const pictureFor = [0, 0, 1, 2, 1, 1, 1];
 
     async function mountLearn() {
         const root = node('article', '', 'tb-learn');
@@ -342,7 +301,12 @@
             const textLines = (screen.lines || []).map(line => node('p', line, 'tb-text'));
             root.append(...textLines);
 
-            if (screen.values) {
+            if (screen.values && screen.values.length === 1) {
+                // One example and nothing to change, so no slider.
+                const picture = node('div', '', 'tb-picture');
+                pictures[pictureFor[state.screen]](picture, screen, textLines)(screen.values[0]);
+                root.append(picture);
+            } else if (screen.values) {
                 const controls = node('label', '', 'tb-slider');
                 const slider = node('input');
                 const output = node('output');

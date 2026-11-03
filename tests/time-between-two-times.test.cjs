@@ -193,15 +193,14 @@ test('Learn has 7 screens, Try it 10 cards, Check 6 cards', () => {
     assert.deepEqual(lesson.section_order, ['explanation', 'interactive', 'question-bank', 'comparison']);
 });
 
-test('Learn 1 shows the two counters before anything is asked', () => {
+test('Learn 1 shows the film example before anything is asked', () => {
     const first = T.learnScreens[0];
-    assert.equal(first.kind, 'counters');
-    assert.equal(JSON.stringify(first.counters), JSON.stringify({ number: 158, clock: '01:58' }));
-    assert.equal(first.values.length, 5);
-    assert.equal(first.values[0], first.start);
+    assert.equal(first.kind, 'compare');
+    assert.equal(first.examples[0].clocks.join(' '), '10:35 13:10');
     T.learnScreens.forEach((screen, index) => {
         assert.ok(screen.title, `learn-${index + 1}: title`);
-        assert.ok(screen.slider, `learn-${index + 1}: a slider`);
+        if (index < 2) assert.equal(screen.values.length, 1, `learn-${index + 1}: nothing to change`);
+        else assert.ok(screen.slider, `learn-${index + 1}: a slider`);
         assert.ok(!screen.options && !screen.answer, `learn-${index + 1}: asks nothing`);
     });
 });

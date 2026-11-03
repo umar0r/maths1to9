@@ -114,7 +114,7 @@
       "title": "Geometry and measures",
       "description": "Explore shape, space, angles, constructions and measurement.",
       "lessons": [
-        {"folder":"time-between-two-times","title":"How long between two times","subtitle":"Hop to the next o'clock, skip whole hours, then land.","skills":["time-calculations"]},
+        {"folder":"time-between-two-times","title":"How long does it take?","subtitle":"Work out how long a film, a journey or a lesson lasts.","skills":["time-calculations"]},
         {"folder":"measures-time-and-timetables","title":"Measures and timetables","subtitle":"Read scales and units, and use timetables.","skills":["standard-measures","timetables"]},
         {"folder":"scale-drawings","title":"Scale drawings","subtitle":"Times to get real life. Divide to get the drawing.","skills":["scale-drawings"]},
         {"folder":"scale-drawings-and-maps","title":"Map scales as ratios","subtitle":"Use scales like 1 : 25 000 to find real distances.","skills":["map-scales"]},

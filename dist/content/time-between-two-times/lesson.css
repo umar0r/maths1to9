@@ -118,58 +118,7 @@
     fill: var(--tb-green);
 }
 
-/* Learn 1: the two counters. */
-.tb-counters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .6rem;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-}
-.tb-counter {
-    display: grid;
-    gap: .3rem;
-    justify-items: center;
-    padding: .7rem .3rem;
-    border-radius: .5rem;
-    background: #f3f6fb;
-    border: 2px solid #dbe3ee;
-    box-sizing: border-box;
-    min-width: 0;
-}
-.tb-counter-label {
-    margin: 0;
-    font-size: .85rem;
-    font-weight: 800;
-    color: var(--tb-grey);
-    text-align: center;
-}
-.tb-digits {
-    font-size: 2rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: .04em;
-    color: var(--tb-dark);
-    white-space: nowrap;
-}
-.tb-digit {
-    display: inline-block;
-    border-radius: .15rem;
-}
-@keyframes tb-flash {
-    from {
-        background: #ffe08a;
-    }
-    to {
-        background: transparent;
-    }
-}
-.tb-digit.tb-flash {
-    animation: tb-flash 400ms ease-out;
-}
-
-/* Learn 2: the two examples. */
+/* Learn 1 and 2: the worked examples. */
 .tb-compare {
     display: grid;
     gap: .5rem;
@@ -322,17 +271,10 @@
     .tb-arc {
         transition: none;
     }
-    .tb-digit.tb-flash {
-        animation: none;
-        background: transparent;
-    }
 }
 @media (max-width: 400px) {
     .tb-working {
         font-size: 1rem;
-    }
-    .tb-digits {
-        font-size: 1.5rem;
     }
     .tb-clock {
         font-size: 1.25rem;
