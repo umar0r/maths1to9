@@ -3,6 +3,7 @@ const number = text => Number(text.replace('−', '-'));
 const signed = value => String(value).replace('-', '−');
 
 module.exports = async function solve(page) {
+    if (await require('../negative-numbers-learn-helper.cjs')(page)) return true;
     const main = page.locator('.lesson-controls button.button--primary:visible');
     if (await main.isEnabled()) return false;
     const prompt = page.locator('.question-prompt:visible');

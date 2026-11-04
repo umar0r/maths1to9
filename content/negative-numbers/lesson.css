@@ -84,3 +84,284 @@
 .negative-ticks .negative-key-tick::before {
     top: -2.2rem;
 }
+
+/* Learn visuals are scoped so the question sections keep their existing style. */
+.nn-learn {
+    --nn-negative: #bb4826;
+    --nn-positive: #087e65;
+    --nn-blue: #287fd1;
+}
+
+.nn-learn p {
+    line-height: 1.65;
+}
+
+.nn-learn .nn-instruction {
+    color: #175ca1;
+}
+
+.nn-learn .nn-sum {
+    font-size: clamp(1.7rem, 5vw, 2.5rem);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.nn-number-line {
+    width: 100%;
+    margin-block: 1.5rem;
+}
+
+.nn-number-line svg {
+    display: block;
+    width: 100%;
+    overflow: visible;
+}
+
+.nn-number-line text {
+    text-anchor: middle;
+    font-family: inherit;
+    font-size: 24px;
+    fill: currentColor;
+}
+
+.nn-number-line .nn-start-label {
+    fill: #65655f;
+    font-size: 21px;
+}
+
+.nn-number-line .nn-negative {
+    color: var(--nn-negative);
+}
+
+.nn-number-line .nn-positive {
+    color: var(--nn-positive);
+}
+
+.nn-number-line .nn-axis {
+    stroke: #898981;
+    stroke-width: 1.5;
+}
+
+.nn-number-line .nn-tick {
+    stroke: currentColor;
+    stroke-width: 1;
+}
+
+.nn-number-line .nn-zero {
+    font-weight: 900;
+    stroke-width: 2.5;
+}
+
+.nn-number-line .nn-zero-circle {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+.nn-number-line .nn-hop {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+}
+
+.nn-number-line .nn-dot {
+    fill: var(--nn-blue);
+    stroke: white;
+    stroke-width: 2;
+}
+
+.nn-number-line .nn-start-dot {
+    fill: #898981;
+}
+
+.nn-number-line .nn-negative-shade {
+    fill: #bb482610;
+    stroke: var(--nn-negative);
+}
+
+.nn-number-line .nn-positive-shade {
+    fill: #087e6510;
+    stroke: var(--nn-positive);
+}
+
+.nn-explore {
+    touch-action: none;
+    cursor: grab;
+}
+
+.nn-explore:active {
+    cursor: grabbing;
+}
+
+.nn-learn [role="button"] {
+    cursor: pointer;
+}
+
+.nn-learn [tabindex="0"]:focus-visible {
+    outline: 3px solid var(--nn-blue);
+    outline-offset: 5px;
+    border-radius: 5px;
+}
+
+.nn-learn .nn-caption {
+    text-align: center;
+    font-weight: 800;
+}
+
+.nn-learn .nn-working {
+    display: table;
+    padding: .5rem .8rem;
+    background: #eaf3df;
+    color: #28520d;
+    border-radius: .7rem;
+    font-size: clamp(.95rem, 4.1vw, 1.5rem);
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.nn-learn .nn-warning {
+    padding: .8rem 1rem;
+    background: #fcebec;
+    color: #8a2020;
+    border-radius: .7rem;
+}
+
+.nn-read-sum {
+    display: grid;
+    grid-template-columns: auto 1fr 1.7fr;
+    gap: .4rem;
+    max-width: 400px;
+    margin: 2.5rem auto 1rem;
+    padding-bottom: 6rem;
+    font-size: clamp(2.5rem, 9vw, 4rem);
+    font-weight: 900;
+    align-items: start;
+}
+
+.nn-part {
+    position: relative;
+    text-align: center;
+    border: 2px solid transparent;
+    border-radius: .5rem;
+    color: #175ca1;
+    min-height: 54px;
+}
+
+.nn-part.nn-negative {
+    color: var(--nn-negative);
+}
+
+.nn-part.nn-selected {
+    border-color: currentColor;
+}
+
+.nn-part small {
+    position: absolute;
+    top: calc(100% + 1rem);
+    left: 0;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.nn-part.nn-selected::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    height: .9rem;
+    border-left: 2px solid currentColor;
+}
+
+.nn-pattern {
+    width: max-content;
+    max-width: 100%;
+    min-height: 4rem;
+    margin: 1.5rem auto;
+}
+
+.nn-pattern-row {
+    display: grid;
+    grid-template-columns: 5.8em 2.1em 2.6em;
+    padding: .25rem .4rem;
+    font-weight: 900;
+    font-size: clamp(1.3rem, 5vw, 2rem);
+    white-space: nowrap;
+}
+
+.nn-pattern-row small {
+    font-size: .7em;
+    color: var(--nn-positive);
+    align-self: center;
+}
+
+.nn-highlight {
+    background: #fbefdb;
+}
+
+.nn-transform {
+    display: flex;
+    align-items: center;
+    gap: .3em;
+}
+
+.nn-transform-signs {
+    display: inline-grid;
+    width: 2.1em;
+    position: relative;
+    border-radius: .3rem;
+    background: #fbefdb;
+    text-align: center;
+}
+
+.nn-transform-signs > span {
+    grid-area: 1 / 1;
+}
+
+.nn-transform-signs .nn-after {
+    visibility: hidden;
+}
+
+.nn-transform-signs.nn-changed .nn-before {
+    opacity: 0;
+    animation: nn-fade-out .35s;
+}
+
+.nn-transform-signs.nn-changed .nn-after {
+    visibility: visible;
+    animation: nn-fade-in .35s;
+}
+
+.nn-gone {
+    visibility: hidden;
+}
+@keyframes nn-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes nn-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-transform-signs.nn-changed > span {
+        animation: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .nn-number-line text {
+        font-size: 30px;
+    }
+
+    .nn-number-line .nn-start-label {
+        font-size: 26px;
+    }
+
+    .nn-number-line .nn-zero-circle {
+        r: 20px;
+    }
+}
