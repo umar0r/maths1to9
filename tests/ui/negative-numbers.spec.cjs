@@ -41,11 +41,12 @@ for (const width of [1280, 375]) {
             const errors = watchForErrors(page);
             await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
             await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByText('Subtracting a negative becomes adding a positive.', { exact: true })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Numbers below zero', exact: true })).toBeVisible();
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();
             for (let step = 0; step < 160; step++) {
+                if (await require('./negative-numbers-learn-helper.cjs')(page)) continue;
                 const url = page.url();
                 if (!visited.has(url)) {
                     await goBackAndForward(page);
@@ -164,39 +165,11 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
-        await mainAction(page).click();
-        const path = page.locator('.negative-path:visible');
-        await expect(path).toHaveCount(0);
-        const slider = page.getByLabel('Spaces moved right', { exact: true });
-        await slider.focus();
-        await slider.press('ArrowRight');
-        const firstWidth = await path.evaluate(element => element.getBoundingClientRect().width);
-        await slider.press('End');
-        const fullWidth = await path.evaluate(element => element.getBoundingClientRect().width);
-        expect(fullWidth).toBeCloseTo(firstWidth * 4, 0);
-        const alignment = await page.evaluate(() => {
-            const marker = document.querySelector('.negative-marker').getBoundingClientRect();
-            const track = document.querySelector('.negative-ticks').getBoundingClientRect();
-            return marker.y + marker.height / 2 - (track.y + track.height / 2);
-        });
-        expect(Math.abs(alignment)).toBeLessThan(0.6);
-        for (const value of ['3', '7']) await expect(page.locator('.negative-ticks:visible span').filter({ hasText: new RegExp(`^${value}$`) })).toHaveCSS('font-size', width === 375 ? '10.4px' : '12px');
-        await page.screenshot({ path: `/private/tmp/negative-line-learn-${width}.png`, fullPage: true });
-        await mainAction(page).click();
-        await expect(page.locator('.negative-equation:visible').last()).not.toHaveText(/\.$/);
-        // Adjacent odd key labels sit on a separate row from the even scale labels.
-        await page.getByLabel('Starting number', { exact: true }).focus();
-        await page.getByLabel('Starting number', { exact: true }).press('Home');
-        await page.getByLabel('Positive amount to add', { exact: true }).focus();
-        await page.getByLabel('Positive amount to add', { exact: true }).press('Home');
-        const overlaps = await page.locator('.negative-ticks:visible span').evaluateAll(nodes => {
-            const labels = nodes.filter(node => parseFloat(getComputedStyle(node).fontSize) > 0).map(node => node.getBoundingClientRect());
-            return labels.some((a, i) => labels.slice(i + 1).some(b => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom));
-        });
-        expect(overlaps).toBe(false);
-        await mainAction(page).click();
-        await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Start −7, move right to −4/);
-        await mainAction(page).click();
+        // Finish the new Learn pictures before checking the unchanged Try it line.
+        for (let step = 0; step < 80 && new URL(page.url()).hash.startsWith('#learn-'); step++) {
+            if (await solve(page)) continue;
+            await mainAction(page).click();
+        }
         await expect(page.locator('.negative-path:visible')).toHaveCount(0);
         await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Starting marker 5/);
         await expect(page.locator('.negative-line:visible')).not.toHaveAttribute('aria-label', /move right to 8/);

@@ -28,12 +28,12 @@ $pageTitle = 'Subtracting negative numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=40">
-    <link rel="stylesheet" href="./lesson.css?v=5">
+    <link rel="stylesheet" href="./lesson.css?v=7">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json"
+    data-lesson-src="./lesson.json?v=2"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -74,7 +74,7 @@ $pageTitle = 'Subtracting negative numbers';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=12"></script>
-    <script src="./interactive.js?v=13"></script>
+    <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=46"></script>
