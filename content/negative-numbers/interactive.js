@@ -12,20 +12,20 @@
         { title: 'Taking away past zero', lines: [
             'When you take away a positive number, you move left along the number line. If you take away more than you started with, you go past zero and end up on a negative number.'
         ], journeys: [
-            { start: 4, steps: 6, direction: -1, sum: '4 − 6', instruction: 'Start at 4. Taking away 6 means 6 steps to the left. Tap to take each step.', result: 'You went past zero and landed on −2.' },
-            { start: 2, steps: 5, direction: -1, sum: '2 − 5', instruction: 'Your turn. Start at 2 and take 5 steps left.' }
+            { start: 4, steps: 6, direction: -1, sum: '4 − 6', instruction: 'Start at 4. Taking away 6 means 6 steps to the left. Tap the number line to take each step.', result: 'You went past zero and landed on −2.' },
+            { start: 2, steps: 5, direction: -1, sum: '2 − 5', instruction: 'Your turn. Tap the number line to take 5 steps left.' }
         ] },
         { title: 'Adding to a negative number', lines: [
             'When you add a positive number, you move right along the number line. If you start on a negative number, adding moves you back up towards zero, and sometimes past it.'
         ], journeys: [
-            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', instruction: 'Start at −6. Adding 4 means 4 steps to the right. Tap to take each step.', result: 'You moved up towards zero but didn\'t reach it, so the answer is still negative.' },
-            { start: -3, steps: 7, direction: 1, sum: '−3 + 7', instruction: 'Your turn. Start at −3 and take 7 steps right.', result: 'This time you went past zero, so the answer is positive.' }
+            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', instruction: 'Start at −6. Adding 4 means 4 steps to the right. Tap the number line to take each step.', result: 'You moved up towards zero but didn\'t reach it, so the answer is still negative.' },
+            { start: -3, steps: 7, direction: 1, sum: '−3 + 7', instruction: 'Your turn. Tap the number line to take 7 steps right.', result: 'This time you went past zero, so the answer is positive.' }
         ] },
         { title: 'Taking away from a negative number', lines: [
-            'If you start on a negative number and take away, you still move left. That takes you further below zero, so the answer is more negative.'
+            'If you start on a negative number and take away a positive number, you still move left. That takes you further below zero, so the answer is more negative.'
         ], journeys: [
-            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', instruction: 'Start at −2. Taking away 3 means 3 steps to the left. Tap to take each step.' },
-            { start: -4, steps: 5, direction: -1, sum: '−4 − 5', instruction: 'Your turn. Start at −4 and take 5 steps left.' }
+            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', instruction: 'Start at −2. Taking away 3 means 3 steps to the left. Tap the number line to take each step.' },
+            { start: -4, steps: 5, direction: -1, sum: '−4 − 5', instruction: 'Your turn. Tap the number line to take 5 steps left.' }
         ] },
         { title: 'Two minus signs in one sum', lines: [
             'Sometimes you have to take away a negative number, like 3 take away negative 2. We write it as 3 − (−2). The bracket keeps the negative 2 together, so the two minus signs don\'t run into each other.'
@@ -45,28 +45,37 @@
 
     // Every Learn line has the same scale. Two label rows keep all 21 values
     // readable on phones without hiding the odd numbers.
-    function numberLine({ start, position = start, hops = 0, direction = 1, explore = false }) {
+    function numberLine({ start, position = start, hops = 0, direction = 1, explore = false, pixelWidth = 660 }) {
         const x = value => 30 + (value + 10) * 30;
-        let picture = explore ? `<rect class="nn-negative-shade" x="20" y="65" width="290" height="30" rx="5"/>
-            <rect class="nn-positive-shade" x="350" y="65" width="290" height="30" rx="5"/>
-            <text class="nn-negative" x="165" y="30">negative numbers</text>
-            <text class="nn-positive" x="495" y="30">positive numbers</text>` :
-            `<text class="nn-start-label" x="${x(start)}" y="24">start</text>`;
-        picture += '<path class="nn-axis" d="M 15 80 H 645"/>';
+        const phone = window.matchMedia('(max-width: 600px)').matches;
+        const axis = phone ? 180 : 80;
+        const labelOffset = axis - 80;
+        const height = phone ? 300 : 185;
+        // Keep the draggable marker 22 px wide, with a hit area larger than 44 px,
+        // regardless of how much the SVG scales to fit the card.
+        const svgScale = 660 / (pixelWidth || (phone ? window.innerWidth - 36 : 660));
+        const markerRadius = explore ? 11 * svgScale : (phone ? 12 : 9);
+        let picture = explore ? `<rect class="nn-negative-shade" x="20" y="${axis - 15}" width="290" height="30" rx="5"/>
+            <rect class="nn-positive-shade" x="350" y="${axis - 15}" width="290" height="30" rx="5"/>
+            <text class="nn-negative" x="165" y="${phone ? 60 : 30}">negative numbers</text>
+            <text class="nn-positive" x="495" y="${phone ? 60 : 30}">positive numbers</text>` :
+            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 55 : 24}">start</text>`;
+        picture += `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
         for (let value = -10; value <= 10; value++) {
             const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
-            const y = Math.abs(value) % 2 ? 162 : 116;
-            picture += `<path class="nn-tick ${tone}" d="M ${x(value)} 73 V 87"/>
+            const y = (Math.abs(value) % 2 ? 162 : 116) + labelOffset;
+            picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
                 <text class="nn-value ${tone}" x="${x(value)}" y="${y}">${signed(value)}</text>`;
         }
-        picture += '<circle class="nn-zero-circle" cx="330" cy="108" r="16"/>';
+        picture += `<circle class="nn-zero-circle" cx="330" cy="${axis + 28}" r="16"/>`;
         for (let step = 0; step < hops; step++) {
             const from = x(start + direction * step), to = from + direction * 30;
-            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} 80 Q ${(from + to) / 2} 37 ${to} 80"/>`;
+            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 20 : 37} ${to} ${axis}"/>`;
         }
-        if (!explore) picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="80" r="6"/>`;
-        picture += `<circle class="nn-dot" cx="${x(position)}" cy="80" r="9"/>`;
-        return `<svg viewBox="0 0 660 185" aria-hidden="true">${picture}</svg>`;
+        if (!explore) picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="${axis}" r="6"/>`;
+        picture += `<circle class="nn-dot" cx="${x(position)}" cy="${axis}" r="${markerRadius}"/>`;
+        if (explore) picture += `<circle class="nn-drag-target" cx="${x(position)}" cy="${axis}" r="${23 * svgScale}" fill="transparent"/>`;
+        return `<svg viewBox="0 0 660 ${height}" aria-hidden="true">${picture}</svg>`;
     }
 
     function tapTarget(node, label, onTap) {
@@ -172,7 +181,7 @@
             caption.setAttribute('aria-live', 'polite');
             function draw() {
                 const value = state.marker;
-                line.innerHTML = numberLine({ start: 0, position: value, explore: true });
+                line.innerHTML = numberLine({ start: 0, position: value, explore: true, pixelWidth: line.clientWidth });
                 caption.textContent = value === 0 ? "You're on 0. Zero is neither positive nor negative." :
                     `You're on ${signed(value)}. That's ${Math.abs(value)} to the ${value < 0 ? 'left' : 'right'} of zero, so it's a ${value < 0 ? 'negative' : 'positive'} number.`;
             }
@@ -201,7 +210,7 @@
 
         function journey(item, count, onTap) {
             const line = document.createElement('div');
-            line.className = 'nn-number-line';
+            line.className = `nn-number-line${count === 0 ? ' nn-awaiting-tap' : ''}`;
             line.innerHTML = numberLine({ ...item, hops: count, position: item.start + count * item.direction });
             root.append(line);
             if (count < item.steps) tapTarget(line, item.instruction, onTap);
@@ -277,7 +286,7 @@
                         render();
                     });
                 } else {
-                    const instruction = `${state.screen === 6 ? 'Now start' : 'Start'} at ${signed(screen.start)} and take ${screen.steps} steps right.`;
+                    const instruction = `${state.screen === 6 ? 'Now start' : 'Start'} at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
                     paragraph(instruction, 'nn-instruction');
                     journey({ ...screen, direction: 1, instruction }, state.hops[i], () => {
                         section.update(state => { state.hops[i]++; });

@@ -111,6 +111,12 @@
     margin-block: 1.5rem;
 }
 
+.nn-awaiting-tap {
+    border-radius: .75rem;
+    background: #287fd10a;
+    box-shadow: inset 0 0 0 2px #287fd155;
+}
+
 .nn-number-line svg {
     display: block;
     width: 100%;
@@ -353,6 +359,12 @@
 }
 
 @media (max-width: 600px) {
+    /* Reach across the card's 20 px padding without changing shared layout. */
+    .nn-number-line {
+        width: calc(100% + 40px);
+        margin-inline: -20px;
+    }
+
     .nn-number-line text {
         font-size: 30px;
     }

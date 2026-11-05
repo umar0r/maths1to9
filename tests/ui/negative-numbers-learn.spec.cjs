@@ -54,10 +54,21 @@ for (const width of [1280, 375]) {
         await expect(main(page)).toBeEnabled();
         const line = root(page).locator('.nn-explore');
         const box = await line.boundingBox();
+        const marker = await line.locator('.nn-dot').boundingBox();
+        const hit = await line.locator('.nn-drag-target').boundingBox();
+        expect(marker.width).toBeGreaterThanOrEqual(22);
+        expect(marker.width).toBeLessThan(26);
+        expect(hit.width).toBeGreaterThanOrEqual(44);
+        expect(hit.height).toBeGreaterThanOrEqual(44);
+        if (width === 375) {
+            expect(box.width).toBeGreaterThan(335);
+            expect(box.height).toBeGreaterThan(150);
+        }
+        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Negative numbers');
         // Real pointer drag, snapping at −4, followed by keyboard movement.
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height * 80 / 185);
+        await page.mouse.move(box.x + box.width / 2, marker.y + marker.height / 2);
         await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 210 / 660, box.y + box.height * 80 / 185, { steps: 8 });
+        await page.mouse.move(box.x + box.width * 210 / 660, marker.y + marker.height / 2, { steps: 8 });
         await page.mouse.up();
         await expect(root(page).locator('.nn-caption')).toHaveText("You're on −4. That's 4 to the left of zero, so it's a negative number.");
         await line.focus();
@@ -73,10 +84,21 @@ for (const width of [1280, 375]) {
                 const before = await picture(page);
                 // Exercise touch taps and keyboard activation as well as clicks.
                 const target = root(page).locator('[role="button"]').first();
+                const isLine = await target.evaluate(node => node.classList.contains('nn-number-line'));
+                const waiting = isLine && await target.evaluate(node => !node.querySelector('.nn-hop'));
+                if (waiting) await expect(target).toHaveClass(/nn-awaiting-tap/);
                 if (width === 375) await target.tap();
                 else if (taps === 0) { await target.focus(); await target.press('Enter'); }
                 else await target.click();
                 expect(await picture(page)).not.toEqual(before);
+                if (isLine) {
+                    const moved = root(page).locator('.nn-number-line').filter({ has: page.locator('.nn-hop') });
+                    for (const line of await moved.all()) await expect(line).not.toHaveClass(/nn-awaiting-tap/);
+                    if (width === 375) {
+                        const hop = await moved.last().locator('.nn-hop').last().boundingBox();
+                        expect(hop.height).toBeGreaterThan(39);
+                    }
+                }
                 await layout(page);
                 await reloadAndCompare(page);
                 taps++;
