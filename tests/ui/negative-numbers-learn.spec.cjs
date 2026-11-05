@@ -56,6 +56,9 @@ for (const width of [1280, 375]) {
         const box = await line.boundingBox();
         const marker = await line.locator('.nn-dot').boundingBox();
         const hit = await line.locator('.nn-drag-target').boundingBox();
+        const zero = await line.locator('.nn-zero-circle').boundingBox();
+        await expect(root(page).locator('.nn-caption')).toHaveText("You're on −4. That's 4 to the left of zero, so it's a negative number.");
+        expect(marker.x + marker.width).toBeLessThan(zero.x);
         expect(marker.width).toBeGreaterThanOrEqual(22);
         expect(marker.width).toBeLessThan(26);
         expect(hit.width).toBeGreaterThanOrEqual(44);
@@ -65,7 +68,12 @@ for (const width of [1280, 375]) {
             expect(box.height).toBeGreaterThan(150);
         }
         await expect(page.locator('.lesson-section__title:visible')).toHaveText('Negative numbers');
-        // Real pointer drag, snapping at −4, followed by keyboard movement.
+        // Drag from the new starting position to zero, then back to −4.
+        await page.mouse.move(marker.x + marker.width / 2, marker.y + marker.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width / 2, marker.y + marker.height / 2, { steps: 8 });
+        await page.mouse.up();
+        await expect(root(page).locator('.nn-caption')).toHaveText("You're on 0. Zero is neither positive nor negative.");
         await page.mouse.move(box.x + box.width / 2, marker.y + marker.height / 2);
         await page.mouse.down();
         await page.mouse.move(box.x + box.width * 210 / 660, marker.y + marker.height / 2, { steps: 8 });

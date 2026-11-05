@@ -111,7 +111,7 @@
         const section = await api.useSectionState('learn', {
             version: 2,
             initial: () => ({
-                screen: 0, furthestScreen: 0, finished: false, marker: 0,
+                screen: 0, furthestScreen: 0, finished: false, marker: -4,
                 journeys: [[0, 0], [0, 0], [0, 0]], labels: [false, false],
                 pattern: 0, changed: [false, false], hops: [0, 0]
             }),

@@ -78,7 +78,7 @@ negative colour with the label "negative numbers" above it. The right side
 numbers". Zero is circled.
 
 **What the pupil does:** this is the one screen with a drag. A marker sits
-on 0. The pupil drags it along the line; it snaps to whole numbers. A
+on −4. The pupil drags it along the line; it snaps to whole numbers. A
 sentence under the line updates as it moves, and each one makes sense on
 its own:
 
