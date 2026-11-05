@@ -67,7 +67,8 @@ for (const width of [1280, 375]) {
             expect(box.width).toBeGreaterThan(335);
             expect(box.height).toBeGreaterThan(150);
         }
-        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Negative numbers');
+        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Subtracting negative numbers');
+        await expect(page.locator('.lesson-eyebrow:visible')).toHaveCount(0);
         // Drag from the new starting position to zero, then back to −4.
         await page.mouse.move(marker.x + marker.width / 2, marker.y + marker.height / 2);
         await page.mouse.down();
