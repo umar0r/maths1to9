@@ -1937,13 +1937,15 @@
             return;
         }
 
-        appendSectionHeading(
-            container,
-            explanation,
-            'Explanation',
-            'What you need to know',
-            'explanation'
-        );
+        if (!explanation.hide_heading) {
+            appendSectionHeading(
+                container,
+                explanation,
+                'Explanation',
+                'What you need to know',
+                'explanation'
+            );
+        }
 
         /*
          * Optional lesson video. Sits at the top of Learn so a
