@@ -41,7 +41,7 @@ for (const width of [1280, 375]) {
             const errors = watchForErrors(page);
             await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
             await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByRole('heading', { name: 'Numbers below zero', exact: true })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Subtracting negative numbers', exact: true })).toBeVisible();
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();

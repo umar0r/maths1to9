@@ -1,7 +1,7 @@
 {
     "id": "negative-numbers-01",
     "slug": "negative-numbers",
-    "title": "Subtracting negative numbers",
+    "title": "Negative numbers",
     "subtitle": "Rewrite subtracting a negative as adding a positive.",
     "navigation": {
         "back_button": true
@@ -22,15 +22,18 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Negative numbers"
+        "hide_eyebrow": true,
+        "title": "Subtracting negative numbers"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
         "title": "Try these calculations",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise subtracting negative numbers",
         "intro": "",
         "session_length": 11
@@ -73,6 +76,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you have learnt",
         "intro": "",
         "questions": [

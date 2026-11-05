@@ -135,6 +135,11 @@
     font-size: 21px;
 }
 
+/* Small enough for all 21 numbers to fit on one row. */
+.nn-number-line .nn-value {
+    font-size: 17px;
+}
+
 .nn-number-line .nn-negative {
     color: var(--nn-negative);
 }
@@ -178,16 +183,6 @@
 
 .nn-number-line .nn-start-dot {
     fill: #898981;
-}
-
-.nn-number-line .nn-negative-shade {
-    fill: #bb482610;
-    stroke: var(--nn-negative);
-}
-
-.nn-number-line .nn-positive-shade {
-    fill: #087e6510;
-    stroke: var(--nn-positive);
 }
 
 .nn-explore {
@@ -373,7 +368,11 @@
         font-size: 26px;
     }
 
+    .nn-number-line .nn-value {
+        font-size: 19px;
+    }
+
     .nn-number-line .nn-zero-circle {
-        r: 20px;
+        r: 15px;
     }
 }

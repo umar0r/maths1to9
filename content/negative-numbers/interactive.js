@@ -43,34 +43,29 @@
 
     const signed = value => String(value).replace('-', '−');
 
-    // Every Learn line has the same scale. Two label rows keep all 21 values
-    // readable on phones without hiding the odd numbers.
+    // Every Learn line has the same scale, with all 21 values on one row.
     function numberLine({ start, position = start, hops = 0, direction = 1, explore = false, pixelWidth = 660 }) {
         const x = value => 30 + (value + 10) * 30;
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const axis = phone ? 180 : 80;
-        const labelOffset = axis - 80;
-        const height = phone ? 300 : 185;
+        const axis = phone ? 210 : 80;
+        const height = phone ? 296 : 140;
         // Keep the draggable marker 22 px wide, with a hit area larger than 44 px,
         // regardless of how much the SVG scales to fit the card.
         const svgScale = 660 / (pixelWidth || (phone ? window.innerWidth - 36 : 660));
         const markerRadius = explore ? 11 * svgScale : (phone ? 12 : 9);
-        let picture = explore ? `<rect class="nn-negative-shade" x="20" y="${axis - 15}" width="290" height="30" rx="5"/>
-            <rect class="nn-positive-shade" x="350" y="${axis - 15}" width="290" height="30" rx="5"/>
-            <text class="nn-negative" x="165" y="${phone ? 60 : 30}">negative numbers</text>
-            <text class="nn-positive" x="495" y="${phone ? 60 : 30}">positive numbers</text>` :
-            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 55 : 24}">start</text>`;
+        let picture = explore ? `<text class="nn-negative" x="165" y="${phone ? 90 : 30}">negative numbers</text>
+            <text class="nn-positive" x="495" y="${phone ? 90 : 30}">positive numbers</text>` :
+            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 85 : 24}">start</text>`;
         picture += `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
         for (let value = -10; value <= 10; value++) {
             const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
-            const y = (Math.abs(value) % 2 ? 162 : 116) + labelOffset;
             picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
-                <text class="nn-value ${tone}" x="${x(value)}" y="${y}">${signed(value)}</text>`;
+                <text class="nn-value ${tone}" x="${x(value)}" y="${axis + 36}">${signed(value)}</text>`;
         }
         picture += `<circle class="nn-zero-circle" cx="330" cy="${axis + 28}" r="16"/>`;
         for (let step = 0; step < hops; step++) {
             const from = x(start + direction * step), to = from + direction * 30;
-            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 20 : 37} ${to} ${axis}"/>`;
+            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 50 : 37} ${to} ${axis}"/>`;
         }
         if (!explore) picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="${axis}" r="6"/>`;
         picture += `<circle class="nn-dot" cx="${x(position)}" cy="${axis}" r="${markerRadius}"/>`;
@@ -222,7 +217,9 @@
 
         function render() {
             const screen = screens[state.screen];
-            root.innerHTML = `<h3 data-screen-heading tabindex="-1">${screen.title}</h3>`;
+            // The section title is the only visible heading. Screen readers still
+            // hear each screen's name, and focus has somewhere to land.
+            root.innerHTML = `<h3 class="visually-hidden" data-screen-heading tabindex="-1">${screen.title}</h3>`;
             screen.lines.forEach(text => paragraph(text));
             if (state.screen === 0) explore();
             else if (screen.journeys) {
