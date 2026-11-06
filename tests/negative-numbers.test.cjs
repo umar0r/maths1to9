@@ -34,8 +34,9 @@ function verifyMaths(question) {
 
 test('negative-numbers: every fixed and generated calculation has the right answer', () => {
     questions.forEach(verifyMaths);
-    assert.equal(answer(Q.checks()[3]), 'Subtracting −7 means adding 7. The answer is 3.');
-    assert.equal(answer(Q.checks()[4]), '4 − (−7) = 11°C');
+    assert.equal(Q.checks().length, 5);
+    assert.equal(answer(Q.checks()[1]), 'They turn into a plus, so you add.');
+    assert.equal(answer(Q.checks()[2]), 'A minus, because the two signs are different.');
 });
 
 test('negative-numbers: every choice has four distinct options and one correct answer', () => {
@@ -92,5 +93,5 @@ test('negative-numbers: 200 seeds of every type are deterministic and mapped to 
     assert.ok(examples().some(question => question.input === 'choice'));
     assert.ok(examples().some(question => question.input === 'number'));
     assert.ok(Q.checks().some(question => question.input === 'choice'));
-    assert.ok(Q.checks().some(question => question.input === 'number'));
+    assert.ok(Q.checks().every(question => question.input === 'choice'));
 });
