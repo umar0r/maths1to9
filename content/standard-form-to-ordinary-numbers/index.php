@@ -28,7 +28,7 @@ $pageTitle = 'From standard form to ordinary numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
 </head>
 
 <body
@@ -40,10 +40,6 @@ $pageTitle = 'From standard form to ordinary numbers';
             <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
-            </a>
-
-            <a class="site-header__back" href="../../">
-                All lessons
             </a>
         </div>
     </header>
@@ -72,7 +68,7 @@ $pageTitle = 'From standard form to ordinary numbers';
     <script src="../../vendor/katex/katex.min.js"></script>
 
     <!-- Shared browser progress handling -->
-    <script src="../../assets/js/progress.js?v=2"></script>
+    <script src="../../assets/js/progress.js?v=3"></script>
 
     <script src="./numbers.js?v=1"></script>
 
@@ -81,6 +77,6 @@ $pageTitle = 'From standard form to ordinary numbers';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=46"></script>
+    <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

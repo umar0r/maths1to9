@@ -908,7 +908,7 @@
                             if (next) api.continueSection();
                             else {
                                 api.completeLesson();
-                                window.location.assign(document.querySelector('.site-header__back')?.href || '../../');
+                                window.location.assign(document.querySelector('.site-logo')?.href || '../../');
                             }
                         }
                     }
@@ -1618,6 +1618,15 @@
         const header = renderLessonHeader();
         const navigation = renderSectionNavigation();
 
+        // The stage dots sit in the site header, opposite the logo.
+        const siteHeader = document.querySelector('.site-header__inner');
+        const stagesInSiteHeader = Boolean(siteHeader) &&
+            navigation.classList.contains('lesson-navigation--stages');
+
+        if (stagesInSiteHeader) {
+            siteHeader.append(navigation);
+        }
+
         const sectionContainer = createElement(
             'div',
             'lesson-section-container'
@@ -1678,7 +1687,7 @@
 
         app.append(
             header,
-            navigation,
+            ...(stagesInSiteHeader ? [] : [navigation]),
             sectionContainer,
             controls
         );
@@ -2943,8 +2952,8 @@
     function handlePrimaryAction() {
         if (state.finished && state.lesson.navigation?.back_button !== true &&
             !state.questionSets.has(state.sections[state.currentIndex]?.id)) {
-            const allLessons = document.querySelector('.site-header__back');
-            window.location.assign(allLessons?.href || new URL('../../', window.location.href).href);
+            const home = document.querySelector('.site-logo');
+            window.location.assign(home?.href || new URL('../../', window.location.href).href);
             return;
         }
 

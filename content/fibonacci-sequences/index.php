@@ -27,7 +27,7 @@ $pageTitle = 'Fibonacci-type sequences';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
     <link rel="stylesheet" href="./lesson.css?v=18">
 </head>
 
@@ -40,10 +40,6 @@ $pageTitle = 'Fibonacci-type sequences';
             <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
-            </a>
-
-            <a class="site-header__back" href="../../">
-                All lessons
             </a>
         </div>
     </header>
@@ -68,7 +64,7 @@ $pageTitle = 'Fibonacci-type sequences';
     </noscript>
 
     <!-- Shared browser progress handling -->
-    <script src="../../assets/js/progress.js?v=2"></script>
+    <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./fibonacci.js?v=19"></script>
@@ -77,6 +73,6 @@ $pageTitle = 'Fibonacci-type sequences';
     <script src="./interactive.js?v=18"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=46"></script>
+    <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

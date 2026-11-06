@@ -8,7 +8,7 @@ for (const base of ['content', 'dist/content']) {
             await page.goto(`${base}/${lesson}/#comparison`, {waitUntil:'networkidle'});
             await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
             const main = page.locator(`${MAIN_ACTION}:visible`);
-            const destination = await page.locator('.site-header__back').getAttribute('href');
+            const destination = await page.locator('.site-logo').getAttribute('href');
             const expectedUrl = new URL(destination, page.url()).href;
             for (let step = 0; step < 80; step++) {
                 if (await main.innerText() === 'All lessons') break;
