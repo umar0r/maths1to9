@@ -10,10 +10,8 @@ module.exports = async function solve(page) {
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
     if (text.includes('×')) {
-        const choices = { 'Work out −6 × 4.': '−24', 'Which square gives the sign of −8 × −2?': '− row, − column', 'Sam says −3 × −5 = −15. What is the right answer?': '15' };
-        const typed = { 'Work out −6 × −3.': '18', 'Find the missing number: ? × −3 = 15.': '−5' };
-        if (typed[text]) await page.locator('.question-card:visible input[type=text]').fill(typed[text]);
-        else await page.getByRole('button', { name: choices[text], exact: true }).click();
+        const typed = { 'Work out −6 × 4.': '−24', 'Work out −6 × −3.': '18', 'Find the missing number: ? × −3 = 15.': '−5', 'Sam says −3 × −5 = −15. What is the right answer?': '15' };
+        await page.locator('.question-card:visible input[type=text]').fill(typed[text]);
         return true;
     }
     const calculation = text.match(/([−-]?\d+)\s*−\s*\(−(\d+)\)/);

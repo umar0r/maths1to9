@@ -320,16 +320,21 @@ square shows its sign and an example under the grid: 2 × 3 = 6, 2 × −3 = −
 lines around the top row and first column. The question's row is pastel red
 and its column pastel blue, so the square where they cross is purple:
 
-1. Choice: Work out −6 × 4.
+1. Typed: Work out −6 × 4.
 2. Typed: Work out −6 × −3.
-3. Choice: Which square gives the sign of −8 × −2? (nothing coloured until the pupil picks an option, then the table colours that row and column)
+3. Tap: Tap the square that gives the sign of −8 × −2. A wrong square colours
+   its row and column and explains why.
 4. Typed: Find the missing number: ? × −3 = 15.
-5. Choice: Sam says −3 × −5 = −15. What is the right answer?
+5. Typed: Sam says −3 × −5 = −15. What is the right answer?
+
+**Subtracting examples.** Try it has no multiple choice. The question sits at
+the top, then "Drag the dot to the answer." When the dot lands on the answer
+it goes green, the working shows in the green box, and Next unlocks. There is
+nothing to type and no Check button.
 
 ## Number line in the questions
 
-Every typed "Work out" question in Try it, Practice and Check has a number
-line above it. The pupil drags the dot to help them work it out, and hops
+Every typed "Work out" question in Practice has a number line. The pupil drags the dot to help them work it out, and hops
 appear from the start to the dot. Above the hops it says how far they've
 moved (+4, or −3 going left), and the number they're on shows below the line. Only the
 typed answer is marked. The line stretches to fit the sum, with room to go

@@ -51,14 +51,15 @@
     function multiplyExamples() {
         return [
             {
-                questionType: 'multiply', input: 'choice', signs: ['−', '+'],
-                prompt: 'Work out −6 × 4.',
-                options: [
-                    option('−24', '6 × 4 = 24. The signs are different, so the answer is negative.', true),
-                    option('24', 'The signs are different, so the answer is negative, not positive.'),
-                    option('−2', 'That adds −6 and 4. This question multiplies them.'),
-                    option('−10', 'That takes 4 away from −6. This question multiplies them.')
-                ]
+                questionType: 'multiply', input: 'number', signs: ['−', '+'],
+                prompt: 'Work out −6 × 4.', answer: '−24',
+                feedback: '6 × 4 = 24. The signs are different, so the answer is negative.',
+                rules: [
+                    { value: '24', feedback: 'The signs are different, so the answer is negative, not positive.' },
+                    { value: '−2', feedback: 'That adds −6 and 4. This question multiplies them.' },
+                    { value: '−10', feedback: 'That takes 4 away from −6. This question multiplies them.' }
+                ],
+                fallback: 'Work out 6 × 4, then use the table to find the sign.'
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
@@ -71,14 +72,14 @@
                 fallback: 'Work out 6 × 3, then use the grid to find the sign.'
             },
             {
-                questionType: 'multiply', input: 'choice', signs: [null, null], square: ['−', '−'],
-                prompt: 'Which square gives the sign of −8 × −2?',
-                options: [
-                    option('− row, − column', 'Both numbers are negative, so use the − row and the − column.', true),
-                    option('+ row, + column', 'Both numbers are negative, so neither one is on a + line.'),
-                    option('+ row, − column', '−8 is negative, so it goes on the − row, not the + row.'),
-                    option('− row, + column', '−2 is negative, so it goes on the − column, not the + column.')
-                ]
+                questionType: 'multiply', input: 'tap', square: ['−', '−'],
+                prompt: 'Tap the square that gives the sign of −8 × −2.',
+                feedback: 'Both numbers are negative, so use the − row and the − column.',
+                wrong: {
+                    '+,+': 'Both numbers are negative, so neither one is on a + line.',
+                    '+,−': '−8 is negative, so it goes on the − row, not the + row.',
+                    '−,+': '−2 is negative, so it goes on the − column, not the + column.'
+                }
             },
             {
                 questionType: 'multiply', input: 'number', signs: [null, '−'],
@@ -88,14 +89,14 @@
                 fallback: '15 ÷ 3 = 5. Then use the grid to find the sign.'
             },
             {
-                questionType: 'multiply', input: 'choice', signs: ['−', '−'],
-                prompt: 'Sam says −3 × −5 = −15. What is the right answer?',
-                options: [
-                    option('15', 'The signs are the same, so the answer is positive.', true),
-                    option('−15', 'That is Sam\'s answer. The signs are the same, so it should be positive.'),
-                    option('−8', 'That adds −3 and −5. This question multiplies them.'),
-                    option('2', 'That takes −5 away from −3. This question multiplies them.')
-                ]
+                questionType: 'multiply', input: 'number', signs: ['−', '−'],
+                prompt: 'Sam says −3 × −5 = −15. What is the right answer?', answer: '15',
+                feedback: 'The signs are the same, so the answer is positive.',
+                rules: [
+                    { value: '−15', feedback: 'That is Sam\'s answer. The signs are the same, so it should be positive.' },
+                    { value: '−8', feedback: 'That adds −3 and −5. This question multiplies them.' }
+                ],
+                fallback: 'Work out 3 × 5, then use the table to find the sign.'
             }
         ];
     }
@@ -236,7 +237,7 @@
             const tick = document.createElement('span');
             tick.style.left = `${(value - min) / (max - min) * 100}%`;
             tick.textContent = signed(value);
-            tick.className = labelClass(value, start, end, showJourney, max - min);
+            tick.className = value === 0 ? 'negative-zero' : labelClass(value, start, end, showJourney, max - min);
             ticks.append(tick);
         }
         const hops = document.createElement('div');
@@ -349,8 +350,8 @@
 
     // A number line whose dot the pupil can drag while working out the answer.
     // Only the typed answer is marked, so moving the dot is never checked.
-    function drawMovableLine(host, question) {
-        paragraph(host, 'Drag the dot to help you work it out.', 'negative-drag-hint');
+    function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease } = {}) {
+        paragraph(host, hint, 'negative-drag-hint');
         const end = question.start + question.amount;
         // Leave room to go the wrong way, so that mistake can be seen too.
         const min = Math.min(-10, question.start - question.amount);
@@ -382,12 +383,37 @@
         line.addEventListener('pointermove', event => {
             if (line.hasPointerCapture(event.pointerId)) pointer(event);
         });
+        line.addEventListener('pointerup', () => onRelease?.(value));
         line.addEventListener('keydown', event => {
             if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
             event.preventDefault();
             move(value + (event.key === 'ArrowRight' ? 1 : -1));
+            onRelease?.(value);
         });
         show(savedDot(question));
+    }
+
+    function drawFinishedLine(host, question) {
+        const end = question.start + question.amount;
+        drawLine(host, question.start, end, end, true, {
+            min: Math.min(-10, question.start - question.amount),
+            max: Math.max(10, end)
+        });
+    }
+
+    // Try it: the pupil drags the dot, and landing on the answer finishes it.
+    function drawDragToAnswer(host, question, solved, onSolved) {
+        const end = question.start + question.amount;
+        if (solved) {
+            drawFinishedLine(host, question);
+            host.querySelector('.negative-line').classList.add('negative-line--solved');
+            paragraph(host, working(question.start, question.amount).replace(/\.$/, ''), 'nn-working');
+            return;
+        }
+        drawMovableLine(host, question, {
+            hint: 'Drag the dot to the answer.',
+            onRelease: value => { if (value === end) onSolved(); }
+        });
     }
 
     // Remembers a wrong answer, so a reload still shows the line.
@@ -419,10 +445,7 @@
             figure(host, { readOnly }) {
                 lineHost = host;
                 host.hidden = afterWrongAnswer && !readOnly && !wrongBefore(question);
-                if (readOnly) drawLine(host, question.start, question.start + question.amount, question.start + question.amount, true, {
-                    min: Math.min(-10, question.start - question.amount),
-                    max: Math.max(10, question.start + question.amount)
-                });
+                if (readOnly) drawFinishedLine(host, question);
                 else drawMovableLine(host, question);
             },
             onFeedback(result) {
@@ -495,34 +518,51 @@
             <tbody>${line('+')}${line('−')}</tbody>`;
     }
 
-    // A small table beside a multiplying question. Questions that ask for a
-    // square colour the table to match whichever option is selected.
+    // A small table beside a multiplying question, with its signs coloured.
     function withSignGrid(question) {
         return {
             ...question,
-            figure(host, { readOnly }) {
+            figure(host) {
                 const table = document.createElement('table');
                 table.className = 'nn-sign-table';
+                table.innerHTML = signTable(...question.signs);
                 host.append(table);
-                const draw = (row, column) => { table.innerHTML = signTable(row, column); };
-                if (!question.square) return draw(...question.signs);
-                if (readOnly) return draw(...question.square);
-                const card = host.parentElement;
-                const showSelected = () => {
-                    const label = card.querySelector('.question-card-options button.is-selected')?.textContent;
-                    const signs = label?.match(/^(.) row, (.) column$/);
-                    draw(signs?.[1], signs?.[2]);
-                };
-                draw();
-                card.addEventListener('click', () => setTimeout(showSelected));
-                setTimeout(showSelected);
             }
         };
+    }
+
+    // Try it: the pupil taps a square. A wrong square colours its row and
+    // column and explains why; the right one finishes the question.
+    function drawTapSquare(host, question, tried, solved, onTap) {
+        const last = tried.at(-1);
+        const picked = solved ? question.square : last?.split(',') || [];
+        const table = document.createElement('table');
+        table.className = 'nn-sign-table';
+        table.innerHTML = signTable(...picked);
+        host.append(table);
+        if (!solved) {
+            table.querySelectorAll('tbody td').forEach((cell, i) => {
+                const { row, column } = SIGN_GRID[i];
+                const key = `${row},${column}`;
+                if (tried.includes(key)) return;
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('aria-label', `${row} row, ${column} column`);
+                cell.tabIndex = 0;
+                cell.addEventListener('click', () => onTap(key));
+                cell.addEventListener('keydown', event => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    onTap(key);
+                });
+            });
+        }
+        if (solved) paragraph(host, question.feedback, 'nn-working nn-working--wrap');
+        else if (last) paragraph(host, question.wrong[last], 'nn-warning');
     }
 
     window.NegativeNumbers = {
         signed, paragraph, equation, working, rewrite, calculate, checks,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, drawSignGrid, withSignGrid
+        multiplyExamples, drawSignGrid, withSignGrid, drawDragToAnswer, drawTapSquare
     };
 })();

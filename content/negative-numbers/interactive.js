@@ -138,7 +138,7 @@
 
     function examples() {
         const Q = window.NegativeNumbers;
-        return [Q.rewrite(5, 3), Q.calculate(-2, 6), Q.rewrite(-7, 3), Q.calculate(-4, 9)];
+        return [Q.calculate(5, 3), Q.calculate(-2, 6), Q.calculate(-7, 3), Q.calculate(-4, 9)];
     }
 
     function sectionEvent(sectionId, name) {
@@ -410,10 +410,10 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 2,
+            version: 3,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                grid: [false, false, false, false], gridLast: null,
+                grid: [false, false, false, false], gridLast: null, solved: {}, tried: [],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade: () => null
@@ -438,8 +438,13 @@
         function reportProgress() {
             const done = pages.slice(0, state.index).filter(page => page.kind === 'question').length;
             const page = pages[state.index];
-            const current = page.kind === 'question' && state.cards[`example-${page.number + 1}`]?.correct === true;
+            const current = page.kind === 'question' && solved(page);
             api.setSectionProgress('interactive', state.finished ? questions.length : done + Number(current), questions.length);
+        }
+
+        // Dragging and tapping are saved here; typed answers are saved in cards.
+        function solved({ number }) {
+            return state.solved[number] === true || state.cards[`example-${number + 1}`]?.correct === true;
         }
 
         function continuePage() {
@@ -453,28 +458,41 @@
             render();
         }
 
-        function drawExample(container, { question, number }, readOnly) {
-            const random = window.Maths1to9LessonEngine.seededRandom(state.seed + number);
-            const prepared = NN.prepare(question, random);
-            const config = question.signs ? NN.withSignGrid(prepared) : NN.withMovableLine(prepared);
-            // Choice examples show a line; the others draw their own figure.
-            const visual = document.createElement('div');
-            const drawVisual = correct => {
-                if (config.figure) return;
-                visual.replaceChildren();
-                NN.drawAnswerLine(visual, question, correct);
-            };
-            drawVisual(state.cards[`example-${number + 1}`]?.correct);
-            container.append(visual);
+        function markSolved(number) {
+            section.update(state => { state.solved[number] = true; });
+            reportProgress();
+            render();
+        }
+
+        // A question the pupil answers by doing, with no Check button.
+        function drawHandsOn(container, page) {
+            const { question, number } = page;
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.className = 'question-prompt';
+            heading.textContent = question.prompt;
+            const body = document.createElement('div');
+            body.className = 'nn-learn';
+            container.append(heading, body);
+            if (question.input === 'tap') {
+                NN.drawTapSquare(body, question, state.tried, solved(page), key => {
+                    if (key === question.square.join(',')) return markSolved(number);
+                    section.update(state => { state.tried.push(key); });
+                    render();
+                });
+            } else NN.drawDragToAnswer(body, question, solved(page), () => markSolved(number));
+        }
+
+        function drawExample(container, page, readOnly) {
+            const { question, number } = page;
+            if (!question.signs) return drawHandsOn(container, page);
+            const prepared = NN.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + number));
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
-                ...config, sectionId: 'interactive', questionId: `example-${number + 1}`,
+                ...NN.withSignGrid(prepared), sectionId: 'interactive', questionId: `example-${number + 1}`,
                 scored: false, readOnly,
-                onFeedback(result) {
-                    reportProgress();
-                    drawVisual(result.correct);
-                },
+                onFeedback: reportProgress,
                 onContinue: continuePage
             });
         }
@@ -534,6 +552,9 @@
                 drawExample(root, page, readOnly);
                 if (readOnly) api.setSectionAction('interactive', {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
+                });
+                else if (!page.question.signs) api.setSectionAction('interactive', {
+                    label: 'Next', disabled: !solved(page), onClick: nextPage
                 });
             }
             syncHash();

@@ -76,6 +76,27 @@
     stroke: #087e65;
 }
 
+.negative-ticks .negative-zero {
+    color: #7c46c4;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.negative-ticks .negative-zero::before {
+    height: .9rem;
+    border-left: 3px solid #7c46c4;
+    transform: translateX(-1px);
+}
+
+/* The dot and its number turn green when the pupil lands on the answer. */
+.negative-line--solved .negative-marker {
+    background: #1d9e75;
+}
+
+.negative-line--solved .negative-dot-value {
+    color: #1d9e75;
+}
+
 .negative-ticks .negative-no-label {
     font-size: 0;
 }
@@ -323,6 +344,15 @@
     stroke-width: 1;
 }
 
+.nn-number-line .nn-value.nn-zero,
+.nn-thermometer .nn-scale.nn-zero {
+    color: #7c46c4;
+}
+
+.nn-number-line .nn-zero-circle {
+    color: #7c46c4;
+}
+
 .nn-number-line .nn-zero {
     font-weight: 900;
     stroke-width: 2.5;
@@ -518,6 +548,14 @@
 .nn-learn .nn-fee-sum {
     font-size: 1.25rem;
     font-weight: 800;
+}
+
+.nn-learn .nn-working--wrap {
+    white-space: normal;
+}
+
+.nn-sign-table td[role="button"] {
+    cursor: pointer;
 }
 
 .nn-statement {
