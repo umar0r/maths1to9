@@ -47,6 +47,59 @@
         };
     }
 
+    // The multiplying questions in Try it, each with the signs to find on the grid.
+    function multiplyExamples() {
+        return [
+            {
+                questionType: 'multiply', input: 'choice', signs: ['−', '+'],
+                prompt: 'Work out −6 × 4.',
+                options: [
+                    option('−24', '6 × 4 = 24. The signs are different, so the answer is negative.', true),
+                    option('24', 'The signs are different, so the answer is negative, not positive.'),
+                    option('−2', 'That adds −6 and 4. This question multiplies them.'),
+                    option('−10', 'That takes 4 away from −6. This question multiplies them.')
+                ]
+            },
+            {
+                questionType: 'multiply', input: 'number', signs: ['−', '−'],
+                prompt: 'Work out −6 × −3.', answer: '18',
+                feedback: '6 × 3 = 18. The signs are the same, so the answer is positive.',
+                rules: [
+                    { value: '−18', feedback: 'The signs are the same, so the answer is positive.' },
+                    { value: '−9', feedback: 'That adds −6 and −3. This question multiplies them.' }
+                ],
+                fallback: 'Work out 6 × 3, then use the grid to find the sign.'
+            },
+            {
+                questionType: 'multiply', input: 'choice', signs: [null, null], square: ['−', '−'],
+                prompt: 'Which square gives the sign of −8 × −2?',
+                options: [
+                    option('− row, − column', 'Both numbers are negative, so use the − row and the − column.', true),
+                    option('+ row, + column', 'Both numbers are negative, so neither one is on a + line.'),
+                    option('+ row, − column', '−8 is negative, so it goes on the − row, not the + row.'),
+                    option('− row, + column', '−2 is negative, so it goes on the − column, not the + column.')
+                ]
+            },
+            {
+                questionType: 'multiply', input: 'number', signs: [null, '−'],
+                prompt: 'Find the missing number: ? × −3 = 15.', answer: '−5',
+                feedback: '−5 × −3 = 15. The answer is positive, so both signs must be the same.',
+                rules: [{ value: '5', feedback: '5 × −3 = −15. The signs need to be the same to get a positive answer.' }],
+                fallback: '15 ÷ 3 = 5. Then use the grid to find the sign.'
+            },
+            {
+                questionType: 'multiply', input: 'choice', signs: ['−', '−'],
+                prompt: 'Sam says −3 × −5 = −15. What is the right answer?',
+                options: [
+                    option('15', 'The signs are the same, so the answer is positive.', true),
+                    option('−15', 'That is Sam\'s answer. The signs are the same, so it should be positive.'),
+                    option('−8', 'That adds −3 and −5. This question multiplies them.'),
+                    option('2', 'That takes −5 away from −3. This question multiplies them.')
+                ]
+            }
+        ];
+    }
+
     function checks() {
         const mistake = {
             questionType: 'error', input: 'choice',
@@ -129,9 +182,36 @@
         return node;
     }
 
-    function drawLine(host, start, end, position = start, showJourney = true) {
-        const min = Math.min(-10, start);
-        const max = Math.max(10, end);
+    // Long lines only label every fifth number, so the labels stay readable.
+    function labelClass(value, start, end, showJourney, range) {
+        if (value === start || (showJourney && value === end)) return value % 2 ? 'negative-key-tick' : '';
+        if (range > 20) {
+            const closeToStart = Math.abs(value - start) < 3;
+            return value % 5 || closeToStart ? 'negative-no-label' : '';
+        }
+        return value % 2 ? 'negative-small-tick' : '';
+    }
+
+    function drawHops(start, value, min, max) {
+        const direction = value < start ? -1 : 1;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('negative-hops');
+        svg.setAttribute('viewBox', `0 0 ${max - min} 10`);
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.setAttribute('aria-hidden', 'true');
+        for (let step = 0; step < Math.abs(value - start); step++) {
+            const from = start - min + step * direction;
+            const hop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            hop.setAttribute('class', `negative-hop ${direction < 0 ? 'negative-hop--left' : 'negative-hop--right'}`);
+            hop.setAttribute('d', `M ${from} 10 Q ${from + direction / 2} -8 ${from + direction} 10`);
+            svg.append(hop);
+        }
+        return svg;
+    }
+
+    function drawLine(host, start, end, position = start, showJourney = true, range = {}) {
+        const min = range.min ?? Math.min(-10, start);
+        const max = range.max ?? Math.max(10, end);
         const line = document.createElement('div');
         line.className = 'negative-line';
         line.setAttribute('role', 'img');
@@ -143,26 +223,32 @@
             const tick = document.createElement('span');
             tick.style.left = `${(value - min) / (max - min) * 100}%`;
             tick.textContent = signed(value);
-            if (value % 2 !== 0) {
-                tick.className = value === start || (showJourney && value === end)
-                    ? 'negative-key-tick' : 'negative-small-tick';
-            }
+            tick.className = labelClass(value, start, end, showJourney, max - min);
             ticks.append(tick);
         }
-        const path = document.createElement('div');
-        path.className = 'negative-path';
-        path.style.left = `${(start - min) / (max - min) * 100}%`;
-        path.textContent = '→';
+        const hops = document.createElement('div');
+        hops.className = 'negative-hops-layer';
+        const moved = document.createElement('span');
+        moved.className = 'negative-hop-count';
+        const reading = document.createElement('span');
+        reading.className = 'negative-dot-value';
         const marker = document.createElement('span');
         marker.className = 'negative-marker';
         marker.setAttribute('aria-hidden', 'true');
-        track.append(path, marker, ticks);
+        track.append(hops, moved, marker, ticks, reading);
         line.append(track);
         host.append(line);
         function update(value) {
             marker.style.left = `${(value - min) / (max - min) * 100}%`;
-            path.hidden = !showJourney || value === start;
-            path.style.width = `${Math.max(0, value - start) / (max - min) * 100}%`;
+            const shown = showJourney || range.hops ? value : start;
+            const steps = shown - start;
+            hops.replaceChildren(drawHops(start, shown, min, max));
+            // Above the hops: how far they've moved. Below the line: where they are.
+            moved.textContent = steps ? `${steps > 0 ? '+' : '−'}${Math.abs(steps)}` : '';
+            moved.className = `negative-hop-count ${steps < 0 ? 'negative-hop-count--left' : ''}`;
+            moved.style.left = `${((start + shown) / 2 - min) / (max - min) * 100}%`;
+            reading.textContent = showJourney || range.hops ? signed(shown) : '';
+            reading.style.left = `${(shown - min) / (max - min) * 100}%`;
             line.setAttribute('aria-label', showJourney
                 ? `Number line from ${signed(min)} to ${signed(max)}. Start ${signed(start)}, move right to ${signed(value)}. Marker ${signed(value)}.`
                 : `Number line from ${signed(min)} to ${signed(max)}. Starting marker ${signed(start)}.`);
@@ -230,8 +316,172 @@
         drawLine(host, question.start, question.start + question.amount, correct ? question.start + question.amount : question.start, Boolean(correct));
     }
 
+    // Where the pupil left the dot, so a reload doesn't lose it.
+    function savedDot(question) {
+        try {
+            const value = window.localStorage.getItem(`negative-numbers-dot:${question.prompt}`);
+            return value === null ? question.start : Number(value);
+        } catch {
+            return question.start;
+        }
+    }
+
+    function saveDot(question, value) {
+        try {
+            window.localStorage.setItem(`negative-numbers-dot:${question.prompt}`, String(value));
+        } catch {
+            // The dot still works; it just won't survive a reload.
+        }
+    }
+
+    // A number line whose dot the pupil can drag while working out the answer.
+    // Only the typed answer is marked, so moving the dot is never checked.
+    function drawMovableLine(host, question) {
+        paragraph(host, 'Drag the dot to help you work it out.', 'negative-drag-hint');
+        const end = question.start + question.amount;
+        // Leave room to go the wrong way, so that mistake can be seen too.
+        const min = Math.min(-10, question.start - question.amount);
+        const max = Math.max(10, end);
+        const update = drawLine(host, question.start, end, question.start, false, { min, max, hops: true });
+        const line = host.querySelector('.negative-line');
+        const track = line.querySelector('.negative-track');
+        let value = question.start;
+        function show(next) {
+            value = Math.max(min, Math.min(max, next));
+            update(value);
+            line.setAttribute('aria-label', `Number line from ${signed(min)} to ${signed(max)}. The dot is on ${signed(value)}. Use the arrow keys to move it.`);
+        }
+        function move(next) {
+            show(next);
+            saveDot(question, value);
+        }
+        function pointer(event) {
+            const box = track.getBoundingClientRect();
+            move(Math.round(min + (event.clientX - box.left) / box.width * (max - min)));
+        }
+        line.classList.add('negative-line--movable');
+        line.setAttribute('role', 'application');
+        line.tabIndex = 0;
+        line.addEventListener('pointerdown', event => {
+            line.setPointerCapture(event.pointerId);
+            pointer(event);
+        });
+        line.addEventListener('pointermove', event => {
+            if (line.hasPointerCapture(event.pointerId)) pointer(event);
+        });
+        line.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            move(value + (event.key === 'ArrowRight' ? 1 : -1));
+        });
+        show(savedDot(question));
+    }
+
+    // Typed "work out" questions get the number line above them. A finished
+    // question just shows the hops from the start to the answer.
+    function withMovableLine(question) {
+        if (question.input !== 'number') return question;
+        return {
+            ...question,
+            figure(host, { readOnly }) {
+                if (readOnly) drawLine(host, question.start, question.start + question.amount, question.start + question.amount, true, {
+                    min: Math.min(-10, question.start - question.amount),
+                    max: Math.max(10, question.start + question.amount)
+                });
+                else drawMovableLine(host, question);
+            }
+        };
+    }
+
+    // The sign grid: row sign, column sign and the sign of the answer.
+    const SIGN_GRID = [
+        { row: '+', column: '+', answer: '+', sum: '2 × 3 = 6' },
+        { row: '+', column: '−', answer: '−', sum: '2 × −3 = −6' },
+        { row: '−', column: '+', answer: '−', sum: '−2 × 3 = −6' },
+        { row: '−', column: '−', answer: '+', sum: '−2 × −3 = 6' }
+    ];
+
+    function drawGrid(host, cell) {
+        const grid = document.createElement('div');
+        grid.className = 'nn-sign-grid';
+        grid.innerHTML = '<span class="nn-grid-label">×</span><span class="nn-grid-label">+</span><span class="nn-grid-label">−</span>';
+        SIGN_GRID.forEach((square, i) => {
+            if (i % 2 === 0) grid.insertAdjacentHTML('beforeend', `<span class="nn-grid-label">${square.row}</span>`);
+            grid.append(cell(square, i));
+        });
+        host.append(grid);
+    }
+
+    const gridColour = square => `nn-grid-${square.answer === '+' ? 'plus' : 'minus'}`;
+
+    // The grid pupils fill in, one tap per square.
+    function drawSignGrid(host, filled, last, onTap) {
+        drawGrid(host, (square, i) => {
+            const cell = document.createElement('span');
+            cell.className = `nn-grid-cell ${filled[i] ? gridColour(square) : ''} ${last === i ? 'nn-grid-last' : ''}`;
+            cell.textContent = filled[i] ? square.answer : '?';
+            if (!filled[i]) {
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('aria-label', `${square.row} times ${square.column}`);
+                cell.tabIndex = 0;
+                cell.addEventListener('click', () => onTap(i));
+                cell.addEventListener('keydown', event => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    onTap(i);
+                });
+            }
+            return cell;
+        });
+        if (last !== null) paragraph(host, SIGN_GRID[last].sum, 'nn-grid-sum');
+    }
+
+    // The sign table. The chosen row is red and the chosen column blue, so the
+    // square where they cross turns purple.
+    function signTable(row, column) {
+        const tint = (inRow, inColumn) => {
+            if (inRow && inColumn) return ' class="nn-table-both"';
+            if (inRow) return ' class="nn-table-row"';
+            return inColumn ? ' class="nn-table-column"' : '';
+        };
+        const line = sign => `<tr><th scope="row"${tint(sign === row, false)}>${sign}</th>
+            ${['+', '−'].map(top => {
+                const square = SIGN_GRID.find(item => item.row === sign && item.column === top);
+                return `<td${tint(sign === row, top === column)}>${square.answer}</td>`;
+            }).join('')}</tr>`;
+        return `<caption class="visually-hidden">Signs when you multiply</caption>
+            <thead><tr><th scope="col">×</th><th scope="col"${tint(false, column === '+')}>+</th><th scope="col"${tint(false, column === '−')}>−</th></tr></thead>
+            <tbody>${line('+')}${line('−')}</tbody>`;
+    }
+
+    // A small table beside a multiplying question. Questions that ask for a
+    // square colour the table to match whichever option is selected.
+    function withSignGrid(question) {
+        return {
+            ...question,
+            figure(host, { readOnly }) {
+                const table = document.createElement('table');
+                table.className = 'nn-sign-table';
+                host.append(table);
+                const draw = (row, column) => { table.innerHTML = signTable(row, column); };
+                if (!question.square) return draw(...question.signs);
+                if (readOnly) return draw(...question.square);
+                const card = host.parentElement;
+                const showSelected = () => {
+                    const label = card.querySelector('.question-card-options button.is-selected')?.textContent;
+                    const signs = label?.match(/^(.) row, (.) column$/);
+                    draw(signs?.[1], signs?.[2]);
+                };
+                draw();
+                card.addEventListener('click', () => setTimeout(showSelected));
+                setTimeout(showSelected);
+            }
+        };
+    }
+
     window.NegativeNumbers = {
-        signed, equation, working, rewrite, calculate, checks,
-        practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine
+        signed, paragraph, equation, working, rewrite, calculate, checks,
+        practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
+        multiplyExamples, drawSignGrid, withSignGrid
     };
 })();

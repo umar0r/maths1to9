@@ -5,71 +5,121 @@
     const initialHash = window.location.hash;
 
     const screens = [
-        { title: 'Numbers below zero', lines: [
-            'Negative numbers are numbers below zero. You\'ve already seen them on a cold day: −3°C is 3 degrees colder than 0°C. We write a negative number with a minus sign in front, and we say it as "negative 3".',
-            'On this number line, zero sits in the middle. The positive numbers go to the right of zero, and the negative numbers go to the left. Zero itself is neither positive nor negative.'
+        { title: 'Numbers below zero', kind: 'thermometer',
+        heading: 'Negative numbers are numbers below zero.', lines: [
+            'You\'ve seen them on a cold day. −3°C is 3 degrees colder than 0°C.',
+            'We write a negative number with a minus sign in front. We say −3 as "negative 3".'
         ] },
-        { title: 'Taking away past zero', lines: [
-            'When you take away a positive number, you move left along the number line. If you take away more than you started with, you go past zero and end up on a negative number.'
+        { title: 'The number line', kind: 'sideways',
+        heading: 'A number line is like a thermometer lying on its side.', lines: [
+            'Zero is in the middle. The positive numbers go to the right of zero. The negative numbers go to the left.',
+            'Zero itself is neither positive nor negative.'
+        ] },
+        { title: 'Taking away past zero', kind: 'journeys', slot: 0,
+        heading: 'When you take away a positive number, you move left along the number line.', lines: [
+            'If you take away more than you started with, you go past zero and end up on a negative number.'
         ], journeys: [
-            { start: 4, steps: 6, direction: -1, sum: '4 − 6', instruction: 'Start at 4. Taking away 6 means 6 steps to the left. Tap the number line to take each step.', result: 'You went past zero and landed on −2.' },
-            { start: 2, steps: 5, direction: -1, sum: '2 − 5', instruction: 'Your turn. Tap the number line to take 5 steps left.' }
+            { start: 4, steps: 6, direction: -1, sum: '4 − 6', showSum: false, instruction: 'Take 6 away from 4.', startLabel: false }
         ] },
-        { title: 'Adding to a negative number', lines: [
-            'When you add a positive number, you move right along the number line. If you start on a negative number, adding moves you back up towards zero, and sometimes past it.'
+        { title: 'Adding to a negative number', kind: 'journeys', slot: 1,
+        heading: 'When you add a positive number, you move right along the number line.', lines: [], journeys: [
+            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', showSum: false, tapCue: false, instruction: 'Move the dot 4 places to the right.', result: 'You moved up towards zero but didn\'t reach it, so the answer is still negative.' }
+        ] },
+        { title: 'Taking away from a negative number', kind: 'journeys', slot: 2,
+        heading: 'If you start on a negative number and take away a positive number, you still move left.', lines: [
+            'That takes you further below zero, so the answer is more negative.'
         ], journeys: [
-            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', instruction: 'Start at −6. Adding 4 means 4 steps to the right. Tap the number line to take each step.', result: 'You moved up towards zero but didn\'t reach it, so the answer is still negative.' },
-            { start: -3, steps: 7, direction: 1, sum: '−3 + 7', instruction: 'Your turn. Tap the number line to take 7 steps right.', result: 'This time you went past zero, so the answer is positive.' }
+            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', showSum: false, tapCue: false, instruction: 'Start at −2 and move 3 steps to the left.' }
         ] },
-        { title: 'Taking away from a negative number', lines: [
-            'If you start on a negative number and take away a positive number, you still move left. That takes you further below zero, so the answer is more negative.'
-        ], journeys: [
-            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', instruction: 'Start at −2. Taking away 3 means 3 steps to the left. Tap the number line to take each step.' },
-            { start: -4, steps: 5, direction: -1, sum: '−4 − 5', instruction: 'Your turn. Tap the number line to take 5 steps left.' }
+        { title: 'Two minus signs in one sum', kind: 'read',
+        heading: 'Sometimes you have to take away a negative number.', lines: [], afterSum: [
+            'We read this as \u20183 subtract negative 2\u2019.',
+            'The brackets show that −2 is the number we are subtracting.'
         ] },
-        { title: 'Two minus signs in one sum', lines: [
-            'Sometimes you have to take away a negative number, like 3 take away negative 2. We write it as 3 − (−2). The bracket keeps the negative 2 together, so the two minus signs don\'t run into each other.'
+        { title: 'Removing a fee', kind: 'fee',
+        heading: 'Removing a fee puts the money back.', lines: [
+            'For example, a £2 bank fee is a negative amount: −£2.',
+            'Your balance was £5. The bank took a £2 fee, so your balance fell to £3.'
         ] },
-        { title: 'What happens when you take away a negative', lines: [
-            'Start with 3 and take away a smaller number each time. Watch what happens to the answer.'
+        { title: 'What happens when you take away a negative', kind: 'pattern',
+        heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [
+            'Watch what happens to the answer.'
         ] },
-        { title: 'Take away a negative: add instead', lines: [
-            'So when you take away a negative, you can add instead. The take-away sign and the negative sign turn into a plus.'
+        { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
+        heading: 'So when you take away a negative, you can add instead.', lines: [
+            'The take-away sign and the negative sign turn into a plus.'
         ], start: 3, steps: 4 },
-        { title: 'When the first number is negative', lines: [
-            'It works the same way when the first number is negative. Only the two minus signs in the middle turn into a plus. The first number stays exactly as it is.'
-        ], start: -8, steps: 3 }
+        { title: 'When the first number is negative', kind: 'method', slot: 1,
+        heading: 'It works the same way when the first number is negative.', lines: [
+            'Only the two minus signs in the middle turn into a plus. The first number stays exactly as it is.'
+        ], start: -8, steps: 3, showSum: false }
     ];
 
     const signed = value => String(value).replace('-', '−');
 
+    // An upright thermometer from −10°C to 10°C, filled up to the level.
+    const THERMOMETER = { top: 24, step: 16, tube: 60, height: 410 };
+    const thermometerY = value => THERMOMETER.top + (10 - value) * THERMOMETER.step;
+
+    function thermometer(level) {
+        const { top, tube, height } = THERMOMETER;
+        const bulb = thermometerY(-10) + 34;
+        let picture = `<rect class="nn-tube" x="${tube - 11}" y="${top - 14}" width="22" height="${bulb - top}" rx="11"/>
+            <circle class="nn-bulb" cx="${tube}" cy="${bulb}" r="22"/>
+            <rect class="nn-mercury" x="${tube - 5}" y="${thermometerY(level)}" width="10" height="${bulb - thermometerY(level)}"/>`;
+        for (let value = -10; value <= 10; value++) {
+            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
+            const y = thermometerY(value);
+            picture += `<path class="nn-tick" d="M ${tube + 13} ${y} H ${tube + (value % 5 ? 21 : 27)}"/>
+                <text class="nn-value nn-scale ${tone}" x="${tube + 33}" y="${y + 4}">${signed(value)}</text>`;
+        }
+        picture += `<path class="nn-level" d="M ${tube - 15} ${thermometerY(level)} H ${tube + 15}"/>
+            <text class="nn-level-label" x="${tube - 19}" y="${thermometerY(level) + 5}">${signed(level)}°C</text>`;
+        return `<svg viewBox="0 0 160 ${height}" aria-hidden="true">${picture}</svg>`;
+    }
+
+    // The same thermometer lying on its side: bulb on the left, −10 to 10
+    // left to right, with the numbers upright underneath.
+    function sidewaysThermometer(level) {
+        const phone = window.matchMedia('(max-width: 600px)').matches;
+        const x = value => 70 + (value + 10) * 30;
+        const tube = 40, bulb = 30;
+        const labelY = tube + (phone ? 52 : 40);
+        let picture = `<rect class="nn-tube" x="${bulb}" y="${tube - 11}" width="${x(10) + 20 - bulb}" height="22" rx="11"/>
+            <circle class="nn-bulb" cx="${bulb}" cy="${tube}" r="22"/>
+            <rect class="nn-mercury" x="${bulb}" y="${tube - 5}" width="${x(level) - bulb}" height="10"/>`;
+        for (let value = -10; value <= 10; value++) {
+            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
+            picture += `<path class="nn-tick" d="M ${x(value)} ${tube + 13} V ${tube + (value % 5 ? 21 : 27)}"/>
+                <text class="nn-value nn-scale ${tone}" x="${x(value)}" y="${labelY}">${signed(value)}</text>`;
+        }
+        picture += `<path class="nn-level" d="M ${x(level)} ${tube - 15} V ${tube + 15}"/>`;
+        return `<svg viewBox="0 -20 ${x(10) + 30} ${labelY + 30}" aria-hidden="true">${picture}</svg>`;
+    }
+
     // Every Learn line has the same scale, with all 21 values on one row.
-    function numberLine({ start, position = start, hops = 0, direction = 1, explore = false, pixelWidth = 660 }) {
+    function numberLine({ start, position = start, hops = 0, direction = 1, startLabel = true }) {
         const x = value => 30 + (value + 10) * 30;
         const phone = window.matchMedia('(max-width: 600px)').matches;
         const axis = phone ? 210 : 80;
         const height = phone ? 296 : 140;
-        // Keep the draggable marker 22 px wide, with a hit area larger than 44 px,
-        // regardless of how much the SVG scales to fit the card.
-        const svgScale = 660 / (pixelWidth || (phone ? window.innerWidth - 36 : 660));
-        const markerRadius = explore ? 11 * svgScale : (phone ? 12 : 9);
-        let picture = explore ? `<text class="nn-negative" x="165" y="${phone ? 90 : 30}">negative numbers</text>
-            <text class="nn-positive" x="495" y="${phone ? 90 : 30}">positive numbers</text>` :
-            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 85 : 24}">start</text>`;
+        let picture = startLabel ?
+            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 85 : 24}">start</text>` : '';
         picture += `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
         for (let value = -10; value <= 10; value++) {
             const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
             picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
                 <text class="nn-value ${tone}" x="${x(value)}" y="${axis + 36}">${signed(value)}</text>`;
         }
-        picture += `<circle class="nn-zero-circle" cx="330" cy="${axis + 28}" r="16"/>`;
+        picture += `<circle class="nn-zero-circle" cx="330" cy="${axis + (phone ? 29 : 31)}" r="12"/>`;
         for (let step = 0; step < hops; step++) {
             const from = x(start + direction * step), to = from + direction * 30;
             picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 50 : 37} ${to} ${axis}"/>`;
         }
-        if (!explore) picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="${axis}" r="6"/>`;
-        picture += `<circle class="nn-dot" cx="${x(position)}" cy="${axis}" r="${markerRadius}"/>`;
-        if (explore) picture += `<circle class="nn-drag-target" cx="${x(position)}" cy="${axis}" r="${23 * svgScale}" fill="transparent"/>`;
+        // Above the hops: how far the dot has moved.
+        if (hops) picture += `<text class="nn-hop-count ${direction < 0 ? 'nn-negative' : 'nn-positive'}" x="${x(start + direction * hops / 2)}" y="${phone ? 118 : 46}">${direction < 0 ? '−' : '+'}${hops}</text>`;
+        picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="${axis}" r="6"/>`;
+        picture += `<circle class="nn-dot" cx="${x(position)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
         return `<svg viewBox="0 0 660 ${height}" aria-hidden="true">${picture}</svg>`;
     }
 
@@ -104,13 +154,13 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 2,
+            version: 8,
             initial: () => ({
-                screen: 0, furthestScreen: 0, finished: false, marker: -4,
-                journeys: [[0, 0], [0, 0], [0, 0]], labels: [false, false],
-                pattern: 0, changed: [false, false], hops: [0, 0]
+                screen: 0, finished: false, temperature: -3,
+                journeys: [[0, 0], [0, 0], [0, 0]], feeRemoved: false,
+                pattern: 1, changed: [false, false], hops: [0, 0]
             }),
-            // The previous four Learn screens have been replaced entirely.
+            // New screens have moved the later Learn screens along.
             upgrade: () => null
         });
         const state = section.state;
@@ -131,81 +181,94 @@
         }
 
         function showScreen(screen) {
-            section.update(state => {
-                state.screen = screen;
-                state.furthestScreen = Math.max(state.furthestScreen, screen);
-            });
+            section.update(state => { state.screen = screen; });
             render();
-            root.querySelector('h3').focus();
+            root.querySelector('[data-screen-heading]').focus();
         }
 
         function complete() {
-            if (state.screen === 0) return true;
-            if (state.screen <= 3) return screens[state.screen].journeys.every((item, i) =>
-                state.journeys[state.screen - 1][i] === item.steps);
-            if (state.screen === 4) return state.labels.every(Boolean);
-            if (state.screen === 5) return state.pattern === 6;
-            return state.hops[state.screen - 6] === screens[state.screen].steps;
+            const screen = screens[state.screen];
+            if (['thermometer', 'sideways', 'read'].includes(screen.kind)) return true;
+            if (screen.kind === 'fee') return state.feeRemoved;
+            if (screen.kind === 'journeys') return screen.journeys.every((item, i) =>
+                state.journeys[screen.slot][i] === item.steps);
+            if (screen.kind === 'pattern') return state.pattern === 6;
+            return state.hops[screen.slot] === screen.steps;
         }
 
         function actions() {
             api.setSectionBack('explanation', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
-            if (state.screen === 7 && complete()) {
+            const last = state.screen === screens.length - 1;
+            if (last && complete()) {
                 if (!state.finished) section.update(state => { state.finished = true; });
                 sectionEvent('explanation', 'complete');
                 api.clearSectionAction('explanation');
             } else {
                 api.setSectionAction('explanation', {
-                    label: 'Next', disabled: !complete(),
+                    // Only the last screen must be finished, to open Try it.
+                    label: 'Next', disabled: last,
                     onClick: () => showScreen(state.screen + 1)
                 });
             }
             syncHash();
         }
 
-        function explore() {
-            const line = document.createElement('div');
-            line.className = 'nn-number-line nn-explore';
-            line.tabIndex = 0;
-            line.setAttribute('role', 'application');
-            line.setAttribute('aria-label', 'Drag the marker along the number line, or use the arrow keys.');
-            root.append(line);
+        // Screen 1: drag the level up and down the thermometer.
+        function exploreThermometer() {
+            paragraph('Drag the red line up and down the thermometer.', 'nn-instruction');
+            const picture = document.createElement('div');
+            picture.className = 'nn-thermometer nn-explore';
+            picture.tabIndex = 0;
+            picture.setAttribute('role', 'application');
+            picture.setAttribute('aria-label', 'Drag the level up and down the thermometer, or use the arrow keys.');
+            root.append(picture);
             const caption = paragraph('', 'nn-caption');
             caption.setAttribute('aria-live', 'polite');
             function draw() {
-                const value = state.marker;
-                line.innerHTML = numberLine({ start: 0, position: value, explore: true, pixelWidth: line.clientWidth });
-                caption.textContent = value === 0 ? "You're on 0. Zero is neither positive nor negative." :
-                    `You're on ${signed(value)}. That's ${Math.abs(value)} to the ${value < 0 ? 'left' : 'right'} of zero, so it's a ${value < 0 ? 'negative' : 'positive'} number.`;
+                const value = state.temperature;
+                picture.innerHTML = thermometer(value);
+                caption.textContent = value === 0 ? "It's 0°C. Zero is neither positive nor negative." :
+                    `It's ${signed(value)}°C. That's ${Math.abs(value)} degrees ${value < 0 ? 'below' : 'above'} zero, so it's a ${value < 0 ? 'negative' : 'positive'} number.`;
             }
             function move(value) {
-                section.update(state => { state.marker = Math.max(-10, Math.min(10, value)); });
+                section.update(state => { state.temperature = Math.max(-10, Math.min(10, value)); });
                 draw();
             }
             function pointer(event) {
-                const box = line.getBoundingClientRect();
-                move(Math.round(((event.clientX - box.left) / box.width * 660 - 30) / 30 - 10));
+                const box = picture.querySelector('svg').getBoundingClientRect();
+                const y = (event.clientY - box.top) / box.height * THERMOMETER.height;
+                move(Math.round(10 - (y - THERMOMETER.top) / THERMOMETER.step));
             }
-            line.addEventListener('pointerdown', event => {
-                line.setPointerCapture(event.pointerId);
+            picture.addEventListener('pointerdown', event => {
+                picture.setPointerCapture(event.pointerId);
                 pointer(event);
             });
-            line.addEventListener('pointermove', event => {
-                if (line.hasPointerCapture(event.pointerId)) pointer(event);
+            picture.addEventListener('pointermove', event => {
+                if (picture.hasPointerCapture(event.pointerId)) pointer(event);
             });
-            line.addEventListener('keydown', event => {
+            picture.addEventListener('keydown', event => {
                 if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
                 event.preventDefault();
-                move(state.marker + (['ArrowRight', 'ArrowUp'].includes(event.key) ? 1 : -1));
+                move(state.temperature + (['ArrowRight', 'ArrowUp'].includes(event.key) ? 1 : -1));
             });
             draw();
         }
 
+        // Screen 2: the same thermometer, lying on its side.
+        function showSidewaysThermometer() {
+            const picture = document.createElement('div');
+            picture.className = 'nn-thermometer nn-side';
+            picture.setAttribute('role', 'img');
+            picture.setAttribute('aria-label', 'The thermometer lying on its side, from −10 on the left to 10 on the right, showing −3°C.');
+            picture.innerHTML = sidewaysThermometer(-3);
+            root.append(picture);
+        }
+
         function journey(item, count, onTap) {
             const line = document.createElement('div');
-            line.className = `nn-number-line${count === 0 ? ' nn-awaiting-tap' : ''}`;
+            line.className = `nn-number-line${count === 0 && item.tapCue !== false ? ' nn-awaiting-tap' : ''}`;
             line.innerHTML = numberLine({ ...item, hops: count, position: item.start + count * item.direction });
             root.append(line);
             if (count < item.steps) tapTarget(line, item.instruction, onTap);
@@ -217,19 +280,20 @@
 
         function render() {
             const screen = screens[state.screen];
-            // The section title is the only visible heading. Screen readers still
-            // hear each screen's name, and focus has somewhere to land.
-            root.innerHTML = `<h3 class="visually-hidden" data-screen-heading tabindex="-1">${screen.title}</h3>`;
+            // Each screen's main idea is its only heading; the Learn section
+            // title is hidden in lesson.json.
+            root.innerHTML = `<h2 class="lesson-section__title" data-screen-heading tabindex="-1">${screen.heading}</h2>`;
             screen.lines.forEach(text => paragraph(text));
-            if (state.screen === 0) explore();
-            else if (screen.journeys) {
+            if (screen.kind === 'thermometer') exploreThermometer();
+            else if (screen.kind === 'sideways') showSidewaysThermometer();
+            else if (screen.kind === 'journeys') {
                 screen.journeys.forEach((item, i) => {
-                    const counts = state.journeys[state.screen - 1];
+                    const counts = state.journeys[screen.slot];
                     if (i > 0 && counts[i - 1] < screen.journeys[i - 1].steps) return;
-                    paragraph(item.sum, 'nn-sum');
+                    if (item.showSum !== false) paragraph(item.sum, 'nn-sum');
                     paragraph(item.instruction, 'nn-instruction');
                     journey(item, counts[i], () => {
-                        section.update(state => { state.journeys[state.screen - 1][i]++; });
+                        section.update(state => { state.journeys[screen.slot][i]++; });
                         render();
                     });
                     if (counts[i] === item.steps) {
@@ -237,25 +301,41 @@
                         paragraph(`${item.sum} = ${signed(item.start + item.steps * item.direction)}`, 'nn-working');
                     }
                 });
-            } else if (state.screen === 4) {
-                paragraph('Tap each part of the sum to see what it means.', 'nn-instruction');
+            } else if (screen.kind === 'read') {
                 const sum = document.createElement('div');
                 sum.className = 'nn-read-sum';
-                sum.innerHTML = `<span>3</span><span class="nn-part ${state.labels[0] ? 'nn-selected' : ''}" data-part="0">−<small>${state.labels[0] ? 'take away' : ''}</small></span><span class="nn-part nn-negative ${state.labels[1] ? 'nn-selected' : ''}" data-part="1">(−2)<small>${state.labels[1] ? 'the number negative 2' : ''}</small></span>`;
+                sum.innerHTML = '<span>3</span><span class="nn-part nn-selected">−<small>subtract</small></span><span class="nn-part nn-negative nn-selected">(−2)<small>negative 2</small></span>';
                 root.append(sum);
-                sum.querySelectorAll('[data-part]').forEach(node => {
-                    const i = Number(node.dataset.part);
-                    if (!state.labels[i]) tapTarget(node, i === 0 ? 'Take-away sign' : 'The number negative 2', () => {
-                        section.update(state => { state.labels[i] = true; });
+                screen.afterSum.forEach(text => paragraph(text));
+            } else if (screen.kind === 'fee') {
+                const removed = state.feeRemoved;
+                const statement = document.createElement('div');
+                statement.className = 'nn-statement';
+                statement.innerHTML = `<div class="nn-statement-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 12 3l9 6v1H3zM5 11h2v7H5zm6 0h2v7h-2zm6 0h2v7h-2zM3 19h18v2H3z"/></svg>Your bank account</div>
+                    <div class="nn-statement-row"><span>Balance</span><span>£5</span></div>
+                    <div class="nn-statement-row nn-fee ${removed ? 'nn-fee-removed' : ''}"><span>Fee</span><span>−£2</span></div>
+                    <div class="nn-statement-row nn-statement-total"><span>Balance now</span><span>£${removed ? 5 : 3}</span></div>`;
+                root.append(statement);
+                paragraph('5 + (−2) = 3', 'nn-fee-sum');
+                if (!removed) {
+                    const instruction = 'The fee was a mistake. Tap the fee to remove it.';
+                    paragraph(instruction, 'nn-instruction');
+                    tapTarget(statement.querySelector('.nn-fee'), instruction, () => {
+                        section.update(state => { state.feeRemoved = true; });
                         render();
                     });
-                });
-            } else if (state.screen === 5) {
+                } else {
+                    paragraph('The fee was a mistake. The bank removes it and puts £2 back.');
+                    paragraph('3 − (−2) = 5', 'nn-fee-sum');
+                    paragraph('Subtracting −2 has the same effect as adding 2.');
+                    paragraph('3 − (−2) = 3 + 2 = 5', 'nn-working');
+                }
+            } else if (screen.kind === 'pattern') {
                 const pattern = document.createElement('div');
                 pattern.className = 'nn-pattern';
                 for (let i = 0; i < state.pattern; i++) {
                     const subtract = 3 - i;
-                    pattern.innerHTML += `<div class="nn-pattern-row ${i > 3 ? 'nn-highlight' : ''}"><span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${i}</span><small>${i ? 'up 1' : ''}</small></div>`;
+                    pattern.innerHTML += `<div class="nn-pattern-row ${i > 3 ? 'nn-highlight' : ''}"><span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${i}</span><small>${i ? `up ${i}` : ''}</small></div>`;
                 }
                 const instruction = document.createElement('p');
                 instruction.className = 'nn-instruction';
@@ -268,14 +348,15 @@
                 });
                 else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
             } else {
-                const i = state.screen - 6;
-                const changed = state.changed[i];
+                const i = screen.slot;
+                const changed = state.changed[i] || screen.showSum === false;
                 const sum = document.createElement('div');
                 sum.className = 'nn-transform nn-sum';
-                sum.innerHTML = `<span>${signed(screen.start)}</span> <span class="nn-transform-signs ${changed ? 'nn-changed' : ''}"><span class="nn-before">− (−</span><span class="nn-after">+</span></span> <span>${screen.steps}<span class="${changed ? 'nn-gone' : ''}">)</span></span>`;
-                root.append(sum);
+                const original = changed && i === 0 ? `<span>${signed(screen.start)} − (−${screen.steps}) =</span> ` : '';
+                sum.innerHTML = `${original}<span>${signed(screen.start)}</span> <span class="nn-transform-signs ${changed ? 'nn-changed' : ''}"><span class="nn-before">− (−</span><span class="nn-after">+</span></span> <span>${screen.steps}<span class="${changed ? 'nn-gone' : ''}">)</span></span>`;
+                if (screen.showSum !== false) root.append(sum);
                 if (!changed) {
-                    const instruction = state.screen === 6 ? 'Tap the two minus signs to turn them into a plus.' : 'Tap the two middle minus signs.';
+                    const instruction = i === 0 ? 'Tap the two minus signs to turn them into a plus.' : 'Tap the two middle minus signs.';
                     paragraph(instruction, 'nn-instruction');
                     tapTarget(sum.querySelector('.nn-transform-signs'), instruction, () => {
                         section.update(state => { state.changed[i] = true; });
@@ -283,7 +364,7 @@
                         render();
                     });
                 } else {
-                    const instruction = `${state.screen === 6 ? 'Now start' : 'Start'} at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
+                    const instruction = `${i === 0 ? 'Now start' : 'Start'} at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
                     paragraph(instruction, 'nn-instruction');
                     journey({ ...screen, direction: 1, instruction }, state.hops[i], () => {
                         section.update(state => { state.hops[i]++; });
@@ -301,24 +382,38 @@
         screens.forEach((screen, index) => {
             api.registerHashRoute(`learn-${index + 1}`, () => {
                 api.goToSection('explanation', { moveFocus: false });
-                showScreen(Math.min(index, state.furthestScreen));
+                showScreen(index);
             });
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
-        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
+        if (requested >= 0) showScreen(requested);
         else render();
     }
 
     async function mountTryIt(root) {
-        const questions = examples();
+        const NN = window.NegativeNumbers;
+        // Try it runs: subtracting examples, a review, the sign grid, the
+        // multiplying examples, then a second review.
+        const questions = [...examples(), ...NN.multiplyExamples()];
+        const firstMultiply = examples().length;
+        const questionPages = (from, to) => questions.slice(from, to).map((question, i) => ({ kind: 'question', question, number: from + i }));
+        const pages = [
+            ...questionPages(0, firstMultiply),
+            { kind: 'review', from: 0, to: firstMultiply },
+            { kind: 'grid' },
+            ...questionPages(firstMultiply, questions.length),
+            { kind: 'review', from: firstMultiply, to: questions.length }
+        ];
+        const lastPage = pages.length - 1;
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+                grid: [false, false, false, false], gridLast: null,
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade: () => null
@@ -341,60 +436,102 @@
         }
 
         function reportProgress() {
-            const card = state.cards[`example-${state.index + 1}`];
-            const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
-            api.setSectionProgress('interactive', completed, questions.length);
+            const done = pages.slice(0, state.index).filter(page => page.kind === 'question').length;
+            const page = pages[state.index];
+            const current = page.kind === 'question' && state.cards[`example-${page.number + 1}`]?.correct === true;
+            api.setSectionProgress('interactive', state.finished ? questions.length : done + Number(current), questions.length);
         }
 
-        function continueExample() {
+        function continuePage() {
             section.update(state => {
                 state.index++;
                 state.screen = state.index;
                 state.furthestScreen = state.screen;
-                state.finished = state.index === questions.length;
+                state.finished = state.index === lastPage;
             });
+            reportProgress();
             render();
         }
 
-        function drawExample(container, index, readOnly) {
-            const example = questions[index];
+        function drawExample(container, { question, number }, readOnly) {
+            const random = window.Maths1to9LessonEngine.seededRandom(state.seed + number);
+            const prepared = NN.prepare(question, random);
+            const config = question.signs ? NN.withSignGrid(prepared) : NN.withMovableLine(prepared);
+            // Choice examples show a line; the others draw their own figure.
             const visual = document.createElement('div');
-            window.NegativeNumbers.drawAnswerLine(visual, example, state.cards[`example-${index + 1}`]?.correct);
+            const drawVisual = correct => {
+                if (config.figure) return;
+                visual.replaceChildren();
+                NN.drawAnswerLine(visual, question, correct);
+            };
+            drawVisual(state.cards[`example-${number + 1}`]?.correct);
             container.append(visual);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
-                ...window.NegativeNumbers.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
+                ...config, sectionId: 'interactive', questionId: `example-${number + 1}`,
                 scored: false, readOnly,
                 onFeedback(result) {
                     reportProgress();
-                    visual.replaceChildren();
-                    window.NegativeNumbers.drawAnswerLine(visual, example, result.correct);
+                    drawVisual(result.correct);
                 },
-                onContinue: continueExample
+                onContinue: continuePage
             });
+        }
+
+        function drawGridPage() {
+            const page = document.createElement('div');
+            page.className = 'nn-learn';
+            root.append(page);
+            NN.paragraph(page, 'Tap each square to fill the grid.', 'nn-instruction');
+            NN.drawSignGrid(page, state.grid, state.gridLast, square => {
+                section.update(state => {
+                    state.grid[square] = true;
+                    state.gridLast = square;
+                });
+                render();
+            });
+            const full = state.grid.every(Boolean);
+            if (full) NN.paragraph(page, 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.');
+            return full;
+        }
+
+        function nextPage() {
+            if (state.screen === state.index) continuePage();
+            else showScreen(state.screen + 1);
         }
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
-            root.append(heading);
+            const page = pages[state.screen];
+            // The section title is hidden. A question's prompt is its page's only
+            // heading; the review and grid pages draw their own.
+            if (page.kind !== 'question') {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.className = 'lesson-section__title';
+                heading.textContent = page.kind === 'review' ? 'A quick review' : 'When you multiply, the two signs tell you the sign of the answer.';
+                root.append(heading);
+            }
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === questions.length) {
-                questions.forEach((example, index) => {
+            if (page.kind === 'review') {
+                pages.filter(item => item.kind === 'question' && item.number >= page.from && item.number < page.to).forEach(item => {
                     const completed = document.createElement('article');
+                    completed.className = 'nn-completed-example';
                     root.append(completed);
-                    drawExample(completed, index, true);
+                    drawExample(completed, item, true);
                 });
-                api.clearSectionAction('interactive');
+                if (state.screen === lastPage) api.clearSectionAction('interactive');
+                else api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
+            } else if (page.kind === 'grid') {
+                const full = drawGridPage();
+                api.setSectionAction('interactive', { label: 'Next', disabled: !full, onClick: nextPage });
             } else {
                 const readOnly = state.screen < state.index;
-                drawExample(root, state.screen, readOnly);
+                drawExample(root, page, readOnly);
                 if (readOnly) api.setSectionAction('interactive', {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
@@ -402,7 +539,7 @@
             syncHash();
         }
 
-        for (let index = 0; index <= questions.length; index++) {
+        pages.forEach((page, index) => {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
                 if (!api.goToSection('interactive', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
@@ -410,13 +547,12 @@
                 }
                 showScreen(Math.min(index, state.furthestScreen));
             });
-        }
+        });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
-            .find(index => initialHash === `#try-it-${index + 1}`);
-        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
+        const requested = pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
+        if (requested >= 0 && api.goToSection('interactive', { moveFocus: false })) {
             showScreen(Math.min(requested, state.furthestScreen));
         }
     }

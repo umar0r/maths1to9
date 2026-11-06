@@ -27,30 +27,38 @@ negative becomes adding a positive". That's a rule with no reason behind it:
   negatives to start with.
 - It never explains *why* taking away a negative makes the answer bigger.
 
-## The new Learn: eight screens
+## The new Learn: ten screens
 
-Write the words exactly as they are below. They're written to be read out
+Each screen's first sentence is shown as its heading, and the rest of its
+text follows underneath.
+Always say "left" and "right" for moving on the number line, never
+"back" or "forward". The Learn section title is hidden. Write the words exactly as they are below. They're written to be read out
 loud by a teacher to one pupil. Don't chop them into shorter sentences.
 
 Every number line in this lesson is the same: whole numbers from −10 to 10,
 zero drawn bolder than the rest and circled. Negative numbers and positive
 numbers each have their own colour, used the same way on every screen.
 Labels must not overlap at 375 px. On phones the line uses the full card
-width and a taller picture so the hops are clear. Screen 1 has a 22 px marker
-with a touch area at least 44 px wide. On screens 2, 3, 4, 7 and 8, each
-number line has a soft outline until its first tap.
+width so the hops are clear. Each number line has a soft outline until its
+first tap.
+
+Every Learn screen can be opened from its address (`#learn-4`), and Next
+always works, whatever the screen says about it unlocking below. Only the
+last screen must be finished, to open Try it.
 
 Each screen teaches one thing, like Brilliant, and each one builds on the
 last:
 
-1. What a negative number is and where it sits on the number line.
-2. Taking away past zero (4 − 6).
-3. Adding to a negative (−6 + 4).
-4. Taking away from a negative (−2 − 3).
-5. How to read a sum with two minus signs, 3 − (−2).
-6. Why taking away a negative makes the answer go up (a pattern of sums).
-7. The method: the two minus signs become a plus.
-8. The same method with a negative first number.
+1. What a negative number is, on a thermometer.
+2. The number line is the thermometer lying on its side.
+3. Taking away past zero (4 − 6).
+4. Adding to a negative (−6 + 4).
+5. Taking away from a negative (−2 − 3).
+6. How to read a sum with two minus signs, 3 − (−2).
+7. A bank fee taken and removed: why subtracting a negative adds.
+8. Why taking away a negative makes the answer go up (a pattern of sums).
+9. The method: the two minus signs become a plus.
+10. The same method with a negative first number.
 
 No made-up stories (money, debts, notes): the maths itself is the example.
 
@@ -58,88 +66,80 @@ No made-up stories (money, debts, notes): the maths itself is the example.
 
 ### Screen 1. Numbers below zero
 
-Mockup: `docs/negative-numbers-learn/screen-1.png`
+**Text (three short lines):**
 
-**Heading:** Numbers below zero
-
-**Text:**
-
-> Negative numbers are numbers below zero. You've already seen them on a
-> cold day: −3°C is 3 degrees colder than 0°C. We write a negative number
-> with a minus sign in front, and we say it as "negative 3".
+> Negative numbers are numbers below zero.
 >
-> On this number line, zero sits in the middle. The positive numbers go to the
-> right of zero, and the negative numbers go to the left. Zero itself is
-> neither positive nor negative.
+> You've seen them on a cold day. −3°C is 3 degrees colder than 0°C.
+>
+> We write a negative number with a minus sign in front. We say −3 as
+> "negative 3".
 
-**Picture:** the number line. The left side (−10 to −1) is shaded in the
-negative colour with the label "negative numbers" above it. The right side
-(1 to 10) is shaded in the positive colour with the label "positive
-numbers". Zero is circled.
+**Picture:** an upright thermometer from −10°C to 10°C, every number
+labelled small beside the scale, negatives in red and positives in green.
+The red level starts at −3°C.
 
-**What the pupil does:** this is the one screen with a drag. A marker sits
-on −4. The pupil drags it along the line; it snaps to whole numbers. A
-sentence under the line updates as it moves, and each one makes sense on
-its own:
+**What the pupil does:** "Drag the red line up and down the thermometer."
+A sentence underneath changes as it moves:
 
-- On 0: "You're on 0. Zero is neither positive nor negative."
-- On a negative, e.g. −4: "You're on −4. That's 4 to the left of zero, so
-  it's a negative number."
-- On a positive, e.g. 6: "You're on 6. That's 6 to the right of zero, so
-  it's a positive number."
+- "It's −3°C. That's 3 degrees below zero, so it's a negative number."
+- "It's 0°C. Zero is neither positive nor negative."
+- "It's 6°C. That's 6 degrees above zero, so it's a positive number."
 
-The marker also works with the arrow keys. The main button is "Next"
-straight away; the drag is there to explore, not a test.
+The arrow keys work too. Next works straight away.
 
 ---
 
-### Screen 2. Taking away past zero
+### Screen 2. The number line
 
-**Heading:** Taking away past zero
+**Text:**
+
+> A number line is like a thermometer lying on its side.
+>
+> Zero is in the middle. The positive numbers go to the right of zero. The
+> negative numbers go to the left.
+>
+> Zero itself is neither positive nor negative.
+
+**Picture:** the same thermometer lying on its side: bulb on the left, −10
+to 10 from left to right, still showing −3°C, with the same small numbers.
+Nothing to tap. Next works straight away.
+
+---
+
+### Screen 3. Taking away past zero
 
 The one idea: taking away more than you started with takes you below zero.
 
+**Heading:** When you take away a positive number, you move left along the
+number line.
+
 **Text:**
 
-> When you take away a positive number, you move left along the number line. If you take
-> away more than you started with, you go past zero and end up on a
-> negative number.
+> If you take away more than you started with, you go past zero and end up
+> on a negative number.
 
-**Example:** `4 − 6`
+**Instruction:**
 
-> Start at 4. Taking away 6 means 6 steps to the left. Tap the number line to take each
-> step.
+> Take 6 away from 4.
 
-Each tap draws one curved hop to the left and moves the dot. After the
-sixth hop:
-
-> You went past zero and landed on −2.
-> **4 − 6 = −2**
-
-**Pupil's turn** (appears once the example is done): `2 − 5`
-
-> Your turn. Tap the number line to take 5 steps left.
-
-Five taps, landing on −3, then **2 − 5 = −3**. Main button unlocks when
-both are done.
+Each tap on the number line moves the dot one place and draws a hop. When
+the dot lands, the green box appears: **4 − 6 = −2**. Main button unlocks
+then. There is no big sum above the line, no second sum and no "start" label.
 
 ---
 
-### Screen 3. Adding to a negative number
+### Screen 4. Adding to a negative number
 
-**Heading:** Adding to a negative number
+The one idea: adding moves you right, towards zero and sometimes past it.
 
-The one idea: adding moves you right, back up towards zero.
+**Heading:** When you add a positive number, you move right along the number
+line.
 
-**Text:**
+**First example, with no big sum above the line:** the dot starts on −6. The number line on
+this screen has no blue highlight.
 
-> When you add a positive number, you move right along the number line. If you start on a
-> negative number, adding moves you back up towards zero, and sometimes
-> past it.
-
-**Example:** `−6 + 4`
-
-> Start at −6. Adding 4 means 4 steps to the right. Tap the number line to take each step.
+> Move the dot 4 places to the right.
 
 Four hops right, landing on −2. Then:
 
@@ -147,89 +147,92 @@ Four hops right, landing on −2. Then:
 > negative.
 > **−6 + 4 = −2**
 
-**Pupil's turn:** `−3 + 7`
-
-> Your turn. Tap the number line to take 7 steps right.
-
-Seven hops, landing on 4. Then:
-
-> This time you went past zero, so the answer is positive.
-> **−3 + 7 = 4**
-
-Main button unlocks when both are done.
+Main button unlocks when the green box shows. There is no second sum on
+this screen.
 
 ---
 
-### Screen 4. Taking away from a negative number
-
-**Heading:** Taking away from a negative number
+### Screen 5. Taking away from a negative number
 
 The one idea: taking away from a negative takes you further below zero.
-This is the case pupils later mix up with taking away a negative, so it
-needs its own screen.
+Pupils later mix this up with taking away a negative, so it needs its own
+screen.
+
+**Heading:** If you start on a negative number and take away a positive
+number, you still move left.
 
 **Text:**
 
-> If you start on a negative number and take away a positive number, you still move left.
 > That takes you further below zero, so the answer is more negative.
 
-**Example:** `−2 − 3`
+**First example, with no big sum above the line:** the dot starts on −2.
 
-> Start at −2. Taking away 3 means 3 steps to the left. Tap the number line to take each
-> step.
+> Start at −2 and move 3 steps to the left.
 
 Three hops left, then **−2 − 3 = −5**.
 
-**Pupil's turn:** `−4 − 5`
-
-> Your turn. Tap the number line to take 5 steps left.
-
-Five hops, then **−4 − 5 = −9**. Main button unlocks when both are done.
+Main button unlocks when the green box shows. There is no second sum on
+this screen, and the number line has no blue highlight.
 
 ---
 
-### Screen 5. Two minus signs in one sum
+### Screen 6. Two minus signs in one sum
 
-**Heading:** Two minus signs in one sum
+**Heading:** Sometimes you have to take away a negative number.
 
-The one idea: how to read a sum with two minus signs. No answers yet.
+`3 − (−2)` is shown large, in its two colours, with these labels showing
+straight away: "subtract" under the −, and "negative 2" under (−2).
 
-**Text:**
+> We read this as ‘3 subtract negative 2’.
+>
+> The brackets show that −2 is the number we are subtracting.
 
-> Sometimes you have to take away a negative number, like 3 take away
-> negative 2. We write it as 3 − (−2). The bracket keeps the negative 2
-> together, so the two minus signs don't run into each other.
-
-**What the pupil does:** `3 − (−2)` is shown large. "Tap each part of the
-sum to see what it means." Tapping the first minus outlines it and shows
-the label "take away" under it. Tapping the bracket outlines `(−2)` and
-shows "the number negative 2". Main button unlocks once both have been
-tapped.
+Nothing to tap, and no answer yet.
 
 ---
 
-### Screen 6. What happens when you take away a negative
+### Screen 7. Removing a fee
 
-**Heading:** What happens when you take away a negative
+**Heading:** Removing a fee puts the money back.
 
-The one idea: taking away a negative makes the answer go up. This is the
-reason, shown with a pattern of sums the pupil already trusts. No stories.
+> For example, a £2 bank fee is a negative amount: −£2.
+>
+> Your balance was £5. The bank took a £2 fee, so your balance fell to £3.
 
-**Text:**
+**Picture:** a simple bank statement, all on the page from the start: a bank
+icon and "Your bank account", then Balance £5, Fee −£2 and Balance now £3.
+Under it: `5 + (−2) = 3`.
 
-> Start with 3 and take away a smaller number each time. Watch what
-> happens to the answer.
+**What the pupil does:** "The fee was a mistake. Tap the fee to remove it."
+The fee is crossed out and Balance now changes to £5. Then:
 
-**What the pupil does:** "Tap to show the next line." Each tap adds one
-line, with "up 1" beside every answer after the first:
+> The fee was a mistake. The bank removes it and puts £2 back.
+
+`3 − (−2) = 5`
+
+> Subtracting −2 has the same effect as adding 2.
+
+**3 − (−2) = 3 + 2 = 5**
+
+---
+
+### Screen 8. What happens when you take away a negative
+
+**Heading:** Another way of looking at it: start with 3 and take away a
+smaller number each time.
+
+> Watch what happens to the answer.
+
+`3 − 3 = 0` is already showing. "Tap to show the next line." Each tap adds
+one line, and beside each answer it says how far it has gone up from 0:
 
 ```
 3 − 3     = 0
 3 − 2     = 1    up 1
-3 − 1     = 2    up 1
-3 − 0     = 3    up 1
-3 − (−1)  = 4    up 1
-3 − (−2)  = 5    up 1
+3 − 1     = 2    up 2
+3 − 0     = 3    up 3
+3 − (−1)  = 4    up 4
+3 − (−2)  = 5    up 5
 ```
 
 The two lines with a negative are highlighted. After the last line:
@@ -238,15 +241,16 @@ The two lines with a negative are highlighted. After the last line:
 > zero and you're taking away negative numbers, so the answer keeps going
 > up. Taking away negative 2 gives 5, which is the same as 3 + 2.
 
-Main button unlocks when this paragraph shows.
-
 ---
 
-### Screen 7. Take away a negative: add instead
+### Screen 9. Take away a negative: add instead
 
 **Heading:** Take away a negative: add instead
 
 The one idea: the method. The two minus signs become a plus, then add.
+
+Keep this explanation: it says why taking away a negative moves the dot
+right. Trim only the instructions.
 
 **Text:**
 
@@ -257,8 +261,9 @@ The one idea: the method. The two minus signs become a plus, then add.
 
 1. `3 − (−4)` is shown large with the two signs `− (−` highlighted.
    "Tap the two minus signs to turn them into a plus." On tap, the two
-   signs and the bracket fade and a `+` takes their place: `3 + 4`.
-2. "Now start at 3. Tap the number line to take 4 steps right." Four taps, four hops right,
+   signs and the bracket fade and a `+` takes their place, and the line reads
+   `3 − (−4) = 3 + 4`.
+2. "Start at 3. Move the dot 4 places right." Four taps, four hops right,
    landing on 7.
 3. The working appears: **3 − (−4) = 3 + 4 = 7**
 
@@ -266,7 +271,7 @@ Main button unlocks when the working shows.
 
 ---
 
-### Screen 8. When the first number is negative
+### Screen 10. When the first number is negative
 
 **Heading:** When the first number is negative
 
@@ -280,11 +285,12 @@ The one idea: the first number doesn't change, even when it's negative.
 
 **What the pupil does:**
 
-1. Tap the two middle minus signs. They turn into a plus: `−8 + 3`. The
-   `−8` doesn't move or change.
-2. "Start at −8. Tap the number line to take 3 steps right." Three taps, three hops, landing
-   on −5.
-3. The working appears: **−8 − (−3) = −8 + 3 = −5**
+There is no big sum above the line and no signs to tap. The number line
+shows straight away.
+
+"Start at −8. Tap the number line to take 3 steps right." Three taps, three
+hops, landing on −5. Then the working appears:
+**−8 − (−3) = −8 + 3 = −5**
 
 **Then a warning box:**
 
@@ -295,6 +301,39 @@ Main button unlocks when the warning box shows. After this screen, Learn is
 finished and Try it opens.
 
 ---
+
+## Try it: multiplying negative numbers
+
+Try it runs: the four subtracting examples, "A quick review", the sign grid,
+five multiplying examples, then a second "A quick review".
+
+**Sign grid page.** Heading: "When you multiply, the two signs tell you the
+sign of the answer." "Tap each square to fill the grid." A grid with + and −
+along the top and down the side, and four squares showing ?. Tapping a
+square shows its sign and an example under the grid: 2 × 3 = 6, 2 × −3 = −6,
+−2 × 3 = −6 or −2 × −3 = 6. Once all four are filled:
+
+> When the two signs are the same, the answer is positive. When they are
+> different, the answer is negative.
+
+**Multiplying examples.** Each has a small table of the signs, with heavier
+lines around the top row and first column. The question's row is pastel red
+and its column pastel blue, so the square where they cross is purple:
+
+1. Choice: Work out −6 × 4.
+2. Typed: Work out −6 × −3.
+3. Choice: Which square gives the sign of −8 × −2? (nothing coloured until the pupil picks an option, then the table colours that row and column)
+4. Typed: Find the missing number: ? × −3 = 15.
+5. Choice: Sam says −3 × −5 = −15. What is the right answer?
+
+## Number line in the questions
+
+Every typed "Work out" question in Try it, Practice and Check has a number
+line above it. The pupil drags the dot to help them work it out, and hops
+appear from the start to the dot. Above the hops it says how far they've
+moved (+4, or −3 going left), and the number they're on shows below the line. Only the
+typed answer is marked. The line stretches to fit the sum, with room to go
+the wrong way. Lines longer than 20 only label every fifth number.
 
 ## What changed in the pasted starter text
 

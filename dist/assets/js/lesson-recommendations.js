@@ -123,7 +123,7 @@
             // same published list on PHP and static builds instead of probing
             // lesson.json for every planned entry in the curriculum.
             const homeUrl = new URL(
-                document.querySelector('.site-header__back')?.getAttribute('href') || '../../',
+                document.querySelector('.site-logo')?.getAttribute('href') || '../../',
                 window.location.href
             );
             publishedRoutesPromise = fetch(homeUrl, { cache: 'no-store' })
