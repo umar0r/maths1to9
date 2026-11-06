@@ -16,7 +16,7 @@
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,
-            question: (item, random) => window.NegativeNumbers.withMovableLine(window.NegativeNumbers.generate(item, random)),
+            question: (item, random) => window.NegativeNumbers.withMovableLine(window.NegativeNumbers.generate(item, random), { afterWrongAnswer: true }),
             upgrade: () => null
         });
     }
@@ -110,10 +110,20 @@
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
-            root.append(heading);
+            // The section title is hidden. A question is its page's only heading,
+            // with the same small tag as Practice above it.
+            if (state.screen === count) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.className = 'lesson-section__title';
+                heading.textContent = 'Your completed Check';
+                root.append(heading);
+            } else {
+                const position = document.createElement('p');
+                position.className = 'question-number';
+                position.textContent = `Question ${state.screen + 1} of ${count}`;
+                root.append(position);
+            }
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);

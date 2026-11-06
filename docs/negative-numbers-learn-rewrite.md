@@ -335,6 +335,9 @@ moved (+4, or −3 going left), and the number they're on shows below the line. 
 typed answer is marked. The line stretches to fit the sum, with room to go
 the wrong way. Lines longer than 20 only label every fifth number.
 
+In Practice the line stays hidden at first. It appears after the first wrong
+answer on that question, and works the same way from then on.
+
 ## What changed in the pasted starter text
 
 - Kept: negative numbers are below zero, written with a minus sign, to the

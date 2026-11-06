@@ -2466,18 +2466,20 @@
     }
 
     function renderComparison(container, comparison) {
-        appendSectionHeading(
-            container,
-            comparison,
-            'Try it',
-            'Compare the decimals',
-            'comparison'
-        );
+        if (!comparison.hide_heading) {
+            appendSectionHeading(
+                container,
+                comparison,
+                'Try it',
+                'Compare the decimals',
+                'comparison'
+            );
 
-        appendIntro(
-            container,
-            comparison.intro
-        );
+            appendIntro(
+                container,
+                comparison.intro
+            );
+        }
 
         const comparisonRoot = createElement(
             'div',

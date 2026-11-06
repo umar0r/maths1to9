@@ -195,7 +195,7 @@
 }
 
 /* The question takes focus for screen readers; it isn't something to tap. */
-#lesson-section-interactive .question-prompt:focus {
+.question-prompt:focus {
     outline: none;
 }
 

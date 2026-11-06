@@ -36,6 +36,7 @@
     "question_bank": {
         "eyebrow": "Practice",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Practise subtracting negative numbers",
         "intro": "",
         "session_length": 11
@@ -79,6 +80,7 @@
     "comparison": {
         "eyebrow": "Check",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Check what you have learnt",
         "intro": "",
         "questions": [
