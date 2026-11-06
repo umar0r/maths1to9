@@ -100,28 +100,41 @@
         ];
     }
 
+    // Check tests understanding, not working out: one question per key point.
     function checks() {
-        const mistake = {
-            questionType: 'error', input: 'choice',
-            prompt: 'A student writes: −4 − (−7) = −4 − 7 = −11. Which explanation is right?',
-            options: [
-                option('Subtracting −7 means adding 7. The answer is 3.', 'Keep −4 and add 7: −4 + 7 = 3.', true),
-                option('The working is right. The answer is −11.', 'Subtracting −7 becomes adding 7. It does not become subtracting 7.'),
-                option('Change −4 to 4, then add 7. The answer is 11.', 'Keep the starting number −4. Only subtracting −7 changes to addition.'),
-                option('Add 7 but keep the answer negative. The answer is −3.', 'Start at −4 and move seven spaces right. You pass zero and reach 3.')
-            ]
-        };
-        const temperature = {
-            questionType: 'temperature', input: 'choice',
-            prompt: 'At 6 a.m., the temperature is −7°C. By midday, it is 4°C. Which calculation gives the increase?',
-            options: [
-                option('4 − (−7) = 11°C', 'The increase is the final temperature minus the starting temperature.', true),
-                option('4 − 7 = −3°C', 'The starting temperature is −7, so subtract −7, not 7.'),
-                option('−7 − 4 = −11°C', 'To find the increase, subtract the starting temperature from the final temperature.'),
-                option('7 − 4 = 3°C', 'The temperature crosses zero: seven degrees to zero, then four more.')
-            ]
-        };
-        return [calculate(13, 6), calculate(-15, 7), rewrite(-6, 10), mistake, temperature];
+        const understanding = (prompt, options) => ({ questionType: 'understanding', input: 'choice', prompt, options });
+        return [
+            understanding('On a number line, what do + and − tell you to do?', [
+                option('+ means move right. − means move left.', 'Right. Adding moves you right and taking away moves you left.', true),
+                option('+ means move left. − means move right.', 'That is the wrong way round. Numbers get bigger as you go right, so adding moves you right.'),
+                option('+ and − both mean move right.', 'They go opposite ways. Taking away moves you left.'),
+                option('They only tell you if the answer is positive or negative.', 'They also tell you which way to move: + goes right and − goes left.')
+            ]),
+            understanding('What happens to the two minus signs when you take away a negative number?', [
+                option('They turn into a plus, so you add.', 'Right. Taking away a negative is the same as adding.', true),
+                option('They stay as they are, so you take away more.', 'Taking away a negative does the opposite of taking away, so you add.'),
+                option('They cancel out, so you ignore the number.', 'You still use the number. The two signs turn into a plus, so you add it.'),
+                option('They turn into a plus, and the first number changes sign too.', 'The first number stays exactly as it is. Only the two signs change.')
+            ]),
+            understanding('What sign do you get when you multiply a negative number by a positive number?', [
+                option('A minus, because the two signs are different.', 'Right. Different signs give a negative answer.', true),
+                option('A plus, because one of the numbers is positive.', 'One positive number isn\'t enough. The signs are different, so the answer is negative.'),
+                option('A plus, because two signs make a plus.', 'Only two signs that are the same make a plus. These are different.'),
+                option('It depends which number is bigger.', 'The size doesn\'t matter when you multiply. Different signs always give a negative answer.')
+            ]),
+            understanding('You start on a negative number and take away a positive number. What happens?', [
+                option('You move left, further below zero, so the answer is more negative.', 'Right. Taking away moves you left, away from zero.', true),
+                option('You move right, towards zero.', 'Taking away a positive number always moves you left.'),
+                option('The two minus signs make a plus, so you add.', 'That only happens when you take away a negative number. Here you take away a positive one.'),
+                option('You stop at zero, because you can\'t go any lower.', 'Numbers carry on below zero, so you keep moving left.')
+            ]),
+            understanding('You start on a positive number and take away a bigger number. What happens?', [
+                option('You go past zero, so the answer is negative.', 'Right. You move left, past zero, and land on a negative number.', true),
+                option('You stop at zero, because you can\'t go below it.', 'The number line carries on below zero, so you keep moving left.'),
+                option('You move right, because the number is bigger.', 'Taking away always moves you left, however big the number is.'),
+                option('The answer stays positive, so you swap the numbers round.', 'You can\'t swap the numbers in a take-away. You go past zero, so the answer is negative.')
+            ])
+        ];
     }
 
     const practiceTypes = [

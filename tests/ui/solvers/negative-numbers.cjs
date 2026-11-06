@@ -18,12 +18,15 @@ module.exports = async function solve(page) {
     }
     const calculation = text.match(/([−-]?\d+)\s*−\s*\(−(\d+)\)/);
     const options = page.locator('.question-card-options:visible button');
-    if (/temperature/.test(text)) {
-        const start = number(text.match(/temperature is ([−-]?\d+)/)[1]);
-        const end = number(text.match(/midday, it is ([−-]?\d+)/)[1]);
-        await page.getByRole('button', { name: `${signed(end)} − (${signed(start)}) = ${end - start}°C`, exact: true }).click();
-    } else if (text.startsWith('A student writes:')) {
-        await page.getByRole('button', { name: 'Subtracting −7 means adding 7. The answer is 3.', exact: true }).click();
+    const understanding = {
+        'On a number line, what do + and − tell you to do?': '+ means move right. − means move left.',
+        'What happens to the two minus signs when you take away a negative number?': 'They turn into a plus, so you add.',
+        'What sign do you get when you multiply a negative number by a positive number?': 'A minus, because the two signs are different.',
+        'You start on a negative number and take away a positive number. What happens?': 'You move left, further below zero, so the answer is more negative.',
+        'You start on a positive number and take away a bigger number. What happens?': 'You go past zero, so the answer is negative.'
+    };
+    if (understanding[text]) {
+        await page.getByRole('button', { name: understanding[text], exact: true }).click();
     } else if (calculation) {
         const start = number(calculation[1]), amount = Number(calculation[2]);
         if (text.startsWith('Sam writes:')) {

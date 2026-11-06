@@ -338,6 +338,17 @@ the wrong way. Lines longer than 20 only label every fifth number.
 In Practice the line stays hidden at first. It appears after the first wrong
 answer on that question, and works the same way from then on.
 
+## Check
+
+Five multiple choice questions that test understanding, not working out, one
+for each key point:
+
+1. − means go left and + means go right.
+2. Two minus signs make a plus.
+3. A negative times a positive gives a minus.
+4. Starting on a negative and taking away goes further below zero.
+5. Starting on a positive and taking away a bigger number goes past zero.
+
 ## What changed in the pasted starter text
 
 - Kept: negative numbers are below zero, written with a minus sign, to the

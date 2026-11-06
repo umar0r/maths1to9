@@ -17,7 +17,8 @@
             "error": "calculate-negative-numbers",
             "rewrite": "calculate-negative-numbers",
             "calculate": "calculate-negative-numbers",
-            "temperature": "calculate-negative-numbers"
+            "temperature": "calculate-negative-numbers",
+            "understanding": "calculate-negative-numbers"
         }
     },
     "explanation": {
@@ -85,19 +86,19 @@
         "intro": "",
         "questions": [
             {
-                "type": "calculate"
+                "type": "understanding"
             },
             {
-                "type": "calculate"
+                "type": "understanding"
             },
             {
-                "type": "rewrite"
+                "type": "understanding"
             },
             {
-                "type": "error"
+                "type": "understanding"
             },
             {
-                "type": "temperature"
+                "type": "understanding"
             }
         ],
         "summary": {
