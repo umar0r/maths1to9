@@ -174,41 +174,34 @@ for (const width of [1280, 375]) {
             if (await solve(page)) continue;
             await mainAction(page).click();
         }
-        await expect(page.locator('.negative-hop:visible')).toHaveCount(0);
-        await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Starting marker 5/);
-        await expect(page.locator('.negative-line:visible')).not.toHaveAttribute('aria-label', /move right to 8/);
-        await page.getByRole('button', { name: '5 − 3', exact: true }).click();
-        await mainAction(page).click();
-        await expect(page.locator('.question-feedback:visible')).toHaveText('That keeps the subtraction. Subtracting a negative means adding: 5 + 3.');
-        await expect(page.locator('.negative-hop:visible')).toHaveCount(0);
-        await mainAction(page).click();
-        await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.negative-hop:visible')).toHaveCount(3);
-        await page.screenshot({ path: `/private/tmp/negative-line-try-${width}.png`, fullPage: true });
-        // Example 2: the dot can be dragged, is saved, and is never marked.
-        await mainAction(page).click();
+        // Example 1: the question comes first, and there's nothing to choose.
+        await expect(page.locator('.question-card-options:visible button')).toHaveCount(0);
+        const heading = await prompt(page).boundingBox();
         const line = page.locator('.negative-line--movable:visible');
-        await expect(line).toHaveAttribute('aria-label', /The dot is on −2/);
-        const box = await page.locator('.negative-track:visible').boundingBox();
-        await page.mouse.move(box.x + box.width * 8 / 20, box.y + 40);
-        await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 14 / 20, box.y + 40, { steps: 6 });
-        await page.mouse.up();
-        await expect(line).toHaveAttribute('aria-label', /The dot is on 4/);
-        await expect(page.locator('.negative-hop:visible')).toHaveCount(6);
+        expect(heading.y).toBeLessThan((await line.boundingBox()).y);
+        await expect(line).toHaveAttribute('aria-label', /The dot is on 5/);
+        await expect(mainAction(page)).toBeDisabled();
+        // Going the wrong way doesn't finish it, and the dot is saved.
         await line.focus();
         await line.press('ArrowLeft');
-        await expect(line).toHaveAttribute('aria-label', /The dot is on 3/);
+        await expect(page.locator('.negative-hop:visible')).toHaveCount(1);
+        await expect(page.locator('.negative-hop-count:visible')).toHaveText('−1');
         await page.reload({ waitUntil: 'networkidle' });
-        await expect(page.locator('.negative-line--movable:visible')).toHaveAttribute('aria-label', /The dot is on 3/);
-        await page.locator('.question-card:visible input[type=text]').fill('−8');
-        await mainAction(page).click();
-        await expect(page.locator('.negative-line--movable:visible')).toHaveCount(1);
-        await mainAction(page).click();
-        await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.negative-hop:visible')).not.toHaveCount(0);
+        await expect(page.locator('.negative-line--movable:visible')).toHaveAttribute('aria-label', /The dot is on 4/);
+        await expect(mainAction(page)).toBeDisabled();
+        // Dragging onto the answer finishes it.
+        const box = await page.locator('.negative-track:visible').boundingBox();
+        await page.mouse.move(box.x + box.width * 14 / 20, box.y + 40);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 18 / 20, box.y + 40, { steps: 6 });
+        await page.mouse.up();
+        await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);
+        await expect(page.locator('.negative-hop-count:visible')).toHaveText('+3');
+        await expect(page.locator('.nn-working:visible')).toHaveText('5 − (−3) = 5 + 3 = 8');
+        await expect(mainAction(page)).toBeEnabled();
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);
+        await page.screenshot({ path: `/private/tmp/negative-line-try-${width}.png`, fullPage: true });
         await context.close();
     });
 }

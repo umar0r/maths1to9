@@ -90,8 +90,7 @@ test('negative-numbers: 200 seeds of every type are deterministic and mapped to 
         const inputs = new Set(items.map(item => Q.generate(item, seededRandom(item.seed)).input));
         assert.ok(inputs.has('choice') && inputs.has('number'));
     }
-    assert.ok(examples().some(question => question.input === 'choice'));
-    assert.ok(examples().some(question => question.input === 'number'));
+    assert.ok(examples().every(question => question.input !== 'choice'));
     assert.ok(Q.checks().some(question => question.input === 'choice'));
     assert.ok(Q.checks().every(question => question.input === 'choice'));
 });
