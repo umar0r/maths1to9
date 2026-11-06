@@ -41,7 +41,7 @@ for (const width of [1280, 375]) {
             const errors = watchForErrors(page);
             await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
             await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByRole('heading', { name: 'Subtracting negative numbers', exact: true })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Negative numbers are numbers below zero.', exact: true })).toBeVisible();
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();
@@ -66,6 +66,7 @@ for (const width of [1280, 375]) {
                     const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
                     const options = page.locator('.question-card-options:visible button');
                     const kind = await options.count() ? 'choice' : 'number';
+                    if (kind === 'number' && !(await prompt(page).innerText()).includes('×')) await expect(page.locator('.negative-line--movable:visible')).toHaveCount(1);
                     const key = `${section}:${kind}`;
                     if (kind === 'choice' || !tested.has(key)) {
                         if (section !== 'interactive') penalty += 5;
@@ -117,7 +118,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(50);
-            expect(earned).toBe(200 - penalty);
+            expect(earned).toBe(225 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');
@@ -148,7 +149,7 @@ for (const width of [1280, 375]) {
 test('negative-numbers: built static lesson finishes and All lessons reaches its homepage', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('dist/content/negative-numbers/', { waitUntil: 'networkidle' });
-    for (let step = 0; step < 100; step++) {
+    for (let step = 0; step < 160; step++) {
         if (await mainAction(page).innerText() === 'All lessons') break;
         if (await solve(page)) continue;
         await mainAction(page).click();
@@ -170,18 +171,41 @@ for (const width of [1280, 375]) {
             if (await solve(page)) continue;
             await mainAction(page).click();
         }
-        await expect(page.locator('.negative-path:visible')).toHaveCount(0);
+        await expect(page.locator('.negative-hop:visible')).toHaveCount(0);
         await expect(page.locator('.negative-line:visible')).toHaveAttribute('aria-label', /Starting marker 5/);
         await expect(page.locator('.negative-line:visible')).not.toHaveAttribute('aria-label', /move right to 8/);
         await page.getByRole('button', { name: '5 − 3', exact: true }).click();
         await mainAction(page).click();
         await expect(page.locator('.question-feedback:visible')).toHaveText('That keeps the subtraction. Subtracting a negative means adding: 5 + 3.');
-        await expect(page.locator('.negative-path:visible')).toHaveCount(0);
+        await expect(page.locator('.negative-hop:visible')).toHaveCount(0);
         await mainAction(page).click();
         await solve(page);
         await mainAction(page).click();
-        await expect(page.locator('.negative-path:visible')).toHaveCount(1);
+        await expect(page.locator('.negative-hop:visible')).toHaveCount(3);
         await page.screenshot({ path: `/private/tmp/negative-line-try-${width}.png`, fullPage: true });
+        // Example 2: the dot can be dragged, is saved, and is never marked.
+        await mainAction(page).click();
+        const line = page.locator('.negative-line--movable:visible');
+        await expect(line).toHaveAttribute('aria-label', /The dot is on −2/);
+        const box = await page.locator('.negative-track:visible').boundingBox();
+        await page.mouse.move(box.x + box.width * 8 / 20, box.y + 40);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 14 / 20, box.y + 40, { steps: 6 });
+        await page.mouse.up();
+        await expect(line).toHaveAttribute('aria-label', /The dot is on 4/);
+        await expect(page.locator('.negative-hop:visible')).toHaveCount(6);
+        await line.focus();
+        await line.press('ArrowLeft');
+        await expect(line).toHaveAttribute('aria-label', /The dot is on 3/);
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(page.locator('.negative-line--movable:visible')).toHaveAttribute('aria-label', /The dot is on 3/);
+        await page.locator('.question-card:visible input[type=text]').fill('−8');
+        await mainAction(page).click();
+        await expect(page.locator('.negative-line--movable:visible')).toHaveCount(1);
+        await mainAction(page).click();
+        await solve(page);
+        await mainAction(page).click();
+        await expect(page.locator('.negative-hop:visible')).not.toHaveCount(0);
         await context.close();
     });
 }

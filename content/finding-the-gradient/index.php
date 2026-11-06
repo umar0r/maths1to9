@@ -32,7 +32,7 @@ $pageTitle = 'Finding the gradient';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
 </head>
 
 <body
@@ -44,10 +44,6 @@ $pageTitle = 'Finding the gradient';
             <a class="site-logo" href="../../">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
-            </a>
-
-            <a class="site-header__back" href="../../">
-                All lessons
             </a>
         </div>
     </header>
@@ -80,7 +76,7 @@ $pageTitle = 'Finding the gradient';
     <link rel="stylesheet" href="./lesson.css?v=1">
 
     <!-- Shared browser progress handling -->
-    <script src="../../assets/js/progress.js?v=2"></script>
+    <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./gradient.js?v=1"></script>
@@ -88,6 +84,6 @@ $pageTitle = 'Finding the gradient';
     <script src="./questions.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=46"></script>
+    <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

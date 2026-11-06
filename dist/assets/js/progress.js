@@ -568,9 +568,9 @@
     );
 
     /* Keep the lesson resume point up to date when a student leaves via
-     * the header link, including future non-local progress adapters. */
+     * the header logo, including future non-local progress adapters. */
     document.addEventListener('click', (event) => {
-        const link = event.target.closest('a.site-header__back');
+        const link = event.target.closest('[data-lesson-id] a.site-logo');
 
         if (
             !link ||

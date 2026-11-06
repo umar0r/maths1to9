@@ -28,7 +28,7 @@ $pageTitle = 'Substituting into formulae';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=40">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
     <link rel="stylesheet" href="./lesson.css?v=3">
 </head>
 
@@ -41,10 +41,6 @@ $pageTitle = 'Substituting into formulae';
             <a class="site-logo" href="../../index.php">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
                 <span>Maths1to9</span>
-            </a>
-
-            <a class="site-header__back" href="../../index.php">
-                All lessons
             </a>
         </div>
     </header>
@@ -68,10 +64,10 @@ $pageTitle = 'Substituting into formulae';
         </div>
     </noscript>
 
-    <script src="../../assets/js/progress.js?v=2"></script>
+    <script src="../../assets/js/progress.js?v=3"></script>
     <script src="./substitution.js?v=2"></script>
     <script src="./questions.js?v=13"></script>
     <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=46"></script>
+    <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

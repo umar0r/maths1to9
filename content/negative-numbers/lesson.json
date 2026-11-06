@@ -23,11 +23,13 @@
     "explanation": {
         "eyebrow": "Learn",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Subtracting negative numbers"
     },
     "interactive": {
         "eyebrow": "Try it",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Try these calculations",
         "intro": ""
     },

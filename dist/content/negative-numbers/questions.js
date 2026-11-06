@@ -16,7 +16,7 @@
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,
-            question: window.NegativeNumbers.generate,
+            question: (item, random) => window.NegativeNumbers.withMovableLine(window.NegativeNumbers.generate(item, random)),
             upgrade: () => null
         });
     }
@@ -71,7 +71,7 @@
         function questionConfig(index, readOnly) {
             const question = questions[index];
             return {
-                ...window.NegativeNumbers.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
+                ...window.NegativeNumbers.withMovableLine(window.NegativeNumbers.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index))),
                 sectionId: 'comparison', questionId: `final-check-${index + 1}`,
                 scored: true, readOnly,
                 onFeedback: reportProgress, onContinue: continueQuestion

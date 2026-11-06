@@ -23,7 +23,7 @@ async function layout(page) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const problems = await root(page).evaluate(node => {
         const issues = [];
-        for (const svg of node.querySelectorAll('svg')) {
+        for (const svg of node.querySelectorAll('.nn-number-line svg, .nn-thermometer svg')) {
             const box = svg.getBoundingClientRect();
             const labels = [...svg.querySelectorAll('.nn-value')].map(label => label.getBoundingClientRect());
             if (labels.some((a, i) => labels.slice(i + 1).some(b =>
@@ -48,46 +48,44 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         const errors = watchForErrors(page);
-        await page.goto('content/negative-numbers/#learn-8', { waitUntil: 'networkidle' });
+        // Any Learn screen opens from its address, and Next moves on freely.
+        await page.goto('content/negative-numbers/#learn-4', { waitUntil: 'networkidle' });
+        await expect(page.locator('.lesson-section__title:visible')).toHaveText('When you add a positive number, you move right along the number line.');
+        await expect(main(page)).toBeEnabled();
+        await page.goto('content/negative-numbers/#learn-1', { waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'networkidle' });
         await expect(page).toHaveURL(/#learn-1$/);
         await expect(main(page)).toHaveText('Next');
         await expect(main(page)).toBeEnabled();
-        const line = root(page).locator('.nn-explore');
-        const box = await line.boundingBox();
-        const marker = await line.locator('.nn-dot').boundingBox();
-        const hit = await line.locator('.nn-drag-target').boundingBox();
-        const zero = await line.locator('.nn-zero-circle').boundingBox();
-        await expect(root(page).locator('.nn-caption')).toHaveText("You're on −4. That's 4 to the left of zero, so it's a negative number.");
-        expect(marker.x + marker.width).toBeLessThan(zero.x);
-        expect(marker.width).toBeGreaterThanOrEqual(22);
-        expect(marker.width).toBeLessThan(26);
-        expect(hit.width).toBeGreaterThanOrEqual(44);
-        expect(hit.height).toBeGreaterThanOrEqual(44);
-        if (width === 375) {
-            expect(box.width).toBeGreaterThan(335);
-            expect(box.height).toBeGreaterThan(150);
-        }
-        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Subtracting negative numbers');
+        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Negative numbers are numbers below zero.');
         await expect(page.locator('.lesson-eyebrow:visible')).toHaveCount(0);
-        // Drag from the new starting position to zero, then back to −4.
-        await page.mouse.move(marker.x + marker.width / 2, marker.y + marker.height / 2);
+        // Screen 1: drag the thermometer's level, then use the arrow keys.
+        const caption = root(page).locator('.nn-caption');
+        const thermometer = root(page).locator('.nn-thermometer');
+        const svg = await thermometer.locator('svg').boundingBox();
+        const levelY = value => svg.y + (24 + (10 - value) * 16) / 410 * svg.height;
+        const tubeX = svg.x + svg.width * 60 / 160;
+        await expect(caption).toHaveText("It's −3°C. That's 3 degrees below zero, so it's a negative number.");
+        await page.mouse.move(tubeX, levelY(-3));
         await page.mouse.down();
-        await page.mouse.move(box.x + box.width / 2, marker.y + marker.height / 2, { steps: 8 });
+        await page.mouse.move(tubeX, levelY(0), { steps: 8 });
         await page.mouse.up();
-        await expect(root(page).locator('.nn-caption')).toHaveText("You're on 0. Zero is neither positive nor negative.");
-        await page.mouse.move(box.x + box.width / 2, marker.y + marker.height / 2);
+        await expect(caption).toHaveText("It's 0°C. Zero is neither positive nor negative.");
+        await page.mouse.move(tubeX, levelY(0));
         await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 210 / 660, marker.y + marker.height / 2, { steps: 8 });
+        await page.mouse.move(tubeX, levelY(6), { steps: 8 });
         await page.mouse.up();
-        await expect(root(page).locator('.nn-caption')).toHaveText("You're on −4. That's 4 to the left of zero, so it's a negative number.");
-        await line.focus();
-        for (let i = 0; i < 10; i++) await line.press('ArrowRight');
-        await expect(root(page).locator('.nn-caption')).toHaveText("You're on 6. That's 6 to the right of zero, so it's a positive number.");
-        for (let i = 0; i < 10; i++) await line.press('ArrowLeft');
+        await expect(caption).toHaveText("It's 6°C. That's 6 degrees above zero, so it's a positive number.");
+        await thermometer.focus();
+        for (let i = 0; i < 9; i++) await thermometer.press('ArrowDown');
+        await expect(caption).toHaveText("It's −3°C. That's 3 degrees below zero, so it's a negative number.");
+        await layout(page);
         await reloadAndCompare(page);
-        for (let screen = 1; screen <= 8; screen++) {
+        for (let screen = 1; screen <= 10; screen++) {
             await expect(page).toHaveURL(new RegExp(`#learn-${screen}$`));
-            if (screen > 1) await expect(main(page)).toBeDisabled();
+            // Only the last Learn screen must be finished before moving on.
+            if (screen === 10) await expect(main(page)).toBeDisabled();
+            else await expect(main(page)).toBeEnabled();
             let taps = 0;
             while (await root(page).locator('[role="button"]').count()) {
                 const before = await picture(page);
@@ -95,7 +93,9 @@ for (const width of [1280, 375]) {
                 const target = root(page).locator('[role="button"]').first();
                 const isLine = await target.evaluate(node => node.classList.contains('nn-number-line'));
                 const waiting = isLine && await target.evaluate(node => !node.querySelector('.nn-hop'));
-                if (waiting) await expect(target).toHaveClass(/nn-awaiting-tap/);
+                // Screens 4 and 5 have no blue highlight on their number lines.
+                if (waiting && [4, 5].includes(screen)) await expect(target).not.toHaveClass(/nn-awaiting-tap/);
+                else if (waiting) await expect(target).toHaveClass(/nn-awaiting-tap/);
                 if (width === 375) await target.tap();
                 else if (taps === 0) { await target.focus(); await target.press('Enter'); }
                 else await target.click();
@@ -113,7 +113,7 @@ for (const width of [1280, 375]) {
                 taps++;
                 expect(taps).toBeLessThan(20);
             }
-            expect(taps).toBe([0, 11, 11, 8, 2, 6, 5, 4][screen - 1]);
+            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 5, 3][screen - 1]);
             await layout(page);
             await reloadAndCompare(page);
             await page.screenshot({ path: `/private/tmp/negative-learn-${width}-screen-${screen}.png`, fullPage: true });
@@ -124,6 +124,10 @@ for (const width of [1280, 375]) {
                 expect(await picture(page)).toEqual(retained);
             }
             await expect(main(page)).toBeEnabled();
+            if (screen === 7) {
+                await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
+                await expect(root(page).locator('.nn-working')).toHaveText('3 − (−2) = 3 + 2 = 5');
+            }
             await main(page).click();
         }
         await expect(page.locator('.question-prompt:visible')).toBeVisible();

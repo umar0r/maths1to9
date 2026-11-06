@@ -161,38 +161,6 @@ a {
     letter-spacing: -0.04em;
 }
 
-.site-header__back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    background: transparent;
-    color: var(--text-soft);
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    font-size: 0.88rem;
-    font-weight: 800;
-    text-decoration: none;
-    transition: color 150ms ease;
-}
-
-.site-header__back::before {
-    content: "←";
-}
-
-.site-header__back:hover {
-    color: var(--primary);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.site-header__back:focus-visible {
-    outline: 3px solid rgba(47, 111, 237, 0.25);
-    outline-offset: 4px;
-    border-radius: 4px;
-}
-
 .lesson-loading {
     padding: 60px 0;
     text-align: center;
@@ -385,10 +353,18 @@ a {
 }
 
 .lesson-header--compact .lesson-header__title {
-    max-width: calc(100% - 128px);
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
     margin: 0;
     font-size: clamp(1.2rem, 2.6vw, 1.55rem);
     line-height: 1.15;
+}
+
+.lesson-header--compact .lesson-header__stage-progress {
+    position: static;
+    flex: none;
+    margin-left: 20px;
 }
 
 .lesson-header--compact .lesson-header__practice-progress {
@@ -407,10 +383,6 @@ a {
 
 .lesson-header--compact .practice-progress-ring span {
     font-size: 0.75rem;
-}
-
-.lesson-header--compact + .lesson-navigation {
-    margin-top: 0;
 }
 
 .lesson-header--compact ~ .lesson-section-container .lesson-section {
@@ -872,6 +844,55 @@ a {
 
     .lesson-navigation--stages .lesson-navigation__button {
         font-size: 0.7rem;
+    }
+}
+
+/* In the site header the journey is a small strip opposite the logo. */
+.site-header .lesson-navigation--stages {
+    flex: 0 0 300px;
+    width: 300px;
+    margin: 0;
+}
+
+.site-header .lesson-navigation--stages .lesson-navigation__button,
+.site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"] {
+    gap: 3px;
+    font-size: 0.68rem;
+}
+
+.site-header .lesson-navigation--stages .lesson-navigation__button::before {
+    width: 20px;
+    height: 20px;
+    font-size: 0.64rem;
+}
+
+.site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"]::before {
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+}
+
+.site-header .lesson-navigation--stages .lesson-navigation__button:not(:last-child)::after {
+    top: 9px;
+    left: calc(50% + 13px);
+    width: calc(100% - 26px);
+}
+
+/* On a phone only the numbered dots fit beside the logo. */
+@media (max-width: 520px) {
+    .site-header .lesson-navigation--stages {
+        flex: 0 1 136px;
+        width: 136px;
+    }
+
+    .site-header .lesson-navigation--stages .lesson-navigation__button,
+    .site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"] {
+        min-height: 44px;
+        align-content: center;
+        gap: 0;
+        font-size: 0;
+    }
+
+    .site-header .lesson-navigation--stages .lesson-navigation__button:not(:last-child)::after {
+        top: 21px;
     }
 }
 
