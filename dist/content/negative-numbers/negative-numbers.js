@@ -377,18 +377,46 @@
         show(savedDot(question));
     }
 
+    // Remembers a wrong answer, so a reload still shows the line.
+    function wrongBefore(question) {
+        try {
+            return window.localStorage.getItem(`negative-numbers-wrong:${question.prompt}`) === '1';
+        } catch {
+            return false;
+        }
+    }
+
+    function rememberWrong(question, wrong) {
+        try {
+            if (wrong) window.localStorage.setItem(`negative-numbers-wrong:${question.prompt}`, '1');
+            else window.localStorage.removeItem(`negative-numbers-wrong:${question.prompt}`);
+        } catch {
+            // The line still appears; it just won't survive a reload.
+        }
+    }
+
     // Typed "work out" questions get the number line above them. A finished
-    // question just shows the hops from the start to the answer.
-    function withMovableLine(question) {
-        if (question.input !== 'number') return question;
+    // question just shows the hops from the start to the answer. With
+    // afterWrongAnswer, the line stays hidden until the first wrong answer.
+    function withMovableLine(question, { afterWrongAnswer = false } = {}) {
+        if (question.input !== 'number' || question.signs) return question;
+        let lineHost;
         return {
             ...question,
             figure(host, { readOnly }) {
+                lineHost = host;
+                host.hidden = afterWrongAnswer && !readOnly && !wrongBefore(question);
                 if (readOnly) drawLine(host, question.start, question.start + question.amount, question.start + question.amount, true, {
                     min: Math.min(-10, question.start - question.amount),
                     max: Math.max(10, question.start + question.amount)
                 });
                 else drawMovableLine(host, question);
+            },
+            onFeedback(result) {
+                question.onFeedback?.(result);
+                if (!afterWrongAnswer) return;
+                rememberWrong(question, !result.correct);
+                if (!result.correct) lineHost.hidden = false;
             }
         };
     }

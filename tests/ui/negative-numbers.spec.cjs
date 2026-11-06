@@ -66,8 +66,11 @@ for (const width of [1280, 375]) {
                     const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
                     const options = page.locator('.question-card-options:visible button');
                     const kind = await options.count() ? 'choice' : 'number';
-                    if (kind === 'number' && !(await prompt(page).innerText()).includes('×')) await expect(page.locator('.negative-line--movable:visible')).toHaveCount(1);
                     const key = `${section}:${kind}`;
+                    // Practice hides the line until a wrong answer.
+                    if (kind === 'number' && !(await prompt(page).innerText()).includes('×') && (section !== 'question-bank' || !tested.has(key))) {
+                        await expect(page.locator('.negative-line--movable:visible')).toHaveCount(section === 'question-bank' ? 0 : 1);
+                    }
                     if (kind === 'choice' || !tested.has(key)) {
                         if (section !== 'interactive') penalty += 5;
                         tested.add(key);
