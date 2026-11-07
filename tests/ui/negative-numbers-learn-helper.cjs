@@ -5,11 +5,9 @@ module.exports = async function solveLearn(page) {
     // Try it: press the arrow keys until the dot lands on the answer.
     const line = page.locator('.negative-line--movable:visible');
     if (await line.count()) {
-        const text = await page.locator('.question-prompt:visible').innerText();
-        const [, start, amount] = text.match(/([−-]?\d+) − \(−(\d+)\)/);
+        const target = Number(await line.getAttribute('data-answer'));
         await line.focus();
         const dot = Number((await page.locator('.negative-dot-value:visible').innerText()).replace('−', '-'));
-        const target = Number(start.replace('−', '-')) + Number(amount);
         for (let step = 0; step < Math.abs(target - dot); step++) await line.press(target > dot ? 'ArrowRight' : 'ArrowLeft');
         return true;
     }

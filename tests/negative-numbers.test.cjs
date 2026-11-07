@@ -10,7 +10,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
     window, document: { body: { dataset: { lessonRenderer: 'custom' } } }
 });
 const Q = loadScript(path.join(contentDir, 'negative-numbers/negative-numbers.js'),
-    ['rewrite', 'calculate', 'checks', 'generate', 'pick', 'practiceTypes'], { window });
+    ['rewrite', 'calculate', 'checks', 'generate', 'pick', 'practiceTypes', 'dragTakeNegative', 'dragTakePositive', 'dragAdd'], { window });
 window.NegativeNumbers = Q;
 const { screens, examples } = loadScript(path.join(contentDir, 'negative-numbers/interactive.js'), ['screens', 'examples'], { window });
 const fixed = [...examples(), ...Q.checks()];
@@ -91,6 +91,10 @@ test('negative-numbers: 200 seeds of every type are deterministic and mapped to 
         assert.ok(inputs.has('choice') && inputs.has('number'));
     }
     assert.ok(examples().every(question => question.input !== 'choice'));
+    // No run of three of the same kind of sum, and a mix of kinds overall.
+    const kinds = examples().map(question => question.prompt.replace(/[−\d]+/g, 'n').replace(/\(n\)/, '(−n)'));
+    assert.ok(new Set(kinds).size >= 3, kinds.join(' | '));
+    kinds.forEach((kind, i) => assert.ok(!(kind === kinds[i + 1] && kind === kinds[i + 2]), kind));
     assert.ok(Q.checks().some(question => question.input === 'choice'));
     assert.ok(Q.checks().every(question => question.input === 'choice'));
 });

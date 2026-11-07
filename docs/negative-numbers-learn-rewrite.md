@@ -46,6 +46,9 @@ Every Learn screen can be opened from its address (`#learn-4`), and Next
 always works, whatever the screen says about it unlocking below. Only the
 last screen must be finished, to open Try it.
 
+Working always goes inside the feedback box, never in a separate box underneath.
+Every bold green answer in this document means that.
+
 Each screen teaches one thing, like Brilliant, and each one builds on the
 last:
 
@@ -124,7 +127,7 @@ number line.
 > Take 6 away from 4.
 
 Each tap on the number line moves the dot one place and draws a hop. When
-the dot lands, the green box appears: **4 − 6 = −2**. Main button unlocks
+the dot lands, the feedback box appears: **4 − 6 = −2**. Main button unlocks
 then. There is no big sum above the line, no second sum and no "start" label.
 
 ---
@@ -147,7 +150,7 @@ Four hops right, landing on −2. Then:
 > negative.
 > **−6 + 4 = −2**
 
-Main button unlocks when the green box shows. There is no second sum on
+Main button unlocks when the feedback box shows. There is no second sum on
 this screen.
 
 ---
@@ -171,7 +174,7 @@ number, you still move left.
 
 Three hops left, then **−2 − 3 = −5**.
 
-Main button unlocks when the green box shows. There is no second sum on
+Main button unlocks when the feedback box shows. There is no second sum on
 this screen, and the number line has no blue highlight.
 
 ---
@@ -247,10 +250,8 @@ The two lines with a negative are highlighted. After the last line:
 
 **Heading:** Take away a negative: add instead
 
-The one idea: the method. The two minus signs become a plus, then add.
-
-Keep this explanation: it says why taking away a negative moves the dot
-right. Trim only the instructions.
+The one idea: the two minus signs become a plus. There is no number line on
+this screen.
 
 **Text:**
 
@@ -263,9 +264,7 @@ right. Trim only the instructions.
    "Tap the two minus signs to turn them into a plus." On tap, the two
    signs and the bracket fade and a `+` takes their place, and the line reads
    `3 − (−4) = 3 + 4`.
-2. "Start at 3. Move the dot 4 places right." Four taps, four hops right,
-   landing on 7.
-3. The working appears: **3 − (−4) = 3 + 4 = 7**
+2. The working appears straight away: **3 − (−4) = 3 + 4 = 7**
 
 Main button unlocks when the working shows.
 
@@ -292,20 +291,20 @@ shows straight away.
 hops, landing on −5. Then the working appears:
 **−8 − (−3) = −8 + 3 = −5**
 
-**Then a warning box:**
+**The same feedback box also says:**
 
 > Watch out: a common mistake is to change the −8 into 8 as well, and get
 > 8 + 3 = 11. Only the two signs in the middle change.
 
-Main button unlocks when the warning box shows. After this screen, Learn is
+Main button unlocks when the feedback box shows. After this screen, Learn is
 finished and Try it opens.
 
 ---
 
 ## Try it: multiplying negative numbers
 
-Try it runs: the four subtracting examples, "A quick review", the sign grid,
-five multiplying examples, then a second "A quick review".
+Try it runs: the four number line examples, the sign grid, five multiplying
+examples, then "A quick review" of the multiplying examples.
 
 **Sign grid page.** Heading: "When you multiply, the two signs tell you the
 sign of the answer." "Tap each square to fill the grid." A grid with + and −
@@ -327,10 +326,17 @@ and its column pastel blue, so the square where they cross is purple:
 4. Typed: Find the missing number: ? × −3 = 15.
 5. Typed: Sam says −3 × −5 = −15. What is the right answer?
 
-**Subtracting examples.** Try it has no multiple choice. The question sits at
+**Number line examples, in this order:** 5 − (−3), 3 − 8, −4 − (−9), −6 + 9.
+Never three of the same kind in a row.
+
+**Number line examples.** Try it has no multiple choice. The question sits at
 the top, then "Drag the dot to the answer." When the dot lands on the answer
-it goes green, the working shows in the green box, and Next unlocks. There is
-nothing to type and no Check button.
+it goes green and it says "Correct." with a short reason, the working shows in
+the same feedback box, and Next unlocks. There is nothing to type and no Check button.
+
+If the dot is left anywhere else, a small hint shows under the line: which way
+to go if they went left, how far in total if they stopped short, or that it's
+too far if they went past.
 
 ## Number line in the questions
 
