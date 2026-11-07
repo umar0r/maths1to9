@@ -56,15 +56,6 @@
             `Start at ${signed(start)} and count ${amount} places left.`);
     }
 
-    function addToNegative(start, amount) {
-        const answer = start + amount;
-        return typedSum(start, amount, `Work out ${signed(start)} + ${amount}.`,
-            `${signed(start)} + ${amount} = ${signed(answer)}. Adding moves you right.`,
-            [[-answer, 'Check the sign of your answer. You move right, so where do you land?'],
-                [start - amount, 'That takes away. Adding moves you right.']],
-            `Start at ${signed(start)} and count ${amount} places right.`);
-    }
-
     function addNegative(start, amount) {
         const answer = start - amount;
         return typedSum(start, -amount, `Work out ${signed(start)} + (−${amount}).`,
@@ -155,17 +146,6 @@
                 { value: signed(-size - other), feedback: `That adds −${size} and −${other}. This question multiplies them.` }
             ],
             fallback: `Work out ${size} × ${other}, then use the signs to find the sign of the answer.`
-        };
-    }
-
-    function multiplyMissing(size, other) {
-        const product = size * other;
-        return {
-            questionType: 'multiply', input: 'number', signs: [null, '−'], expected: -size,
-            prompt: `Find the missing number: ? × −${other} = ${product}.`, answer: signed(-size),
-            feedback: `−${size} × −${other} = ${product}. The answer is positive, so both signs must be the same.`,
-            rules: [{ value: String(size), feedback: `${size} × −${other} = −${product}. The signs need to be the same to get a positive answer.` }],
-            fallback: `${product} ÷ ${other} = ${size}. Then work out the sign.`
         };
     }
 
@@ -305,9 +285,8 @@
     // A fixed mix, so the same kind of sum never comes three times in a row.
     const practiceTypes = [
         'take-positive', 'cross-zero', 'rewrite-positive', 'temperature-rise',
-        'add-two-negatives', 'multiply-different', 'missing-add', 'take-from-negative',
-        'either-way', 'multiply-same', 'temperature-two-steps', 'rewrite-negative',
-        'add-negative', 'multiply-missing', 'error', 'add-to-negative'
+        'add-two-negatives', 'multiply-different', 'missing-add', 'multiply-same',
+        'either-way', 'temperature-two-steps', 'error'
     ];
 
     function pick(random) {
@@ -328,13 +307,6 @@
         if (item.type === 'take-positive') {
             const start = integer(1, 9);
             question = takePositive(start, start + integer(1, 9));
-        } else if (item.type === 'add-to-negative') {
-            const size = integer(1, 9);
-            question = addToNegative(-size, integer(1, 15));
-        } else if (item.type === 'take-from-negative') {
-            question = takePositive(-integer(1, 9), integer(1, 9));
-        } else if (item.type === 'add-negative') {
-            question = addNegative(integer(2, 12), integer(1, 12));
         } else if (item.type === 'add-two-negatives') {
             question = addNegative(-integer(1, 12), integer(1, 12));
         } else if (item.type === 'temperature-rise') {
@@ -357,8 +329,6 @@
             question = multiplyDifferent(integer(3, 9), integer(2, 9));
         } else if (item.type === 'multiply-same') {
             question = multiplySame(integer(2, 9), integer(2, 9));
-        } else if (item.type === 'multiply-missing') {
-            question = multiplyMissing(integer(2, 9), integer(2, 9));
         } else if (item.type.startsWith('rewrite')) {
             const magnitude = integer(1, 15);
             // Different magnitudes keep even the numerical values of all four choices distinct.

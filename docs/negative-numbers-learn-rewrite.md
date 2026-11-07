@@ -417,7 +417,9 @@ with our own wording and random numbers: a temperature going up, a
 temperature falling then going up (no number line), a missing number with
 adding (? + 12 = −10, no number line), adding two negatives, and a choice of
 which pair of sums shows that adding to a negative can give either sign.
-Practice now has 16 questions.
+To keep Practice at 11 questions, five kinds that repeated others came out:
+adding to a negative, adding a negative, the second rewrite, taking away
+from a negative, and the multiplying missing number.
 
 Each multiplying question in Try it shows the sign rule under the grid,
 e.g. "Negative × positive = negative. Different signs give a negative answer."
