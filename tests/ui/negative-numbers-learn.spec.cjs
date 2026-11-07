@@ -34,7 +34,7 @@ async function layout(page) {
             }
             if (labels.length !== 21) issues.push('missing whole-number labels');
         }
-        for (const sum of node.querySelectorAll('.nn-working, .nn-sum, .nn-pattern-row')) {
+        for (const sum of node.querySelectorAll('.nn-box-sum, .nn-sum, .nn-pattern-row')) {
             if (sum.scrollWidth > sum.clientWidth + 1) issues.push('sum overflows');
         }
         return issues;
@@ -113,7 +113,7 @@ for (const width of [1280, 375]) {
                 taps++;
                 expect(taps).toBeLessThan(20);
             }
-            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 5, 3][screen - 1]);
+            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 1, 3][screen - 1]);
             await layout(page);
             await reloadAndCompare(page);
             await page.screenshot({ path: `/private/tmp/negative-learn-${width}-screen-${screen}.png`, fullPage: true });
@@ -124,9 +124,10 @@ for (const width of [1280, 375]) {
                 expect(await picture(page)).toEqual(retained);
             }
             await expect(main(page)).toBeEnabled();
+            if (screen === 8) await expect(root(page).getByText('Tap to show the next line.')).toHaveCount(0);
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
-                await expect(root(page).locator('.nn-working')).toHaveText('3 − (−2) = 3 + 2 = 5');
+                await expect(root(page).locator('.nn-box-sum')).toHaveText('3 − (−2) = 3 + 2 = 5');
             }
             await main(page).click();
         }

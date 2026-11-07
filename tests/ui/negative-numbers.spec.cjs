@@ -186,6 +186,7 @@ for (const width of [1280, 375]) {
         await line.press('ArrowLeft');
         await expect(page.locator('.negative-hop:visible')).toHaveCount(1);
         await expect(page.locator('.negative-hop-count:visible')).toHaveText('−1');
+        await expect(page.locator('.question-feedback.is-incorrect:visible')).toHaveText('You went left. Taking away a negative is the same as adding, so go right.');
         await page.reload({ waitUntil: 'networkidle' });
         await expect(page.locator('.negative-line--movable:visible')).toHaveAttribute('aria-label', /The dot is on 4/);
         await expect(mainAction(page)).toBeDisabled();
@@ -197,7 +198,8 @@ for (const width of [1280, 375]) {
         await page.mouse.up();
         await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);
         await expect(page.locator('.negative-hop-count:visible')).toHaveText('+3');
-        await expect(page.locator('.nn-working:visible')).toHaveText('5 − (−3) = 5 + 3 = 8');
+        await expect(page.locator('.question-feedback.is-correct:visible')).toContainText('Correct. Taking away −3 is the same as adding 3, so you moved 3 places right.');
+        await expect(page.locator('.question-feedback.is-correct:visible .nn-box-sum')).toHaveText('5 − (−3) = 5 + 3 = 8');
         await expect(mainAction(page)).toBeEnabled();
         await page.reload({ waitUntil: 'networkidle' });
         await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);

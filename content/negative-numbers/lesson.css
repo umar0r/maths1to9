@@ -479,22 +479,15 @@
     font-weight: 800;
 }
 
-.nn-learn .nn-working {
-    display: table;
-    padding: .5rem .8rem;
-    background: #eaf3df;
-    color: #28520d;
-    border-radius: .7rem;
-    font-size: clamp(.95rem, 4.1vw, 1.5rem);
+.nn-box-sum {
+    display: block;
+    margin-top: .25rem;
+    font-size: clamp(1rem, 4.1vw, 1.3rem);
     font-weight: 900;
-    white-space: nowrap;
 }
 
-.nn-learn .nn-warning {
-    padding: .8rem 1rem;
-    background: #fcebec;
-    color: #8a2020;
-    border-radius: .7rem;
+.question-feedback .nn-box-sum:first-child {
+    margin-top: 0;
 }
 
 .nn-read-sum {
@@ -548,10 +541,6 @@
 .nn-learn .nn-fee-sum {
     font-size: 1.25rem;
     font-weight: 800;
-}
-
-.nn-learn .nn-working--wrap {
-    white-space: normal;
 }
 
 .nn-sign-table td[role="button"] {

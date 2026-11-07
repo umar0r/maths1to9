@@ -34,6 +34,30 @@
         };
     }
 
+    // Try it's drag questions. `amount` is how far the dot moves: minus means left.
+    function dragQuestion(start, amount, sum, working, correct, wrongWay) {
+        const answer = signed(start + amount);
+        return {
+            start, amount, questionType: 'drag', input: 'drag',
+            prompt: `Work out ${sum}.`, answer, feedback: `${working}.`, working, correct, wrongWay
+        };
+    }
+
+    const dragTakeNegative = (start, amount) => dragQuestion(start, amount, equation(start, amount),
+        `${equation(start, amount)} = ${signed(start)} + ${amount} = ${signed(start + amount)}`,
+        `Correct. Taking away −${amount} is the same as adding ${amount}, so you moved ${amount} places right.`,
+        'You went left. Taking away a negative is the same as adding, so go right.');
+
+    const dragTakePositive = (start, amount) => dragQuestion(start, -amount, `${signed(start)} − ${amount}`,
+        `${signed(start)} − ${amount} = ${signed(start - amount)}`,
+        `Correct. Taking away ${amount} moves you ${amount} places left.`,
+        'You went right. Taking away a positive number moves you left.');
+
+    const dragAdd = (start, amount) => dragQuestion(start, amount, `${signed(start)} + ${amount}`,
+        `${signed(start)} + ${amount} = ${signed(start + amount)}`,
+        `Correct. Adding ${amount} moves you ${amount} places right.`,
+        'You went left. Adding a positive number moves you right.');
+
     function error(start, amount) {
         return {
             start, amount, questionType: 'error', input: 'choice',
@@ -223,6 +247,19 @@
         return svg;
     }
 
+    // The feedback box. Any working goes in here, on its own line, never in a
+    // separate box underneath.
+    function correctBox(host, text, sum) {
+        const box = paragraph(host, text, 'question-feedback is-visible is-correct');
+        if (sum) {
+            const working = document.createElement('span');
+            working.className = 'nn-box-sum';
+            working.textContent = sum;
+            box.append(working);
+        }
+        return box;
+    }
+
     function drawLine(host, start, end, position = start, showJourney = true, range = {}) {
         const min = range.min ?? Math.min(-10, start);
         const max = range.max ?? Math.max(10, end);
@@ -353,9 +390,7 @@
     function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease } = {}) {
         paragraph(host, hint, 'negative-drag-hint');
         const end = question.start + question.amount;
-        // Leave room to go the wrong way, so that mistake can be seen too.
-        const min = Math.min(-10, question.start - question.amount);
-        const max = Math.max(10, end);
+        const { min, max } = lineRange(question);
         const update = drawLine(host, question.start, end, question.start, false, { min, max, hops: true });
         const line = host.querySelector('.negative-line');
         const track = line.querySelector('.negative-track');
@@ -374,6 +409,7 @@
             move(Math.round(min + (event.clientX - box.left) / box.width * (max - min)));
         }
         line.classList.add('negative-line--movable');
+        line.dataset.answer = end;
         line.setAttribute('role', 'application');
         line.tabIndex = 0;
         line.addEventListener('pointerdown', event => {
@@ -393,12 +429,26 @@
         show(savedDot(question));
     }
 
+    // Room to go either way, so a wrong turn can be seen too.
+    function lineRange({ start, amount }) {
+        const steps = Math.abs(amount);
+        return { min: Math.min(-10, start - steps), max: Math.max(10, start + steps) };
+    }
+
     function drawFinishedLine(host, question) {
         const end = question.start + question.amount;
-        drawLine(host, question.start, end, end, true, {
-            min: Math.min(-10, question.start - question.amount),
-            max: Math.max(10, end)
-        });
+        drawLine(host, question.start, end, end, true, lineRange(question));
+    }
+
+    // A short nudge for wherever the dot was left; nothing while it's on the start.
+    function dragHint(question, value) {
+        const { start, amount, wrongWay } = question;
+        const moved = (value - start) * Math.sign(amount);
+        const steps = Math.abs(amount);
+        if (moved === 0) return '';
+        if (moved < 0) return wrongWay;
+        if (moved > steps) return `That's too far. You only need to move ${steps} places ${amount < 0 ? 'left' : 'right'}.`;
+        return `That's the right way. You need to move ${steps} places in total.`;
     }
 
     // Try it: the pupil drags the dot, and landing on the answer finishes it.
@@ -407,13 +457,23 @@
         if (solved) {
             drawFinishedLine(host, question);
             host.querySelector('.negative-line').classList.add('negative-line--solved');
-            paragraph(host, working(question.start, question.amount).replace(/\.$/, ''), 'nn-working');
+            correctBox(host, question.correct, question.working);
             return;
         }
+        let hint;
+        const showHint = value => {
+            hint.textContent = dragHint(question, value);
+            hint.classList.toggle('is-visible', hint.textContent !== '');
+        };
         drawMovableLine(host, question, {
             hint: 'Drag the dot to the answer.',
-            onRelease: value => { if (value === end) onSolved(); }
+            onRelease: value => {
+                if (value === end) onSolved();
+                else showHint(value);
+            }
         });
+        hint = paragraph(host, '', 'question-feedback is-incorrect');
+        showHint(savedDot(question));
     }
 
     // Remembers a wrong answer, so a reload still shows the line.
@@ -556,12 +616,13 @@
                 });
             });
         }
-        if (solved) paragraph(host, question.feedback, 'nn-working nn-working--wrap');
-        else if (last) paragraph(host, question.wrong[last], 'nn-warning');
+        if (solved) correctBox(host, `Correct. ${question.feedback}`);
+        else if (last) paragraph(host, question.wrong[last], 'question-feedback is-visible is-incorrect');
     }
 
     window.NegativeNumbers = {
-        signed, paragraph, equation, working, rewrite, calculate, checks,
+        signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
+        dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
         multiplyExamples, drawSignGrid, withSignGrid, drawDragToAnswer, drawTapSquare
     };

@@ -48,7 +48,7 @@
         { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
         heading: 'So when you take away a negative, you can add instead.', lines: [
             'The take-away sign and the negative sign turn into a plus.'
-        ], start: 3, steps: 4 },
+        ], start: 3, steps: 4, showLine: false },
         { title: 'When the first number is negative', kind: 'method', slot: 1,
         heading: 'It works the same way when the first number is negative.', lines: [
             'Only the two minus signs in the middle turn into a plus. The first number stays exactly as it is.'
@@ -138,7 +138,7 @@
 
     function examples() {
         const Q = window.NegativeNumbers;
-        return [Q.calculate(5, 3), Q.calculate(-2, 6), Q.calculate(-7, 3), Q.calculate(-4, 9)];
+        return [Q.dragTakeNegative(5, 3), Q.dragTakePositive(3, 8), Q.dragTakeNegative(-4, 9), Q.dragAdd(-6, 9)];
     }
 
     function sectionEvent(sectionId, name) {
@@ -193,6 +193,7 @@
             if (screen.kind === 'journeys') return screen.journeys.every((item, i) =>
                 state.journeys[screen.slot][i] === item.steps);
             if (screen.kind === 'pattern') return state.pattern === 6;
+            if (screen.showLine === false) return state.changed[screen.slot];
             return state.hops[screen.slot] === screen.steps;
         }
 
@@ -297,8 +298,7 @@
                         render();
                     });
                     if (counts[i] === item.steps) {
-                        if (item.result) paragraph(item.result);
-                        paragraph(`${item.sum} = ${signed(item.start + item.steps * item.direction)}`, 'nn-working');
+                        window.NegativeNumbers.correctBox(root, item.result || '', `${item.sum} = ${signed(item.start + item.steps * item.direction)}`);
                     }
                 });
             } else if (screen.kind === 'read') {
@@ -327,8 +327,7 @@
                 } else {
                     paragraph('The fee was a mistake. The bank removes it and puts £2 back.');
                     paragraph('3 − (−2) = 5', 'nn-fee-sum');
-                    paragraph('Subtracting −2 has the same effect as adding 2.');
-                    paragraph('3 − (−2) = 3 + 2 = 5', 'nn-working');
+                    window.NegativeNumbers.correctBox(root, 'Subtracting −2 has the same effect as adding 2.', '3 − (−2) = 3 + 2 = 5');
                 }
             } else if (screen.kind === 'pattern') {
                 const pattern = document.createElement('div');
@@ -337,16 +336,17 @@
                     const subtract = 3 - i;
                     pattern.innerHTML += `<div class="nn-pattern-row ${i > 3 ? 'nn-highlight' : ''}"><span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${i}</span><small>${i ? `up ${i}` : ''}</small></div>`;
                 }
-                const instruction = document.createElement('p');
-                instruction.className = 'nn-instruction';
-                instruction.textContent = 'Tap to show the next line.';
-                pattern.append(instruction);
                 root.append(pattern);
-                if (state.pattern < 6) tapTarget(pattern, 'Tap to show the next line.', () => {
-                    section.update(state => { state.pattern++; });
-                    render();
-                });
-                else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
+                if (state.pattern < 6) {
+                    const instruction = document.createElement('p');
+                    instruction.className = 'nn-instruction';
+                    instruction.textContent = 'Tap to show the next line.';
+                    pattern.append(instruction);
+                    tapTarget(pattern, 'Tap to show the next line.', () => {
+                        section.update(state => { state.pattern++; });
+                        render();
+                    });
+                } else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
             } else {
                 const i = screen.slot;
                 const changed = state.changed[i] || screen.showSum === false;
@@ -364,15 +364,17 @@
                         render();
                     });
                 } else {
-                    const instruction = `${i === 0 ? 'Now start' : 'Start'} at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
-                    paragraph(instruction, 'nn-instruction');
-                    journey({ ...screen, direction: 1, instruction }, state.hops[i], () => {
-                        section.update(state => { state.hops[i]++; });
-                        render();
-                    });
+                    if (screen.showLine !== false) {
+                        const instruction = `Start at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
+                        paragraph(instruction, 'nn-instruction');
+                        journey({ ...screen, direction: 1, instruction }, state.hops[i], () => {
+                            section.update(state => { state.hops[i]++; });
+                            render();
+                        });
+                    }
                     if (complete()) {
-                        paragraph(`${signed(screen.start)} − (−${screen.steps}) = ${signed(screen.start)} + ${screen.steps} = ${signed(screen.start + screen.steps)}`, 'nn-working');
-                        if (i === 1) paragraph('Watch out: a common mistake is to change the −8 into 8 as well, and get 8 + 3 = 11. Only the two signs in the middle change.', 'nn-warning');
+                        const reminder = i === 1 ? 'Watch out: a common mistake is to change the −8 into 8 as well, and get 8 + 3 = 11. Only the two signs in the middle change.' : '';
+                        window.NegativeNumbers.correctBox(root, reminder, `${signed(screen.start)} − (−${screen.steps}) = ${signed(screen.start)} + ${screen.steps} = ${signed(screen.start + screen.steps)}`);
                     }
                 }
             }
@@ -393,14 +395,13 @@
 
     async function mountTryIt(root) {
         const NN = window.NegativeNumbers;
-        // Try it runs: subtracting examples, a review, the sign grid, the
-        // multiplying examples, then a second review.
+        // Try it runs: number line examples, the sign grid, the multiplying
+        // examples, then a review of those.
         const questions = [...examples(), ...NN.multiplyExamples()];
         const firstMultiply = examples().length;
         const questionPages = (from, to) => questions.slice(from, to).map((question, i) => ({ kind: 'question', question, number: from + i }));
         const pages = [
             ...questionPages(0, firstMultiply),
-            { kind: 'review', from: 0, to: firstMultiply },
             { kind: 'grid' },
             ...questionPages(firstMultiply, questions.length),
             { kind: 'review', from: firstMultiply, to: questions.length }
