@@ -372,8 +372,9 @@
                             render();
                         });
                     }
-                    if (complete()) {
-                        const reminder = i === 1 ? 'Watch out: a common mistake is to change the −8 into 8 as well, and get 8 + 3 = 11. Only the two signs in the middle change.' : '';
+                    // The first method screen ends on the changed sum: no box needed.
+                    if (complete() && i === 1) {
+                        const reminder = 'Watch out: a common mistake is to change the −8 into 8 as well, and get 8 + 3 = 11. Only the two signs in the middle change.';
                         window.NegativeNumbers.correctBox(root, reminder, `${signed(screen.start)} − (−${screen.steps}) = ${signed(screen.start)} + ${screen.steps} = ${signed(screen.start + screen.steps)}`);
                     }
                 }
