@@ -58,6 +58,25 @@ test('negative-numbers: Practice mixes the kinds of sum and never runs three ali
     families.forEach((kind, i) => assert.ok(!(kind === families[i + 1] && kind === families[i + 2]), kind));
 });
 
+test('negative-numbers: exam-style questions have the right answers', () => {
+    const sums = label => label.split(' and ').map(sum => (sum.match(/[−-]?\d+/g) || []).map(evaluate));
+    for (const question of generated.filter(question => question.questionType === 'either-way')) {
+        for (const option of question.options) {
+            const pair = sums(option.label);
+            const right = pair.every(([a, b, c]) => a + b === c) && pair.some(s => s[2] > 0) && pair.some(s => s[2] < 0);
+            assert.equal(right, option.correct, option.label);
+        }
+    }
+    for (const question of generated.filter(question => question.prompt.startsWith('Find the missing number: ? +'))) {
+        const [amount, total] = question.prompt.match(/[−-]?\d+/g).map(evaluate);
+        assert.equal(evaluate(question.answer) + amount, total, question.prompt);
+    }
+    for (const question of generated.filter(question => question.prompt.includes('falls by'))) {
+        const [start, fall, rise] = question.prompt.match(/[−-]?\d+/g).map(evaluate);
+        assert.equal(evaluate(question.answer), start - fall + rise, question.prompt);
+    }
+});
+
 test('negative-numbers: rewrite answers keep the starting number and add the positive', () => {
     questions.filter(question => question.questionType.startsWith('rewrite')).forEach(verifyMaths);
 });

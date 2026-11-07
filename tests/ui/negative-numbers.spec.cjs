@@ -120,8 +120,8 @@ for (const width of [1280, 375]) {
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
-            expect(penalty).toBe(50);
-            expect(earned).toBe(225 - penalty);
+            expect(penalty).toBe(55);
+            expect(earned).toBe(275 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');

@@ -409,3 +409,15 @@ for each key point:
   and working the pupil has already done.
 - Check every screen at 375 px: labels on the line don't overlap, the hops
   stay on screen, and the calculation fits on one line.
+
+## Exam-style Practice and the sign rule (2026-11-07)
+
+Practice adds five kinds based on how the exams ask about negative numbers,
+with our own wording and random numbers: a temperature going up, a
+temperature falling then going up (no number line), a missing number with
+adding (? + 12 = −10, no number line), adding two negatives, and a choice of
+which pair of sums shows that adding to a negative can give either sign.
+Practice now has 16 questions.
+
+Each multiplying question in Try it shows the sign rule under the grid,
+e.g. "Negative × positive = negative. Different signs give a negative answer."
