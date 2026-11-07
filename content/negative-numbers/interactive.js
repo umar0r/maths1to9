@@ -395,16 +395,15 @@
 
     async function mountTryIt(root) {
         const NN = window.NegativeNumbers;
-        // Try it runs: number line examples, the sign grid, the multiplying
-        // examples, then a review of those.
+        // Try it runs: number line examples, the sign grid, then the multiplying
+        // examples. The last one goes straight on to Practice.
         const questions = [...examples(), ...NN.multiplyExamples()];
         const firstMultiply = examples().length;
         const questionPages = (from, to) => questions.slice(from, to).map((question, i) => ({ kind: 'question', question, number: from + i }));
         const pages = [
             ...questionPages(0, firstMultiply),
             { kind: 'grid' },
-            ...questionPages(firstMultiply, questions.length),
-            { kind: 'review', from: firstMultiply, to: questions.length }
+            ...questionPages(firstMultiply, questions.length)
         ];
         const lastPage = pages.length - 1;
         const api = window.Maths1to9Lesson;
@@ -449,11 +448,17 @@
         }
 
         function continuePage() {
+            if (state.index === lastPage) {
+                section.update(state => { state.finished = true; });
+                reportProgress();
+                sectionEvent('interactive', 'complete');
+                api.continueSection();
+                return;
+            }
             section.update(state => {
                 state.index++;
                 state.screen = state.index;
                 state.furthestScreen = state.screen;
-                state.finished = state.index === lastPage;
             });
             reportProgress();
             render();
@@ -529,29 +534,22 @@
                 const heading = document.createElement('h3');
                 heading.dataset.screenHeading = '';
                 heading.className = 'lesson-section__title';
-                heading.textContent = page.kind === 'review' ? 'A quick review' : 'When you multiply, the two signs tell you the sign of the answer.';
+                heading.textContent = 'When you multiply, the two signs tell you the sign of the answer.';
                 root.append(heading);
             }
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
-            if (page.kind === 'review') {
-                pages.filter(item => item.kind === 'question' && item.number >= page.from && item.number < page.to).forEach(item => {
-                    const completed = document.createElement('article');
-                    completed.className = 'nn-completed-example';
-                    root.append(completed);
-                    drawExample(completed, item, true);
-                });
-                if (state.screen === lastPage) api.clearSectionAction('interactive');
-                else api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
-            } else if (page.kind === 'grid') {
+            if (page.kind === 'grid') {
                 const full = drawGridPage();
                 api.setSectionAction('interactive', { label: 'Next', disabled: !full, onClick: nextPage });
             } else {
-                const readOnly = state.screen < state.index;
+                const readOnly = state.screen < state.index || state.finished;
                 drawExample(root, page, readOnly);
-                if (readOnly) api.setSectionAction('interactive', {
+                if (readOnly) api.setSectionAction('interactive', state.screen === lastPage ? {
+                    label: 'Continue', onClick: () => api.continueSection()
+                } : {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
                 else if (!page.question.signs) api.setSectionAction('interactive', {

@@ -249,18 +249,6 @@
     text-align: center;
 }
 
-/* Each finished Try it example sits in its own coloured panel. */
-.nn-completed-example {
-    margin-block: 1.25rem;
-    padding: 1.25rem;
-    border-radius: .8rem;
-    background: #f2f6fb;
-}
-
-.nn-completed-example:nth-of-type(even) {
-    background: #fbf5ec;
-}
-
 /* Learn visuals are scoped so the question sections keep their existing style. */
 .nn-learn {
     --nn-negative: #bb4826;

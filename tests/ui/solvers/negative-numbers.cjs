@@ -9,11 +9,20 @@ module.exports = async function solve(page) {
     const prompt = page.locator('.question-prompt:visible');
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
+    const options2 = page.locator('.question-card-options:visible button');
+    const give = async value => {
+        if (await options2.count()) await page.getByRole('button', { name: signed(value), exact: true }).click();
+        else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
+    };
+    const numbers = (text.match(/[−-]?\d+/g) || []).map(number);
     if (text.includes('×')) {
-        const typed = { 'Work out −6 × 4.': '−24', 'Work out −6 × −3.': '18', 'Find the missing number: ? × −3 = 15.': '−5', 'Sam says −3 × −5 = −15. What is the right answer?': '15' };
-        await page.locator('.question-card:visible input[type=text]').fill(typed[text]);
+        if (text.includes('? ×')) await give(numbers[1] / numbers[0]);
+        else await give(numbers[0] * numbers[1]);
         return true;
     }
+    if (/^Work out [−-]?\d+ − \d+\.$/.test(text)) { await give(numbers[0] - numbers[1]); return true; }
+    if (/^Work out [−-]?\d+ \+ \d+\.$/.test(text)) { await give(numbers[0] + numbers[1]); return true; }
+    if (/^Work out [−-]?\d+ \+ \(−\d+\)\.$/.test(text)) { await give(numbers[0] + numbers[1]); return true; }
     const calculation = text.match(/([−-]?\d+)\s*−\s*\(−(\d+)\)/);
     const options = page.locator('.question-card-options:visible button');
     const understanding = {

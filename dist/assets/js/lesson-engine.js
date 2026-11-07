@@ -3590,6 +3590,10 @@
                 return setSectionAction(sectionId, config);
             },
 
+            continueSection() {
+                handleNext();
+            },
+
             clearSectionAction(sectionId) {
                 return clearSectionAction(sectionId);
             },
