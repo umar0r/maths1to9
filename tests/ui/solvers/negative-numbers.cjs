@@ -20,6 +20,21 @@ module.exports = async function solve(page) {
         else await give(numbers[0] * numbers[1]);
         return true;
     }
+    if (text.startsWith('It is ')) {
+        const [start, first, second] = numbers;
+        await give(text.includes('falls') ? start - first + second : start + first);
+        return true;
+    }
+    if (text.includes('? +')) { await give(numbers[1] - numbers[0]); return true; }
+    if (text.startsWith('Adding ')) {
+        const labels = await options2.allInnerTexts();
+        const right = labels.find(label => {
+            const sums = label.split(' and ').map(sum => (sum.match(/[−-]?\d+/g) || []).map(number));
+            return sums.every(([a, b, c]) => a + b === c) && sums.some(s => s[2] > 0) && sums.some(s => s[2] < 0);
+        });
+        await page.getByRole('button', { name: right, exact: true }).click();
+        return true;
+    }
     if (/^Work out [−-]?\d+ − \d+\.$/.test(text)) { await give(numbers[0] - numbers[1]); return true; }
     if (/^Work out [−-]?\d+ \+ \d+\.$/.test(text)) { await give(numbers[0] + numbers[1]); return true; }
     if (/^Work out [−-]?\d+ \+ \(−\d+\)\.$/.test(text)) { await give(numbers[0] + numbers[1]); return true; }

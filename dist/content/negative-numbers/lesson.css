@@ -203,6 +203,12 @@
     border-right: 3px solid #1f2a44;
 }
 
+.nn-grid-rule {
+    margin: 12px 0 16px;
+    text-align: center;
+    font-weight: 700;
+}
+
 .nn-sign-table .nn-table-row {
     background: #fbdfdf;
 }

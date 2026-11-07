@@ -56,15 +56,6 @@
             `Start at ${signed(start)} and count ${amount} places left.`);
     }
 
-    function addToNegative(start, amount) {
-        const answer = start + amount;
-        return typedSum(start, amount, `Work out ${signed(start)} + ${amount}.`,
-            `${signed(start)} + ${amount} = ${signed(answer)}. Adding moves you right.`,
-            [[-answer, 'Check the sign of your answer. You move right, so where do you land?'],
-                [start - amount, 'That takes away. Adding moves you right.']],
-            `Start at ${signed(start)} and count ${amount} places right.`);
-    }
-
     function addNegative(start, amount) {
         const answer = start - amount;
         return typedSum(start, -amount, `Work out ${signed(start)} + (−${amount}).`,
@@ -77,6 +68,59 @@
     const signReason = same => `The signs are ${same ? 'the same, so the answer is positive' : 'different, so the answer is negative'}.`;
 
     // Multiplying sums. `signs` are the row and column to find on the sign table.
+    // Exam-style questions. Temperatures give the same sums a real setting.
+    function temperatureRise(start, amount) {
+        const answer = start + amount;
+        return typedSum(start, amount,
+            `It is ${signed(start)}°C. The temperature goes up by ${amount}°C. What is the temperature now, in °C?`,
+            `${signed(start)} + ${amount} = ${signed(answer)}. Going up moves you right.`,
+            [[start - amount, 'That takes away. Going up means adding, so move right.'],
+                [-answer, 'Check the sign of your answer. Did you go past zero?']],
+            `Start at ${signed(start)} and count ${amount} places right.`);
+    }
+
+    // Two steps, so the line is not shown: it would only show one move.
+    function temperatureTwoSteps(start, fall, rise) {
+        const answer = start - fall + rise;
+        return {
+            ...typedSum(start, rise - fall,
+                `It is ${start}°C. The temperature falls by ${fall}°C, then goes up by ${rise}°C. What is the temperature now, in °C?`,
+                `${start} − ${fall} = ${signed(start - fall)}, then ${signed(start - fall)} + ${rise} = ${signed(answer)}.`,
+                [[start + fall + rise, 'A fall means the temperature goes down, so take it away.'],
+                    [start - fall - rise, 'Going up means adding, so the second step moves right.'],
+                    [-answer, 'Check the sign of your answer. Did you go past zero?']],
+                `First work out ${start} − ${fall}. Then add ${rise}.`),
+            noLine: true
+        };
+    }
+
+    function missingAdd(amount, total) {
+        const answer = total - amount;
+        return {
+            ...typedSum(0, answer, `Find the missing number: ? + ${amount} = ${signed(total)}.`,
+                `${signed(answer)} + ${amount} = ${signed(total)}. To find it, work out ${signed(total)} − ${amount} = ${signed(answer)}.`,
+                [[total + amount, `That adds ${amount}. To undo adding ${amount}, take ${amount} away.`],
+                    [-answer, 'Check the sign of your answer. Put it back in the sum to check it.']],
+                `Undo the adding: work out ${signed(total)} − ${amount}.`),
+            noLine: true
+        };
+    }
+
+    function eitherWay(amount, small, big, otherSmall, otherBig) {
+        const sum = start => `${signed(-start)} + ${amount} = ${signed(amount - start)}`;
+        return {
+            questionType: 'either-way', input: 'choice', amount,
+            prompt: `Adding ${amount} to a negative number can give a positive answer or a negative answer. Which pair of sums shows this?`,
+            options: [
+                option(`${sum(small)} and ${sum(big)}`, `Right. One answer is positive and the other is negative.`, true),
+                option(`${sum(small)} and ${sum(otherSmall)}`, 'Both of these answers are positive. You need one positive and one negative.'),
+                option(`${sum(big)} and ${sum(otherBig)}`, 'Both of these answers are negative. You need one positive and one negative.'),
+                option(`${signed(-small)} + ${amount} = ${signed(small - amount)} and ${signed(-big)} + ${amount} = ${signed(big - amount)}`,
+                    `Check the sums. ${signed(-small)} + ${amount} = ${signed(amount - small)}, because adding moves you right.`)
+            ]
+        };
+    }
+
     function multiplyDifferent(size, other) {
         const answer = -size * other;
         return {
@@ -102,17 +146,6 @@
                 { value: signed(-size - other), feedback: `That adds −${size} and −${other}. This question multiplies them.` }
             ],
             fallback: `Work out ${size} × ${other}, then use the signs to find the sign of the answer.`
-        };
-    }
-
-    function multiplyMissing(size, other) {
-        const product = size * other;
-        return {
-            questionType: 'multiply', input: 'number', signs: [null, '−'], expected: -size,
-            prompt: `Find the missing number: ? × −${other} = ${product}.`, answer: signed(-size),
-            feedback: `−${size} × −${other} = ${product}. The answer is positive, so both signs must be the same.`,
-            rules: [{ value: String(size), feedback: `${size} × −${other} = −${product}. The signs need to be the same to get a positive answer.` }],
-            fallback: `${product} ÷ ${other} = ${size}. Then work out the sign.`
         };
     }
 
@@ -158,7 +191,8 @@
         return [
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '+'],
-                prompt: 'Work out −6 × 4.', answer: '−24',
+                prompt: 'Work out −6 × 4.',
+                rule: 'Negative × positive = negative. Different signs give a negative answer.', answer: '−24',
                 feedback: '6 × 4 = 24. The signs are different, so the answer is negative.',
                 rules: [
                     { value: '24', feedback: 'The signs are different, so the answer is negative, not positive.' },
@@ -169,7 +203,8 @@
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
-                prompt: 'Work out −6 × −3.', answer: '18',
+                prompt: 'Work out −6 × −3.',
+                rule: 'Negative × negative = positive. The same signs give a positive answer.', answer: '18',
                 feedback: '6 × 3 = 18. The signs are the same, so the answer is positive.',
                 rules: [
                     { value: '−18', feedback: 'The signs are the same, so the answer is positive.' },
@@ -180,6 +215,7 @@
             {
                 questionType: 'multiply', input: 'tap', square: ['−', '−'],
                 prompt: 'Tap the square that gives the sign of −8 × −2.',
+                rule: 'Negative × negative = positive. The same signs give a positive answer.',
                 feedback: 'Both numbers are negative, so use the − row and the − column.',
                 wrong: {
                     '+,+': 'Both numbers are negative, so neither one is on a + line.',
@@ -189,14 +225,16 @@
             },
             {
                 questionType: 'multiply', input: 'number', signs: [null, '−'],
-                prompt: 'Find the missing number: ? × −3 = 15.', answer: '−5',
+                prompt: 'Find the missing number: ? × −3 = 15.',
+                rule: 'The same signs give a positive answer. Different signs give a negative answer.', answer: '−5',
                 feedback: '−5 × −3 = 15. The answer is positive, so both signs must be the same.',
                 rules: [{ value: '5', feedback: '5 × −3 = −15. The signs need to be the same to get a positive answer.' }],
                 fallback: '15 ÷ 3 = 5. Then use the grid to find the sign.'
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
-                prompt: 'Sam says −3 × −5 = −15. What is the right answer?', answer: '15',
+                prompt: 'Sam says −3 × −5 = −15. What is the right answer?',
+                rule: 'Negative × negative = positive. The same signs give a positive answer.', answer: '15',
                 feedback: 'The signs are the same, so the answer is positive.',
                 rules: [
                     { value: '−15', feedback: 'That is Sam\'s answer. The signs are the same, so it should be positive.' },
@@ -246,9 +284,9 @@
 
     // A fixed mix, so the same kind of sum never comes three times in a row.
     const practiceTypes = [
-        'take-positive', 'rewrite-positive', 'add-to-negative', 'multiply-different',
-        'cross-zero', 'take-from-negative', 'multiply-same', 'rewrite-negative',
-        'add-negative', 'multiply-missing', 'error'
+        'take-positive', 'cross-zero', 'rewrite-positive', 'temperature-rise',
+        'add-two-negatives', 'multiply-different', 'missing-add', 'multiply-same',
+        'either-way', 'temperature-two-steps', 'error'
     ];
 
     function pick(random) {
@@ -269,19 +307,28 @@
         if (item.type === 'take-positive') {
             const start = integer(1, 9);
             question = takePositive(start, start + integer(1, 9));
-        } else if (item.type === 'add-to-negative') {
-            const size = integer(1, 9);
-            question = addToNegative(-size, integer(1, 15));
-        } else if (item.type === 'take-from-negative') {
-            question = takePositive(-integer(1, 9), integer(1, 9));
-        } else if (item.type === 'add-negative') {
-            question = addNegative(integer(2, 12), integer(1, 12));
+        } else if (item.type === 'add-two-negatives') {
+            question = addNegative(-integer(1, 12), integer(1, 12));
+        } else if (item.type === 'temperature-rise') {
+            question = temperatureRise(-integer(2, 15), integer(3, 25));
+        } else if (item.type === 'temperature-two-steps') {
+            const start = integer(2, 12);
+            question = temperatureTwoSteps(start, start + integer(1, 10), integer(1, 9));
+        } else if (item.type === 'missing-add') {
+            question = missingAdd(integer(2, 15), -integer(1, 15));
+        } else if (item.type === 'either-way') {
+            const amount = integer(4, 9);
+            const small = integer(1, amount - 1);
+            const big = amount + integer(1, 8);
+            let otherSmall = integer(1, amount - 2);
+            if (otherSmall >= small) otherSmall++;
+            let otherBig = amount + integer(1, 7);
+            if (otherBig >= big) otherBig++;
+            question = eitherWay(amount, small, big, otherSmall, otherBig);
         } else if (item.type === 'multiply-different') {
             question = multiplyDifferent(integer(3, 9), integer(2, 9));
         } else if (item.type === 'multiply-same') {
             question = multiplySame(integer(2, 9), integer(2, 9));
-        } else if (item.type === 'multiply-missing') {
-            question = multiplyMissing(integer(2, 9), integer(2, 9));
         } else if (item.type.startsWith('rewrite')) {
             const magnitude = integer(1, 15);
             // Different magnitudes keep even the numerical values of all four choices distinct.
@@ -614,7 +661,7 @@
     // Typed "work out" questions get the number line above them. A finished
     // question just shows the hops from the start to the answer.
     function withMovableLine(question, { afterWrongAnswer = false } = {}) {
-        if (question.input !== 'number' || question.signs) return question;
+        if (question.input !== 'number' || question.signs || question.noLine) return question;
         const config = {
             ...question,
             figure(host, { readOnly }) {
@@ -695,6 +742,7 @@
                 table.className = 'nn-sign-table';
                 table.innerHTML = signTable(...question.signs);
                 host.append(table);
+                if (question.rule) paragraph(host, question.rule, 'nn-grid-rule');
             }
         };
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
@@ -709,6 +757,7 @@
         table.className = 'nn-sign-table';
         table.innerHTML = signTable(...picked);
         host.append(table);
+        paragraph(host, question.rule, 'nn-grid-rule');
         if (!solved) {
             table.querySelectorAll('tbody td').forEach((cell, i) => {
                 const { row, column } = SIGN_GRID[i];
