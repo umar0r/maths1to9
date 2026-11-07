@@ -34,6 +34,88 @@
         };
     }
 
+    // Practice sums that aren't taking away a negative. Each lists its real
+    // mistakes; rules that land on the answer are dropped.
+    function typedSum(start, amount, prompt, feedback, mistakes, fallback) {
+        const answer = signed(start + amount);
+        const seen = new Set([answer]);
+        const rules = mistakes.map(([value, text]) => ({ value: signed(value), feedback: text })).filter(rule => {
+            if (seen.has(rule.value)) return false;
+            seen.add(rule.value);
+            return true;
+        });
+        return { start, amount, questionType: 'calculate', input: 'number', prompt, answer, feedback, rules, fallback };
+    }
+
+    function takePositive(start, amount) {
+        const answer = start - amount;
+        return typedSum(start, -amount, `Work out ${signed(start)} − ${amount}.`,
+            `${signed(start)} − ${amount} = ${signed(answer)}. Taking away moves you left.`,
+            [[-answer, 'Check the sign of your answer. You move left, so where do you land?'],
+                [start + amount, 'That adds them. Taking away moves you left.']],
+            `Start at ${signed(start)} and count ${amount} places left.`);
+    }
+
+    function addToNegative(start, amount) {
+        const answer = start + amount;
+        return typedSum(start, amount, `Work out ${signed(start)} + ${amount}.`,
+            `${signed(start)} + ${amount} = ${signed(answer)}. Adding moves you right.`,
+            [[-answer, 'Check the sign of your answer. You move right, so where do you land?'],
+                [start - amount, 'That takes away. Adding moves you right.']],
+            `Start at ${signed(start)} and count ${amount} places right.`);
+    }
+
+    function addNegative(start, amount) {
+        const answer = start - amount;
+        return typedSum(start, -amount, `Work out ${signed(start)} + (−${amount}).`,
+            `${signed(start)} + (−${amount}) = ${signed(start)} − ${amount} = ${signed(answer)}.`,
+            [[start + amount, 'Adding a negative is the same as taking away, so move left.'],
+                [-answer, 'Check the sign of your answer. You move left, so where do you land?']],
+            `Adding a negative is the same as taking away. Count ${amount} places left from ${signed(start)}.`);
+    }
+
+    const signReason = same => `The signs are ${same ? 'the same, so the answer is positive' : 'different, so the answer is negative'}.`;
+
+    // Multiplying sums. `signs` are the row and column to find on the sign table.
+    function multiplyDifferent(size, other) {
+        const answer = -size * other;
+        return {
+            questionType: 'multiply', input: 'choice', signs: ['−', '+'], expected: answer,
+            prompt: `Work out −${size} × ${other}.`,
+            options: [
+                option(signed(answer), `${size} × ${other} = ${size * other}. ${signReason(false)}`, true),
+                option(String(-answer), `${signReason(false)}`),
+                option(signed(other - size), `That adds −${size} and ${other}. This question multiplies them.`),
+                option(signed(-size - other), `That takes ${other} away from −${size}. This question multiplies them.`)
+            ]
+        };
+    }
+
+    function multiplySame(size, other) {
+        const answer = size * other;
+        return {
+            questionType: 'multiply', input: 'number', signs: ['−', '−'], expected: answer,
+            prompt: `Work out −${size} × −${other}.`, answer: String(answer),
+            feedback: `${size} × ${other} = ${answer}. ${signReason(true)}`,
+            rules: [
+                { value: signed(-answer), feedback: signReason(true) },
+                { value: signed(-size - other), feedback: `That adds −${size} and −${other}. This question multiplies them.` }
+            ],
+            fallback: `Work out ${size} × ${other}, then use the signs to find the sign of the answer.`
+        };
+    }
+
+    function multiplyMissing(size, other) {
+        const product = size * other;
+        return {
+            questionType: 'multiply', input: 'number', signs: [null, '−'], expected: -size,
+            prompt: `Find the missing number: ? × −${other} = ${product}.`, answer: signed(-size),
+            feedback: `−${size} × −${other} = ${product}. The answer is positive, so both signs must be the same.`,
+            rules: [{ value: String(size), feedback: `${size} × −${other} = −${product}. The signs need to be the same to get a positive answer.` }],
+            fallback: `${product} ÷ ${other} = ${size}. Then work out the sign.`
+        };
+    }
+
     // Try it's drag questions. `amount` is how far the dot moves: minus means left.
     function dragQuestion(start, amount, sum, working, correct, wrongWay) {
         const answer = signed(start + amount);
@@ -162,10 +244,11 @@
         ];
     }
 
+    // A fixed mix, so the same kind of sum never comes three times in a row.
     const practiceTypes = [
-        'rewrite-positive', 'rewrite-negative', 'rewrite-positive', 'rewrite-negative',
-        'calculate-positive', 'calculate-positive', 'cross-zero', 'stay-negative',
-        'cross-zero', 'zero', 'error'
+        'take-positive', 'rewrite-positive', 'add-to-negative', 'multiply-different',
+        'cross-zero', 'take-from-negative', 'multiply-same', 'rewrite-negative',
+        'add-negative', 'multiply-missing', 'error'
     ];
 
     function pick(random) {
@@ -183,7 +266,23 @@
         const { randomInt } = window.Maths1to9LessonEngine;
         const integer = (min, max) => randomInt(min, max, random);
         let question;
-        if (item.type.startsWith('rewrite')) {
+        if (item.type === 'take-positive') {
+            const start = integer(1, 9);
+            question = takePositive(start, start + integer(1, 9));
+        } else if (item.type === 'add-to-negative') {
+            const size = integer(1, 9);
+            question = addToNegative(-size, integer(1, 15));
+        } else if (item.type === 'take-from-negative') {
+            question = takePositive(-integer(1, 9), integer(1, 9));
+        } else if (item.type === 'add-negative') {
+            question = addNegative(integer(2, 12), integer(1, 12));
+        } else if (item.type === 'multiply-different') {
+            question = multiplyDifferent(integer(3, 9), integer(2, 9));
+        } else if (item.type === 'multiply-same') {
+            question = multiplySame(integer(2, 9), integer(2, 9));
+        } else if (item.type === 'multiply-missing') {
+            question = multiplyMissing(integer(2, 9), integer(2, 9));
+        } else if (item.type.startsWith('rewrite')) {
             const magnitude = integer(1, 15);
             // Different magnitudes keep even the numerical values of all four choices distinct.
             let amount = integer(1, 14);
@@ -494,27 +593,36 @@
         }
     }
 
-    // Typed "work out" questions get the number line above them. A finished
-    // question just shows the hops from the start to the answer. With
-    // afterWrongAnswer, the line stays hidden until the first wrong answer.
-    function withMovableLine(question, { afterWrongAnswer = false } = {}) {
-        if (question.input !== 'number' || question.signs) return question;
-        let lineHost;
+    // Keeps a question's figure hidden until the first wrong answer.
+    function revealAfterWrong(config, question) {
+        let figureHost;
         return {
-            ...question,
-            figure(host, { readOnly }) {
-                lineHost = host;
-                host.hidden = afterWrongAnswer && !readOnly && !wrongBefore(question);
-                if (readOnly) drawFinishedLine(host, question);
-                else drawMovableLine(host, question);
+            ...config,
+            figure(host, options) {
+                figureHost = host;
+                host.hidden = !options.readOnly && !wrongBefore(question);
+                config.figure(host, options);
             },
             onFeedback(result) {
-                question.onFeedback?.(result);
-                if (!afterWrongAnswer) return;
+                config.onFeedback?.(result);
                 rememberWrong(question, !result.correct);
-                if (!result.correct) lineHost.hidden = false;
+                if (!result.correct) figureHost.hidden = false;
             }
         };
+    }
+
+    // Typed "work out" questions get the number line above them. A finished
+    // question just shows the hops from the start to the answer.
+    function withMovableLine(question, { afterWrongAnswer = false } = {}) {
+        if (question.input !== 'number' || question.signs) return question;
+        const config = {
+            ...question,
+            figure(host, { readOnly }) {
+                if (readOnly) drawFinishedLine(host, question);
+                else drawMovableLine(host, question);
+            }
+        };
+        return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
     // The sign grid: row sign, column sign and the sign of the answer.
@@ -571,7 +679,7 @@
         const line = sign => `<tr><th scope="row"${tint(sign === row, false)}>${sign}</th>
             ${['+', '−'].map(top => {
                 const square = SIGN_GRID.find(item => item.row === sign && item.column === top);
-                return `<td${tint(sign === row, top === column)}>${square.answer}</td>`;
+                return `<td${tint(sign === row && top === column, sign === row && top === column)}>${square.answer}</td>`;
             }).join('')}</tr>`;
         return `<caption class="visually-hidden">Signs when you multiply</caption>
             <thead><tr><th scope="col">×</th><th scope="col"${tint(false, column === '+')}>+</th><th scope="col"${tint(false, column === '−')}>−</th></tr></thead>
@@ -579,8 +687,8 @@
     }
 
     // A small table beside a multiplying question, with its signs coloured.
-    function withSignGrid(question) {
-        return {
+    function withSignGrid(question, { afterWrongAnswer = false } = {}) {
+        const config = {
             ...question,
             figure(host) {
                 const table = document.createElement('table');
@@ -589,6 +697,7 @@
                 host.append(table);
             }
         };
+        return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
     // Try it: the pupil taps a square. A wrong square colours its row and

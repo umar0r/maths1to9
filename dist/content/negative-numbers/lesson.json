@@ -18,7 +18,14 @@
             "rewrite": "calculate-negative-numbers",
             "calculate": "calculate-negative-numbers",
             "temperature": "calculate-negative-numbers",
-            "understanding": "calculate-negative-numbers"
+            "understanding": "calculate-negative-numbers",
+            "take-positive": "calculate-negative-numbers",
+            "add-to-negative": "calculate-negative-numbers",
+            "take-from-negative": "calculate-negative-numbers",
+            "add-negative": "calculate-negative-numbers",
+            "multiply-different": "calculate-negative-numbers",
+            "multiply-same": "calculate-negative-numbers",
+            "multiply-missing": "calculate-negative-numbers"
         }
     },
     "explanation": {

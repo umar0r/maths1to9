@@ -303,8 +303,8 @@ finished and Try it opens.
 
 ## Try it: multiplying negative numbers
 
-Try it runs: the four number line examples, the sign grid, five multiplying
-examples, then "A quick review" of the multiplying examples.
+Try it runs: the four number line examples, the sign grid, then five
+multiplying examples. The last one goes straight on to Practice.
 
 **Sign grid page.** Heading: "When you multiply, the two signs tell you the
 sign of the answer." "Tap each square to fill the grid." A grid with + and −
@@ -348,6 +348,26 @@ the wrong way. Lines longer than 20 only label every fifth number.
 
 In Practice the line stays hidden at first. It appears after the first wrong
 answer on that question, and works the same way from then on.
+
+## Practice
+
+Eleven questions in a fixed mix, with new numbers each session, so the same
+kind of sum never comes three times in a row:
+
+1. Positive − bigger positive, typed
+2. Rewrite a positive − (−n), choice
+3. Negative + positive, typed
+4. Negative × positive, choice
+5. Negative − (−n) crossing zero, typed
+6. Negative − positive, typed
+7. Negative × negative, typed
+8. Rewrite a negative − (−n), choice
+9. Positive + (−n), typed
+10. Missing number in ? × −n, typed
+11. Spot Sam's mistake, choice
+
+The number line or the sign table stays hidden until the first wrong answer
+on a question.
 
 ## Check
 

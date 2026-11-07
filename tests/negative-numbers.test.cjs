@@ -21,12 +21,14 @@ const questions = [...fixed, ...generated];
 const answer = question => question.input === 'choice' ? question.options.find(option => option.correct).label : question.answer;
 
 function verifyMaths(question) {
-    const expected = question.start + question.amount;
+    const expected = question.expected ?? question.start + question.amount;
     if (question.input === 'number') assert.equal(evaluate(question.answer), expected, question.prompt);
     else if (question.questionType.startsWith('rewrite')) {
         assert.equal(answer(question), `${String(question.start).replace('-', '−')} + ${question.amount}`);
         assert.equal(evaluate(answer(question)), expected);
         assert.equal(question.options.filter(option => close(evaluate(option.label), expected)).length, 1);
+    } else if (question.questionType.startsWith('multiply')) {
+        assert.equal(evaluate(answer(question)), expected);
     } else if (question.prompt.startsWith('Sam writes:')) {
         assert.ok(answer(question).endsWith(`The answer is ${String(expected).replace('-', '−')}.`));
     }
@@ -47,6 +49,13 @@ test('negative-numbers: every choice has four distinct options and one correct a
         assert.equal(new Set(question.options.map(option => option.feedback)).size, 4, question.prompt);
         assert.ok(question.options.every(option => option.feedback.trim()));
     }
+});
+
+test('negative-numbers: Practice mixes the kinds of sum and never runs three alike', () => {
+    const family = type => type.startsWith('multiply') ? 'multiply' : type.startsWith('rewrite') || type === 'cross-zero' || type === 'error' ? 'take-negative' : type;
+    const families = Q.practiceTypes.map(family);
+    assert.ok(new Set(families).size >= 5, families.join(' | '));
+    families.forEach((kind, i) => assert.ok(!(kind === families[i + 1] && kind === families[i + 2]), kind));
 });
 
 test('negative-numbers: rewrite answers keep the starting number and add the positive', () => {
