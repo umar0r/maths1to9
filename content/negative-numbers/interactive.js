@@ -48,11 +48,7 @@
         { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
         heading: 'So when you take away a negative, you can add instead.', lines: [
             'The take-away sign and the negative sign turn into a plus.'
-        ], start: 3, steps: 4, showLine: false },
-        { title: 'When the first number is negative', kind: 'method', slot: 1,
-        heading: 'It works the same way when the first number is negative.', lines: [
-            'Only the two minus signs in the middle turn into a plus. The first number stays exactly as it is.'
-        ], start: -8, steps: 3, showSum: false }
+        ], start: 3, steps: 4 }
     ];
 
     const signed = value => String(value).replace('-', '−');
@@ -158,7 +154,7 @@
             initial: () => ({
                 screen: 0, finished: false, temperature: -3,
                 journeys: [[0, 0], [0, 0], [0, 0]], feeRemoved: false,
-                pattern: 1, changed: [false, false], hops: [0, 0]
+                pattern: 1, changed: [false]
             }),
             // New screens have moved the later Learn screens along.
             upgrade: () => null
@@ -193,8 +189,7 @@
             if (screen.kind === 'journeys') return screen.journeys.every((item, i) =>
                 state.journeys[screen.slot][i] === item.steps);
             if (screen.kind === 'pattern') return state.pattern === 6;
-            if (screen.showLine === false) return state.changed[screen.slot];
-            return state.hops[screen.slot] === screen.steps;
+            return state.changed[screen.slot];
         }
 
         function actions() {
@@ -349,34 +344,20 @@
                 } else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
             } else {
                 const i = screen.slot;
-                const changed = state.changed[i] || screen.showSum === false;
+                const changed = state.changed[i];
                 const sum = document.createElement('div');
                 sum.className = 'nn-transform nn-sum';
-                const original = changed && i === 0 ? `<span>${signed(screen.start)} − (−${screen.steps}) =</span> ` : '';
+                const original = changed ? `<span>${signed(screen.start)} − (−${screen.steps}) =</span> ` : '';
                 sum.innerHTML = `${original}<span>${signed(screen.start)}</span> <span class="nn-transform-signs ${changed ? 'nn-changed' : ''}"><span class="nn-before">− (−</span><span class="nn-after">+</span></span> <span>${screen.steps}<span class="${changed ? 'nn-gone' : ''}">)</span></span>`;
-                if (screen.showSum !== false) root.append(sum);
+                root.append(sum);
                 if (!changed) {
-                    const instruction = i === 0 ? 'Tap the two minus signs to turn them into a plus.' : 'Tap the two middle minus signs.';
+                    const instruction = 'Tap the two minus signs to turn them into a plus.';
                     paragraph(instruction, 'nn-instruction');
                     tapTarget(sum.querySelector('.nn-transform-signs'), instruction, () => {
                         section.update(state => { state.changed[i] = true; });
                         // Keep the sum in place while the old signs fade into the plus.
                         render();
                     });
-                } else {
-                    if (screen.showLine !== false) {
-                        const instruction = `Start at ${signed(screen.start)}. Tap the number line to take ${screen.steps} steps right.`;
-                        paragraph(instruction, 'nn-instruction');
-                        journey({ ...screen, direction: 1, instruction }, state.hops[i], () => {
-                            section.update(state => { state.hops[i]++; });
-                            render();
-                        });
-                    }
-                    // The first method screen ends on the changed sum: no box needed.
-                    if (complete() && i === 1) {
-                        const reminder = 'Watch out: a common mistake is to change the −8 into 8 as well, and get 8 + 3 = 11. Only the two signs in the middle change.';
-                        window.NegativeNumbers.correctBox(root, reminder, `${signed(screen.start)} − (−${screen.steps}) = ${signed(screen.start)} + ${screen.steps} = ${signed(screen.start + screen.steps)}`);
-                    }
                 }
             }
             actions();
