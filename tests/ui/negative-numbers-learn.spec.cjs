@@ -81,10 +81,10 @@ for (const width of [1280, 375]) {
         await expect(caption).toHaveText("It's −3°C. That's 3 degrees below zero, so it's a negative number.");
         await layout(page);
         await reloadAndCompare(page);
-        for (let screen = 1; screen <= 10; screen++) {
+        for (let screen = 1; screen <= 9; screen++) {
             await expect(page).toHaveURL(new RegExp(`#learn-${screen}$`));
             // Only the last Learn screen must be finished before moving on.
-            if (screen === 10) await expect(main(page)).toBeDisabled();
+            if (screen === 9) await expect(main(page)).toBeDisabled();
             else await expect(main(page)).toBeEnabled();
             let taps = 0;
             while (await root(page).locator('[role="button"]').count()) {
@@ -113,7 +113,7 @@ for (const width of [1280, 375]) {
                 taps++;
                 expect(taps).toBeLessThan(20);
             }
-            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 1, 3][screen - 1]);
+            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 1][screen - 1]);
             await layout(page);
             await reloadAndCompare(page);
             await page.screenshot({ path: `/private/tmp/negative-learn-${width}-screen-${screen}.png`, fullPage: true });

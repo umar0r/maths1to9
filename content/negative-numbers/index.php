@@ -70,7 +70,7 @@ $pageTitle = 'Negative numbers';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=16"></script>
-    <script src="./interactive.js?v=56"></script>
+    <script src="./interactive.js?v=57"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

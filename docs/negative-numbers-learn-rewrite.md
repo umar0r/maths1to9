@@ -270,34 +270,11 @@ Main button unlocks when the working shows.
 
 ---
 
-### Screen 10. When the first number is negative
+### Screen 10 removed (2026-11-08)
 
-**Heading:** When the first number is negative
-
-The one idea: the first number doesn't change, even when it's negative.
-
-**Text:**
-
-> It works the same way when the first number is negative. Only the two
-> minus signs in the middle turn into a plus. The first number stays
-> exactly as it is.
-
-**What the pupil does:**
-
-There is no big sum above the line and no signs to tap. The number line
-shows straight away.
-
-"Start at −8. Tap the number line to take 3 steps right." Three taps, three
-hops, landing on −5. Then the working appears:
-**−8 − (−3) = −8 + 3 = −5**
-
-**The same feedback box also says:**
-
-> Watch out: a common mistake is to change the −8 into 8 as well, and get
-> 8 + 3 = 11. Only the two signs in the middle change.
-
-Main button unlocks when the feedback box shows. After this screen, Learn is
-finished and Try it opens.
+It only showed a start on −8 and three steps right, which screen 4 already
+teaches. Learn now ends on screen 9. Pupils meet a negative first number in
+Try it (−4 − (−9)), Practice (Sam's mistake) and Check.
 
 ---
 
