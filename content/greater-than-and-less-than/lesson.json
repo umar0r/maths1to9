@@ -8,7 +8,6 @@
     },
     "assessment": {
         "question_types": {
-            "sample": "inequality-symbols",
             "compare": [
                 "order-numbers",
                 "inequality-symbols"
@@ -25,7 +24,8 @@
             "decimalOrder": "order-numbers",
             "mixedNegativeOrder": "order-negative-numbers",
             "greatestIntegerBelow": "order-negative-numbers",
-            "decimalSign": "inequality-symbols"
+            "decimalSign": "inequality-symbols",
+            "balanceSign": "inequality-symbols"
         }
     },
     "explanation": {
@@ -38,7 +38,7 @@
         "eyebrow": "Try it",
         "hide_eyebrow": true,
         "hide_heading": true,
-        "title": "Count both groups",
+        "title": "Try comparing numbers",
         "intro": ""
     },
     "question_bank": {
@@ -93,19 +93,87 @@
         "intro": "",
         "questions": [
             {
-                "type": "sample",
-                "prompt": "What is 2 × 7?",
+                "type": "negSymbol",
+                "prompt": "Mia writes −3 < −9. What has she done wrong?",
                 "options": [
-                    "14",
-                    "9",
-                    "7",
-                    "21"
+                    "The wide side should face −3, because −3 is bigger.",
+                    "Nothing. Her sign is right.",
+                    "She should have written −3 = −9.",
+                    "The bigger number always goes second."
                 ],
                 "feedback": [
-                    "Two groups of 7 make 14.",
-                    "You added 2 instead of doubling.",
-                    "That counts only one group.",
-                    "That counts three groups instead of two."
+                    "Yes. −3 > −9, because −3 is further right on the number line.",
+                    "−3 < −9 says −3 is less than −9. But −9 is further left on the number line, so −9 is smaller.",
+                    "= means both sides are the same. −3 and −9 aren't the same.",
+                    "Either order works: −3 > −9 and −9 < −3 are both right. It's the sign that's wrong."
+                ],
+                "answer": 0
+            },
+            {
+                "type": "order",
+                "prompt": "Ben says 0.35 is bigger than 0.4 because it has more digits. Is he right?",
+                "options": [
+                    "No. 0.4 = 0.40, and 40 hundredths is more than 35 hundredths.",
+                    "Yes. More digits means a bigger number.",
+                    "Yes, because 35 is bigger than 4.",
+                    "No. They're the same size."
+                ],
+                "feedback": [
+                    "Yes. Add a zero so both have the same number of digits, then compare.",
+                    "Not after the decimal point. 4 tenths is more than 3 tenths.",
+                    "The 35 and the 4 aren't in the same places. Write 0.4 as 0.40, then compare 40 with 35.",
+                    "0.4 = 0.40. 40 hundredths and 35 hundredths aren't the same."
+                ],
+                "answer": 0
+            },
+            {
+                "type": "order",
+                "prompt": "A pen costs £3.05 and a pencil case costs £3.50. Which sentence is true?",
+                "options": [
+                    "The pen is cheaper, because 0 tenths is less than 5 tenths.",
+                    "The pencil case is cheaper, because 3.50 has a 0 at the end.",
+                    "They cost the same, because they use the same digits.",
+                    "The pen costs more, because it ends in a 5."
+                ],
+                "feedback": [
+                    "Yes. Both start with £3, so look at the tenths next.",
+                    "A 0 at the end doesn't make a number smaller. £3.50 is the same as £3.5.",
+                    "The digits are in different places. 5 tenths is worth more than 5 hundredths.",
+                    "Look at the first place where the prices are different, not the last digit."
+                ],
+                "answer": 0
+            },
+            {
+                "type": "balanceSign",
+                "prompt": "A balance scale tips down on the left. What does that tell you?",
+                "options": [
+                    "The left side is heavier, so left > right.",
+                    "The left side is lighter, so left < right.",
+                    "Both sides weigh the same, so left = right.",
+                    "The right side is heavier, so right > left."
+                ],
+                "feedback": [
+                    "Yes. The heavier side goes down.",
+                    "The lighter side goes up, not down.",
+                    "If they weighed the same, the scale would be level.",
+                    "The right side went up, so it's the lighter side."
+                ],
+                "answer": 0
+            },
+            {
+                "type": "negOrder",
+                "prompt": "Which is less, 0 or −100?",
+                "options": [
+                    "−100, because it's further left on the number line.",
+                    "0, because 100 is bigger than 0.",
+                    "0, because nothing is less than 0.",
+                    "They're the same, because 0 and −100 both end in 0."
+                ],
+                "feedback": [
+                    "Yes. Every number below zero is less than 0, however big it looks.",
+                    "The minus sign matters. −100 is 100 below zero.",
+                    "Every negative number is less than 0.",
+                    "Ending in 0 doesn't make two numbers the same. −100 is 100 below zero."
                 ],
                 "answer": 0
             }
@@ -114,7 +182,19 @@
             "title": "What you have learnt",
             "points": [
                 {
-                    "text": "Two equal groups make double the number in one group."
+                    "text": "The wide side of the sign faces the bigger number."
+                },
+                {
+                    "text": "Add zeros at the end of a decimal to help you compare."
+                },
+                {
+                    "text": "Compare pounds first, then tenths, then hundredths."
+                },
+                {
+                    "text": "On a balance scale, the heavier side goes down."
+                },
+                {
+                    "text": "The further left a number is on a number line, the smaller it is."
                 }
             ]
         }

@@ -2,43 +2,37 @@
     "id": "place-value-01",
     "slug": "place-value",
     "title": "Place value",
-    "subtitle": "Understand what each digit is worth and put numbers in order, including negatives.",
+    "subtitle": "Understand what each digit is worth.",
     "navigation": {
         "back_button": true
     },
     "assessment": {
         "question_types": {
             "digitValue": "place-value",
-            "compare": [
-                "order-numbers",
-                "inequality-symbols"
-            ],
-            "order": "order-numbers",
             "scaledProduct": "place-value",
-            "powerOfTen": "place-value",
-            "negCoolest": "order-negative-numbers",
-            "negSymbol": [
-                "order-negative-numbers",
-                "inequality-symbols"
-            ],
-            "negGreatest": "order-negative-numbers",
-            "negOrder": "order-negative-numbers"
+            "powerOfTen": "place-value"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "What each digit is worth"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Try place value",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise place value",
         "intro": "",
-        "session_length": 8
+        "session_length": 8,
+        "hide_heading": true
     },
     "section_order": [
         "explanation",
@@ -78,6 +72,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you’ve learned",
         "intro": "",
         "questions": [
@@ -85,28 +80,23 @@
                 "type": "digitValue"
             },
             {
-                "type": "compare"
+                "type": "digitValue"
             },
             {
-                "type": "order"
-            },
-            {
-                "type": "negSymbol"
-            },
-            {
-                "type": "negOrder"
+                "type": "digitValue"
             },
             {
                 "type": "powerOfTen"
             },
             {
-                "type": "powerOfTen"
+                "type": "scaledProduct"
             }
         ],
         "summary": {
             "title": "You've finished Place value",
             "points": []
-        }
+        },
+        "hide_heading": true
     },
     "score_activities": [
         {
@@ -139,10 +129,6 @@
         },
         {
             "id": "step:interactive:7",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:8",
             "kind": "guided"
         },
         {

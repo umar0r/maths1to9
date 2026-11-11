@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const types = ['digitValue', 'compare', 'order', 'scaledProduct', 'powerOfTen'];
+    const types = ['digitValue', 'scaledProduct', 'powerOfTen'];
     const addCommas = value => {
         const [whole, fraction] = String(value).split('.');
         return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
@@ -25,21 +25,6 @@
         return addCommas(whole + (fraction ? `.${fraction}` : ''));
     }
     const scaleValue = (integer, places) => formatScaledInteger(integer, places);
-    function exactParts(value) {
-        const text = normaliseDecimalAnswer(value);
-        if (text === null) return null;
-        const [whole, fraction = ''] = text.split('.');
-        return { digits: BigInt(whole + fraction), places: fraction.length };
-    }
-    function compareDecimals(left, right) {
-        const a = exactParts(left), b = exactParts(right);
-        const first = a.digits * 10n ** BigInt(b.places), second = b.digits * 10n ** BigInt(a.places);
-        return first < second ? -1 : first > second ? 1 : 0;
-    }
-    const padDecimal = (value, places = 3) => {
-        const [whole, fraction = ''] = String(value).split('.');
-        return `${whole}.${fraction.padEnd(places, '0')}`;
-    };
     const digitWords = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
     const tensWords = ['', 'ten', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
     const placeNames = { 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones', '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths' };
@@ -81,87 +66,6 @@
         const number = `${addCommas(digits.slice(0, wholeLength).join(''))}.${digits.slice(wholeLength).join('')}`;
         return digitQuestion(number, Number(digits[E.randomInt(0, digits.length - 1, random)]), mode);
     }
-    function comparisonQuestion(left, right, mode = 'choice', scenario = 'direct', names = ['Zara', 'Maya']) {
-        if (scenario === 'games') { left = padDecimal(left, 2); right = padDecimal(right, 2); }
-        const comparison = compareDecimals(left, right);
-        const symbol = comparison < 0 ? '<' : comparison > 0 ? '>' : '=';
-        const smaller = comparison < 0 ? left : right, bigger = comparison > 0 ? left : right;
-        let prompt, answer, wrong;
-        if (scenario === 'race') {
-            const winner = comparison < 0 ? names[0] : names[1];
-            prompt = `${names[0]} finishes a race in ${left} seconds. ${names[1]} finishes in ${right} seconds. `
-                + (mode === 'choice' ? 'Who has the shorter time?' : 'What is the shorter time, in seconds?');
-            answer = mode === 'choice' ? winner : smaller;
-            wrong = mode === 'choice' ? [[names.find(name => name !== winner), 'That is the longer time. The shorter time is the smaller number.'],
-                ['They have the same time.', 'The times have different values. Line up the decimal places.'],
-                ['You cannot compare these times.', 'Add zeros to the end if needed. Then compare the columns.']]
-                : [[bigger, 'That is the longer time. Choose the smaller number.'],
-                    [smaller.replace('.', ''), 'Keep the decimal point in its place.'], [bigger.replace('.', ''), 'Do not remove the decimal point.']];
-        } else if (scenario === 'games') {
-            prompt = `One game costs £${left} and another costs £${right}. `
-                + (mode === 'choice' ? 'Which game costs more?' : 'What is the higher price, in pounds?');
-            answer = mode === 'choice' ? `£${bigger}` : bigger;
-            wrong = mode === 'choice' ? [[`£${smaller}`, 'That is the lower price. Compare the pounds first, then the decimal places.'],
-                ['They cost the same.', 'The prices have different values. Add a zero if it helps you compare.'],
-                ['You cannot compare these prices.', 'Both prices are in pounds. Line up the decimal points.']]
-                : [[smaller, 'That is the lower price. Choose the greater number.'],
-                    [bigger.replace('.', ''), 'Keep the decimal point. The price is in pounds.'], [smaller.replace('.', ''), 'Do not remove the decimal point.']];
-        } else {
-            prompt = mode === 'choice' ? `Which comparison of ${left} and ${right} is correct?`
-                : `Which is greater: ${left} or ${right}? Type the number.`;
-            answer = mode === 'choice' ? `${left} ${symbol} ${right}` : bigger;
-            wrong = mode === 'choice' ? [
-                [`${left} ${symbol === '<' ? '>' : '<'} ${right}`, 'That sign points the wrong way. Compare the first column that is different.'],
-                [`${left} = ${right}`, 'These numbers are not equal. Line up the decimal places.'],
-                ['These numbers cannot be compared.', 'Extra zeros at the end do not change a decimal. Add them, then compare.']
-            ] : [[smaller, 'That is the smaller number. Compare from left to right.'],
-                [bigger.replace('.', ''), 'The decimal point must stay in place.'], [smaller.replace('.', ''), 'Keep the decimal point when you write the number.']];
-        }
-        return makeQuestion({ type: 'compare', mode, scenario, left, right, names, symbol, kind: 'compare', prompt, answer, wrong,
-            feedback: `${padDecimal(left)} ${symbol} ${padDecimal(right)}`,
-            fallback: 'Line up the decimal points. Add zeros at the end, then compare from left to right.' });
-    }
-    function generateComparisonQuestion(random, mode) {
-        const E = window.Maths1to9LessonEngine;
-        if (E.randomInt(1, 3, random) === 1) {
-            const whole = E.randomInt(2, 12, random), tenth = E.randomInt(1, 7, random), hundredth = E.randomInt(1, 9, random);
-            const pair = E.shuffle([`${whole}.${tenth}${hundredth}`, `${whole}.${tenth + 1}`], random);
-            return comparisonQuestion(...pair, mode, E.randomInt(0, 1, random) ? 'race' : 'games', E.shuffle(['Zara', 'Maya'], random));
-        }
-        const whole = E.randomInt(0, 5, random), places = E.randomInt(1, 2, random);
-        const fraction = E.randomInt(10 ** (places - 1), 10 ** places - 1, random);
-        const short = `${whole}.${fraction}`;
-        const units = whole * 1000 + fraction * 10 ** (3 - places);
-        const long = formatScaledInteger(units + (E.randomInt(0, 1, random) ? 1 : -1) * E.randomInt(1, 9, random), 3, true);
-        return comparisonQuestion(...E.shuffle([short, long], random), mode);
-    }
-    function orderingQuestion(values, mode = 'custom', prompt = 'Put these numbers in order from smallest to largest.') {
-        const ordered = [...values].sort(compareDecimals);
-        const feedback = `From smallest to largest: ${ordered.join(' < ')}`;
-        const base = { questionType: 'order', input: mode, kind: 'order', values, correctOrder: ordered, prompt: mode === 'custom' ? prompt : `${prompt} ${values.join('; ')}`, feedback };
-        if (mode === 'custom') return { ...base, widget: orderingWidget(values) };
-        if (mode === 'number') return makeQuestion({ type: 'order', mode, kind: 'order', values, correctOrder: ordered,
-            prompt: `Which number is smallest? ${values.join('; ')}`, answer: ordered[0], feedback,
-            wrong: ordered.slice(1).map(number => [number, 'There is a smaller number. Add zeros and compare the columns.']),
-            fallback: 'Line up the decimal points and compare from left to right. Give just the smallest number.' });
-        const wrong = [
-            [[...ordered].reverse(), 'That goes from largest to smallest.'],
-            [[ordered[0], ordered[2], ordered[1], ordered[3]], 'Compare the two middle numbers one column at a time.'],
-            [[ordered[1], ordered[0], ordered[2], ordered[3]], 'Compare the first two numbers again. Add zeros to line up the decimal places.'],
-            [[ordered[0], ordered[1], ordered[3], ordered[2]], 'Compare the last two numbers again. Start on the left.']
-        ];
-        return { ...base, options: [option(ordered.join(' → '), feedback, true), ...wrong.slice(0, 3).map(([order, message]) => option(order.join(' → '), message))] };
-    }
-    function generateOrderingQuestion(random, mode) {
-        const E = window.Maths1to9LessonEngine;
-        const context = E.randomInt(1, 3, random) === 1;
-        const length = E.randomInt(0, 7, random);
-        const whole = context ? E.randomInt(2, 4, random) : length ? E.randomInt(10 ** (length - 1), 10 ** length - 1, random) : 0;
-        const exact = whole * 1000 + E.randomInt(1, 8, random) * 100;
-        const units = [exact - E.randomInt(1, 9, random), exact, exact + E.randomInt(1, 7, random) * 10, exact + E.randomInt(8, 15, random) * 10];
-        const values = E.shuffle(units.map(value => formatScaledInteger(value, 3)), random);
-        return orderingQuestion(values, mode, context ? 'Put these ribbon lengths in metres in order from shortest to longest.' : undefined);
-    }
     const productOffsets = [[1, 0], [0, 1], [1, 1], [2, 0], [0, 2], [2, 1], [1, 2], [-1, 0], [0, -1], [-1, 1], [1, -1]];
     function scaledProductQuestion(first, second, offsets, mode = 'number') {
         const product = first * second, total = offsets[0] + offsets[1];
@@ -195,104 +99,23 @@
         const E = window.Maths1to9LessonEngine;
         return powerOfTenQuestion(E.randomInt(101, 99999, random), E.randomInt(0, 3, random), E.randomInt(1, 3, random) * (E.randomInt(0, 1, random) ? 1 : -1), mode);
     }
-    const displayNegative = value => String(value).replace('-', '−');
-    function negativeValues(random) {
-        const E = window.Maths1to9LessonEngine;
-        const negatives = E.shuffle(Array.from({ length: 12 }, (_, i) => -i - 1), random).slice(0, 2);
-        const positive = E.randomInt(1, 9, random);
-        const remaining = Array.from({ length: 22 }, (_, i) => i - 12).filter(n => !negatives.includes(n) && n !== positive);
-        return E.shuffle([...negatives, positive, remaining[E.randomInt(0, remaining.length - 1, random)]], random);
-    }
-    function negativeOrderQuestion(values, prompt = 'Put these numbers in order from smallest to largest.') {
-        const written = values.map(displayNegative);
-        const question = orderingQuestion(written, 'custom', prompt);
-        const originalMark = question.widget.mark;
-        question.widget.mark = value => {
-            const result = originalMark(value);
-            return result.correct ? result : { ...result, feedback: 'Start with the number furthest left on the number line. Numbers closer to 0 are greater than numbers further below 0.' };
-        };
-        return { ...question, questionType: 'negOrder' };
-    }
-    function negativeSymbolQuestion(a, b) {
-        const left = displayNegative(a), right = displayNegative(b), sign = a < b ? '<' : '>';
-        return { questionType: 'negSymbol', input: 'choice', prompt: 'Which is correct?', values: [a, b],
-            options: [
-                option(`${left} ${sign} ${right}`, `${displayNegative(Math.min(a, b))} is further left on the number line.`, true),
-                option(`${left} ${sign === '<' ? '>' : '<'} ${right}`, 'That compares the numbers without their minus signs. On a number line, the number further left is smaller.'),
-                option(`${left} = ${right}`, 'These are different numbers. One is further left on the number line.'),
-                option("You can't compare negative numbers", 'You can. The number further left on the number line is smaller.')
-            ] };
-    }
-    function generateNegative(item, random) {
-        const E = window.Maths1to9LessonEngine;
-        const values = negativeValues(random);
-        if (item.type === 'negOrder') return negativeOrderQuestion(values);
-        if (item.type === 'negSymbol') {
-            const pair = values.filter(n => n < 0).slice(0, 2);
-            return negativeSymbolQuestion(pair[0], pair[1]);
-        }
-        if (item.type === 'negCoolest') {
-            const sorted = [...values].sort((a, b) => a - b), answer = sorted[0];
-            const nearestNegative = sorted.filter(n => n < 0).at(-1), largest = sorted.at(-1);
-            const remaining = sorted.find(n => ![answer, nearestNegative, largest].includes(n));
-            return makeQuestion({ type: item.type, mode: 'choice', values,
-                prompt: `Here are four temperatures: ${values.map(n => `${displayNegative(n)} °C`).join(', ')}. Which is the coldest?`,
-                answer: displayNegative(answer),
-                wrong: [
-                    [displayNegative(nearestNegative), 'That has the smallest number after the minus sign, but it is closest to 0. The further below 0, the colder.'],
-                    [displayNegative(largest), 'That is the warmest. The coldest is the lowest number.'],
-                    [displayNegative(remaining), 'There is a number further left on the number line. Look for the one furthest below 0.']
-                ], feedback: `${displayNegative(answer)} °C is the coldest. It is the lowest temperature.` });
-        }
-        const decimal = random() < 0.5;
-        const first = E.randomInt(1, decimal ? 9 : 12, random);
-        const others = Array.from({ length: decimal ? 9 : 12 }, (_, i) => i + 1).filter(n => n !== first);
-        const second = others[E.randomInt(0, others.length - 1, random)];
-        const pair = [first, second].map(n => -n / (decimal ? 10 : 1));
-        const answer = Math.max(...pair), smaller = Math.min(...pair);
-        return makeQuestion({ type: 'negGreatest', mode: 'number', values: pair,
-            prompt: `Which is greater: ${displayNegative(pair[0])} or ${displayNegative(pair[1])}? Type the number.`,
-            answer: displayNegative(answer), wrong: [
-                [displayNegative(smaller), 'That one is further below 0, so it is smaller. Choose the number closer to 0.'],
-                [displayNegative(-answer), 'Keep the minus sign. Both numbers are below 0.']
-            ], feedback: `${displayNegative(answer)} is greater. It is further right on the number line.`,
-            fallback: 'On a number line, the greater number is further right.' });
-    }
-    function negativeNumberLine(host) {
-        const ns = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(ns, 'svg');
-        svg.setAttribute('viewBox', '0 0 360 95');
-        svg.setAttribute('class', 'pv-negative-line');
-        svg.setAttribute('role', 'img');
-        svg.setAttribute('aria-label', 'Number line from minus eight to four. Marked points: minus seven, minus two, zero and three.');
-        function node(tag, attrs) {
-            const element = document.createElementNS(ns, tag);
-            for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, String(value));
-            svg.append(element);
-            return element;
-        }
-        node('line', { x1: 20, y1: 40, x2: 340, y2: 40, stroke: '#26344d', 'stroke-width': 2 });
-        for (let value = -8; value <= 4; value++) {
-            const x = 24 + (value + 8) * 26;
-            node('line', { x1: x, y1: 35, x2: x, y2: 45, stroke: '#26344d' });
-            const label = node('text', { x, y: 65, 'text-anchor': 'middle', fill: '#26344d', 'font-size': 13 });
-            label.textContent = displayNegative(value);
-            if ([-7, -2, 0, 3].includes(value)) node('circle', { cx: x, cy: 40, r: 4, fill: '#2769c5' });
-        }
-        host.append(svg);
-    }
     function generate(item, random) {
-        if (item.type.startsWith('neg')) return prepare(generateNegative(item, random), random);
-        const generators = { digitValue: generateDigitValueQuestion, compare: generateComparisonQuestion, order: generateOrderingQuestion,
-            scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion };
+        const generators = {
+            digitValue: generateDigitValueQuestion,
+            scaledProduct: generateScaledProductQuestion,
+            powerOfTen: generatePowerOfTenQuestion
+        };
         return generators[item.type](random, item.mode || 'choice');
     }
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
-        return E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
-            { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' },
-            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random)
-            .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
+        const order = E.shuffle(types, random);
+        const firstMode = E.randomInt(0, 1, random);
+        return Array.from({ length: 8 }, (_, index) => ({
+            type: order[index % order.length],
+            mode: (firstMode + index) % 2 ? 'number' : 'choice',
+            seed: E.randomInt(0, 4294967295, random)
+        }));
     }
     const prepare = (question, random) => question.options
         ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
@@ -303,75 +126,639 @@
         node.className = className;
         return node;
     }
-    function orderingWidget(values) {
-        const expected = [...values].sort(compareDecimals);
-        const normalise = value => Array.isArray(value) ? [...value] : [];
+    /* Pupils put the digits 6, 7 and 0 into the hundreds, tens and ones slots to make the biggest number.
+       A tap sends a card to the next empty slot (or back again); on desktop the cards can also be dragged.
+       Each placed digit shows what it is worth. */
+    function biggestNumberWidget() {
+        const digits = ['6', '7', '0'];
+        const columns = [{ name: 'hundreds', size: 100 }, { name: 'tens', size: 10 }, { name: 'ones', size: 1 }];
+        const normalise = value => Array.isArray(value) && value.length === columns.length ? [...value] : [null, null, null];
+        const worth = (digit, column) => String(Number(digit) * columns[column].size);
         return {
-            isEmpty(value) { return normalise(value).length !== values.length; },
-            answerText(value) { return normalise(value).join(' → '); },
+            isEmpty(value) { return normalise(value).includes(null); },
+            answerText(value) { return normalise(value).join(''); },
             mark(value) {
-                const order = normalise(value);
-                const correct = order.length === expected.length && order.every((number, index) => number === expected[index]);
-                return { correct, feedback: correct ? `From smallest to largest: ${expected.join(' < ')}`
-                    : 'Line up the decimal points. Add zeros at the end and compare from left to right.' };
+                const placed = normalise(value);
+                if (placed[0] !== '7') {
+                    return { correct: false, feedback: 'Put the biggest digit, 7, in the hundreds column. That is where a digit is worth the most.' };
+                }
+                if (placed[1] !== '6') {
+                    return { correct: false, feedback: '6 is bigger than 0, so the 6 goes in the tens column.' };
+                }
+                return { correct: true, feedback: '7 is the biggest digit, so it goes in the hundreds column, where it is worth the most. 760 is the biggest number you can make.' };
             },
             render(host, { value, editable, onChange }) {
-                let order = normalise(value), canEdit = editable;
-                host.append(element('p', 'Tap the numbers from smallest to largest. Tap a filled place to return its number. You can also drag a number into a place.'));
-                const pool = element('div', '', 'pv-order-pool');
-                pool.setAttribute('role', 'group'); pool.setAttribute('aria-label', 'Numbers to order');
-                const slots = element('div', '', 'pv-order-slots');
-                slots.setAttribute('role', 'group'); slots.setAttribute('aria-label', 'Smallest to largest');
-                const announcement = element('p', '', 'visually-hidden');
-                announcement.setAttribute('aria-live', 'polite');
-                host.append(pool, slots, announcement);
-                function move(number, position) {
-                    if (!canEdit || !values.includes(number)) return;
-                    order = order.filter(value => value !== number);
-                    order.splice(Math.min(position, order.length), 0, number);
-                    announcement.textContent = `${number} placed in position ${order.indexOf(number) + 1}`;
-                    paint(); onChange(order);
-                    (pool.querySelector('button') || slots.querySelector('button'))?.focus();
+                let placed = normalise(value), canEdit = editable, justDragged = false;
+                const block = element('div', '', 'pv-build');
+                const slotRow = element('div', '', 'pv-build__slots');
+                const slots = columns.map(column => {
+                    const slot = element('div', '', 'pv-build__slot');
+                    const holder = element('div', '', 'pv-build__holder');
+                    const worthLine = element('span', '', 'pv-build__worth');
+                    slot.append(element('span', column.name, 'pv-build__label'), holder, worthLine);
+                    slotRow.append(slot);
+                    return { holder, worthLine };
+                });
+                const pool = element('div', '', 'pv-build__pool');
+                pool.setAttribute('role', 'group');
+                pool.setAttribute('aria-label', 'Digit cards');
+                const chips = digits.map(digit => {
+                    const chip = element('button', digit, 'pv-chip');
+                    chip.type = 'button';
+                    chip.dataset.digit = digit;
+                    chip.addEventListener('click', () => {
+                        if (justDragged) { justDragged = false; return; }
+                        if (!canEdit) return;
+                        const from = placed.indexOf(digit);
+                        if (from !== -1) placed[from] = null;
+                        else if (placed.includes(null)) placed[placed.indexOf(null)] = digit;
+                        else return;
+                        commit();
+                    });
+                    chip.addEventListener('pointerdown', event => startDrag(event, chip, digit));
+                    return chip;
+                });
+                block.append(slotRow, pool);
+                host.append(block);
+
+                function commit() {
+                    const before = new Map(chips.map(chip => [chip, chip.getBoundingClientRect()]));
+                    paint();
+                    slideFrom(before);
+                    onChange([...placed]);
                 }
-                function draggable(button, number) {
-                    button.draggable = canEdit;
-                    button.addEventListener('dragstart', event => event.dataTransfer?.setData('text/plain', number));
+                /* Each card glides from where it was to where it now sits. */
+                function slideFrom(before) {
+                    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                    chips.forEach(chip => {
+                        const was = before.get(chip), now = chip.getBoundingClientRect();
+                        const dx = was.left - now.left, dy = was.top - now.top;
+                        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+                        chip.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+                    });
+                }
+                function holderAt(x, y) {
+                    return slots.findIndex(({ holder }) => {
+                        const box = holder.getBoundingClientRect();
+                        return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+                    });
+                }
+                /* Mouse dragging. Touch keeps to taps, so the page still scrolls normally on phones. */
+                function startDrag(event, chip, digit) {
+                    if (!canEdit || event.pointerType === 'touch' || event.button !== 0) return;
+                    const startX = event.clientX, startY = event.clientY;
+                    let dragging = false, target = -1;
+                    const move = moveEvent => {
+                        const dx = moveEvent.clientX - startX, dy = moveEvent.clientY - startY;
+                        if (!dragging && Math.hypot(dx, dy) < 6) return;
+                        dragging = true;
+                        chip.classList.add('is-dragging');
+                        chip.style.transform = `translate(${dx}px, ${dy}px)`;
+                        target = holderAt(moveEvent.clientX, moveEvent.clientY);
+                        slots.forEach(({ holder }, index) => holder.classList.toggle('is-target', index === target));
+                    };
+                    const end = () => {
+                        chip.removeEventListener('pointermove', move);
+                        chip.removeEventListener('pointerup', end);
+                        chip.removeEventListener('pointercancel', end);
+                        slots.forEach(({ holder }) => holder.classList.remove('is-target'));
+                        if (!dragging) return;
+                        justDragged = true;
+                        setTimeout(() => { justDragged = false; }, 0);
+                        const before = new Map(chips.map(other => [other, other.getBoundingClientRect()]));
+                        chip.classList.remove('is-dragging');
+                        chip.style.transform = '';
+                        const from = placed.indexOf(digit);
+                        if (target !== -1) {
+                            const displaced = placed[target];
+                            placed[target] = digit;
+                            if (from !== -1 && from !== target) placed[from] = displaced;
+                        } else if (from !== -1) {
+                            placed[from] = null;
+                        }
+                        paint();
+                        slideFrom(before);
+                        onChange([...placed]);
+                    };
+                    chip.setPointerCapture(event.pointerId);
+                    chip.addEventListener('pointermove', move);
+                    chip.addEventListener('pointerup', end);
+                    chip.addEventListener('pointercancel', end);
                 }
                 function paint() {
-                    pool.replaceChildren(); slots.replaceChildren();
-                    for (const number of values.filter(number => !order.includes(number))) {
-                        const button = element('button', number, 'pv-order-tile');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.dataset.orderTile = number;
-                        button.addEventListener('click', () => move(number, order.length));
-                        draggable(button, number); pool.append(button);
-                    }
-                    values.forEach((unused, index) => {
-                        const group = element('div', '', 'pv-order-place');
-                        const number = order[index];
-                        group.append(element('span', index === 0 ? '1: smallest' : index === values.length - 1 ? '4: largest' : String(index + 1)));
-                        const button = element('button', number || 'Empty', 'pv-order-slot');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.setAttribute('aria-label', number ? `${number} in position ${index + 1}. Press to return it.` : `Empty position ${index + 1}`);
-                        button.addEventListener('click', () => {
-                            if (!canEdit || !number) return;
-                            order.splice(index, 1); paint(); onChange(order); pool.querySelector('button')?.focus();
-                        });
-                        button.addEventListener('dragover', event => { if (canEdit) event.preventDefault(); });
-                        button.addEventListener('drop', event => { event.preventDefault(); move(event.dataTransfer?.getData('text/plain'), index); });
-                        if (number) draggable(button, number);
-                        group.append(button); slots.append(group);
+                    slots.forEach(({ holder, worthLine }, index) => {
+                        const digit = placed[index];
+                        holder.classList.toggle('is-filled', digit !== null);
+                        worthLine.textContent = digit === null ? ' ' : `worth ${worth(digit, index)}`;
+                        if (digit !== null) holder.append(chips[digits.indexOf(digit)]);
                     });
+                    chips.forEach((chip, index) => {
+                        const column = placed.indexOf(digits[index]);
+                        if (column === -1) pool.append(chip);
+                        chip.disabled = !canEdit;
+                        chip.setAttribute('aria-label', column === -1 ? digits[index] : `${digits[index]} in the ${columns[column].name} column. Tap to take it back.`);
+                    });
+                    pool.hidden = !placed.includes(null);
                 }
                 paint();
                 return {
-                    update(next) { order = normalise(next.value); canEdit = next.editable; paint(); },
-                    focus() { (pool.querySelector('button') || slots.querySelector('button'))?.focus(); }
+                    update(next) { placed = normalise(next.value); canEdit = next.editable; paint(); },
+                    focus() { chips.find(chip => !chip.disabled)?.focus(); }
                 };
             }
         };
     }
+    /* A row of place-value cards whose digits pupils move left or right, one column at a time.
+       ← and → buttons sit beside the row (under it on phones); a mouse can also drag the digits,
+       and the arrow keys work when the row has focus. A 0 fills any empty column between the
+       first digit and the ones column. moves > 0 means the digits moved left (× 10 each time). */
+    function shiftCards({ digits, minMoves, maxMoves, label, describe, onMove }) {
+        const EMPTY_CARD = ' ';
+        const headings = ['thousands', 'hundreds', 'tens', 'ones', 'tenths'];
+        const onesColumn = 3;
+        let moves = 0, canEdit = false;
+        const node = element('div', '', 'pv-shift');
+        const row = element('div', '', 'pv-number-chart pv-shift__row');
+        row.setAttribute('role', 'slider');
+        row.setAttribute('aria-label', `${label} Use the arrow keys to move the digits.`);
+        row.setAttribute('aria-valuemin', String(minMoves));
+        row.setAttribute('aria-valuemax', String(maxMoves));
+        const slots = headings.map((heading, index) => {
+            if (index === 4) {
+                const pointCard = element('div', '', 'pv-number-column');
+                pointCard.append(element('span', 'decimal point'), element('strong', '.'));
+                row.append(pointCard);
+            }
+            const card = element('div', '', 'pv-number-column');
+            const slot = element('strong', EMPTY_CARD);
+            card.append(element('span', heading), slot);
+            row.append(card);
+            return slot;
+        });
+        /* Measured on the card, which never moves, not on the digit, which may be mid-slide. */
+        const centreOf = slot => {
+            const box = slot.parentElement.getBoundingClientRect();
+            return box.left + box.width / 2;
+        };
+        const controls = element('div', '', 'pv-shift__controls');
+        /* The same chunky ← ×10 and ÷10 → buttons as the 4.5 × 2.3 playground. */
+        const moveButton = (arrow, side, change) => {
+            const multiply = change > 0;
+            const button = element('button', '', `pv-shift__move pv-shift__move--${side} pv-play__button pv-play__button--${multiply ? 'multiply' : 'divide'}`);
+            button.append(element('span', arrow, 'pv-play__arrow'), element('span', multiply ? '×10' : '÷10'));
+            button.type = 'button';
+            button.setAttribute('aria-label', `${multiply ? 'Multiply' : 'Divide'} by 10: move the digits one column ${side}`);
+            button.addEventListener('click', () => moveTo(moves + change));
+            controls.append(button);
+            return button;
+        };
+        const left = moveButton('←', 'left', 1);
+        const right = moveButton('→', 'right', -1);
+        node.append(row, controls);
 
+        function moveTo(next) {
+            next = Math.max(minMoves, Math.min(maxMoves, next));
+            if (!canEdit || next === moves) return;
+            const startPoints = digits.map(item => centreOf(slots[item.column - moves]));
+            moves = next;
+            paint();
+            slideFrom(startPoints);
+            onMove(moves);
+        }
+        function slideFrom(startPoints) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            digits.forEach((item, index) => {
+                const slot = slots[item.column - moves];
+                const distance = startPoints[index] - centreOf(slot);
+                slot.animate([{ transform: `translateX(${distance}px)` }, { transform: 'none' }], { duration: 250, easing: 'ease-out' });
+            });
+        }
+        row.addEventListener('keydown', event => {
+            if (event.key === 'ArrowLeft') moveTo(moves + 1);
+            else if (event.key === 'ArrowRight') moveTo(moves - 1);
+            else return;
+            event.preventDefault();
+        });
+        /* Mouse dragging: the digits snap to whichever columns the pointer has dragged them to.
+           Touch is left alone so the page still scrolls; phones use the arrow buttons. */
+        row.addEventListener('pointerdown', event => {
+            if (!canEdit || event.pointerType === 'touch' || event.button !== 0) return;
+            const lastDigit = digits[digits.length - 1];
+            const startCentre = centreOf(slots[lastDigit.column - moves]);
+            const startX = event.clientX;
+            row.setPointerCapture(event.pointerId);
+            row.classList.add('is-dragging');
+            const move = moveEvent => {
+                const x = startCentre + moveEvent.clientX - startX;
+                let nearest = 0;
+                slots.forEach((slot, index) => {
+                    if (Math.abs(centreOf(slot) - x) < Math.abs(centreOf(slots[nearest]) - x)) nearest = index;
+                });
+                moveTo(lastDigit.column - nearest);
+            };
+            const end = () => {
+                row.classList.remove('is-dragging');
+                row.removeEventListener('pointermove', move);
+                row.removeEventListener('pointerup', end);
+                row.removeEventListener('pointercancel', end);
+            };
+            row.addEventListener('pointermove', move);
+            row.addEventListener('pointerup', end);
+            row.addEventListener('pointercancel', end);
+        });
+        function paint() {
+            slots.forEach(slot => { slot.textContent = EMPTY_CARD; });
+            digits.forEach(item => { slots[item.column - moves].textContent = item.digit; });
+            const firstDigit = digits[0].column - moves;
+            slots.forEach((slot, index) => {
+                if (index > firstDigit && index <= onesColumn && slot.textContent === EMPTY_CARD) slot.textContent = '0';
+            });
+            /* An empty tenths card shows 0, so 3,840 reads 3840.0 and every card has a digit. */
+            if (slots[onesColumn + 1].textContent === EMPTY_CARD) slots[onesColumn + 1].textContent = '0';
+            row.setAttribute('aria-valuenow', String(moves));
+            row.setAttribute('aria-valuetext', describe(moves));
+            row.tabIndex = canEdit ? 0 : -1;
+            row.classList.toggle('is-editable', canEdit);
+            left.disabled = !canEdit || moves === maxMoves;
+            right.disabled = !canEdit || moves === minMoves;
+        }
+        return {
+            node,
+            set(nextMoves, editable) { moves = nextMoves; canEdit = editable; paint(); },
+            focus() { row.focus(); }
+        };
+    }
+    /* 38.4 × 100: pupils move the digits of 38.4 two columns left. */
+    function timesHundredWidget() {
+        const results = ['38.4', '384', '3,840'];
+        const normalise = value => Number.isInteger(value) && value >= 0 && value <= 2 ? value : 0;
+        return {
+            isEmpty(value) { return normalise(value) === 0; },
+            answerText(value) { return results[normalise(value)]; },
+            mark(value) {
+                if (normalise(value) === 2) {
+                    return { correct: true, feedback: 'Every digit moved two columns to the left. The 0 fills the empty ones column. 38.4 × 100 = 3,840.' };
+                }
+                return { correct: false, feedback: 'You moved the digits one column. That is × 10. To multiply by 100, move them two columns.' };
+            },
+            render(host, { value, editable, onChange }) {
+                const shift = shiftCards({
+                    digits: [{ digit: '3', column: 2 }, { digit: '8', column: 3 }, { digit: '4', column: 4 }],
+                    minMoves: 0, maxMoves: 2, label: 'Digits of 38.4.',
+                    describe: moves => `The digits show ${results[moves]}`,
+                    onMove: onChange
+                });
+                host.append(shift.node);
+                shift.set(normalise(value), editable);
+                return {
+                    update(next) { shift.set(normalise(next.value), next.editable); },
+                    focus() { shift.focus(); }
+                };
+            }
+        };
+    }
+    /* A playground for 4.5 × 2.3 = 10.35 in place-value columns from ten-thousands to ten-thousandths, styled like the tables on Learn slides 6 to 8.
+       Each number can be multiplied or divided by 10 as often as pupils like (×10 moves its digits
+       a column left, ÷10 a column right). The buttons only stop when a digit would fall off the
+       edge of the table. Pupils use the buttons beside each row or drag a row with a mouse. Any exploring counts: there is no wrong answer. */
+    function placeValuePlayground() {
+        /* Each number is its digits and how many of them come after the point: 4.5 is 45 with 1. */
+        const rows = [
+            { name: 'top', digits: 45, places: 1 },
+            { name: 'bottom', digits: 23, places: 1 }
+        ];
+        const product = { digits: 1035, places: 2 };
+        const headings = ['ten-thousands', 'thousands', 'hundreds', 'tens', 'ones', 'tenths', 'hundredths', 'thousandths', 'ten-thousandths'];
+        const onesColumn = 4;
+        const decimalColumns = headings.length - onesColumn - 1;
+        const feedback = 'Multiply one number by 10 and the answer is 10 times bigger. Divide one by 10 and the answer is 10 times smaller. Do one of each and they cancel out.';
+        const showing = (row, moves) => scaleValue(row.digits, row.places - moves);
+        const answer = moves => scaleValue(product.digits, product.places - (moves.top + moves.bottom));
+        /* A number fits when its whole part reaches no further left than the first column
+           and its decimals no further right than the last. */
+        const fitsTable = text => {
+            const [whole, fraction = ''] = text.replace(/,/g, '').split('.');
+            return whole.length <= onesColumn + 1 && fraction.length <= decimalColumns;
+        };
+        const fits = moves => fitsTable(showing(rows[0], moves.top)) && fitsTable(showing(rows[1], moves.bottom)) && fitsTable(answer(moves));
+        const normalise = value => {
+            const pick = side => Number.isInteger(value?.[side]) ? value[side] : 0;
+            const moves = { top: pick('top'), bottom: pick('bottom'), tried: value?.tried === true };
+            return fits(moves) ? moves : { top: 0, bottom: 0, tried: moves.tried };
+        };
+        const canMove = (moves, name, change) => fits({ ...moves, [name]: moves[name] + change });
+        const sentence = moves => `${showing(rows[0], moves.top)} × ${showing(rows[1], moves.bottom)} = ${answer(moves)}`;
+        return {
+            isEmpty(value) { return !normalise(value).tried; },
+            answerText(value) { return sentence(normalise(value)); },
+            mark() { return { correct: true, feedback }; },
+            render(host, { value, editable, onChange }) {
+                let moves = normalise(value), canEdit = editable;
+                const play = element('div', '', 'pv-play');
+                const sheet = element('div', '', 'pv-paper');
+                sheet.setAttribute('role', 'img');
+                /* The column names are the table's own top row, so they always line up with the digits. */
+                sheet.append(element('span', '', 'pv-paper__cell pv-paper__sign'));
+                headings.forEach((heading, index) => {
+                    const cell = element('span', '', 'pv-paper__cell pv-paper__box pv-paper__heading is-top');
+                    cell.append(element('span', heading));
+                    if (index === 0) cell.classList.add('is-first');
+                    if (index === headings.length - 1) cell.classList.add('is-last');
+                    sheet.append(cell);
+                });
+                const lines = ['top', 'bottom', 'answer'].map(kind => {
+                    sheet.append(element('span', { bottom: '×', answer: '=' }[kind] ?? '', 'pv-paper__cell pv-paper__sign'));
+                    const cells = headings.map((heading, index) => {
+                        const cell = element('span', '', 'pv-paper__cell pv-paper__box');
+                        if (index === 0) cell.classList.add('is-first');
+                        if (index === headings.length - 1) cell.classList.add('is-last');
+                        if (index === onesColumn) cell.classList.add('has-point');
+                        if (kind === 'answer') cell.classList.add('is-ruled', 'is-bottom');
+                        else cell.dataset.row = kind;
+                        sheet.append(cell);
+                        return cell;
+                    });
+                    return { kind, cells };
+                });
+                /* Wide screens: ×10 sits left of each row and ÷10 right of it, with the badge after.
+                   Phones have no room beside the table, so a second set sits underneath it.
+                   Only one set is ever shown; the other is display: none. */
+                const leftSide = element('div', '', 'pv-play__left');
+                const rightSide = element('div', '', 'pv-play__right');
+                const phone = element('div', '', 'pv-play__phone');
+                const controls = rows.map(row => ({ name: row.name, multiply: [], divide: [] }));
+                leftSide.append(element('span'));
+                rightSide.append(element('span'));
+                const button = (control, kind) => {
+                    const multiply = kind === 'multiply';
+                    const node = element('button', '', `pv-shift__move pv-play__button pv-play__button--${kind}`);
+                    node.append(element('span', multiply ? '←' : '→', 'pv-play__arrow'), element('span', multiply ? '×10' : '÷10'));
+                    node.type = 'button';
+                    node.setAttribute('aria-label', `${multiply ? 'Multiply' : 'Divide'} the ${control.name} number by 10`);
+                    node.addEventListener('click', () => moveTo(control.name, moves[control.name] + (multiply ? 1 : -1)));
+                    control[kind].push(node);
+                    return node;
+                };
+                controls.forEach(control => {
+                    const leftCell = element('div', '', 'pv-play__controls');
+                    leftCell.append(button(control, 'multiply'));
+                    leftSide.append(leftCell);
+                    const rightCell = element('div', '', 'pv-play__controls');
+                    rightCell.append(button(control, 'divide'));
+                    rightSide.append(rightCell);
+                    const phoneLine = element('div', '', 'pv-play__controls');
+                    phoneLine.append(element('span', `${control.name === 'top' ? 'Top' : 'Bottom'} number`, 'pv-play__label'),
+                        button(control, 'multiply'), button(control, 'divide'));
+                    phone.append(phoneLine);
+                });
+                play.append(leftSide, sheet, rightSide, phone);
+                host.append(play);
+
+                function moveTo(name, target) {
+                    /* Step towards the target one column at a time, stopping at the table's edge. */
+                    let next = moves[name];
+                    const step = Math.sign(target - next);
+                    while (next !== target && canMove({ ...moves, [name]: next }, name, step)) next += step;
+                    if (!canEdit || next === moves[name]) return;
+                    const change = next - moves[name];
+                    moves = { ...moves, [name]: next, tried: true };
+                    paint();
+                    slide(name, change);
+                    slide('answer', change);
+                    onChange({ ...moves });
+                }
+                /* Digits glide sideways from where they were. */
+                function slide(kind, change) {
+                    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                    const line = lines.find(item => item.kind === kind);
+                    const step = line.cells[1].getBoundingClientRect().left - line.cells[0].getBoundingClientRect().left;
+                    line.cells.filter(cell => cell.textContent).forEach(cell => {
+                        cell.animate([{ transform: `translateX(${change * step}px)` }, { transform: 'none' }], { duration: 250, easing: 'ease-out' });
+                    });
+                }
+                /* Writes a number into the boxes, lined up on the ones column. */
+                function fill(kind, text) {
+                    const [whole, fraction = ''] = text.replace(/,/g, '').split('.');
+                    const line = lines.find(item => item.kind === kind);
+                    line.cells.forEach((cell, index) => {
+                        const position = index - (onesColumn - whole.length + 1);
+                        const digit = index <= onesColumn ? whole[position] : fraction[index - onesColumn - 1];
+                        cell.textContent = digit ?? '';
+                    });
+                }
+                function paint() {
+                    fill('top', showing(rows[0], moves.top));
+                    fill('bottom', showing(rows[1], moves.bottom));
+                    fill('answer', answer(moves));
+                    controls.forEach(({ name, multiply, divide }) => {
+                        multiply.forEach(node => { node.disabled = !canEdit || !canMove(moves, name, 1); });
+                        divide.forEach(node => { node.disabled = !canEdit || !canMove(moves, name, -1); });
+                    });
+                    sheet.setAttribute('aria-label', sentence(moves));
+                    sheet.classList.toggle('is-editable', canEdit);
+                }
+                /* Mouse dragging: drag a number's digits along its row, one column at a time.
+                   Touch is left alone so the page still scrolls; phones use the arrows. */
+                sheet.addEventListener('pointerdown', event => {
+                    const name = event.target.dataset?.row;
+                    if (!canEdit || !name || event.pointerType === 'touch' || event.button !== 0) return;
+                    const line = lines.find(item => item.kind === name);
+                    const step = line.cells[1].getBoundingClientRect().left - line.cells[0].getBoundingClientRect().left;
+                    const startX = event.clientX, startMoves = moves[name];
+                    sheet.setPointerCapture(event.pointerId);
+                    sheet.classList.add('is-dragging');
+                    const move = moveEvent => moveTo(name, startMoves - Math.round((moveEvent.clientX - startX) / step));
+                    const end = () => {
+                        sheet.classList.remove('is-dragging');
+                        sheet.removeEventListener('pointermove', move);
+                        sheet.removeEventListener('pointerup', end);
+                        sheet.removeEventListener('pointercancel', end);
+                    };
+                    sheet.addEventListener('pointermove', move);
+                    sheet.addEventListener('pointerup', end);
+                    sheet.addEventListener('pointercancel', end);
+                });
+                paint();
+                return {
+                    update(next) { moves = normalise(next.value); canEdit = next.editable; paint(); },
+                    focus() { controls[0].multiply.find(node => node.offsetParent)?.focus(); }
+                };
+            }
+        };
+    }
+    /* 46.275 as a row of digit cards. Tapping a card turns it over to show its column and
+       what the digit is worth (tens / 40). Tap again to turn it back. Check unlocks once every
+       card has been turned at least once. */
+    function flipCardsWidget() {
+        const cards = [
+            { digit: '4', column: 'tens', worth: '40' },
+            { digit: '6', column: 'ones', worth: '6' },
+            { digit: '2', column: 'tenths', worth: '0.2' },
+            { digit: '7', column: 'hundredths', worth: '0.07' },
+            { digit: '5', column: 'thousandths', worth: '0.005' }
+        ];
+        const pointAfter = 1;
+        const normalise = value => ({
+            open: Array.isArray(value?.open) ? cards.map((card, index) => value.open[index] === true) : cards.map(() => false),
+            seen: Array.isArray(value?.seen) ? cards.map((card, index) => value.seen[index] === true) : cards.map(() => false)
+        });
+        const feedback = 'In 46.275, the 4 is worth 40, the 6 is worth 6, the 2 is worth 0.2, the 7 is worth 0.07 and the 5 is worth 0.005.';
+        return {
+            isEmpty(value) { return normalise(value).seen.includes(false); },
+            answerText() { return '40 + 6 + 0.2 + 0.07 + 0.005 = 46.275'; },
+            mark() { return { correct: true, feedback }; },
+            render(host, { value, editable, onChange }) {
+                let state = normalise(value), canEdit = editable;
+                const row = element('div', '', 'pv-flip');
+                row.setAttribute('role', 'group');
+                row.setAttribute('aria-label', 'The digits of 46.275. Tap a card to turn it over.');
+                const buttons = cards.map((card, index) => {
+                    const button = element('button', '', 'pv-flip__card');
+                    button.type = 'button';
+                    const inner = element('span', '', 'pv-flip__inner');
+                    const front = element('span', card.digit, 'pv-flip__face pv-flip__front');
+                    const back = element('span', '', 'pv-flip__face pv-flip__back');
+                    back.append(element('span', card.column, 'pv-flip__column'), element('strong', card.worth, 'pv-flip__worth'));
+                    inner.append(front, back);
+                    button.append(inner);
+                    button.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        state.open[index] = !state.open[index];
+                        state.seen[index] = true;
+                        paint();
+                        onChange({ open: [...state.open], seen: [...state.seen] });
+                    });
+                    row.append(button);
+                    if (index === pointAfter) row.append(element('span', '.', 'pv-flip__point'));
+                    return button;
+                });
+                host.append(row);
+                function paint() {
+                    buttons.forEach((button, index) => {
+                        const card = cards[index];
+                        button.classList.toggle('is-open', state.open[index]);
+                        button.setAttribute('aria-pressed', String(state.open[index]));
+                        button.setAttribute('aria-label', state.open[index] ? `${card.digit}: ${card.column}, worth ${card.worth}` : `${card.digit}. Tap to see what it is worth.`);
+                        button.disabled = !canEdit;
+                    });
+                }
+                paint();
+                return {
+                    update(next) { state = normalise(next.value); canEdit = next.editable; paint(); },
+                    focus() { buttons[0].focus(); }
+                };
+            }
+        };
+    }
+    /* "Six million, four hundred and fifty-three thousand and nine" in figures. Pupils tap a
+       column box (or let it move on by itself) and tap blue digit buttons to fill it. The words
+       for the column being filled light up like a highlighter pen; the hundreds and tens have no
+       words, which is the clue that they hold 0. */
+    function wordsToFiguresWidget() {
+        const columns = ['millions', 'hundred-thousands', 'ten-thousands', 'thousands', 'hundreds', 'tens', 'ones'];
+        const answer = '6453009';
+        /* Each piece of the words, with the column it belongs to (null for joining words). */
+        const pieces = [
+            ['six million', 0], [', ', null], ['four hundred', 1], [' and ', null], ['fifty', 2], ['-', null],
+            ['three thousand', 3], [' and ', null], ['nine', 6]
+        ];
+        const normalise = value => Array.isArray(value) && value.length === columns.length
+            ? value.map(digit => /^\d$/.test(digit ?? '') ? digit : null)
+            : columns.map(() => null);
+        return {
+            isEmpty(value) { return normalise(value).includes(null); },
+            answerText(value) { return normalise(value).map(digit => digit ?? '_').join(''); },
+            mark(value) {
+                const digits = normalise(value);
+                if (digits[0] !== '6') return { correct: false, feedback: 'Six million means a 6 in the millions column.' };
+                if (digits.slice(1, 4).join('') !== '453') {
+                    return { correct: false, feedback: 'Four hundred and fifty-three thousand means 4, 5 and 3 in the hundred-thousands, ten-thousands and thousands columns.' };
+                }
+                if (digits[4] !== '0' || digits[5] !== '0') {
+                    return { correct: false, feedback: 'The words have no hundreds and no tens, so put a 0 in each of those columns.' };
+                }
+                if (digits[6] !== '9') return { correct: false, feedback: '"And nine" means a 9 in the ones column.' };
+                return { correct: true, feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.' };
+            },
+            render(host, { value, editable, onChange }) {
+                let digits = normalise(value), canEdit = editable;
+                let active = Math.max(0, digits.indexOf(null));
+                const block = element('div', '', 'pv-words');
+                const words = element('p', '', 'pv-words__text');
+                const spans = pieces.map(([text, column]) => {
+                    const span = element('span', text);
+                    if (column !== null) span.classList.add('pv-words__piece');
+                    words.append(span);
+                    return { span, column };
+                });
+                const play = element('div', '', 'pv-play pv-play--words');
+                const sheet = element('div', '', 'pv-paper');
+                sheet.style.gridTemplateColumns = `repeat(${columns.length}, var(--col))`;
+                sheet.setAttribute('role', 'group');
+                sheet.setAttribute('aria-label', 'The number in figures. Tap a box to choose it.');
+                columns.forEach((name, index) => {
+                    const cell = element('span', '', 'pv-paper__cell pv-paper__box pv-paper__heading is-top');
+                    cell.append(element('span', name));
+                    if (index === 0) cell.classList.add('is-first');
+                    if (index === columns.length - 1) cell.classList.add('is-last');
+                    sheet.append(cell);
+                });
+                const boxes = columns.map((name, index) => {
+                    const box = element('button', '', 'pv-paper__cell pv-paper__box pv-words__box is-bottom');
+                    box.type = 'button';
+                    if (index === 0) box.classList.add('is-first');
+                    if (index === columns.length - 1) box.classList.add('is-last');
+                    box.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        active = index;
+                        paint();
+                    });
+                    sheet.append(box);
+                    return box;
+                });
+                play.append(sheet);
+                const keys = element('div', '', 'pv-words__keys');
+                keys.setAttribute('role', 'group');
+                keys.setAttribute('aria-label', 'Digits');
+                const keyButtons = '0123456789'.split('').map(digit => {
+                    const key = element('button', digit, 'pv-shift__move pv-play__button pv-words__key');
+                    key.type = 'button';
+                    key.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        digits[active] = digit;
+                        const next = digits.indexOf(null);
+                        active = next === -1 ? active : next;
+                        paint();
+                        onChange([...digits]);
+                    });
+                    keys.append(key);
+                    return key;
+                });
+                block.append(words, play, keys);
+                host.append(block);
+                function paint() {
+                    boxes.forEach((box, index) => {
+                        box.textContent = digits[index] ?? '';
+                        box.classList.toggle('is-active', canEdit && index === active);
+                        box.disabled = !canEdit;
+                        box.setAttribute('aria-label', `${columns[index]}: ${digits[index] ?? 'empty'}`);
+                    });
+                    spans.forEach(({ span, column }) => span.classList.toggle('is-lit', canEdit && column === active));
+                    keyButtons.forEach(key => { key.disabled = !canEdit; });
+                }
+                paint();
+                return {
+                    update(next) {
+                        digits = normalise(next.value);
+                        canEdit = next.editable;
+                        active = Math.max(0, digits.indexOf(null));
+                        paint();
+                    },
+                    focus() { boxes[active].focus(); }
+                };
+            }
+        };
+    }
     const shiftColumns = ['1,000', '100', '10', '1', '0.1', '0.01', '0.001'];
     const onesIndex = 3;
     function shiftedCells(digits, offset) {
@@ -502,87 +889,108 @@
             widget: scalingWidget(89, 54, targets) };
     }
     function examples() {
-        const tens = makeQuestion({ type: 'digitValue', kind: 'locate', mode: 'choice', prompt: 'In 670, which digit is in the tens column?', answer: '7',
-            wrong: [['6', '6 is in the hundreds column.'], ['0', '0 is in the ones column.'], ['70', '70 is the value. Give just the digit in the tens column.']],
-            feedback: 'The digit 7 is in the tens column. Its value is 70.' });
-        const ones = makeQuestion({ type: 'digitValue', kind: 'locate', mode: 'number', prompt: 'In 670, which digit is in the ones column?', answer: '0',
-            wrong: [['7', '7 is in the tens column.'], ['6', '6 is in the hundreds column.'], ['670', 'That is the whole number. Give just the ones digit.']],
-            feedback: 'The ones digit is 0. Zero holds this place.', fallback: 'The ones column is just to the left of the decimal point, or at the right end of a whole number.' });
-        return [tens, ones, digitQuestion('670', 6, 'number'), digitQuestion('46.275', 4, 'choice'), digitQuestion('46.275', 7, 'number'),
-            negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
+        const biggest = { questionType: 'digitValue', input: 'custom', kind: 'build',
+            prompt: 'Make the biggest number you can with 6, 7 and 0.',
+            feedback: '7 is the biggest digit, so it goes in the hundreds column, where it is worth the most. 760 is the biggest number you can make.', widget: biggestNumberWidget() };
+        const timesHundred = { questionType: 'powerOfTen', input: 'custom', kind: 'move', prompt: 'Work out 38.4 × 100.',
+            feedback: 'Every digit moved two columns to the left. The 0 fills the empty ones column. 38.4 × 100 = 3,840.', widget: timesHundredWidget() };
+        const playground = { questionType: 'scaledProduct', input: 'custom', kind: 'explore',
+            prompt: '4.5 × 2.3 = 10.35.\nMultiply or divide either number by 10. Watch the answer.',
+            feedback: 'Multiply one number by 10 and the answer is 10 times bigger. Divide one by 10 and the answer is 10 times smaller. Do one of each and they cancel out.',
+            widget: placeValuePlayground() };
+        const flipCards = { questionType: 'digitValue', input: 'custom', kind: 'flip', prompt: 'Tap each card in 46.275 to see what its digit is worth.',
+            feedback: 'In 46.275, the 4 is worth 40, the 6 is worth 6, the 2 is worth 0.2, the 7 is worth 0.07 and the 5 is worth 0.005.', widget: flipCardsWidget() };
+        const wordsToFigures = { questionType: 'digitValue', input: 'custom', kind: 'words',
+            prompt: 'Write this number in figures.',
+            feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
+        return [biggest, timesHundred, playground, flipCards, wordsToFigures,
+            scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
     }
     function checks() {
-        const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',
-            prompt: 'A number has 3 hundreds, 6 ones, 8 tenths and 4 hundredths. What is the number?', answer: '306.84',
-            wrong: [['36.84', 'There are 3 hundreds. Keep a zero in the empty tens column.'],
-                ['306.084', '8 tenths is 0.8. Put the 8 straight after the decimal point.'],
-                ['368.4', 'Keep each digit in its named column. There are no tens.']],
-            feedback: '3 hundreds + 6 ones + 8 tenths + 4 hundredths = 306.84' });
-        const reason = { input: 'choice', questionType: 'compare', kind: 'reason',
-            prompt: 'Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?', options: [
-                option('No. 0.7 = 0.70, and 0.70 > 0.67.', 'Seven tenths is greater than six tenths.', true),
-                option('No. A number with more decimal digits is always smaller.', 'The number of decimal digits does not decide which value is larger.'),
-                option('Yes. 67 > 7.', '67 hundredths is 0.67. Compare it with 70 hundredths, not 7 hundredths.'),
-                option('Yes. Hundredths are worth more than tenths.', 'One hundredth is smaller than one tenth.')
-            ] };
-        const divide = powerOfTenQuestion(438, 0, 1);
-        divide.prompt = 'A machine divides its input by 10. The input is 438. What is the output?';
-        const reverse = powerOfTenQuestion(4270, 0, 2);
-        reverse.prompt = 'A number is multiplied by 100. The result is 4,270. What was the original number?';
-        return [number, reason, orderingQuestion(['2.8', '2.75', '2.805', '2.79'], 'custom', 'Put these long-jump distances in metres in order from shortest to longest.'),
-            negativeSymbolQuestion(-6, -11), negativeOrderQuestion([-4, 2, -9, 0, -1], 'Put these temperatures in order, coldest first.'), divide, reverse];
+        return [
+            makeQuestion({
+                type: 'digitValue',
+                prompt: "Asha says the 8 in 5,382 is worth 8. What's wrong?",
+                answer: "The 8 is in the tens column, so it's worth 80.",
+                feedback: 'Yes. 8 tens is 8 × 10 = 80.',
+                wrong: [
+                    ["Nothing. She's right.", "The 8 isn't in the ones column. It's in the tens column, so it's worth 8 × 10."],
+                    ["It's worth 800.", '800 would need the 8 in the hundreds column. Count from the right: ones, then tens.'],
+                    ["It's worth 8,000.", 'The thousands column holds the 5, not the 8.']
+                ]
+            }),
+            makeQuestion({
+                type: 'digitValue',
+                prompt: 'In 4.37, what is the 3 worth?',
+                answer: '3 tenths, which is 0.3.',
+                feedback: 'Yes. The first place after the point is tenths.',
+                wrong: [
+                    ['30.', 'Digits after the decimal point are worth less than one.'],
+                    ['3 hundredths, which is 0.03.', 'Hundredths is the second place after the point. The 3 is in the first.'],
+                    ['3.', "The 3 is after the point, so it's worth less than one."]
+                ]
+            }),
+            makeQuestion({
+                type: 'digitValue',
+                prompt: 'Which is bigger, 0.6 or 0.58, and why?',
+                answer: '0.6, because 0.6 = 0.60, and 60 hundredths is more than 58.',
+                feedback: 'Yes. Add a zero so both have two digits, then compare.',
+                wrong: [
+                    ['0.58, because it has more digits.', "More digits after the point doesn't mean bigger. 6 tenths is more than 5 tenths."],
+                    ['0.58, because 58 is bigger than 6.', "58 and 6 aren't in the same places. Write 0.6 as 0.60, then compare 60 with 58."],
+                    ["They're the same, because both start with 0.", 'The 0 only tells you both are less than one. Compare the tenths next.']
+                ]
+            }),
+            makeQuestion({
+                type: 'powerOfTen',
+                prompt: 'What happens to the digits when you multiply a number by 10?',
+                answer: 'Each digit moves one column to the left.',
+                feedback: 'Yes. Each digit is now worth ten times as much.',
+                wrong: [
+                    ['Each digit moves one column to the right.', "That's what dividing by 10 does."],
+                    ['You always add a 0 to the end.', 'That works for 38 × 10 = 380. But 3.8 × 10 is 38, not 3.80.'],
+                    ['The digits change to bigger digits.', 'The digits stay the same. They move into bigger columns.']
+                ]
+            }),
+            makeQuestion({
+                type: 'scaledProduct',
+                prompt: '384 × 2 = 768. Which change keeps the answer at 768?',
+                answer: 'Divide 384 by 10 and multiply 2 by 10. The two changes cancel out.',
+                feedback: 'Yes. 38.4 × 20 = 768.',
+                wrong: [
+                    ["Divide 384 by 10 and leave 2 alone. Changing one number doesn't matter.", 'Only one number changed, so the answer is 10 times smaller: 76.8.'],
+                    ['Multiply both numbers by 10. Doing the same to both keeps it the same.', 'Both numbers got bigger, so the answer is 100 times bigger.'],
+                    ['Divide 384 by 100 and multiply 2 by 10. Any divide and multiply cancel out.', "÷ 100 and × 10 aren't the same size, so they don't cancel out."]
+                ]
+            })
+        ];
     }
 
     const explorerNumber = '107389.4828';
     const explorerColumns = ['Hundred-thousands', 'Ten-thousands', 'Thousands', 'Hundreds', 'Tens', 'Ones', 'Tenths', 'Hundredths', 'Thousandths', 'Ten-thousandths'];
     const learnScreens = [
-        { title: 'A digit has a place and a value', lines: [
-            'Place value tells you what each digit is worth. A digit is one of the symbols 0 to 9.',
-            'In 670, the 7 is in the tens column. It is worth 7 × 10 = 70. The 0 holds the ones place.'
+        { title: 'Place value tells you what each digit is worth.', lines: [
+            'A digit is one of the symbols 0 to 9.',
+            'In 670, the 6 is in the hundreds column. It is worth 6 × 100 = 600. The 7 is in the tens column. It is worth 7 × 10 = 70. The 0 holds the digits place.'
         ] },
-        { title: 'One number, different place values', lines: [
-            'Tap a digit to see its column and value. Start with the 9: it is worth 9 ones.',
-            'Each place to the left is worth ten times as much. Each place to the right is worth one tenth as much.',
-            'Read this number as: one hundred and seven thousand, three hundred and eighty-nine point four eight two eight.'
+        { title: 'A digit’s position decides its value.', lines: [] },
+        { title: 'Digits after the decimal point are less than one.', lines: [] },
+        { title: 'A longer decimal is not always bigger.', lines: [
+            '0.75 looks bigger than 0.8 because it has more digits. It isn’t.',
+            'Add a zero to the end so both have the same number of digits. 0.8 = 0.80. The zero does not change the value.'
         ] },
-        { title: 'Read decimal places and empty places', lines: [
-            'The decimal point separates whole-number places from decimal places. To its right are tenths, hundredths, then thousandths.',
-            'In 46.275, the 7 is in the hundredths column. It is worth 7 × 0.01 = 0.07.',
-            'Zero holds an empty place. In 307.62, there are 3 hundreds, 0 tens, 7 ones, 6 tenths and 2 hundredths.'
+        { title: 'Multiplying by 10 moves each digit one column\u00a0left.', lines: [
+            'Each column is worth ten times the one on its right.'
         ] },
-        { title: 'Line up the decimal points', lines: [
-            'To compare decimals, add zeros at the end so the columns line up. These zeros do not change the value.',
-            '0.8 = 0.800. Compare from left to right. The first different column shows that 0.800 < 0.809.',
-            '< means “is smaller than”. > means “is greater than”. = means “is equal to”.',
-            'To put numbers in order, use the same method. From smallest to largest: 0.405 < 0.450 < 0.500. So 0.405 < 0.45 < 0.5.'
-        ] },
-        { title: 'Numbers below zero', lines: [
-            'Negative numbers are less than zero. They have a minus sign, like −3.',
-            'On a number line, numbers get bigger as you go right and smaller as you go left.',
-            '−7 is further left than −2, so −7 < −2. It is the smaller number, even though 7 is bigger than 2.',
-            'Think of temperatures. −7 °C is colder than −2 °C.'
-        ] },
-        { title: 'Multiply and divide by powers of 10', lines: [
-            'Multiplying by 10, 100 or 1,000 moves every digit 1, 2 or 3 columns left. Dividing moves the digits right. The decimal point stays fixed.',
-            '38.4 × 100 = 3,840. Going back, 3,840 ÷ 100 = 38.4.',
-            'If you are given the result of multiplying by 100, divide by 100 to find the original number.'
-        ] },
-        { title: 'Change both factors', lines: [
-            'A factor is a number in a multiplication. The product is the answer after multiplying.',
-            '89 × 54 = 4,806. For 8.9 × 5.4, each factor is divided by 10.',
-            'Apply both changes to the product: 4,806 ÷ 10 ÷ 10 = 48.06. Together, that is dividing by 100.'
+        { title: 'Dividing by 10 moves each digit one column\u00a0right.', lines: [
+            'Each column is worth one tenth of the one on its left.'
         ] },
         { title: 'Changes can cancel out', lines: [
-            'Start from 89 × 54 = 4,806. Changing 89 to 890 multiplies one factor by 10. Changing 54 to 5.4 divides the other by 10.',
-            'The changes cancel out. 4,806 × 10 ÷ 10 = 4,806, so 890 × 5.4 = 4,806.'
-        ] },
-        { title: 'Track every place you change', lines: [
-            'Start from 89 × 54 = 4,806. For 0.89 × 0.54, each factor is divided by 100.',
-            'Apply both changes: 4,806 ÷ 100 ÷ 100 = 0.4806. Together, that is dividing by 10,000.',
-            'In Try it, move each row until it shows the factor in the question. Then type the product before checking.'
+            '384 × 2 = 768.',
+            'Now divide 384 by 10 and multiply 2 by 10. You get 38.4 and 20. Multiply them, and the answer is still 768.'
         ] }
     ];
-    function numberChart(number, highlighted = -1) {
+    function numberChart(number, highlighted = -1, showPoint = false, showCaption = true) {
         const digits = number.replace('.', '').split('');
         const point = number.includes('.') ? number.indexOf('.') : number.length;
         const chart = element('div', '', 'pv-number-chart');
@@ -593,10 +1001,132 @@
             const cell = element('div', '', `pv-number-column${highlighted === index ? ' is-highlighted' : ''}`);
             cell.append(element('span', place), element('strong', digit));
             chart.append(cell);
+            if (showPoint && exponent === 0) {
+                const pointCell = element('div', '', 'pv-number-column');
+                pointCell.append(element('span', 'decimal point'), element('strong', '.'));
+                chart.append(pointCell);
+            }
         });
         const figure = element('figure', '', 'pv-chart-block');
-        figure.append(element('figcaption', addCommas(number), 'pv-big-number'), chart);
+        if (showCaption) figure.append(element('figcaption', addCommas(number), 'pv-big-number'));
+        figure.append(chart);
         return figure;
+    }
+    /* Shows 38.4 × 10 = 384 (or 384 ÷ 10 = 38.4) as a table of place-value columns,
+       with an arrow beside the two rows. The 4 is highlighted in both. */
+    function timesTenTable(divide = false) {
+        const small = { cells: ['', '3', '8', '.', '4'], highlighted: 4 };
+        const large = { cells: ['3', '8', '4', '.', ''], highlighted: 2 };
+        return placeTable(divide ? [large, small] : [small, large], divide ? '÷ 10' : '× 10',
+            divide ? '384 ÷ 10 = 38.4' : '38.4 × 10 = 384');
+    }
+    /* A place-value table with two rows. With an arrow, the step label sits beside an arrow from the top row
+       to the bottom row. Without one, the step label is a sign beside the bottom row, as in a written sum. */
+    function placeTable(rows, step, sum, arrowed = true) {
+        const headings = ['hundreds', 'tens', 'ones', 'decimal point', 'tenths'];
+        const table = element('table', '', 'pv-times-table');
+        table.setAttribute('aria-label', `${sum}, shown in place-value columns`);
+        const head = element('tr');
+        head.append(element('td', '', 'pv-times-table__arrow'));
+        headings.forEach(heading => head.append(element('th', heading)));
+        table.append(head);
+        rows.forEach((row, rowIndex) => {
+            const line = element('tr');
+            if (!arrowed) {
+                line.append(element('td', rowIndex === rows.length - 1 ? step : '', 'pv-times-table__arrow pv-times-table__sign'));
+            } else if (rowIndex === 0) {
+                const arrow = element('td', '', 'pv-times-table__arrow');
+                arrow.rowSpan = rows.length;
+                arrow.innerHTML = `<div><span>${step}</span><svg viewBox="0 0 40 96" aria-hidden="true"><path d="M36 6C8 18 8 72 28 86" /><path d="M18 88 31 88 28 74" /></svg></div>`;
+                line.append(arrow);
+            }
+            row.cells.forEach((cell, index) => line.append(element('td', cell, [row.highlighted === index ? 'is-highlighted' : '', index === 0 ? 'pv-times-table__first' : ''].join(' ').trim())));
+            table.append(line);
+        });
+        return table;
+    }
+    /* The 46.275 cards with hand-drawn arrows from three labels up to the 2, 7 and 5.
+       The arrows are redrawn whenever the layout changes size. */
+    function arrowedChart() {
+        const notes = [
+            { text: 'the 2 is worth 0.2', card: 3 },
+            { text: 'the 7 is worth 0.07', card: 4 },
+            { text: 'the 5 is worth 0.005', card: 5 }
+        ];
+        const block = element('div', '', 'pv-notes');
+        const chart = numberChart('46.275', 3, true, false);
+        const labels = element('div', '', 'pv-notes__labels');
+        const spans = notes.map(note => labels.appendChild(element('span', note.text)));
+        const svgNs = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNs, 'svg');
+        svg.setAttribute('class', 'pv-notes__arrows');
+        svg.setAttribute('aria-hidden', 'true');
+        block.append(chart, labels, svg);
+
+        function draw() {
+            if (!block.isConnected) { observer.disconnect(); return; }
+            const cards = chart.querySelectorAll('.pv-number-column');
+            /* Sit the labels just left of the first card they point to, so every arrow starts clear of the text. */
+            labels.style.marginLeft = '0px';
+            const firstCard = cards[notes[0].card].getBoundingClientRect();
+            const room = firstCard.left - block.getBoundingClientRect().left - labels.offsetWidth - 20;
+            labels.style.marginLeft = `${Math.max(0, room)}px`;
+            const origin = block.getBoundingClientRect();
+            svg.setAttribute('width', origin.width);
+            svg.setAttribute('height', origin.height);
+            svg.replaceChildren();
+            notes.forEach((note, index) => {
+                const card = cards[note.card].getBoundingClientRect();
+                const label = spans[index].getBoundingClientRect();
+                const tx = card.left + card.width / 2 - origin.left, ty = card.bottom - origin.top + 6;
+                const sx = label.right - origin.left + 8, sy = label.top + label.height / 2 - origin.top;
+                const path = document.createElementNS(svgNs, 'path');
+                path.setAttribute('d', `M ${sx} ${sy} C ${sx + (tx - sx) * 0.55} ${sy + 3}, ${tx + 2} ${sy - (sy - ty) * 0.35}, ${tx} ${ty}`
+                    + ` M ${tx - 6} ${ty + 9} L ${tx} ${ty} L ${tx + 6} ${ty + 8}`);
+                svg.append(path);
+            });
+        }
+        const observer = new ResizeObserver(() => draw());
+        observer.observe(block);
+        requestAnimationFrame(draw);
+        return block;
+    }
+    /* Draws > or < as an open mouth with white teeth along the inside of each jaw. */
+    function tapDigitCards(host, section) {
+        const digits = '670'.split('');
+        const selected = () => section.state.firstCard ?? 1;
+        const chart = element('div', '', 'pv-number-chart');
+        chart.setAttribute('role', 'group');
+        chart.setAttribute('aria-label', 'The digits of 670');
+        const equation = element('p', '', 'pv-equation');
+        equation.setAttribute('aria-live', 'polite');
+        const figure = element('figure', '', 'pv-chart-block');
+        figure.append(chart);
+        host.append(figure, equation);
+
+        const cards = digits.map((digit, index) => {
+            const card = element('button', '', 'pv-number-column pv-number-column--tap');
+            card.type = 'button';
+            card.append(element('span', placeNames[2 - index]), element('strong', digit));
+            card.addEventListener('click', () => {
+                section.update(state => { state.firstCard = index; });
+                paint();
+            });
+            chart.append(card);
+            return card;
+        });
+
+        function paint() {
+            const index = selected();
+            cards.forEach((card, cardIndex) => {
+                card.classList.toggle('is-highlighted', cardIndex === index);
+                card.setAttribute('aria-pressed', String(cardIndex === index));
+            });
+            const digit = Number(digits[index]);
+            const place = 10 ** (2 - index);
+            equation.textContent = `${digit} × ${place} = ${digit * place}`;
+        }
+        paint();
     }
     function digitExplorer(host, section) {
         const digits = explorerNumber.replace('.', '').split('');
@@ -605,7 +1135,18 @@
         const table = element('div', '', 'pv-digit-explorer');
         const detail = element('p', '', 'pv-digit-detail');
         detail.setAttribute('aria-live', 'polite');
-        host.append(element('p', addCommas(explorerNumber), 'pv-big-number'), table, detail);
+        const rules = element('ul');
+        rules.append(
+            element('li', 'Each place to the left is worth ten times as much.'),
+            element('li', 'Each place to the right is worth one tenth as much.')
+        );
+        host.append(
+            table,
+            detail,
+            element('p', addCommas(explorerNumber), 'pv-big-number'),
+            element('p', 'Tap a digit to see its column and value.'),
+            rules
+        );
         digits.forEach((digit, index) => {
             const value = scaleValue(Number(digit), index - 5);
             const button = element('button', '', 'pv-digit-row');
@@ -627,32 +1168,28 @@
         }
         paint();
     }
-    function learnedScaling(host, offsets) {
-        const board = element('div', '', 'pv-scaling-board');
-        board.append(shiftHeading());
-        [89, 54].forEach((factor, index) => {
-            board.append(element('p', `${factor} → ${scaleValue(factor, offsets[index])}`, 'pv-row-label'));
-            const row = shiftRow(String(factor), { offset: offsets[index], minimum: -1, maximum: 2, label: `Worked factor ${index + 1}` });
-            row.node.setAttribute('role', 'img'); row.node.setAttribute('aria-label', `Digits of ${scaleValue(factor, offsets[index])} in place-value columns`);
-            board.append(row.node);
-        });
-        host.append(board, element('p', `${scaleValue(89, offsets[0])} × ${scaleValue(54, offsets[1])} = ${scaleValue(4806, offsets[0] + offsets[1])}`, 'pv-equation'));
-    }
     function drawLearn(host, screen, section) {
-        if (screen === 0) host.append(numberChart('670', 1), element('p', '7 × 10 = 70', 'pv-equation'));
+        if (screen === 0) tapDigitCards(host, section);
         else if (screen === 1) digitExplorer(host, section);
-        else if (screen === 2) host.append(numberChart('46.275', 3), numberChart('307.62'));
+        else if (screen === 2) host.append(arrowedChart());
         else if (screen === 3) {
-            const row = element('div', '', 'pv-comparison-picture');
-            for (const number of ['0.405', '0.450', '0.500']) row.append(element('span', number, 'pv-example-tile'));
-            host.append(element('p', '0.800 < 0.809', 'pv-equation'), row);
-        } else if (screen === 4) negativeNumberLine(host);
-        else if (screen === 5) {
-            host.append(numberChart('38.4'), element('p', 'Multiply by 100', 'pv-equation'), numberChart('3840'));
-        } else learnedScaling(host, [[1, 1], [-1, 1], [2, 2]][screen - 6]);
+            const compare = element('div', '', 'pv-compare');
+            compare.append(numberChart('0.80', -1, true, false), numberChart('0.75', -1, true, false));
+            host.append(compare, element('p', 'Now compare the digits from left to right. The first digit that is different decides it. 8 tenths is more than 7 tenths.'));
+        } else if (screen === 4) {
+            host.append(timesTenTable(), element('p', 'The decimal point stays where it is.'));
+        } else if (screen === 5) {
+            host.append(timesTenTable(true), element('p', 'The decimal point stays where it is.'));
+        } else if (screen === 6) {
+            host.append(
+                placeTable([{ cells: ['', '3', '8', '.', '4'] }, { cells: ['', '2', '0', '.', '0'] }], '×', '38.4 × 20', false),
+                element('p', '38.4 × 20 = 768', 'pv-equation'));
+        }
     }
 
-    Object.assign(window.PlaceValue ??= {}, { negativeValues, generateNegative, negativeOrderQuestion, negativeSymbolQuestion, types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, compareDecimals,
-        digitValueWords, digitQuestion, comparisonQuestion, orderingQuestion, scaledProductQuestion, powerOfTenQuestion,
-        generate, pick, prepare, examples, checks, learnScreens, drawLearn, orderingWidget, scalingWidget, shiftedCells });
+    Object.assign(window.PlaceValue ??= {}, {
+        types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, digitValueWords,
+        digitQuestion, scaledProductQuestion, powerOfTenQuestion, generate, pick, prepare,
+        examples, checks, learnScreens, drawLearn, scalingWidget, shiftedCells
+    });
 })();

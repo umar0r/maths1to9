@@ -394,7 +394,7 @@
             prompt: 'Who weighs more? Tap that person.',
             widget: balancePeopleWidget()
         };
-        return [lessThanWhole, cheapestDrink, balance, lessThan, heavierPerson, window.NumberComparison.movedTryIt()];
+        return [lessThanWhole, cheapestDrink, balance, lessThan, heavierPerson, window.NumberComparison.numberLineExample()];
     }
 
     async function mountTryIt(root) {
@@ -403,9 +403,19 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 5,
+            version: 6,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
-            upgrade: (saved, version) => version >= 2 && version <= 4 ? { ...saved, finished: false } : null
+            upgrade(saved, version) {
+                if (version < 2 || version > 5) return null;
+                const cards = { ...saved.cards };
+                delete cards['example-6'];
+                return {
+                    ...saved, cards, finished: false,
+                    index: Math.min(saved.index, 5),
+                    screen: Math.min(saved.screen, 5),
+                    furthestScreen: Math.min(saved.furthestScreen, 5)
+                };
+            }
         });
         const state = section.state;
 

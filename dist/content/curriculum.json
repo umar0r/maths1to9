@@ -8,7 +8,8 @@
       "title": "Number",
       "description": "Build confidence with numbers, calculations, fractions and accuracy.",
       "lessons": [
-        {"folder":"place-value","title":"Place value and ordering","subtitle":"Understand what each digit is worth and put numbers in order, including negatives.","skills":["place-value","order-numbers","order-negative-numbers","inequality-symbols"]},
+        {"folder":"place-value","title":"Place value","subtitle":"Understand what each digit is worth.","skills":["place-value"]},
+        {"folder":"greater-than-and-less-than","title":"Greater than and less than","subtitle":"Compare numbers and put them in order.","skills":["inequality-symbols","order-numbers","order-negative-numbers"]},
         {"folder":"negative-numbers","title":"Negative numbers","subtitle":"Rewrite subtracting a negative as adding a positive.","skills":["calculate-negative-numbers"]},
         {"folder":"adding-decimal-numbers","title":"Adding decimal numbers","subtitle":"Line up the decimal points, then add column by column.","skills":["decimal-add-subtract"]},
         {"folder":"calculating-with-decimals","title":"Calculating with decimals","subtitle":"Use the four operations accurately with decimal numbers.","skills":["decimal-add-subtract","decimal-multiply-divide"]},

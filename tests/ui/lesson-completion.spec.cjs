@@ -2,7 +2,7 @@ const {test, expect} = require('@playwright/test');
 const {MAIN_ACTION} = require('./helpers.cjs');
 
 for (const base of ['content', 'dist/content']) {
-    for (const lesson of ['place-value', 'order-of-operations']) {
+    for (const lesson of ['place-value', 'greater-than-and-less-than', 'order-of-operations']) {
         test(`${base}/${lesson}: completion keeps a working All lessons footer`, async ({page}) => {
             const solve = require(`./solvers/${lesson}.cjs`);
             await page.goto(`${base}/${lesson}/#comparison`, {waitUntil:'networkidle'});
@@ -22,7 +22,7 @@ for (const base of ['content', 'dist/content']) {
             const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
             // These fixtures isolate each lesson’s shared Check cards. The full
             // Practice + Check score is covered by engine-runs.spec.cjs.
-            const expectedAnswers = lesson === 'place-value' ? 7 : 5;
+            const expectedAnswers = 5;
             expect(score.answered).toBe(expectedAnswers);
             expect(score.answerPoints).toBe(expectedAnswers * 10);
             await main.click();

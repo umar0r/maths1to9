@@ -9,7 +9,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const Q = loadScript(path.join(__dirname, '../content/place-value/place-value.js'),
     ['types', 'generate', 'pick', 'prepare', 'examples', 'checks', 'learnScreens', 'shiftedCells', 'scalingWidget', 'formatScaledInteger'], { window });
 const C = loadScript(path.join(__dirname, '../content/greater-than-and-less-than/number-comparison.js'),
-    ['decimalTypes', 'generate', 'movedTryIt', 'pick', 'prepare'], { window });
+    ['decimalTypes', 'generate', 'numberLineExample', 'pick', 'prepare'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
 const samples = [Q, C].flatMap(lesson => (lesson.types ?? lesson.decimalTypes).flatMap(type =>
     ['choice', 'number', ...(type === 'order' ? ['custom'] : [])].flatMap(mode => Array.from({ length: 300 }, (_, seed) => ({
@@ -113,7 +113,7 @@ test('powerOfTen: multiplication and division by 10, 100 and 1,000 are exact', (
     }
 });
 test('all fixed and generated choices have four distinct options and their own feedback', () => {
-    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.movedTryIt()].filter(q => q.options)) {
+    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.numberLineExample()].filter(q => q.options)) {
         assert.equal(q.options.length, 4, q.prompt);
         assert.equal(new Set(q.options.map(option => option.label)).size, 4);
         assert.equal(q.options.filter(option => option.correct).length, 1);
@@ -121,7 +121,7 @@ test('all fixed and generated choices have four distinct options and their own f
     }
 });
 test('typed cards preserve exact decimal values and have misconception rules and matching hints', () => {
-    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.movedTryIt()].filter(q => q.input === 'number')) {
+    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.numberLineExample()].filter(q => q.input === 'number')) {
         assert.equal(q.tolerance, 0);
         assert(q.feedback && q.fallback && q.rules.length);
         for (const rule of q.rules) { assert(rule.feedback); assert.notEqual(num(rule.value), num(q.answer)); }
@@ -222,7 +222,7 @@ const skillMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/pla
 const comparisonSkillMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/greater-than-and-less-than/lesson.json'), 'utf8')).assessment.question_types;
 test('fixed question types keep their mappings after the lesson split', () => {
     for (const q of [...Q.examples(), ...Q.checks()]) assert.equal(skillMap[q.questionType], 'place-value');
-    assert.equal(comparisonSkillMap[C.movedTryIt().questionType], 'order-negative-numbers');
+    assert.equal(comparisonSkillMap[C.numberLineExample().questionType], 'order-negative-numbers');
 });
 for (const type of [...Q.types, ...C.decimalTypes]) {
     const owner = Q.types.includes(type) ? Q : C;

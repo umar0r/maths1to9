@@ -31,13 +31,11 @@
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('comparison', {
-            version: 1,
+            version: 2,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 order: questions.map(question => shuffle(question.options.map((option, index) => index)))
             })
-            // CHANGE: bump version and add upgrade(saved, version) if the
-            // fixed questions change. Never restore answers to different content.
         });
         const state = section.state;
 
@@ -50,6 +48,11 @@
         function showScreen(screen) {
             section.update(state => { state.screen = screen; });
             render();
+            const heading = root.querySelector('h3');
+            if (heading) {
+                heading.tabIndex = -1;
+                heading.focus();
+            }
         }
 
         function reportProgress() {
@@ -93,8 +96,6 @@
                 correct: rows.filter(row => row.firstCorrect === true).length, total: count
             });
             renderResults(results, rows, { heading: 'Your Check results' });
-            // CHANGE: the lesson's own short summary and next-lesson content
-            // belong here. Keep the shared results, and retain All lessons.
             const summary = document.createElement('section');
             summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
             for (const point of lesson.comparison.summary.points) {
@@ -115,10 +116,6 @@
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
-            root.append(heading);
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);

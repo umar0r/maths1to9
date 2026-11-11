@@ -16,13 +16,6 @@ const shift = (value, power) => power >= 0 ? { digits: value.digits * 10n ** Big
     : { digits: value.digits, places: value.places - power };
 function answerFor(prompt, choice) {
     let match;
-    if (prompt.startsWith('Here are four temperatures:')) {
-        return String(Math.min(...Array.from(prompt.matchAll(/([−-]?\d+) °C/g), m => num(m[1])))).replace('-', '−');
-    }
-    if (prompt === 'Which is correct?') return null;
-    if ((match = prompt.match(/Which is greater: ([−-]?[\d.]+) or ([−-]?[\d.]+)\?/))) {
-        return num(match[1]) > num(match[2]) ? match[1] : match[2];
-    }
     if ((match = prompt.match(/In ([\d,.]+), which digit is in the (tens|ones) column/))) {
         const whole = match[1].replace(/,/g, '').split('.')[0];
         return whole.at(match[2] === 'tens' ? -2 : -1);
@@ -32,15 +25,6 @@ function answerFor(prompt, choice) {
         const exponent = index < point ? point - index - 1 : point - index;
         return choice ? valueWords(Number(match[2]), exponent) : format(shift(exact(match[2]), exponent));
     }
-    if ((match = prompt.match(/Which comparison of ([\d,.]+) and ([\d,.]+) is correct/))) return `${match[1]} ${num(match[1]) < num(match[2]) ? '<' : '>'} ${match[2]}`;
-    if ((match = prompt.match(/Which is greater: ([\d,.]+) or ([\d,.]+)\?/))) return num(match[1]) > num(match[2]) ? match[1] : match[2];
-    if ((match = prompt.match(/(\w+) finishes a race in (\d+(?:\.\d+)?) seconds\. (\w+) finishes in (\d+(?:\.\d+)?) seconds/))) {
-        return choice ? num(match[2]) < num(match[4]) ? match[1] : match[3] : num(match[2]) < num(match[4]) ? match[2] : match[4];
-    }
-    if ((match = prompt.match(/One game costs £(\d+(?:\.\d+)?) and another costs £(\d+(?:\.\d+)?)/))) {
-        const higher = num(match[1]) > num(match[2]) ? match[1] : match[2];
-        return choice ? `£${higher}` : higher;
-    }
     if ((match = prompt.match(/what is ([\d.,]+) × ([\d.,]+)\?/))) {
         const first = exact(match[1]), second = exact(match[2]);
         return format({ digits: first.digits * second.digits, places: first.places + second.places });
@@ -49,10 +33,14 @@ function answerFor(prompt, choice) {
         const zeros = match[3].replace(/,/g, '').length - 1;
         return format(shift(exact(match[1]), match[2] === '×' ? zeros : -zeros));
     }
-    if ((match = prompt.match(/has (\d) hundreds, (\d) ones, (\d) tenths and (\d) hundredths/))) return `${match[1]}0${match[2]}.${match[3]}${match[4]}`;
-    if (prompt.startsWith('Leila says')) return 'No. 0.7 = 0.70, and 0.70 > 0.67.';
-    if ((match = prompt.match(/divides its input by 10\. The input is ([\d,]+)/))) return format(shift(exact(match[1]), -1));
-    if ((match = prompt.match(/multiplied by 100\. The result is ([\d,]+)\. What was the original number/))) return format(shift(exact(match[1]), -2));
+    const checkAnswers = {
+        "Asha says the 8 in 5,382 is worth 8. What's wrong?": "The 8 is in the tens column, so it's worth 80.",
+        'In 4.37, what is the 3 worth?': '3 tenths, which is 0.3.',
+        'Which is bigger, 0.6 or 0.58, and why?': '0.6, because 0.6 = 0.60, and 60 hundredths is more than 58.',
+        'What happens to the digits when you multiply a number by 10?': 'Each digit moves one column to the left.',
+        '384 × 2 = 768. Which change keeps the answer at 768?': 'Divide 384 by 10 and multiply 2 by 10. The two changes cancel out.'
+    };
+    if (checkAnswers[prompt]) return checkAnswers[prompt];
     throw new Error(`Unrecognised place-value question: ${prompt}`);
 }
 async function solve(page, memory = {}) {
@@ -63,22 +51,6 @@ async function solve(page, memory = {}) {
     if (action !== 'Check') return false;
     const card = page.locator('.question-card:visible');
     const prompt = await card.locator('.question-prompt').innerText();
-    const pool = card.locator('.pv-order-pool');
-    if (await pool.count()) {
-        const values = await pool.locator('button').allTextContents();
-        for (const value of values.sort((a, b) => num(a) - num(b))) await pool.getByRole('button', { name: value, exact: true }).click();
-        return values.length > 0;
-    }
-    const tapCards = card.locator('.pv-tap-cards');
-    if (await tapCards.count()) {
-        const target = num(prompt.match(/less than ([\d.]+)/)[1]);
-        const buttons = tapCards.locator('button');
-        for (let index = 0; index < await buttons.count(); index++) {
-            const button = buttons.nth(index);
-            if (num(await button.innerText()) < target && await button.getAttribute('aria-pressed') !== 'true') await button.click();
-        }
-        return false;
-    }
     const words = card.locator('.pv-words__keys');
     if (await words.count()) {
         for (const digit of '6453009') await words.getByRole('button', { name: digit, exact: true }).click();
@@ -125,14 +97,7 @@ async function solve(page, memory = {}) {
     if (await main.isEnabled()) return false;
     const options = card.locator('.question-card-options button');
     const choice = await options.count() > 0;
-    let answer = answerFor(prompt, choice);
-    if (answer === null) {
-        const labels = await options.allTextContents();
-        answer = labels.find(label => {
-            const m = label.match(/^([−-]?[\d.]+) ([<>]) ([−-]?[\d.]+)$/);
-            return m && (m[2] === '<' ? num(m[1]) < num(m[3]) : num(m[1]) > num(m[3]));
-        });
-    }
+    const answer = answerFor(prompt, choice);
     if (choice) await options.filter({ hasText: new RegExp(`^${answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).click();
     else await card.locator('input[type=text]').fill(answer);
     return true;

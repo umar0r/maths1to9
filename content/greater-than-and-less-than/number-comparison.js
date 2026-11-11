@@ -379,9 +379,82 @@
         return spreadModes(shuffle(session, random)).map(item => ({ ...item, seed: randomInt(0, 4294967295, random) }));
     }
 
-    function movedTryIt() {
-        return negativeOrderQuestion([-3, 5, -8, 0]);
+    function numberLineExample() {
+        const numbers = Array.from({ length: 10 }, (_, index) => index - 6);
+        const target = -2;
+        const expected = numbers.filter(number => number < target);
+        const picks = value => Array.isArray(value) ? value : [];
+
+        return {
+            questionType: 'negOrder',
+            input: 'custom',
+            prompt: 'Tap the numbers that are less than −2.',
+            widget: {
+                isEmpty(value) { return picks(value).length === 0; },
+                answerText(value) {
+                    return numbers.filter(number => picks(value).includes(number)).map(displayNegative).join(', ');
+                },
+                mark(value) {
+                    const selected = picks(value);
+                    if (selected.includes(target)) {
+                        return { correct: false, feedback: "−2 isn't less than −2. It's the same number." };
+                    }
+                    if (selected.some(number => number > target)) {
+                        return { correct: false, feedback: 'Numbers to the right of −2 are bigger than −2.' };
+                    }
+                    if (expected.some(number => !selected.includes(number))) {
+                        return { correct: false, feedback: 'Some numbers are missing. Every number to the left of −2 is less than it.' };
+                    }
+                    return {
+                        correct: true,
+                        feedback: '−6, −5, −4 and −3 are all to the left of −2. The further left a number is, the smaller it is.'
+                    };
+                },
+                render(host, { value, editable, onChange }) {
+                    let selected = picks(value);
+                    let canEdit = editable;
+                    const line = element('div', '', 'comparison-line');
+                    line.setAttribute('role', 'group');
+                    line.setAttribute('aria-label', 'Number line from −6 to 3. −2 is marked.');
+                    const ticks = numbers.map(number => {
+                        const tick = element('button', '', 'comparison-line__number');
+                        tick.type = 'button';
+                        if (number === target) tick.classList.add('is-target');
+                        const mark = element('span', '', 'comparison-line__tick');
+                        mark.setAttribute('aria-hidden', 'true');
+                        tick.append(mark, element('span', displayNegative(number)));
+                        tick.addEventListener('click', () => {
+                            if (!canEdit) return;
+                            selected = selected.includes(number)
+                                ? selected.filter(other => other !== number) : [...selected, number];
+                            paint();
+                            onChange(selected);
+                        });
+                        line.append(tick);
+                        return { number, tick };
+                    });
+                    host.append(line);
+
+                    function paint() {
+                        for (const { number, tick } of ticks) {
+                            tick.setAttribute('aria-pressed', String(selected.includes(number)));
+                            tick.disabled = !canEdit;
+                        }
+                    }
+
+                    paint();
+                    return {
+                        update(next) {
+                            selected = picks(next.value);
+                            canEdit = next.editable;
+                            paint();
+                        },
+                        focus() { ticks[0].tick.focus(); }
+                    };
+                }
+            }
+        };
     }
 
-    window.NumberComparison = { compareDecimals, decimalTypes, generate, movedTryIt, pick, prepare };
+    window.NumberComparison = { compareDecimals, decimalTypes, generate, numberLineExample, pick, prepare };
 })();
