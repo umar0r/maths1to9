@@ -290,12 +290,12 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1, initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
+            version: 2, initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 order: examples.map(example => shuffle((example.options || []).map((option, index) => index))) })
         });
         const state = section.state;
         section.save();
-        const hashes = ['try-it-1', 'try-it-2', 'try-it-3', 'try-it-3-read', 'try-it-4', 'try-it-4-check', 'try-it-results'];
+        const hashes = ['try-it-1', 'try-it-2', 'try-it-3', 'try-it-3-read', 'try-it-4', 'try-it-4-check'];
         function syncHash() { if (api.getCurrentSection().id === 'interactive') api.setSlideHash(hashes[state.screen], { replace: true }); }
         function show(screen) {
             section.update(state => { state.screen = screen; }); render();
@@ -306,24 +306,28 @@
             const card = state.cards[`example-${state.index + 1}`];
             api.setSectionProgress('interactive', state.finished ? examples.length : state.index + Number(card?.correct === true), examples.length);
         }
+        const lastScreen = examples.length - 1;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() { api.completeSection('interactive'); api.continueSection(); }
         function draw(container, index, readOnly) {
             const example = examples[index];
             const cardRoot = node('div'); container.append(cardRoot);
             return api.createQuestion(cardRoot, { ...example, options: state.order[index].map(option => example.options[option]),
                 fallback: example.fallback || E.fallback, sectionId: 'interactive', questionId: `example-${index + 1}`, scored: false, readOnly,
                 onFeedback: report, onContinue() {
-                    section.update(state => { state.index++; state.screen = state.index; state.furthestScreen = state.screen; state.finished = state.index === examples.length; });
+                    section.update(state => { state.index++; state.screen = Math.min(state.index, lastScreen); state.furthestScreen = state.screen; state.finished = state.index === examples.length; });
                     render();
+                    if (state.finished) goToPractice();
                 } });
         }
         function render() {
             root.replaceChildren();
-            const heading = node('h3', state.screen === examples.length ? 'Your completed examples' : `Example ${[1, 2, 3, 3, 4, 4][state.screen]}`);
+            const heading = node('h3', `Example ${[1, 2, 3, 3, 4, 4][state.screen]}`);
             heading.dataset.screenHeading = ''; root.append(heading);
             api.setSectionBack('interactive', state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === examples.length) { examples.forEach((example, index) => draw(root, index, true)); api.clearSectionAction('interactive'); }
-            else { draw(root, state.screen, state.screen < state.index); if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => show(state.screen + 1) }); }
+            draw(root, state.screen, state.screen < state.index);
+            if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : show(state.screen + 1) });
             syncHash();
         }
         hashes.forEach((hash, index) => api.registerHashRoute(hash, () => {
