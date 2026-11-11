@@ -140,8 +140,8 @@ test.describe('phone checks', () => {
         await root(page).locator('.question-card input').fill('-1');
         await main(page).click();
         await expect(root(page).locator('svg [stroke-dasharray]')).toHaveCount(1);
-        await until(page, '#try-it-7');
-        await expect(root(page).locator('.turning-retained')).toHaveCount(5);
+        // Continue on the last example goes straight to Practice question 1.
+        await until(page, '#question-bank-question-1');
         expect(errors).toEqual([]);
     });
 

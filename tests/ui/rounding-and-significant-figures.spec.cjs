@@ -226,8 +226,8 @@ for (const width of [1280, 375]) {
             if (card % 3 === 2) await expect(page.locator('.significant-equation:visible')).toHaveCount(1);
             await mainAction(page).click();
         }
-        await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
-        await expect(page.locator('.significant-digits:visible')).toHaveCount(12);
+        // Continue on the last example goes straight to Practice question 1.
+        await expect(page).toHaveURL(/#question-bank-question-1$/);
         await context.close();
     });
 

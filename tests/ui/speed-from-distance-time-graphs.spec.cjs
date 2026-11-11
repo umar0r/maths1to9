@@ -187,7 +187,8 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
                 await answer(page, definition, saved.order[i]); await capture(page, `try-${i}`); await backAndForward(page); await reload(page);
                 await main(page).click();
             }
-            await backAndForward(page); await main(page).click();
+            // Continue on the last example goes straight to Practice question 1.
+            await expect(page).toHaveURL(/#question-bank-question-1$/); await backAndForward(page);
             for (let i = 0; i < 6; i++) await solvePractice(page, mode.touch && i === 0);
             await capture(page, 'practice-results'); await reload(page);
             const scoreBeforeRepeat = await page.evaluate(() => Maths1to9Lesson.getScore());

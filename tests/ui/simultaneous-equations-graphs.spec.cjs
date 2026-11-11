@@ -170,8 +170,8 @@ test.describe('simultaneous-equations-graphs phone checks', () => {
         await expect(root(page).locator('.maths-graph__label').filter({ hasText: /^\(/ })).toHaveCount(0);
         await main(page).click();
         await solve(page);
-        await until(page, '#try-it-6');
-        await expect(root(page).locator('.simultaneous-retained')).toHaveCount(5);
+        // Continue on the last example goes straight to Practice question 1.
+        await until(page, '#question-bank-question-1');
         expect(errors).toEqual([]);
     });
     test('tap the right point, wrong then right Practice, practise again twice and reload without changing points', async ({ page }) => {

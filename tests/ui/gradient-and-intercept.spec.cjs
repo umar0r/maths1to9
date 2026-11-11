@@ -205,7 +205,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
     for(const site of ['', '/dist']) test(`${site||'PHP'}: full correct run, saved Learn, feedback, navigation and homepage`,async({page})=>{
         test.setTimeout(240_000);const errors=watchForErrors(page);
         await openLesson(page, site);const maximum=await page.evaluate(()=>Maths1to9Lesson.getScore().maximumPoints);
-        await learn(page,mode.hasTouch,site==='');await cards(page,'interactive',6,site==='');await main(page).click();
+        await learn(page,mode.hasTouch,site==='');await cards(page,'interactive',6,site==='');await expect(page).toHaveURL(/#question-bank-question-1$/);
         await cards(page,'question-bank',8,site==='');await main(page).click();await cards(page,'comparison',7,site==='');
         const progress=await page.evaluate(()=>Maths1to9Lesson.getProgress());expect(progress.score.points).toBe(maximum);expect(progress.scoreActivities.filter(a=>!a.completed)).toEqual([]);
         await expect(main(page)).toHaveText('All lessons');await main(page).click();await expect(page).toHaveURL(new RegExp(`${site}/$`));
@@ -216,7 +216,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
         expect(errors).toEqual([]);
     });
     test('wrong then right keeps the right field; Practise again twice keeps the score',async({page})=>{
-        test.setTimeout(240_000);const errors=watchForErrors(page);await openLesson(page);await learn(page,mode.hasTouch);await cards(page,'interactive',6);await main(page).click();
+        test.setTimeout(240_000);const errors=watchForErrors(page);await openLesson(page);await learn(page,mode.hasTouch);await cards(page,'interactive',6);await expect(page).toHaveURL(/#question-bank-question-1$/);
         await cards(page,'question-bank',8,false,true);const before=await page.evaluate(()=>Maths1to9Lesson.getScore());
         for(let session=0;session<2;session++) {await page.getByRole('button',{name:'Practise again',exact:true}).click();await cards(page,'question-bank',8);await reload(page);expect(await page.evaluate(()=>Maths1to9Lesson.getScore())).toEqual(before);}
         expect((await state(page,'question-bank')).earlier.length).toBe(2);

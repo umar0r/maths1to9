@@ -93,11 +93,12 @@ async function backForward(page) {
     expect(await page.evaluate(() => window.Maths1to9Lesson.getScore())).toEqual(before);
 }
 
-async function previousSection(page) {
+// From the last Try it example the button is the lesson's own Next.
+async function previousSection(page, label = 'Continue') {
     const hash = new URL(page.url()).hash;
     const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
     await back(page).click();
-    await expect(main(page)).toHaveText('Continue');
+    await expect(main(page)).toHaveText(label);
     await reload(page);
     await main(page).click();
     expect(new URL(page.url()).hash).toBe(hash);
@@ -210,10 +211,10 @@ async function tryCards(page, revisits) {
         if (revisits) { await reload(page); await backForward(page); }
         await main(page).click();
     }
-    await expect(page).toHaveURL(/#try-it-5$/);
+    // Continue on the last example goes straight to Practice question 1.
+    await expect(page).toHaveURL(/#question-bank-question-1$/);
     await reload(page);
     if (revisits) await backForward(page);
-    await main(page).click();
 }
 async function practice(page, { wrong = false, decimal = false, revisits = false } = {}) {
     for (let index = 0; index < 6; index++) {
@@ -237,7 +238,7 @@ async function practice(page, { wrong = false, decimal = false, revisits = false
         await input(page).fill(typed);
         if (revisits) {
             await reload(page);
-            if (index === 0) await previousSection(page);
+            if (index === 0) await previousSection(page, 'Next');
             await expect(input(page)).toHaveValue(typed);
         }
         await input(page).press('Enter');
@@ -498,7 +499,8 @@ for (const mode of modes) {
             await expect(main(page)).toHaveText('Try again');
             await main(page).click();
             for (const value of ['8', '4']) { await answer(page, value); await main(page).click(); }
-            await main(page).click();
+            // Continue on the last example went straight to Practice question 1.
+            await expect(page).toHaveURL(/#question-bank-question-1$/);
             await practice(page, { wrong: true, revisits: true });
             const saved = await state(page, 'question-bank');
             expect(saved.cards['question-bank:1:2'].value).toBe('2/4');

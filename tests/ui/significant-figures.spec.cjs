@@ -205,7 +205,8 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('Continue');
             await mainAction(page).click();
         }
-        await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
+        // Continue on the last example goes straight to Practice question 1.
+        await expect(page).toHaveURL(/#question-bank-question-1$/);
         await context.close();
     });
 

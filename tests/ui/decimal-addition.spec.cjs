@@ -41,9 +41,8 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
         await expect(main(page)).toHaveText('Continue');
         await main(page).click();
     }
-    await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('10.75');
-    await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('4.85');
-    await main(page).click();
+    // Continue on the last example goes straight to Practice question 1.
+    await expect(page).toHaveURL(/#question-bank-question-1$/);
     let moneyDraft;
     for (let question = 0; question < 6; question++) {
         await solve(page);
