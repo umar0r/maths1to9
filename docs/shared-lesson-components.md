@@ -575,14 +575,12 @@ box.className = E.feedbackClassName('interactive', { visible: false }); // hidde
 
 The first argument is the section the box is in: `'explanation'` (Learn),
 `'interactive'` (Try it), `'question-bank'` (Practice) or `'comparison'`
-(Check). The engine picks the look from it:
+(Check). Feedback sits below the activity in every section, with pastel
+blue for correct answers and creamy red for incorrect answers. It is centred
+on phones and sits slightly right of centre on desktop.
 
-| Section | Look | Right answer |
-|---|---|---|
-| Learn | Plain box | Nothing |
-| Try it | Bubble: cream when right, pink when wrong | Nothing |
-| Practice | Bubble: green when right, pink when wrong | Confetti |
-| Check | Bubble: green when right, pink when wrong | A rocket |
+Practice adds confetti for a correct answer and Check adds a rocket.
+Learn and Try it show the feedback on its own.
 
 Question cards call these themselves, and fire the confetti or rocket.
 Working goes inside the same box (append a span), never in a second box.

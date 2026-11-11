@@ -2188,36 +2188,12 @@ a {
 }
 
 .question-feedback {
-    display: none;
-    margin: 16px 0 0;
-    padding: 12px 16px;
-    border-radius: var(--radius-small);
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.question-feedback.is-visible {
-    display: block;
-    animation: feedback-in 150ms ease-out;
-}
-
-.question-feedback.is-correct {
-    background: var(--success-background);
-    color: var(--success-dark);
-    border: 1px solid #d1fae5;
-}
-
-.question-feedback.is-incorrect {
-    background: var(--error-background);
-    color: var(--error-dark);
-    border: 1px solid #fecaca;
-}
-
-/* Centre the feedback bubble at the bottom of Try it, Practice and Check. */
-.question-feedback--bubble {
+    --feedback-nudge: 0px;
     position: relative;
+    inset-inline-start: var(--feedback-nudge);
+    display: none;
     width: fit-content;
-    max-width: 100%;
+    max-width: calc(100% - 2 * var(--feedback-nudge));
     margin: 20px auto 0;
     padding: 14px 22px;
     border-radius: 22px 22px 22px 6px;
@@ -2228,26 +2204,33 @@ a {
     color: var(--text);
 }
 
+@media (min-width: 760px) {
+    .question-feedback { --feedback-nudge: 12px; }
+}
+
+.question-feedback.is-visible {
+    display: block;
+    animation: feedback-in 150ms ease-out;
+}
+
+.question-feedback.is-correct {
+    background: var(--primary-light);
+    border: 1px solid #bacdf5;
+}
+
+.question-feedback.is-incorrect {
+    background: #fff0ec;
+    border: 1px solid #efb8ae;
+}
+
 /* Some graph cards place the figure and question in separate columns. */
-.question-card > .question-feedback.question-feedback--bubble {
+.question-card > .question-feedback.is-visible {
     grid-column: 1 / -1;
 }
 
 .question-feedback--bubble.is-visible {
     animation: feedback-pop 260ms cubic-bezier(.2, 1.4, .4, 1);
     transform-origin: bottom center;
-}
-
-.question-feedback--bubble.is-correct {
-    background: var(--primary-light);
-    border: 1px solid #bacdf5;
-    color: var(--text);
-}
-
-.question-feedback--bubble.is-incorrect {
-    background: #fff0ec;
-    border: 1px solid #efb8ae;
-    color: var(--text);
 }
 
 @keyframes feedback-pop {
