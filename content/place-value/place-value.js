@@ -303,64 +303,6 @@
         node.className = className;
         return node;
     }
-    function tapCardsWidget(numbers, target) {
-        const isBelow = number => compareDecimals(number, target) < 0;
-        const tip = 'Add zeros so both have the same number of digits, then compare.';
-        const expected = numbers.filter(isBelow);
-        const normalise = value => Array.isArray(value) ? [...value] : [];
-        return {
-            isEmpty(value) { return normalise(value).length === 0; },
-            answerText(value) { return normalise(value).join(', '); },
-            mark(value) {
-                const chosen = normalise(value);
-                const wrongPick = chosen.find(number => !isBelow(number));
-                const missed = expected.find(number => !chosen.includes(number));
-                if (wrongPick !== undefined) {
-                    if (wrongPick === target) {
-                        return { correct: false, feedback: `${target} is not less than ${target}. They are the same number.` };
-                    }
-                    if (compareDecimals(wrongPick, target) === 0) {
-                        return { correct: false, feedback: `${wrongPick} is the same as ${target}, so it is not less than ${target}.` };
-                    }
-                    return { correct: false, feedback: `${wrongPick} is bigger than ${target}. ${tip}` };
-                }
-                if (missed !== undefined) {
-                    return { correct: false, feedback: `${missed} is less than ${target} too. ${tip}` };
-                }
-                return { correct: true, feedback: `${expected.slice(0, -1).join(', ')} and ${expected.at(-1)} are all less than ${target}.` };
-            },
-            render(host, { value, editable, onChange }) {
-                let chosen = normalise(value), canEdit = editable;
-                const grid = element('div', '', 'pv-tap-cards');
-                grid.setAttribute('role', 'group');
-                grid.setAttribute('aria-label', 'Numbers to choose from');
-                host.append(grid);
-                const cards = numbers.map(number => {
-                    const card = element('button', number, 'pv-tap-card');
-                    card.type = 'button';
-                    card.addEventListener('click', () => {
-                        if (!canEdit) return;
-                        chosen = chosen.includes(number) ? chosen.filter(other => other !== number) : [...chosen, number];
-                        paint();
-                        onChange(chosen);
-                    });
-                    grid.append(card);
-                    return card;
-                });
-                function paint() {
-                    cards.forEach((card, index) => {
-                        card.setAttribute('aria-pressed', String(chosen.includes(numbers[index])));
-                        card.disabled = !canEdit;
-                    });
-                }
-                paint();
-                return {
-                    update(next) { chosen = normalise(next.value); canEdit = next.editable; paint(); },
-                    focus() { cards[0]?.focus(); }
-                };
-            }
-        };
-    }
     /* Pupils put the digits 6, 7 and 0 into the hundreds, tens and ones slots to make the biggest number.
        A tap sends a card to the next empty slot (or back again); on desktop the cards can also be dragged.
        Each placed digit shows what it is worth. */
@@ -1207,9 +1149,7 @@
         const wordsToFigures = { questionType: 'digitValue', input: 'custom', kind: 'words',
             prompt: 'Write this number in figures.',
             feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
-        const lessThan = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 0.8.',
-            feedback: '0.75, 0.08 and 0.79 are all less than 0.8.', widget: tapCardsWidget(['0.75', '0.9', '0.08', '0.805', '0.79', '0.80'], '0.8') };
-        return [biggest, timesHundred, playground, flipCards, wordsToFigures, lessThan,
+        return [biggest, timesHundred, playground, flipCards, wordsToFigures,
             negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
     }
     function checks() {

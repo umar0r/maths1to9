@@ -152,10 +152,6 @@
             "kind": "guided"
         },
         {
-            "id": "step:interactive:9",
-            "kind": "guided"
-        },
-        {
             "id": "place-value:explore",
             "kind": "explore"
         }

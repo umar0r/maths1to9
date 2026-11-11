@@ -23,42 +23,124 @@
     margin: 1.75rem auto 1.25rem;
 }
 
-.lesson-section .price-tags > .price-tag {
+.lesson-section .price-tags[role="group"] > .price-tag {
+    --tag-border: var(--border-dark);
+    --tag-fill: var(--surface);
     position: relative;
+    display: grid;
+    place-items: center;
     min-width: 0;
     min-height: 76px;
-    padding: 1.65rem .5rem .65rem;
-    border-radius: 1rem .5rem .5rem 1rem;
+    padding: .5rem .25rem .5rem 1.5rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
     font-size: 1.25rem;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.price-tag::before {
-    content: '';
-    position: absolute;
-    top: .45rem;
-    left: 50%;
-    width: .6rem;
-    height: .6rem;
-    border: 1px solid var(--text-muted);
-    border-radius: 50%;
-    background: var(--surface);
-    transform: translateX(-50%);
+.lesson-section .price-tags[role="group"] > .price-tag:not(:disabled):hover {
+    background: transparent;
+    box-shadow: none;
 }
 
-.price-tag::after {
-    content: '';
+.lesson-section .price-tags[role="group"] > .price-tag:not(.is-selected):not(:disabled):hover {
+    --tag-fill: var(--background-deep);
+    --tag-border: var(--text-muted);
+}
+
+.lesson-section .price-tags[role="group"] > .price-tag.is-selected {
+    --tag-fill: var(--primary-light);
+    --tag-border: var(--primary);
+}
+
+.lesson-section .price-tags[role="group"] > .price-tag.is-selected:not(:disabled):hover {
+    color: var(--primary-dark);
+}
+
+.lesson-section .price-tags[role="group"] > .price-tag.is-correct {
+    --tag-fill: var(--success-background);
+    --tag-border: var(--success);
+}
+
+.lesson-section .price-tags[role="group"] > .price-tag.is-incorrect {
+    --tag-fill: var(--error-background);
+    --tag-border: var(--error);
+}
+
+.price-tag__drawing {
     position: absolute;
-    top: -.65rem;
-    left: 50%;
-    width: .55rem;
-    height: 1.4rem;
-    border: 1px solid var(--text-muted);
-    border-radius: 50%;
-    transform: translateX(-50%) rotate(-18deg);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.price-tag__outline {
+    fill: var(--tag-fill);
+    stroke: var(--tag-border);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.price-tag__hole { fill: var(--surface); stroke: var(--tag-border); }
+.price-tag__string { fill: none; stroke: var(--text-muted); stroke-width: 1.5; }
+.price-tag__amount { position: relative; }
+
+.price-tag:focus-visible,
+.balance-equation__sign:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
 }
 
 @media (max-width: 480px) {
-    .price-tags {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .price-tags { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.balance-equation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    gap: .5rem;
+    align-items: center;
+    max-width: 17rem;
+    margin: 1.25rem auto 0;
+    font-size: clamp(1.3rem, 5vw, 1.85rem);
+    font-weight: 800;
+    text-align: center;
+}
+
+.balance-equation__sign {
+    min-height: 52px;
+    border: 2px solid var(--primary);
+    border-radius: .5rem;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font: inherit;
+    cursor: pointer;
+}
+
+.balance-equation__sign:disabled { opacity: 1; cursor: default; }
+
+.balance-scale {
+    display: block;
+    width: min(100%, 30rem);
+    height: auto;
+    margin: .5rem auto 0;
+}
+
+.balance-scale__stand { fill: #e2e8f0; stroke: #526171; stroke-width: 3; stroke-linejoin: round; }
+.balance-scale__base, .balance-scale__beam { stroke: #334155; stroke-width: 6; stroke-linecap: round; }
+.balance-scale__pivot { fill: #fff; stroke: #334155; stroke-width: 3; }
+.balance-scale__cord { fill: none; stroke: #526171; stroke-width: 2; }
+.balance-scale__weight { fill: #ecfeff; stroke: #155e75; stroke-width: 2; }
+.balance-scale__tray { fill: #e2e8f0; stroke: #526171; stroke-width: 2; stroke-linejoin: round; }
+.balance-scale text { fill: #172b3b; font-size: 17px; font-weight: 800; text-anchor: middle; }
+
+.balance-scale__beam { transform-origin: 180px 56px; }
+.balance-scale.is-tipped .balance-scale__beam { transform: rotate(-9deg); }
+.balance-scale.is-tipped .balance-scale__pan--left { transform: translate(1.3px, 16.4px); }
+.balance-scale.is-tipped .balance-scale__pan--right { transform: translate(-1.3px, -16.4px); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .balance-scale__beam, .balance-scale__pan { transition: transform 220ms ease-out; }
 }

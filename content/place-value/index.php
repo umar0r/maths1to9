@@ -28,12 +28,12 @@ $pageTitle = 'Place value';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=43">
-    <link rel="stylesheet" href="./lesson.css?v=83">
+    <link rel="stylesheet" href="./lesson.css?v=84">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=11"
+    data-lesson-src="./lesson.json?v=12"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -68,9 +68,9 @@ $pageTitle = 'Place value';
 
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./place-value.js?v=89"></script>
+    <script src="./place-value.js?v=90"></script>
     <script src="./questions.js?v=48"></script>
-    <script src="./interactive.js?v=45"></script>
+    <script src="./interactive.js?v=46"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

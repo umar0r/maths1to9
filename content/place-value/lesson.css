@@ -67,7 +67,6 @@
     .pv-compare .pv-number-column > span { font-size: .72rem; }
 }
 
-.pv-tap-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; max-width: 30rem; margin: 1.25rem auto; }
 .pv-notes { position: relative; }
 .pv-notes__labels { display: grid; gap: .9rem; width: fit-content; margin-top: 2.25rem; }
 .pv-notes__labels span { font-size: 1rem; }
@@ -259,7 +258,3 @@
 .pv-chip.is-dragging { z-index: 10; cursor: grabbing; transition: none; box-shadow: 0 14px 24px rgba(15, 23, 42, .25), 0 5px 0 var(--primary-dark); }
 .pv-chip:disabled { opacity: 1; color: #fff; cursor: default; }
 .pv-chip:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
-.pv-tap-card { min-height: 72px; color: inherit; font: inherit; font-size: 1.6rem; font-weight: 700; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; cursor: pointer; }
-.pv-tap-card[aria-pressed=true] { border-color: #155e75; background: #ecfeff; }
-.pv-tap-card:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
-.pv-tap-card:disabled { color: inherit; opacity: 1; cursor: default; }

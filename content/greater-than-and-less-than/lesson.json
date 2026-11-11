@@ -110,6 +110,14 @@
         {
             "id": "step:interactive:1",
             "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
         }
     ]
 }
