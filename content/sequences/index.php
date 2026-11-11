@@ -70,7 +70,7 @@ $pageTitle = 'Continuing a sequence';
     <script src="./sequences.js?v=15"></script>
     <script src="./visuals.js?v=15"></script>
     <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=15"></script>
+    <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>
