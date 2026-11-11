@@ -105,18 +105,19 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 19,
+            version: 20,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade(saved, version) {
-                if (version !== 17 && version !== 18) return null;
-                const removedCount = version === 17 ? 2 : 1;
+                if (version < 17 || version > 19) return null;
+                const removedCount = 20 - version;
                 const remap = index => index > 5 ? Math.max(5, index - removedCount) : index;
                 const cards = { ...saved.cards };
                 delete cards['example-6'];
                 delete cards['example-7'];
+                delete cards['example-8'];
                 return {
                     ...saved,
                     index: remap(saved.index),
@@ -147,7 +148,7 @@
 
         function originalIndex(index) {
             // Keep saved cards and seeds tied to their original activities.
-            return index < 5 ? index : index + 2;
+            return index < 5 ? index : index + 3;
         }
 
         function exampleId(index) {

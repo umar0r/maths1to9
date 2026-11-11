@@ -7,11 +7,16 @@ const { loadScript, allStrings, wrongSums } = require('./helpers/lessons.cjs');
 const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
 const Q = loadScript(path.join(__dirname, '../content/place-value/place-value.js'),
-    ['types', 'generate', 'pick', 'prepare', 'examples', 'checks', 'learnScreens', 'shiftedCells', 'scalingWidget', 'orderingWidget', 'formatScaledInteger'], { window });
+    ['types', 'generate', 'pick', 'prepare', 'examples', 'checks', 'learnScreens', 'shiftedCells', 'scalingWidget', 'formatScaledInteger'], { window });
+const C = loadScript(path.join(__dirname, '../content/greater-than-and-less-than/number-comparison.js'),
+    ['decimalTypes', 'generate', 'movedTryIt', 'pick', 'prepare'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
-const samples = Q.types.flatMap(type => ['choice', 'number', ...(type === 'order' ? ['custom'] : [])].flatMap(mode => Array.from({ length: 300 }, (_, seed) => ({ seed,
-    q: Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0))
-}))));
+const samples = [Q, C].flatMap(lesson => (lesson.types ?? lesson.decimalTypes).flatMap(type =>
+    ['choice', 'number', ...(type === 'order' ? ['custom'] : [])].flatMap(mode => Array.from({ length: 300 }, (_, seed) => ({
+        seed,
+        q: lesson.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0))
+    })))
+));
 const questionsOf = type => samples.filter(({ q }) => q.questionType === type);
 const answerOf = q => q.input === 'choice' ? q.options.find(option => option.correct).label : q.answer;
 const num = text => Number(String(text).replace(/,/g, '').replace(/−/g, '-'));
@@ -108,7 +113,7 @@ test('powerOfTen: multiplication and division by 10, 100 and 1,000 are exact', (
     }
 });
 test('all fixed and generated choices have four distinct options and their own feedback', () => {
-    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks()].filter(q => q.options)) {
+    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.movedTryIt()].filter(q => q.options)) {
         assert.equal(q.options.length, 4, q.prompt);
         assert.equal(new Set(q.options.map(option => option.label)).size, 4);
         assert.equal(q.options.filter(option => option.correct).length, 1);
@@ -116,30 +121,58 @@ test('all fixed and generated choices have four distinct options and their own f
     }
 });
 test('typed cards preserve exact decimal values and have misconception rules and matching hints', () => {
-    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks()].filter(q => q.input === 'number')) {
+    for (const q of [...samples.map(({ q }) => q), ...Q.examples(), ...Q.checks(), C.movedTryIt()].filter(q => q.input === 'number')) {
         assert.equal(q.tolerance, 0);
         assert(q.feedback && q.fallback && q.rules.length);
         for (const rule of q.rules) { assert(rule.feedback); assert.notEqual(num(rule.value), num(q.answer)); }
     }
 });
-test('sessions contain eight seeded items, all seven types and mixed answer modes', () => {
+test('Place value sessions cover all three seeded types with alternating choice and typed cards', () => {
     for (let seed = 0; seed < 200; seed++) {
         const session = Q.pick(seededRandom(seed));
         assert.equal(session.length, 8);
-        assert.equal(new Set(session.map(item => item.type)).size, 7);
-        assert.equal(session.filter(item => item.mode === 'choice').length, 3);
+        assert.equal(new Set(session.map(item => item.type)).size, 3);
+        assert.equal(session.filter(item => item.mode === 'choice').length, 4);
         assert.equal(session.filter(item => item.mode === 'number').length, 4);
-        assert.equal(session.filter(item => item.mode === 'custom').length, 1);
         assert.equal(JSON.stringify(session), JSON.stringify(Q.pick(seededRandom(seed))));
-        for (const item of session) {
+        for (const [index, item] of session.entries()) {
             assert.deepEqual(Object.keys(item).sort(), ['mode', 'seed', 'type']);
+            assert.notEqual(session[index - 1]?.mode, item.mode);
             assert.equal(JSON.stringify(Q.generate(item, seededRandom(item.seed))), JSON.stringify(Q.generate(item, seededRandom(item.seed))));
         }
     }
-    for (const questions of [Q.examples(), Q.checks()]) {
-        assert(questions.filter(q => q.input === 'choice').length >= 2);
-        assert(questions.filter(q => q.input !== 'choice').length >= 2);
+    assert.equal(Q.examples().length, 8);
+    assert(Q.examples().every(q => q.input === 'custom'));
+    assert.equal(Q.checks().length, 5);
+    assert(Q.checks().every(q => q.input === 'choice'));
+});
+test('comparison sessions cover eleven kinds with no repeats or three cards of one format in a row', () => {
+    const coverage = new Set();
+    for (let seed = 0; seed < 200; seed++) {
+        const fullSeed = Math.imul(seed, 2654435761) >>> 0;
+        const session = C.pick(seededRandom(fullSeed));
+        assert.equal(session.length, 8);
+        assert.equal(new Set(session.map(item => item.type)).size, 8);
+        assert(session.some(item => item.mode === 'choice'));
+        assert(session.some(item => item.mode === 'number'));
+        assert.equal(JSON.stringify(session), JSON.stringify(C.pick(seededRandom(fullSeed))));
+        for (const [index, item] of session.entries()) {
+            coverage.add(item.type);
+            assert.deepEqual(Object.keys(item).sort(), ['mode', 'seed', 'type']);
+            assert(!(item.mode === session[index - 1]?.mode && item.mode === session[index - 2]?.mode));
+            const generate = () => C.prepare(C.generate(item, seededRandom(item.seed)), seededRandom(item.seed));
+            const q = generate();
+            assert.equal(q.input, item.mode);
+            assert.equal(JSON.stringify(q), JSON.stringify(generate()));
+            if (q.input === 'choice') {
+                assert.equal(q.options.length, 4);
+                assert.equal(new Set(q.options.map(option => option.label)).size, 4);
+                assert.equal(q.options.filter(option => option.correct).length, 1);
+                assert(q.options.every(option => option.feedback.trim()));
+            }
+        }
     }
+    assert.equal(coverage.size, 11);
 });
 test('scaling cards check both row positions and the exact typed product', () => {
     for (const targets of [[1, 1], [-1, 1], [2, 2]]) {
@@ -186,13 +219,17 @@ test('Place value Learn keeps seven screens, including the longer decimal screen
 
 // Preserve the generic checks whose old questions.js discovery no longer applies.
 const skillMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/place-value/lesson.json'), 'utf8')).assessment.question_types;
-test('place-value: every fixed question type still has its skill mapping', () => {
-    for (const q of [...Q.examples(), ...Q.checks()]) assert(q.questionType in skillMap);
+const comparisonSkillMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/greater-than-and-less-than/lesson.json'), 'utf8')).assessment.question_types;
+test('fixed question types keep their mappings after the lesson split', () => {
+    for (const q of [...Q.examples(), ...Q.checks()]) assert.equal(skillMap[q.questionType], 'place-value');
+    assert.equal(comparisonSkillMap[C.movedTryIt().questionType], 'order-negative-numbers');
 });
-for (const type of Q.types) {
+for (const type of [...Q.types, ...C.decimalTypes]) {
+    const owner = Q.types.includes(type) ? Q : C;
+    const mapping = owner === Q ? skillMap : comparisonSkillMap;
     const generated = questionsOf(type);
     test(`${type}: generates seeded questions without errors`, () => assert(generated.length >= 600));
-    test(`${type}: has a skill mapping in lesson.json`, () => assert(type in skillMap));
+    test(`${type}: has a skill mapping in lesson.json`, () => assert(type in mapping));
     test(`${type}: has exactly one correct distinct answer`, () => {
         for (const { q } of generated.filter(({ q }) => q.options)) {
             assert.equal(q.options.filter(option => option.correct).length, 1);
@@ -202,7 +239,7 @@ for (const type of Q.types) {
     test(`${type}: shared shuffling varies the answer position and preserves feedback`, () => {
         const positions = new Set();
         for (const { q, seed } of generated.filter(({ q }) => q.options)) {
-            const source = JSON.stringify(q), prepared = Q.prepare(q, seededRandom(seed));
+            const source = JSON.stringify(q), prepared = owner.prepare(q, seededRandom(seed));
             positions.add(prepared.options.findIndex(option => option.correct));
             for (const option of prepared.options) assert.equal(option.feedback, q.options.find(original => original.label === option.label).feedback);
             assert.equal(JSON.stringify(q), source);

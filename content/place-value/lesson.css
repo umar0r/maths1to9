@@ -12,7 +12,7 @@
 .pv-digit-row strong { text-align: center; font-size: 1.25rem; }
 .pv-digit-row > :last-child { text-align: right; overflow-wrap: anywhere; }
 .pv-digit-row[aria-pressed=true] { border-color: #155e75; background: #ecfeff; }
-.pv-digit-row:focus-visible, .pv-shift-row:focus-visible, .pv-order-tile:focus-visible, .pv-order-slot:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
+.pv-digit-row:focus-visible, .pv-shift-row:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
 .pv-digit-detail { min-height: 4rem; }
 .pv-comparison-picture { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
 .pv-example-tile { padding: .6rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; font-weight: 800; }
@@ -29,15 +29,9 @@
 .pv-product-input { display: grid; gap: .5rem; max-width: 240px; }
 .pv-product-input input { min-width: 0; width: 100%; min-height: 44px; padding: .5rem; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
 .pv-product-input input:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
-.pv-order-pool, .pv-order-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
-.pv-order-tile, .pv-order-slot { min-width: 0; width: 100%; min-height: 48px; padding: .4rem; color: #172b3b; background: #f8fafc; border: 2px solid #64748b; border-radius: .5rem; font: inherit; overflow-wrap: anywhere; }
-.pv-order-place { display: grid; grid-template-rows: auto 1fr; gap: .25rem; min-width: 0; }
-.pv-order-place > span { font-size: .9rem; color: #526171; }
-.pv-order-slot { border-style: dashed; }
 @media (max-width: 400px) {
     .pv-digit-row { font-size: .9rem; grid-template-columns: minmax(0, 1.4fr) 30px minmax(0, 1fr); gap: .25rem; }
     .pv-number-column { min-width: 70px; }
-    .pv-order-tile, .pv-order-slot { font-size: .9rem; }
 }
 
 .pv-chart-block { margin-inline: 0; }
@@ -45,7 +39,6 @@
 .pv-shift-cell.pv-decimal-start::before { content: '.'; position: absolute; left: -7px; bottom: 5px; color: #155e75; font-size: 1.5rem; font-weight: 800; z-index: 1; }
 .pv-moving-digit { display: inline-block; }
 
-.pv-negative-line { display: block; width: 100%; max-width: 36rem; margin: 1rem auto; }
 
 /* Larger screens: the digits run left to right, like a place-value chart. */
 @media (min-width: 768px) {

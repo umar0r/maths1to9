@@ -7,10 +7,10 @@ const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), {
     window, document: { body: { dataset: { lessonRenderer: 'custom' } } }
 });
-for (const file of ['pie-charts/pie-chart.js', 'place-value/place-value.js']) {
+for (const file of ['pie-charts/pie-chart.js', 'greater-than-and-less-than/number-comparison.js']) {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../content', file), 'utf8'), { window });
 }
-const P = window.PieCharts, V = window.PlaceValue, E = window.Maths1to9LessonEngine;
+const P = window.PieCharts, V = window.NumberComparison, E = window.Maths1to9LessonEngine;
 const value = text => Number(String(text).replace('−', '-'));
 const answer = q => value(q.answer ?? q.options.find(option => option.correct).label);
 const seeds = Array.from({ length: 500 }, (_, i) => Math.imul(i, 2654435761) >>> 0);
@@ -80,10 +80,10 @@ test('compareDecimals: existing decimal results are unchanged and negatives sort
         for (const b of ['-11', '-7', '-0.7', '-0.1', '0', '2']) assert.equal(V.compareDecimals(a, b), Math.sign(value(a) - value(b)) || 0);
     }
 });
-test('new skills receive exactly two Practice and two Check questions, with matching assessment types', () => {
-    for (const [slug, Q, types, skill, tryCount] of [
-        ['pie-charts', P, ['read-count', 'read-from-known'], 'interpret-pie-charts', 7],
-        ['place-value', V, ['negCoolest', 'negGreatest', 'negSymbol', 'negOrder'], 'order-negative-numbers', 9]
+test('Practice retains two original cards per moved skill and their assessment mappings', () => {
+    for (const [slug, Q, types, skill] of [
+        ['pie-charts', P, ['read-count', 'read-from-known'], 'interpret-pie-charts'],
+        ['greater-than-and-less-than', V, ['negCoolest', 'negGreatest', 'negSymbol', 'negOrder'], 'order-negative-numbers']
     ]) {
         const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content', slug, 'lesson.json')));
         for (const type of types) {
@@ -95,8 +95,18 @@ test('new skills receive exactly two Practice and two Check questions, with matc
             assert.equal(items.length, 8);
             assert.equal(items.filter(item => types.includes(item.type)).length, 2);
         }
-        assert.equal(Q.checks().length, 7);
-        assert.equal(Q.checks().filter(q => types.includes(q.questionType)).length, 2);
-        assert.equal(Q.examples().length, tryCount);
     }
+});
+
+test('Pie charts retains seven Check cards, two for the moved skill, and seven Try it cards', () => {
+    const types = ['read-count', 'read-from-known'];
+    assert.equal(P.checks().length, 7);
+    assert.equal(P.checks().filter(q => types.includes(q.questionType)).length, 2);
+    assert.equal(P.examples().length, 7);
+});
+
+test('Greater than and less than Check assesses ordering negative numbers twice', () => {
+    const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content/greater-than-and-less-than/lesson.json')));
+    const mapping = lesson.assessment.question_types;
+    assert.equal(lesson.comparison.questions.filter(q => [mapping[q.type]].flat().includes('order-negative-numbers')).length, 2);
 });

@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const types = ['digitValue', 'compare', 'order', 'scaledProduct', 'powerOfTen'];
+    const types = ['digitValue', 'scaledProduct', 'powerOfTen'];
     const addCommas = value => {
         const [whole, fraction] = String(value).split('.');
         return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
@@ -25,21 +25,6 @@
         return addCommas(whole + (fraction ? `.${fraction}` : ''));
     }
     const scaleValue = (integer, places) => formatScaledInteger(integer, places);
-    function exactParts(value) {
-        const text = normaliseDecimalAnswer(value);
-        if (text === null) return null;
-        const [whole, fraction = ''] = text.split('.');
-        return { digits: BigInt(whole + fraction), places: fraction.length };
-    }
-    function compareDecimals(left, right) {
-        const a = exactParts(left), b = exactParts(right);
-        const first = a.digits * 10n ** BigInt(b.places), second = b.digits * 10n ** BigInt(a.places);
-        return first < second ? -1 : first > second ? 1 : 0;
-    }
-    const padDecimal = (value, places = 3) => {
-        const [whole, fraction = ''] = String(value).split('.');
-        return `${whole}.${fraction.padEnd(places, '0')}`;
-    };
     const digitWords = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
     const tensWords = ['', 'ten', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
     const placeNames = { 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones', '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths' };
@@ -81,87 +66,6 @@
         const number = `${addCommas(digits.slice(0, wholeLength).join(''))}.${digits.slice(wholeLength).join('')}`;
         return digitQuestion(number, Number(digits[E.randomInt(0, digits.length - 1, random)]), mode);
     }
-    function comparisonQuestion(left, right, mode = 'choice', scenario = 'direct', names = ['Zara', 'Maya']) {
-        if (scenario === 'games') { left = padDecimal(left, 2); right = padDecimal(right, 2); }
-        const comparison = compareDecimals(left, right);
-        const symbol = comparison < 0 ? '<' : comparison > 0 ? '>' : '=';
-        const smaller = comparison < 0 ? left : right, bigger = comparison > 0 ? left : right;
-        let prompt, answer, wrong;
-        if (scenario === 'race') {
-            const winner = comparison < 0 ? names[0] : names[1];
-            prompt = `${names[0]} finishes a race in ${left} seconds. ${names[1]} finishes in ${right} seconds. `
-                + (mode === 'choice' ? 'Who has the shorter time?' : 'What is the shorter time, in seconds?');
-            answer = mode === 'choice' ? winner : smaller;
-            wrong = mode === 'choice' ? [[names.find(name => name !== winner), 'That is the longer time. The shorter time is the smaller number.'],
-                ['They have the same time.', 'The times have different values. Line up the decimal places.'],
-                ['You cannot compare these times.', 'Add zeros to the end if needed. Then compare the columns.']]
-                : [[bigger, 'That is the longer time. Choose the smaller number.'],
-                    [smaller.replace('.', ''), 'Keep the decimal point in its place.'], [bigger.replace('.', ''), 'Do not remove the decimal point.']];
-        } else if (scenario === 'games') {
-            prompt = `One game costs £${left} and another costs £${right}. `
-                + (mode === 'choice' ? 'Which game costs more?' : 'What is the higher price, in pounds?');
-            answer = mode === 'choice' ? `£${bigger}` : bigger;
-            wrong = mode === 'choice' ? [[`£${smaller}`, 'That is the lower price. Compare the pounds first, then the decimal places.'],
-                ['They cost the same.', 'The prices have different values. Add a zero if it helps you compare.'],
-                ['You cannot compare these prices.', 'Both prices are in pounds. Line up the decimal points.']]
-                : [[smaller, 'That is the lower price. Choose the greater number.'],
-                    [bigger.replace('.', ''), 'Keep the decimal point. The price is in pounds.'], [smaller.replace('.', ''), 'Do not remove the decimal point.']];
-        } else {
-            prompt = mode === 'choice' ? `Which comparison of ${left} and ${right} is correct?`
-                : `Which is greater: ${left} or ${right}? Type the number.`;
-            answer = mode === 'choice' ? `${left} ${symbol} ${right}` : bigger;
-            wrong = mode === 'choice' ? [
-                [`${left} ${symbol === '<' ? '>' : '<'} ${right}`, 'That sign points the wrong way. Compare the first column that is different.'],
-                [`${left} = ${right}`, 'These numbers are not equal. Line up the decimal places.'],
-                ['These numbers cannot be compared.', 'Extra zeros at the end do not change a decimal. Add them, then compare.']
-            ] : [[smaller, 'That is the smaller number. Compare from left to right.'],
-                [bigger.replace('.', ''), 'The decimal point must stay in place.'], [smaller.replace('.', ''), 'Keep the decimal point when you write the number.']];
-        }
-        return makeQuestion({ type: 'compare', mode, scenario, left, right, names, symbol, kind: 'compare', prompt, answer, wrong,
-            feedback: `${padDecimal(left)} ${symbol} ${padDecimal(right)}`,
-            fallback: 'Line up the decimal points. Add zeros at the end, then compare from left to right.' });
-    }
-    function generateComparisonQuestion(random, mode) {
-        const E = window.Maths1to9LessonEngine;
-        if (E.randomInt(1, 3, random) === 1) {
-            const whole = E.randomInt(2, 12, random), tenth = E.randomInt(1, 7, random), hundredth = E.randomInt(1, 9, random);
-            const pair = E.shuffle([`${whole}.${tenth}${hundredth}`, `${whole}.${tenth + 1}`], random);
-            return comparisonQuestion(...pair, mode, E.randomInt(0, 1, random) ? 'race' : 'games', E.shuffle(['Zara', 'Maya'], random));
-        }
-        const whole = E.randomInt(0, 5, random), places = E.randomInt(1, 2, random);
-        const fraction = E.randomInt(10 ** (places - 1), 10 ** places - 1, random);
-        const short = `${whole}.${fraction}`;
-        const units = whole * 1000 + fraction * 10 ** (3 - places);
-        const long = formatScaledInteger(units + (E.randomInt(0, 1, random) ? 1 : -1) * E.randomInt(1, 9, random), 3, true);
-        return comparisonQuestion(...E.shuffle([short, long], random), mode);
-    }
-    function orderingQuestion(values, mode = 'custom', prompt = 'Put these numbers in order from smallest to largest.') {
-        const ordered = [...values].sort(compareDecimals);
-        const feedback = `From smallest to largest: ${ordered.join(' < ')}`;
-        const base = { questionType: 'order', input: mode, kind: 'order', values, correctOrder: ordered, prompt: mode === 'custom' ? prompt : `${prompt} ${values.join('; ')}`, feedback };
-        if (mode === 'custom') return { ...base, widget: orderingWidget(values) };
-        if (mode === 'number') return makeQuestion({ type: 'order', mode, kind: 'order', values, correctOrder: ordered,
-            prompt: `Which number is smallest? ${values.join('; ')}`, answer: ordered[0], feedback,
-            wrong: ordered.slice(1).map(number => [number, 'There is a smaller number. Add zeros and compare the columns.']),
-            fallback: 'Line up the decimal points and compare from left to right. Give just the smallest number.' });
-        const wrong = [
-            [[...ordered].reverse(), 'That goes from largest to smallest.'],
-            [[ordered[0], ordered[2], ordered[1], ordered[3]], 'Compare the two middle numbers one column at a time.'],
-            [[ordered[1], ordered[0], ordered[2], ordered[3]], 'Compare the first two numbers again. Add zeros to line up the decimal places.'],
-            [[ordered[0], ordered[1], ordered[3], ordered[2]], 'Compare the last two numbers again. Start on the left.']
-        ];
-        return { ...base, options: [option(ordered.join(' → '), feedback, true), ...wrong.slice(0, 3).map(([order, message]) => option(order.join(' → '), message))] };
-    }
-    function generateOrderingQuestion(random, mode) {
-        const E = window.Maths1to9LessonEngine;
-        const context = E.randomInt(1, 3, random) === 1;
-        const length = E.randomInt(0, 7, random);
-        const whole = context ? E.randomInt(2, 4, random) : length ? E.randomInt(10 ** (length - 1), 10 ** length - 1, random) : 0;
-        const exact = whole * 1000 + E.randomInt(1, 8, random) * 100;
-        const units = [exact - E.randomInt(1, 9, random), exact, exact + E.randomInt(1, 7, random) * 10, exact + E.randomInt(8, 15, random) * 10];
-        const values = E.shuffle(units.map(value => formatScaledInteger(value, 3)), random);
-        return orderingQuestion(values, mode, context ? 'Put these ribbon lengths in metres in order from shortest to longest.' : undefined);
-    }
     const productOffsets = [[1, 0], [0, 1], [1, 1], [2, 0], [0, 2], [2, 1], [1, 2], [-1, 0], [0, -1], [-1, 1], [1, -1]];
     function scaledProductQuestion(first, second, offsets, mode = 'number') {
         const product = first * second, total = offsets[0] + offsets[1];
@@ -195,104 +99,23 @@
         const E = window.Maths1to9LessonEngine;
         return powerOfTenQuestion(E.randomInt(101, 99999, random), E.randomInt(0, 3, random), E.randomInt(1, 3, random) * (E.randomInt(0, 1, random) ? 1 : -1), mode);
     }
-    const displayNegative = value => String(value).replace('-', '−');
-    function negativeValues(random) {
-        const E = window.Maths1to9LessonEngine;
-        const negatives = E.shuffle(Array.from({ length: 12 }, (_, i) => -i - 1), random).slice(0, 2);
-        const positive = E.randomInt(1, 9, random);
-        const remaining = Array.from({ length: 22 }, (_, i) => i - 12).filter(n => !negatives.includes(n) && n !== positive);
-        return E.shuffle([...negatives, positive, remaining[E.randomInt(0, remaining.length - 1, random)]], random);
-    }
-    function negativeOrderQuestion(values, prompt = 'Put these numbers in order from smallest to largest.') {
-        const written = values.map(displayNegative);
-        const question = orderingQuestion(written, 'custom', prompt);
-        const originalMark = question.widget.mark;
-        question.widget.mark = value => {
-            const result = originalMark(value);
-            return result.correct ? result : { ...result, feedback: 'Start with the number furthest left on the number line. Numbers closer to 0 are greater than numbers further below 0.' };
-        };
-        return { ...question, questionType: 'negOrder' };
-    }
-    function negativeSymbolQuestion(a, b) {
-        const left = displayNegative(a), right = displayNegative(b), sign = a < b ? '<' : '>';
-        return { questionType: 'negSymbol', input: 'choice', prompt: 'Which is correct?', values: [a, b],
-            options: [
-                option(`${left} ${sign} ${right}`, `${displayNegative(Math.min(a, b))} is further left on the number line.`, true),
-                option(`${left} ${sign === '<' ? '>' : '<'} ${right}`, 'That compares the numbers without their minus signs. On a number line, the number further left is smaller.'),
-                option(`${left} = ${right}`, 'These are different numbers. One is further left on the number line.'),
-                option("You can't compare negative numbers", 'You can. The number further left on the number line is smaller.')
-            ] };
-    }
-    function generateNegative(item, random) {
-        const E = window.Maths1to9LessonEngine;
-        const values = negativeValues(random);
-        if (item.type === 'negOrder') return negativeOrderQuestion(values);
-        if (item.type === 'negSymbol') {
-            const pair = values.filter(n => n < 0).slice(0, 2);
-            return negativeSymbolQuestion(pair[0], pair[1]);
-        }
-        if (item.type === 'negCoolest') {
-            const sorted = [...values].sort((a, b) => a - b), answer = sorted[0];
-            const nearestNegative = sorted.filter(n => n < 0).at(-1), largest = sorted.at(-1);
-            const remaining = sorted.find(n => ![answer, nearestNegative, largest].includes(n));
-            return makeQuestion({ type: item.type, mode: 'choice', values,
-                prompt: `Here are four temperatures: ${values.map(n => `${displayNegative(n)} °C`).join(', ')}. Which is the coldest?`,
-                answer: displayNegative(answer),
-                wrong: [
-                    [displayNegative(nearestNegative), 'That has the smallest number after the minus sign, but it is closest to 0. The further below 0, the colder.'],
-                    [displayNegative(largest), 'That is the warmest. The coldest is the lowest number.'],
-                    [displayNegative(remaining), 'There is a number further left on the number line. Look for the one furthest below 0.']
-                ], feedback: `${displayNegative(answer)} °C is the coldest. It is the lowest temperature.` });
-        }
-        const decimal = random() < 0.5;
-        const first = E.randomInt(1, decimal ? 9 : 12, random);
-        const others = Array.from({ length: decimal ? 9 : 12 }, (_, i) => i + 1).filter(n => n !== first);
-        const second = others[E.randomInt(0, others.length - 1, random)];
-        const pair = [first, second].map(n => -n / (decimal ? 10 : 1));
-        const answer = Math.max(...pair), smaller = Math.min(...pair);
-        return makeQuestion({ type: 'negGreatest', mode: 'number', values: pair,
-            prompt: `Which is greater: ${displayNegative(pair[0])} or ${displayNegative(pair[1])}? Type the number.`,
-            answer: displayNegative(answer), wrong: [
-                [displayNegative(smaller), 'That one is further below 0, so it is smaller. Choose the number closer to 0.'],
-                [displayNegative(-answer), 'Keep the minus sign. Both numbers are below 0.']
-            ], feedback: `${displayNegative(answer)} is greater. It is further right on the number line.`,
-            fallback: 'On a number line, the greater number is further right.' });
-    }
-    function negativeNumberLine(host) {
-        const ns = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(ns, 'svg');
-        svg.setAttribute('viewBox', '0 0 360 95');
-        svg.setAttribute('class', 'pv-negative-line');
-        svg.setAttribute('role', 'img');
-        svg.setAttribute('aria-label', 'Number line from minus eight to four. Marked points: minus seven, minus two, zero and three.');
-        function node(tag, attrs) {
-            const element = document.createElementNS(ns, tag);
-            for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, String(value));
-            svg.append(element);
-            return element;
-        }
-        node('line', { x1: 20, y1: 40, x2: 340, y2: 40, stroke: '#26344d', 'stroke-width': 2 });
-        for (let value = -8; value <= 4; value++) {
-            const x = 24 + (value + 8) * 26;
-            node('line', { x1: x, y1: 35, x2: x, y2: 45, stroke: '#26344d' });
-            const label = node('text', { x, y: 65, 'text-anchor': 'middle', fill: '#26344d', 'font-size': 13 });
-            label.textContent = displayNegative(value);
-            if ([-7, -2, 0, 3].includes(value)) node('circle', { cx: x, cy: 40, r: 4, fill: '#2769c5' });
-        }
-        host.append(svg);
-    }
     function generate(item, random) {
-        if (item.type.startsWith('neg')) return prepare(generateNegative(item, random), random);
-        const generators = { digitValue: generateDigitValueQuestion, compare: generateComparisonQuestion, order: generateOrderingQuestion,
-            scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion };
+        const generators = {
+            digitValue: generateDigitValueQuestion,
+            scaledProduct: generateScaledProductQuestion,
+            powerOfTen: generatePowerOfTenQuestion
+        };
         return generators[item.type](random, item.mode || 'choice');
     }
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
-        return E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
-            { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' },
-            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random)
-            .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
+        const order = E.shuffle(types, random);
+        const firstMode = E.randomInt(0, 1, random);
+        return Array.from({ length: 8 }, (_, index) => ({
+            type: order[index % order.length],
+            mode: (firstMode + index) % 2 ? 'number' : 'choice',
+            seed: E.randomInt(0, 4294967295, random)
+        }));
     }
     const prepare = (question, random) => question.options
         ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
@@ -936,75 +759,6 @@
             }
         };
     }
-    function orderingWidget(values) {
-        const expected = [...values].sort(compareDecimals);
-        const normalise = value => Array.isArray(value) ? [...value] : [];
-        return {
-            isEmpty(value) { return normalise(value).length !== values.length; },
-            answerText(value) { return normalise(value).join(' → '); },
-            mark(value) {
-                const order = normalise(value);
-                const correct = order.length === expected.length && order.every((number, index) => number === expected[index]);
-                return { correct, feedback: correct ? `From smallest to largest: ${expected.join(' < ')}`
-                    : 'Line up the decimal points. Add zeros at the end and compare from left to right.' };
-            },
-            render(host, { value, editable, onChange }) {
-                let order = normalise(value), canEdit = editable;
-                host.append(element('p', 'Tap the numbers from smallest to largest. Tap a filled place to return its number. You can also drag a number into a place.'));
-                const pool = element('div', '', 'pv-order-pool');
-                pool.setAttribute('role', 'group'); pool.setAttribute('aria-label', 'Numbers to order');
-                const slots = element('div', '', 'pv-order-slots');
-                slots.setAttribute('role', 'group'); slots.setAttribute('aria-label', 'Smallest to largest');
-                const announcement = element('p', '', 'visually-hidden');
-                announcement.setAttribute('aria-live', 'polite');
-                host.append(pool, slots, announcement);
-                function move(number, position) {
-                    if (!canEdit || !values.includes(number)) return;
-                    order = order.filter(value => value !== number);
-                    order.splice(Math.min(position, order.length), 0, number);
-                    announcement.textContent = `${number} placed in position ${order.indexOf(number) + 1}`;
-                    paint(); onChange(order);
-                    (pool.querySelector('button') || slots.querySelector('button'))?.focus();
-                }
-                function draggable(button, number) {
-                    button.draggable = canEdit;
-                    button.addEventListener('dragstart', event => event.dataTransfer?.setData('text/plain', number));
-                }
-                function paint() {
-                    pool.replaceChildren(); slots.replaceChildren();
-                    for (const number of values.filter(number => !order.includes(number))) {
-                        const button = element('button', number, 'pv-order-tile');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.dataset.orderTile = number;
-                        button.addEventListener('click', () => move(number, order.length));
-                        draggable(button, number); pool.append(button);
-                    }
-                    values.forEach((unused, index) => {
-                        const group = element('div', '', 'pv-order-place');
-                        const number = order[index];
-                        group.append(element('span', index === 0 ? '1: smallest' : index === values.length - 1 ? '4: largest' : String(index + 1)));
-                        const button = element('button', number || 'Empty', 'pv-order-slot');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.setAttribute('aria-label', number ? `${number} in position ${index + 1}. Press to return it.` : `Empty position ${index + 1}`);
-                        button.addEventListener('click', () => {
-                            if (!canEdit || !number) return;
-                            order.splice(index, 1); paint(); onChange(order); pool.querySelector('button')?.focus();
-                        });
-                        button.addEventListener('dragover', event => { if (canEdit) event.preventDefault(); });
-                        button.addEventListener('drop', event => { event.preventDefault(); move(event.dataTransfer?.getData('text/plain'), index); });
-                        if (number) draggable(button, number);
-                        group.append(button); slots.append(group);
-                    });
-                }
-                paint();
-                return {
-                    update(next) { order = normalise(next.value); canEdit = next.editable; paint(); },
-                    focus() { (pool.querySelector('button') || slots.querySelector('button'))?.focus(); }
-                };
-            }
-        };
-    }
-
     const shiftColumns = ['1,000', '100', '10', '1', '0.1', '0.01', '0.001'];
     const onesIndex = 3;
     function shiftedCells(digits, offset) {
@@ -1150,28 +904,66 @@
             prompt: 'Write this number in figures.',
             feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
         return [biggest, timesHundred, playground, flipCards, wordsToFigures,
-            negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
+            scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
     }
     function checks() {
-        const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',
-            prompt: 'A number has 3 hundreds, 6 ones, 8 tenths and 4 hundredths. What is the number?', answer: '306.84',
-            wrong: [['36.84', 'There are 3 hundreds. Keep a zero in the empty tens column.'],
-                ['306.084', '8 tenths is 0.8. Put the 8 straight after the decimal point.'],
-                ['368.4', 'Keep each digit in its named column. There are no tens.']],
-            feedback: '3 hundreds + 6 ones + 8 tenths + 4 hundredths = 306.84' });
-        const reason = { input: 'choice', questionType: 'compare', kind: 'reason',
-            prompt: 'Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?', options: [
-                option('No. 0.7 = 0.70, and 0.70 > 0.67.', 'Seven tenths is greater than six tenths.', true),
-                option('No. A number with more decimal digits is always smaller.', 'The number of decimal digits does not decide which value is larger.'),
-                option('Yes. 67 > 7.', '67 hundredths is 0.67. Compare it with 70 hundredths, not 7 hundredths.'),
-                option('Yes. Hundredths are worth more than tenths.', 'One hundredth is smaller than one tenth.')
-            ] };
-        const divide = powerOfTenQuestion(438, 0, 1);
-        divide.prompt = 'A machine divides its input by 10. The input is 438. What is the output?';
-        const reverse = powerOfTenQuestion(4270, 0, 2);
-        reverse.prompt = 'A number is multiplied by 100. The result is 4,270. What was the original number?';
-        return [number, reason, orderingQuestion(['2.8', '2.75', '2.805', '2.79'], 'custom', 'Put these long-jump distances in metres in order from shortest to longest.'),
-            negativeSymbolQuestion(-6, -11), negativeOrderQuestion([-4, 2, -9, 0, -1], 'Put these temperatures in order, coldest first.'), divide, reverse];
+        return [
+            makeQuestion({
+                type: 'digitValue',
+                prompt: "Asha says the 8 in 5,382 is worth 8. What's wrong?",
+                answer: "The 8 is in the tens column, so it's worth 80.",
+                feedback: 'Yes. 8 tens is 8 × 10 = 80.',
+                wrong: [
+                    ["Nothing. She's right.", "The 8 isn't in the ones column. It's in the tens column, so it's worth 8 × 10."],
+                    ["It's worth 800.", '800 would need the 8 in the hundreds column. Count from the right: ones, then tens.'],
+                    ["It's worth 8,000.", 'The thousands column holds the 5, not the 8.']
+                ]
+            }),
+            makeQuestion({
+                type: 'digitValue',
+                prompt: 'In 4.37, what is the 3 worth?',
+                answer: '3 tenths, which is 0.3.',
+                feedback: 'Yes. The first place after the point is tenths.',
+                wrong: [
+                    ['30.', 'Digits after the decimal point are worth less than one.'],
+                    ['3 hundredths, which is 0.03.', 'Hundredths is the second place after the point. The 3 is in the first.'],
+                    ['3.', "The 3 is after the point, so it's worth less than one."]
+                ]
+            }),
+            makeQuestion({
+                type: 'digitValue',
+                prompt: 'Which is bigger, 0.6 or 0.58, and why?',
+                answer: '0.6, because 0.6 = 0.60, and 60 hundredths is more than 58.',
+                feedback: 'Yes. Add a zero so both have two digits, then compare.',
+                wrong: [
+                    ['0.58, because it has more digits.', "More digits after the point doesn't mean bigger. 6 tenths is more than 5 tenths."],
+                    ['0.58, because 58 is bigger than 6.', "58 and 6 aren't in the same places. Write 0.6 as 0.60, then compare 60 with 58."],
+                    ["They're the same, because both start with 0.", 'The 0 only tells you both are less than one. Compare the tenths next.']
+                ]
+            }),
+            makeQuestion({
+                type: 'powerOfTen',
+                prompt: 'What happens to the digits when you multiply a number by 10?',
+                answer: 'Each digit moves one column to the left.',
+                feedback: 'Yes. Each digit is now worth ten times as much.',
+                wrong: [
+                    ['Each digit moves one column to the right.', "That's what dividing by 10 does."],
+                    ['You always add a 0 to the end.', 'That works for 38 × 10 = 380. But 3.8 × 10 is 38, not 3.80.'],
+                    ['The digits change to bigger digits.', 'The digits stay the same. They move into bigger columns.']
+                ]
+            }),
+            makeQuestion({
+                type: 'scaledProduct',
+                prompt: '384 × 2 = 768. Which change keeps the answer at 768?',
+                answer: 'Divide 384 by 10 and multiply 2 by 10. The two changes cancel out.',
+                feedback: 'Yes. 38.4 × 20 = 768.',
+                wrong: [
+                    ["Divide 384 by 10 and leave 2 alone. Changing one number doesn't matter.", 'Only one number changed, so the answer is 10 times smaller: 76.8.'],
+                    ['Multiply both numbers by 10. Doing the same to both keeps it the same.', 'Both numbers got bigger, so the answer is 100 times bigger.'],
+                    ['Divide 384 by 100 and multiply 2 by 10. Any divide and multiply cancel out.', "÷ 100 and × 10 aren't the same size, so they don't cancel out."]
+                ]
+            })
+        ];
     }
 
     const explorerNumber = '107389.4828';
@@ -1395,7 +1187,9 @@
         }
     }
 
-    Object.assign(window.PlaceValue ??= {}, { negativeValues, generateNegative, negativeOrderQuestion, negativeSymbolQuestion, types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, compareDecimals,
-        digitValueWords, digitQuestion, comparisonQuestion, orderingQuestion, scaledProductQuestion, powerOfTenQuestion,
-        generate, pick, prepare, examples, checks, learnScreens, drawLearn, orderingWidget, scalingWidget, shiftedCells });
+    Object.assign(window.PlaceValue ??= {}, {
+        types, addCommas, normaliseDecimalAnswer, formatScaledInteger, scaleValue, digitValueWords,
+        digitQuestion, scaledProductQuestion, powerOfTenQuestion, generate, pick, prepare,
+        examples, checks, learnScreens, drawLearn, scalingWidget, shiftedCells
+    });
 })();

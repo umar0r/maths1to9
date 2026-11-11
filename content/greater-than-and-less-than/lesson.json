@@ -8,7 +8,24 @@
     },
     "assessment": {
         "question_types": {
-            "sample": "inequality-symbols"
+            "sample": "inequality-symbols",
+            "compare": [
+                "order-numbers",
+                "inequality-symbols"
+            ],
+            "order": "order-numbers",
+            "negCoolest": "order-negative-numbers",
+            "negSymbol": [
+                "order-negative-numbers",
+                "inequality-symbols"
+            ],
+            "negGreatest": "order-negative-numbers",
+            "negOrder": "order-negative-numbers",
+            "negativeDecimalGreater": "order-negative-numbers",
+            "decimalOrder": "order-numbers",
+            "mixedNegativeOrder": "order-negative-numbers",
+            "greatestIntegerBelow": "order-negative-numbers",
+            "decimalSign": "inequality-symbols"
         }
     },
     "explanation": {
@@ -28,9 +45,9 @@
         "eyebrow": "Practice",
         "hide_eyebrow": true,
         "hide_heading": true,
-        "title": "Practise doubling",
+        "title": "Practise comparing numbers",
         "intro": "",
-        "session_length": 5
+        "session_length": 8
     },
     "section_order": [
         "explanation",
@@ -121,6 +138,10 @@
         },
         {
             "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
             "kind": "guided"
         }
     ]

@@ -208,22 +208,26 @@
         };
     }
 
-    function drawBalanceScale(left, right) {
+    function drawBalanceScale(left, right, panDrop = 0) {
         const holder = document.createElement('div');
-        holder.innerHTML = `<svg class="balance-scale" viewBox="0 0 360 177" role="img">
-            <path class="balance-scale__stand" d="M180 57L157 153H203Z"/>
-            <path class="balance-scale__base" d="M142 155H218"/>
+        holder.innerHTML = `<svg class="balance-scale" viewBox="0 0 360 ${177 + panDrop}" role="img">
+            <path class="balance-scale__stand" d="M180 57L157 ${153 + panDrop}H203Z"/>
+            <path class="balance-scale__base" d="M142 ${155 + panDrop}H218"/>
             <path class="balance-scale__beam" d="M75 56H285"/>
             <circle class="balance-scale__pivot" cx="180" cy="56" r="6"/>
             <g class="balance-scale__pan balance-scale__pan--left">
-                <path class="balance-scale__cord" d="M75 56L10 126M75 56L140 126"/>
-                ${left}
-                <path class="balance-scale__tray" d="M9 126H141Q135 139 122 139H28Q15 139 9 126Z"/>
+                <path class="balance-scale__cord" d="M75 56L10 ${126 + panDrop}M75 56L140 ${126 + panDrop}"/>
+                <g transform="translate(0 ${panDrop})">
+                    ${left}
+                    <path class="balance-scale__tray" d="M9 126H141Q135 139 122 139H28Q15 139 9 126Z"/>
+                </g>
             </g>
             <g class="balance-scale__pan balance-scale__pan--right">
-                <path class="balance-scale__cord" d="M285 56L220 126M285 56L350 126"/>
-                ${right}
-                <path class="balance-scale__tray" d="M219 126H351Q345 139 332 139H238Q225 139 219 126Z"/>
+                <path class="balance-scale__cord" d="M285 56L220 ${126 + panDrop}M285 56L350 ${126 + panDrop}"/>
+                <g transform="translate(0 ${panDrop})">
+                    ${right}
+                    <path class="balance-scale__tray" d="M219 126H351Q345 139 332 139H238Q225 139 219 126Z"/>
+                </g>
             </g>
         </svg>`;
         return holder.firstElementChild;
@@ -288,8 +292,8 @@
 
     function personFigure(x) {
         return `<g class="balance-person" transform="translate(${x} 0)">
-            <circle cx="0" cy="80" r="7"/>
-            <path d="M0 91V109M-12 102L0 93L12 102M-8 124L0 109L8 124"/>
+            <circle cx="0" cy="39" r="9"/>
+            <path d="M0 51V90M-17 75L0 57L17 75M-14 124L0 90L14 124"/>
         </g>`;
     }
 
@@ -315,7 +319,7 @@
                 let canEdit = editable;
                 let phase = 'answer';
                 const scene = element('div', '', 'people-balance');
-                const scale = drawBalanceScale(personFigure(75), personFigure(285));
+                const scale = drawBalanceScale(personFigure(75), personFigure(285), 42);
                 const figures = scale.querySelectorAll('.balance-person');
                 const group = element('div', '', 'people-balance__choices');
                 group.setAttribute('role', 'group');
@@ -387,10 +391,10 @@
         const heavierPerson = {
             questionType: 'compare',
             input: 'custom',
-            prompt: 'Who weighs more? Tap them.',
+            prompt: 'Who weighs more? Tap that person.',
             widget: balancePeopleWidget()
         };
-        return [lessThanWhole, cheapestDrink, balance, lessThan, heavierPerson];
+        return [lessThanWhole, cheapestDrink, balance, lessThan, heavierPerson, window.NumberComparison.movedTryIt()];
     }
 
     async function mountTryIt(root) {
@@ -399,9 +403,9 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 4,
+            version: 5,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
-            upgrade: (saved, version) => version === 2 || version === 3 ? { ...saved, finished: false } : null
+            upgrade: (saved, version) => version >= 2 && version <= 4 ? { ...saved, finished: false } : null
         });
         const state = section.state;
 
