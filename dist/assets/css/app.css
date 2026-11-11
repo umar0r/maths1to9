@@ -3544,6 +3544,9 @@ noscript p {
     cursor: pointer;
 }
 .lesson-back[hidden] { display: none; }
+.lesson-topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 44px; }
+.lesson-topbar .lesson-topbar__position { margin: 0 0 0 auto; }
+.lesson-topbar__position[hidden] { display: none; }
 .lesson-back:focus-visible { outline: 3px solid var(--primary, #2563eb); outline-offset: 2px; }
 
 .lesson-score-panel { display: flex; align-items: center; gap: 1rem; margin-block: 1rem; }

@@ -22,7 +22,7 @@ for (const base of ['content', 'dist/content']) {
             const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
             // These fixtures isolate each lesson’s shared Check cards. The full
             // Practice + Check score is covered by engine-runs.spec.cjs.
-            const expectedAnswers = lesson === 'place-value' ? 7 : 5;
+            const expectedAnswers = 5;
             expect(score.answered).toBe(expectedAnswers);
             expect(score.answerPoints).toBe(expectedAnswers * 10);
             await main.click();

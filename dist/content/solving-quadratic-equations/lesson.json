@@ -18,6 +18,7 @@
         "back_button": true
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise solving quadratic equations",
         "intro": "",

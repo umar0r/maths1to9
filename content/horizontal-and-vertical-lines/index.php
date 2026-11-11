@@ -27,12 +27,12 @@ $pageTitle = 'Horizontal and vertical lines';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=44">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=45">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=3"
+    data-lesson-src="./lesson.json?v=4"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -78,6 +78,6 @@ $pageTitle = 'Horizontal and vertical lines';
     <script src="./questions.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=51"></script>
+    <script src="../../assets/js/lesson-engine.js?v=52"></script>
 </body>
 </html>

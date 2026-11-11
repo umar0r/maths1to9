@@ -29,6 +29,7 @@
         "intro": ""
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise multiplying in standard form",
         "intro": "",

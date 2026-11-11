@@ -28,13 +28,13 @@ $pageTitle = 'Simplifying expressions';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=44">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=45">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=2"
+    data-lesson-src="./lesson.json?v=3"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -68,6 +68,6 @@ $pageTitle = 'Simplifying expressions';
     <script src="./algebra.js?v=1"></script>
     <script src="./questions.js?v=1"></script>
     <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=51"></script>
+    <script src="../../assets/js/lesson-engine.js?v=52"></script>
 </body>
 </html>

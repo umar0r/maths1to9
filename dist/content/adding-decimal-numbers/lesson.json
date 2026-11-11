@@ -32,6 +32,7 @@
         "intro": ""
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise adding decimals",
         "intro": "",
