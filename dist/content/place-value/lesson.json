@@ -13,32 +13,34 @@
                 "order-numbers",
                 "inequality-symbols"
             ],
-            "order": "order-numbers",
             "scaledProduct": "place-value",
             "powerOfTen": "place-value",
-            "negCoolest": "order-negative-numbers",
-            "negSymbol": [
-                "order-negative-numbers",
-                "inequality-symbols"
-            ],
-            "negGreatest": "order-negative-numbers",
-            "negOrder": "order-negative-numbers"
+            "negOrder": "order-negative-numbers",
+            "wordsToFigures": "place-value",
+            "digitCards": "place-value",
+            "digitCount": "place-value",
+            "closestNumber": "place-value"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "What each digit is worth"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Try place value",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise place value",
         "intro": "",
-        "session_length": 8
+        "session_length": 10
     },
     "section_order": [
         "explanation",
@@ -78,6 +80,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you’ve learned",
         "intro": "",
         "questions": [
@@ -85,19 +88,13 @@
                 "type": "digitValue"
             },
             {
-                "type": "compare"
-            },
-            {
-                "type": "order"
-            },
-            {
-                "type": "negSymbol"
-            },
-            {
-                "type": "negOrder"
+                "type": "wordsToFigures"
             },
             {
                 "type": "powerOfTen"
+            },
+            {
+                "type": "digitCount"
             },
             {
                 "type": "powerOfTen"
@@ -127,22 +124,6 @@
         },
         {
             "id": "step:interactive:4",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:5",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:6",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:7",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:8",
             "kind": "guided"
         },
         {

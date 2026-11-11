@@ -957,6 +957,7 @@
                 if (api.getSections().at(-1)?.id === sectionId) api.completeLesson();
             }
             if (saved.finished && saved.screen === saved.items.length) {
+                api.setSectionPosition?.(sectionId, null);
                 const score = document.createElement('div');
                 const results = document.createElement('div');
                 container.append(score, results);
@@ -1000,9 +1001,9 @@
                 return;
             }
             const item = saved.items[saved.screen];
-            const position = resultText('p', `Question ${saved.screen + 1} of ${config.count}`, 'question-number');
+            api.setSectionPosition?.(sectionId, `Question ${saved.screen + 1} of ${config.count}`);
             const cardRoot = document.createElement('div');
-            container.append(position, cardRoot);
+            container.append(cardRoot);
             const definition = question(item);
             const readOnly = saved.screen < saved.index;
             api.createQuestion(cardRoot, {
@@ -1101,6 +1102,8 @@
          * the section the pupil is viewing.
          */
         sectionActions: new Map(),
+        // "Question 3 of 10" for a section, shown on the Back row.
+        sectionPositions: new Map(),
         questionSets: new Set(),
         sectionStates: new Map(),
         backNavigation: null,
@@ -1732,15 +1735,22 @@
                 }
             }
         });
+        /* One row above the sections: Back on the left, the question counter on the right. */
+        const topbar = createElement('div', 'lesson-topbar');
         if (state.lesson.navigation?.back_button === true) {
             const back = createElement('button', 'lesson-back', '‹ Back');
             back.type = 'button';
             back.setAttribute('aria-label', 'Previous screen');
             back.hidden = true;
             back.addEventListener('click', () => state.backNavigation.back());
-            sectionContainer.append(back);
+            topbar.append(back);
             elements.backButton = back;
         }
+        const position = createElement('p', 'question-number lesson-topbar__position');
+        position.hidden = true;
+        topbar.append(position);
+        elements.position = position;
+        sectionContainer.append(topbar);
 
         state.sectionElements = state.sections.map(
             (definition, index) => {
@@ -3225,6 +3235,11 @@
             state.sectionActions.get(section?.id);
 
         if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
+        if (elements.position) {
+            const position = state.sectionPositions.get(section?.id) || '';
+            elements.position.textContent = position;
+            elements.position.hidden = position === '';
+        }
         const reviewing = state.lesson.navigation?.back_button === true || state.questionSets.has(section?.id);
         const finishedAction = state.finished && !reviewing;
         const showSectionAction = Boolean(sectionAction) && !finishedAction;
@@ -3497,6 +3512,13 @@
 
     function exposeLessonApi() {
         window.Maths1to9Lesson = {
+            setSectionPosition(sectionId, text) {
+                if (findSectionIndex(sectionId) === -1) return;
+                if (text) state.sectionPositions.set(sectionId, String(text));
+                else state.sectionPositions.delete(sectionId);
+                updateControls();
+            },
+
             setSectionBack(sectionId, handler) {
                 if (findSectionIndex(sectionId) === -1) return;
                 state.backNavigation.set(sectionId, handler);
