@@ -193,7 +193,7 @@
         const api = window.Maths1to9Lesson;
         event('interactive', 'gate');
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 dot: T.positions(guided)[0], found: false })
         });
@@ -219,14 +219,21 @@
             for (let i = 1; i < steps; i++) completed += Number(correct(i));
             api.setSectionProgress('interactive', completed, steps);
         }
+        const lastScreen = steps - 1;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() {
+            api.completeSection('interactive');
+            api.continueSection();
+        }
         function advance() {
             section.update(s => {
                 s.index++;
-                s.screen = s.index;
+                s.screen = Math.min(s.index, lastScreen);
                 s.furthestScreen = s.screen;
                 s.finished = s.index === steps;
             });
             render();
+            if (state.finished) goToPractice();
         }
 
         // Try it 1: drag the dot along the curve to the turning point.
@@ -285,18 +292,10 @@
             board?.destroy();
             board = null;
             root.replaceChildren();
-            const done = state.screen === steps;
-            root.append(node('h3', done ? 'Your completed examples' : titles[state.screen]));
+            root.append(node('h3', titles[state.screen]));
             api.setSectionBack('interactive', state.screen ? { onClick: () => show(state.screen - 1) } : null);
             if (state.finished) event('interactive', 'complete');
-            if (done) {
-                for (let i = 1; i < steps; i++) {
-                    const host = node('div', '', 'turning-retained');
-                    root.append(host);
-                    card(host, i, true);
-                }
-                api.clearSectionAction('interactive');
-            } else if (state.screen === 0) {
+            if (state.screen === 0) {
                 finding(root);
                 api.setSectionAction('interactive', {
                     label: state.index > 0 ? 'Next' : 'Continue',
@@ -308,13 +307,13 @@
                 root.append(host);
                 const readOnly = state.screen < state.index;
                 card(host, state.screen, readOnly);
-                if (readOnly) api.setSectionAction('interactive', { label: 'Next', onClick: () => show(state.screen + 1) });
+                if (readOnly) api.setSectionAction('interactive', { label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : show(state.screen + 1) });
             }
             report();
             syncHash();
         }
 
-        for (let i = 0; i <= steps; i++) {
+        for (let i = 0; i < steps; i++) {
             api.registerHashRoute(`try-it-${i + 1}`, () => {
                 if (api.goToSection('interactive', { moveFocus: false })) show(Math.min(i, state.furthestScreen));
             });
@@ -322,7 +321,7 @@
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         render();
-        const requested = /^#try-it-([1-7])$/.exec(initialHash);
+        const requested = /^#try-it-([1-6])$/.exec(initialHash);
         if (requested && api.goToSection('interactive', { moveFocus: false })) show(Math.min(Number(requested[1]) - 1, state.furthestScreen));
     }
 
