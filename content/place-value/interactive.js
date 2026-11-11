@@ -3,6 +3,9 @@
 
     const SLUG = document.body.dataset.lessonId;
     const initialHash = window.location.hash;
+    // For reviewing on a local copy: add ?skip to the address to open any slide.
+    const SKIP = window.location.hostname === 'localhost'
+        && new URLSearchParams(window.location.search).has('skip');
 
     function examples() {
         return window.PlaceValue.examples();
@@ -21,7 +24,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 3,
+            version: 4,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, selected: 5 }),
             upgrade: () => null
         });
@@ -49,7 +52,7 @@
         function render() {
             const screen = screens[state.screen];
             const { escapeHtml } = window.Maths1to9LessonEngine;
-            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
+            root.innerHTML = `<h3 class="lesson-section__title" data-screen-heading>${escapeHtml(screen.title)}</h3>`;
             for (const line of screen.lines) {
                 const paragraph = document.createElement('p');
                 paragraph.textContent = line;
@@ -79,12 +82,12 @@
         screens.forEach((screen, index) => {
             api.registerHashRoute(`learn-${index + 1}`, () => {
                 api.goToSection('explanation', { moveFocus: false });
-                showScreen(Math.min(index, state.furthestScreen));
+                showScreen(SKIP ? index : Math.min(index, state.furthestScreen));
             });
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
-        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
+        if (requested >= 0) showScreen(SKIP ? requested : Math.min(requested, state.furthestScreen));
         else render();
     }
 
@@ -94,7 +97,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 3,
+            version: 17,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -114,8 +117,10 @@
             section.update(state => { state.screen = screen; });
             render();
             const heading = root.querySelector('h3');
-            heading.tabIndex = -1;
-            heading.focus();
+            if (heading) {
+                heading.tabIndex = -1;
+                heading.focus();
+            }
         }
 
         function reportProgress() {
@@ -126,7 +131,7 @@
 
         function continueExample() {
             section.update(state => {
-                state.index++;
+                state.index = state.screen + 1;
                 state.screen = state.index;
                 state.furthestScreen = state.screen;
                 state.finished = state.index === questions.length;
@@ -150,10 +155,12 @@
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
-            root.append(heading);
+            if (state.screen === questions.length) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.textContent = 'Your completed examples';
+                root.append(heading);
+            }
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
@@ -166,7 +173,7 @@
                 });
                 api.clearSectionAction('interactive');
             } else {
-                const readOnly = state.screen < state.index;
+                const readOnly = !SKIP && state.screen < state.index;
                 drawExample(root, state.screen, readOnly);
                 if (readOnly) api.setSectionAction('interactive', {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
@@ -177,11 +184,11 @@
 
         for (let index = 0; index <= questions.length; index++) {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
-                if (!api.goToSection('interactive', { moveFocus: false })) {
+                if (!api.goToSection('interactive', { moveFocus: false, unlock: SKIP })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
-                showScreen(Math.min(index, state.furthestScreen));
+                showScreen(SKIP ? index : Math.min(index, state.furthestScreen));
             });
         }
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
@@ -189,8 +196,8 @@
         render();
         const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
             .find(index => initialHash === `#try-it-${index + 1}`);
-        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
-            showScreen(Math.min(requested, state.furthestScreen));
+        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false, unlock: SKIP })) {
+            showScreen(SKIP ? requested : Math.min(requested, state.furthestScreen));
         }
     }
 

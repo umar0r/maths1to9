@@ -69,6 +69,42 @@ async function solve(page, memory = {}) {
         for (const value of values.sort((a, b) => num(a) - num(b))) await pool.getByRole('button', { name: value, exact: true }).click();
         return values.length > 0;
     }
+    const tapCards = card.locator('.pv-tap-cards');
+    if (await tapCards.count()) {
+        const target = num(prompt.match(/less than ([\d.]+)/)[1]);
+        const buttons = tapCards.locator('button');
+        for (let index = 0; index < await buttons.count(); index++) {
+            const button = buttons.nth(index);
+            if (num(await button.innerText()) < target && await button.getAttribute('aria-pressed') !== 'true') await button.click();
+        }
+        return false;
+    }
+    const words = card.locator('.pv-words__keys');
+    if (await words.count()) {
+        for (const digit of '6453009') await words.getByRole('button', { name: digit, exact: true }).click();
+        return false;
+    }
+    const flips = card.locator('.pv-flip__card');
+    if (await flips.count()) {
+        for (let index = 0; index < await flips.count(); index++) await flips.nth(index).click();
+        return false;
+    }
+    const build = card.locator('.pv-build__pool');
+    if (await build.count()) {
+        for (const digit of ['7', '6', '0']) await build.getByRole('button', { name: digit, exact: true }).click();
+        return false;
+    }
+    if (await card.locator('.pv-paper').count()) {
+        await card.getByRole('button', { name: 'Multiply the top number by 10' }).click();
+        return false;
+    }
+    if (await card.locator('.pv-shift').count()) {
+        const row = card.locator('.pv-shift__row');
+        await row.focus();
+        await row.press('ArrowLeft');
+        await row.press('ArrowLeft');
+        return false;
+    }
     if (await card.getByLabel('Product', { exact: true }).count()) {
         const [, first, second, targetFirst, targetSecond] = prompt.match(/Given that (\d+) × (\d+) = [\d,]+, work out ([\d.,]+) × ([\d.,]+)\./);
         const targetValues = [targetFirst, targetSecond];

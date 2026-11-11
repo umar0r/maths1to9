@@ -27,15 +27,20 @@
     },
     "explanation": {
         "eyebrow": "Learn",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "What each digit is worth"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Try place value",
         "intro": ""
     },
     "question_bank": {
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise place value",
         "intro": "",
         "session_length": 8
@@ -78,6 +83,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you’ve learned",
         "intro": "",
         "questions": [
@@ -143,6 +149,14 @@
         },
         {
             "id": "step:interactive:8",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:9",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:10",
             "kind": "guided"
         },
         {
