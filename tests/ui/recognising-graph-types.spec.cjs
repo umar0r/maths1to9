@@ -182,13 +182,13 @@ for(const phone of [false,true])test.describe('graph types custom answers '+(pho
             expect(await buttons.evaluateAll(items=>items.map(item=>item.getAttribute('aria-label')))).toEqual(names);
             const ids=await group.locator('.maths-graph__board').evaluateAll(boards=>boards.map(board=>board.id));
             await main(page).click();
-            await expect(root(page).locator('.question-feedback')).toHaveText(option.feedback);
+            await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText(option.feedback);
             expect(await group.locator('.maths-graph__board').evaluateAll(boards=>boards.map(board=>board.id))).toEqual(ids);
             await main(page).click();
             expect(await group.locator('.maths-graph__board').evaluateAll(boards=>boards.map(board=>board.id))).toEqual(ids);
         }
         await pick(q.widget.correctId);await main(page).click();await reload(page);
-        await expect(root(page).locator('.question-feedback.is-correct')).toHaveCount(1);
+        await expect(page.locator('.lesson-section:visible .question-feedback.is-correct, .lesson-feedback .question-feedback.is-correct')).toHaveCount(1);
         await expect(group.locator('[data-option-id="'+q.widget.correctId+'"]')).toHaveClass(/is-correct/);
         await page.screenshot({path:'/tmp/graphtypes-choice-'+(phone?'375':'1280')+'.png',fullPage:true});
         expect(errors).toEqual([]);

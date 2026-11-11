@@ -27,7 +27,7 @@ $pageTitle = 'Growth, decay and interest';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=47">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 

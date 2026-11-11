@@ -373,7 +373,7 @@ for (const mode of modes) {
             await board(page).waitFor();
             for (let i = 0; i < 7; i++) await main(page).click();
             await expect(page).toHaveURL(/#try-it-1$/);
-            const feedback = page.locator('#lesson-section-interactive .question-feedback');
+            const feedback = page.locator('#lesson-section-interactive .question-feedback, .lesson-feedback .question-feedback');
             await expect(feedback).toBeHidden();
             await expect(feedback).toHaveText('');
             await reload(page);
@@ -436,7 +436,7 @@ for (const mode of modes) {
             await board(page).waitFor();
             expect(await arrowCount(page)).toBe(2);
             for (let i = 0; i < 7; i++) await main(page).click();
-            const feedback = page.locator('#lesson-section-interactive .question-feedback:visible');
+            const feedback = page.locator('.question-feedback:visible');
             const cases = [
                 { vertical: false, from: [1, -2], to: [4, 4], text: 'That’s the line itself. Draw across first, then up.' },
                 { vertical: false, from: [1, -2], to: [3, -2], text: 'Keep going until you’re directly below (4, 4).' },

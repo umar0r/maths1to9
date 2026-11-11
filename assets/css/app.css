@@ -2188,13 +2188,11 @@ a {
 }
 
 .question-feedback {
-    --feedback-nudge: 0px;
     position: relative;
-    inset-inline-start: var(--feedback-nudge);
     display: none;
     width: fit-content;
-    max-width: calc(100% - 2 * var(--feedback-nudge));
-    margin: 20px auto 0;
+    max-width: 100%;
+    margin: 20px 0 0;
     padding: 14px 22px;
     border-radius: 22px 22px 22px 6px;
     overflow-wrap: anywhere;
@@ -2204,8 +2202,12 @@ a {
     color: var(--text);
 }
 
-@media (min-width: 760px) {
-    .question-feedback { --feedback-nudge: 12px; }
+.lesson-feedback:not(:empty) {
+    margin-bottom: 16px;
+}
+
+.lesson-feedback .question-feedback {
+    margin-top: 0;
 }
 
 .question-feedback.is-visible {

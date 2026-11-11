@@ -197,17 +197,17 @@ test.describe('reciprocal phone details', () => {
             ['Curves that touch the axes','The curves get closer to the axes']
         ]){
             await root(page).getByRole('button',{name:label,exact:true}).tap();
-            await expect(root(page).locator('.question-feedback')).toContainText(message);
+            await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toContainText(message);
             await expect(root(page).getByRole('button',{name:label,exact:true})).toHaveClass(/is-selected is-incorrect/);
             await page.screenshot({path:'/tmp/reciprocal-join-'+label.split(',')[0].replaceAll(' ','-')+'.png',fullPage:true});
         }
         await reload(page);
         expect((await read(page)).s.joined).toBe(false);
-        await expect(root(page).locator('.question-feedback')).toBeEmpty();
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toBeEmpty();
         await root(page).getByRole('button',{name:'Two separate smooth curves',exact:true}).tap();
         await reload(page);
         await expect(root(page).getByRole('button',{name:'Two separate smooth curves',exact:true})).toBeDisabled();
-        await expect(root(page).locator('.question-feedback.is-correct')).toHaveCount(1);
+        await expect(page.locator('.lesson-section:visible .question-feedback.is-correct, .lesson-feedback .question-feedback.is-correct')).toHaveCount(1);
         expect(errors).toEqual([]);
     });
 });
@@ -219,7 +219,7 @@ test('drawing-reciprocal-graphs retained boxes, Practice retry and two extra ses
     const cells=root(page).locator('.reciprocal-cell');
     for(const [i,value] of ['-0.5','-1','-2','99','1','0.5'].entries())await cells.nth(i).fill(value);
     await main(page).click();await reload(page);
-    await expect(root(page).locator('.question-feedback')).toContainText('One box is wrong');
+    await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toContainText('One box is wrong');
     await main(page).click();
     await expect(cells.first()).toHaveValue('−0.5');
     await expect(cells.nth(3)).toHaveValue('');

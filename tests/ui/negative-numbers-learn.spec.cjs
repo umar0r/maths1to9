@@ -4,10 +4,12 @@ const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const root = page => page.locator('.nn-learn:visible');
 
 async function picture(page) {
-    return root(page).evaluate(node => ({
+    const lesson = await root(page).evaluate(node => ({
         text: node.innerText,
         lines: [...node.querySelectorAll('svg')].map(svg => svg.innerHTML)
     }));
+    const outsideFeedback = await page.locator('.lesson-feedback .question-feedback:visible').allTextContents();
+    return { ...lesson, outsideFeedback };
 }
 
 async function reloadAndCompare(page) {
@@ -127,7 +129,7 @@ for (const width of [1280, 375]) {
             if (screen === 8) await expect(root(page).getByText('Tap to show the next line.')).toHaveCount(0);
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
-                await expect(root(page).locator('.nn-box-sum')).toHaveText('3 − (−2) = 3 + 2 = 5');
+                await expect(page.locator('.question-feedback:visible .nn-box-sum')).toHaveText('3 − (−2) = 3 + 2 = 5');
             }
             await main(page).click();
         }

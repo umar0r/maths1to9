@@ -163,7 +163,7 @@ test.describe('simultaneous-equations-graphs phone checks', () => {
         const inputs = root(page).locator('.question-card input');
         await inputs.nth(0).fill('-1'); await inputs.nth(1).fill('2');
         await main(page).click();
-        await expect(root(page).locator('.question-feedback.is-visible')).toHaveText('Write x first, then y: x = 2, y = −1.');
+        await expect(page.locator('.lesson-section:visible .question-feedback.is-visible, .lesson-feedback .question-feedback.is-visible')).toHaveText('Write x first, then y: x = 2, y = −1.');
         await expect(root(page).locator('svg [stroke-dasharray]')).toHaveCount(2);
         await reload(page);
         await expect(root(page).locator('svg [stroke-dasharray]')).toHaveCount(2);
@@ -349,7 +349,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await inputs.nth(0).fill('1'); await inputs.nth(1).fill('3');
         await main(page).click();
         await expect(main(page)).toHaveText('Try again');
-        await expect(root(page).locator('.question-feedback')).toContainText("That's the nearest grid point");
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toContainText("That's the nearest grid point");
         await reload(page);
         await main(page).click();
         await inputs.nth(0).fill('1.4'); await inputs.nth(1).fill('2.7');
@@ -357,7 +357,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await expect(inputs.nth(0)).toHaveValue('1.4');
         await main(page).click();
         await expect(main(page)).toHaveText('Continue');
-        await expect(root(page).locator('.question-feedback')).toHaveText('Right. The solution is about x ≈ 1.3, y ≈ 2.7.');
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Right. The solution is about x ≈ 1.3, y ≈ 2.7.');
         await reload(page);
         expect(await noSideways(page)).toBe(true);
         await page.locator('.site-logo').scrollIntoViewIfNeeded();
@@ -373,7 +373,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await reload(page);
         await main(page).click();
         await expect(main(page)).toHaveText('Continue');
-        await expect(root(page).locator('.question-feedback')).toHaveText('Right. The solution is about x ≈ −1.7, y ≈ 0.7.');
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Right. The solution is about x ≈ −1.7, y ≈ 0.7.');
         await reload(page);
         await expect(inputs.nth(0)).toHaveValue('−1.6');
         expect(await noSideways(page)).toBe(true);

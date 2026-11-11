@@ -115,28 +115,28 @@ test('equations-of-straight-lines workbench wrong operations, keyboard, both two
     await page.setViewportSize({ width: 375, height: 1000 });
     await page.goto(`/content/${slug}/`); await ready(page); await advanceLearn(page, 3);
     await root(page).getByRole('button', { name: '− 3 from both sides', exact: true }).click();
-    await expect(root(page).locator('.question-feedback:visible')).toContainText('That gives y − 6');
+    await expect(page.locator('.lesson-section:visible .question-feedback:visible, .lesson-feedback .question-feedback:visible')).toContainText('That gives y − 6');
     await root(page).getByRole('button', { name: '÷ 3 both sides', exact: true }).click();
-    await expect(root(page).locator('.question-feedback:visible')).toContainText("y isn't multiplied");
+    await expect(page.locator('.lesson-section:visible .question-feedback:visible, .lesson-feedback .question-feedback:visible')).toContainText("y isn't multiplied");
     expect((await state(page)).steps[2]).toEqual([]); await reload(page);
-    await expect(root(page).locator('.question-feedback.is-visible')).toHaveCount(0);
+    await expect(page.locator('.lesson-section:visible .question-feedback.is-visible, .lesson-feedback .question-feedback.is-visible')).toHaveCount(0);
     await root(page).getByRole('button', { name: '+ 3 to both sides', exact: true }).click();
     await expect(root(page).locator('.workbench-equation').first()).toHaveText('y − 3 + 3 = 2x + 3');
     await solve(page); await main(page).click();
     for (const label of ['× 2 both sides', '− 2 from both sides']) {
-        await root(page).getByRole('button', { name: label, exact: true }).click(); await expect(root(page).locator('.question-feedback:visible')).toContainText('divide by 2');
+        await root(page).getByRole('button', { name: label, exact: true }).click(); await expect(page.locator('.lesson-section:visible .question-feedback:visible, .lesson-feedback .question-feedback:visible')).toContainText('divide by 2');
     }
     const divide = root(page).getByRole('button', { name: '÷ 2 both sides', exact: true });
     await divide.focus(); await page.keyboard.press('Enter');
     await expect(root(page).locator('.workbench-equation').first()).toHaveText('2y ÷ 2 = 4x ÷ 2 + 6 ÷ 2');
     await solve(page); await main(page).click();
     await root(page).getByRole('button', { name: '+ 4 to both sides', exact: true }).click();
-    await expect(root(page).locator('.question-feedback:visible')).toContainText('2y + 8');
+    await expect(page.locator('.lesson-section:visible .question-feedback:visible, .lesson-feedback .question-feedback:visible')).toContainText('2y + 8');
     await root(page).getByRole('button', { name: '÷ 2 both sides', exact: true }).click();
     await expect(root(page).locator('.workbench-equation').first()).toHaveText('2y ÷ 2 + 4 ÷ 2 = 6x ÷ 2');
     await reload(page); await expect(root(page).locator('.workbench-result')).toHaveText('y + 2 = 3x');
     await root(page).getByRole('button', { name: '+ 2 to both sides', exact: true }).click();
-    await expect(root(page).locator('.question-feedback:visible')).toContainText('y + 4');
+    await expect(page.locator('.lesson-section:visible .question-feedback:visible, .lesson-feedback .question-feedback:visible')).toContainText('y + 4');
     await root(page).getByRole('button', { name: '− 2 from both sides', exact: true }).click();
     await expect(root(page).locator('.workbench-result').last()).toHaveText('y = 3x − 2 ✓');
     await expect(root(page).getByRole('button', { name: '+ 2 to both sides', exact: true })).toBeDisabled();
@@ -274,7 +274,7 @@ test('equations-of-straight-lines all wrong choices and every feedback rule use 
         for (const option of options.filter(option => !option.correct)) {
             const control = root(page).getByRole('button', { name: option.label, exact: true });
             await control.click(); await expect(control).toBeDisabled();
-            await expect(root(page).locator('.question-feedback.is-visible').last()).toHaveText(`✗ ${option.feedback}`);
+            await expect(page.locator('.lesson-section:visible .question-feedback.is-visible, .lesson-feedback .question-feedback.is-visible').last()).toHaveText(`✗ ${option.feedback}`);
             await reload(page); await expect(control).toBeDisabled();
         }
         await solve(page);

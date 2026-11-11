@@ -326,8 +326,7 @@
         window.setTimeout(() => burst.remove(), 1400);
     }
 
-    // The one place that decides how feedback looks. Learn keeps the plain
-    // box; Try it gets a calm cream bubble; Practice and Check a bright one.
+    // Question stages use the bubble animation.
     function feedbackLook(sectionId) {
         if (sectionId === 'interactive') return ' question-feedback--bubble question-feedback--calm';
         if (sectionId === 'question-bank' || sectionId === 'comparison') return ' question-feedback--bubble';
@@ -837,8 +836,10 @@
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
-            if (correct && sectionId === 'question-bank') celebrate(feedback, 'confetti');
-            if (correct && sectionId === 'comparison') celebrate(feedback, 'rocket');
+            if (correct && (sectionId === 'question-bank' || sectionId === 'comparison')) {
+                // Measure the bubble after the observer has placed it below the card.
+                Promise.resolve().then(() => celebrate(feedback, sectionId === 'comparison' ? 'rocket' : 'confetti'));
+            }
             if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
@@ -1702,6 +1703,55 @@
         return String(value).trim();
     }
 
+    function placeLessonFeedback(sectionContainer) {
+        const desktop = window.matchMedia('(min-width: 760px)');
+        const footer = createElement('div', 'lesson-feedback');
+        sectionContainer.append(footer);
+        let placed = null;
+
+        function sync() {
+            const section = state.sectionElements[state.currentIndex];
+            const visible = desktop.matches && section && !section.hidden
+                ? [...section.querySelectorAll('.question-feedback.is-visible')]
+                    .filter(box => box.getClientRects().length > 0 &&
+                        box.parentElement.getClientRects().length > 0)
+                : [];
+
+            if (placed) {
+                const { anchor, box } = placed;
+                if (desktop.matches && section?.contains(anchor) &&
+                    anchor.parentElement.getClientRects().length > 0 &&
+                    box.matches('.question-feedback.is-visible') && visible.length === 0) {
+                    return;
+                }
+                if (sectionContainer.contains(anchor)) anchor.replaceWith(box);
+                else box.remove();
+                placed = null;
+                // Recount after returning the bubble to its original activity.
+                return;
+            }
+
+            if (visible.length === 1) {
+                const [box] = visible;
+                const anchor = document.createComment('lesson feedback');
+                box.before(anchor);
+                footer.append(box);
+                placed = { anchor, box };
+            }
+        }
+
+        // Keep the activity's original element so retries, reloads and custom
+        // widgets continue to update the same feedback.
+        const observer = new MutationObserver(sync);
+        observer.observe(sectionContainer, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['class', 'hidden', 'style']
+        });
+        desktop.addEventListener('change', sync);
+    }
+
     function renderLesson() {
         app.replaceChildren();
 
@@ -1780,6 +1830,7 @@
             }
         );
 
+        placeLessonFeedback(sectionContainer);
         const controls = renderLessonControls();
 
         app.append(

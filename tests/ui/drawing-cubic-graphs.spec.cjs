@@ -165,14 +165,14 @@ test.describe('cubic phone details', () => {
             ['A U-shaped curve', "That's the shape of a quadratic graph."]
         ]) {
             await root(page).getByRole('button', { name: label, exact: true }).tap();
-            await expect(root(page).locator('.question-feedback')).toContainText(message);
+            await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toContainText(message);
             await expect(root(page).getByRole('button', { name: label, exact: true })).toHaveClass(/is-selected is-incorrect/);
             await page.screenshot({ animations: 'disabled', path: `/tmp/cubic-join-${label.startsWith('Straight') ? 'dots' : label.startsWith('One') ? 'ruler' : 'u'}.png`, fullPage: true });
         }
         await root(page).getByRole('button', { name: 'A smooth S-shaped curve', exact: true }).tap();
         await reload(page);
         await expect(root(page).getByRole('button', { name: 'A smooth S-shaped curve', exact: true })).toBeDisabled();
-        await expect(root(page).locator('.question-feedback.is-correct')).toHaveCount(1);
+        await expect(page.locator('.lesson-section:visible .question-feedback.is-correct, .lesson-feedback .question-feedback.is-correct')).toHaveCount(1);
         expect(errors).toEqual([]);
     });
 });
@@ -184,7 +184,7 @@ test('drawing-cubic-graphs Practice plot retry, retained boxes and two extra ses
     const cells = root(page).locator('.cubic-cell');
     for (const [i, value] of ['0', '1', '99', '9'].entries()) await cells.nth(i).fill(value);
     await main(page).click(); await reload(page);
-    await expect(root(page).locator('.question-feedback')).toContainText('One box is wrong');
+    await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toContainText('One box is wrong');
     await main(page).click();
     await expect(cells.nth(0)).toHaveValue('0');
     await expect(cells.nth(2)).toHaveValue('');

@@ -134,7 +134,7 @@ test.describe('phone checks', () => {
         await expect(page).toHaveURL(/#try-it-2$/);
         await root(page).locator('.question-card input').fill('1');
         await main(page).click();
-        await expect(root(page).locator('.question-feedback.is-visible')).toHaveText('Left of 0 is negative: the x-coordinate is −1.');
+        await expect(page.locator('.lesson-section:visible .question-feedback.is-visible, .lesson-feedback .question-feedback.is-visible')).toHaveText('Left of 0 is negative: the x-coordinate is −1.');
         await reload(page);
         await main(page).click();
         await root(page).locator('.question-card input').fill('-1');
