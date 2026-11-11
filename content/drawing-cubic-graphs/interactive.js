@@ -259,7 +259,7 @@
     async function mountTryIt(root) {
         const api = window.Maths1to9Lesson;
         event('interactive', 'gate');
-        const section = await api.useSectionState('interactive', { version: 1, initial: () => ({ index: 0, screen: 0, furthestScreen: 0,
+        const section = await api.useSectionState('interactive', { version: 2, initial: () => ({ index: 0, screen: 0, furthestScreen: 0,
             finished: false, cards: {}, plotted: [], joined: false,
             joinOrder: window.Maths1to9LessonEngine.shuffle([0, 1, 2, 3]),
             crossOrder: window.Maths1to9LessonEngine.shuffle([0, 1, 2, 3]) }) });
@@ -273,8 +273,12 @@
             const completed = Number(state.cards['example-1']?.correct === true) + Number(state.cards['example-2']?.correct === true) + Number(state.plotted.length === 5) + Number(state.joined) + Number(state.cards['example-5']?.correct === true);
             api.setSectionProgress('interactive', completed, 5);
         }
+        const lastScreen = 4;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() { api.completeSection('interactive'); api.continueSection(); }
         function advance() {
-            section.update(s => { s.index++; s.screen = s.index; s.furthestScreen = s.screen; s.finished = s.index === 5; }); render();
+            section.update(s => { s.index++; s.screen = Math.min(s.index, lastScreen); s.furthestScreen = s.screen; s.finished = s.index === 5; }); render();
+            if (state.finished) goToPractice();
         }
         function action() {
             report();
@@ -295,28 +299,22 @@
         }
         function render() {
             board?.destroy(); board = null; root.replaceChildren();
-            root.append(node('h3', state.screen === 5 ? 'Your completed examples' : ['First column.', 'The rest of the table.', 'Plot.', 'Join them.', 'Where does it cross?'][state.screen]));
+            root.append(node('h3', ['First column.', 'The rest of the table.', 'Plot.', 'Join them.', 'Where does it cross?'][state.screen]));
             equation(root, guided);
             api.setSectionBack('interactive', state.screen ? { onClick: () => show(state.screen - 1) } : null);
             if (state.finished) event('interactive', 'complete');
             if (state.screen < 2 || state.screen === 4) {
                 card(root, state.screen, state.screen < state.index);
-                if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => show(state.screen + 1) });
+                if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : show(state.screen + 1) });
             } else if (state.screen === 2) board = plotting(root, guided, state.plotted, () => section.save(), action);
-            else if (state.screen === 3) board = joining(root, guided, state, () => section.save(), action);
-            else {
-                const first = node('div'), second = node('div'), third = node('div');
-                root.append(first, second, third); card(first, 0, true); card(second, 1, true); card(third, 4, true);
-                board = joining(root, guided, state, () => section.save(), action);
-                api.clearSectionAction('interactive');
-            }
+            else board = joining(root, guided, state, () => section.save(), action);
             action(); syncHash();
         }
-        for (let i = 0; i <= 5; i++) api.registerHashRoute(`try-it-${i + 1}`, () => { if (api.goToSection('interactive', { moveFocus: false })) show(Math.min(i, state.furthestScreen)); });
+        for (let i = 0; i < 5; i++) api.registerHashRoute(`try-it-${i + 1}`, () => { if (api.goToSection('interactive', { moveFocus: false })) show(Math.min(i, state.furthestScreen)); });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         render();
-        const requested = /^#try-it-([1-6])$/.exec(initialHash);
+        const requested = /^#try-it-([1-5])$/.exec(initialHash);
         if (requested && api.goToSection('interactive', { moveFocus: false })) show(Math.min(Number(requested[1]) - 1, state.furthestScreen));
     }
     examples.forEach((question, index) => { if (question) examples[index] = Q.prepare(question); });
