@@ -393,10 +393,17 @@
         return svg;
     }
 
-    // The feedback box. Any working goes in here, on its own line, never in a
-    // separate box underneath.
-    function correctBox(host, text, sum) {
-        const box = paragraph(host, text, 'question-feedback is-visible is-correct');
+    // The shared feedback box, drawn by the engine so it matches every other
+    // lesson. Any working goes in here, on its own line, never in a separate
+    // box underneath. Learn passes 'explanation'; Try it passes 'interactive'.
+    function feedbackBox(host, sectionId, options) {
+        const box = window.Maths1to9LessonEngine.createFeedback(sectionId, options);
+        host.append(box);
+        return box;
+    }
+
+    function correctBox(host, text, sum, sectionId = 'explanation') {
+        const box = feedbackBox(host, sectionId, { correct: true, text });
         if (sum) {
             const working = document.createElement('span');
             working.className = 'nn-box-sum';
@@ -603,7 +610,7 @@
         if (solved) {
             drawFinishedLine(host, question);
             host.querySelector('.negative-line').classList.add('negative-line--solved');
-            correctBox(host, question.correct, question.working);
+            correctBox(host, question.correct, question.working, 'interactive');
             return;
         }
         let hint;
@@ -618,7 +625,7 @@
                 else showHint(value);
             }
         });
-        hint = paragraph(host, '', 'question-feedback is-incorrect');
+        hint = feedbackBox(host, 'interactive', { correct: false, visible: false });
         showHint(savedDot(question));
     }
 
@@ -774,8 +781,8 @@
                 });
             });
         }
-        if (solved) correctBox(host, `Correct. ${question.feedback}`);
-        else if (last) paragraph(host, question.wrong[last], 'question-feedback is-visible is-incorrect');
+        if (solved) correctBox(host, `Correct. ${question.feedback}`, '', 'interactive');
+        else if (last) feedbackBox(host, 'interactive', { correct: false, text: question.wrong[last] });
     }
 
     window.NegativeNumbers = {

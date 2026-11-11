@@ -75,9 +75,9 @@ $pageTitle = 'Drawing quadratic graphs';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=14"></script>
-    <script src="./interactive.js?v=20"></script>
+    <script src="./interactive.js?v=21"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=50"></script>
+    <script src="../../assets/js/lesson-engine.js?v=51"></script>
 </body>
 </html>

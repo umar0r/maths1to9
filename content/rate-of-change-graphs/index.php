@@ -78,6 +78,6 @@ $pageTitle = 'Rates of change on graphs';
     <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=50"></script>
+    <script src="../../assets/js/lesson-engine.js?v=51"></script>
 </body>
 </html>

@@ -77,6 +77,6 @@ $pageTitle = 'From standard form to ordinary numbers';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=50"></script>
+    <script src="../../assets/js/lesson-engine.js?v=51"></script>
 </body>
 </html>

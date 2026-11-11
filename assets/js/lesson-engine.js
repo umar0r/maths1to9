@@ -326,12 +326,29 @@
         window.setTimeout(() => burst.remove(), 1400);
     }
 
-    // The feedback look for a question card, by section. Learn keeps the
-    // plain box; Try it gets a calm bubble; Practice and Check a bright one.
+    // The one place that decides how feedback looks. Learn keeps the plain
+    // box; Try it gets a calm cream bubble; Practice and Check a bright one.
     function feedbackLook(sectionId) {
         if (sectionId === 'interactive') return ' question-feedback--bubble question-feedback--calm';
         if (sectionId === 'question-bank' || sectionId === 'comparison') return ' question-feedback--bubble';
         return '';
+    }
+
+    function feedbackClassName(sectionId, { correct = null, visible = true } = {}) {
+        let name = `question-feedback${feedbackLook(sectionId)}`;
+        if (visible) name += ' is-visible';
+        if (correct === true) name += ' is-correct';
+        if (correct === false) name += ' is-incorrect';
+        return name;
+    }
+
+    // Every feedback box in every lesson comes from here, so they all look
+    // and sit the same. Lessons append the returned element where the
+    // feedback belongs and may add working to it; they never style it.
+    function createFeedback(sectionId, { correct = null, text = '', visible = true } = {}) {
+        const box = resultText('p', text, feedbackClassName(sectionId, { correct, visible }));
+        box.setAttribute('role', 'status');
+        return box;
     }
 
     function resultText(tag, value, className = '') {
@@ -616,8 +633,7 @@
             appendResultMark(answer, row);
             article.append(answer);
             if (saved.feedback) {
-                const feedbackClass = saved.correct === true ? 'is-correct' : 'is-incorrect';
-                article.append(resultText('p', saved.feedback, `question-feedback${feedbackLook(sectionId)} is-visible ${feedbackClass}`));
+                article.append(createFeedback(sectionId, { correct: saved.correct === true, text: saved.feedback }));
             }
             return { result };
         }
@@ -688,8 +704,7 @@
                 group.append(label);
             }
         }
-        const feedback = document.createElement('p');
-        feedback.setAttribute('role', 'status');
+        const feedback = createFeedback(sectionId, { visible: false });
         article.append(feedback);
         function setAction() {
             api.setSectionAction(sectionId, {
@@ -729,8 +744,10 @@
                 box.setAttribute('aria-invalid', String(saved.invalid === id));
             }
             const shown = saved.invalid || saved.phase !== 'answer';
-            feedback.className = `question-feedback${feedbackLook(sectionId)}`;
-            if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
+            feedback.className = feedbackClassName(sectionId, {
+                correct: shown ? saved.correct === true && !saved.invalid : null,
+                visible: shown
+            });
             feedback.replaceChildren();
             if (saved.invalid) feedback.textContent = fractions
                 ? 'Type a number or a fraction, like 3 or 1/2.'
@@ -1025,6 +1042,8 @@
         tidyNumber,
         createQuestion,
         celebrate,
+        createFeedback,
+        feedbackClassName,
         questionSetId,
         assessmentEvidenceId,
         archivePractice,
