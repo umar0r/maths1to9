@@ -729,60 +729,67 @@
 .nn-reveal__cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .7rem;
-    max-width: 16rem;
+    gap: .65rem;
+    max-width: 12rem;
     margin: 0 auto 1.25rem;
 }
 
 .lesson-section .nn-reveal__cards[role="group"] > .button {
-    min-height: 56px;
-    padding: .5rem;
-    font-size: 1.45rem;
-}
-
-.lesson-section .nn-reveal__cards[role="group"] > .button.is-used:not(.is-selected) {
-    background: var(--background-deep);
-    color: var(--text-muted);
-}
-
-.lesson-section .nn-reveal__cards[role="group"] > .button.is-selected:hover {
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    border-color: var(--primary);
-    box-shadow: 0 3px 0 var(--primary);
-}
-
-.lesson-section .nn-reveal__cards[role="group"] > .button:disabled { opacity: 1; }
-
-@media (hover: none) {
-    .lesson-section .nn-reveal__cards[role="group"] > .button:not(.is-used):hover {
-        background: var(--surface);
-        color: var(--text);
-        border-color: var(--border-dark);
-        box-shadow: 0 3px 0 var(--border-dark);
-        transform: none;
-    }
-}
-
-.nn-reveal__lists {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .45rem;
-    max-width: 24rem;
-    margin: 0 auto;
-    text-align: center;
+    justify-items: center;
+    align-content: center;
+    gap: .2rem;
+    min-height: 56px;
+    padding: .35rem;
+    background: #2c6ae5;
+    color: #fff;
+    border: 1px solid transparent;
+    border-radius: .65rem;
+    box-shadow: 0 4px 0 #1d4ead;
+    font-size: 1.45rem;
+    line-height: 1.1;
 }
 
-.nn-reveal__lists ul {
+.nn-reveal__cards > .button::before {
+    content: "";
+    width: 15px;
+    height: 10px;
+    background: radial-gradient(circle, #d7e5ff 1px, transparent 1.5px) 0 0 / 5px 5px;
+}
+
+.lesson-section .nn-reveal__cards[role="group"] > .button.is-used {
+    background: #245bc4;
+}
+
+.lesson-section .nn-reveal__cards[role="group"] > .button.is-selected {
+    background: #1d4ead;
+    border-color: #b9d1ff;
+}
+
+.lesson-section .nn-reveal__cards[role="group"] > .button:not(:disabled):hover {
+    background: #245bc4;
+    color: #fff;
+    border-color: #b9d1ff;
+    box-shadow: 0 4px 0 #1d4ead;
+    transform: none;
+}
+
+.lesson-section .nn-reveal__cards[role="group"] > .button:not(:disabled):active {
+    box-shadow: 0 1px 0 #1d4ead;
+    transform: translateY(3px);
+}
+
+.nn-reveal__results {
     display: grid;
     grid-template-rows: repeat(3, 1.9rem);
     align-items: center;
     margin: 0;
     padding: 0;
     list-style: none;
+    text-align: center;
     font-size: clamp(.86rem, 4.1vw, 1.15rem);
     font-weight: 800;
     white-space: nowrap;
 }
 
-.nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
+.nn-reveal__results li[hidden] { display: block; visibility: hidden; }

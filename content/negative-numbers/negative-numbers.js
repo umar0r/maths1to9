@@ -225,7 +225,7 @@
             },
             {
                 questionType: 'multiply', input: 'reveal',
-                prompt: 'Tap each card to multiply 1 by it.',
+                prompt: 'Tap each card to multiply −1 by it.',
                 feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
             },
             {
