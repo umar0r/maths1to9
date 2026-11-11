@@ -144,3 +144,57 @@
 @media (prefers-reduced-motion: no-preference) {
     .balance-scale__beam, .balance-scale__pan { transition: transform 220ms ease-out; }
 }
+
+.people-balance {
+    position: relative;
+    width: min(100%, 30rem);
+    margin: .5rem auto 1rem;
+    padding-bottom: 3.25rem;
+    container-type: inline-size;
+}
+
+.people-balance .balance-scale { width: 100%; margin: 0; }
+
+.balance-person {
+    color: #334155;
+    fill: var(--surface);
+    stroke: currentColor;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.balance-person path { fill: none; }
+.balance-person.is-selected { color: var(--primary); }
+.balance-person.is-correct { color: var(--success); }
+.balance-person.is-incorrect { color: var(--error); }
+
+.lesson-section .people-balance__choices[role="group"] > .people-balance__person {
+    position: absolute;
+    bottom: .25rem;
+    min-height: 44px;
+    padding: .5rem .55rem;
+    font-size: clamp(.87rem, 3.5vw, 1rem);
+    white-space: nowrap;
+    translate: -50% 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lesson-section .people-balance__choices[role="group"] > .people-balance__person.is-selected:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-color: var(--primary);
+    box-shadow: 0 3px 0 var(--primary);
+}
+
+.people-balance__person:first-child { left: 20.833%; }
+.people-balance__person:last-child { left: 79.167%; }
+
+/* Give the figure and its label one shared target. */
+.people-balance__person::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    height: 32cqw;
+}

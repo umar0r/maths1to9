@@ -169,7 +169,7 @@
                         aria-hidden="true" focusable="false">
                         <path class="price-tag__outline" d="M3 40L29 3H140Q147 3 147 10V70Q147 77 140 77H29Z"/>
                         <circle class="price-tag__hole" cx="30" cy="40" r="4"/>
-                        <path class="price-tag__string" d="M30 40C22 26 11 32 14 41C17 48 25 44 30 40Z"/>
+                        <path class="price-tag__string" d="M26.4 38.2C20 30 12 33 13 40C14 47 22 47 26.4 41.8"/>
                     </svg>`;
                     tag.append(element('span', price, 'price-tag__amount'));
                     tag.type = 'button';
@@ -208,6 +208,27 @@
         };
     }
 
+    function drawBalanceScale(left, right) {
+        const holder = document.createElement('div');
+        holder.innerHTML = `<svg class="balance-scale" viewBox="0 0 360 177" role="img">
+            <path class="balance-scale__stand" d="M180 57L157 153H203Z"/>
+            <path class="balance-scale__base" d="M142 155H218"/>
+            <path class="balance-scale__beam" d="M75 56H285"/>
+            <circle class="balance-scale__pivot" cx="180" cy="56" r="6"/>
+            <g class="balance-scale__pan balance-scale__pan--left">
+                <path class="balance-scale__cord" d="M75 56L10 126M75 56L140 126"/>
+                ${left}
+                <path class="balance-scale__tray" d="M9 126H141Q135 139 122 139H28Q15 139 9 126Z"/>
+            </g>
+            <g class="balance-scale__pan balance-scale__pan--right">
+                <path class="balance-scale__cord" d="M285 56L220 126M285 56L350 126"/>
+                ${right}
+                <path class="balance-scale__tray" d="M219 126H351Q345 139 332 139H238Q225 139 219 126Z"/>
+            </g>
+        </svg>`;
+        return holder.firstElementChild;
+    }
+
     function balanceSignWidget() {
         const less = '<';
         const greater = '>';
@@ -226,29 +247,15 @@
                 const signButton = element('button', '', 'balance-equation__sign');
                 signButton.type = 'button';
                 equation.append(element('span', '9'), signButton, element('span', '4 + 3'));
-                const figure = element('div', '', 'balance-figure');
-                figure.innerHTML = `<svg class="balance-scale" viewBox="0 0 360 177" role="img">
-                    <path class="balance-scale__stand" d="M180 57L157 153H203Z"/>
-                    <path class="balance-scale__base" d="M142 155H218"/>
-                    <path class="balance-scale__beam" d="M75 56H285"/>
-                    <circle class="balance-scale__pivot" cx="180" cy="56" r="6"/>
-                    <g class="balance-scale__pan balance-scale__pan--left">
-                        <path class="balance-scale__cord" d="M75 56L10 126M75 56L140 126"/>
-                        <rect class="balance-scale__weight" x="58" y="89" width="34" height="35" rx="5"/>
-                        <text x="75" y="112">9</text>
-                        <path class="balance-scale__tray" d="M9 126H141Q135 139 122 139H28Q15 139 9 126Z"/>
-                    </g>
-                    <g class="balance-scale__pan balance-scale__pan--right">
-                        <path class="balance-scale__cord" d="M285 56L220 126M285 56L350 126"/>
-                        <rect class="balance-scale__weight" x="255" y="93" width="28" height="31" rx="5"/>
-                        <rect class="balance-scale__weight" x="287" y="97" width="28" height="27" rx="5"/>
-                        <text x="269" y="114">4</text>
-                        <text x="301" y="116">3</text>
-                        <path class="balance-scale__tray" d="M219 126H351Q345 139 332 139H238Q225 139 219 126Z"/>
-                    </g>
-                </svg>`;
-                host.append(equation, figure);
-                const scale = figure.firstElementChild;
+                const scale = drawBalanceScale(
+                    `<rect class="balance-scale__weight" x="58" y="91" width="34" height="35" rx="5"/>
+                    <text x="75" y="112">9</text>`,
+                    `<rect class="balance-scale__weight" x="255" y="95" width="28" height="31" rx="5"/>
+                    <rect class="balance-scale__weight" x="287" y="99" width="28" height="27" rx="5"/>
+                    <text x="269" y="114">4</text>
+                    <text x="301" y="116">3</text>`
+                );
+                host.append(equation, scale);
 
                 function paint(tipped) {
                     signButton.textContent = sign;
@@ -279,6 +286,87 @@
         };
     }
 
+    function personFigure(x) {
+        return `<g class="balance-person" transform="translate(${x} 0)">
+            <circle cx="0" cy="80" r="7"/>
+            <path d="M0 91V109M-12 102L0 93L12 102M-8 124L0 109L8 124"/>
+        </g>`;
+    }
+
+    function balancePeopleWidget() {
+        const people = [
+            { name: 'Sam', weight: '46.5 kg' },
+            { name: 'Jo', weight: '46.45 kg' }
+        ];
+
+        return {
+            isEmpty(value) { return value === null; },
+            answerText(value) {
+                const person = people.find(person => person.name === value);
+                return person ? `${person.name}, ${person.weight}` : '';
+            },
+            mark(value) {
+                return value === 'Sam'
+                    ? { correct: true, feedback: '46.50 > 46.45, so Sam weighs more.' }
+                    : { correct: false, feedback: '46.45 has more digits, but write 46.5 as 46.50. 50 hundredths is more than 45.' };
+            },
+            render(host, { value, editable, onChange }) {
+                let selected = value;
+                let canEdit = editable;
+                let phase = 'answer';
+                const scene = element('div', '', 'people-balance');
+                const scale = drawBalanceScale(personFigure(75), personFigure(285));
+                const figures = scale.querySelectorAll('.balance-person');
+                const group = element('div', '', 'people-balance__choices');
+                group.setAttribute('role', 'group');
+                group.setAttribute('aria-label', 'People on the scale');
+                scene.append(scale, group);
+                host.append(scene);
+
+                const buttons = people.map(({ name, weight }) => {
+                    const button = element('button', `${name} ${weight}`, 'button people-balance__person');
+                    button.type = 'button';
+                    button.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        selected = name;
+                        paint();
+                        onChange(name);
+                    });
+                    group.append(button);
+                    return button;
+                });
+
+                function paint() {
+                    const tipped = phase !== 'answer';
+                    scale.classList.toggle('is-tipped', tipped);
+                    scale.setAttribute('aria-label', tipped ? 'The scale tips down on Sam’s side.' : 'The scale is level.');
+                    buttons.forEach((button, index) => {
+                        const picked = selected === people[index].name;
+                        const selectedClass = phase === 'correct' ? 'is-correct'
+                            : phase === 'wrong' ? 'is-incorrect' : 'is-selected';
+                        for (const style of ['is-selected', 'is-correct', 'is-incorrect']) {
+                            button.classList.toggle(style, picked && style === selectedClass);
+                            figures[index].classList.toggle(style, picked && style === selectedClass);
+                        }
+                        button.setAttribute('aria-pressed', String(picked));
+                        button.disabled = !canEdit;
+                    });
+                }
+
+                paint();
+                return {
+                    update(next) {
+                        selected = next.value;
+                        canEdit = next.editable;
+                        phase = next.phase;
+                        paint();
+                    },
+                    focus() { buttons[0].focus(); }
+                };
+            }
+        };
+    }
+
     function tryItExamples() {
         const lessThanWhole = { questionType: 'compare', input: 'custom', prompt: 'Tap the numbers that are less than 7.',
             widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
@@ -296,7 +384,13 @@
         };
         const lessThan = { questionType: 'compare', input: 'custom', prompt: 'Tap the numbers that are less than 0.8.',
             widget: tapCardsWidget(['0.75', '0.9', '0.08', '0.805', '0.79', '0.80'], '0.8') };
-        return [lessThanWhole, cheapestDrink, balance, lessThan];
+        const heavierPerson = {
+            questionType: 'compare',
+            input: 'custom',
+            prompt: 'Who weighs more? Tap them.',
+            widget: balancePeopleWidget()
+        };
+        return [lessThanWhole, cheapestDrink, balance, lessThan, heavierPerson];
     }
 
     async function mountTryIt(root) {
@@ -305,9 +399,9 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 3,
+            version: 4,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
-            upgrade: (saved, version) => version === 2 ? { ...saved, finished: false } : null
+            upgrade: (saved, version) => version === 2 || version === 3 ? { ...saved, finished: false } : null
         });
         const state = section.state;
 
