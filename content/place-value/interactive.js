@@ -105,12 +105,23 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 17,
+            version: 18,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
-            upgrade: () => null
+            upgrade(saved, version) {
+                if (version !== 17) return null;
+                const remap = index => index > 5 ? index - 1 : index;
+                const { 'example-6': removed, ...cards } = saved.cards;
+                return {
+                    ...saved,
+                    index: remap(saved.index),
+                    screen: remap(saved.screen),
+                    furthestScreen: remap(saved.furthestScreen),
+                    cards
+                };
+            }
         });
         const state = section.state;
         section.save();
@@ -131,8 +142,12 @@
             }
         }
 
+        function exampleId(index) {
+            return `example-${index < 5 ? index + 1 : index + 2}`;
+        }
+
         function reportProgress() {
-            const card = state.cards[`example-${state.index + 1}`];
+            const card = state.cards[exampleId(state.index)];
             const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
             api.setSectionProgress('interactive', completed, questions.length);
         }
@@ -152,7 +167,7 @@
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
-                ...window.PlaceValue.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
+                ...window.PlaceValue.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: exampleId(index),
                 scored: false, readOnly,
                 onFeedback(result) {
                     reportProgress();

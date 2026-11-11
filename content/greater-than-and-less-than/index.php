@@ -28,7 +28,7 @@ $pageTitle = 'Greater than and less than';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=43">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
@@ -68,7 +68,7 @@ $pageTitle = 'Greater than and less than';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=11"></script>
-    <script src="./interactive.js?v=12"></script>
+    <script src="./interactive.js?v=13"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

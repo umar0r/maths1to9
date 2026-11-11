@@ -303,8 +303,9 @@
         node.className = className;
         return node;
     }
-    function tapCardsWidget(numbers, target, { inRow = false, tip = 'Add zeros so both have the same number of digits, then compare.' } = {}) {
+    function tapCardsWidget(numbers, target) {
         const isBelow = number => compareDecimals(number, target) < 0;
+        const tip = 'Add zeros so both have the same number of digits, then compare.';
         const expected = numbers.filter(isBelow);
         const normalise = value => Array.isArray(value) ? [...value] : [];
         return {
@@ -330,7 +331,7 @@
             },
             render(host, { value, editable, onChange }) {
                 let chosen = normalise(value), canEdit = editable;
-                const grid = element('div', '', inRow ? 'pv-tap-cards pv-tap-cards--row' : 'pv-tap-cards');
+                const grid = element('div', '', 'pv-tap-cards');
                 grid.setAttribute('role', 'group');
                 grid.setAttribute('aria-label', 'Numbers to choose from');
                 host.append(grid);
@@ -1206,12 +1207,9 @@
         const wordsToFigures = { questionType: 'digitValue', input: 'custom', kind: 'words',
             prompt: 'Write this number in figures.',
             feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
-        const lessThanWhole = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 7.',
-            feedback: '3, 4, 5 and 6 are all less than 7.',
-            widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
         const lessThan = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 0.8.',
             feedback: '0.75, 0.08 and 0.79 are all less than 0.8.', widget: tapCardsWidget(['0.75', '0.9', '0.08', '0.805', '0.79', '0.80'], '0.8') };
-        return [biggest, timesHundred, playground, flipCards, wordsToFigures, lessThanWhole, lessThan,
+        return [biggest, timesHundred, playground, flipCards, wordsToFigures, lessThan,
             negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
     }
     function checks() {

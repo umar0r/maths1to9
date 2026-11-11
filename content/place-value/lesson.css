@@ -242,7 +242,6 @@
 }
 .pv-shift__move { min-width: 72px; min-height: 56px; color: inherit; font: inherit; font-size: 1.6rem; font-weight: 700; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; cursor: pointer; }
 .pv-shift__move:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
-.pv-tap-cards--row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .25rem; }
 .pv-build { margin: 1.25rem 0; }
 .pv-build__slots { display: flex; justify-content: center; gap: .75rem; }
 .pv-build__slot { display: grid; justify-items: center; gap: .35rem; }

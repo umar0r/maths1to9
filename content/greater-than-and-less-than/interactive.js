@@ -4,41 +4,10 @@
     const SLUG = document.body.dataset.lessonId;
     const initialHash = window.location.hash;
 
-    // CHANGE: replace these examples and their real misconception options.
-    const examples = [
-        {
-            number: 5, prompt: 'What is 2 × 5?', input: 'choice',
-            options: [
-                { label: '10', correct: true, feedback: 'Two groups of 5 make 10.' },
-                { label: '7', feedback: 'You added 2 instead of making two equal groups.' },
-                { label: '5', feedback: 'That counts only one group.' },
-                { label: '15', feedback: 'That counts three groups instead of two.' }
-            ]
-        },
-        {
-            number: 6, prompt: 'What is 2 × 6?', input: 'number', answer: '12',
-            rules: [
-                { value: '8', feedback: 'You added 2 instead of doubling.' },
-                { value: '6', feedback: 'Count both groups, not just one.' }
-            ],
-            fallback: 'Add the two equal groups: 6 + 6.'
-        }
-    ];
-
     function sectionEvent(sectionId, name) {
         document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
             detail: { sectionId }
         }));
-    }
-
-    function drawGroups(container, number) {
-        // CHANGE: draw this lesson's own visual here. Shared cards own inputs.
-        const visual = document.createElement('p');
-        visual.className = 'interactive-equation';
-        visual.setAttribute('role', 'img');
-        visual.setAttribute('aria-label', `Two equal groups of ${number} counters`);
-        visual.textContent = `${'● '.repeat(number).trim()}  +  ${'● '.repeat(number).trim()}`;
-        container.append(visual);
     }
 
     function element(tag, text = '', className = '') {
@@ -115,12 +84,142 @@
         syncHash();
     }
 
+    function tapCardsWidget(numbers, target, { inRow = false, tip = 'Add zeros so both have the same number of digits, then compare.' } = {}) {
+        const isBelow = number => Number(number) < Number(target);
+        const expected = numbers.filter(isBelow);
+        const normalise = value => Array.isArray(value) ? [...value] : [];
+        return {
+            isEmpty(value) { return normalise(value).length === 0; },
+            answerText(value) { return normalise(value).join(', '); },
+            mark(value) {
+                const chosen = normalise(value);
+                const wrongPick = chosen.find(number => !isBelow(number));
+                const missed = expected.find(number => !chosen.includes(number));
+                if (wrongPick !== undefined) {
+                    if (wrongPick === target) {
+                        return { correct: false, feedback: `${target} is not less than ${target}. They are the same number.` };
+                    }
+                    if (Number(wrongPick) === Number(target)) {
+                        return { correct: false, feedback: `${wrongPick} is the same as ${target}, so it is not less than ${target}.` };
+                    }
+                    return { correct: false, feedback: `${wrongPick} is bigger than ${target}. ${tip}` };
+                }
+                if (missed !== undefined) {
+                    return { correct: false, feedback: `${missed} is less than ${target} too. ${tip}` };
+                }
+                return { correct: true, feedback: `${expected.slice(0, -1).join(', ')} and ${expected.at(-1)} are all less than ${target}.` };
+            },
+            render(host, { value, editable, onChange }) {
+                let chosen = normalise(value), canEdit = editable;
+                const grid = element('div', '', inRow ? 'pv-tap-cards pv-tap-cards--row' : 'pv-tap-cards');
+                grid.setAttribute('role', 'group');
+                grid.setAttribute('aria-label', 'Numbers to choose from');
+                host.append(grid);
+                const cards = numbers.map(number => {
+                    const card = element('button', number, 'pv-tap-card');
+                    card.type = 'button';
+                    card.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        chosen = chosen.includes(number) ? chosen.filter(other => other !== number) : [...chosen, number];
+                        paint();
+                        onChange(chosen);
+                    });
+                    grid.append(card);
+                    return card;
+                });
+                function paint() {
+                    cards.forEach((card, index) => {
+                        card.setAttribute('aria-pressed', String(chosen.includes(numbers[index])));
+                        card.disabled = !canEdit;
+                    });
+                }
+                paint();
+                return {
+                    update(next) { chosen = normalise(next.value); canEdit = next.editable; paint(); },
+                    focus() { cards[0]?.focus(); }
+                };
+            }
+        };
+    }
+
+    function priceTagsWidget() {
+        const cheapest = '£1.09';
+        const feedback = {
+            '£1.90': '£1.90 has 9 tenths. Look for the price with the fewest tenths.',
+            '£1.09': '£1.09 is cheapest. All four start with £1. Then £1.09 has 0 tenths, and the others have 1 or 9.',
+            '£1.99': "That's the dearest. Look for the fewest tenths.",
+            '£1.19': 'Look at the tenths first. 0 tenths is less than 1 tenth, so £1.09 is cheaper.'
+        };
+        return {
+            isEmpty(value) { return value === null; },
+            answerText(value) { return value; },
+            mark(value) { return { correct: value === cheapest, feedback: feedback[value] }; },
+            render(host, { value, editable, onChange }) {
+                let selected = value;
+                let canEdit = editable;
+                let phase = 'answer';
+                const grid = element('div', '', 'price-tags');
+                grid.setAttribute('role', 'group');
+                grid.setAttribute('aria-label', 'Price tags');
+                host.append(grid);
+
+                const tags = Object.keys(feedback).map(price => {
+                    const tag = element('button', price, 'button price-tag');
+                    tag.type = 'button';
+                    tag.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        selected = price;
+                        paint();
+                        onChange(price);
+                    });
+                    grid.append(tag);
+                    return { tag, price };
+                });
+
+                function paint() {
+                    for (const { tag, price } of tags) {
+                        const picked = selected === price;
+                        tag.setAttribute('aria-pressed', String(picked));
+                        tag.classList.toggle('is-selected', picked && phase === 'answer');
+                        tag.classList.toggle('is-incorrect', picked && phase === 'wrong');
+                        tag.classList.toggle('is-correct', picked && phase === 'correct');
+                        tag.disabled = !canEdit;
+                    }
+                }
+
+                paint();
+                return {
+                    update(next) {
+                        selected = next.value;
+                        canEdit = next.editable;
+                        phase = next.phase;
+                        paint();
+                    },
+                    focus() { tags[0].tag.focus(); }
+                };
+            }
+        };
+    }
+
+    function tryItExamples() {
+        const lessThanWhole = { questionType: 'compare', input: 'custom', prompt: 'Tap the numbers that are less than 7.',
+            widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
+        const cheapestDrink = {
+            questionType: 'compare',
+            input: 'custom',
+            prompt: 'Which drink is cheapest? Tap its price tag.',
+            widget: priceTagsWidget()
+        };
+        return [lessThanWhole, cheapestDrink];
+    }
+
     async function mountTryIt(root) {
+        const examples = tryItExamples();
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} })
         });
         const state = section.state;
@@ -154,36 +253,26 @@
 
         function drawExample(container, index, readOnly) {
             const example = examples[index];
-            const visual = document.createElement('div');
-            drawGroups(visual, example.number);
-            container.append(visual);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
                 ...example, sectionId: 'interactive', questionId: `example-${index + 1}`,
                 scored: false, readOnly,
-                onFeedback(result) {
-                    reportProgress();
-                    // CHANGE: update the lesson visual in place in response to
-                    // result.correct / result.value / result.option (e.g. flash
-                    // a missed tile). Don't rebuild the shared card here.
-                    visual.setAttribute('aria-label', result.correct ? 'Both groups counted' : 'Count both equal groups');
-                },
+                onFeedback: reportProgress,
                 onContinue: continueExample
             });
         }
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === examples.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
-            root.append(heading);
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
             if (state.screen === examples.length) {
+                const heading = element('h3', 'Your completed examples');
+                heading.dataset.screenHeading = '';
+                root.append(heading);
                 examples.forEach((example, index) => {
                     const completed = document.createElement('article');
                     root.append(completed);

@@ -7,3 +7,58 @@
 .pv-mouth { display: inline-block; height: 2.2em; width: auto; margin-inline: .3em; vertical-align: middle; }
 .pv-mouth polyline { fill: none; stroke: #15803d; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
 .pv-mouth polygon { fill: #fff; stroke: #15803d; stroke-width: 1.5; stroke-linejoin: round; }
+
+.pv-tap-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; max-width: 30rem; margin: 1.25rem auto; }
+.pv-tap-cards--row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .25rem; }
+.pv-tap-card { min-height: 72px; color: inherit; font: inherit; font-size: 1.6rem; font-weight: 700; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; cursor: pointer; }
+.pv-tap-card[aria-pressed=true] { border-color: #155e75; background: #ecfeff; }
+.pv-tap-card:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
+.pv-tap-card:disabled { color: inherit; opacity: 1; cursor: default; }
+
+.price-tags {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem .75rem;
+    max-width: 36rem;
+    margin: 1.75rem auto 1.25rem;
+}
+
+.lesson-section .price-tags > .price-tag {
+    position: relative;
+    min-width: 0;
+    min-height: 76px;
+    padding: 1.65rem .5rem .65rem;
+    border-radius: 1rem .5rem .5rem 1rem;
+    font-size: 1.25rem;
+}
+
+.price-tag::before {
+    content: '';
+    position: absolute;
+    top: .45rem;
+    left: 50%;
+    width: .6rem;
+    height: .6rem;
+    border: 1px solid var(--text-muted);
+    border-radius: 50%;
+    background: var(--surface);
+    transform: translateX(-50%);
+}
+
+.price-tag::after {
+    content: '';
+    position: absolute;
+    top: -.65rem;
+    left: 50%;
+    width: .55rem;
+    height: 1.4rem;
+    border: 1px solid var(--text-muted);
+    border-radius: 50%;
+    transform: translateX(-50%) rotate(-18deg);
+}
+
+@media (max-width: 480px) {
+    .price-tags {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
