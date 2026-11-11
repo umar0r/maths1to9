@@ -237,7 +237,7 @@
             notes.append(node('p', 'Drag the dot along the curve to the turning point.'));
             const status = node('p', '', 'turning-status');
             status.setAttribute('role', 'status');
-            notes.append(status);
+            (state.found ? host : notes).append(status);
             board = T.graph(frame, [guided], `${T.shapeLabel(guided)} Drag the dot along the curve.`);
             function paint() {
                 if (state.found) {

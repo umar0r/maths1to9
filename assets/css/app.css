@@ -2213,25 +2213,29 @@ a {
     border: 1px solid #fecaca;
 }
 
-/* Feedback bubble on the engine's question cards in Try it, Practice and
-   Check: a soft speech bubble that fits its words. Learn keeps the plain
-   box above. */
+/* Centre the feedback bubble at the bottom of Try it, Practice and Check. */
 .question-feedback--bubble {
     position: relative;
     width: fit-content;
     max-width: 100%;
-    margin-top: 20px;
+    margin: 20px auto 0;
     padding: 14px 22px;
     border-radius: 22px 22px 22px 6px;
+    overflow-wrap: anywhere;
     font-weight: 400;
     font-size: 1.1rem;
     line-height: 1.45;
     color: var(--text);
 }
 
+/* Some graph cards place the figure and question in separate columns. */
+.question-card > .question-feedback.question-feedback--bubble {
+    grid-column: 1 / -1;
+}
+
 .question-feedback--bubble.is-visible {
     animation: feedback-pop 260ms cubic-bezier(.2, 1.4, .4, 1);
-    transform-origin: bottom left;
+    transform-origin: bottom center;
 }
 
 .question-feedback--bubble.is-correct {

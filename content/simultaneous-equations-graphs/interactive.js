@@ -204,13 +204,14 @@
             board = T.graph(figure, guided, T.graphLabel(guided), T.TRY_GRID);
             const status = node('p', '', 'simultaneous-status');
             status.setAttribute('role', 'status');
-            figure.append(status);
+            host.append(status);
             let dot, picker;
             function paint() {
                 dot?.remove();
                 if (state.tap) dot = board.point(state.tap, { size: 'large', tone: state.found ? 'correct' : 'incorrect' });
                 const first = state.tap && T.onLine(guided[0], state.tap);
                 const second = state.tap && T.onLine(guided[1], state.tap);
+                status.hidden = !state.tap;
                 status.textContent = T.mathText(state.found ? '✓ Both lines go through this point.'
                     : !state.tap ? '' : first ? '✗ That point is on y = 2x + 7 only. Find where both lines meet.'
                         : second ? '✗ That point is on y = −x + 4 only. Find where both lines meet.'

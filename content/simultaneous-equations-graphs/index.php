@@ -75,7 +75,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=5"></script>
-    <script src="./interactive.js?v=4"></script>
+    <script src="./interactive.js?v=5"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=52"></script>
