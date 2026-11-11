@@ -127,18 +127,6 @@
             "kind": "guided"
         },
         {
-            "id": "step:interactive:5",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:6",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:7",
-            "kind": "guided"
-        },
-        {
             "id": "place-value:explore",
             "kind": "explore"
         }

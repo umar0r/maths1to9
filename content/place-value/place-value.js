@@ -1363,8 +1363,7 @@
             widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
         const lessThan = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 0.8.',
             feedback: '0.75, 0.08 and 0.79 are all less than 0.8.', widget: tapCardsWidget(['0.75', '0.9', '0.08', '0.805', '0.79', '0.80'], '0.8') };
-        return [biggest, timesHundred, playground, flipCards, wordsToFigures, lessThanWhole, lessThan,
-            negativeOrderQuestion([-3, 5, -8, 0])];
+        return [biggest, timesHundred, playground, flipCards, wordsToFigures];
     }
     function checks() {
         const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',
