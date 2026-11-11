@@ -2239,21 +2239,15 @@ a {
 }
 
 .question-feedback--bubble.is-correct {
-    background: #edf9ee;
-    border: 1px solid #a9dcae;
+    background: var(--primary-light);
+    border: 1px solid #bacdf5;
     color: var(--text);
 }
 
 .question-feedback--bubble.is-incorrect {
-    background: #fdf0ef;
-    border: 1px solid #f2b8b3;
+    background: #fff0ec;
+    border: 1px solid #efb8ae;
     color: var(--text);
-}
-
-/* Try it: a calm cream bubble when it's right. */
-.question-feedback--calm.is-correct {
-    background: #fdf6e4;
-    border: 1px solid #ecdcae;
 }
 
 @keyframes feedback-pop {

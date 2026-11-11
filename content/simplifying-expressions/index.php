@@ -28,7 +28,7 @@ $pageTitle = 'Simplifying expressions';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=45">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=46">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 

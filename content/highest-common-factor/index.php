@@ -27,7 +27,7 @@ $pageTitle = 'Highest common factor';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=45">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=46">
     <link rel="stylesheet" href="./lesson.css?v=8">
 </head>
 
