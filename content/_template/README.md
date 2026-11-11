@@ -21,7 +21,9 @@ The doubling content is an example of wiring, not a finished lesson brief.
   are ignored by the engine; replace or remove them before delivery.
 - `interactive.js`: three saved Learn screens and two guided examples.
   Replace the counter visual with the lesson's own visual. Keep it during
-  the activity and in the read-only completed examples.
+  the activity and on a finished example the pupil goes Back to (shown
+  read-only). There is no review screen of completed examples: Continue
+  on the last example goes straight to Practice.
 - `questions.js`: seeded Practice through the shared question-set runner,
   and fixed Check through the shared question card, followed by results
   and a short summary. Add lesson CSS only for its own visual.

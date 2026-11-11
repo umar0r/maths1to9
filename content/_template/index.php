@@ -78,7 +78,7 @@ $pageTitle = 'My lesson title';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=11"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./interactive.js?v=12"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>
