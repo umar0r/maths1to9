@@ -28,7 +28,7 @@ $pageTitle = 'Drawing quadratic graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=44">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="./lesson.css?v=6">
@@ -75,9 +75,9 @@ $pageTitle = 'Drawing quadratic graphs';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=14"></script>
-    <script src="./interactive.js?v=20"></script>
+    <script src="./interactive.js?v=21"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=49"></script>
+    <script src="../../assets/js/lesson-engine.js?v=51"></script>
 </body>
 </html>

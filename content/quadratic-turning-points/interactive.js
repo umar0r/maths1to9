@@ -242,7 +242,7 @@
             function paint() {
                 if (state.found) {
                     status.textContent = '✓ This is the turning point. The curve stops going down and starts going up.';
-                    status.className = 'turning-status question-feedback is-visible is-correct';
+                    status.className = `turning-status ${window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: true })}`;
                 } else status.textContent = heading(guided, state.dot[0]).replace('…', '.');
             }
             if (state.found) T.markTurningPoint(board, guided, { label: false, tone: 'correct' });

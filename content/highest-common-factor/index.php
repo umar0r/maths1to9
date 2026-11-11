@@ -27,7 +27,7 @@ $pageTitle = 'Highest common factor';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=44">
     <link rel="stylesheet" href="./lesson.css?v=8">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Highest common factor';
     <script src="./interactive.js?v=12"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=49"></script>
+    <script src="../../assets/js/lesson-engine.js?v=51"></script>
 </body>
 </html>

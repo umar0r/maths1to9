@@ -29,7 +29,7 @@ Practice and Check structure, KaTeX from `vendor/katex` for any maths.
 
 ## The story
 
-Brilliant-style, but only with GCSE methods: build one picture a step at a
+Visual and hands-on, but only with GCSE methods: build one picture a step at a
 time, ask a question before naming the idea, and carry the same numbers from
 screen to screen so each new idea answers a question the pupil already has.
 No puzzles or real-life contexts; those belong to the separate
