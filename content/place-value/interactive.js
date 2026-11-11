@@ -97,7 +97,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 17,
+            version: 21,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -129,14 +129,25 @@
             api.setSectionProgress('interactive', completed, questions.length);
         }
 
+        const lastScreen = questions.length - 1;
+
+        /* After the last example the pupil goes straight on to Practice: there is no review screen. */
+        function goToPractice() {
+            api.completeSection('interactive');
+            api.continueSection();
+        }
+
         function continueExample() {
             section.update(state => {
                 state.index = state.screen + 1;
-                state.screen = state.index;
-                state.furthestScreen = state.screen;
                 state.finished = state.index === questions.length;
+                state.screen = Math.min(state.index, lastScreen);
+                state.furthestScreen = state.screen;
             });
-            render();
+            if (state.finished) {
+                render();
+                goToPractice();
+            } else render();
         }
 
         function drawExample(container, index, readOnly) {
@@ -155,34 +166,19 @@
 
         function render() {
             root.replaceChildren();
-            if (state.screen === questions.length) {
-                const heading = document.createElement('h3');
-                heading.dataset.screenHeading = '';
-                heading.textContent = 'Your completed examples';
-                root.append(heading);
-            }
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === questions.length) {
-                questions.forEach((example, index) => {
-                    const completed = document.createElement('article');
-                    root.append(completed);
-                    drawExample(completed, index, true);
-                });
-                api.clearSectionAction('interactive');
-            } else {
-                const readOnly = !SKIP && state.screen < state.index;
-                drawExample(root, state.screen, readOnly);
-                if (readOnly) api.setSectionAction('interactive', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
-                });
-            }
+            const readOnly = !SKIP && state.screen < state.index;
+            drawExample(root, state.screen, readOnly);
+            if (readOnly) api.setSectionAction('interactive', {
+                label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : showScreen(state.screen + 1)
+            });
             syncHash();
         }
 
-        for (let index = 0; index <= questions.length; index++) {
+        for (let index = 0; index < questions.length; index++) {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
                 if (!api.goToSection('interactive', { moveFocus: false, unlock: SKIP })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
@@ -194,7 +190,7 @@
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
+        const requested = Array.from({ length: questions.length }, (_, index) => index)
             .find(index => initialHash === `#try-it-${index + 1}`);
         if (requested !== undefined && api.goToSection('interactive', { moveFocus: false, unlock: SKIP })) {
             showScreen(SKIP ? requested : Math.min(requested, state.furthestScreen));

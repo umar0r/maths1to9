@@ -14,6 +14,22 @@ const format = ({ digits, places }) => {
 };
 const shift = (value, power) => power >= 0 ? { digits: value.digits * 10n ** BigInt(power), places: value.places }
     : { digits: value.digits, places: value.places - power };
+const permutations = items => items.length <= 1 ? [items.join('')]
+    : items.flatMap((item, index) => permutations(items.filter((_, other) => other !== index)).map(rest => item + rest));
+/* Reads "six million, forty thousand and nine" back into 6040009, independently of the lesson code. */
+function numberFromWords(text) {
+    const small = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+        thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40,
+        fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+    let total = 0, current = 0;
+    for (const word of text.replace(/[,-]/g, ' ').split(/\s+/).filter(item => item && item !== 'and')) {
+        if (word in small) current += small[word];
+        else if (word === 'hundred') current *= 100;
+        else if (word === 'thousand') { total += current * 1000; current = 0; }
+        else if (word === 'million') { total += current * 1e6; current = 0; }
+    }
+    return total + current;
+}
 function answerFor(prompt, choice) {
     let match;
     if (prompt.startsWith('Here are four temperatures:')) {
@@ -53,6 +69,18 @@ function answerFor(prompt, choice) {
     if (prompt.startsWith('Leila says')) return 'No. 0.7 = 0.70, and 0.70 > 0.67.';
     if ((match = prompt.match(/divides its input by 10\. The input is ([\d,]+)/))) return format(shift(exact(match[1]), -1));
     if ((match = prompt.match(/multiplied by 100\. The result is ([\d,]+)\. What was the original number/))) return format(shift(exact(match[1]), -2));
+    if ((match = prompt.match(/^(?:Which number is |Write )(.+?)(?:\?| in figures\.)$/))) return format({ digits: BigInt(numberFromWords(match[1])), places: 0 });
+    if ((match = prompt.match(/digits (\d), (\d), (\d) and (\d) once to make a four-digit number\. What is the (smallest even|largest odd)/))) {
+        const made = permutations(match.slice(1, 5)).filter(text => text[0] !== '0');
+        const smallestEven = match[5] === 'smallest even';
+        const wanted = made.filter(text => Number(text) % 2 === (smallestEven ? 0 : 1)).sort();
+        return smallestEven ? wanted[0] : wanted.at(-1);
+    }
+    if ((match = prompt.match(/has (\d) digits\. It is multiplied by ([\d,]+)\./))) return String(Number(match[1]) + match[2].replace(/,/g, '').length - 1);
+    if ((match = prompt.match(/Use (\d), (\d) and (\d) once each to make a three-digit number\. Which number is closest to (\d+)\?/))) {
+        const target = Number(match[4]);
+        return permutations(match.slice(1, 4)).sort((a, b) => Math.abs(a - target) - Math.abs(b - target))[0];
+    }
     throw new Error(`Unrecognised place-value question: ${prompt}`);
 }
 async function solve(page, memory = {}) {
@@ -71,7 +99,7 @@ async function solve(page, memory = {}) {
     }
     const tapCards = card.locator('.pv-tap-cards');
     if (await tapCards.count()) {
-        const target = num(prompt.match(/less than ([\d.]+)/)[1]);
+        const target = num(prompt.match(/less than (\d+(?:\.\d+)?)/)[1]);
         const buttons = tapCards.locator('button');
         for (let index = 0; index < await buttons.count(); index++) {
             const button = buttons.nth(index);

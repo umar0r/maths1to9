@@ -12,7 +12,7 @@
 .pv-digit-row strong { text-align: center; font-size: 1.25rem; }
 .pv-digit-row > :last-child { text-align: right; overflow-wrap: anywhere; }
 .pv-digit-row[aria-pressed=true] { border-color: #155e75; background: #ecfeff; }
-.pv-digit-row:focus-visible, .pv-shift-row:focus-visible, .pv-order-tile:focus-visible, .pv-order-slot:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
+.pv-digit-row:focus-visible, .pv-shift-row:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
 .pv-digit-detail { min-height: 4rem; }
 .pv-comparison-picture { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
 .pv-example-tile { padding: .6rem; border: 2px solid #155e75; border-radius: .5rem; background: #ecfeff; font-weight: 800; }
@@ -29,15 +29,9 @@
 .pv-product-input { display: grid; gap: .5rem; max-width: 240px; }
 .pv-product-input input { min-width: 0; width: 100%; min-height: 44px; padding: .5rem; border: 2px solid #64748b; border-radius: .4rem; font: inherit; }
 .pv-product-input input:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
-.pv-order-pool, .pv-order-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
-.pv-order-tile, .pv-order-slot { min-width: 0; width: 100%; min-height: 48px; padding: .4rem; color: #172b3b; background: #f8fafc; border: 2px solid #64748b; border-radius: .5rem; font: inherit; overflow-wrap: anywhere; }
-.pv-order-place { display: grid; grid-template-rows: auto 1fr; gap: .25rem; min-width: 0; }
-.pv-order-place > span { font-size: .9rem; color: #526171; }
-.pv-order-slot { border-style: dashed; }
 @media (max-width: 400px) {
     .pv-digit-row { font-size: .9rem; grid-template-columns: minmax(0, 1.4fr) 30px minmax(0, 1fr); gap: .25rem; }
     .pv-number-column { min-width: 70px; }
-    .pv-order-tile, .pv-order-slot { font-size: .9rem; }
 }
 
 .pv-chart-block { margin-inline: 0; }
@@ -181,6 +175,28 @@
     .pv-words__box { font-size: 1.25rem; }
     .pv-words__keys { gap: .5rem .4rem; max-width: 18rem; }
     .pv-words__keys .pv-words__key.pv-play__button.pv-shift__move { width: 3rem; height: 3rem; }
+}
+.pv-order-frame { margin: 1.25rem 0 .75rem; }
+.pv-order-slots { display: flex; justify-content: center; align-items: flex-end; gap: .35rem; }
+.pv-order-comma { padding-bottom: .35rem; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #94a3b8; }
+.pv-order-slot { display: grid; place-items: stretch; flex: 0 1 5.5rem; min-width: 0; min-height: 3.6rem; border: 2px dashed #cbd5e1; border-radius: .6rem; background: #f8fafc; }
+.pv-order-slot.is-filled { border-color: transparent; background: none; }
+.pv-order-hint { align-self: center; justify-self: center; font-size: .85rem; color: #94a3b8; }
+.pv-order-slot.is-filled .pv-order-hint { display: none; }
+.pv-order-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; min-height: 5rem; padding: 1rem; }
+.pv-order-pool.is-empty { min-height: 0; padding: .5rem; }
+.pv-order-card { min-width: 4.25rem; height: 3.1rem; padding: 0 .8rem; color: #fff; font: inherit; font-size: 1.35rem; font-weight: 800; border: 0; border-radius: .6rem; background: var(--primary); box-shadow: 0 4px 0 var(--primary-dark); cursor: pointer; transition: transform .08s ease, box-shadow .08s ease; }
+.pv-order-slot .pv-order-card { min-width: 0; width: 100%; padding: 0 .25rem; }
+.pv-order-card:hover { background: #3d7af0; }
+.pv-order-card:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-dark); }
+.pv-order-card:disabled { opacity: 1; color: #fff; cursor: default; }
+.pv-order-card:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
+@media (max-width: 640px) {
+    .pv-order-slots { gap: .2rem; }
+    .pv-order-slot { min-height: 3.2rem; }
+    .pv-order-hint { font-size: .7rem; }
+    .pv-order-card { min-width: 3.5rem; height: 2.7rem; padding: 0 .5rem; font-size: 1.1rem; }
+    .pv-order-pool { gap: .5rem; padding: .75rem; }
 }
 .pv-play { --sign: 1.75rem; --col: 4.7rem; --row: 4rem; --head: 4rem; display: grid; grid-template-columns: auto auto auto; justify-content: center; column-gap: .5rem; row-gap: .4rem; margin: 1.25rem 0 .5rem; }
 .pv-paper { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: var(--sign) repeat(9, var(--col)); grid-template-rows: var(--head); grid-auto-rows: var(--row); gap: 0; user-select: none; }

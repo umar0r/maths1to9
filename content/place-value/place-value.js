@@ -281,17 +281,141 @@
         }
         host.append(svg);
     }
+    /* Practice questions in the style of past exam papers (our own wording and numbers). */
+    const teenWords = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+    function wordsUnderHundred(n) {
+        if (n < 10) return digitWords[n];
+        if (n < 20) return teenWords[n - 10];
+        return tensWords[Math.floor(n / 10)] + (n % 10 ? `-${digitWords[n % 10]}` : '');
+    }
+    function wordsUnderThousand(n) {
+        const hundreds = Math.floor(n / 100), rest = n % 100;
+        if (!hundreds) return wordsUnderHundred(rest);
+        return `${digitWords[hundreds]} hundred${rest ? ` and ${wordsUnderHundred(rest)}` : ''}`;
+    }
+    /* 6040009 → "six million, forty thousand and nine" (British style, up to 9,999,999). */
+    function numberToWords(n) {
+        const millions = Math.floor(n / 1e6), thousands = Math.floor(n / 1000) % 1000, rest = n % 1000;
+        const groups = [];
+        if (millions) groups.push(`${wordsUnderThousand(millions)} million`);
+        if (thousands) groups.push(`${wordsUnderThousand(thousands)} thousand`);
+        let text = groups.join(', ');
+        if (rest) text = groups.length ? `${text}${rest < 100 ? ' and ' : ', '}${wordsUnderThousand(rest)}` : wordsUnderThousand(rest);
+        return text;
+    }
+    function generateWordsToFiguresQuestion(random, mode) {
+        const E = window.Maths1to9LessonEngine;
+        const millions = E.randomInt(2, 9, random);
+        const thousandShapes = [() => E.randomInt(2, 9, random) * 10, () => E.randomInt(2, 9, random) * 100, () => E.randomInt(1, 9, random) * 100 + E.randomInt(1, 9, random)];
+        const restShapes = [() => E.randomInt(1, 9, random), () => E.randomInt(2, 9, random) * 10, () => E.randomInt(1, 9, random) * 100 + E.randomInt(1, 9, random)];
+        const thousands = thousandShapes[E.randomInt(0, 2, random)]();
+        const rest = restShapes[E.randomInt(0, 2, random)]();
+        const number = millions * 1e6 + thousands * 1000 + rest;
+        const words = numberToWords(number);
+        const digits = String(number);
+        const dropped = Number(digits.replace('0', ''));
+        const spoken = Number(`${millions}${thousands}${rest}`);
+        const noMillions = number - millions * 1e6;
+        const shifted = thousands < 100 ? millions * 1e6 + thousands * 10000 + rest : millions * 1e6 + thousands * 1000 + rest * 10;
+        return makeQuestion({ type: 'wordsToFigures', mode, kind: 'words', number,
+            prompt: mode === 'choice' ? `Which number is ${words}?` : `Write ${words} in figures.`,
+            answer: addCommas(number), wrong: [
+                [addCommas(spoken), 'That writes each part next to the next one. Every column needs a digit, so empty columns need a 0.'],
+                [addCommas(dropped), 'That number has a digit missing. Every empty column needs a 0.'],
+                [addCommas(shifted), 'One part is in the wrong columns. Check the place value of each part of the words.'],
+                [addCommas(noMillions), 'That leaves out the millions.']
+            ],
+            feedback: `${words.charAt(0).toUpperCase()}${words.slice(1)} is ${addCommas(number)}. Empty columns hold a 0.`,
+            fallback: 'Write each part in its own columns: millions, then thousands, then hundreds, tens and ones. Put a 0 in any empty column.' });
+    }
+    function arrangements(digits) {
+        if (digits.length <= 1) return [digits.join('')];
+        return digits.flatMap((digit, index) => arrangements(digits.filter((_, other) => other !== index)).map(rest => digit + rest));
+    }
+    function generateDigitCardsQuestion(random) {
+        const E = window.Maths1to9LessonEngine;
+        const even = [2, 4, 6, 8][E.randomInt(0, 3, random)];
+        const odds = E.shuffle([1, 3, 5, 7, 9], random).slice(0, 2);
+        const digits = E.shuffle([0, even, ...odds], random).map(String);
+        const all = arrangements(digits).sort();
+        const valid = all.filter(text => text[0] !== '0');
+        const smallestEven = random() < 0.5;
+        const list = `${digits.slice(0, 3).join(', ')} and ${digits[3]}`;
+        if (smallestEven) {
+            const evens = valid.filter(text => Number(text) % 2 === 0);
+            const answer = evens[0];
+            return makeQuestion({ type: 'digitCards', kind: 'cards', digits,
+                prompt: `Use each of the digits ${list} once to make a four-digit number. What is the smallest even number you can make?`,
+                answer, wrong: [
+                    [valid[0], `${valid[0]} is smaller, but it is odd. An even number ends in 0, 2, 4, 6 or 8.`],
+                    [all.find(text => text[0] === '0' && Number(text) % 2 === 0), 'A four-digit number cannot start with 0. That is only a three-digit number.'],
+                    [evens[1], `${evens[1]} is even, but ${answer} is smaller.`],
+                    [valid.find(text => Number(text) % 2 === 1), 'That number is odd. An even number ends in 0, 2, 4, 6 or 8.'],
+                    [evens[2], `${evens[2]} is even, but ${answer} is smaller. Put the smallest digits on the left.`]
+                ],
+                feedback: `An even number ends in 0, 2, 4, 6 or 8, and a four-digit number cannot start with 0. The smallest is ${answer}.` });
+        }
+        const odd = valid.filter(text => Number(text) % 2 === 1);
+        const answer = odd.at(-1);
+        return makeQuestion({ type: 'digitCards', kind: 'cards', digits,
+            prompt: `Use each of the digits ${list} once to make a four-digit number. What is the largest odd number you can make?`,
+            answer, wrong: [
+                [valid.at(-1), `${valid.at(-1)} is larger, but it is even. An odd number ends in 1, 3, 5, 7 or 9.`],
+                [odd.at(-2), `${odd.at(-2)} is odd, but ${answer} is larger. Put the biggest digits on the left.`],
+                [odd[0], `${odd[0]} is the smallest odd number you can make, not the largest.`],
+                [valid.filter(text => Number(text) % 2 === 0).at(-1), 'That number is even. An odd number ends in 1, 3, 5, 7 or 9.'],
+                [odd.at(-3), `${odd.at(-3)} is odd, but ${answer} is larger. Put the biggest digits on the left.`]
+            ],
+            feedback: `An odd number ends in 1, 3, 5, 7 or 9. Put the biggest digits on the left: the largest is ${answer}.` });
+    }
+    function generateDigitCountQuestion(random) {
+        const E = window.Maths1to9LessonEngine;
+        const length = E.randomInt(2, 4, random), zeros = E.randomInt(1, 3, random);
+        const multiplier = addCommas(10 ** zeros);
+        const example = E.randomInt(10 ** (length - 1), 10 ** length - 1, random);
+        const answer = length + zeros;
+        return makeQuestion({ type: 'digitCount', kind: 'count', length, zeros,
+            prompt: `A whole number has ${length} digits. It is multiplied by ${multiplier}. How many digits does the answer have?`,
+            answer, wrong: [
+                [length, 'That is how many digits it had before. Multiplying by 10, 100 or 1,000 makes the number longer.'],
+                [answer - 1, `Multiplying by ${multiplier} moves every digit ${zeros} column${zeros > 1 ? 's' : ''} left, so it adds ${zeros} digit${zeros > 1 ? 's' : ''}.`],
+                [answer + 1, `That adds one digit too many. ${multiplier} has ${zeros} zero${zeros > 1 ? 's' : ''}.`],
+                [answer + 2, `That adds too many digits. ${multiplier} has ${zeros} zero${zeros > 1 ? 's' : ''}.`]
+            ],
+            feedback: `Multiplying by ${multiplier} moves every digit ${zeros} column${zeros > 1 ? 's' : ''} left, so the answer has ${answer} digits. For example, ${addCommas(example)} × ${multiplier} = ${addCommas(example * 10 ** zeros)}.` });
+    }
+    function generateClosestNumberQuestion(random) {
+        const E = window.Maths1to9LessonEngine;
+        for (;;) {
+            const digits = E.shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], random).slice(0, 3).map(String);
+            const target = E.randomInt(2, 8, random) * 100;
+            const byDistance = arrangements(digits).map(Number).sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+            if (Math.abs(byDistance[0] - target) === Math.abs(byDistance[1] - target)) continue;
+            const answer = byDistance[0];
+            const describe = value => `${value} is ${Math.abs(value - target)} ${value < target ? 'below' : 'above'} ${target}`;
+            return makeQuestion({ type: 'closestNumber', kind: 'closest', digits, target,
+                prompt: `Use ${digits[0]}, ${digits[1]} and ${digits[2]} once each to make a three-digit number. Which number is closest to ${target}?`,
+                answer, wrong: [byDistance[1], byDistance[2], byDistance[5]].map(value => [value, `${describe(value)}. ${answer} is closer.`]),
+                feedback: `${describe(answer)}. No other number you can make is closer.` });
+        }
+    }
     function generate(item, random) {
         if (item.type.startsWith('neg')) return prepare(generateNegative(item, random), random);
         const generators = { digitValue: generateDigitValueQuestion, compare: generateComparisonQuestion, order: generateOrderingQuestion,
-            scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion };
+            scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion,
+            wordsToFigures: generateWordsToFiguresQuestion, digitCards: generateDigitCardsQuestion,
+            digitCount: generateDigitCountQuestion, closestNumber: generateClosestNumberQuestion };
         return generators[item.type](random, item.mode || 'choice');
     }
+    /* Every session has the four exam-style questions, plus six of the original eight, in a random order. */
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
-        return E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
+        const original = E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
             { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' },
-            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random)
+            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random).slice(0, 6);
+        const examStyle = [{ type: 'wordsToFigures', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }, { type: 'digitCards', mode: 'choice' },
+            { type: 'digitCount', mode: 'choice' }, { type: 'closestNumber', mode: 'choice' }];
+        return E.shuffle([...original, ...examStyle], random)
             .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
     }
     const prepare = (question, random) => question.options
@@ -1005,53 +1129,80 @@
                 return { correct, feedback: correct ? `From smallest to largest: ${expected.join(' < ')}`
                     : 'Line up the decimal points. Add zeros at the end and compare from left to right.' };
             },
+            /* A row of dashed slots (smallest on the left) inside a white box, and a grey tray of
+               blue number cards below. Tapping a card in the tray sends it to the next empty slot;
+               tapping a placed card sends it back. Cards glide between the two, and can also be
+               dragged onto a slot. */
             render(host, { value, editable, onChange }) {
                 let order = normalise(value), canEdit = editable;
-                host.append(element('p', 'Tap the numbers from smallest to largest. Tap a filled place to return its number. You can also drag a number into a place.'));
-                const pool = element('div', '', 'pv-order-pool');
-                pool.setAttribute('role', 'group'); pool.setAttribute('aria-label', 'Numbers to order');
+                const frame = element('div', '', 'pv-order-frame');
                 const slots = element('div', '', 'pv-order-slots');
                 slots.setAttribute('role', 'group'); slots.setAttribute('aria-label', 'Smallest to largest');
+                frame.append(slots);
+                const pool = element('div', '', 'pv-order-pool');
+                pool.setAttribute('role', 'group'); pool.setAttribute('aria-label', 'Numbers to order');
                 const announcement = element('p', '', 'visually-hidden');
                 announcement.setAttribute('aria-live', 'polite');
-                host.append(pool, slots, announcement);
+                host.append(frame, pool, announcement);
+                const holders = values.map((unused, index) => {
+                    if (index) slots.append(element('span', ',', 'pv-order-comma'));
+                    const holder = element('div', '', 'pv-order-slot');
+                    if (index === 0) holder.append(element('span', 'smallest', 'pv-order-hint'));
+                    if (index === values.length - 1) holder.append(element('span', 'largest', 'pv-order-hint'));
+                    holder.addEventListener('dragover', event => { if (canEdit) event.preventDefault(); });
+                    holder.addEventListener('drop', event => { event.preventDefault(); move(event.dataTransfer?.getData('text/plain'), index); });
+                    slots.append(holder);
+                    return holder;
+                });
+                const cards = new Map(values.map(number => {
+                    const card = element('button', number, 'pv-order-card');
+                    card.type = 'button';
+                    card.addEventListener('click', () => {
+                        if (!canEdit) return;
+                        if (order.includes(number)) {
+                            order = order.filter(other => other !== number);
+                            announcement.textContent = `${number} back in the tray`;
+                            commit();
+                        } else move(number, order.length);
+                    });
+                    card.addEventListener('dragstart', event => event.dataTransfer?.setData('text/plain', number));
+                    return [number, card];
+                }));
                 function move(number, position) {
                     if (!canEdit || !values.includes(number)) return;
-                    order = order.filter(value => value !== number);
+                    order = order.filter(other => other !== number);
                     order.splice(Math.min(position, order.length), 0, number);
                     announcement.textContent = `${number} placed in position ${order.indexOf(number) + 1}`;
-                    paint(); onChange(order);
-                    (pool.querySelector('button') || slots.querySelector('button'))?.focus();
+                    commit();
                 }
-                function draggable(button, number) {
-                    button.draggable = canEdit;
-                    button.addEventListener('dragstart', event => event.dataTransfer?.setData('text/plain', number));
+                function commit() {
+                    const before = new Map([...cards].map(([number, card]) => [number, card.getBoundingClientRect()]));
+                    paint();
+                    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                        for (const [number, card] of cards) {
+                            const was = before.get(number), now = card.getBoundingClientRect();
+                            const dx = was.left - now.left, dy = was.top - now.top;
+                            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                                card.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+                            }
+                        }
+                    }
+                    onChange([...order]);
                 }
                 function paint() {
-                    pool.replaceChildren(); slots.replaceChildren();
-                    for (const number of values.filter(number => !order.includes(number))) {
-                        const button = element('button', number, 'pv-order-tile');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.dataset.orderTile = number;
-                        button.addEventListener('click', () => move(number, order.length));
-                        draggable(button, number); pool.append(button);
-                    }
-                    values.forEach((unused, index) => {
-                        const group = element('div', '', 'pv-order-place');
+                    holders.forEach((holder, index) => {
                         const number = order[index];
-                        group.append(element('span', index === 0 ? '1: smallest' : index === values.length - 1 ? '4: largest' : String(index + 1)));
-                        const button = element('button', number || 'Empty', 'pv-order-slot');
-                        button.type = 'button'; button.disabled = !canEdit;
-                        button.setAttribute('aria-label', number ? `${number} in position ${index + 1}. Press to return it.` : `Empty position ${index + 1}`);
-                        button.addEventListener('click', () => {
-                            if (!canEdit || !number) return;
-                            order.splice(index, 1); paint(); onChange(order); pool.querySelector('button')?.focus();
-                        });
-                        button.addEventListener('dragover', event => { if (canEdit) event.preventDefault(); });
-                        button.addEventListener('drop', event => { event.preventDefault(); move(event.dataTransfer?.getData('text/plain'), index); });
-                        if (number) draggable(button, number);
-                        group.append(button); slots.append(group);
+                        holder.classList.toggle('is-filled', Boolean(number));
+                        holder.setAttribute('aria-label', number ? `Position ${index + 1}: ${number}` : `Position ${index + 1}: empty`);
+                        if (number) holder.append(cards.get(number));
                     });
+                    for (const number of values) {
+                        const card = cards.get(number);
+                        if (!order.includes(number)) pool.append(card);
+                        card.disabled = !canEdit;
+                        card.draggable = canEdit;
+                    }
+                    pool.classList.toggle('is-empty', order.length === values.length);
                 }
                 paint();
                 return {
@@ -1212,7 +1363,7 @@
         const lessThan = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 0.8.',
             feedback: '0.75, 0.08 and 0.79 are all less than 0.8.', widget: tapCardsWidget(['0.75', '0.9', '0.08', '0.805', '0.79', '0.80'], '0.8') };
         return [biggest, timesHundred, playground, flipCards, wordsToFigures, lessThanWhole, lessThan,
-            negativeOrderQuestion([-3, 5, -8, 0]), scalingQuestion([1, 1]), scalingQuestion([-1, 1]), scalingQuestion([2, 2])];
+            negativeOrderQuestion([-3, 5, -8, 0])];
     }
     function checks() {
         const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',

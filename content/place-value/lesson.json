@@ -22,7 +22,11 @@
                 "inequality-symbols"
             ],
             "negGreatest": "order-negative-numbers",
-            "negOrder": "order-negative-numbers"
+            "negOrder": "order-negative-numbers",
+            "wordsToFigures": "place-value",
+            "digitCards": "place-value",
+            "digitCount": "place-value",
+            "closestNumber": "place-value"
         }
     },
     "explanation": {
@@ -43,7 +47,7 @@
         "hide_eyebrow": true,
         "title": "Practise place value",
         "intro": "",
-        "session_length": 8
+        "session_length": 10
     },
     "section_order": [
         "explanation",
@@ -145,18 +149,6 @@
         },
         {
             "id": "step:interactive:7",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:8",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:9",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:10",
             "kind": "guided"
         },
         {
