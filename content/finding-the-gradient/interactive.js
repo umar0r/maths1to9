@@ -28,7 +28,7 @@
     const exampleGraphs = [triangle, d(1, 2, [1, 1], [5, 3]), d(-1, 2, [0, 3], [4, 1]),
         d(4, 1, [0, 2], [2, 10], { x: 1, y: 2 })];
     const hashes = ['try-it-1', 'try-it-1-up', 'try-it-1-across', 'try-it-1-change',
-        'try-it-1-gradient', 'try-it-2', 'try-it-3', 'try-it-4', 'try-it-4-gradient', 'try-it-5'];
+        'try-it-1-gradient', 'try-it-2', 'try-it-3', 'try-it-4', 'try-it-4-gradient'];
     const cardDefinitions = {
         2: { scene: 0, prompt: 'How far across did you go? (horizontal change)', answer: '3',
             rules: [{ value: '4', feedback: 'That’s the x-coordinate of (4, 4). Count the squares from 1 to 4.' }] },
@@ -203,7 +203,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Next', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1, initial: () => ({ index: 0, screen: 0, finished: false, cards: {},
+            version: 2, initial: () => ({ index: 0, screen: 0, finished: false, cards: {},
                 horizontal: null, vertical: null, drafts: [null, null], feedback: '', correct: null })
         });
         const state = section.state;
@@ -217,9 +217,13 @@
                 Object.values(state.cards).filter(card => card.correct === true).length;
             api.setSectionProgress('interactive', completed, 9);
         }
+        const lastScreen = 8;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() { api.completeSection('interactive'); api.continueSection(); }
         function advance() {
-            section.update(state => { state.index++; state.screen = state.index; state.finished = state.index === 9; });
+            section.update(state => { state.index++; state.screen = Math.min(state.index, lastScreen); state.finished = state.index === 9; });
             render();
+            if (state.finished) goToPractice();
         }
         function triangleFigure(host, readOnly) {
             const board = G.setup(host, triangle, { readOnly: true });
@@ -294,7 +298,7 @@
             board.setEditable(!readOnly && !(index === 1 && state.vertical));
         }
         function action() {
-            if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => showScreen(state.screen + 1) });
+            if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : showScreen(state.screen + 1) });
             else if (state.screen < 2) api.setSectionAction('interactive', {
                 label: 'Next', disabled: !state.vertical, onClick: advance
             });
@@ -305,15 +309,7 @@
             root.replaceChildren();
             api.setSectionBack('interactive', state.screen > 0 ? { onClick: () => showScreen(state.screen - 1) } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === 9) {
-                heading(root, 'Your completed examples');
-                for (const index of Object.keys(cardDefinitions).map(Number)) {
-                    const container = document.createElement('article');
-                    root.append(container);
-                    drawCard(container, index, true);
-                }
-                api.clearSectionAction('interactive');
-            } else if (state.screen < 2) drawing(state.screen, state.screen < state.index);
+            if (state.screen < 2) drawing(state.screen, state.screen < state.index);
             else drawCard(root, state.screen, state.screen < state.index);
             action();
             reportProgress();
