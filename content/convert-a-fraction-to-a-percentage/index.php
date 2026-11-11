@@ -70,7 +70,7 @@ $pageTitle = 'Convert a fraction to a percentage';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=14"></script>
-    <script src="./interactive.js?v=15"></script>
+    <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

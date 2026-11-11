@@ -67,7 +67,7 @@ $pageTitle = 'Solving linear equations';
     <script src="../../assets/js/progress.js?v=3"></script>
     <script src="./equations.js?v=2"></script>
     <script src="./questions.js?v=1"></script>
-    <script src="./interactive.js?v=12"></script>
+    <script src="./interactive.js?v=13"></script>
     <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

@@ -70,7 +70,7 @@ $pageTitle = 'Indices basics';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./indices.js?v=1"></script>
     <script src="./questions.js?v=10"></script>
-    <script src="./interactive.js?v=8"></script>
+    <script src="./interactive.js?v=9"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

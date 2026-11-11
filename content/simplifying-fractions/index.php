@@ -69,7 +69,7 @@ $pageTitle = 'Equivalent and simplifying fractions';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./fractions.js?v=1"></script>
     <script src="./questions.js?v=17"></script>
-    <script src="./interactive.js?v=13"></script>
+    <script src="./interactive.js?v=14"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>

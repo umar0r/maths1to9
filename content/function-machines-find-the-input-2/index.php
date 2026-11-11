@@ -67,7 +67,7 @@ $pageTitle = 'Function machines: find the input';
     <script src="../../assets/js/progress.js?v=3"></script>
     <script src="./machines.js?v=2"></script>
     <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=13"></script>
+    <script src="./interactive.js?v=14"></script>
     <script src="../../assets/js/lesson-engine.js?v=49"></script>
 </body>
 </html>

@@ -70,7 +70,7 @@ $pageTitle = 'Highest common factor';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=6"></script>
-    <script src="./interactive.js?v=12"></script>
+    <script src="./interactive.js?v=13"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=49"></script>
