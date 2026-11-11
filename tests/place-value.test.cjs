@@ -9,7 +9,8 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const Q = loadScript(path.join(__dirname, '../content/place-value/place-value.js'),
     ['types', 'generate', 'pick', 'prepare', 'examples', 'checks', 'learnScreens', 'shiftedCells', 'scalingWidget', 'orderingWidget', 'formatScaledInteger'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
-const samples = Q.types.flatMap(type => ['choice', 'number', ...(type === 'order' ? ['custom'] : [])].flatMap(mode => Array.from({ length: 300 }, (_, seed) => ({ seed,
+// compare and order are no longer in Practice, but their generators still exist, so keep testing them.
+const samples = [...Q.types, 'compare', 'order'].flatMap(type => ['choice', 'number', ...(type === 'order' ? ['custom'] : [])].flatMap(mode => Array.from({ length: 300 }, (_, seed) => ({ seed,
     q: Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0))
 }))));
 const questionsOf = type => samples.filter(({ q }) => q.questionType === type);
@@ -122,24 +123,24 @@ test('typed cards preserve exact decimal values and have misconception rules and
         for (const rule of q.rules) { assert(rule.feedback); assert.notEqual(num(rule.value), num(q.answer)); }
     }
 });
-test('sessions contain eight seeded items, all seven types and mixed answer modes', () => {
+test('sessions contain ten seeded items, all seven types and mixed answer modes', () => {
     for (let seed = 0; seed < 200; seed++) {
         const session = Q.pick(seededRandom(seed));
-        assert.equal(session.length, 8);
-        assert.equal(new Set(session.map(item => item.type)).size, 7);
-        assert.equal(session.filter(item => item.mode === 'choice').length, 3);
-        assert.equal(session.filter(item => item.mode === 'number').length, 4);
-        assert.equal(session.filter(item => item.mode === 'custom').length, 1);
+        assert.equal(session.length, 10);
+        assert.deepEqual([...new Set(session.map(item => item.type))].sort(), [...Q.types].sort());
+        const typed = session.filter(item => item.mode === 'number').length;
+        assert(typed === 3 || typed === 4, `${typed} typed questions`);
+        assert.equal(session.filter(item => item.mode === 'choice').length, 10 - typed);
         assert.equal(JSON.stringify(session), JSON.stringify(Q.pick(seededRandom(seed))));
         for (const item of session) {
             assert.deepEqual(Object.keys(item).sort(), ['mode', 'seed', 'type']);
             assert.equal(JSON.stringify(Q.generate(item, seededRandom(item.seed))), JSON.stringify(Q.generate(item, seededRandom(item.seed))));
         }
     }
-    for (const questions of [Q.examples(), Q.checks()]) {
-        assert(questions.filter(q => q.input === 'choice').length >= 2);
-        assert(questions.filter(q => q.input !== 'choice').length >= 2);
-    }
+    // Try it is hands-on (no multiple choice); Check mixes choice and typed answers.
+    assert.equal(Q.examples().filter(q => q.input === 'choice').length, 0);
+    assert(Q.checks().filter(q => q.input === 'choice').length >= 2);
+    assert(Q.checks().filter(q => q.input !== 'choice').length >= 2);
 });
 test('scaling cards check both row positions and the exact typed product', () => {
     for (const targets of [[1, 1], [-1, 1], [2, 2]]) {
@@ -174,10 +175,10 @@ test('number formatting fuzz checks now run in tests instead of on every page lo
         }
     }
 });
-test('Learn has nine screens and teaches every question method before it is asked', () => {
-    assert.equal(Q.learnScreens.length, 9);
+test('Learn has eight screens and teaches every question method before it is asked', () => {
+    assert.equal(Q.learnScreens.length, 8);
     const text = JSON.stringify(Q.learnScreens).toLowerCase();
-    for (const keyword of ['digit', 'column', 'zero', 'tenths', 'hundredths', 'thousandths', 'compare', 'order', 'decimal point stays fixed', 'divide by 100', 'factor', 'product', 'cancel', '10,000']) assert(text.includes(keyword), keyword);
+    for (const keyword of ['digit', 'column', 'zero', 'decimal point', 'multiplying by 10', 'dividing by 10', 'cancel']) assert(text.includes(keyword), keyword);
     for (const line of allStrings(Q.learnScreens)) assert.deepEqual(wrongSums(line), [], line);
 });
 

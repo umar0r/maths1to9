@@ -82,8 +82,8 @@ test('compareDecimals: existing decimal results are unchanged and negatives sort
 });
 test('new skills receive exactly two Practice and two Check questions, with matching assessment types', () => {
     for (const [slug, Q, types, skill, tryCount] of [
-        ['pie-charts', P, ['read-count', 'read-from-known'], 'interpret-pie-charts', 7],
-        ['place-value', V, ['negCoolest', 'negGreatest', 'negSymbol', 'negOrder'], 'order-negative-numbers', 9]
+        ['pie-charts', P, ['read-count', 'read-from-known'], 'interpret-pie-charts', 7]
+        // Place value's negative-number questions moved to the Greater than and less than lesson.
     ]) {
         const lesson = JSON.parse(fs.readFileSync(path.join(__dirname, '../content', slug, 'lesson.json')));
         for (const type of types) {

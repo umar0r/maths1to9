@@ -1,7 +1,8 @@
 (() => {
     'use strict';
 
-    const types = ['digitValue', 'compare', 'order', 'scaledProduct', 'powerOfTen'];
+    // The Practice question types (comparing and ordering moved to the Greater than and less than lesson).
+    const types = ['digitValue', 'scaledProduct', 'powerOfTen', 'wordsToFigures', 'digitCards', 'digitCount', 'closestNumber'];
     const addCommas = value => {
         const [whole, fraction] = String(value).split('.');
         return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
