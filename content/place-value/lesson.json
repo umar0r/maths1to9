@@ -13,15 +13,8 @@
                 "order-numbers",
                 "inequality-symbols"
             ],
-            "order": "order-numbers",
             "scaledProduct": "place-value",
             "powerOfTen": "place-value",
-            "negCoolest": "order-negative-numbers",
-            "negSymbol": [
-                "order-negative-numbers",
-                "inequality-symbols"
-            ],
-            "negGreatest": "order-negative-numbers",
             "negOrder": "order-negative-numbers",
             "wordsToFigures": "place-value",
             "digitCards": "place-value",
@@ -95,19 +88,13 @@
                 "type": "digitValue"
             },
             {
-                "type": "compare"
-            },
-            {
-                "type": "order"
-            },
-            {
-                "type": "negSymbol"
-            },
-            {
-                "type": "negOrder"
+                "type": "wordsToFigures"
             },
             {
                 "type": "powerOfTen"
+            },
+            {
+                "type": "digitCount"
             },
             {
                 "type": "powerOfTen"

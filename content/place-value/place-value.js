@@ -407,12 +407,13 @@
             digitCount: generateDigitCountQuestion, closestNumber: generateClosestNumberQuestion };
         return generators[item.type](random, item.mode || 'choice');
     }
-    /* Every session has the four exam-style questions, plus six of the original eight, in a random order. */
+    /* Every session has the four exam-style questions and six place value questions, in a random order.
+       Comparing and ordering (including negatives) are taught in the Greater than and less than lesson. */
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
-        const original = E.shuffle([{ type: 'digitValue', mode: 'choice' }, { type: 'compare', mode: 'choice' }, { type: 'order', mode: 'custom' },
-            { type: 'scaledProduct', mode: 'number' }, { type: 'powerOfTen', mode: 'number' }, { type: 'digitValue', mode: 'number' },
-            { type: 'negCoolest', mode: 'choice' }, { type: 'negGreatest', mode: 'number' }], random).slice(0, 6);
+        const original = [{ type: 'digitValue', mode: 'choice' }, { type: 'digitValue', mode: 'number' },
+            { type: 'scaledProduct', mode: 'choice' }, { type: 'scaledProduct', mode: 'number' },
+            { type: 'powerOfTen', mode: 'choice' }, { type: 'powerOfTen', mode: 'number' }];
         const examStyle = [{ type: 'wordsToFigures', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }, { type: 'digitCards', mode: 'choice' },
             { type: 'digitCount', mode: 'choice' }, { type: 'closestNumber', mode: 'choice' }];
         return E.shuffle([...original, ...examStyle], random)
@@ -1383,8 +1384,10 @@
         divide.prompt = 'A machine divides its input by 10. The input is 438. What is the output?';
         const reverse = powerOfTenQuestion(4270, 0, 2);
         reverse.prompt = 'A number is multiplied by 100. The result is 4,270. What was the original number?';
-        return [number, reason, orderingQuestion(['2.8', '2.75', '2.805', '2.79'], 'custom', 'Put these long-jump distances in metres in order from shortest to longest.'),
-            negativeSymbolQuestion(-6, -11), negativeOrderQuestion([-4, 2, -9, 0, -1], 'Put these temperatures in order, coldest first.'), divide, reverse];
+        const E = window.Maths1to9LessonEngine;
+        const words = generateWordsToFiguresQuestion(E.seededRandom(11), 'choice');
+        const digitCount = generateDigitCountQuestion(E.seededRandom(5));
+        return [number, words, divide, digitCount, reverse];
     }
 
     const explorerNumber = '107389.4828';
