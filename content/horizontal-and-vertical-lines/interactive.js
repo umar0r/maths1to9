@@ -179,7 +179,7 @@
         event('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Continue', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false,
                 items: examples.map(() => ({ line: null, correct: false })) })
         });
@@ -192,14 +192,17 @@
         function reportProgress() {
             api.setSectionProgress('interactive', state.finished ? 4 : state.index + Number(state.items[state.index]?.correct === true), 4);
         }
+        const lastScreen = 3;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() { api.completeSection('interactive'); api.continueSection(); }
         function action() {
-            if (state.screen === 4) api.clearSectionAction('interactive');
-            else if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => showScreen(state.screen + 1) });
+            if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => state.screen === lastScreen ? goToPractice() : showScreen(state.screen + 1) });
             else api.setSectionAction('interactive', {
                 label: 'Continue', disabled: !state.items[state.screen].correct,
                 onClick() {
-                    section.update(state => { state.index++; state.screen = state.index; state.furthestScreen = state.screen; state.finished = state.index === 4; });
+                    section.update(state => { state.index++; state.screen = Math.min(state.index, lastScreen); state.furthestScreen = state.screen; state.finished = state.index === 4; });
                     render();
+                    if (state.finished) goToPractice();
                 }
             });
         }
@@ -224,15 +227,12 @@
         function render() {
             mounted.forEach(graph => graph.destroy()); mounted = [];
             root.replaceChildren();
-            if (state.screen === 4) {
-                const heading = node('h3', 'Your completed examples'); heading.dataset.screenHeading = ''; root.append(heading);
-                examples.forEach((example, index) => draw(index, true));
-            } else draw(state.screen, state.screen < state.index);
+            draw(state.screen, state.screen < state.index);
             api.setSectionBack('interactive', state.screen > 0 ? { onClick: () => showScreen(state.screen - 1) } : null);
             if (state.finished) event('interactive', 'complete');
             action(); syncHash();
         }
-        for (let index = 0; index <= 4; index++) api.registerHashRoute(`try-it-${index + 1}`, () => {
+        for (let index = 0; index < 4; index++) api.registerHashRoute(`try-it-${index + 1}`, () => {
             if (!api.goToSection('interactive', { moveFocus: false })) {
                 document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                 return;
@@ -244,7 +244,7 @@
         // including a deep link rejected by a locked section.
         window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         reportProgress(); render();
-        const requested = /^#try-it-([1-5])$/.exec(initialHash);
+        const requested = /^#try-it-([1-4])$/.exec(initialHash);
         if (requested && api.goToSection('interactive', { moveFocus: false })) showScreen(Math.min(Number(requested[1]) - 1, state.furthestScreen));
     }
     window.Maths1to9Interactives ??= {};
