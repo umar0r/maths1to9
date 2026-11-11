@@ -1,0 +1,9 @@
+.pv-sign-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; max-width: 36rem; margin: 1.25rem auto; }
+.pv-sign-card { display: grid; gap: .5rem; padding: 1.25rem .75rem; text-align: center; border: 2px solid #cbd5e1; border-radius: .5rem; background: #f8fafc; }
+.pv-sign-card strong { font-size: 1.6rem; }
+@media (max-width: 480px) {
+    .pv-sign-cards { grid-template-columns: minmax(0, 1fr); }
+}
+.pv-mouth { display: inline-block; height: 2.2em; width: auto; margin-inline: .3em; vertical-align: middle; }
+.pv-mouth polyline { fill: none; stroke: #15803d; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+.pv-mouth polygon { fill: #fff; stroke: #15803d; stroke-width: 1.5; stroke-linejoin: round; }

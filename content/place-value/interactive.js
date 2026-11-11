@@ -24,9 +24,17 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 4,
+            version: 5,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, selected: 5 }),
-            upgrade: () => null
+            upgrade(saved, version) {
+                if (version !== 4) return null;
+                const remap = index => index >= 4 ? index - 1 : index;
+                return {
+                    ...saved,
+                    screen: remap(saved.screen),
+                    furthestScreen: remap(saved.furthestScreen)
+                };
+            }
         });
         const state = section.state;
         section.save();
