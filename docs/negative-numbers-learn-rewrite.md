@@ -49,7 +49,7 @@ last screen must be finished, to open Try it.
 Working always goes inside the feedback box, never in a separate box underneath.
 Every bold green answer in this document means that.
 
-Each screen teaches one thing, like Brilliant, and each one builds on the
+Each screen teaches one thing, and each one builds on the
 last:
 
 1. What a negative number is, on a thermometer.

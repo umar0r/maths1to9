@@ -37,7 +37,7 @@ nothing in those three files.
 
 ## How it should feel
 
-Like a brilliant.org lesson: one idea per screen, a picture the pupil
+One idea per screen, a picture the pupil
 moves, and the picture does the explaining. Text is two or three short
 lines under it.
 

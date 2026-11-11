@@ -197,7 +197,7 @@ with a save made before the change: it must come back as it was.
 
 ## 3. Back button
 
-A subtle way to go back one screen, like brilliant.org: a small "‹ Back" at
+A subtle way to go back one screen: a small "‹ Back" at
 the top left of the lesson card. It replaces the earlier rule of "no Back
 links". Lessons still don't add their own back links or buttons; the engine
 owns this one.

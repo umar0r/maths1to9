@@ -47,7 +47,7 @@ Nothing else changes in `curriculum.json`, `skills.json` or
 
 ## How it should feel
 
-Like a brilliant.org lesson: one idea per screen, a picture the pupil
+One idea per screen, a picture the pupil
 moves, two or three short lines under it.
 
 - **The picture: tiles and a bar.** A row of small square tiles, one per
