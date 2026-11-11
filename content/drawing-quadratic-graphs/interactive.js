@@ -263,7 +263,7 @@
     async function mountTryIt(root) {
         const api = window.Maths1to9Lesson;
         event('interactive', 'gate');
-        const section = await api.useSectionState('interactive', { version: 2, initial: () => ({ index: 0, screen: 0, furthestScreen: 0,
+        const section = await api.useSectionState('interactive', { version: 3, initial: () => ({ index: 0, screen: 0, furthestScreen: 0,
             finished: false, cards: {}, plotted: [], joined: false }) });
         const state = section.state; section.save(); let board = null;
         function syncHash() { if (api.getCurrentSection().id === 'interactive') api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true }); }
@@ -275,13 +275,17 @@
             const completed = Number(state.cards['example-1']?.correct === true) + Number(state.cards['example-2']?.correct === true) + Number(state.plotted.length === 5) + Number(state.joined);
             api.setSectionProgress('interactive', completed, 4);
         }
+        const lastScreen = 3;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice() { api.completeSection('interactive'); api.continueSection(); }
         function advance() {
-            section.update(s => { s.index++; s.screen = s.index; s.furthestScreen = s.screen; s.finished = s.index === 4; }); render();
+            section.update(s => { s.index++; s.screen = Math.min(s.index, lastScreen); s.furthestScreen = s.screen; s.finished = s.index === 4; }); render();
+            if (state.finished) goToPractice();
         }
         function action() {
             report();
             if (state.screen >= 2 && state.screen < 4) api.setSectionAction('interactive', { label: state.screen < state.index ? 'Next' : 'Continue',
-                disabled: state.screen === 2 ? state.plotted.length < 5 : !state.joined, onClick: state.screen < state.index ? () => show(state.screen + 1) : advance });
+                disabled: state.screen === 2 ? state.plotted.length < 5 : !state.joined, onClick: state.screen < state.index ? () => (state.screen === lastScreen ? goToPractice() : show(state.screen + 1)) : advance });
         }
         function card(host, index, readOnly) {
             const config = examples[index];
@@ -297,7 +301,7 @@
         }
         function render() {
             board?.destroy(); board = null; root.replaceChildren();
-            root.append(node('h3', state.screen === 4 ? 'Your completed examples' : ['First column.', 'The rest of the table.', 'Plot.', 'Join them.'][state.screen]));
+            root.append(node('h3', ['First column.', 'The rest of the table.', 'Plot.', 'Join them.'][state.screen]));
             equation(root, guided);
             api.setSectionBack('interactive', state.screen ? { onClick: () => show(state.screen - 1) } : null);
             if (state.finished) event('interactive', 'complete');
@@ -305,20 +309,15 @@
                 card(root, state.screen, state.screen < state.index);
                 if (state.screen < state.index) api.setSectionAction('interactive', { label: 'Next', onClick: () => show(state.screen + 1) });
             } else if (state.screen === 2) board = plotting(root, guided, state.plotted, () => section.save(), action);
-            else if (state.screen === 3) board = joining(root, guided, state, () => section.save(), action,
+            else board = joining(root, guided, state, () => section.save(), action,
                 'The graph goes through all five points and curves smoothly at the bottom.');
-            else {
-                const first = node('div'), second = node('div'); root.append(first, second); card(first, 0, true); card(second, 1, true);
-                board = joining(root, guided, state, () => section.save(), action, 'The graph goes through all five points and curves smoothly at the bottom.');
-                api.clearSectionAction('interactive');
-            }
             action(); syncHash();
         }
-        for (let i = 0; i <= 4; i++) api.registerHashRoute(`try-it-${i + 1}`, () => { if (api.goToSection('interactive', { moveFocus: false })) show(Math.min(i, state.furthestScreen)); });
+        for (let i = 0; i < 4; i++) api.registerHashRoute(`try-it-${i + 1}`, () => { if (api.goToSection('interactive', { moveFocus: false })) show(Math.min(i, state.furthestScreen)); });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         window.addEventListener('hashchange', () => queueMicrotask(syncHash));
         render();
-        const requested = /^#try-it-([1-5])$/.exec(initialHash);
+        const requested = /^#try-it-([1-4])$/.exec(initialHash);
         if (requested && api.goToSection('interactive', { moveFocus: false })) show(Math.min(Number(requested[1]) - 1, state.furthestScreen));
     }
     examples.forEach((question, index) => { examples[index] = Q.prepare(question); });
