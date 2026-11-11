@@ -24,7 +24,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 4,
+            version: 5,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, selected: 5 }),
             upgrade: () => null
         });
