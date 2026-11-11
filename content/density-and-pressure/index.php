@@ -27,7 +27,7 @@ $pageTitle = 'Density and pressure';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=43">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=44">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -72,6 +72,6 @@ $pageTitle = 'Density and pressure';
     <script src="./interactive.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=49"></script>
+    <script src="../../assets/js/lesson-engine.js?v=50"></script>
 </body>
 </html>

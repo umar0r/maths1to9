@@ -269,6 +269,71 @@
             export() { return [...activities.values()].map(item => ({...item})); }
         };
     }
+    // A short celebration when a pupil gets an answer right: confetti in
+    // Practice, a rocket in Check. Starts at the bubble's bottom-left corner.
+    // Does nothing for pupils who ask for reduced motion.
+    const celebrationColours = ['#22c55e', '#facc15', '#3b82f6', '#f97316', '#ec4899', '#a855f7'];
+    const rocketPicture = `
+        <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+            <g transform="rotate(20 18 18)">
+                <path d="M18 3c5 4 7 10 7 16v6h-14v-6c0-6 2-12 7-16z" fill="#e2e8f0" stroke="#334155" stroke-width="1.5"/>
+                <circle cx="18" cy="14" r="3" fill="#3b82f6" stroke="#334155" stroke-width="1.5"/>
+                <path d="M11 19l-4 6v3l4-2zM25 19l4 6v3l-4-2z" fill="#ef4444" stroke="#334155" stroke-width="1.5"/>
+                <path d="M14 26c1 4 2 6 4 8 2-2 3-4 4-8z" fill="#f97316"/>
+                <path d="M16 26c.5 2 1 3 2 4 1-1 1.5-2 2-4z" fill="#facc15"/>
+            </g>
+        </svg>`;
+    function celebrate(anchor, kind = 'confetti') {
+        if (!anchor?.getBoundingClientRect) return;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        const box = anchor.getBoundingClientRect();
+        const burst = document.createElement('div');
+        burst.className = 'celebration';
+        burst.setAttribute('aria-hidden', 'true');
+        burst.style.left = `${box.left + 18}px`;
+        burst.style.top = `${box.top + box.height / 2}px`;
+        if (kind === 'rocket') {
+            const rocket = document.createElement('span');
+            rocket.className = 'celebration__rocket';
+            rocket.innerHTML = rocketPicture;
+            burst.append(rocket);
+            for (let index = 0; index < 14; index += 1) {
+                const spark = document.createElement('span');
+                spark.className = 'celebration__spark';
+                const angle = Math.PI * (0.15 + Math.random() * 0.7);
+                const distance = 20 + Math.random() * 40;
+                spark.style.setProperty('--piece-colour', celebrationColours[index % celebrationColours.length]);
+                spark.style.setProperty('--piece-x', `${Math.cos(angle) * distance}px`);
+                spark.style.setProperty('--piece-y', `${Math.sin(angle) * distance}px`);
+                spark.style.animationDelay = `${Math.round(Math.random() * 150)}ms`;
+                burst.append(spark);
+            }
+        } else {
+            for (let index = 0; index < 28; index += 1) {
+                const piece = document.createElement('span');
+                piece.className = index % 3 === 0 ? 'celebration__piece celebration__piece--round' : 'celebration__piece';
+                const angle = -Math.PI * (0.05 + Math.random() * 0.9);
+                const distance = 60 + Math.random() * 90;
+                piece.style.setProperty('--piece-colour', celebrationColours[index % celebrationColours.length]);
+                piece.style.setProperty('--piece-x', `${Math.cos(angle) * distance}px`);
+                piece.style.setProperty('--piece-y', `${Math.sin(angle) * distance + 30}px`);
+                piece.style.setProperty('--piece-turn', `${Math.round(Math.random() * 720 - 360)}deg`);
+                piece.style.animationDelay = `${Math.round(Math.random() * 80)}ms`;
+                burst.append(piece);
+            }
+        }
+        document.body.append(burst);
+        window.setTimeout(() => burst.remove(), 1400);
+    }
+
+    // The feedback look for a question card, by section. Learn keeps the
+    // plain box; Try it gets a calm bubble; Practice and Check a bright one.
+    function feedbackLook(sectionId) {
+        if (sectionId === 'interactive') return ' question-feedback--bubble question-feedback--calm';
+        if (sectionId === 'question-bank' || sectionId === 'comparison') return ' question-feedback--bubble';
+        return '';
+    }
+
     function resultText(tag, value, className = '') {
         const node = document.createElement(tag);
         node.className = className;
@@ -552,7 +617,7 @@
             article.append(answer);
             if (saved.feedback) {
                 const feedbackClass = saved.correct === true ? 'is-correct' : 'is-incorrect';
-                article.append(resultText('p', saved.feedback, `question-feedback is-visible ${feedbackClass}`));
+                article.append(resultText('p', saved.feedback, `question-feedback${feedbackLook(sectionId)} is-visible ${feedbackClass}`));
             }
             return { result };
         }
@@ -664,7 +729,7 @@
                 box.setAttribute('aria-invalid', String(saved.invalid === id));
             }
             const shown = saved.invalid || saved.phase !== 'answer';
-            feedback.className = 'question-feedback';
+            feedback.className = `question-feedback${feedbackLook(sectionId)}`;
             if (shown) feedback.className += ` is-visible ${saved.correct === true && !saved.invalid ? 'is-correct' : 'is-incorrect'}`;
             feedback.replaceChildren();
             if (saved.invalid) feedback.textContent = fractions
@@ -755,6 +820,8 @@
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
+            if (correct && sectionId === 'question-bank') celebrate(feedback, 'confetti');
+            if (correct && sectionId === 'comparison') celebrate(feedback, 'rocket');
             if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
@@ -957,6 +1024,7 @@
         renderScorePanel,
         tidyNumber,
         createQuestion,
+        celebrate,
         questionSetId,
         assessmentEvidenceId,
         archivePractice,
