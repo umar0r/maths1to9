@@ -175,8 +175,8 @@ test('number formatting fuzz checks now run in tests instead of on every page lo
         }
     }
 });
-test('Learn has eight screens and teaches every question method before it is asked', () => {
-    assert.equal(Q.learnScreens.length, 8);
+test('Learn has seven screens and teaches every question method before it is asked', () => {
+    assert.equal(Q.learnScreens.length, 7);
     const text = JSON.stringify(Q.learnScreens).toLowerCase();
     for (const keyword of ['digit', 'column', 'zero', 'decimal point', 'multiplying by 10', 'dividing by 10', 'cancel']) assert(text.includes(keyword), keyword);
     for (const line of allStrings(Q.learnScreens)) assert.deepEqual(wrongSums(line), [], line);

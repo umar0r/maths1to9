@@ -1403,9 +1403,6 @@
             '0.75 looks bigger than 0.8 because it has more digits. It isn’t.',
             'Add a zero to the end so both have the same number of digits. 0.8 = 0.80. The zero does not change the value.'
         ] },
-        { title: 'The wide side of the sign faces the bigger number.', lines: [
-            'Think of the sign as an open mouth. It always wants to eat the bigger number.'
-        ] },
         { title: 'Multiplying by 10 moves each digit one column\u00a0left.', lines: [
             'Each column is worth ten times the one on its right.'
         ] },
@@ -1518,39 +1515,6 @@
         requestAnimationFrame(draw);
         return block;
     }
-    /* Draws > or < as an open mouth with white teeth along the inside of each jaw. */
-    function mouthSign(sign) {
-        const svgNs = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(svgNs, 'svg');
-        svg.setAttribute('viewBox', '0 0 60 68');
-        svg.setAttribute('class', 'pv-mouth');
-        svg.setAttribute('role', 'img');
-        svg.setAttribute('aria-label', sign === '>' ? 'is greater than' : 'is less than');
-
-        const drawing = document.createElementNS(svgNs, 'g');
-        if (sign === '<') drawing.setAttribute('transform', 'translate(60 0) scale(-1 1)');
-
-        const along = [0.838, 0.545];
-        const inward = [-0.545, 0.838];
-        const point = (forward, inside) => [
-            10 + along[0] * forward + inward[0] * inside,
-            8 + along[1] * forward + inward[1] * inside
-        ];
-        for (const distance of [6, 15, 24]) {
-            const corners = [point(distance - 4, 5), point(distance, 13), point(distance + 4, 5)];
-            for (const flip of [false, true]) {
-                const tooth = document.createElementNS(svgNs, 'polygon');
-                tooth.setAttribute('points', corners.map(([x, y]) => `${x.toFixed(1)},${(flip ? 68 - y : y).toFixed(1)}`).join(' '));
-                drawing.append(tooth);
-            }
-        }
-
-        const jaws = document.createElementNS(svgNs, 'polyline');
-        jaws.setAttribute('points', '10,8 50,34 10,60');
-        drawing.append(jaws);
-        svg.append(drawing);
-        return svg;
-    }
     function tapDigitCards(host, section) {
         const digits = '670'.split('');
         const selected = () => section.state.firstCard ?? 1;
@@ -1636,20 +1600,10 @@
             compare.append(numberChart('0.80', -1, true, false), numberChart('0.75', -1, true, false));
             host.append(compare, element('p', 'Now compare the digits from left to right. The first digit that is different decides it. 8 tenths is more than 7 tenths.'));
         } else if (screen === 4) {
-            const cards = element('div', '', 'pv-sign-cards');
-            for (const [said, left, sign, right] of [['0.80 is greater than 0.75', '0.80', '>', '0.75'], ['0.75 is less than 0.80', '0.75', '<', '0.80']]) {
-                const card = element('div', '', 'pv-sign-card');
-                const written = element('strong');
-                written.append(left, mouthSign(sign), right);
-                card.append(element('span', said), written);
-                cards.append(card);
-            }
-            host.append(cards);
-        } else if (screen === 5) {
             host.append(timesTenTable(), element('p', 'The decimal point stays where it is.'));
-        } else if (screen === 6) {
+        } else if (screen === 5) {
             host.append(timesTenTable(true), element('p', 'The decimal point stays where it is.'));
-        } else if (screen === 7) {
+        } else if (screen === 6) {
             host.append(
                 placeTable([{ cells: ['', '3', '8', '.', '4'] }, { cells: ['', '2', '0', '.', '0'] }], '×', '38.4 × 20', false),
                 element('p', '38.4 × 20 = 768', 'pv-equation'));
