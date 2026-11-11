@@ -186,7 +186,7 @@
         };
     }
 
-    // The multiplying questions in Try it, each with the signs to find on the grid.
+    // The multiplying questions in Try it.
     function multiplyExamples() {
         return [
             {
@@ -224,12 +224,9 @@
                 }
             },
             {
-                questionType: 'multiply', input: 'number', signs: [null, '−'],
-                prompt: 'Find the missing number: ? × −3 = 15.',
-                rule: 'The same signs give a positive answer. Different signs give a negative answer.', answer: '−5',
-                feedback: '−5 × −3 = 15. The answer is positive, so both signs must be the same.',
-                rules: [{ value: '5', feedback: '5 × −3 = −15. The signs need to be the same to get a positive answer.' }],
-                fallback: '15 ÷ 3 = 5. Then use the grid to find the sign.'
+                questionType: 'multiply', input: 'reveal',
+                prompt: 'Tap each card to multiply 1 by it.',
+                feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
