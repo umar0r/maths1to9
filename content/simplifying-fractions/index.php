@@ -33,7 +33,7 @@ $pageTitle = 'Equivalent and simplifying fractions';
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=2"
+    data-lesson-src="./lesson.json?v=3"
 >
     <header class="site-header">
         <div class="site-header__inner">

@@ -42,6 +42,7 @@
         "intro": ""
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise prime factor decomposition",
         "intro": "",

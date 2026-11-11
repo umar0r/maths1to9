@@ -36,6 +36,7 @@
         "intro": ""
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise continuing the sequence",
         "intro": "",

@@ -36,6 +36,7 @@
         "intro": ""
     },
     "question_bank": {
+        "hide_heading": true,
         "eyebrow": "Practice",
         "hide_eyebrow": true,
         "title": "Practise place value",
