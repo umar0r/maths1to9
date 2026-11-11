@@ -18,7 +18,7 @@
         parent.append(span);
     }
     // Live activities retain their drawing; only the feedback and action change on release.
-    function live(container, target, saved, readOnly, onChange) {
+    function live(container, target, saved, readOnly, onChange, sectionId) {
         const host = document.createElement('div');
         const feedback = node('p', '');
         feedback.setAttribute('aria-live', 'polite');
@@ -31,7 +31,7 @@
                 return;
             }
             const result = judge(line, target);
-            feedback.className = `question-feedback is-visible ${result.correct ? 'is-correct' : 'is-incorrect'}`;
+            feedback.className = window.Maths1to9LessonEngine.feedbackClassName(sectionId, { correct: result.correct === true });
             feedback.textContent = result.feedback;
             graph.describe('');
         };
@@ -148,7 +148,7 @@
                 graph = live(root, target, item.line, index < state.furthestScreen || state.finished, line => {
                     section.update(() => { item.line = line; item.correct = line !== null && judge(line, target).correct; });
                     action();
-                });
+                }, 'explanation');
             }
             api.setSectionBack('explanation', index > 0 ? { onClick: () => showScreen(index - 1) } : null);
             if (state.finished) event('explanation', 'complete');
@@ -218,7 +218,7 @@
                 ending.textContent = item.correct ? target.ending : '';
                 if (item.correct) mounted.at(-1).setEditable(false);
                 reportProgress(); action();
-            }));
+            }, 'interactive'));
             container.append(ending);
         }
         function render() {

@@ -49,7 +49,7 @@ last screen must be finished, to open Try it.
 Working always goes inside the feedback box, never in a separate box underneath.
 Every bold green answer in this document means that.
 
-Each screen teaches one thing, like Brilliant, and each one builds on the
+Each screen teaches one thing, and each one builds on the
 last:
 
 1. What a negative number is, on a thermometer.
@@ -300,7 +300,7 @@ and its column pastel blue, so the square where they cross is purple:
 2. Typed: Work out −6 × −3.
 3. Tap: Tap the square that gives the sign of −8 × −2. A wrong square colours
    its row and column and explains why.
-4. Typed: Find the missing number: ? × −3 = 15.
+4. Tap: Reveal the products of 1 and then −1 with the cards 1, 0 and −1.
 5. Typed: Sam says −3 × −5 = −15. What is the right answer?
 
 **Number line examples, in this order:** 5 − (−3), 3 − 8, −4 − (−9), −6 + 9.

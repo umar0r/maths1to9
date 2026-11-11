@@ -392,10 +392,11 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 3,
+            version: 4,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 grid: [false, false, false, false], gridLast: null, solved: {}, tried: [],
+                reveal: { part: 0, seen: [[], []], last: null },
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade: () => null
@@ -446,10 +447,104 @@
             render();
         }
 
-        function markSolved(number) {
+        function markSolved(number, refresh = render) {
             section.update(state => { state.solved[number] = true; });
             reportProgress();
-            render();
+            refresh();
+        }
+
+        function drawRevealCards(heading, body, page) {
+            const factors = [1, -1];
+            const values = [1, 0, -1];
+            const reveal = state.reveal;
+            const { createFeedback } = window.Maths1to9LessonEngine;
+            body.classList.add('nn-reveal');
+
+            const equation = document.createElement('p');
+            equation.className = 'nn-reveal__equation';
+            equation.setAttribute('aria-live', 'polite');
+            const factor = document.createElement('span');
+            const slot = document.createElement('span');
+            slot.className = 'nn-reveal__slot';
+            const answer = document.createElement('span');
+            equation.append(factor, slot, ' = ', answer);
+            body.append(equation);
+
+            const group = document.createElement('div');
+            group.className = 'nn-reveal__cards';
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', 'Numbers to multiply by');
+            body.append(group);
+
+            const lists = document.createElement('div');
+            lists.className = 'nn-reveal__lists';
+            body.append(lists);
+            const rows = factors.map(first => {
+                const list = document.createElement('ul');
+                list.setAttribute('aria-label', `Multiplying ${signed(first)}`);
+                lists.append(list);
+                return values.map(value => {
+                    const row = document.createElement('li');
+                    row.textContent = `${signed(first)} × ${signed(value)} = ${signed(first * value)}`;
+                    list.append(row);
+                    return row;
+                });
+            });
+
+            let feedback;
+            const buttons = values.map(value => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'button';
+                button.textContent = signed(value);
+                button.addEventListener('click', () => {
+                    if (solved(page)) return;
+                    section.update(({ reveal }) => {
+                        const seen = reveal.seen[reveal.part];
+                        if (!seen.includes(value)) seen.push(value);
+                        reveal.last = value;
+                        if (reveal.part === 0 && seen.length === values.length) {
+                            reveal.part = 1;
+                            reveal.last = null;
+                        }
+                    });
+                    if (reveal.seen[1].length === values.length) {
+                        markSolved(page.number, () => api.setSectionAction('interactive', {
+                            label: 'Next', onClick: nextPage
+                        }));
+                    }
+                    paint();
+                });
+                group.append(button);
+                return button;
+            });
+
+            function paint() {
+                const { part, seen, last } = reveal;
+                const done = solved(page);
+                heading.textContent = part === 0 ? page.question.prompt : 'Now tap each card to multiply −1 by it.';
+                factor.textContent = `${signed(factors[part])} × `;
+                slot.textContent = last === null ? '' : signed(last);
+                slot.classList.toggle('is-filled', last !== null);
+                answer.textContent = last === null ? '?' : signed(factors[part] * last);
+                answer.classList.toggle('is-revealed', last !== null);
+                buttons.forEach((button, index) => {
+                    const value = values[index];
+                    const used = seen[part].includes(value);
+                    button.classList.toggle('is-used', used);
+                    button.classList.toggle('is-selected', last === value);
+                    button.setAttribute('aria-pressed', String(used));
+                    button.disabled = done;
+                });
+                rows.forEach((list, partIndex) => list.forEach((row, index) => {
+                    row.hidden = !seen[partIndex].includes(values[index]);
+                }));
+                if (done && !feedback) {
+                    feedback = createFeedback('interactive', { correct: true, text: page.question.feedback });
+                    body.append(feedback);
+                }
+            }
+            paint();
         }
 
         // A question the pupil answers by doing, with no Check button.
@@ -462,7 +557,9 @@
             const body = document.createElement('div');
             body.className = 'nn-learn';
             container.append(heading, body);
-            if (question.input === 'tap') {
+            if (question.input === 'reveal') {
+                drawRevealCards(heading, body, page);
+            } else if (question.input === 'tap') {
                 NN.drawTapSquare(body, question, state.tried, solved(page), key => {
                     if (key === question.square.join(',')) return markSolved(number);
                     section.update(state => { state.tried.push(key); });

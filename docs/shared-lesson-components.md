@@ -197,7 +197,7 @@ with a save made before the change: it must come back as it was.
 
 ## 3. Back button
 
-A subtle way to go back one screen, like brilliant.org: a small "‹ Back" at
+A subtle way to go back one screen: a small "‹ Back" at
 the top left of the lesson card. It replaces the earlier rule of "no Back
 links". Lessons still don't add their own back links or buttons; the engine
 owns this one.
@@ -391,8 +391,8 @@ From `docs/lesson-specification.md`:
   Check.
 - A wrong option greys out with a × and stays disabled; Try again keeps the
   other options. A wrong number clears the box on Try again.
-- Feedback is one sentence from the lesson, shown with the shared
-  `question-feedback is-correct / is-incorrect` classes. A `hint`, if the
+- Feedback is one sentence from the lesson, drawn by the shared feedback
+  box (see "Feedback boxes" below). A `hint`, if the
   wrong answer has one, appears only with that feedback. There is no hint
   button.
 - Options sit in a `role="group"` container so the shared
@@ -556,6 +556,37 @@ Read-only cards render with `editable: false`, update with the saved phase,
 and show `answerText(value)` with the usual mark and saved feedback.
 `result()` and question-set results (including earlier sessions) use
 `answerText(value)`, or an empty string for `null`.
+
+### Feedback boxes (added 2026-11-11)
+
+Every feedback box in every lesson comes from the engine. A lesson never
+writes its own feedback classes or styles.
+
+```js
+const E = window.Maths1to9LessonEngine;
+
+// A new box: append it where the feedback belongs.
+const box = E.createFeedback('interactive', { correct: true, text: 'Right.' });
+
+// An existing box whose result changes: set its class from the engine.
+box.className = E.feedbackClassName('interactive', { correct: false });
+box.className = E.feedbackClassName('interactive', { visible: false }); // hidden
+```
+
+The first argument is the section the box is in: `'explanation'` (Learn),
+`'interactive'` (Try it), `'question-bank'` (Practice) or `'comparison'`
+(Check). The engine picks the look from it:
+
+| Section | Look | Right answer |
+|---|---|---|
+| Learn | Plain box | Nothing |
+| Try it | Bubble: cream when right, pink when wrong | Nothing |
+| Practice | Bubble: green when right, pink when wrong | Confetti |
+| Check | Bubble: green when right, pink when wrong | A rocket |
+
+Question cards call these themselves, and fire the confetti or rocket.
+Working goes inside the same box (append a span), never in a second box.
+A helper used by both Learn and Try it takes the section as an argument.
 
 ## 6. Question set, with Practise again
 

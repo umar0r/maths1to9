@@ -11,6 +11,11 @@ module.exports = async function solveLearn(page) {
         for (let step = 0; step < Math.abs(target - dot); step++) await line.press(target > dot ? 'ArrowRight' : 'ArrowLeft');
         return true;
     }
+    const reveal = root.locator('.nn-reveal__cards button[aria-pressed="false"]:enabled');
+    if (await reveal.count()) {
+        while (await reveal.count()) await reveal.first().click();
+        return true;
+    }
     const target = root.locator('[role="button"]').first();
     if (!await target.count()) return false;
     // Generic runners detect progress from text. Finish one visible journey

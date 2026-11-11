@@ -58,7 +58,7 @@
         const board = Q.graph(host, form);
         Q.xs.forEach(x => Q.point(board, [x, valueOf(form, x)]));
         const controls = group(root, 'How do you join the points?');
-        const feedback = node('p', '', 'question-feedback'); feedback.setAttribute('role', 'status'); root.append(feedback);
+        const feedback = node('p', '', window.Maths1to9LessonEngine.feedbackClassName('interactive', { visible: false })); feedback.setAttribute('role', 'status'); root.append(feedback);
         const ending = paragraph(root, ''); ending.hidden = form.c !== -1 || !saved.joined;
         const correctFeedback = form.c === -1 ? '✓ Right. One smooth curve through every point.' : `✓ ${closing}`;
         function closeText() {
@@ -81,18 +81,18 @@
             buttons.forEach((b, i) => { b.className = `button${i === index ? index ? ' is-incorrect' : ' is-correct' : ''}`; });
             if (index === 0) {
                 saved.joined = true; save(); buttons.forEach(b => { b.disabled = true; });
-                feedback.textContent = correctFeedback; feedback.className = 'question-feedback is-visible is-correct';
+                feedback.textContent = correctFeedback; feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: true });
                 if (form.c === -1) { closeText(); ending.hidden = false; }
                 done();
             } else {
                 feedback.textContent = index === 1 ? "The graph doesn't have corners. Quadratic graphs curve smoothly between the points."
                     : `Your curve misses ${coordinate([0, form.c])}. The curve must go through every point, including the lowest one.`;
-                feedback.className = 'question-feedback is-visible is-incorrect';
+                feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: false });
             }
         }));
         if (saved.joined) {
             draw(0); buttons.forEach(b => { b.disabled = true; }); buttons[0].classList.add('is-correct');
-            feedback.textContent = correctFeedback; feedback.className = 'question-feedback is-visible is-correct';
+            feedback.textContent = correctFeedback; feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: true });
         }
         return board;
     }

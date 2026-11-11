@@ -8,7 +8,7 @@
 }
 
 :root {
-    /* Friendly, colourful learning palette (Brilliant / Khan inspired) */
+    /* Friendly, colourful learning palette */
     --background: #ffffff;
     --background-deep: #f5f8fd;
     --surface: #ffffff;
@@ -2211,6 +2211,163 @@ a {
     background: var(--error-background);
     color: var(--error-dark);
     border: 1px solid #fecaca;
+}
+
+/* Feedback bubble on the engine's question cards in Try it, Practice and
+   Check: a soft speech bubble that fits its words. Learn keeps the plain
+   box above. */
+.question-feedback--bubble {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 20px;
+    padding: 14px 22px;
+    border-radius: 22px 22px 22px 6px;
+    font-weight: 400;
+    font-size: 1.1rem;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.question-feedback--bubble.is-visible {
+    animation: feedback-pop 260ms cubic-bezier(.2, 1.4, .4, 1);
+    transform-origin: bottom left;
+}
+
+.question-feedback--bubble.is-correct {
+    background: #edf9ee;
+    border: 1px solid #a9dcae;
+    color: var(--text);
+}
+
+.question-feedback--bubble.is-incorrect {
+    background: #fdf0ef;
+    border: 1px solid #f2b8b3;
+    color: var(--text);
+}
+
+/* Try it: a calm cream bubble when it's right. */
+.question-feedback--calm.is-correct {
+    background: #fdf6e4;
+    border: 1px solid #ecdcae;
+}
+
+@keyframes feedback-pop {
+    from {
+        opacity: 0;
+        transform: scale(.85);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Confetti burst drawn by the engine when an answer is right. */
+.celebration {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.celebration__piece {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--piece-colour);
+    animation: celebration-burst 900ms cubic-bezier(.15, .7, .3, 1) forwards;
+}
+
+.celebration__piece--round {
+    border-radius: 50%;
+}
+
+@keyframes celebration-burst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) scale(.6);
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--piece-x), var(--piece-y)) rotate(var(--piece-turn)) scale(1);
+    }
+}
+
+/* Rocket drawn by the engine when a Check answer is right. */
+.celebration__rocket {
+    position: absolute;
+    left: -18px;
+    top: -18px;
+    width: 36px;
+    height: 36px;
+    animation: celebration-rocket 1100ms cubic-bezier(.5, 0, .7, .4) forwards;
+}
+
+.celebration__spark {
+    position: absolute;
+    left: -3px;
+    top: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--piece-colour);
+    animation: celebration-spark 700ms ease-out forwards;
+}
+
+@keyframes celebration-rocket {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(.6);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translate(4px, -10px) scale(1);
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(70px, -220px) scale(1);
+    }
+}
+
+@keyframes celebration-spark {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--piece-x), var(--piece-y)) scale(.3);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .question-feedback--bubble.is-visible {
+        animation: none;
+    }
+
+    .celebration {
+        display: none;
+    }
 }
 
 @keyframes feedback-in {

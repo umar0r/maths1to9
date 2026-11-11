@@ -215,7 +215,7 @@
                     : !state.tap ? '' : first ? '✗ That point is on y = 2x + 7 only. Find where both lines meet.'
                         : second ? '✗ That point is on y = −x + 4 only. Find where both lines meet.'
                             : "✗ That point isn't on either line. Find where the two lines cross.");
-                status.className = `simultaneous-status${state.tap ? ` question-feedback is-visible ${state.found ? 'is-correct' : 'is-incorrect'}` : ''}`;
+                status.className = `simultaneous-status${state.tap ? ` ${window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: state.found === true })}` : ''}`;
                 api.setSectionAction('interactive', {
                     label: state.index > 0 ? 'Next' : 'Continue', disabled: !state.found,
                     onClick: state.index > 0 ? () => show(1) : advance

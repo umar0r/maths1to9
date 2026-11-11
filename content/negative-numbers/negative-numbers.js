@@ -186,7 +186,7 @@
         };
     }
 
-    // The multiplying questions in Try it, each with the signs to find on the grid.
+    // The multiplying questions in Try it.
     function multiplyExamples() {
         return [
             {
@@ -224,12 +224,9 @@
                 }
             },
             {
-                questionType: 'multiply', input: 'number', signs: [null, '−'],
-                prompt: 'Find the missing number: ? × −3 = 15.',
-                rule: 'The same signs give a positive answer. Different signs give a negative answer.', answer: '−5',
-                feedback: '−5 × −3 = 15. The answer is positive, so both signs must be the same.',
-                rules: [{ value: '5', feedback: '5 × −3 = −15. The signs need to be the same to get a positive answer.' }],
-                fallback: '15 ÷ 3 = 5. Then use the grid to find the sign.'
+                questionType: 'multiply', input: 'reveal',
+                prompt: 'Tap each card to multiply 1 by it.',
+                feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
@@ -393,10 +390,17 @@
         return svg;
     }
 
-    // The feedback box. Any working goes in here, on its own line, never in a
-    // separate box underneath.
-    function correctBox(host, text, sum) {
-        const box = paragraph(host, text, 'question-feedback is-visible is-correct');
+    // The shared feedback box, drawn by the engine so it matches every other
+    // lesson. Any working goes in here, on its own line, never in a separate
+    // box underneath. Learn passes 'explanation'; Try it passes 'interactive'.
+    function feedbackBox(host, sectionId, options) {
+        const box = window.Maths1to9LessonEngine.createFeedback(sectionId, options);
+        host.append(box);
+        return box;
+    }
+
+    function correctBox(host, text, sum, sectionId = 'explanation') {
+        const box = feedbackBox(host, sectionId, { correct: true, text });
         if (sum) {
             const working = document.createElement('span');
             working.className = 'nn-box-sum';
@@ -603,7 +607,7 @@
         if (solved) {
             drawFinishedLine(host, question);
             host.querySelector('.negative-line').classList.add('negative-line--solved');
-            correctBox(host, question.correct, question.working);
+            correctBox(host, question.correct, question.working, 'interactive');
             return;
         }
         let hint;
@@ -618,7 +622,7 @@
                 else showHint(value);
             }
         });
-        hint = paragraph(host, '', 'question-feedback is-incorrect');
+        hint = feedbackBox(host, 'interactive', { correct: false, visible: false });
         showHint(savedDot(question));
     }
 
@@ -774,8 +778,8 @@
                 });
             });
         }
-        if (solved) correctBox(host, `Correct. ${question.feedback}`);
-        else if (last) paragraph(host, question.wrong[last], 'question-feedback is-visible is-incorrect');
+        if (solved) correctBox(host, `Correct. ${question.feedback}`, '', 'interactive');
+        else if (last) feedbackBox(host, 'interactive', { correct: false, text: question.wrong[last] });
     }
 
     window.NegativeNumbers = {

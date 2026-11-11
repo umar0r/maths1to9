@@ -46,7 +46,7 @@ belongs with the other unit changes. Nothing else changes in
 
 ## How it should feel
 
-Like a brilliant.org lesson: one idea per screen, a picture the pupil
+One idea per screen, a picture the pupil
 moves, two or three short lines under it.
 
 - **The road.** One picture all lesson: a straight road drawn left to
