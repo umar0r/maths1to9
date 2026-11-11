@@ -235,7 +235,7 @@
                 values = [answer, ...wrong.map(option => Number(option.label))];
             } while (values.some(value => !Number.isInteger(value)) || new Set(values).size !== 4);
             const context = !divide && random() < 0.5 ? (r === 3 ? 'A culture triples in size every hour.' : r === 2 ? 'A prize doubles each round.' : 'A prize is multiplied by 4 each round.') : '';
-            const feedback = `${last} ${divide ? '÷' : '×'} ${r} = ${answer}.`;
+            const feedback = divide ? 'Use the same divisor at every step.' : 'Use the same multiplier at every step.';
             question = card(item.type, terms, { op: divide ? 'divide' : 'multiply', value: r }, next, {
                 bankId: 'sequences-04', input: 'choice', context, prompt: 'What is the next term?',
                 options: [option(number(answer), feedback, true), ...wrong]
@@ -259,7 +259,7 @@
                 rules: [
                     mistake(String(d - t), `Going down from ${t} passes zero. The answer is negative.`),
                     mistake(String(t + d), `That adds ${d}. The terms are going down.`)
-                ], feedback: `${t} − ${d} = ${number(t - d)}.`
+                ], feedback: ''
             });
         } else if (item.type === 'two-step') {
             const a = int(2, 8), m = int(2, 4), subtract = random() < 0.5;
@@ -277,7 +277,7 @@
                     mistake(String(reversed), subtract ? 'That subtracts first. Keep the steps in the order given.' : 'That multiplies first. Keep the steps in the order given.'),
                     mistake(String(first), "That's after one go. Put it back in."),
                     mistake(String(third), "That's three goes, one too many.")
-                ], feedback: `After one go: ${first}. After two goes: ${answer}.`
+                ], feedback: 'Use the result of the first go as the starting point for the second.'
             });
         } else if (item.type === 'next-two') {
             const kind = int(0, 2);
@@ -299,7 +299,7 @@
             if (one < 0 || two < 0) rules.push(mistake(pair(Math.abs(one), Math.abs(two)), 'Below zero the terms are negative.'));
             question = card(item.type, terms, { op: d < 0 ? 'subtract' : 'add', value: Math.abs(d) }, { kind: 'term', positions: [5, 6] }, {
                 input: 'number', fractions: true, fields, prompt: 'Write the next two terms.', answer: pair(one, two), rules,
-                feedback: `The next two terms are ${number(one)} and ${number(two)}.`
+                feedback: 'Use the same rule again on the term you just found.'
             });
         } else if (item.type === 'pattern-k') {
             const b = int(3, 8), d = int(2, 5), k = int(5, 8), answer = b + (k - 1) * d;
@@ -310,7 +310,7 @@
                     mistake(String(b + (k - 2) * d), `That's Pattern ${k - 1}. Count on one more.`),
                     mistake(String(k * d), `Multiplying the pattern number by the jump misses the start. Keep adding ${d} from the table.`),
                     mistake(String(b + k * d), `That's one jump too many. Pattern 1 already has ${b} sticks.`)
-                ], feedback: `Keep adding ${d}. Pattern ${k} uses ${answer} sticks.`
+                ], feedback: `Each new pattern adds ${d} sticks.`
             });
         } else {
             throw new TypeError(`Unknown sequence question type: ${item.type}`);

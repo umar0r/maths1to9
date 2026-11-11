@@ -13,6 +13,18 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "contextReject": "A width must be positive, so discard the negative solution.",
+                "setFactorsZero": "A product is zero when at least one factor is zero.",
+                "bothSolutionsFromBrackets": "Set each bracket equal to zero in turn.",
+                "notFinished": "Factorising is only the first step. Set each factor equal to zero.",
+                "monicReady": "Choose bracket numbers that multiply to the constant and add to the number in front of x.",
+                "squareEqualsNumber": "A positive number and its negative have the same square.",
+                "factoriseThenSolve": "Choose bracket numbers with the right product and sum, then set each bracket to zero.",
+                "spotError": "The sign of a solution is opposite to the sign of the number added inside its bracket.",
+                "commonFactor": "Keep the factor x. Dividing it out can lose the zero solution.",
+                "rearrangeToZero": "Make one side zero before factorising."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.QuadraticEquations.pick,

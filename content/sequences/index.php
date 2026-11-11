@@ -67,12 +67,12 @@ $pageTitle = 'Continuing a sequence';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./sequences.js?v=15"></script>
+    <script src="./sequences.js?v=16"></script>
     <script src="./visuals.js?v=15"></script>
-    <script src="./questions.js?v=15"></script>
+    <script src="./questions.js?v=16"></script>
     <script src="./interactive.js?v=15"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

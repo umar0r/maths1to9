@@ -134,7 +134,8 @@
             fields: [{ id: 'x', label: 'x =' }, { id: 'y', label: 'y =' }],
             answer: { x: String(x), y: String(y) }, rules: solutionRules(lines, [x, y]),
             fallback: 'Find where the two lines cross. Read x on the x-axis, then y on the y-axis.',
-            feedback: `Right. ${solution([x, y])} works in both equations.`, figure: figure(lines)
+            feedback: `Right. ${solution([x, y])} works in both equations.`,
+            practiceFeedback: 'The same values have to make both equations true.', figure: figure(lines)
         });
     }
     const choice = (label, feedback, correct = false) => ({ label, feedback, correct });
@@ -211,7 +212,8 @@
             fields: [{ id: 'x', label: 'x ≈' }, { id: 'y', label: 'y ≈' }],
             answer: { x: fractionText(exact.x), y: fractionText(exact.y) }, rules: estimateRules(lines),
             prompt: `Estimate the solution of ${lines.map(equationText).join(' and ')}. Give each value to 1 decimal place, like 1.3.`,
-            feedback: 'Your point is close enough to where the lines cross.',
+            feedback: `Right. The solution is about ${solution([x, y].map(v => Number(v.toFixed(1))), '≈')}.`,
+            practiceFeedback: 'Your point is close enough to where the lines cross.',
             fallback: 'Find where the lines cross. Use the scale to estimate x, then y.', figure: figure(lines)
         });
     }

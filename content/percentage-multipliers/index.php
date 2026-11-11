@@ -67,11 +67,11 @@ $pageTitle = 'Percentage multipliers';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./multipliers.js?v=4"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./multipliers.js?v=5"></script>
+    <script src="./questions.js?v=2"></script>
     <script src="./interactive.js?v=6"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

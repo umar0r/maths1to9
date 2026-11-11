@@ -13,6 +13,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "rule-choice": "Check the same difference between every pair of neighbours."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Sequences.pick,

@@ -107,7 +107,8 @@
             const zeros = answer.match(/0+$/)[0].length > 1 ? 'zeros' : 'zero';
             prompt += ` Keep the ${zeros} at the end after the decimal point.`;
         }
-        const question = { number, kind, accuracy, ...d, stage: 'round', questionType, input, prompt, feedback, exact: kind !== 'nearest' };
+        const question = { number, kind, accuracy, ...d, stage: 'round', questionType, input, prompt, feedback,
+            practiceFeedback: `The next digit is ${next}, so ${Number(next) >= 5 ? 'round up' : 'keep the last digit as it is'}.`, exact: kind !== 'nearest' };
         if (input === 'choice') question.options = [option(spaced(answer), feedback, true), ...mistakes.slice(0, 3).map(([value, message]) => option(spaced(value), message))];
         else {
             question.answer = answer;

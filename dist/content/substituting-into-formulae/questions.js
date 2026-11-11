@@ -13,6 +13,18 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "divisionQuestion": "Replace the letters before dividing.",
+                "bracketQuestion": "Work out what is inside the brackets first.",
+                "powerQuestion": "Square the length before multiplying by the height.",
+                "negativePowerQuestion": "Put the negative number in brackets before squaring it.",
+                "hiddenMultiplicationQuestion": "A number written beside a letter multiplies its value.",
+                "singleLetterQuestion": "Replace the letter with the given number, then multiply before adding.",
+                "perimeterQuestion": "Count two lengths and two widths.",
+                "negativeQuestion": "Keep the minus sign when you replace the letter.",
+                "repeatedLetterQuestion": "Replace every copy of the letter with the same number.",
+                "areaQuestion": "Multiply the length and width after putting in their values."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Substitution.pick,

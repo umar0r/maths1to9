@@ -255,7 +255,7 @@
             });
             question = card(type, part, whole, 'percent', {
                 input: 'number', prompt: useContext ? `${setup} ${ask}` : `Express ${part} as a percentage of ${whole}.`,
-                answer: number(answer), rules, feedback: working
+                answer: number(answer), rules, feedback: 'Divide the part by the whole, then multiply by 100.'
             });
         } else if (type === 'find-the-whole') {
             const groups = choose([
@@ -273,7 +273,7 @@
             }));
             question = card(type, part, whole, 'percent', {
                 bankId: 'convert-a-fraction-to-a-percentage-08', input: 'number', prompt: groups.join(' '),
-                answer: number(answer), rules, feedback: `${part} + ${whole - part} = ${whole}. ${working}`
+                answer: number(answer), rules, feedback: 'Add both groups to find the total before dividing.'
             });
         } else if (type === 'more-than-100') {
             const kind = int(0, 2);
@@ -293,7 +293,7 @@
                 return { ...rule, feedback };
             });
             question = card(type, part, whole, 'percent', {
-                input: 'number', prompt: prompts[kind], answer: number(answer), rules, feedback: working
+                input: 'number', prompt: prompts[kind], answer: number(answer), rules, feedback: 'Divide the part by the whole, then multiply by 100.'
             });
         } else if (type === 'which-is-100') {
             question = card(type, part, whole, 'whole', {

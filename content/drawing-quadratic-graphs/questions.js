@@ -27,6 +27,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "point-on": "Square the x-coordinate before adding or subtracting the constant."
+            },
             version: 2, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: Q.pick, question: Q.generate
         });

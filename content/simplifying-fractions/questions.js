@@ -13,6 +13,13 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "fullySimplified": "No whole number greater than 1 divides both numbers.",
+                "shadedFraction": "Count the shaded parts and the total parts, then divide both counts by the same factor.",
+                "simplifyOneStep": "Divide the top and bottom by the same factor.",
+                "spotTheMistake": "Change the top and bottom by the same factor to keep the value.",
+                "simplifyFully": "Keep dividing by shared factors until there are none left."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.SimplifyingFractions.pick,

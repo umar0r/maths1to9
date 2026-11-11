@@ -13,6 +13,12 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "around-point": "Add the known angles, then subtract from 360°.",
+                "opposite": "Find the angle next to it on the straight line first.",
+                "parallel-angle": "Use the equal angles in the parallel-line pattern.",
+                "find-the-pair": "Use the matching corners or the Z shape to spot the pair."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.AngleFacts.pick,

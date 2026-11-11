@@ -42,6 +42,7 @@
                 [a * (k + 1), `The bottom was multiplied by ${k}, not ${k + 1}. Use the same multiplier for the top.`],
                 [bottom, 'That copies the bottom number into the top. Multiply the original top by the multiplier.']],
             feedback: `${b} × ${k} = ${bottom}. So ${a} × ${k} = ${top}.`,
+            practiceFeedback: 'Use the same multiplier on the top and the bottom.',
             fallback: 'Find the multiplier between the bottom numbers. Multiply the top by the same number.' });
     }
 
@@ -54,6 +55,7 @@
                 [fraction(b, a + b), 'That uses the old bottom as the new top and adds both numbers for the bottom.'],
                 [fraction(a, b * k), 'That changes only the bottom number. Both numbers must change together.']],
             feedback: `${a} × ${k} = ${a * k} and ${b} × ${k} = ${b * k}, so ${a}/${b} = ${a * k}/${b * k}.`,
+            practiceFeedback: 'Multiplying both numbers by the same number keeps the fraction’s value.',
             fallback: 'Multiply the top and bottom by the same whole number.' });
     }
 
@@ -93,6 +95,7 @@
         if (mode === 'number') return { questionType: 'fullySimplified', input: 'custom', model: { a, b },
             prompt: `Write ${a}/${b} in its simplest form.`, widget: simplestWidget({ a, b, wrong: [],
                 feedback: `${a}/${b} is already fully simplified. No whole number greater than 1 divides both numbers.`,
+            practiceFeedback: 'No whole number greater than 1 divides both numbers.',
                 fallback: 'Check for a whole number greater than 1 that divides both numbers. If there is none, keep the fraction as it is.' }) };
         return makeQuestion({ type: 'fullySimplified', mode, model: { a, b }, prompt: 'Which fraction is fully simplified?',
             answer: fraction(a, b), writtenForm: true,
@@ -111,6 +114,7 @@
             prompt: mode === 'choice' ? `Which number divides both ${top} and ${bottom} exactly?`
                 : `What is the highest common factor of ${top} and ${bottom}?`, answer: divisor, wrong,
             feedback: `${top} ÷ ${divisor} = ${a} and ${bottom} ÷ ${divisor} = ${b}. Both answers are whole numbers.`,
+            practiceFeedback: 'Divide both numbers by the same factor. Both results must be whole numbers.',
             fallback: 'Find a whole number that divides both exactly. For the highest common factor, choose the biggest.' });
     }
 
@@ -159,6 +163,7 @@
                 .map(([sign, feedback]) => [`${first} ${sign} ${second}`, feedback])
                 .concat([['They cannot be compared.', 'Rewrite them with the same bottom number. Then their parts are the same size.']]),
             feedback: `${a}/${b} = ${a * k}/${bottom}. So ${first} ${symbol} ${second}.`,
+            practiceFeedback: 'Make the bottom numbers match before comparing the tops.',
             fallback: 'Multiply both numbers in the smaller-written fraction by the same number.' });
     }
 

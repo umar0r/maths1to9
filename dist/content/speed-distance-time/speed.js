@@ -293,7 +293,7 @@
                     mistake(distance - time, `You can't take hours away from ${place.distance}. Divide.`)
                 ]),
                 fallback: 'Speed = distance ÷ time.',
-                feedback: `${distance} ÷ ${time} = ${number(speed)} ${place.unit}`
+                feedback: 'Divide distance by time to find how far you travel in one unit of time.'
             });
         } else if (type === 'find-distance') {
             const place = choose(SETTINGS);
@@ -308,7 +308,7 @@
                     mistake(speed + time, `That adds. It goes ${speed} ${place.distance} in each hour, so multiply.`)
                 ]),
                 fallback: 'Distance = speed × time.',
-                feedback: `${speed} × ${number(time)} = ${number(distance)} ${place.distance}`
+                feedback: 'Check that the time matches the speed units before multiplying.'
             });
         } else if (type === 'find-time') {
             const place = choose(SETTINGS);
@@ -327,7 +327,7 @@
                     mistake(distance - speed, "Taking away doesn't give a time. Divide distance by speed.")
                 ]),
                 fallback: 'Cover T: distance ÷ speed.',
-                feedback: `${distance} ÷ ${speed} = ${number(time)} hours`
+                feedback: 'The time is in hours because the speed is given per hour.'
             });
         } else if (type === 'which-calculation') {
             const place = choose(SETTINGS);

@@ -414,7 +414,7 @@
         let prompt, feedback, candidates;
         if (type === 'read-count') {
             prompt = `This pie chart shows how ${n} pupils chose a colour. How many chose ${row.name}?`;
-            feedback = `${row.name} is ${tidy(angle)}° out of 360°. ${tidy(angle)} ÷ 360 × ${n} = ${answer}.`;
+            feedback = 'Divide the slice angle by 360 to find its share of the total.';
             candidates = [
                 [angle, `That is the angle, not the number of pupils. Find the angle's share of 360°, then use that share of ${n}.`],
                 [n - answer, `That is everyone who did not choose ${row.name}. Use the ${row.name} slice only.`],
@@ -425,7 +425,7 @@
             const known = data[knownIndex], k = values[knownIndex], c = known.count;
             if (k === angle) return null;
             prompt = `${known.name} is ${tidy(k)}° and stands for ${c} pupils. ${row.name} is ${tidy(angle)}°. How many pupils chose ${row.name}?`;
-            feedback = `${tidy(k)}° is ${c} pupils, so ${tidy(angle)}° is ${tidy(angle)} ÷ ${tidy(k)} × ${c} = ${answer} pupils.`;
+            feedback = 'Compare the two slice angles. Use the same multiplier for the counts.';
             candidates = [
                 [angle, `That is ${row.name}'s angle. Turn the angle into a number of pupils.`],
                 [c, `That is the number for ${known.name}. ${row.name}'s slice is a different size.`],

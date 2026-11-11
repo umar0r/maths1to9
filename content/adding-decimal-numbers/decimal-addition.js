@@ -228,7 +228,7 @@
         const errors = mistakes(a, b);
         const feedback = `${a} + ${b} = ${total}. Line up the decimal points and add from right to left.`;
         const question = { a, b, questionType: 'calculate', input, prompt: prompt || `Work out ${a} + ${b}.`,
-            feedback, figure: host => drawGrid(host, a, b) };
+            feedback, practiceFeedback: 'Line up the decimal points and add from right to left.', figure: host => drawGrid(host, a, b) };
         if (input === 'choice') question.options = [
             option(`${currency ? '£' : ''}${total}`, feedback, true),
             ...errors.slice(0, 3).map(error => option(`${currency ? '£' : ''}${error.value}`, error.feedback))

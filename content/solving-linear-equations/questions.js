@@ -13,6 +13,17 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "twoStepSubtract": "Undo the subtraction first, then divide to leave x on its own.",
+                "brackets": "Multiply every term inside the brackets before collecting terms.",
+                "bracketsAndAdd": "Expand the brackets, then collect the numbers before solving.",
+                "subtract": "Add the same amount to both sides to undo subtraction.",
+                "add": "Subtract the same amount from both sides to undo addition.",
+                "twoStepAdd": "Undo the addition first, then divide to leave x on its own.",
+                "costStory": "Subtract the fixed charge before dividing by the rate.",
+                "divide": "Multiply both sides by the divisor.",
+                "multiply": "Divide both sides by the number multiplying x."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.LinearEquations.pick,

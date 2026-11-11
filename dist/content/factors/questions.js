@@ -13,6 +13,13 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "all-factors": "Use factor pairs so you count both numbers that multiply to the target.",
+                "is-factor": "A factor divides the number with nothing left over.",
+                "missing-pair": "Divide the target by the factor you already know.",
+                "equal-rows": "No counters are left over, so the rows are equal.",
+                "factor-count": "Count each factor once, including the two ends of each pair."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Factors.pick,

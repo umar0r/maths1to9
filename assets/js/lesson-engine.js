@@ -352,8 +352,9 @@
             !/[a-z]{2}/u.test(symbols);
     }
 
-    function correctFeedbackText(text, answer = '') {
+    function correctFeedbackText(text, { sectionId, answer = '' } = {}) {
         const detail = text.trim().replace(/^(?:[✓✔]\s*)?(?:(?:yes,\s*)?(?:correct|right)(?:[.!:]\s*|$))?/iu, '');
+        if (sectionId !== 'question-bank') return detail ? `${correctFeedbackIntro} ${detail}` : correctFeedbackIntro;
         const withoutFullStop = value => value.trim().replace(/\.$/u, '');
         const normalise = value => withoutFullStop(value).replace(/(?<=\d),(?=\d)/gu, '')
             .replace(/−/gu, '-').replace(/\s+/gu, ' ').toLowerCase();
@@ -366,17 +367,17 @@
         return explanation ? `${correctFeedbackIntro} ${explanation}` : correctFeedbackIntro;
     }
 
-    function renderFeedbackText(host, text, correct, answer) {
+    function renderFeedbackText(host, text, correct, sectionId, answer) {
         if (correct && text && typeof text === 'object' && typeof text.latex === 'string') {
             host.append(document.createTextNode(`${correctFeedbackIntro} `), resultText('span', text));
             return;
         }
-        host.append(resultText('span', correct ? correctFeedbackText(String(text ?? ''), answer) : text));
+        host.append(resultText('span', correct ? correctFeedbackText(String(text ?? ''), { sectionId, answer }) : text));
     }
 
     function createFeedback(sectionId, { correct = null, text = '', visible = true, answer } = {}) {
         const box = resultText('p', '', feedbackClassName(sectionId, { correct, visible }));
-        if (visible) renderFeedbackText(box, text, correct, answer);
+        if (visible) renderFeedbackText(box, text, correct, sectionId, answer);
         box.setAttribute('role', 'status');
         return box;
     }
@@ -631,6 +632,12 @@
                 correct: saved.correct, explanation: saved.feedback
             };
         }
+        function displayedFeedback() {
+            if (sectionId === 'question-bank' && saved.correct === true) {
+                return config.practiceFeedback ?? saved.feedback;
+            }
+            return saved.feedback;
+        }
         const article = document.createElement('article');
         article.className = 'question-card question-card--bare';
         const heading = resultText('h3', config.prompt, 'question-prompt');
@@ -664,7 +671,7 @@
             article.append(answer);
             if (saved.feedback || saved.correct === true) {
                 article.append(createFeedback(sectionId, {
-                    correct: saved.correct === true, text: saved.feedback, answer: row.answer
+                    correct: saved.correct === true, text: displayedFeedback(), answer: row.answer
                 }));
             }
             return { result };
@@ -786,7 +793,8 @@
                 : 'Type a number, like 12 or 0.5.';
             else if (shown) {
                 const correct = saved.correct === true;
-                renderFeedbackText(feedback, saved.feedback, correct, correct ? result().answer : '');
+                renderFeedbackText(feedback, displayedFeedback(), correct, sectionId,
+                    correct && sectionId === 'question-bank' ? result().answer : '');
                 if (saved.hint) feedback.append(resultText('span', saved.hint, 'question-hint'));
             }
             setAction();
@@ -945,7 +953,11 @@
             });
         }
         document.addEventListener('maths1to9:section-change', syncHash);
-        function question(item) { return config.question(item, seededRandom(item.seed)); }
+        function question(item) {
+            const definition = config.question(item, seededRandom(item.seed));
+            const practiceFeedback = isPractice ? config.practiceFeedback?.[item.type] : undefined;
+            return practiceFeedback === undefined ? definition : { ...definition, practiceFeedback };
+        }
         function rows(session) {
             return session.items.map((item, index) => {
                 const definition = question(item);

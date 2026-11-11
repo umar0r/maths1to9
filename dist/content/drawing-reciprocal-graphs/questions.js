@@ -34,6 +34,12 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "negative": "The bottom-left curve has negative x and negative y.",
+                "at-zero": "That is why the graph never touches the y-axis.",
+                "point-on": "Divide 1 by the x-coordinate and check it matches y.",
+                "bigger": "As positive x gets bigger, its reciprocal gets closer to zero."
+            },
             version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: Q.pick, question: Q.generate
         });

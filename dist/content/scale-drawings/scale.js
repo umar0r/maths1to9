@@ -241,7 +241,7 @@
             const multiplied = `That times. The drawing is smaller than real life. Divide by ${scale}.`;
             const subtracted = `That takes away ${scale}. Divide: ${shown(real)} ÷ ${scale}.`;
             const realLength = `That's the real length. Divide by ${scale} to get the drawing length.`;
-            const feedback = toReal ? `${shown(drawing)} × ${scale} = ${shown(real)} ${unit}` : `${shown(real)} ÷ ${scale} = ${shown(drawing)} cm`;
+            const feedback = toReal ? 'Multiply by the real length for each unit on the drawing.' : 'Divide by the scale to go from real life to the drawing.';
             const outputUnit = toReal ? unit : 'cm';
             const values = { scale, scaleUnit: unit, drawing: toReal ? drawing : null, real: toReal ? null : real };
             const asked = toReal ? 'to-real' : 'to-drawing';

@@ -162,7 +162,8 @@
         return {
             input: 'number', fractions: true, prompt: 'Work out the gradient of the line.',
             answer: fraction(graph.p, graph.q), rules: wrongAnswerRules(graph), fallback,
-            feedback: correctFeedback(graph), figure: figure(graph, { marked: false }), ...extra
+            feedback: correctFeedback(graph),
+            practiceFeedback: 'Divide the change up or down by the change across. Read from left to right.', figure: figure(graph, { marked: false }), ...extra
         };
     }
 

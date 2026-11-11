@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "percent-choice": "Divide the part by the whole, then multiply by 100.",
+                "which-is-100": "The whole is what you compare each part with.",
+                "which-working": "Use the whole as the number you divide by."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.PercentageOf.pick,

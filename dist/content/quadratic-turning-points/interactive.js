@@ -241,7 +241,7 @@
             board = T.graph(frame, [guided], `${T.shapeLabel(guided)} Drag the dot along the curve.`);
             function paint() {
                 if (state.found) {
-                    status.textContent = window.Maths1to9LessonEngine.correctFeedbackText('The curve stops going down and starts going up.');
+                    status.textContent = window.Maths1to9LessonEngine.correctFeedbackText('This is the turning point. The curve stops going down and starts going up.');
                     status.className = `turning-status ${window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: true })}`;
                 } else status.textContent = heading(guided, state.dot[0]).replace('…', '.');
             }

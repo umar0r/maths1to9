@@ -286,7 +286,7 @@
                     mistake(kept, `${number(kept)}% is right. Divide by 100 to get the multiplier.`)
                 ]),
                 fallback: `${direction === 'up' ? 'Add' : 'Take'} ${number(percent)}% ${direction === 'up' ? 'to' : 'from'} 100%, then divide by 100.`,
-                feedback: `${sum} = ${number(m)}`
+                feedback: 'Start from 100% and adjust it by the change before writing the multiplier.'
             });
         } else if (type === 'which-multiplier') {
             const direction = choose(['up', 'down']);
@@ -326,7 +326,7 @@
                 input: 'number', label: isMoney ? 'money' : 'count', prompt, answer: number(answer),
                 rules: cleanRules(answer, rules, isMoney ? 0.01 : 0),
                 fallback: `Times by the multiplier ${number(m)}.`,
-                feedback: `${amount(start)} × ${number(m)} = ${isMoney ? pounds(answer) : amount(answer)}`
+                feedback: 'The multiplier applies the change to the whole starting amount.'
             });
         } else if (type === 'repeated-change' || type === 'which-calculation') {
             let start, percent, years, direction, setting, rules, answer, m;
@@ -365,7 +365,7 @@
                     prompt: `${prompt} ${setting.what} after ${years} years?${setting.money ? '' : ' Round to the nearest whole number.'}`,
                     answer: number(answer), rules,
                     fallback: `Times by ${number(m)} once for each year: ${power(m, years)}.`,
-                    feedback: `${amount(start)} × ${power(m, years)} = ${setting.money ? pounds(answer) : number(round(apply(start, Array(years).fill(m)), 2))}${setting.money ? '' : `, so about ${amount(answer)} ${setting.unit}`}`
+                    feedback: 'Use the same multiplier once for each year.'
                 });
             } else {
                 const added = multiplier(percent * years, direction);

@@ -13,6 +13,20 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "percent-fraction": "Write the percentage over 100, then divide the top and bottom by the same factor.",
+                "decimal-percent": "A percentage counts how many hundredths there are.",
+                "percent-decimal": "Percent means out of 100, so divide by 100 to get a decimal.",
+                "fraction-amount": "A quarter means one of four equal parts.",
+                "money-blocks": "Write the percentage as a decimal before multiplying the amount.",
+                "calculator": "Divide the percentage by 100 before multiplying the amount.",
+                "near-whole": "A percentage just under 100% gives an amount just under the whole.",
+                "people": "Multiply the whole group by the decimal form of the percentage.",
+                "build-blocks": "Work out 1% first, then scale it up.",
+                "one-percent": "One percent is one of 100 equal parts.",
+                "over-whole": "Over 100% gives more than the starting amount.",
+                "battery": "Multiply the full capacity by the fraction that remains."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.PercentageAmounts.pick,

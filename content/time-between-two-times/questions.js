@@ -13,6 +13,12 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "calculator": "Count whole hours between the jumps, then add the minutes at each end.",
+                "jumps": "Jump to the next hour, count the full hours, then add the minutes left.",
+                "hop": "Count the minutes up to the next whole hour.",
+                "hours-and-minutes": "Add the two minute jumps to the full hours between them."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.TimeBetween.pick,

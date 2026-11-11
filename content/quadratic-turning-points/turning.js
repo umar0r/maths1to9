@@ -110,6 +110,7 @@
             rules: turningRules(form),
             fallback: 'Find where the curve turns. Read x on the x-axis, then y on the y-axis.',
             feedback: `Right. The turning point is ${coordinate(turningPoint(form))}.`,
+            practiceFeedback: 'Read across for x and up or down for y at the point where the curve turns.',
             figure: figure(form)
         };
     }

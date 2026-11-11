@@ -157,7 +157,8 @@
     }
     function valueCard(form, x) {
         return { input: 'number', fractions: true, answer: String(valueOf(form, x)), rules: valueRules(form, x),
-            fallback: workingText(form, x), feedback: `Right. ${workingText(form, x)}.` };
+            fallback: workingText(form, x), feedback: `Right. ${workingText(form, x)}.`,
+            practiceFeedback: 'Cube the input before adding or subtracting the constant.' };
     }
     // A typed whole number, accepting any of the minus signs a phone keyboard offers; null if it isn't one.
     function readNumber(text) {

@@ -238,6 +238,6 @@ test('Check 5 estimates a negative x away from the origin using exact fraction a
     const card = T.estimateCard(lines);
     assert.deepEqual(plain(card.answer), { x: '-5/3', y: '2/3' });
     assert.equal(card.tolerance, 0.2);
-    assert.equal(card.feedback, T.mathText('Your point is close enough to where the lines cross.'));
+    assert.equal(card.feedback, T.mathText('Right. The solution is about x ≈ −1.7, y ≈ 0.7.'));
     assert.ok(card.rules.some(rule => JSON.stringify(rule.value) === JSON.stringify({ x: '-2', y: '1' }) && /nearest grid point/.test(rule.feedback)));
 });

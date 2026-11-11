@@ -73,10 +73,10 @@ $pageTitle = 'Using y = mx + c';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./equations.js?v=1"></script>
-    <script src="./interactive.js?v=3"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./interactive.js?v=4"></script>
+    <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

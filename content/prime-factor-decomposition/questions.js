@@ -13,6 +13,14 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "product-meaning": "A prime factor product multiplies only prime numbers.",
+                "index-form": "The small raised number counts repeated copies of the same prime.",
+                "missing-prime": "Divide the original number by the product of the known prime factors.",
+                "missing-power": "Count the copies of the prime to find its power.",
+                "finished-tree": "The tree is complete when each branch ends in a prime.",
+                "prime-index-form": "Write each prime once and use a power for repeats."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Maths1to9PrimeFactors.pick,

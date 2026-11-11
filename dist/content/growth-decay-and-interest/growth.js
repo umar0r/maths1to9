@@ -288,7 +288,7 @@
                     prompt: `${saved} simple interest. ${askTotal ? `How much is in the account after ${years} years?` : `How much interest does it earn in ${years} years?`}`,
                     answer: number(answer), rules,
                     fallback: `Find ${number(rate)}% of £${amount(start)}. You get that every year.`,
-                    feedback: `${number(rate)}% of £${amount(start)} is ${pounds(yearly)} a year. ${pounds(yearly)} × ${years} = ${pounds(yearly * years)}${askTotal ? `, and £${amount(start)} + ${pounds(yearly * years)} = ${pounds(simple)}` : ''}`
+                    feedback: askTotal ? 'Add the same amount of interest each year, then include the starting balance.' : 'Work out the interest for one year and multiply by the number of years.'
                 });
             } else if (type === 'simple-choice') {
                 const labels = [simple, round(yearly * years), yearly, compound].map(pounds);
@@ -312,7 +312,7 @@
                     input: 'number', prompt: `${saved} compound interest. How much is in the account after ${years} years?`,
                     answer: number(compound), rules,
                     fallback: `Times by ${number(m)} once for each year: ${amount(start)} × ${power(m, years)}.`,
-                    feedback: `${amount(start)} × ${power(m, years)} = ${pounds(compound)}`
+                    feedback: 'Apply the multiplier to the new balance each year.'
                 });
             } else if (type === 'compound-interest') {
                 const labels = [compoundInterest, compound, round(yearly * years), yearly].map(pounds);
@@ -360,7 +360,7 @@
                     prompt: `${place} ${amount(count, false)} ${noun}. The number goes up by ${growth}% each year. How many ${noun} are there after ${years} years? Round to the nearest whole number.`,
                     answer: String(answer), rules,
                     fallback: `Times by ${number(g)} once for each year: ${amount(count, false)} × ${power(g, years)}.`,
-                    feedback: `${amount(count, false)} × ${power(g, years)} = ${number(round(exact))}, so about ${amount(answer, false)} ${noun}.`
+                    feedback: 'Apply the multiplier once for each year. Round only at the end.'
                 });
             }
         }

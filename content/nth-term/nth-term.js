@@ -209,7 +209,8 @@
                 prompt: words ? `Pattern n uses ${ruleText} sticks. How many sticks does Pattern ${k} use?`
                     : `Find the ${ordinal(k)} term.`,
                 answer: String(a * k + offset), rules,
-                feedback: `${a} × ${k} ${sign} ${b} = ${a * k} ${sign} ${b} = ${number(a * k + offset)}`
+                feedback: `${a} × ${k} ${sign} ${b} = ${a * k} ${sign} ${b} = ${number(a * k + offset)}`,
+                practiceFeedback: 'Put the position in place of n. Multiply before adding or subtracting.'
             });
         } else if (item.type === 'take-away') {
             const below = random() < 0.5;
@@ -230,7 +231,8 @@
                     mistake(c + product, `That adds. The rule takes away ${a}n.`),
                     mistake(product - c, below ? `${product} is bigger than ${c}, so the answer is below zero.`
                         : `${c} is bigger than ${product}, so the answer is above zero.`)
-                ], feedback: `${c} − ${a} × ${k} = ${c} − ${product} = ${number(answer)}`
+                ], feedback: `${c} − ${a} × ${k} = ${c} − ${product} = ${number(answer)}`,
+                   practiceFeedback: 'Multiply the position first, then subtract that product.'
             });
         } else if (item.type === 'square-rule') {
             const p = int(3, 12), kind = int(0, 2), square = p * p;
@@ -242,7 +244,8 @@
                         mistake(2 * p + offset, `${p}² means ${p} × ${p}, not ${p} × 2.`),
                         mistake((p + offset) ** 2, `Square ${p} first, then ${change} ${b}.`),
                         mistake(square, `That's ${p}². Now ${change} ${b}.`)
-                    ], feedback: `${p}² ${sign} ${b} = ${square} ${sign} ${b} = ${number(square + offset)}`
+                    ], feedback: `${p}² ${sign} ${b} = ${square} ${sign} ${b} = ${number(square + offset)}`,
+                       practiceFeedback: 'Square the position before adding or subtracting.'
                 });
             } else {
                 const m = int(2, 5);
@@ -251,7 +254,8 @@
                         mistake((m * p) ** 2, `Square ${p} first, then multiply by ${m}.`),
                         mistake(2 * m * p, `${p}² means ${p} × ${p}, not ${p} × 2.`),
                         mistake(square, `That's ${p}². Now multiply by ${m}.`)
-                    ], feedback: `${m} × ${p}² = ${m} × ${square} = ${m * square}`
+                    ], feedback: `${m} × ${p}² = ${m} × ${square} = ${m * square}`,
+                       practiceFeedback: 'Square the position first, then multiply.'
                 });
             }
         } else if (item.type === 'term-choice') {

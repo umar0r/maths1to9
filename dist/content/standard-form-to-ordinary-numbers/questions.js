@@ -16,6 +16,14 @@
         const { practiceQuestion } = window.StandardFormOrdinary;
         const types = ['positive', 'negative', 'whole-front', 'zero-index', 'zero-inside', 'zero-inside-negative'];
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "positive": "The index tells you how many times to multiply by 10.",
+                "negative": "A negative index tells you how many times to divide by 10.",
+                "whole-front": "Multiply by 10 once for each step in the index.",
+                "zero-index": "Ten to the power zero is 1, so multiplying by it keeps the same value.",
+                "zero-inside": "Keep the zero between the other digits when you shift them.",
+                "zero-inside-negative": "Each division moves every digit one place right. Keep the zero between the digits."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick(random) {

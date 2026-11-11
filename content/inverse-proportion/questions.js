@@ -13,6 +13,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "find-workers": "Divide the total work by the time available. Round up if part of a worker would be needed."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.InverseProportion.pick,

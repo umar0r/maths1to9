@@ -13,6 +13,10 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "adding-trap": "Find the price of one biscuit first, then scale it up.",
+                "is-proportional": "The price per item stays the same in every row."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DirectProportion.pick,

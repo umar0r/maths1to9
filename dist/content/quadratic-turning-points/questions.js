@@ -34,6 +34,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "type": "Check whether the curve goes up or down on either side of the turn."
+            },
             version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: T.pick, question: T.generate
         });

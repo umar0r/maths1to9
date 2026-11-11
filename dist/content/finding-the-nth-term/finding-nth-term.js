@@ -279,7 +279,7 @@
             question = card(item.type, rule.d, rule.c, {
                 position: k, input: 'number', prompt: `Find the nth term, then use it to find the ${ordinal(k)} term.`,
                 answer: String(term(rule, k)), rules,
-                feedback: `The nth term is ${ruleText(rule)}. ${working(rule, k)}. Check: ${firstChecks(rule)}`
+                feedback: 'Put the position in place of n, then multiply before adding or subtracting.'
             });
         } else if (item.type === 'down-jump') {
             const rule = downRule();

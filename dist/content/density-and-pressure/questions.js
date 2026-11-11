@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "kg-to-g": "Change kilograms to grams before using a density given in grams per cubic centimetre.",
+                "pressure-calculation": "Divide the force by the force on one unit of area.",
+                "which-calculation": "Divide the mass by the mass in one cubic centimetre."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DensityAndPressure.pick,

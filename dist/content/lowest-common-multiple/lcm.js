@@ -308,8 +308,9 @@
     }
     function generate(item, random) {
         const pair = generatedPair(item.type, random);
-        return item.mode === 'custom' ? (item.type === 'build' ? buildQuestion(pair) : matchQuestion(pair))
+        const question = item.mode === 'custom' ? (item.type === 'build' ? buildQuestion(pair) : matchQuestion(pair))
             : numberQuestion(pair, item.mode || 'number');
+        return { ...question, practiceFeedback: 'Multiply all the prime tiles, counting each shared copy once.' };
     }
     function pick(random) {
         return [['shared', 'choice'], ['repeated', 'number'], ['divides', 'choice'], ['coprime', 'number'], ['match', 'custom'], ['build', 'custom']].map(([type, mode]) => ({ type, mode, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random) }));

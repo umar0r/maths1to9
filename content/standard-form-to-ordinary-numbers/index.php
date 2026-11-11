@@ -73,10 +73,10 @@ $pageTitle = 'From standard form to ordinary numbers';
     <script src="./numbers.js?v=1"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=1"></script>
+    <script src="./questions.js?v=2"></script>
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

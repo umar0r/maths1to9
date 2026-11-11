@@ -67,12 +67,12 @@ $pageTitle = 'Fibonacci-type sequences';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./fibonacci.js?v=19"></script>
+    <script src="./fibonacci.js?v=20"></script>
     <script src="./visuals.js?v=19"></script>
-    <script src="./questions.js?v=18"></script>
+    <script src="./questions.js?v=19"></script>
     <script src="./interactive.js?v=18"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

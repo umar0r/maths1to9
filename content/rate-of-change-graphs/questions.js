@@ -16,6 +16,14 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "trend": "Read the line from left to right.",
+                "change": "Subtract the first reading from the last.",
+                "flat-meaning": "Flat means no change.",
+                "rate-down": "Divide the amount lost by the time it took.",
+                "fastest": "The largest change in each unit of time gives the fastest rate.",
+                "rate-up": "Divide the change in height by the time taken."
+            },
             version: 2, upgrade: () => null, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results', pick: J.pick,
             question: J.generate

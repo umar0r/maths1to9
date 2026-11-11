@@ -373,7 +373,7 @@
                 answer: number(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Find the total job: ${a} × ${t}. Then share it between ${b} ${job.many}.`,
-                feedback: `${a} × ${t} = ${total} ${job.one}-hours. ${total} ÷ ${b} = ${number(answer)} hours`
+                feedback: 'Keep the total work the same, then divide by the new number of workers.'
             });
         } else if (type === 'find-workers') {
             const job = choose(JOBS);
@@ -437,7 +437,7 @@
                 answer: number(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Find x × y first: ${x1} × ${y1}. Then divide by ${x2}.`,
-                feedback: `${x1} × ${y1} = ${total}. ${total} ÷ ${x2} = ${number(answer)}`
+                feedback: 'The product stays the same. Divide it by the new value of x.'
             });
         } else if (type === 'double-halve') {
             const m = choose([2, 3, 4, 5, 10]);

@@ -73,6 +73,7 @@
             wrong: otherPlaces.map(place => [value(place), place === 0 ? 'That is the digit itself. Its column tells you what it is worth.'
                 : `That uses the ${placeNames[place]} column. Read the digit's actual column.`]),
             feedback: `${digit} is in the ${placeNames[exponent]} column. Its value is ${scaleValue(digit, -exponent)}.`,
+            practiceFeedback: `The ${placeNames[exponent]} column tells you what the digit is worth.`,
             fallback: 'Find the column. Multiply the digit by the value of one place in that column.' });
     }
     function generateDigitValueQuestion(random, mode) {
@@ -175,6 +176,7 @@
                 [scaleValue(product, total + 2), 'Too many places have been changed. Combine the changes to both factors.'],
                 [addCommas(product), 'The product stays the same only when the two changes cancel out.']
             ], feedback: `${scaleValue(first, offsets[0])} × ${scaleValue(second, offsets[1])} = ${answer}`,
+            practiceFeedback: 'Combine the changes to both factors to see how the product changes.',
             fallback: 'Track the change to each factor. Apply both changes to the known product.' });
     }
     function generateScaledProductQuestion(random, mode) {
@@ -190,7 +192,8 @@
                 [scaleValue(digits, originalPlaces - movement), 'That moves the digits in the opposite direction.'],
                 [scaleValue(digits, originalPlaces + movement + (movement > 0 ? 1 : -1)), 'That moves the digits one place too far.'],
                 [scaleValue(digits, originalPlaces + movement - (movement > 0 ? 1 : -1)), 'That moves the digits one place too few.']
-            ], feedback: `The digits move ${places} ${places === 1 ? 'place' : 'places'} to the ${movement > 0 ? 'right' : 'left'}.`,
+            ], feedback: `${scaleValue(digits, originalPlaces)} ${movement > 0 ? '÷' : '×'} ${addCommas(10 ** Math.abs(movement))} = ${answer}`,
+            practiceFeedback: `The digits move ${places} ${places === 1 ? 'place' : 'places'} to the ${movement > 0 ? 'right' : 'left'}.`,
             fallback: 'Multiplying moves every digit left. Dividing moves every digit right. Count one place for each zero.' });
     }
     function generatePowerOfTenQuestion(random, mode) {
@@ -328,6 +331,7 @@
                 [addCommas(noMillions), 'That leaves out the millions.']
             ],
             feedback: `${words.charAt(0).toUpperCase()}${words.slice(1)} is ${addCommas(number)}. Empty columns hold a 0.`,
+            practiceFeedback: 'Empty columns hold a 0.',
             fallback: 'Write each part in its own columns: millions, then thousands, then hundreds, tens and ones. Put a 0 in any empty column.' });
     }
     function arrangements(digits) {
@@ -355,7 +359,7 @@
                     [valid.find(text => Number(text) % 2 === 1), 'That number is odd. An even number ends in 0, 2, 4, 6 or 8.'],
                     [evens[2], `${evens[2]} is even, but ${answer} is smaller. Put the smallest digits on the left.`]
                 ],
-                feedback: `An even number ends in 0, 2, 4, 6 or 8, and a four-digit number cannot start with 0. The smallest is ${answer}.` });
+                feedback: `An even number ends in 0, 2, 4, 6 or 8, and a four-digit number cannot start with 0.` });
         }
         const odd = valid.filter(text => Number(text) % 2 === 1);
         const answer = odd.at(-1);
@@ -368,7 +372,7 @@
                 [valid.filter(text => Number(text) % 2 === 0).at(-1), 'That number is even. An odd number ends in 1, 3, 5, 7 or 9.'],
                 [odd.at(-3), `${odd.at(-3)} is odd, but ${answer} is larger. Put the biggest digits on the left.`]
             ],
-            feedback: `An odd number ends in 1, 3, 5, 7 or 9. Put the biggest digits on the left: the largest is ${answer}.` });
+            feedback: `An odd number ends in 1, 3, 5, 7 or 9. After choosing the last digit, put the biggest remaining digits on the left.` });
     }
     function generateDigitCountQuestion(random) {
         const E = window.Maths1to9LessonEngine;
@@ -384,7 +388,8 @@
                 [answer + 1, `That adds one digit too many. ${multiplier} has ${zeros} zero${zeros > 1 ? 's' : ''}.`],
                 [answer + 2, `That adds too many digits. ${multiplier} has ${zeros} zero${zeros > 1 ? 's' : ''}.`]
             ],
-            feedback: `Multiplying by ${multiplier} moves every digit ${zeros} column${zeros > 1 ? 's' : ''} left, so the answer has ${answer} digits. For example, ${addCommas(example)} × ${multiplier} = ${addCommas(example * 10 ** zeros)}.` });
+            feedback: `Multiplying by ${multiplier} moves every digit ${zeros} column${zeros > 1 ? 's' : ''} left, so the answer has ${answer} digits. For example, ${addCommas(example)} × ${multiplier} = ${addCommas(example * 10 ** zeros)}.`,
+            practiceFeedback: `Multiplying by ${multiplier} moves every digit ${zeros} column${zeros > 1 ? 's' : ''} left.` });
     }
     function generateClosestNumberQuestion(random) {
         const E = window.Maths1to9LessonEngine;
@@ -398,7 +403,7 @@
             return makeQuestion({ type: 'closestNumber', kind: 'closest', digits, target,
                 prompt: `Use ${digits[0]}, ${digits[1]} and ${digits[2]} once each to make a three-digit number. Which number is closest to ${target}?`,
                 answer, wrong: [byDistance[1], byDistance[2], byDistance[5]].map(value => [value, `${describe(value)}. ${answer} is closer.`]),
-                feedback: `${describe(answer)}. No other number you can make is closer.` });
+                feedback: 'Compare the gaps from the target, whether the number is above or below it.' });
         }
     }
     function generate(item, random) {
@@ -1039,7 +1044,7 @@
                     return { correct: false, feedback: 'The words have no hundreds and no tens, so put a 0 in each of those columns.' };
                 }
                 if (digits[6] !== '9') return { correct: false, feedback: '"And nine" means a 9 in the ones column.' };
-                return { correct: true, feedback: 'Zeros hold the empty hundreds and tens places.' };
+                return { correct: true, feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.' };
             },
             render(host, { value, editable, onChange }) {
                 let digits = normalise(value), canEdit = editable;
@@ -1359,7 +1364,7 @@
             feedback: 'In 46.275, the 4 is worth 40, the 6 is worth 6, the 2 is worth 0.2, the 7 is worth 0.07 and the 5 is worth 0.005.', widget: flipCardsWidget() };
         const wordsToFigures = { questionType: 'digitValue', input: 'custom', kind: 'words',
             prompt: 'Write this number in figures.',
-            feedback: 'Zeros hold the empty hundreds and tens places.', widget: wordsToFiguresWidget() };
+            feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
         const lessThanWhole = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 7.',
             feedback: '3, 4, 5 and 6 are all less than 7.',
             widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
@@ -1373,7 +1378,7 @@
             wrong: [['36.84', 'There are 3 hundreds. Keep a zero in the empty tens column.'],
                 ['306.084', '8 tenths is 0.8. Put the 8 straight after the decimal point.'],
                 ['368.4', 'Keep each digit in its named column. There are no tens.']],
-            feedback: 'A zero holds the empty tens place.' });
+            feedback: '3 hundreds + 6 ones + 8 tenths + 4 hundredths = 306.84' });
         const reason = { input: 'choice', questionType: 'compare', kind: 'reason',
             prompt: 'Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?', options: [
                 option('No. 0.7 = 0.70, and 0.70 > 0.67.', 'Seven tenths is greater than six tenths.', true),

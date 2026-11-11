@@ -29,7 +29,8 @@
         return {
             start, amount, questionType: 'calculate', input: 'number',
             prompt: `Work out ${equation(start, amount)}.`, answer: signed(answer),
-            feedback: working(start, amount), rules: mistakes,
+            feedback: working(start, amount),
+            practiceFeedback: 'Adding a positive number moves you right on the number line.', rules: mistakes,
             fallback: `Keep ${signed(start)} and add ${amount}. Count ${amount} spaces to the right.`
         };
     }
@@ -141,6 +142,7 @@
             questionType: 'multiply', input: 'number', signs: ['−', '−'], expected: answer,
             prompt: `Work out −${size} × −${other}.`, answer: String(answer),
             feedback: `${size} × ${other} = ${answer}. ${signReason(true)}`,
+            practiceFeedback: signReason(true),
             rules: [
                 { value: signed(-answer), feedback: signReason(true) },
                 { value: signed(-size - other), feedback: `That adds −${size} and −${other}. This question multiplies them.` }
@@ -352,7 +354,15 @@
             }
             question = calculate(start, amount);
         }
-        return prepare({ ...question, questionType: item.type }, random);
+        const practiceNotes = {
+            'take-positive': 'Subtracting a positive number moves you left on the number line.',
+            'add-two-negatives': 'Adding a negative number moves you further left on the number line.',
+            'temperature-rise': 'A rise moves to the right, even when the starting temperature is below zero.',
+            'temperature-two-steps': 'Make each move from where the previous one ended.',
+            'missing-add': 'Find the change from the starting number to the ending number.',
+            'multiply-different': 'Different signs make a negative product.'
+        };
+        return prepare({ ...question, questionType: item.type, practiceFeedback: practiceNotes[item.type] ?? question.practiceFeedback }, random);
     }
 
     function paragraph(host, text, className = '') {
@@ -390,15 +400,24 @@
         return svg;
     }
 
-    // Learn passes 'explanation' and Try it passes 'interactive'.
+    // The shared feedback box, drawn by the engine so it matches every other
+    // lesson. Any working goes in here, on its own line, never in a separate
+    // box underneath. Learn passes 'explanation'; Try it passes 'interactive'.
     function feedbackBox(host, sectionId, options) {
         const box = window.Maths1to9LessonEngine.createFeedback(sectionId, options);
         host.append(box);
         return box;
     }
 
-    function correctBox(host, text, sectionId = 'explanation') {
-        return feedbackBox(host, sectionId, { correct: true, text });
+    function correctBox(host, text, sum, sectionId = 'explanation') {
+        const box = feedbackBox(host, sectionId, { correct: true, text });
+        if (sum) {
+            const working = document.createElement('span');
+            working.className = 'nn-box-sum';
+            working.textContent = sum;
+            box.append(working);
+        }
+        return box;
     }
 
     function drawLine(host, start, end, position = start, showJourney = true, range = {}) {
@@ -598,7 +617,7 @@
         if (solved) {
             drawFinishedLine(host, question);
             host.querySelector('.negative-line').classList.add('negative-line--solved');
-            correctBox(host, question.correct, 'interactive');
+            correctBox(host, question.correct, question.working, 'interactive');
             return;
         }
         let hint;
@@ -769,7 +788,7 @@
                 });
             });
         }
-        if (solved) correctBox(host, question.feedback, 'interactive');
+        if (solved) correctBox(host, `Correct. ${question.feedback}`, '', 'interactive');
         else if (last) feedbackBox(host, 'interactive', { correct: false, text: question.wrong[last] });
     }
 

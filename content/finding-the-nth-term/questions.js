@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "down-jump": "A negative multiplier makes the sequence go down. Test the rule at the first two positions.",
+                "pattern-dots": "Use the pattern number in place of n.",
+                "adjust": "Put in the first two positions to check that the rule fits."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.FindingNthTerm.pick,

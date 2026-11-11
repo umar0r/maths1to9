@@ -62,6 +62,13 @@
         const { randomInt } = window.Maths1to9LessonEngine;
         const types = ['no-adjust', 'adjust', 'one-negative', 'front-ten', 'one-negative', 'two-negative'];
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "no-adjust": "Multiply the front numbers and add the indices.",
+                "adjust": "If the front number reaches 10, move one factor of 10 into the power.",
+                "one-negative": "Add the signed indices, then check that the front number is below 10.",
+                "front-ten": "A front number of 10 becomes 1 with one extra factor of 10 in the power.",
+                "two-negative": "Add both negative indices before adjusting the front number."
+            },
             version: 1, count: types.length, practiseAgain: true, heading: 'Your practice results',
             pick(random) {
                 return types.map(type => ({ type, seed: randomInt(0, 4294967295, random) }));

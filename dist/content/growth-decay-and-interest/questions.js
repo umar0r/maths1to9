@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "compound-interest": "Find the final balance, then take away the starting deposit to get the interest.",
+                "simple-choice": "Simple interest adds the same amount each year.",
+                "depreciation": "Each year the multiplier applies to what is left from the year before."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.GrowthDecay.pick,

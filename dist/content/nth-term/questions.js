@@ -13,6 +13,10 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "term-choice": "Replace n with the position, then multiply before adding.",
+                "first-terms": "Put in each position separately, and square it before adding the fixed number."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NthTerm.pick,

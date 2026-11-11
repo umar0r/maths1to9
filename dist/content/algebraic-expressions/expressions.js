@@ -42,16 +42,19 @@
                 [`(${n} − ${k})${letter}`, 'Subtract the total cost from the starting money. Do not multiply the starting money by the number of items.']];
         } else throw new Error(`Unknown expression kind: ${kind}`);
         const model = { kind, letter, k, n, target, numbers, correctTokens, usual };
+        const practiceFeedback = kind === 'square' ? 'Squaring means multiplying a number by itself.'
+            : kind === 'multiply' ? 'Write the number in front of the letter to show multiplication.'
+                : kind === 'brackets' ? 'The multiplier applies to everything in the brackets.' : '';
         const feedback = kind === 'square' ? `${letter} × ${letter} is written ${answer}.`
             : kind === 'multiply' ? `${k} × ${letter} is written ${answer}.`
                 : `Following the story gives ${answer}.`;
         const prompt = prefix + story + (kind === 'brackets' ? ' Write the final expression.' : '')
             + (usual ? ' Use the usual short algebra notation.' : '');
-        if (mode !== 'choice') return { input: 'custom', questionType: type, prompt, model, feedback,
+        if (mode !== 'choice') return { input: 'custom', questionType: type, prompt, model, feedback, practiceFeedback,
             widget: tileWidget(model, feedback, common) };
         const candidates = wrong.filter(([label], index, list) => label !== answer && list.findIndex(([other]) => other === label) === index);
         if (candidates.length < 3) throw new Error(`Missing expression mistakes for ${type}/${kind}`);
-        return { input: 'choice', questionType: type, prompt, model, feedback,
+        return { input: 'choice', questionType: type, prompt, model, feedback, practiceFeedback,
             options: [{ label: answer, correct: true, feedback }, ...candidates.slice(0, 3).map(([label, feedback]) => ({ label, correct: false, feedback }))] };
     }
 

@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "two-changes": "Apply the second multiplier to the amount left after the first change.",
+                "which-multiplier": "For a decrease, the multiplier represents the percentage left.",
+                "which-calculation": "The index counts how many times you apply the same multiplier."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.PercentageMultipliers.pick,

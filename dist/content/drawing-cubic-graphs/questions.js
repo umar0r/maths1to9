@@ -33,6 +33,12 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "point-on": "Put the x-coordinate into the rule and check it gives the y-coordinate.",
+                "cube": "A negative multiplied by itself three times stays negative.",
+                "crosses": "At the y-axis, x is zero, so only the added constant remains.",
+                "shape": "The highest power in the equation tells you the graph type."
+            },
             version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: Q.pick, question: Q.generate
         });

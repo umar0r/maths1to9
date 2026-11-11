@@ -61,6 +61,14 @@
         const { randomInt } = window.Maths1to9LessonEngine;
         const types = ['horizontal-positive', 'vertical-positive', 'horizontal-negative', 'vertical-negative', 'axis', 'mixed'];
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "horizontal-positive": "A horizontal line keeps y the same at every point.",
+                "horizontal-negative": "A horizontal line keeps y the same at every point.",
+                "vertical-positive": "A vertical line keeps x the same at every point.",
+                "vertical-negative": "A vertical line keeps x the same at every point.",
+                "axis": "The fixed coordinate is zero along an axis.",
+                "mixed": "The coordinate that stays the same tells you how the line runs."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick(random) { return types.map(type => ({ type, seed: randomInt(0, 4294967295, random) })); },

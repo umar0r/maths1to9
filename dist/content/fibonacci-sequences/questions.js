@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "which-is-fib": "Check that each new term is the sum of the two before it.",
+                "next-two-choice": "Use the first new term when finding the next one.",
+                "spot-wrong": "Check each term against the sum of the two before it."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Fibonacci.pick,

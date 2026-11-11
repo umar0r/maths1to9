@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         const runner = api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "minutes-speed": "Change minutes to hours before dividing to get kilometres per hour.",
+                "minutes-distance": "Write the whole time in hours before multiplying by the speed.",
+                "who-is-faster": "Compare the distances the cars travel in the same amount of time."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.SpeedDistanceTime.pick,

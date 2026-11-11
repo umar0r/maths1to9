@@ -67,11 +67,11 @@ $pageTitle = 'Density and pressure';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./density.js?v=1"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./density.js?v=2"></script>
+    <script src="./questions.js?v=2"></script>
     <script src="./interactive.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

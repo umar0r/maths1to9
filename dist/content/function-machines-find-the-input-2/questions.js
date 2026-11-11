@@ -13,6 +13,16 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "addMultiply": "Undo the multiplication first, then undo the addition.",
+                "multiplySubtract": "Undo the subtraction first, then undo the multiplication.",
+                "threeAddMultiplySubtract": "Undo the boxes from right to left.",
+                "threeSubtractMultiplyAdd": "Undo the boxes from right to left.",
+                "multiplyAdd": "Undo the addition first, then undo the multiplication.",
+                "addDivide": "Undo the division first, then undo the addition.",
+                "divideAdd": "Undo the addition first, then undo the division.",
+                "subtractMultiply": "Undo the multiplication first, then undo the subtraction."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.FunctionMachines.pick,

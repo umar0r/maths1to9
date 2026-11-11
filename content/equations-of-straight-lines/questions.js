@@ -36,6 +36,16 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "add-subtract": "Move the separate number by doing the same operation on both sides.",
+                "reorder": "Put the term with x first to make the gradient easier to read.",
+                "divide": "Divide every term on both sides by the number multiplying y.",
+                "read-reordered": "The term multiplying x tells you the gradient, wherever it is written.",
+                "two-step": "Move the added term first, then divide to leave y on its own.",
+                "on-its-own": "Do the same thing to both sides to keep the equation balanced.",
+                "point-sides": "A point is on the line when its coordinates make both sides equal.",
+                "same-equation": "Divide every term on both sides by the same number."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results', pick: E.pick, question: E.generate
         });

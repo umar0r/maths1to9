@@ -10,13 +10,18 @@ const source = fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.
 vm.runInNewContext(source, { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
 const { escapeHtml, shuffle, seededRandom, randomInt } = window.Maths1to9LessonEngine;
 
-test('shared correct feedback confirms the result and keeps the explanation', () => {
+test('shared correct feedback trims repeated answers only in Practice', () => {
     const { correctFeedbackText } = window.Maths1to9LessonEngine;
-    assert.equal(correctFeedbackText('41.207 ÷ 10 = 4.1207'), 'Yes, correct!');
+    const practice = { sectionId: 'question-bank' };
+    assert.equal(correctFeedbackText('41.207 ÷ 10 = 4.1207', practice), 'Yes, correct!');
     assert.equal(correctFeedbackText('Right'), 'Yes, correct!');
-    assert.equal(correctFeedbackText('The answer is 6,453,009.', '6453009'), 'Yes, correct!');
-    assert.equal(correctFeedbackText('✓ Right. 41.207 ÷ 10 = 4.1207. Each digit moves one place to the right.'),
+    assert.equal(correctFeedbackText('The answer is 6,453,009.', { ...practice, answer: '6453009' }), 'Yes, correct!');
+    const explanation = '41.207 ÷ 10 = 4.1207. Each digit moves one place to the right.';
+    assert.equal(correctFeedbackText(`✓ Right. ${explanation}`, practice),
         'Yes, correct! Each digit moves one place to the right.');
+    for (const sectionId of ['explanation', 'interactive', 'comparison']) {
+        assert.equal(correctFeedbackText(`✓ Right. ${explanation}`, { sectionId }), `Yes, correct! ${explanation}`);
+    }
     assert.equal(correctFeedbackText('The curve stops going down and starts going up.'),
         'Yes, correct! The curve stops going down and starts going up.');
     assert.equal(correctFeedbackText('3 − (−2) = 3 + 2 = 5.'),

@@ -63,14 +63,15 @@
     }
     function sumQuestion(model, mode = 'choice') {
         const feedback = `${model.expression} simplifies to ${model.answer}.`;
+        const practiceFeedback = 'Collect terms only when their letters and powers match.';
         const prompt = model.widgetKind === 'paint' ? `In ${model.expression}, select the ${model.targetFamily} terms. Type the number in front after collecting those terms.`
             : model.widgetKind === 'sort' ? `Sort the terms in ${model.expression}. Then type the total for each group.`
                 : model.widgetKind === 'zero' ? `Simplify ${model.expression}. Make zero pairs, then type the number in front of ${model.letter}.`
                     : `Simplify ${model.expression}.`;
-        if (mode !== 'choice') return { input: 'custom', questionType: model.type, prompt, model, feedback, widget: widgetFor(model, feedback) };
+        if (mode !== 'choice') return { input: 'custom', questionType: model.type, prompt, model, feedback, practiceFeedback, widget: widgetFor(model, feedback) };
         const wrong = wrongSums(model);
         if (wrong.length < 3) throw new Error(`Missing algebra mistakes for ${model.expression}`);
-        return { input: 'choice', questionType: model.type, prompt: `Simplify ${model.expression}.`, model, feedback,
+        return { input: 'choice', questionType: model.type, prompt: `Simplify ${model.expression}.`, model, feedback, practiceFeedback,
             options: [{ label: model.answer, correct: true, feedback }, ...wrong.slice(0, 3).map(item => ({ label: formatSums(item.sums, model.families), correct: false, feedback: item.feedback }))] };
     }
     function zeroModel(positiveCount, negativeCount, letter = 'm') {
@@ -86,7 +87,8 @@
     }
     function productQuestion(model, mode = 'choice') {
         const feedback = `Multiply the numbers: ${model.leftCoefficient} × ${model.rightCoefficient} = ${model.coefficient}. Count all the letter factors. The answer is ${model.answer}.`;
-        const question = { questionType: model.type, prompt: `Simplify ${model.expression}.`, model, feedback };
+        const question = { questionType: model.type, prompt: `Simplify ${model.expression}.`, model, feedback,
+            practiceFeedback: 'Multiply the numbers in front, then count all the copies of each letter.' };
         if (mode !== 'choice') return { ...question, input: 'custom', widget: productWidget(model, feedback) };
         const alternatives = [[model.coefficient, Math.max(model.leftPower, model.rightPower), 'That leaves out some of the letter factors. Count them all.'],
             [model.leftCoefficient + model.rightCoefficient, model.power, 'Multiply the numbers in front. Do not add them.'],

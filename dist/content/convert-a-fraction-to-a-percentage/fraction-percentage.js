@@ -12,7 +12,8 @@
         const question = {
             n, d, questionType: 'percentage', input,
             prompt: `Write ${n}/${d} as a percentage.${input === 'number' ? ' Leave out the % sign.' : ''}`,
-            feedback: working(n, d)
+            feedback: working(n, d),
+            practiceFeedback: 'Divide the top by the bottom, then multiply by 100.'
         };
         if (input === 'choice') question.options = [
             option(`${tidy(answer)}%`, working(n, d), true),

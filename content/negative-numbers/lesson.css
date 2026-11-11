@@ -473,6 +473,17 @@
     font-weight: 800;
 }
 
+.nn-box-sum {
+    display: block;
+    margin-top: .25rem;
+    font-size: clamp(1rem, 4.1vw, 1.3rem);
+    font-weight: 900;
+}
+
+.question-feedback .nn-box-sum:first-child {
+    margin-top: 0;
+}
+
 .nn-read-sum {
     display: grid;
     grid-template-columns: auto 1fr 1.7fr;

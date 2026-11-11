@@ -92,7 +92,8 @@
                 { value: { d: String(d) }, feedback: 'The distance is right. Check the time: end time − start time.' },
                 { value: { t: String(t) }, feedback: 'The time is right. Check the distance: end distance − start distance.' }
             ].filter((rule, index) => index >= 3 || !Object.entries(rule.value).every(([id, value]) => Number(value) === (id === 'd' ? d : t))),
-            feedback: nb(`Right. ${d} m in ${t} s.`), fallback };
+            feedback: nb(`Right. ${d} m in ${t} s.`),
+            practiceFeedback: 'Subtract the start reading from the end reading on each axis.', fallback };
     }
 
     const learnScreens = [

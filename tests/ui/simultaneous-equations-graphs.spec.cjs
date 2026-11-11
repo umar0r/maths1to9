@@ -373,7 +373,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await reload(page);
         await main(page).click();
         await expect(main(page)).toHaveText('Continue');
-        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Yes, correct! Your point is close enough to where the lines cross.');
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Yes, correct! The solution is about x ≈ −1.7, y ≈ 0.7.');
         await reload(page);
         await expect(inputs.nth(0)).toHaveValue('−1.6');
         expect(await noSideways(page)).toBe(true);

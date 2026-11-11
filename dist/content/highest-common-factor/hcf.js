@@ -207,7 +207,9 @@
     }
     function generate(item, random) {
         const pair = generatedPair(item.type, random);
-        return item.mode === 'custom' ? matchQuestion(pair) : numberQuestion(pair, item.mode || 'number');
+        const question = item.mode === 'custom' ? matchQuestion(pair) : numberQuestion(pair, item.mode || 'number');
+        return { ...question, practiceFeedback: shared(pair).length
+            ? 'Use each matched prime once.' : 'There are no shared primes. One divides every whole number.' };
     }
     function pick(random) {
         return [['shared', 'choice'], ['repeated', 'number'], ['divides', 'choice'], ['coprime', 'number'], ['match', 'custom'], ['match', 'custom']].map(([type, mode]) => ({ type, mode, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random) }));

@@ -215,7 +215,7 @@
             } while (rules.length < 2);
             question = card(item.type, [a, b], terms, [6], {
                 input: 'number', prompt: 'What is the next term?', answer: String(answer), rules,
-                feedback: `${number(terms[3])} + ${number(terms[4])} = ${number(answer)}`
+                feedback: 'Add the two previous terms to make the next one.'
             });
         } else if (item.type === 'next-two') {
             const a = int(1, 12), b = int(1, 12), one = a + b, two = a + 2 * b;
@@ -224,7 +224,7 @@
                     mistake(pair(one, 2 * a + b), `For the term after, use ${b} and ${one}.`),
                     mistake(pair(one, 2 * one), 'That doubles. Add the two terms before.'),
                     mistake(pair(one, one + b - a), 'That adds the same gap again. The gaps change.')
-                ], feedback: `${a} + ${b} = ${one}, then ${b} + ${one} = ${two}`
+                ], feedback: 'Use the term you just found when you work out the one after it.'
             });
         } else if (item.type === 'kth-term') {
             const a = int(1, 6), b = int(1, 6), k = int(6, 8), terms = extend(a, b, k + 1);
@@ -232,7 +232,7 @@
                 input: 'number', prompt: `The first two terms are ${a} and ${b}. What is the ${ordinal(k)} term?`, answer: String(terms[k - 1]), rules: [
                     mistake(terms[k - 2], `That's the ${ordinal(k - 1)} term. One more.`),
                     mistake(terms[k], "That's one too many. Count the positions.")
-                ], feedback: `${list(terms.slice(0, k))}. The ${ordinal(k)} term is ${terms[k - 1]}.`
+                ], feedback: 'Count from the first term as you build the sequence.'
             });
         } else if (item.type === 'next-two-choice') {
             let a, b, terms, pairs;

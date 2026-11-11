@@ -23,6 +23,7 @@
             prompt: `In ${power(base, index)}, what is the ${askBase ? 'base' : 'index'}?`, answer,
             fallback: askBase ? 'Read the big number. That is the base.' : 'Read the small raised number. That is the index.',
             feedback: `The base is ${base}. The index is ${index}.`,
+            practiceFeedback: 'The base is the number being multiplied. The index counts how many copies of it to use.',
             wrong: [
                 [askBase ? index : base, askBase ? 'That is the small index. The base is the big number.' : 'That is the base. The index is the small raised number.'],
                 [base ** index, 'That is the value after multiplying. Read the two parts of the power.'],
@@ -38,6 +39,7 @@
             prompt: mode === 'choice' ? `Which shows the copies of the base in ${power(base, index)}?`
                 : `Find the missing factor for ${power(base, index)}: ${index > 1 ? `${repeated(base, index - 1)} × ` : ''}□`,
             answer, feedback: `${power(base, index)} = ${repeated(base, index)}`,
+            practiceFeedback: 'The index counts copies of the base, which you multiply together.',
             wrong: mode === 'choice' ? [
                 [repeated(base, index + 1), 'That uses one extra copy of the base. Count the copies.'],
                 [repeated(base, Math.max(1, index - 1)), 'That leaves out a copy of the base.'],
@@ -57,6 +59,7 @@
         return question({ type: 'calculate-power', mode, base, index,
             prompt: `Calculate ${power(base, index)}.`, answer: base ** index,
             feedback: `${power(base, index)} = ${repeated(base, index)} = ${base ** index}`,
+            practiceFeedback: 'Multiply copies of the base as many times as the index tells you.',
             wrong: [
                 [base * index, 'That multiplies the base by the index. Multiply copies of the base instead.'],
                 [base + index, 'That adds the base and index. A power uses multiplication.'],
@@ -73,6 +76,7 @@
                 : `Write ${repeated(base, index)} in index form. What index goes on the ${base}?`,
             answer: mode === 'choice' ? power(base, index) : index,
             feedback: `${repeated(base, index)} = ${power(base, index)}`,
+            practiceFeedback: 'Count how many times the same number appears as a factor.',
             wrong: mode === 'choice' ? [
                 [power(base, Math.max(1, index - 1)), 'That counts one copy too few.'],
                 ...(base ** index !== index ** base ? [[power(index, base), 'That swaps the base and index. The repeated number stays as the base.']] : []),

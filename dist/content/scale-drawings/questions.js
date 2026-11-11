@@ -13,6 +13,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "area": "Scale both lengths before multiplying for the area.",
+                "route": "Add the lengths on the drawing before scaling the total.",
+                "draw": "Use the same scale for both sides."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.ScaleDrawings.pick,

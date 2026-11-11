@@ -35,7 +35,9 @@
         return m === 0 ? 'Flat: 0 up for every 1 right' : `1 right, ${Math.abs(m)} ${m < 0 ? 'down' : 'up'}`;
     }
     function tapFeedback([x, y]) {
-        if (x === 0 && y === 3) return `✓ The line crosses the y-axis at ${E.coordinate(0, 3)}.`;
+        if (x === 0 && y === 3) {
+            return `The line crosses the y-axis at ${E.coordinate(0, 3)}. Every point on the y-axis has ${E.nb('x = 0')}. Put ${E.nb('x = 0')} in: ${E.nb('y = 2 × 0 + 3 = 3')}. So 3 is the y-intercept.`;
+        }
         if (x === 0) return "That's on the y-axis, but the line isn't there. Follow the line to the y-axis.";
         if (y === 2 * x + 3) return 'That point is on the line. Now follow it to the y-axis, the up-and-down axis.';
         if (y === 0) return "That's on the x-axis. The y-axis is the up-and-down one.";
@@ -108,8 +110,7 @@
                 prompt.textContent = 'Tap where the line crosses the y-axis.';
                 const feedback = node('p');
                 feedback.setAttribute('role', 'status');
-                const explanation = node('div');
-                content.append(feedback, explanation);
+                content.append(feedback);
                 let marker;
                 function paint() {
                     marker?.remove();
@@ -120,8 +121,6 @@
                     feedback.className = state.tap ? `question-feedback is-visible ${state.found ? 'is-correct' : 'is-incorrect'}` : '';
                     if (state.found) {
                         eq.innerHTML = E.equationHtml(2, 3, { highlight: 'c' });
-                        paragraphs(explanation, [`Every point on the y-axis has ${E.nb('x = 0')}. Put ${E.nb('x = 0')} in: ${E.nb('y = 2 × 0 + 3 = 3')}.`]);
-                        const sentence = node('p'); sentence.append('So 3 is the ', node('strong', 'y-intercept'), '.'); explanation.append(sentence);
                     }
                 }
                 paint();

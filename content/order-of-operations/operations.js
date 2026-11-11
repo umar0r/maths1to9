@@ -945,7 +945,8 @@
                 });
             }
         }
-        const result = { expression, questionType: item.type, input, prompt, feedback: item.type === 'firstOperationQuestion' && input === 'number' ? `${source.correctLabel} = ${answer}` : words(source.explanation) };
+        const result = { expression, questionType: item.type, input, prompt, feedback: item.type === 'firstOperationQuestion' && input === 'number' ? `${source.correctLabel} = ${answer}` : words(source.explanation),
+            practiceFeedback: item.type === 'firstOperationQuestion' ? 'Start inside the brackets.' : 'Use the order of operations. Work from left to right when operations have the same priority.' };
         if (input === 'choice') result.options = source.answers.map(option => ({ ...option, feedback: option.correct ? words(source.explanation) : words(option.feedback) }));
         else Object.assign(result, { answer: formatNumber(answer), tolerance: 0,
             rules: wrong.filter(rule => Number(rule.value.replace(/−/g, '-')) !== Number(String(answer).replace(/−/g, '-'))),

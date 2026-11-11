@@ -16,6 +16,16 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "second-section": "Use only the distance and time between the ends of the second section.",
+                "whole-line": "Divide the change in distance by the time for the whole section.",
+                "steady-or-not": "A flat section means the distance stays the same.",
+                "middle-section": "Subtract the start readings from the end readings before dividing.",
+                "fastest": "The steepest section covers the most distance per unit of time.",
+                "after-stop": "Start timing again where the flat section ends.",
+                "whole-journey-mistake": "Use the two ends of the requested section, rather than the ends of the whole journey.",
+                "stopped": "The distance does not change while someone is stopped."
+            },
             version: 2, upgrade: () => null, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results', pick: J.pick, question: J.generate
         });

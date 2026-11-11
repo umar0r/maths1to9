@@ -33,6 +33,11 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "estimate": "Estimate when the lines cross between grid lines.",
+                "which-solution": "The same values have to make both equations true.",
+                "both-lines": "A point on only one line makes only one of the equations true."
+            },
             version: 2, upgrade: T.upgradePractice, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: T.pick, question: T.generate
         });

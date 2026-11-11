@@ -13,6 +13,14 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "total": "Add the counts for every slice to find the whole.",
+                "share": "Divide the count for the slice by the total count.",
+                "per-item": "Split the 360° of a full turn equally between all the items.",
+                "angle": "Use the slice’s share of a full turn.",
+                "missing": "Subtract the angles you know from a full turn.",
+                "draw": "The angles fill a whole turn, so they must add to 360°."
+            },
             version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.PieCharts.pick,

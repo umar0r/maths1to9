@@ -34,6 +34,13 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "missing-power": "The shape helps you identify the power.",
+                "type-from-equation": "Look for where x appears and for its highest power.",
+                "equation-from-graph": "Match the shape to the highest power in the equation.",
+                "power": "Ignore the numbers multiplying x. Look for its highest power.",
+                "type-from-graph": "Look at the overall shape of the graph."
+            },
             version: 1, count: 6, practiseAgain: true, heading: 'Your practice results',
             pick: Q.pick, question: Q.generate
         });

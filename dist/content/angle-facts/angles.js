@@ -833,7 +833,7 @@
                         mistake(g, 'x is next to g, on a straight line. They add up to 180°.')
                     ],
                     fallback: 'Angles on a straight line add up to 180°.',
-                    feedback: `180 − ${g} = ${answer}°`,
+                    feedback: 'Angles on a straight line add to 180°.',
                     figure: straightLineFigure({
                         note,
                         label: `A straight line with a line coming out of it, angles ${g} degrees and x`,
@@ -864,7 +864,7 @@
                     mistake(total, 'That adds the two you know. Now take that away from 180.')
                 ],
                 fallback: 'Angles on a straight line add up to 180°.',
-                feedback: `${a} + ${b} = ${total}. 180 − ${total} = ${answer}°`,
+                feedback: 'Add the known angles before subtracting from 180°.',
                 figure: straightLineFigure({
                     note,
                     label: `A straight line with two lines coming out of it, angles ${a} degrees, ${b} degrees and x`,

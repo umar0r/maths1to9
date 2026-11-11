@@ -549,7 +549,7 @@
                 answer: String(answer),
                 rules: cleanRules(answer, rules),
                 fallback: 'Both times are in the same hour. Take away the minutes.',
-                feedback: `${b} − ${a} = ${answer} minutes`
+                feedback: 'Both times are in the same hour, so subtract the minutes.'
             });
         } else if (type === 'cross-hour') {
             const setting = choose(SETTINGS);
@@ -571,7 +571,7 @@
                 answer: String(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Hop from ${clock(hour, a)} to ${next}. Then land on ${clock(hour + 1, b)}. Add the jumps.`,
-                feedback: `Hop ${hop} minutes, land ${b} minutes. ${hop} + ${b} = ${answer} minutes`
+                feedback: 'Add the minutes before and after the hour.'
             });
         } else if (type === 'jumps') {
             const startHour = int(7, 17);

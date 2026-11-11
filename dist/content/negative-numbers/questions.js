@@ -13,6 +13,9 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
+            practiceFeedback: {
+                "either-way": "Adding moves right. The starting point can be far enough below zero that the answer stays negative."
+            },
             version: 1, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,

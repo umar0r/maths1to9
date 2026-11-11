@@ -348,7 +348,7 @@
                     mistake(round(mass - volume, 2), 'That takes the volume away. Divide the mass by the volume.')
                 ]),
                 fallback: 'Density = mass ÷ volume.',
-                feedback: `${number(mass)} ÷ ${volume} = ${number(density)} g/cm³`
+                feedback: 'Density is the mass for each cubic centimetre.'
             });
         } else if (type === 'find-mass') {
             const material = capitalise(choose(MATERIALS));
@@ -363,7 +363,7 @@
                     mistake(round(density + volume, 2), 'That adds. Mass = density × volume.')
                 ]),
                 fallback: 'Cover M: density × volume.',
-                feedback: `${number(density)} × ${volume} = ${number(mass)} g`
+                feedback: 'Multiply the mass for one cubic centimetre by the volume.'
             });
         } else if (type === 'find-volume') {
             const volume = 10 * int(1, 60);
@@ -378,7 +378,7 @@
                     mistake(round(mass - density, 2), 'That takes the density away. Divide the mass by the density.')
                 ]),
                 fallback: 'Cover V: mass ÷ density.',
-                feedback: `${number(mass)} ÷ ${number(density)} = ${number(volume)} cm³`
+                feedback: 'Divide mass by density to find volume.'
             });
         } else if (type === 'find-pressure') {
             const metric = int(0, 1) === 0;
@@ -400,7 +400,7 @@
                         mistake(round(area / force, 4), "That's the wrong way round. Force ÷ area: the force goes first."),
                         mistake(round(Math.abs(force - area), 2), `That takes ${number(area)} away. Divide the force by the area.`)
                     ]),
-                    feedback: `${number(force)} ÷ ${number(area)} = ${number(pressure)} ${pressureUnit}`
+                    feedback: 'Pressure is force per unit of area.'
                 };
             } else if (unknown === 'force') {
                 config = {
@@ -411,7 +411,7 @@
                         mistake(round(area / pressure, 4), "That's the wrong way round. Force = pressure × area, so the pressure goes first."),
                         mistake(round(pressure + area, 2), 'That adds. Force = pressure × area.')
                     ]),
-                    feedback: `${number(pressure)} × ${number(area)} = ${number(force)} N`
+                    feedback: 'Multiply the force per unit of area by the whole area.'
                 };
             } else {
                 config = {
@@ -422,7 +422,7 @@
                         mistake(round(pressure / force, 4), "That's the wrong way round. Area = force ÷ pressure, so the force goes first."),
                         mistake(round(Math.abs(force - pressure), 2), 'That takes away. Divide the force by the pressure.')
                     ]),
-                    feedback: `${number(force)} ÷ ${number(pressure)} = ${number(area)} ${areaUnit}`
+                    feedback: 'Divide force by pressure to find the area.'
                 };
             }
             question = card(type, unknown === 'pressure' ? { force, pressure: null, area }

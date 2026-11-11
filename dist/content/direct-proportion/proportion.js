@@ -318,7 +318,7 @@
                     mistake(round(totalPence * count / 100, 2), `That multiplies. Share ${cash(totalPence)} between ${count} ${many}: divide.`)
                 ]),
                 fallback: `Share ${cash(totalPence)} between ${count} ${many}.`,
-                feedback: `${cash(totalPence)} ÷ ${count} = ${cash(unitPence)}. 1 ${one} costs ${cash(unitPence)}.`
+                feedback: 'Divide the total cost by the number of items to find the cost of one.'
             });
         } else if (type === 'scale-price') {
             const [one, many] = choose(MONEY_ITEMS);
@@ -340,7 +340,7 @@
                 answer: number(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Find the price of 1 ${one}: ${cash(totalPence)} ÷ ${count}.`,
-                feedback: `${cash(totalPence)} ÷ ${count} = ${cash(unitPence)} for 1 ${one}. ${cash(unitPence)} × ${want} = ${cash(answerPence)}`
+                feedback: 'Find the cost of one item first, then multiply by the number you want.'
             });
         } else if (type === 'scale-amount') {
             const thing = choose(RECIPE_THINGS);
@@ -361,7 +361,7 @@
                 answer: number(answer),
                 rules: cleanRules(answer, rules),
                 fallback: `Find the ${thing} for 1 person: ${total} ÷ ${count}.`,
-                feedback: `${total} ÷ ${count} = ${each} g for 1 person. ${each} × ${want} = ${answer} g`
+                feedback: 'Find the amount for one person first, then scale it up.'
             });
         } else if (type === 'which-calculation') {
             const [one, many] = choose(MONEY_ITEMS);

@@ -143,7 +143,8 @@
     }
     function valueCard(form, x) {
         return { input: 'number', fractions: true, answer: String(valueOf(form, x)), rules: valueRules(form, x),
-            fallback: 'Divide ' + form + ' by x: ' + workingText(form, x), feedback: `Right. ${workingText(form, x)}.` };
+            fallback: 'Divide ' + form + ' by x: ' + workingText(form, x), feedback: `Right. ${workingText(form, x)}.`,
+            practiceFeedback: 'Divide the numerator by the x-value.' };
     }
     // Accept a signed decimal; invalid or incomplete text has no numeric value.
     function readNumber(text) {

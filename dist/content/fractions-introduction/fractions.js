@@ -46,6 +46,7 @@
                 [d - n, 'That counts the parts left unshaded. Read the number asked for.'],
                 [n * d, 'That multiplies the two numbers. You only need to read one of them.']],
             feedback: `The ${part} is ${answer}. ${part === 'numerator' ? 'It is the top number.' : 'It is the bottom number.'}`,
+            practiceFeedback: part === 'numerator' ? 'The top number counts the parts taken.' : 'The bottom number counts the equal parts in a whole.',
             fallback: 'The numerator is the top number. The denominator is the bottom number.', picture: { kind: 'bar', n, d } });
     }
 
@@ -58,6 +59,7 @@
                 [fraction(n, n + d), 'That adds the shaded parts to the total. They are already part of the total.'],
                 [fraction(n, d - n), 'The bottom must count all the parts, including the shaded ones.']],
             feedback: `${n} of the ${d} equal parts are shaded, so the fraction is ${fraction(n, d)}.`,
+            practiceFeedback: 'Count the shaded parts for the top number and all the equal parts for the bottom number.',
             fallback: 'Count the shaded parts for the top. Count all the equal parts for the bottom.', picture: { kind, n, d } });
     }
 
@@ -71,13 +73,15 @@
             wrong: [[n, 'That counts parts, not complete wholes.'], [d, 'That is the number of parts in one whole.'],
                 [fullWholes + 1, 'There are not enough parts for that many complete wholes.']],
             feedback: `${written} has ${fullWholes} complete whole${fullWholes === 1 ? '' : 's'}.`,
+            practiceFeedback: 'The whole number is written before the fraction.',
             fallback: 'Count groups of the bottom number. A part of a whole does not count as a complete whole.' });
         return makeQuestion({ type: 'classifyFraction', mode, model, prompt: `How is ${written} written?`, answer,
             wrong: [['Proper fraction', 'A proper fraction has a top number smaller than its bottom number.'],
                 ['Improper fraction', 'An improper fraction is written as one fraction, with its top at least as big as its bottom.'],
                 ['Mixed number', 'A mixed number is written as a whole number and a fraction.'],
                 ['Whole number', 'There is still a part of a whole here. It is not a whole number.']],
-            feedback: `${written} is written as a ${answer.toLowerCase()}.`, fallback: 'Look at how the number is written.' });
+            feedback: `${written} is written as a ${answer.toLowerCase()}.`,
+            practiceFeedback: '', fallback: 'Look at how the number is written.' });
     }
 
     function improperQuestion(whole, n, d, mode = 'choice') {
@@ -94,6 +98,7 @@
                     [whole, 'That is the number of complete wholes, not the parts left over.'],
                     [d, 'That is the bottom number. Count the parts left over.']],
             feedback: `${top} ÷ ${d} gives ${whole} complete whole${whole === 1 ? '' : 's'} and ${n} part${n === 1 ? '' : 's'} left. ${fraction(top, d)} = ${whole} ${fraction(n, d)}.`,
+            practiceFeedback: 'Divide the top by the bottom. The remainder is the top of the fraction part.',
             fallback: 'Divide the top by the bottom. The parts left over become the new top number.' });
     }
 
@@ -115,6 +120,7 @@
                     [whole * n, 'Multiply the whole number by the bottom, then add the top.'],
                     [whole * d, 'That counts the complete wholes. Add the extra parts too.']],
             feedback: `${whole} × ${d} + ${n} = ${top}, so ${whole} ${fraction(n, d)} = ${fraction(top, d)}.`,
+            practiceFeedback: 'Count the parts in the whole numbers, then add the parts in the fraction.',
             fallback: 'Multiply the whole number by the bottom. Add the top. Keep the bottom the same.' });
     }
 
@@ -129,7 +135,8 @@
             wrong: [[smaller, 'That is the smaller fraction. Compare them using the same bottom number.'],
                 [fraction(left[1], left[0]), 'That turns the first fraction upside down.'],
                 [fraction(right[1], right[0]), 'That turns the second fraction upside down.']],
-            feedback: `${method} ${bigger} is greater.`, fallback: 'Make the bottom numbers match. Multiply each top and bottom by the same number.' });
+            feedback: `${method} ${bigger} is greater.`,
+            practiceFeedback: method, fallback: 'Make the bottom numbers match. Multiply each top and bottom by the same number.' });
         return makeQuestion({ type: 'chooseInequality', mode, model,
             prompt: `Which comparison of ${first} and ${second} is correct?`, answer: `${first} ${symbol} ${second}`,
             wrong: [['<', 'That says the first fraction is smaller. Compare equal-sized parts before choosing the sign.'],
@@ -137,7 +144,8 @@
                 ['=', 'That says the fractions have the same value. Compare their tops after making the bottoms match.']]
                 .map(([sign, message]) => [`${first} ${sign} ${second}`, message])
                 .concat([['These fractions cannot be compared.', 'Fractions with different bottoms can be compared. Rewrite them with the same bottom.']]),
-            feedback: `${method} ${first} ${symbol} ${second}.`, fallback: 'Make the bottom numbers match, then compare the tops.' });
+            feedback: `${method} ${first} ${symbol} ${second}.`,
+            practiceFeedback: method, fallback: 'Make the bottom numbers match, then compare the tops.' });
     }
 
     function negativeQuestion(left, right, mode = 'choice') {
@@ -148,6 +156,7 @@
                 ['They are equal.', 'These fractions are at different places on the number line.'],
                 [fraction(-smaller[0], smaller[1]), 'Keep the minus sign. Both fractions in the question are negative.']],
             feedback: `${show(smaller)} is further left on the number line, so it is smaller.`,
+            practiceFeedback: 'The smaller number lies further left on the number line.',
             fallback: 'For negative numbers, further left means smaller.' });
     }
 
@@ -163,7 +172,8 @@
                 [order([labels[0], labels[2], labels[1]]), 'The last two fractions are the wrong way round.']]
                 : [[labels[1], 'There is a smaller fraction in the list. Compare their positions on a number line.'],
                     [labels[2], 'That is the largest fraction. You need the smallest.']],
-            feedback: `Smallest first: ${order(labels)}.`, fallback: 'Negative fractions come before positive ones. Compare equal-sized parts within each group.' });
+            feedback: `Smallest first: ${order(labels)}.`,
+            practiceFeedback: 'Negative fractions come before positive ones.', fallback: 'Negative fractions come before positive ones. Compare equal-sized parts within each group.' });
     }
 
     function pick(random) {

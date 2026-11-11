@@ -102,7 +102,7 @@ async function learn(page, touch, detailed=false) {
         for(let n=0;n<6;n++) await board(page).press('ArrowLeft');
         for(let n=0;n<3;n++) await board(page).press('ArrowUp');await board(page).press('Enter');
     } else await tap(page,[0,3],touch);
-    await expect(page.locator('.question-feedback:visible')).toContainText('Yes, correct! The line crosses');await clearLabels(page);await capture(page,'learn-2');
+    await expect(page.locator('.question-feedback:visible')).toHaveText('Yes, correct! The line crosses the y-axis at (0, 3). Every point on the y-axis has x = 0. Put x = 0 in: y = 2 × 0 + 3 = 3. So 3 is the y-intercept.');await clearLabels(page);await capture(page,'learn-2');
     if(detailed)await reload(page);await main(page).click();
     await expect(main(page)).toBeDisabled();
     await board(page).focus();await board(page).press('ArrowRight');expect((await arrows(page)).length).toBe(2);await clearLabels(page);
