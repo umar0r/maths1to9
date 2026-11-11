@@ -455,7 +455,7 @@ for (const mode of modes) {
             await expect(feedback).toHaveText(cases.at(-1).text);
             await draw(page, [4, -2], [1, -2], mode.hasTouch);
             await expect(page).toHaveURL(/#try-it-1-up$/);
-            await expect(feedback).toHaveText('✓ That’s the horizontal change.');
+            await expect(feedback).toHaveText('Yes, correct! That’s the horizontal change.');
             for (const row of [
                 { from: [1, -2], to: [4, 4], text: 'That’s the line itself. Draw up from (4, −2).' },
                 { from: [4, -2], to: [4, 2], text: 'Keep going up to (4, 4).' },
@@ -469,7 +469,7 @@ for (const mode of modes) {
                 await expect(feedback).toHaveText(row.text);
             }
             await draw(page, [4, 4], [4, -2], mode.hasTouch);
-            await expect(feedback).toHaveText('✓ That’s the vertical change.');
+            await expect(feedback).toHaveText('Yes, correct! That’s the vertical change.');
             await expect(main(page)).toBeEnabled();
             await main(page).click();
             for (const value of ['3', '6', '2']) { await answer(page, value); await main(page).click(); }

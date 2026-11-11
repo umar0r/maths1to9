@@ -32,7 +32,7 @@
             }
             const result = judge(line, target);
             feedback.className = window.Maths1to9LessonEngine.feedbackClassName(sectionId, { correct: result.correct === true });
-            feedback.textContent = result.feedback;
+            feedback.textContent = result.correct ? window.Maths1to9LessonEngine.correctFeedbackText(result.feedback) : result.feedback;
             graph.describe('');
         };
         graph.drawLine({

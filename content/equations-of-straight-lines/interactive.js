@@ -128,7 +128,9 @@
                     button.className = `button${saved.rejected.includes(index) ? ' is-incorrect' : saved.correct && index === saved.selected ? ' is-correct' : ''}`;
                 });
                 if (saved.selected !== null) {
-                    feedback.textContent = `${saved.correct ? '✓' : '✗'} ${definition.options[saved.selected].feedback}`;
+                    feedback.textContent = saved.correct
+                        ? window.Maths1to9LessonEngine.correctFeedbackText(definition.options[saved.selected].feedback, definition.options[saved.selected].label)
+                        : `✗ ${definition.options[saved.selected].feedback}`;
                     feedback.className = `question-feedback is-visible ${saved.correct ? 'is-correct' : 'is-incorrect'}`;
                 }
             }

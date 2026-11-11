@@ -198,8 +198,7 @@ for (const width of [1280, 375]) {
         await page.mouse.up();
         await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);
         await expect(page.locator('.negative-hop-count:visible')).toHaveText('+3');
-        await expect(page.locator('.question-feedback.is-correct:visible')).toContainText('Correct. Taking away −3 is the same as adding 3, so you moved 3 places right.');
-        await expect(page.locator('.question-feedback.is-correct:visible .nn-box-sum')).toHaveText('5 − (−3) = 5 + 3 = 8');
+        await expect(page.locator('.question-feedback.is-correct:visible')).toHaveText('Yes, correct! Taking away −3 is the same as adding 3, so you moved 3 places right.');
         await expect(mainAction(page)).toBeEnabled();
         await page.reload({ waitUntil: 'networkidle' });
         await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);

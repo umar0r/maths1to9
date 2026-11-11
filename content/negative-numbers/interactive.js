@@ -293,7 +293,7 @@
                         render();
                     });
                     if (counts[i] === item.steps) {
-                        window.NegativeNumbers.correctBox(root, item.result || '', `${item.sum} = ${signed(item.start + item.steps * item.direction)}`);
+                        window.NegativeNumbers.correctBox(root, item.result || '');
                     }
                 });
             } else if (screen.kind === 'read') {
@@ -322,7 +322,7 @@
                 } else {
                     paragraph('The fee was a mistake. The bank removes it and puts £2 back.');
                     paragraph('3 − (−2) = 5', 'nn-fee-sum');
-                    window.NegativeNumbers.correctBox(root, 'Subtracting −2 has the same effect as adding 2.', '3 − (−2) = 3 + 2 = 5');
+                    window.NegativeNumbers.correctBox(root, 'Subtracting −2 has the same effect as adding 2.');
                 }
             } else if (screen.kind === 'pattern') {
                 const pattern = document.createElement('div');

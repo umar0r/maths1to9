@@ -73,7 +73,7 @@
             buttons.forEach((b, position) => {
                 b.className = `button${saved.joinOrder[position] === index ? index ? ' is-selected is-incorrect' : ' is-selected is-correct' : ''}`;
             });
-            feedback.textContent = Q.prose(Q.joinFeedback[index]);
+            feedback.textContent = index === 0 ? window.Maths1to9LessonEngine.correctFeedbackText(Q.prose(Q.joinFeedback[0])) : Q.prose(Q.joinFeedback[index]);
             feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: index === 0 });
             if (index === 0) {
                 saved.joined = true; save();
@@ -86,7 +86,7 @@
                 b.classList.toggle('is-correct', saved.joinOrder[position] === 0);
                 b.classList.toggle('is-selected', saved.joinOrder[position] === 0);
             });
-            feedback.textContent = Q.prose(Q.joinFeedback[0]);
+            feedback.textContent = window.Maths1to9LessonEngine.correctFeedbackText(Q.prose(Q.joinFeedback[0]));
             feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: true });
         }
         return board;

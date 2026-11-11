@@ -10,6 +10,19 @@ const source = fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.
 vm.runInNewContext(source, { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
 const { escapeHtml, shuffle, seededRandom, randomInt } = window.Maths1to9LessonEngine;
 
+test('shared correct feedback confirms the result and keeps the explanation', () => {
+    const { correctFeedbackText } = window.Maths1to9LessonEngine;
+    assert.equal(correctFeedbackText('41.207 ÷ 10 = 4.1207'), 'Yes, correct!');
+    assert.equal(correctFeedbackText('Right'), 'Yes, correct!');
+    assert.equal(correctFeedbackText('The answer is 6,453,009.', '6453009'), 'Yes, correct!');
+    assert.equal(correctFeedbackText('✓ Right. 41.207 ÷ 10 = 4.1207. Each digit moves one place to the right.'),
+        'Yes, correct! Each digit moves one place to the right.');
+    assert.equal(correctFeedbackText('The curve stops going down and starts going up.'),
+        'Yes, correct! The curve stops going down and starts going up.');
+    assert.equal(correctFeedbackText('3 − (−2) = 3 + 2 = 5.'),
+        'Yes, correct! 3 − (−2) = 3 + 2 = 5.');
+});
+
 test('shared escapeHtml escapes all HTML delimiters and preserves ordinary text', () => {
     assert.equal(escapeHtml(`<b title="a&b">'hello'</b>`), '&lt;b title=&quot;a&amp;b&quot;&gt;&#39;hello&#39;&lt;/b&gt;');
     assert.equal(escapeHtml('2 × 3 − 1'), '2 × 3 − 1');

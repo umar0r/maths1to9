@@ -46,7 +46,7 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe(`d
                 await expect(main(page)).toBeEnabled();
             }
             if (data.id === 'interactive' && data.s.screen >= 3 && data.s.joined) {
-                await expect(page.locator('.lesson-section:visible .question-feedback.is-correct, .lesson-feedback .question-feedback.is-correct').last()).toHaveText('✓ The graph goes through all five points and curves smoothly at the bottom.');
+                await expect(page.locator('.lesson-section:visible .question-feedback.is-correct, .lesson-feedback .question-feedback.is-correct').last()).toHaveText('Yes, correct! The graph goes through all five points and curves smoothly at the bottom.');
             }
             if (process.env.DEBUG_RUN) console.log(i,hash,await main(page).textContent(),(await read(page)).s?.screen);
             if(hash!==prior) {

@@ -115,7 +115,8 @@
                     marker?.remove();
                     if (state.tap) marker = graph.point(state.tap, { tone: state.found ? 'correct' : 'incorrect',
                         size: state.found ? 'large' : 'small', coordinates: state.found });
-                    feedback.textContent = state.tap ? tapFeedback(state.tap) : '';
+                    feedback.textContent = state.found ? window.Maths1to9LessonEngine.correctFeedbackText(tapFeedback(state.tap))
+                        : state.tap ? tapFeedback(state.tap) : '';
                     feedback.className = state.tap ? `question-feedback is-visible ${state.found ? 'is-correct' : 'is-incorrect'}` : '';
                     if (state.found) {
                         eq.innerHTML = E.equationHtml(2, 3, { highlight: 'c' });

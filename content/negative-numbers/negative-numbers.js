@@ -390,24 +390,15 @@
         return svg;
     }
 
-    // The shared feedback box, drawn by the engine so it matches every other
-    // lesson. Any working goes in here, on its own line, never in a separate
-    // box underneath. Learn passes 'explanation'; Try it passes 'interactive'.
+    // Learn passes 'explanation' and Try it passes 'interactive'.
     function feedbackBox(host, sectionId, options) {
         const box = window.Maths1to9LessonEngine.createFeedback(sectionId, options);
         host.append(box);
         return box;
     }
 
-    function correctBox(host, text, sum, sectionId = 'explanation') {
-        const box = feedbackBox(host, sectionId, { correct: true, text });
-        if (sum) {
-            const working = document.createElement('span');
-            working.className = 'nn-box-sum';
-            working.textContent = sum;
-            box.append(working);
-        }
-        return box;
+    function correctBox(host, text, sectionId = 'explanation') {
+        return feedbackBox(host, sectionId, { correct: true, text });
     }
 
     function drawLine(host, start, end, position = start, showJourney = true, range = {}) {
@@ -607,7 +598,7 @@
         if (solved) {
             drawFinishedLine(host, question);
             host.querySelector('.negative-line').classList.add('negative-line--solved');
-            correctBox(host, question.correct, question.working, 'interactive');
+            correctBox(host, question.correct, 'interactive');
             return;
         }
         let hint;
@@ -778,7 +769,7 @@
                 });
             });
         }
-        if (solved) correctBox(host, `Correct. ${question.feedback}`, '', 'interactive');
+        if (solved) correctBox(host, question.feedback, 'interactive');
         else if (last) feedbackBox(host, 'interactive', { correct: false, text: question.wrong[last] });
     }
 

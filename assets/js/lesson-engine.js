@@ -341,11 +341,42 @@
         return name;
     }
 
-    // Every feedback box in every lesson comes from here, so they all look
-    // and sit the same. Lessons append the returned element where the
-    // feedback belongs and may add working to it; they never style it.
-    function createFeedback(sectionId, { correct = null, text = '', visible = true } = {}) {
-        const box = resultText('p', text, feedbackClassName(sectionId, { correct, visible }));
+    const correctFeedbackIntro = 'Yes, correct!';
+
+    function isSingleCalculation(text) {
+        const sides = text.split(/[=<>≤≥≈]/u);
+        if (sides.length !== 2 || !sides.every(side => side.trim())) return false;
+        const symbols = text.replace(/\b(?:mm|cm|km|mg|kg|min|ml|mph|km\/h)\b/gu, '');
+        return /[0-9]/u.test(symbols) &&
+            /^[\s\d.,:()[\]{}+−–\-×÷*\/^=<>≤≥≈√π%£$°²³⁰¹⁴-⁹⁻⁄a-z]+$/u.test(symbols) &&
+            !/[a-z]{2}/u.test(symbols);
+    }
+
+    function correctFeedbackText(text, answer = '') {
+        const detail = text.trim().replace(/^(?:[✓✔]\s*)?(?:(?:yes,\s*)?(?:correct|right)(?:[.!:]\s*|$))?/iu, '');
+        const withoutFullStop = value => value.trim().replace(/\.$/u, '');
+        const normalise = value => withoutFullStop(value).replace(/(?<=\d),(?=\d)/gu, '')
+            .replace(/−/gu, '-').replace(/\s+/gu, ' ').toLowerCase();
+        const knownAnswer = typeof answer === 'string' ? normalise(answer) : '';
+        const explanation = detail.split(/(?<=\.)\s+(?=\p{L})/u).filter(sentence => {
+            const answerStatement = sentence.replace(/^the (?:answer|value|turning point|gradient|solution) is\s+/iu, '');
+            const repeatedAnswer = knownAnswer && normalise(answerStatement) === knownAnswer;
+            return !repeatedAnswer && !isSingleCalculation(sentence);
+        }).join(' ');
+        return explanation ? `${correctFeedbackIntro} ${explanation}` : correctFeedbackIntro;
+    }
+
+    function renderFeedbackText(host, text, correct, answer) {
+        if (correct && text && typeof text === 'object' && typeof text.latex === 'string') {
+            host.append(document.createTextNode(`${correctFeedbackIntro} `), resultText('span', text));
+            return;
+        }
+        host.append(resultText('span', correct ? correctFeedbackText(String(text ?? ''), answer) : text));
+    }
+
+    function createFeedback(sectionId, { correct = null, text = '', visible = true, answer } = {}) {
+        const box = resultText('p', '', feedbackClassName(sectionId, { correct, visible }));
+        if (visible) renderFeedbackText(box, text, correct, answer);
         box.setAttribute('role', 'status');
         return box;
     }
@@ -631,8 +662,10 @@
             const answer = resultText('p', row.answer, 'retained-result__answer');
             appendResultMark(answer, row);
             article.append(answer);
-            if (saved.feedback) {
-                article.append(createFeedback(sectionId, { correct: saved.correct === true, text: saved.feedback }));
+            if (saved.feedback || saved.correct === true) {
+                article.append(createFeedback(sectionId, {
+                    correct: saved.correct === true, text: saved.feedback, answer: row.answer
+                }));
             }
             return { result };
         }
@@ -752,7 +785,8 @@
                 ? 'Type a number or a fraction, like 3 or 1/2.'
                 : 'Type a number, like 12 or 0.5.';
             else if (shown) {
-                feedback.append(resultText('span', saved.feedback));
+                const correct = saved.correct === true;
+                renderFeedbackText(feedback, saved.feedback, correct, correct ? result().answer : '');
                 if (saved.hint) feedback.append(resultText('span', saved.hint, 'question-hint'));
             }
             setAction();
@@ -1045,6 +1079,7 @@
         createQuestion,
         celebrate,
         createFeedback,
+        correctFeedbackText,
         feedbackClassName,
         questionSetId,
         assessmentEvidenceId,

@@ -183,13 +183,14 @@
     }
     function powerOfTenQuestion(digits, originalPlaces, movement, mode = 'number') {
         const answer = scaleValue(digits, originalPlaces + movement);
+        const places = Math.abs(movement);
         return makeQuestion({ type: 'powerOfTen', mode, kind: 'power', digits, originalPlaces, movement,
             prompt: `What is ${scaleValue(digits, originalPlaces)} ${movement > 0 ? '÷' : '×'} ${addCommas(10 ** Math.abs(movement))}?`,
             answer, wrong: [
                 [scaleValue(digits, originalPlaces - movement), 'That moves the digits in the opposite direction.'],
                 [scaleValue(digits, originalPlaces + movement + (movement > 0 ? 1 : -1)), 'That moves the digits one place too far.'],
                 [scaleValue(digits, originalPlaces + movement - (movement > 0 ? 1 : -1)), 'That moves the digits one place too few.']
-            ], feedback: `${scaleValue(digits, originalPlaces)} ${movement > 0 ? '÷' : '×'} ${addCommas(10 ** Math.abs(movement))} = ${answer}`,
+            ], feedback: `The digits move ${places} ${places === 1 ? 'place' : 'places'} to the ${movement > 0 ? 'right' : 'left'}.`,
             fallback: 'Multiplying moves every digit left. Dividing moves every digit right. Count one place for each zero.' });
     }
     function generatePowerOfTenQuestion(random, mode) {
@@ -1038,7 +1039,7 @@
                     return { correct: false, feedback: 'The words have no hundreds and no tens, so put a 0 in each of those columns.' };
                 }
                 if (digits[6] !== '9') return { correct: false, feedback: '"And nine" means a 9 in the ones column.' };
-                return { correct: true, feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.' };
+                return { correct: true, feedback: 'Zeros hold the empty hundreds and tens places.' };
             },
             render(host, { value, editable, onChange }) {
                 let digits = normalise(value), canEdit = editable;
@@ -1358,7 +1359,7 @@
             feedback: 'In 46.275, the 4 is worth 40, the 6 is worth 6, the 2 is worth 0.2, the 7 is worth 0.07 and the 5 is worth 0.005.', widget: flipCardsWidget() };
         const wordsToFigures = { questionType: 'digitValue', input: 'custom', kind: 'words',
             prompt: 'Write this number in figures.',
-            feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.', widget: wordsToFiguresWidget() };
+            feedback: 'Zeros hold the empty hundreds and tens places.', widget: wordsToFiguresWidget() };
         const lessThanWhole = { questionType: 'compare', input: 'custom', kind: 'select', prompt: 'Tap the numbers that are less than 7.',
             feedback: '3, 4, 5 and 6 are all less than 7.',
             widget: tapCardsWidget(['3', '4', '5', '6', '7', '8', '9'], '7', { inRow: true, tip: 'Every card to the left of 7 is less than 7.' }) };
@@ -1372,7 +1373,7 @@
             wrong: [['36.84', 'There are 3 hundreds. Keep a zero in the empty tens column.'],
                 ['306.084', '8 tenths is 0.8. Put the 8 straight after the decimal point.'],
                 ['368.4', 'Keep each digit in its named column. There are no tens.']],
-            feedback: '3 hundreds + 6 ones + 8 tenths + 4 hundredths = 306.84' });
+            feedback: 'A zero holds the empty tens place.' });
         const reason = { input: 'choice', questionType: 'compare', kind: 'reason',
             prompt: 'Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?', options: [
                 option('No. 0.7 = 0.70, and 0.70 > 0.67.', 'Seven tenths is greater than six tenths.', true),

@@ -27,7 +27,7 @@ $pageTitle = 'Percentages of amounts';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=46">
     <link rel="stylesheet" href="./lesson.css?v=8">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Percentages of amounts';
     <script src="./interactive.js?v=17"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=52"></script>
+    <script src="../../assets/js/lesson-engine.js?v=53"></script>
 </body>
 </html>

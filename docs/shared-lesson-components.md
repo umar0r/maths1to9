@@ -566,7 +566,10 @@ writes its own feedback classes or styles.
 const E = window.Maths1to9LessonEngine;
 
 // A new box: append it where the feedback belongs.
-const box = E.createFeedback('interactive', { correct: true, text: 'Right.' });
+const box = E.createFeedback('interactive', { correct: true, text: 'Each digit moves one place to the right.' });
+
+// The engine adds “Yes, correct!” to the explanation.
+box.textContent = E.correctFeedbackText('Count one place for each zero.');
 
 // An existing box whose result changes: set its class from the engine.
 box.className = E.feedbackClassName('interactive', { correct: false });
@@ -575,15 +578,17 @@ box.className = E.feedbackClassName('interactive', { visible: false }); // hidde
 
 The first argument is the section the box is in: `'explanation'` (Learn),
 `'interactive'` (Try it), `'question-bank'` (Practice) or `'comparison'`
-(Check). Feedback sits below the activity in every section, with pastel
-blue for correct answers and creamy red for incorrect answers. It is centred
-on phones and sits slightly right of centre on desktop.
+(Check). Feedback is left aligned. On desktop it sits below the card.
+Correct feedback is pastel blue and incorrect feedback is creamy red.
 
 Practice adds confetti for a correct answer and Check adds a rocket.
 Learn and Try it show the feedback on its own.
 
 Question cards call these themselves, and fire the confetti or rocket.
-Working goes inside the same box (append a span), never in a second box.
+For a correct answer, give a short reason when it helps. Leave the
+explanation empty if the pupil already has everything they need.
+Use incorrect feedback to explain the mistake and give the pupil a way
+to put it right.
 A helper used by both Learn and Try it takes the section as an argument.
 
 ## 6. Question set, with Practise again

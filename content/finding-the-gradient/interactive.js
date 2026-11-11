@@ -261,7 +261,7 @@
             if (state.vertical) board.segment(state.vertical.from, state.vertical.to, { tone: 'correct' });
             const shown = readOnly ? judgeLeg(state[index === 0 ? 'horizontal' : 'vertical'], index === 1)
                 : { feedback: state.feedback, correct: state.correct };
-            const feedback = node('p', shown.feedback, window.Maths1to9LessonEngine.feedbackClassName('interactive', {
+            const feedback = node('p', shown.correct ? window.Maths1to9LessonEngine.correctFeedbackText(shown.feedback) : shown.feedback, window.Maths1to9LessonEngine.feedbackClassName('interactive', {
                 correct: shown.feedback ? shown.correct === true : null, visible: Boolean(shown.feedback)
             }));
             feedback.setAttribute('aria-live', 'polite');
@@ -279,7 +279,7 @@
                             state.correct = result.correct;
                             if (result.correct) state[index === 0 ? 'horizontal' : 'vertical'] = line;
                         });
-                        feedback.textContent = result.feedback;
+                        feedback.textContent = result.correct ? window.Maths1to9LessonEngine.correctFeedbackText(result.feedback) : result.feedback;
                         feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: result.correct === true });
                         reportProgress();
                         if (result.correct && index === 0) advance();

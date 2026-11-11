@@ -154,7 +154,7 @@ test.describe('simultaneous-equations-graphs phone checks', () => {
         await board.press('ArrowLeft');
         for (let i = 0; i < 5; i++) await board.press('ArrowUp');
         await board.press('Enter');
-        await expect(root(page).locator('.simultaneous-status')).toHaveText('✓ Both lines go through this point.');
+        await expect(root(page).locator('.simultaneous-status')).toHaveText('Yes, correct! Both lines go through this point.');
         await expect(main(page)).toBeEnabled();
         await reload(page);
         expect((await read(page)).s.found).toBe(true);
@@ -357,7 +357,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await expect(inputs.nth(0)).toHaveValue('1.4');
         await main(page).click();
         await expect(main(page)).toHaveText('Continue');
-        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Right. The solution is about x ≈ 1.3, y ≈ 2.7.');
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Yes, correct! Your point is close enough to where the lines cross.');
         await reload(page);
         expect(await noSideways(page)).toBe(true);
         await page.locator('.site-logo').scrollIntoViewIfNeeded();
@@ -373,7 +373,7 @@ for (const phone of [false, true]) test.describe(`simultaneous-equations-graphs 
         await reload(page);
         await main(page).click();
         await expect(main(page)).toHaveText('Continue');
-        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Right. The solution is about x ≈ −1.7, y ≈ 0.7.');
+        await expect(page.locator('.lesson-section:visible .question-feedback, .lesson-feedback .question-feedback')).toHaveText('Yes, correct! Your point is close enough to where the lines cross.');
         await reload(page);
         await expect(inputs.nth(0)).toHaveValue('−1.6');
         expect(await noSideways(page)).toBe(true);

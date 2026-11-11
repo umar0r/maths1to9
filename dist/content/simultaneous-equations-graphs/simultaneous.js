@@ -211,7 +211,7 @@
             fields: [{ id: 'x', label: 'x ≈' }, { id: 'y', label: 'y ≈' }],
             answer: { x: fractionText(exact.x), y: fractionText(exact.y) }, rules: estimateRules(lines),
             prompt: `Estimate the solution of ${lines.map(equationText).join(' and ')}. Give each value to 1 decimal place, like 1.3.`,
-            feedback: `Right. The solution is about ${solution([x, y].map(v => Number(v.toFixed(1))), '≈')}.`,
+            feedback: 'Your point is close enough to where the lines cross.',
             fallback: 'Find where the lines cross. Use the scale to estimate x, then y.', figure: figure(lines)
         });
     }

@@ -60,7 +60,7 @@
         const controls = group(root, 'How do you join the points?');
         const feedback = node('p', '', window.Maths1to9LessonEngine.feedbackClassName('interactive', { visible: false })); feedback.setAttribute('role', 'status'); root.append(feedback);
         const ending = paragraph(root, ''); ending.hidden = form.c !== -1 || !saved.joined;
-        const correctFeedback = form.c === -1 ? '✓ Right. One smooth curve through every point.' : `✓ ${closing}`;
+        const correctFeedback = window.Maths1to9LessonEngine.correctFeedbackText(form.c === -1 ? 'One smooth curve through every point.' : closing);
         function closeText() {
             if (form.c === -1) {
                 const [before, after] = closing.split('quadratic');

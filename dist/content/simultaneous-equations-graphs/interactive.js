@@ -212,7 +212,7 @@
                 const first = state.tap && T.onLine(guided[0], state.tap);
                 const second = state.tap && T.onLine(guided[1], state.tap);
                 status.hidden = !state.tap;
-                status.textContent = T.mathText(state.found ? '✓ Both lines go through this point.'
+                status.textContent = T.mathText(state.found ? window.Maths1to9LessonEngine.correctFeedbackText('Both lines go through this point.')
                     : !state.tap ? '' : first ? '✗ That point is on y = 2x + 7 only. Find where both lines meet.'
                         : second ? '✗ That point is on y = −x + 4 only. Find where both lines meet.'
                             : "✗ That point isn't on either line. Find where the two lines cross.");

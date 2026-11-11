@@ -128,7 +128,7 @@ test.describe('phone checks', () => {
         await ready(page);
         expect((await read(page)).s.dot).toEqual(before);
         for (let i = 0; i < 30 && !(await read(page)).s.found; i++) await nudge(page);
-        await expect(root(page).locator('.turning-status')).toContainText('This is the turning point.');
+        await expect(root(page).locator('.turning-status')).toHaveText('Yes, correct! The curve stops going down and starts going up.');
         await expect(main(page)).toBeEnabled();
         await main(page).click();
         await expect(page).toHaveURL(/#try-it-2$/);
