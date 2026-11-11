@@ -142,7 +142,7 @@
     async function mountTryIt(root){
         const api=window.Maths1to9Lesson,E=window.Maths1to9LessonEngine;
         event('interactive','gate');
-        const section=await api.useSectionState('interactive',{version:1,initial:()=>({
+        const section=await api.useSectionState('interactive',{version:2,initial:()=>({
             index:0,screen:0,furthestScreen:0,finished:false,cards:{},
             orders:examples.map(q=>E.shuffle((q.options||[]).map((_,i)=>i))),graphOrder:E.shuffle([0,1,2,3])
         })});
@@ -150,7 +150,10 @@
         function syncHash(){if(api.getCurrentSection().id==='interactive')api.setSlideHash('try-it-'+(state.screen+1),{replace:true});}
         function show(screen){section.update(s=>{s.screen=screen;});render();const heading=root.querySelector('h3');heading.tabIndex=-1;heading.focus();}
         function report(){api.setSectionProgress('interactive',examples.filter((q,i)=>state.cards['example-'+(i+1)]?.correct===true).length,5);}
-        function advance(){section.update(s=>{s.index++;s.screen=s.index;s.furthestScreen=s.screen;s.finished=s.index===5;});render();}
+        const lastScreen=4;
+        // After the last example the pupil goes straight on to Practice: there is no review screen.
+        function goToPractice(){api.completeSection('interactive');api.continueSection();}
+        function advance(){section.update(s=>{s.index++;s.screen=Math.min(s.index,lastScreen);s.furthestScreen=s.screen;s.finished=s.index===5;});render();if(state.finished)goToPractice();}
         function card(host,index,readOnly){
             const question=examples[index];
             api.createQuestion(host,{...question,
@@ -160,18 +163,17 @@
                 onFeedback:report,onContinue:advance});
         }
         function render(){
-            root.replaceChildren();root.append(node('h3',state.screen===5?'Your completed examples':'Question '+(state.screen+1)+' of 5'));
+            root.replaceChildren();root.append(node('h3','Question '+(state.screen+1)+' of 5'));
             api.setSectionBack('interactive',state.screen?{onClick:()=>show(state.screen-1)}:null);
             if(state.finished)event('interactive','complete');
-            if(state.screen===5){examples.forEach((q,i)=>{const host=node('div');root.append(host);card(host,i,true);});api.clearSectionAction('interactive');}
-            else{const host=node('div');root.append(host);card(host,state.screen,state.screen<state.index);
-                if(state.screen<state.index)api.setSectionAction('interactive',{label:'Next',onClick:()=>show(state.screen+1)});}
+            const host=node('div');root.append(host);card(host,state.screen,state.screen<state.index);
+            if(state.screen<state.index)api.setSectionAction('interactive',{label:'Next',onClick:()=>state.screen===lastScreen?goToPractice():show(state.screen+1)});
             report();syncHash();
         }
-        for(let i=0;i<=5;i++)api.registerHashRoute('try-it-'+(i+1),()=>{if(api.goToSection('interactive',{moveFocus:false}))show(Math.min(i,state.furthestScreen));});
+        for(let i=0;i<5;i++)api.registerHashRoute('try-it-'+(i+1),()=>{if(api.goToSection('interactive',{moveFocus:false}))show(Math.min(i,state.furthestScreen));});
         document.addEventListener('maths1to9:section-change',()=>queueMicrotask(syncHash));
         window.addEventListener('hashchange',()=>queueMicrotask(syncHash));
-        render();const requested=/^#try-it-([1-6])$/.exec(initialHash);
+        render();const requested=/^#try-it-([1-5])$/.exec(initialHash);
         if(requested&&api.goToSection('interactive',{moveFocus:false}))show(Math.min(Number(requested[1])-1,state.furthestScreen));
     }
     window.Maths1to9Interactives??={};
