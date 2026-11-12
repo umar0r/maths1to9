@@ -317,7 +317,7 @@
 
 .nn-number-line .nn-end-label {
     fill: #65655f;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 /* Small enough for all 21 numbers to fit on one row. */
@@ -679,7 +679,7 @@
     }
 
     .nn-number-line .nn-end-label {
-        font-size: 20px;
+        font-size: 16px;
     }
 
     .nn-number-line .nn-value {
@@ -1000,4 +1000,16 @@
         stroke-dashoffset: 0;
         opacity: 1;
     }
+}
+
+/* Worked examples: a plain black line, with only the start, the end and 0
+   in colour. */
+.nn-drawn .nn-tick,
+.nn-drawn .nn-value:not(.nn-zero) {
+    color: #1f2937;
+}
+
+.nn-drawn .nn-value.nn-key {
+    color: var(--nn-blue);
+    font-weight: 800;
 }

@@ -98,15 +98,17 @@
         const x = value => 30 + (value + 10) * 30;
         const phone = window.matchMedia('(max-width: 600px)').matches;
         const axis = phone ? 210 : 80;
-        const height = phone ? 296 : 150;
-        // "start" and "end" sit under the numbers they name, clear of the hops.
-        const label = (text, value) => `<text class="nn-end-label" x="${x(value)}" y="${axis + (phone ? 66 : 56)}">${text}</text>`;
+        const height = phone ? 296 : 140;
+        // "start" and "end" sit above the hops, over the numbers they name.
+        const label = (text, value) => `<text class="nn-end-label" x="${x(value)}" y="${phone ? 116 : 44}">${text}</text>`;
         let picture = `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
         if (hops) picture += label('start', start) + `<g class="nn-end" style="--hop: ${hops}">${label('end', position)}</g>`;
         for (let value = -10; value <= 10; value++) {
             const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
+            // In a worked example, the start and the end are the numbers to look at.
+            const key = hops && (value === start || value === position) ? ' nn-key' : '';
             picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
-                <text class="nn-value ${tone}" x="${x(value)}" y="${axis + 36}">${signed(value)}</text>`;
+                <text class="nn-value ${tone}${key}" x="${x(value)}" y="${axis + 36}">${signed(value)}</text>`;
         }
         // Each hop draws in after the one before, so the eye follows the direction.
         for (let step = 0; step < hops; step++) {
@@ -314,7 +316,7 @@
                 } else {
                     paragraph('The fee was a mistake. The bank removes it and puts £2 back.');
                     paragraph('3 − (−2) = 5', 'nn-fee-sum');
-                    window.NegativeNumbers.correctBox(root, 'Subtracting −2 has the same effect as adding 2.', '3 − (−2) = 3 + 2 = 5');
+                    paragraph('Subtracting −2 has the same effect as adding 2.');
                 }
             } else if (screen.kind === 'pattern') {
                 const pattern = document.createElement('div');
