@@ -86,11 +86,18 @@ for (const width of [1280, 375]) {
             // Only the last Learn screen must be finished before moving on.
             if (screen === 9) await expect(main(page)).toBeDisabled();
             else await expect(main(page)).toBeEnabled();
+            const targetButtons = root(page).getByRole('button');
+            const card = targetButtons.filter({ hasText: /^−1$/ });
+            if (screen === 8) {
+                await expect(card).toBeVisible();
+                await expect(root(page).locator('.nn-instruction')).toHaveCount(0);
+                await expect(root(page).locator('.nn-pattern-row')).toHaveCount(1);
+            }
             let taps = 0;
-            while (await root(page).locator('[role="button"]').count()) {
+            while (await targetButtons.count()) {
                 const before = await picture(page);
                 // Exercise touch taps and keyboard activation as well as clicks.
-                const target = root(page).locator('[role="button"]').first();
+                const target = targetButtons.first();
                 const isLine = await target.evaluate(node => node.classList.contains('nn-number-line'));
                 const waiting = isLine && await target.evaluate(node => !node.querySelector('.nn-hop'));
                 // Screens 4 and 5 have no blue highlight on their number lines.
@@ -129,7 +136,14 @@ for (const width of [1280, 375]) {
                 expect(await picture(page)).toEqual(retained);
             }
             await expect(main(page)).toBeEnabled();
-            if (screen === 8) await expect(root(page).getByText('Tap to show the next line.')).toHaveCount(0);
+            if (screen === 8) {
+                await expect(root(page).locator('.nn-instruction')).toHaveCount(0);
+                await expect(root(page).locator('.nn-pattern-row')).toHaveCount(6);
+                await expect(card).toHaveCount(0);
+                const lastRow = root(page).locator('.nn-pattern-row').last();
+                await expect(lastRow.locator('span')).toHaveText(['3 − (−2)', '= 5']);
+                await expect(lastRow.locator('small')).toHaveText('up 5');
+            }
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
                 // Learn has no feedback box: the reason is a plain line.

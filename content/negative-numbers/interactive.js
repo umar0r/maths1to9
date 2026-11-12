@@ -42,9 +42,7 @@
             'Your balance was £5. The bank took a £2 fee, so your balance fell to £3.'
         ] },
         { title: 'What happens when you take away a negative', kind: 'pattern',
-        heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [
-            'Watch what happens to the answer.'
-        ] },
+        heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [] },
         { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
         heading: 'So when you take away a negative, you can add instead.', lines: [
             'The take-away sign and the negative sign turn into a plus.'
@@ -276,6 +274,51 @@
             root.append(line);
         }
 
+        function showPattern() {
+            const pattern = document.createElement('div');
+            pattern.className = 'nn-pattern';
+            if (new URLSearchParams(window.location.search).has('preview-reset')) {
+                const reset = document.createElement('button');
+                reset.type = 'button';
+                reset.className = 'lesson-back nn-pattern-reset';
+                reset.textContent = 'Reset slide';
+                reset.addEventListener('click', () => {
+                    section.update(state => { state.pattern = 1; });
+                    render();
+                    root.querySelector('.nn-pattern-reset').focus({ preventScroll: true });
+                });
+                root.append(reset);
+            }
+            root.append(pattern);
+
+            function addRow(answer) {
+                const subtract = 3 - answer;
+                const row = document.createElement('div');
+                row.className = answer >= 4 ? 'nn-pattern-row nn-highlight' : 'nn-pattern-row';
+                row.innerHTML = `<span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${answer}</span><small>${answer ? `up ${answer}` : ''}</small>`;
+                return row;
+            }
+
+            for (let answer = 0; answer < state.pattern; answer++) {
+                pattern.append(addRow(answer));
+            }
+            if (complete()) return;
+
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'nn-punch-card nn-pattern-card';
+            card.textContent = '−1';
+            card.setAttribute('aria-label', '−1, show the next sum');
+            card.style.gridRow = state.pattern;
+            pattern.append(card);
+            card.addEventListener('click', () => {
+                section.update(state => { state.pattern++; });
+                card.before(addRow(state.pattern - 1));
+                if (complete()) card.remove();
+                else card.style.gridRow = state.pattern;
+            });
+        }
+
         function render() {
             const screen = screens[state.screen];
             // Each screen's main idea is its only heading; the Learn section
@@ -319,23 +362,7 @@
                     paragraph('Subtracting −2 has the same effect as adding 2.');
                 }
             } else if (screen.kind === 'pattern') {
-                const pattern = document.createElement('div');
-                pattern.className = 'nn-pattern';
-                for (let i = 0; i < state.pattern; i++) {
-                    const subtract = 3 - i;
-                    pattern.innerHTML += `<div class="nn-pattern-row ${i > 3 ? 'nn-highlight' : ''}"><span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${i}</span><small>${i ? `up ${i}` : ''}</small></div>`;
-                }
-                root.append(pattern);
-                if (state.pattern < 6) {
-                    const instruction = document.createElement('p');
-                    instruction.className = 'nn-instruction';
-                    instruction.textContent = 'Tap to show the next line.';
-                    pattern.append(instruction);
-                    tapTarget(pattern, 'Tap to show the next line.', () => {
-                        section.update(state => { state.pattern++; });
-                        render();
-                    });
-                } else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
+                showPattern();
             } else {
                 const i = screen.slot;
                 const changed = state.changed[i];
