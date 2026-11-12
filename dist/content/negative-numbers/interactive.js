@@ -42,9 +42,7 @@
             'Your balance was £5. The bank took a £2 fee, so your balance fell to £3.'
         ] },
         { title: 'What happens when you take away a negative', kind: 'pattern',
-        heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [
-            'Watch what happens to the answer.'
-        ] },
+        heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [] },
         { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
         heading: 'So when you take away a negative, you can add instead.', lines: [
             'The take-away sign and the negative sign turn into a plus.'
@@ -276,6 +274,64 @@
             root.append(line);
         }
 
+        function showPattern() {
+            const instructionText = 'Tap the ladder to take away 1 less.';
+            const instruction = complete() ? null : paragraph(instructionText, 'nn-instruction');
+            const picture = document.createElement('div');
+            picture.className = 'nn-pattern';
+            picture.innerHTML = '<div class="nn-pattern-rows"></div><div class="nn-ladder"></div>';
+            const rows = picture.querySelector('.nn-pattern-rows');
+            const ladder = picture.querySelector('.nn-ladder');
+            const rungY = value => 212 - value * 40;
+            let rungs = '';
+            for (let value = 0; value < 6; value++) {
+                const y = rungY(value);
+                rungs += `<g data-rung="${value}">
+                    <path class="nn-ladder-rung ${value >= 4 ? 'nn-ladder-rung-highlight' : ''}" d="M 8 ${y} H 48"/>
+                    <text x="57" y="${y}" dominant-baseline="central">${value}</text>
+                </g>`;
+            }
+            ladder.innerHTML = `<svg viewBox="0 0 72 224" aria-hidden="true">
+                <path class="nn-ladder-rails" d="M 8 4 V 220 M 48 4 V 220"/>
+                ${rungs}
+                <circle class="nn-ladder-marker" cx="28" cy="0" r="7"/>
+            </svg>`;
+            const marker = ladder.querySelector('.nn-ladder-marker');
+            root.append(picture);
+
+            function addRow(answer) {
+                const subtract = 3 - answer;
+                const row = document.createElement('div');
+                row.className = answer >= 4 ? 'nn-pattern-row nn-highlight' : 'nn-pattern-row';
+                row.innerHTML = `<span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${answer}</span><small>${answer ? `up ${answer}` : ''}</small>`;
+                rows.append(row);
+            }
+
+            function moveMarker() {
+                const answer = state.pattern - 1;
+                marker.style.cy = `${rungY(answer)}px`;
+            }
+
+            function finish() {
+                instruction?.remove();
+                ladder.removeAttribute('tabindex');
+                ladder.setAttribute('role', 'img');
+                ladder.setAttribute('aria-label', 'The answer climbed from 0 to 5, one rung for each line.');
+                paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
+            }
+
+            for (let answer = 0; answer < state.pattern; answer++) addRow(answer);
+            moveMarker();
+            if (complete()) finish();
+            else tapTarget(ladder, instructionText, () => {
+                if (complete()) return;
+                section.update(state => { state.pattern++; });
+                addRow(state.pattern - 1);
+                moveMarker();
+                if (complete()) finish();
+            });
+        }
+
         function render() {
             const screen = screens[state.screen];
             // Each screen's main idea is its only heading; the Learn section
@@ -319,23 +375,7 @@
                     paragraph('Subtracting −2 has the same effect as adding 2.');
                 }
             } else if (screen.kind === 'pattern') {
-                const pattern = document.createElement('div');
-                pattern.className = 'nn-pattern';
-                for (let i = 0; i < state.pattern; i++) {
-                    const subtract = 3 - i;
-                    pattern.innerHTML += `<div class="nn-pattern-row ${i > 3 ? 'nn-highlight' : ''}"><span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${i}</span><small>${i ? `up ${i}` : ''}</small></div>`;
-                }
-                root.append(pattern);
-                if (state.pattern < 6) {
-                    const instruction = document.createElement('p');
-                    instruction.className = 'nn-instruction';
-                    instruction.textContent = 'Tap to show the next line.';
-                    pattern.append(instruction);
-                    tapTarget(pattern, 'Tap to show the next line.', () => {
-                        section.update(state => { state.pattern++; });
-                        render();
-                    });
-                } else paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
+                showPattern();
             } else {
                 const i = screen.slot;
                 const changed = state.changed[i];

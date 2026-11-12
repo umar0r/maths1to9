@@ -86,6 +86,11 @@ for (const width of [1280, 375]) {
             // Only the last Learn screen must be finished before moving on.
             if (screen === 9) await expect(main(page)).toBeDisabled();
             else await expect(main(page)).toBeEnabled();
+            const ladder = root(page).getByRole('button', { name: 'Tap the ladder to take away 1 less.' });
+            if (screen === 8) {
+                await expect(ladder).toBeVisible();
+                await expect(root(page).locator('.nn-pattern-row')).toHaveCount(1);
+            }
             let taps = 0;
             while (await root(page).locator('[role="button"]').count()) {
                 const before = await picture(page);
@@ -129,7 +134,15 @@ for (const width of [1280, 375]) {
                 expect(await picture(page)).toEqual(retained);
             }
             await expect(main(page)).toBeEnabled();
-            if (screen === 8) await expect(root(page).getByText('Tap to show the next line.')).toHaveCount(0);
+            if (screen === 8) {
+                await expect(root(page).locator('.nn-instruction')).toHaveCount(0);
+                await expect(root(page).locator('.nn-pattern-row')).toHaveCount(6);
+                const finishedLadder = root(page).getByRole('img', {
+                    name: 'The answer climbed from 0 to 5, one rung for each line.'
+                });
+                const topRungY = await finishedLadder.locator('[data-rung="5"] text').getAttribute('y');
+                await expect(finishedLadder.locator('.nn-ladder-marker')).toHaveCSS('cy', `${topRungY}px`);
+            }
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
                 // Learn has no feedback box: the reason is a plain line.

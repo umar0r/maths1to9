@@ -590,10 +590,50 @@
 }
 
 .nn-pattern {
-    width: max-content;
-    max-width: 100%;
-    min-height: 4rem;
+    --nn-pattern-highlight: #fbefdb;
+    display: flex;
+    flex-wrap: wrap-reverse;
+    align-items: flex-end;
+    justify-content: center;
+    gap: .75rem;
     margin: 1.5rem auto;
+}
+
+.nn-ladder {
+    flex: 0 0 4.25rem;
+}
+
+.nn-ladder svg {
+    display: block;
+    width: 100%;
+}
+
+.nn-ladder text {
+    fill: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.nn-ladder-rails,
+.nn-ladder-rung {
+    stroke: #898981;
+    stroke-width: 1.5;
+}
+
+.nn-ladder-rung-highlight {
+    stroke: var(--nn-pattern-highlight);
+    stroke-width: 5;
+}
+
+.nn-ladder-marker {
+    fill: var(--nn-blue);
+    stroke: white;
+    stroke-width: 2;
+    transition: cy .3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-ladder-marker { transition: none; }
 }
 
 .nn-pattern-row {
@@ -611,8 +651,8 @@
     align-self: center;
 }
 
-.nn-highlight {
-    background: #fbefdb;
+.nn-pattern-row.nn-highlight {
+    background: var(--nn-pattern-highlight);
 }
 
 .nn-transform {
