@@ -28,7 +28,7 @@ $pageTitle = 'Negative numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=46">
-    <link rel="stylesheet" href="./lesson.css?v=57">
+    <link rel="stylesheet" href="./lesson.css?v=58">
 </head>
 
 <body

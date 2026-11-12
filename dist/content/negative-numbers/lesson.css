@@ -606,26 +606,27 @@
 }
 
 .nn-pattern .nn-pattern-card {
+    --nn-pattern-card-glow: 0 0 0 3px rgb(37 99 235 / .22), 0 0 10px 2px rgb(37 99 235 / .35);
     grid-column: 2;
     width: 2.2em;
     min-height: 44px;
     padding-inline: 0;
     font-size: 1.5rem;
     font-weight: 800;
-    box-shadow: 0 5px 0 var(--primary-dark);
+    box-shadow: 0 5px 0 var(--primary-dark), var(--nn-pattern-card-glow);
     transition: transform .15s ease, box-shadow .15s ease;
 }
 
 @media (hover: hover) {
     .nn-pattern .nn-pattern-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 7px 0 var(--primary-dark);
+        box-shadow: 0 7px 0 var(--primary-dark), var(--nn-pattern-card-glow);
     }
 }
 
 .nn-pattern .nn-pattern-card:active {
     transform: translateY(4px);
-    box-shadow: 0 1px 0 var(--primary-dark);
+    box-shadow: 0 1px 0 var(--primary-dark), var(--nn-pattern-card-glow);
 }
 
 @media (prefers-reduced-motion: reduce) {
