@@ -33,8 +33,9 @@
         const count = questions.length;
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
+        // Version 2 changed question 3, so older saved answers no longer fit.
         const section = await api.useSectionState('comparison', {
-            version: 1,
+            version: 2,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -115,20 +116,16 @@
 
         function render() {
             root.replaceChildren();
-            // The section title is hidden. A question is its page's only heading,
-            // with the same small tag as Practice above it.
+            // The section title is hidden. A question is its page's only heading.
             if (state.screen === count) {
                 const heading = document.createElement('h3');
                 heading.dataset.screenHeading = '';
                 heading.className = 'lesson-section__title';
                 heading.textContent = 'Your completed Check';
                 root.append(heading);
-            } else {
-                const position = document.createElement('p');
-                position.className = 'question-number';
-                position.textContent = `Question ${state.screen + 1} of ${count}`;
-                root.append(position);
             }
+            // The engine shows "Question 3 of 5" at the top right, beside Back.
+            api.setSectionPosition('comparison', state.screen === count ? null : `Question ${state.screen + 1} of ${count}`);
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
@@ -147,13 +144,26 @@
             syncHash();
         }
 
+        // The site isn't open to pupils yet, so a slide link opens any slide,
+        // even one not reached yet. Skipped slides stay unanswered.
+        function jumpTo(screen) {
+            section.update(state => {
+                if (screen > state.index) {
+                    state.index = screen;
+                    state.furthestScreen = screen;
+                }
+            });
+            reportProgress();
+            showScreen(screen);
+        }
+
         questions.forEach((question, index) => {
             api.registerHashRoute(`check-${index + 1}`, () => {
                 if (!api.goToSection('comparison', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
-                showScreen(Math.min(index, state.furthestScreen));
+                jumpTo(index);
             });
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
@@ -166,7 +176,7 @@
         if (initialHash === '#summary' && state.finished) {
             if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
         } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
-            showScreen(Math.min(requested, state.furthestScreen));
+            jumpTo(requested);
         }
     }
 
