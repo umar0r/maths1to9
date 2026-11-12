@@ -86,18 +86,18 @@ for (const width of [1280, 375]) {
             // Only the last Learn screen must be finished before moving on.
             if (screen === 9) await expect(main(page)).toBeDisabled();
             else await expect(main(page)).toBeEnabled();
-            const ladder = root(page).getByRole('button', { name: 'Tap the ladder to take away 1 less.' });
+            const targetButtons = root(page).getByRole('button');
+            const card = targetButtons.filter({ hasText: /^−1$/ });
             if (screen === 8) {
-                await expect(ladder).toBeVisible();
+                await expect(card).toBeVisible();
+                await expect(root(page).locator('.nn-instruction')).toHaveText('Click on −1');
                 await expect(root(page).locator('.nn-pattern-row')).toHaveCount(1);
-                await expect(ladder.locator('.nn-ladder-marker')).toHaveText('0');
-                await expect(ladder.locator('.nn-ladder-rung-highlight')).toHaveCount(0);
             }
             let taps = 0;
-            while (await root(page).locator('[role="button"]').count()) {
+            while (await targetButtons.count()) {
                 const before = await picture(page);
                 // Exercise touch taps and keyboard activation as well as clicks.
-                const target = root(page).locator('[role="button"]').first();
+                const target = targetButtons.first();
                 const isLine = await target.evaluate(node => node.classList.contains('nn-number-line'));
                 const waiting = isLine && await target.evaluate(node => !node.querySelector('.nn-hop'));
                 // Screens 4 and 5 have no blue highlight on their number lines.
@@ -139,15 +139,10 @@ for (const width of [1280, 375]) {
             if (screen === 8) {
                 await expect(root(page).locator('.nn-instruction')).toHaveCount(0);
                 await expect(root(page).locator('.nn-pattern-row')).toHaveCount(6);
-                const finishedLadder = root(page).getByRole('img', {
-                    name: 'The answer climbed from 0 to 5, one rung for each line.'
-                });
-                const marker = finishedLadder.locator('.nn-ladder-marker');
-                await expect(marker).toHaveText('5');
-                const topRung = finishedLadder.locator('[data-rung="5"]');
-                const topRungY = await topRung.evaluate(node => node.getPointAtLength(0).y);
-                await expect(marker).toHaveCSS('transform', `matrix(1, 0, 0, 1, 0, ${topRungY})`);
-                await expect(finishedLadder.locator('.nn-ladder-rung-highlight')).toHaveCount(2);
+                await expect(card).toHaveCount(0);
+                const lastRow = root(page).locator('.nn-pattern-row').last();
+                await expect(lastRow.locator('span')).toHaveText(['3 − (−2)', '= 5']);
+                await expect(lastRow.locator('small')).toHaveText('up 5');
             }
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');

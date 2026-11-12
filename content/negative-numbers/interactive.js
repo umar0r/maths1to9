@@ -275,30 +275,12 @@
         }
 
         function showPattern() {
-            const instructionText = 'Tap the ladder to take away 1 less.';
-            const instruction = complete() ? null : paragraph(instructionText, 'nn-instruction');
-            const picture = document.createElement('div');
-            picture.className = 'nn-pattern';
-            picture.innerHTML = '<div class="nn-pattern-rows"></div><div class="nn-ladder"></div>';
-            const rows = picture.querySelector('.nn-pattern-rows');
-            const ladder = picture.querySelector('.nn-ladder');
-            const rungY = value => 302 - value * 56;
-            let rungs = '';
-            for (let value = 0; value < 6; value++) {
-                const y = rungY(value);
-                rungs += `<path class="nn-ladder-rung" data-rung="${value}" d="M 20 ${y} H 80"/>`;
-            }
-            ladder.innerHTML = `<svg viewBox="0 0 100 324" aria-hidden="true">
-                <path class="nn-ladder-rails" d="M 20 9 V 315 M 80 9 V 315"/>
-                ${rungs}
-                <g class="nn-ladder-marker">
-                    <circle cx="50" cy="0" r="14"/>
-                    <text x="50" y="0" dominant-baseline="central" text-anchor="middle"></text>
-                </g>
-            </svg>`;
-            const marker = ladder.querySelector('.nn-ladder-marker');
-            const answerLabel = marker.querySelector('text');
-            root.append(picture);
+            const instruction = complete() ? null : paragraph('Click on −1', 'nn-instruction');
+            const pattern = document.createElement('div');
+            pattern.className = 'nn-pattern';
+            const rows = document.createElement('div');
+            pattern.append(rows);
+            root.append(pattern);
 
             function addRow(answer) {
                 const subtract = 3 - answer;
@@ -308,32 +290,21 @@
                 rows.append(row);
             }
 
-            function moveMarker() {
-                const answer = state.pattern - 1;
-                marker.style.transform = `translateY(${rungY(answer)}px)`;
-                answerLabel.textContent = answer;
-                for (let value = 4; value <= answer; value++) {
-                    ladder.querySelector(`[data-rung="${value}"]`).classList.add('nn-ladder-rung-highlight');
-                }
-            }
-
-            function finish() {
-                instruction?.remove();
-                ladder.removeAttribute('tabindex');
-                ladder.setAttribute('role', 'img');
-                ladder.setAttribute('aria-label', 'The answer climbed from 0 to 5, one rung for each line.');
-                paragraph("Each time you take away 1 less, the answer goes up by 1. Carry on past zero and you're taking away negative numbers, so the answer keeps going up. Taking away negative 2 gives 5, which is the same as 3 + 2.");
-            }
-
             for (let answer = 0; answer < state.pattern; answer++) addRow(answer);
-            moveMarker();
-            if (complete()) finish();
-            else tapTarget(ladder, instructionText, () => {
-                if (complete()) return;
+            if (complete()) return;
+
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'nn-punch-card nn-pattern-card';
+            card.textContent = '−1';
+            pattern.prepend(card);
+            card.addEventListener('click', () => {
                 section.update(state => { state.pattern++; });
                 addRow(state.pattern - 1);
-                moveMarker();
-                if (complete()) finish();
+                if (complete()) {
+                    instruction.remove();
+                    card.remove();
+                }
             });
         }
 

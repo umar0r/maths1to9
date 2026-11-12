@@ -590,68 +590,17 @@
 }
 
 .nn-pattern {
-    display: flex;
-    flex-wrap: wrap-reverse;
-    align-items: center;
-    justify-content: center;
-    gap: .75rem;
+    display: grid;
+    justify-items: center;
+    gap: .85rem;
     margin: 1.5rem auto;
 }
 
-.nn-ladder {
-    flex: 0 0 6.25rem;
-}
-
-.nn-ladder[role="button"] {
-    border-radius: 5px;
-    outline: 2px solid var(--nn-blue);
-    outline-offset: 3px;
-}
-
-.nn-ladder svg {
-    display: block;
-    width: 100%;
-}
-
-.nn-ladder-rails,
-.nn-ladder-rung {
-    stroke: #475569;
-    stroke-width: 3px;
-    vector-effect: non-scaling-stroke;
-}
-
-.nn-ladder-rung-highlight {
-    stroke: var(--nn-negative);
-}
-
-.nn-ladder-marker {
-    transition: transform .3s ease;
-}
-
-.nn-ladder-marker circle {
-    fill: var(--nn-blue);
-    stroke: white;
-    stroke-width: 2;
-}
-
-.nn-ladder-marker text {
-    fill: white;
-    font-size: 18px;
-    font-weight: 900;
-}
-
-@media (max-width: 600px) {
-    .nn-ladder {
-        flex-basis: 5rem;
-    }
-
-    .nn-ladder-marker circle {
-        r: 17.5px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .nn-ladder-marker { transition: none; }
+.nn-pattern .nn-pattern-card {
+    width: 2.2em;
+    padding-inline: 0;
+    font-size: 1.9rem;
+    font-weight: 800;
 }
 
 .nn-pattern-row {
