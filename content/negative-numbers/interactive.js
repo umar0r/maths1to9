@@ -296,10 +296,12 @@
                 const row = document.createElement('div');
                 row.className = answer >= 4 ? 'nn-pattern-row nn-highlight' : 'nn-pattern-row';
                 row.innerHTML = `<span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${answer}</span><small>${answer ? `up ${answer}` : ''}</small>`;
-                pattern.append(row);
+                return row;
             }
 
-            for (let answer = 0; answer < state.pattern; answer++) addRow(answer);
+            for (let answer = 0; answer < state.pattern; answer++) {
+                pattern.append(addRow(answer));
+            }
             if (complete()) return;
 
             const card = document.createElement('button');
@@ -311,7 +313,7 @@
             pattern.append(card);
             card.addEventListener('click', () => {
                 section.update(state => { state.pattern++; });
-                addRow(state.pattern - 1);
+                card.before(addRow(state.pattern - 1));
                 if (complete()) card.remove();
                 else card.style.gridRow = state.pattern;
             });
