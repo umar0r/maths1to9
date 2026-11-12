@@ -587,16 +587,24 @@ The first argument is the section the box is in: `'explanation'` (Learn),
 Question cards call these themselves, and fire the confetti or rocket.
 Working goes inside the same box (append a span), never in a second box.
 
-**Where it sits (added 2026-11-12).** Every visible feedback box is drawn
-outside the card, under its bottom-right corner, on desktop and phone. The
-main button moves down to make room. The engine does this for every
-lesson (`.lesson-section .question-feedback.is-visible` in `app.css`, and
-`placeFeedback` in `lesson-engine.js`, which reserves the room and stacks
-boxes if a screen shows more than one). So a lesson just appends the box
-inside its own card wherever is handy. Never position it yourself, and
-never put a positioned wrapper (`position: relative`) around it, or it
-will be pinned to that wrapper instead of the card.
-A helper used by both Learn and Try it takes the section as an argument.
+**Where it sits (changed 2026-11-12, the Brilliant way).** While a
+feedback box shows, the engine sticks the main button bar to the bottom of
+the screen and puts the box just above the button, so the pupil always
+sees the feedback and the button together, however tall the card is.
+Only the newest box on the screen goes in the bar; older answered cards
+still on the screen keep their feedback inside the card.
+
+- Desktop and tablet (768px and wider): the bubble sits above the button,
+  lined up with the card's left edge.
+- Phone (under 768px): the bar becomes a coloured sheet across the bottom
+  of the screen (green when right, pink when wrong, cream for a right
+  answer in Try it). The words sit on the sheet and the main button fills
+  its width underneath.
+
+This is all `placeFeedback` in `lesson-engine.js` and the
+`.lesson-controls[data-feedback]` rules in `app.css`. A lesson just
+appends the box inside its own card wherever is handy. Never position it
+yourself.
 
 ## 6. Question set, with Practise again
 
