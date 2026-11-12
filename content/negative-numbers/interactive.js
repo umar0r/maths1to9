@@ -23,7 +23,7 @@
         ] },
         { title: 'Adding to a negative number', kind: 'journeys', slot: 1,
         heading: 'When you add a positive number, you move right along the number line.', lines: [], journeys: [
-            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', showSum: false, tapCue: false, instruction: 'Move the dot 4 places to the right.', result: 'You moved up towards zero but didn\'t reach it, so the answer is still negative.' }
+            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', showSum: false, tapCue: false, instruction: 'Move the dot 4 places to the right.', result: 'Adding 4 to −6 moves you towards zero, but not past it, so the answer is still negative.' }
         ] },
         { title: 'Taking away from a negative number', kind: 'journeys', slot: 2,
         heading: 'If you start on a negative number and take away a positive number, you still move left.', lines: [
@@ -107,15 +107,15 @@
             picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
                 <text class="nn-value ${tone}" x="${x(value)}" y="${axis + 36}">${signed(value)}</text>`;
         }
-        picture += `<circle class="nn-zero-circle" cx="330" cy="${axis + (phone ? 29 : 31)}" r="12"/>`;
+        // Each hop draws in after the one before, so the eye follows the direction.
         for (let step = 0; step < hops; step++) {
             const from = x(start + direction * step), to = from + direction * 30;
-            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 50 : 37} ${to} ${axis}"/>`;
+            picture += `<path class="nn-hop ${direction < 0 ? 'nn-negative' : 'nn-positive'}" pathLength="1" style="--hop: ${step}" d="M ${from} ${axis} Q ${(from + to) / 2} ${phone ? 50 : 37} ${to} ${axis}"/>`;
         }
         // Above the hops: how far the dot has moved.
-        if (hops) picture += `<text class="nn-hop-count ${direction < 0 ? 'nn-negative' : 'nn-positive'}" x="${x(start + direction * hops / 2)}" y="${phone ? 118 : 46}">${direction < 0 ? '−' : '+'}${hops}</text>`;
+        if (hops) picture += `<text style="--hop: ${hops}" class="nn-hop-count ${direction < 0 ? 'nn-negative' : 'nn-positive'}" x="${x(start + direction * hops / 2)}" y="${phone ? 118 : 46}">${direction < 0 ? '−' : '+'}${hops}</text>`;
         picture += `<circle class="nn-start-dot" cx="${x(start)}" cy="${axis}" r="6"/>`;
-        picture += `<circle class="nn-dot" cx="${x(position)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
+        picture += `<circle class="nn-dot" style="--hop: ${hops}" cx="${x(position)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
         return `<svg viewBox="0 0 660 ${height}" aria-hidden="true">${picture}</svg>`;
     }
 
@@ -186,8 +186,7 @@
             const screen = screens[state.screen];
             if (['thermometer', 'sideways', 'read'].includes(screen.kind)) return true;
             if (screen.kind === 'fee') return state.feeRemoved;
-            if (screen.kind === 'journeys') return screen.journeys.every((item, i) =>
-                state.journeys[screen.slot][i] === item.steps);
+            if (screen.kind === 'journeys') return true;
             if (screen.kind === 'pattern') return state.pattern === 6;
             return state.changed[screen.slot];
         }
@@ -262,16 +261,16 @@
             root.append(picture);
         }
 
-        function journey(item, count, onTap) {
+        // Learn shows each example already worked out; Try it is where pupils
+        // move the dot themselves.
+        function journey(item) {
+            const end = item.start + item.steps * item.direction;
             const line = document.createElement('div');
-            line.className = `nn-number-line${count === 0 && item.tapCue !== false ? ' nn-awaiting-tap' : ''}`;
-            line.innerHTML = numberLine({ ...item, hops: count, position: item.start + count * item.direction });
+            line.className = 'nn-number-line nn-drawn';
+            line.innerHTML = numberLine({ ...item, hops: item.steps, position: end });
+            line.setAttribute('role', 'img');
+            line.setAttribute('aria-label', `Start ${signed(item.start)}, ${item.steps} steps ${item.direction < 0 ? 'left' : 'right'}, landing on ${signed(end)}.`);
             root.append(line);
-            if (count < item.steps) tapTarget(line, item.instruction, onTap);
-            else {
-                line.setAttribute('role', 'img');
-                line.setAttribute('aria-label', `Start ${signed(item.start)}, ${count} steps ${item.direction < 0 ? 'left' : 'right'}, landing on ${signed(item.start + count * item.direction)}.`);
-            }
         }
 
         function render() {
@@ -283,20 +282,11 @@
             if (screen.kind === 'thermometer') exploreThermometer();
             else if (screen.kind === 'sideways') showSidewaysThermometer();
             else if (screen.kind === 'journeys') {
-                screen.journeys.forEach((item, i) => {
-                    const counts = state.journeys[screen.slot];
-                    if (i > 0 && counts[i - 1] < screen.journeys[i - 1].steps) return;
+                screen.journeys.forEach(item => {
+                    if (item.result) paragraph(item.result);
                     if (item.showSum !== false) paragraph(item.sum, 'nn-sum');
                     paragraph(item.instruction, 'nn-instruction');
-                    journey(item, counts[i], () => {
-                        section.update(state => { state.journeys[screen.slot][i]++; });
-                        render();
-                    });
-                    // A box with only the sum would repeat what's on screen, so
-                    // only screens with something to say get one.
-                    if (counts[i] === item.steps && item.result) {
-                        window.NegativeNumbers.correctBox(root, item.result || '', `${item.sum} = ${signed(item.start + item.steps * item.direction)}`);
-                    }
+                    journey(item);
                 });
             } else if (screen.kind === 'read') {
                 const sum = document.createElement('div');

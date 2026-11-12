@@ -113,7 +113,12 @@ for (const width of [1280, 375]) {
                 taps++;
                 expect(taps).toBeLessThan(20);
             }
-            expect(taps).toBe([0, 0, 6, 4, 3, 0, 1, 5, 1][screen - 1]);
+            expect(taps).toBe([0, 0, 0, 0, 0, 0, 1, 5, 1][screen - 1]);
+            // Screens 3 to 5 show the worked example already drawn, with no ring round 0.
+            if ([3, 4, 5].includes(screen)) {
+                await expect(root(page).locator('.nn-drawn .nn-hop')).toHaveCount([6, 4, 3][screen - 3]);
+                await expect(root(page).locator('.nn-zero-circle')).toHaveCount(0);
+            }
             await layout(page);
             await reloadAndCompare(page);
             await page.screenshot({ path: `/private/tmp/negative-learn-${width}-screen-${screen}.png`, fullPage: true });
