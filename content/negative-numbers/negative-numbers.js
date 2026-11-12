@@ -149,6 +149,84 @@
         };
     }
 
+    // Exam-style Practice questions from the question bank.
+    // Multiplying two negative decimals. Work in tenths so the answer is exact.
+    function decimalMultiply(size, other) {
+        const answer = Math.round(size * 10 * other) / 10;
+        const added = Math.round((size + other) * 10) / 10;
+        return {
+            questionType: 'multiply', input: 'number', signs: ['−', '−'], expected: answer,
+            prompt: `Work out (−${size}) × (−${other}).`, answer: String(answer),
+            feedback: `${size} × ${other} = ${answer}. ${signReason(true)}`,
+            rules: [
+                { value: signed(-answer), feedback: signReason(true) },
+                { value: signed(-added), feedback: `That adds −${size} and −${other}. This question multiplies them.` },
+                { value: String(added), feedback: `That adds ${size} and ${other}. Multiply them instead.` }
+            ].filter(rule => rule.value !== String(answer)),
+            fallback: `Work out ${size} × ${other}, then use the signs to find the sign of the answer.`
+        };
+    }
+
+    // Dividing follows the same sign rule as multiplying.
+    function dividePair(size, divisor) {
+        const total = size * divisor;
+        const rule = 'Dividing works like multiplying: the same signs give a positive answer, different signs give a negative answer.';
+        return {
+            questionType: 'divide-pair', input: 'choice',
+            prompt: `Work out −${total} ÷ −${divisor}, then −${total} ÷ ${divisor}. Which pair of answers is right?`,
+            options: [
+                option(`${size}, then −${size}`, `Right. −${total} ÷ −${divisor} = ${size}, because the signs are the same. −${total} ÷ ${divisor} = −${size}, because they are different.`, true),
+                option(`−${size}, then ${size}`, `That's the wrong way round. ${rule}`),
+                option(`${size}, then ${size}`, `The second answer should be negative. −${total} and ${divisor} have different signs.`),
+                option(`−${size}, then −${size}`, `The first answer should be positive. −${total} and −${divisor} have the same sign.`)
+            ]
+        };
+    }
+
+    function squareNegative(size) {
+        return {
+            questionType: 'square-negative', input: 'choice',
+            prompt: `n = −${size}. What is n²? (n² means n × n.)`,
+            options: [
+                option(String(size * size), `Right. −${size} × −${size} = ${size * size}. ${signReason(true)}`, true),
+                option(`−${size * size}`, `n² is −${size} × −${size}. ${signReason(true)}`),
+                option(`−${2 * size}`, `That doubles −${size}. n² means −${size} × −${size}, not −${size} × 2.`),
+                option(String(2 * size), `That's 2 × ${size}. n² means −${size} × −${size}.`)
+            ]
+        };
+    }
+
+    // The number halfway between a negative and a positive number.
+    function halfway(low, high) {
+        const answer = (low + high) / 2;
+        const rules = [
+            [(high - low) / 2, `That's half the distance from ${signed(low)} to ${high}. Now count that far right from ${signed(low)}.`],
+            [-answer, `Check the sign. ${signed(low)} + ${high} = ${signed(low + high)}, and half of that is ${signed(answer)}.`],
+            [low + high, `That's ${signed(low)} + ${high}. Halve it to find the middle.`]
+        ].map(([value, feedback]) => ({ value: signed(value), feedback }))
+            .filter((rule, index, list) => rule.value !== signed(answer) && list.findIndex(other => other.value === rule.value) === index);
+        return {
+            questionType: 'halfway', input: 'number', expected: answer, noLine: true,
+            prompt: `What number is exactly halfway between ${signed(low)} and ${high}?`, answer: signed(answer),
+            feedback: `Add the two numbers and halve the answer: ${signed(low)} + ${high} = ${signed(low + high)}, and ${signed(low + high)} ÷ 2 = ${signed(answer)}.`,
+            rules,
+            fallback: `Add ${signed(low)} and ${high}, then divide by 2.`
+        };
+    }
+
+    function alwaysPositive() {
+        return {
+            questionType: 'always-positive', input: 'choice',
+            prompt: 'p and q are different positive numbers. n is a negative number. Which of these is always positive?',
+            options: [
+                option('p − n', 'Right. Taking away a negative is the same as adding, so p − n is p plus a positive number.', true),
+                option('p + n', 'This can be positive or negative. It depends on which is bigger: p or the size of n.'),
+                option('p − q', 'This is negative when q is bigger than p.'),
+                option('p ÷ n', 'A positive number divided by a negative number is always negative.')
+            ]
+        };
+    }
+
     // Try it's drag questions. `amount` is how far the dot moves: minus means left.
     function dragQuestion(start, amount, sum, working, correct, wrongWay) {
         const answer = signed(start + amount);
@@ -266,8 +344,9 @@
     // A fixed mix, so the same kind of sum never comes three times in a row.
     const practiceTypes = [
         'take-positive', 'cross-zero', 'rewrite-positive', 'temperature-rise',
-        'add-two-negatives', 'multiply-different', 'missing-add', 'multiply-same',
-        'either-way', 'temperature-two-steps', 'error'
+        'add-two-negatives', 'multiply-different', 'missing-add', 'divide-pair',
+        'multiply-same', 'temperature-two-steps', 'square-negative', 'either-way',
+        'decimal-multiply', 'halfway', 'always-positive', 'error'
     ];
 
     function pick(random) {
@@ -308,6 +387,21 @@
             question = eitherWay(amount, small, big, otherSmall, otherBig);
         } else if (item.type === 'multiply-different') {
             question = multiplyDifferent(integer(3, 9), integer(2, 9));
+        } else if (item.type === 'decimal-multiply') {
+            question = decimalMultiply([0.5, 1.5, 2.5, 3.5][integer(0, 3)], integer(2, 8));
+        } else if (item.type === 'divide-pair') {
+            question = dividePair(integer(3, 9), integer(3, 9));
+        } else if (item.type === 'square-negative') {
+            question = squareNegative(integer(3, 9));
+        } else if (item.type === 'halfway') {
+            // An even total, not zero, so the middle is a whole number that isn't 0.
+            const low = -integer(2, 20);
+            let high = integer(1, 15);
+            if ((low + high) % 2 !== 0) high += 1;
+            if (low + high === 0) high += 2;
+            question = halfway(low, high);
+        } else if (item.type === 'always-positive') {
+            question = alwaysPositive();
         } else if (item.type === 'multiply-same') {
             question = multiplySame(integer(2, 9), integer(2, 9));
         } else if (item.type.startsWith('rewrite')) {

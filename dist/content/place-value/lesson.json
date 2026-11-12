@@ -19,7 +19,8 @@
             "wordsToFigures": "place-value",
             "digitCards": "place-value",
             "digitCount": "place-value",
-            "closestNumber": "place-value"
+            "closestNumber": "place-value",
+            "numberLine": "place-value"
         }
     },
     "explanation": {
@@ -41,7 +42,7 @@
         "hide_eyebrow": true,
         "title": "Practise place value",
         "intro": "",
-        "session_length": 10
+        "session_length": 11
     },
     "section_order": [
         "explanation",

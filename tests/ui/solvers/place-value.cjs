@@ -153,6 +153,15 @@ async function solve(page, memory = {}) {
     if (await main.isEnabled()) return false;
     const options = card.locator('.question-card-options button');
     const choice = await options.count() > 0;
+    // The number line question: read the picture's description, not the lesson's answer.
+    if (prompt.startsWith('What number is at P on the number line?')) {
+        const label = await card.locator('svg[role=img]').getAttribute('aria-label');
+        const [, left, gaps, tick] = label.match(/from (\d+) to \d+ with (\d+) equal gaps\. P is at mark (\d+)/).map(Number);
+        const value = String(Number((left + tick / gaps).toFixed(2)));
+        if (choice) await options.filter({ hasText: new RegExp(`^${value.replace('.', '\\.')}$`) }).click();
+        else await card.locator('input[type=text]').fill(value);
+        return true;
+    }
     let answer = answerFor(prompt, choice);
     if (answer === null) {
         const labels = await options.allTextContents();

@@ -126,3 +126,27 @@ test('negative-numbers: 200 seeds of every type are deterministic and mapped to 
     assert.ok(Q.checks().some(question => question.input === 'choice'));
     assert.ok(Q.checks().every(question => question.input === 'choice'));
 });
+
+test('negative-numbers: question-bank Practice questions have the right answers', () => {
+    const of = type => generated.filter(question => question.questionType === type);
+    for (const question of of('decimal-multiply')) {
+        const [a, b] = question.prompt.match(/\d+(?:\.\d+)?/g).map(Number);
+        assert.ok(close(evaluate(question.answer), a * b), question.prompt);
+        assert.ok(question.rules.every(rule => !close(evaluate(rule.value), a * b)), question.prompt);
+    }
+    for (const question of of('divide-pair')) {
+        const [total, divisor] = question.prompt.match(/\d+/g).map(Number);
+        assert.equal(answer(question), `${total / divisor}, then −${total / divisor}`);
+    }
+    for (const question of of('square-negative')) {
+        const size = Number(question.prompt.match(/−(\d+)/)[1]);
+        assert.equal(answer(question), String(size * size));
+    }
+    for (const question of of('halfway')) {
+        const [low, high] = question.prompt.match(/[−-]?\d+/g).map(evaluate);
+        assert.equal(evaluate(question.answer), (low + high) / 2, question.prompt);
+        assert.ok(Number.isInteger((low + high) / 2) && low + high !== 0, question.prompt);
+        assert.ok(question.rules.length >= 2 && question.rules.every(rule => evaluate(rule.value) !== (low + high) / 2), question.prompt);
+    }
+    assert.equal(answer(of('always-positive')[0]), 'p − n');
+});

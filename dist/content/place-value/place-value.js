@@ -2,7 +2,7 @@
     'use strict';
 
     // The Practice question types (comparing and ordering moved to the Greater than and less than lesson).
-    const types = ['digitValue', 'scaledProduct', 'powerOfTen', 'wordsToFigures', 'digitCards', 'digitCount', 'closestNumber'];
+    const types = ['digitValue', 'scaledProduct', 'powerOfTen', 'wordsToFigures', 'digitCards', 'digitCount', 'closestNumber', 'numberLine'];
     const addCommas = value => {
         const [whole, fraction] = String(value).split('.');
         return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
@@ -400,15 +400,66 @@
                 feedback: `${describe(answer)}. No other number you can make is closer.` });
         }
     }
+    /* Reading a point between two whole numbers. Only the ends are labelled, so
+       pupils first work out what one gap is worth. */
+    function generateNumberLineQuestion(random, mode) {
+        const E = window.Maths1to9LessonEngine;
+        const left = E.randomInt(1, 9, random), gaps = [4, 5, 10][E.randomInt(0, 2, random)];
+        const step = 1 / gaps, tick = E.randomInt(2, gaps - 1, random);
+        const at = count => String(Number((left + count * step).toFixed(2)));
+        const answer = at(tick);
+        const stepText = String(Number(step.toFixed(2)));
+        const wrong = [
+            [at(tick - 1), `That is one gap too few. Count the gaps from ${left}, not the marks.`],
+            [at(tick + 1), `That is one gap too many. Count the gaps from ${left} to P.`],
+            [String(left + 1), `${left + 1} is the labelled end. P is before it.`],
+            [at(gaps - tick), `That counts from ${left + 1}. Count the gaps from ${left}, on the left.`],
+            [String(Number((left + tick * step / 10).toFixed(3))), `Each gap is ${stepText}, not ${String(Number((step / 10).toFixed(3)))}.`]
+        ];
+        if (gaps !== 10) wrong.unshift([String(Number((left + tick * 0.1).toFixed(2))), `There are ${gaps} gaps, not 10, so each gap is ${stepText}, not 0.1.`]);
+        const question = makeQuestion({ type: 'numberLine', mode, left, gaps, tick,
+            prompt: mode === 'choice' ? 'What number is at P on the number line?' : 'What number is at P on the number line? Type the number.',
+            answer, wrong,
+            feedback: `There are ${gaps} gaps between ${left} and ${left + 1}, so each gap is ${stepText}. P is ${tick} gaps after ${left}, so it is ${answer}.`,
+            fallback: `Count the gaps between ${left} and ${left + 1}. Share 1 between them to find what one gap is worth.` });
+        return { ...question, figure: host => numberLineFigure(host, left, gaps, tick) };
+    }
+    function numberLineFigure(host, left, gaps, tick) {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('viewBox', '0 0 360 90');
+        svg.setAttribute('class', 'pv-negative-line');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', `Number line from ${left} to ${left + 1} with ${gaps} equal gaps. P is at mark ${tick} after ${left}.`);
+        function node(tag, attrs, text) {
+            const element = document.createElementNS(ns, tag);
+            for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, String(value));
+            if (text !== undefined) element.textContent = text;
+            svg.append(element);
+            return element;
+        }
+        const x = count => 30 + count * (300 / gaps);
+        node('line', { x1: 20, y1: 50, x2: 340, y2: 50, stroke: '#26344d', 'stroke-width': 2 });
+        for (let count = 0; count <= gaps; count++) {
+            const end = count === 0 || count === gaps;
+            node('line', { x1: x(count), y1: end ? 42 : 45, x2: x(count), y2: end ? 58 : 55, stroke: '#26344d', 'stroke-width': end ? 2 : 1.5 });
+        }
+        node('text', { x: x(0), y: 78, 'text-anchor': 'middle', fill: '#26344d', 'font-size': 15 }, String(left));
+        node('text', { x: x(gaps), y: 78, 'text-anchor': 'middle', fill: '#26344d', 'font-size': 15 }, String(left + 1));
+        node('path', { d: `M${x(tick)} 40 l-6 -10 h12 z`, fill: '#2769c5' });
+        node('text', { x: x(tick), y: 22, 'text-anchor': 'middle', fill: '#2769c5', 'font-size': 15, 'font-weight': 700 }, 'P');
+        host.append(svg);
+    }
     function generate(item, random) {
         if (item.type.startsWith('neg')) return prepare(generateNegative(item, random), random);
         const generators = { digitValue: generateDigitValueQuestion, compare: generateComparisonQuestion, order: generateOrderingQuestion,
             scaledProduct: generateScaledProductQuestion, powerOfTen: generatePowerOfTenQuestion,
             wordsToFigures: generateWordsToFiguresQuestion, digitCards: generateDigitCardsQuestion,
-            digitCount: generateDigitCountQuestion, closestNumber: generateClosestNumberQuestion };
+            digitCount: generateDigitCountQuestion, closestNumber: generateClosestNumberQuestion,
+            numberLine: generateNumberLineQuestion };
         return generators[item.type](random, item.mode || 'choice');
     }
-    /* Every session has the four exam-style questions and six place value questions, in a random order.
+    /* Every session has the five exam-style questions and six place value questions, in a random order.
        Comparing and ordering (including negatives) are taught in the Greater than and less than lesson. */
     function pick(random) {
         const E = window.Maths1to9LessonEngine;
@@ -416,7 +467,8 @@
             { type: 'scaledProduct', mode: 'choice' }, { type: 'scaledProduct', mode: 'number' },
             { type: 'powerOfTen', mode: 'choice' }, { type: 'powerOfTen', mode: 'number' }];
         const examStyle = [{ type: 'wordsToFigures', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }, { type: 'digitCards', mode: 'choice' },
-            { type: 'digitCount', mode: 'choice' }, { type: 'closestNumber', mode: 'choice' }];
+            { type: 'digitCount', mode: 'choice' }, { type: 'closestNumber', mode: 'choice' },
+            { type: 'numberLine', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }];
         return E.shuffle([...original, ...examStyle], random)
             .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
     }

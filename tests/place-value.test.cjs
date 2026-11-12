@@ -123,14 +123,14 @@ test('typed cards preserve exact decimal values and have misconception rules and
         for (const rule of q.rules) { assert(rule.feedback); assert.notEqual(num(rule.value), num(q.answer)); }
     }
 });
-test('sessions contain ten seeded items, all seven types and mixed answer modes', () => {
+test('sessions contain eleven seeded items, all eight types and mixed answer modes', () => {
     for (let seed = 0; seed < 200; seed++) {
         const session = Q.pick(seededRandom(seed));
-        assert.equal(session.length, 10);
+        assert.equal(session.length, 11);
         assert.deepEqual([...new Set(session.map(item => item.type))].sort(), [...Q.types].sort());
         const typed = session.filter(item => item.mode === 'number').length;
-        assert(typed === 3 || typed === 4, `${typed} typed questions`);
-        assert.equal(session.filter(item => item.mode === 'choice').length, 10 - typed);
+        assert(typed >= 3 && typed <= 5, `${typed} typed questions`);
+        assert.equal(session.filter(item => item.mode === 'choice').length, 11 - typed);
         assert.equal(JSON.stringify(session), JSON.stringify(Q.pick(seededRandom(seed))));
         for (const item of session) {
             assert.deepEqual(Object.keys(item).sort(), ['mode', 'seed', 'type']);
@@ -226,3 +226,14 @@ for (const type of Q.types) {
         }
     });
 }
+
+test('numberLine: P is the right number of gaps along, and each wrong answer is different', () => {
+    for (const { q } of questionsOf('numberLine')) {
+        const right = q.left + q.tick / q.gaps;
+        assert.ok(Math.abs(num(answerOf(q)) - right) < 1e-9, q.feedback);
+        const wrong = q.options ? q.options.filter(option => !option.correct).map(option => option.label) : q.rules.map(rule => rule.value);
+        assert.ok(wrong.length >= 3);
+        for (const value of wrong) assert.ok(Math.abs(num(value) - right) > 1e-9, value);
+        assert.equal(typeof q.figure, 'function');
+    }
+});

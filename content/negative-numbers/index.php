@@ -33,7 +33,7 @@ $pageTitle = 'Negative numbers';
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=9"
+    data-lesson-src="./lesson.json?v=10"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -66,10 +66,10 @@ $pageTitle = 'Negative numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./negative-numbers.js?v=29"></script>
+    <script src="./negative-numbers.js?v=30"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=19"></script>
+    <script src="./questions.js?v=20"></script>
     <script src="./interactive.js?v=73"></script>
 
     <!-- Shared lesson renderer; loaded last -->
