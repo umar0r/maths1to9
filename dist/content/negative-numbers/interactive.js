@@ -275,7 +275,6 @@
         }
 
         function showPattern() {
-            const instruction = complete() ? null : paragraph('Click on −1', 'nn-instruction');
             const pattern = document.createElement('div');
             pattern.className = 'nn-pattern';
             const rows = document.createElement('div');
@@ -297,14 +296,12 @@
             card.type = 'button';
             card.className = 'nn-punch-card nn-pattern-card';
             card.textContent = '−1';
-            pattern.prepend(card);
+            card.setAttribute('aria-label', '−1, show the next sum');
+            pattern.append(card);
             card.addEventListener('click', () => {
                 section.update(state => { state.pattern++; });
                 addRow(state.pattern - 1);
-                if (complete()) {
-                    instruction.remove();
-                    card.remove();
-                }
+                if (complete()) card.remove();
             });
         }
 

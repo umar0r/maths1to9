@@ -90,7 +90,7 @@ for (const width of [1280, 375]) {
             const card = targetButtons.filter({ hasText: /^−1$/ });
             if (screen === 8) {
                 await expect(card).toBeVisible();
-                await expect(root(page).locator('.nn-instruction')).toHaveText('Click on −1');
+                await expect(root(page).locator('.nn-instruction')).toHaveCount(0);
                 await expect(root(page).locator('.nn-pattern-row')).toHaveCount(1);
             }
             let taps = 0;
