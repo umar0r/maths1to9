@@ -353,19 +353,9 @@
     color: #7c46c4;
 }
 
-.nn-number-line .nn-zero-circle {
-    color: #7c46c4;
-}
-
 .nn-number-line .nn-zero {
     font-weight: 900;
     stroke-width: 2.5;
-}
-
-.nn-number-line .nn-zero-circle {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
 }
 
 .nn-number-line .nn-hop {
@@ -704,9 +694,6 @@
         font-size: 19px;
     }
 
-    .nn-number-line .nn-zero-circle {
-        r: 15px;
-    }
 }
 
 .nn-reveal .nn-reveal__equation {
@@ -978,3 +965,37 @@
 
 .nn-sign-word--positive { background: #e3f4ee; color: var(--nn-positive); }
 .nn-sign-word--negative { background: #fbe7dc; color: var(--nn-negative); }
+
+/* Learn's worked examples: the hops draw in one after another, then the
+   count and the landing dot appear. Shown finished for reduced motion. */
+.nn-drawn .nn-hop {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: nn-draw-hop .22s ease-out forwards;
+    animation-delay: calc(.3s + var(--hop) * .2s);
+}
+
+.nn-drawn .nn-hop-count,
+.nn-drawn .nn-dot {
+    opacity: 0;
+    animation: nn-appear .25s ease-out forwards;
+    animation-delay: calc(.3s + var(--hop) * .2s);
+}
+
+@keyframes nn-draw-hop {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes nn-appear {
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-drawn .nn-hop,
+    .nn-drawn .nn-hop-count,
+    .nn-drawn .nn-dot {
+        animation: none;
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
