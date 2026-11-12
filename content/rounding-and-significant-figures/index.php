@@ -27,7 +27,7 @@ $pageTitle = 'Rounding';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=45">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=46">
     <link rel="stylesheet" href="./lesson.css?v=4">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Rounding';
     <script src="./interactive.js?v=10"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=52"></script>
+    <script src="../../assets/js/lesson-engine.js?v=53"></script>
 </body>
 </html>
