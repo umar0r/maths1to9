@@ -67,4 +67,30 @@ function checkScreen(state, previousPoints = 0) {
     return points;
 }
 
-module.exports = { SCORE, MAIN_ACTION, watchForErrors, screen, screenProblems, checkScreen };
+// What a pupil would notice changing: where they are, the main button and
+// the question.
+async function signature(page) {
+    const state = await screen(page);
+    const prompts = await page.locator('.question-prompt:visible').allInnerTexts().catch(() => []);
+    return JSON.stringify([state.where, state.mainActions, prompts]);
+}
+
+// Try it goes straight on after a right answer. Press Check (or run submit())
+// and wait for the next question. To see the worked answer, pass look(): it
+// goes Back, runs look() on the answered card, then comes forward again.
+async function checkThenMoveOn(page, look, submit) {
+    const main = page.locator(`${MAIN_ACTION}:visible`).first();
+    const before = await signature(page);
+    const where = (await screen(page)).where;
+    if (submit) await submit(); else await main.click();
+    await expect.poll(() => signature(page), `Try it should move on from ${where}`).not.toBe(before);
+    if (!look) return;
+    const after = await signature(page);
+    await page.getByRole('button', { name: 'Previous screen', exact: true }).click();
+    await expect.poll(async () => (await screen(page)).where).toBe(where);
+    await look();
+    await main.click();
+    await expect.poll(() => signature(page)).toBe(after);
+}
+
+module.exports = { SCORE, MAIN_ACTION, watchForErrors, screen, screenProblems, checkScreen, checkThenMoveOn };

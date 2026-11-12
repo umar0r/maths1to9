@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 const slug = 'finding-the-gradient';
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const input = page => page.locator('.question-card input:visible');
@@ -82,6 +82,11 @@ async function answer(page, value) {
     await input(page).fill(value);
     await input(page).press('Enter');
     await expect(main(page)).toHaveText('Continue');
+}
+// Try it: a right answer goes straight on to the next question.
+async function tryAnswer(page, value) {
+    await input(page).fill(value);
+    await checkThenMoveOn(page, undefined, () => input(page).press('Enter'));
 }
 async function backForward(page) {
     const before = await page.evaluate(() => window.Maths1to9Lesson.getScore());
@@ -204,11 +209,9 @@ async function tryCards(page, revisits) {
         if (revisits) await reload(page);
         await input(page).fill(value);
         if (revisits) { await reload(page); await expect(input(page)).toHaveValue(value); }
-        await input(page).press('Enter');
-        await expect(main(page)).toHaveText('Continue');
+        await checkThenMoveOn(page, undefined, () => input(page).press('Enter'));
         if (index === 2) await labelsClear(page);
         if (revisits) { await reload(page); await backForward(page); }
-        await main(page).click();
     }
     await expect(page).toHaveURL(/#try-it-5$/);
     await reload(page);
@@ -472,7 +475,7 @@ for (const mode of modes) {
             await expect(feedback).toHaveText('✓ That’s the vertical change.');
             await expect(main(page)).toBeEnabled();
             await main(page).click();
-            for (const value of ['3', '6', '2']) { await answer(page, value); await main(page).click(); }
+            for (const value of ['3', '6', '2']) await tryAnswer(page, value);
             await expect(page).toHaveURL(/#try-it-2$/);
             await labelsClear(page);
             await draw(page, [1, 1], [5, 3], mode.hasTouch);
@@ -490,14 +493,14 @@ for (const mode of modes) {
                 const b = Object.values(window.JXG.boards).find(b => b.containerObj === element);
                 return Object.values(b.objects).filter(o => o.visProp.dash === 2).length;
             })).toBe(0);
-            for (const value of ['1/2', '−1/2']) { await answer(page, value); await main(page).click(); }
+            for (const value of ['1/2', '−1/2']) await tryAnswer(page, value);
             await input(page).fill('4');
             await input(page).press('Enter');
             await expect(page.locator('.question-feedback:visible')).toHaveText('That’s 4 squares. Each square up is 2 units.');
             await reload(page);
             await expect(main(page)).toHaveText('Try again');
             await main(page).click();
-            for (const value of ['8', '4']) { await answer(page, value); await main(page).click(); }
+            for (const value of ['8', '4']) await tryAnswer(page, value);
             await main(page).click();
             await practice(page, { wrong: true, revisits: true });
             const saved = await state(page, 'question-bank');

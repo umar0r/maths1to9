@@ -104,6 +104,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -115,13 +123,18 @@ for (const width of [1280, 375]) {
                     }
                     await solve(page);
                 }
+                // The sign machine keeps Next locked until a card is flipped.
+                if (await page.locator('.nn-punch-card:visible').count() && !await button.isEnabled()) {
+                    await solve(page);
+                    continue;
+                }
                 await expect(button).toBeEnabled();
                 await button.click();
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(50);
-            expect(earned).toBe(225 - penalty);
+            expect(earned).toBe(220 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');

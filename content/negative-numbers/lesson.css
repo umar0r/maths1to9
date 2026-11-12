@@ -162,22 +162,38 @@
     height: 1.5rem;
 }
 
+/* The sign grid on Try it, drawn like the Place value table: thin grey
+   lines, a rounded edge and a dark grey top row and first column. */
 .nn-sign-grid {
     display: grid;
-    grid-template-columns: 2.5rem 5rem 5rem;
-    grid-auto-rows: 5rem;
-    gap: .5rem;
-    justify-content: center;
-    align-items: center;
-    margin-block: 1rem;
+    grid-template-columns: 3.5rem 5rem 5rem;
+    grid-template-rows: 3.25rem 5rem 5rem;
+    gap: 2px;
+    width: fit-content;
+    margin: 1.25rem auto;
+    padding: 2px;
+    border-radius: 8px;
+    background: #cbd5e1;
     font-size: 1.8rem;
-    font-weight: 900;
+    font-weight: 800;
     text-align: center;
 }
 
-.nn-sign-grid .nn-grid-label {
-    color: #65655f;
+.nn-sign-grid > * {
+    display: grid;
+    place-items: center;
 }
+
+/* The top row and first column: dark grey, like the sign machine. */
+.nn-sign-grid .nn-grid-label {
+    background: #3c4a63;
+    color: #fff;
+}
+
+.nn-sign-grid .nn-grid-label:first-child { border-top-left-radius: 6px; }
+.nn-sign-grid .nn-grid-label:nth-child(3) { border-top-right-radius: 6px; }
+.nn-sign-grid > :nth-last-child(3) { border-bottom-left-radius: 6px; }
+.nn-sign-grid > :last-child { border-bottom-right-radius: 6px; }
 
 .nn-sign-table {
     margin: 1rem auto;
@@ -227,26 +243,20 @@
 }
 
 .nn-grid-cell {
-    display: grid;
-    place-items: center;
     height: 100%;
-    border-radius: .7rem;
-    background: #eef0f4;
-    color: #8a93a3;
+    background: #f8fafc;
+    color: #94a3b8;
 }
 
-.nn-grid-plus {
-    background: #e4eefb;
-    color: #175ca1;
-}
+.nn-grid-cell[role="button"] { cursor: pointer; }
 
-.nn-grid-minus {
-    background: #fbe7dc;
-    color: #bb4826;
-}
+.nn-grid-plus { color: var(--nn-positive, #087e65); }
+.nn-grid-minus { color: var(--nn-negative, #bb4826); }
 
+/* The square just tapped, marked like the Place value table. */
 .nn-grid-last {
-    box-shadow: 0 0 0 3px #1d9e75;
+    background: #ecfeff;
+    box-shadow: inset 0 0 0 2px #155e75;
 }
 
 .nn-learn .nn-grid-sum {
@@ -786,3 +796,185 @@
 }
 
 .nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
+
+/* Try it: the sign machine. Two punch cards sit in the machine; tapping
+   one flips its sign, and the answer rides out along the belt to the tray. */
+.nn-machine {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin: 1.5rem 0;
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    font-weight: 800;
+}
+
+.nn-machine__body {
+    position: relative;
+    z-index: 1;
+    padding: .35em .45em .45em;
+    border-radius: .3em;
+    background: #3c4a63;
+    box-shadow: inset 0 -.18em 0 rgb(0 0 0 / .25);
+}
+
+.nn-machine__lights {
+    display: flex;
+    justify-content: center;
+    gap: .2em;
+    margin-bottom: .25em;
+}
+
+.nn-machine__lights span {
+    width: .22em;
+    height: .22em;
+    border-radius: 50%;
+    background: #6b7a94;
+}
+
+.nn-machine.is-running .nn-machine__lights span {
+    background: #ffd166;
+    animation: nn-light 1s ease-in-out infinite;
+}
+
+.nn-machine.is-running .nn-machine__lights span:nth-child(2) { animation-delay: .2s; }
+.nn-machine.is-running .nn-machine__lights span:nth-child(3) { animation-delay: .4s; }
+
+.nn-machine__front {
+    display: flex;
+    align-items: center;
+    gap: .2em;
+    color: #fff;
+}
+
+/* A blue punch card: a row of punched holes along the top, the sign below. */
+.nn-punch-card {
+    position: relative;
+    width: 1.5em;
+    height: 1.75em;
+    padding-top: .3em;
+    color: #fff;
+    font: inherit;
+    border: 0;
+    border-radius: .2em;
+    background: var(--primary);
+    box-shadow: 0 .1em 0 var(--primary-dark);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.nn-punch-card::before {
+    position: absolute;
+    top: .18em;
+    left: 50%;
+    width: 1em;
+    height: .14em;
+    background-image: radial-gradient(circle, #3c4a63 .045em, transparent .055em);
+    background-size: .2em .14em;
+    content: "";
+    transform: translateX(-50%);
+}
+
+.nn-punch-card:hover { background: #3d7af0; }
+.nn-punch-card:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
+.nn-punch-card.is-flipping { animation: nn-flip .35s ease-in-out; }
+
+.nn-machine__belt {
+    position: relative;
+    flex: 0 1 4.5em;
+    min-width: 2.5em;
+    height: .7em;
+    margin: 0 -.1em .35em;
+    border-block: .12em solid #3c4a63;
+    background: repeating-linear-gradient(90deg, #8a97ad 0 .3em, #c5cedb .3em .6em);
+    background-size: .6em 100%;
+}
+
+.nn-machine.is-running .nn-machine__belt { animation: nn-belt .6s linear infinite; }
+
+.nn-machine__token {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    display: grid;
+    width: 1em;
+    height: 1em;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / .3);
+    font-size: .8em;
+    opacity: 0;
+}
+
+.nn-machine__token[hidden] { display: none; }
+.nn-machine__token.is-moving { animation: nn-token .7s ease-in forwards; }
+
+/* The answer sits white on the dark grey tray, like the machine. */
+.nn-machine__tray {
+    display: grid;
+    width: 1.6em;
+    height: 1.6em;
+    place-items: center;
+    border-radius: 0 0 .3em .3em;
+    background: #3c4a63;
+    color: #fff;
+}
+
+.nn-machine__tray.is-moving { animation: nn-tray .9s ease-out; }
+
+@keyframes nn-flip {
+    50% { transform: scaleX(0); }
+}
+
+@keyframes nn-belt { to { background-position: .6em 0; } }
+@keyframes nn-light { 50% { opacity: .35; } }
+
+@keyframes nn-token {
+    0% { left: 0; opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: calc(100% - 1em); opacity: 0; }
+}
+
+@keyframes nn-tray {
+    0%, 70% { color: transparent; }
+    85% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-machine.is-running .nn-machine__belt,
+    .nn-machine.is-running .nn-machine__lights span,
+    .nn-punch-card.is-flipping,
+    .nn-machine__token.is-moving,
+    .nn-machine__tray.is-moving {
+        animation: none;
+    }
+}
+
+/* Try it: the four sign rules in pastel boxes. */
+.nn-sign-rules {
+    display: grid;
+    gap: .6rem;
+    max-width: 24rem;
+    margin: 1.25rem auto;
+    padding: 0;
+    list-style: none;
+}
+
+.nn-sign-rule {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    font-size: clamp(1rem, 4.2vw, 1.25rem);
+    font-weight: 700;
+}
+
+.nn-sign-word {
+    padding: .35rem .7rem;
+    border-radius: .5rem;
+}
+
+.nn-sign-word--positive { background: #e3f4ee; color: var(--nn-positive); }
+.nn-sign-word--negative { background: #fbe7dc; color: var(--nn-negative); }

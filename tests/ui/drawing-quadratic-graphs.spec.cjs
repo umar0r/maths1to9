@@ -171,7 +171,6 @@ test('drawing-quadratic-graphs wrong Practice plot, reload phases and two more s
     test.setTimeout(180000);const errors=watchForErrors(page);await page.goto(`/content/${slug}/`);await ready(page);await until(page,'#try-it-1');
     await root(page).getByRole('textbox').fill('-6'); await main(page).click(); await reload(page);
     await main(page).click(); await root(page).getByRole('textbox').fill('2'); await main(page).click(); await reload(page);
-    await main(page).click();
     await root(page).getByRole('textbox').first().fill('-1'); await reload(page);
     await expect(root(page).getByRole('textbox').first()).toHaveValue('-1');
     await until(page,'#question-bank-question-1');

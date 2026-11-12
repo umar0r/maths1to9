@@ -73,6 +73,6 @@ $pageTitle = 'Lowest common multiple';
     <script src="./interactive.js?v=10"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=52"></script>
+    <script src="../../assets/js/lesson-engine.js?v=53"></script>
 </body>
 </html>

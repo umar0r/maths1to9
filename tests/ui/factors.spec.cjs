@@ -112,6 +112,14 @@ for (const width of [1280, 375]) {
                     }
                     await solve(page);
                     if (await main(page).innerText() === 'Check') await main(page).click();
+                    if (section === 'interactive') {
+                        // Try it goes straight on after a right answer.
+                        await expect(page).not.toHaveURL(url);
+                        const earned = await score(page);
+                        await reload(page);
+                        expect(await score(page)).toBe(earned);
+                        continue;
+                    }
                     await expect(main(page)).toHaveText('Continue');
                     if (retried) await expect(page.locator('.question-card:visible')).not.toContainText('Right first time');
                     const earned = await score(page);

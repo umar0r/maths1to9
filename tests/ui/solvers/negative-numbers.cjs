@@ -9,6 +9,11 @@ module.exports = async function solve(page) {
     const prompt = page.locator('.question-prompt:visible');
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
+    // The sign machine: flipping one card is enough.
+    if (text.startsWith('Tap a card to flip its sign')) {
+        await page.locator('.nn-punch-card:visible').first().click();
+        return true;
+    }
     const options2 = page.locator('.question-card-options:visible button');
     const give = async value => {
         if (await options2.count()) await page.getByRole('button', { name: signed(value), exact: true }).click();
@@ -44,6 +49,7 @@ module.exports = async function solve(page) {
         'On a number line, what do + and − tell you to do?': '+ means move right. − means move left.',
         'What happens to the two minus signs when you take away a negative number?': 'They turn into a plus, so you add.',
         'What sign do you get when you multiply a negative number by a positive number?': 'A minus, because the two signs are different.',
+        'The table shows the sign of the answer when you multiply. What goes in the empty square?': '+, because the two signs are the same.',
         'You start on a negative number and take away a positive number. What happens?': 'You move left, further below zero, so the answer is more negative.',
         'You start on a positive number and take away a bigger number. What happens?': 'You go past zero, so the answer is negative.'
     };

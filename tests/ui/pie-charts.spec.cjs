@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/pie-charts.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -123,6 +123,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -254,15 +262,15 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(drawing(page).getByLabel('Blue angle (°)', { exact: true })).toHaveValue('');
         await solve.fillChart(page);
-        await mainAction(page).click();
-        await expect(mainAction(page)).toHaveText('Continue');
-        await reload(page);
-        await expect(drawing(page).getByLabel('Blue angle (°)', { exact: true })).toHaveValue('180');
-        await expect(drawing(page).getByLabel('Green angle (°)', { exact: true })).toHaveValue('90');
-        await expect(drawing(page).getByLabel('Red angle (°)', { exact: true })).toHaveValue('90');
-        await expect(page.locator('.pie-angle-sum:visible')).toHaveText('Total of angles entered: 360°');
-        await page.screenshot({ path: `/private/tmp/pie-widget-complete-${width}.png`, fullPage: true });
-        await mainAction(page).click();
+        // Try it goes straight on; Back shows the finished chart, kept after a reload.
+        await checkThenMoveOn(page, async () => {
+            await reload(page);
+            await expect(drawing(page).getByLabel('Blue angle (°)', { exact: true })).toHaveValue('180');
+            await expect(drawing(page).getByLabel('Green angle (°)', { exact: true })).toHaveValue('90');
+            await expect(drawing(page).getByLabel('Red angle (°)', { exact: true })).toHaveValue('90');
+            await expect(page.locator('.pie-angle-sum:visible')).toHaveText('Total of angles entered: 360°');
+            await page.screenshot({ path: `/private/tmp/pie-widget-complete-${width}.png`, fullPage: true });
+        });
         for (let step = 0; step < 12; step++) {
             if (await page.getByRole('heading', { name: 'Your completed work', exact: true }).isVisible()) break;
             if (await solve(page)) continue;
