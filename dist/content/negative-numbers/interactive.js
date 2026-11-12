@@ -19,17 +19,17 @@
         heading: 'When you take away a positive number, you move left along the number line.', lines: [
             'If you take away more than you started with, you go past zero and end up on a negative number.'
         ], journeys: [
-            { start: 4, steps: 6, direction: -1, sum: '4 − 6', showSum: false, instruction: 'Take 6 away from 4.', startLabel: false }
+            { start: 4, steps: 6, direction: -1, sum: '4 − 6', showSum: false }
         ] },
         { title: 'Adding to a negative number', kind: 'journeys', slot: 1,
         heading: 'When you add a positive number, you move right along the number line.', lines: [], journeys: [
-            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', showSum: false, tapCue: false, instruction: 'Move the dot 4 places to the right.', result: 'Adding 4 to −6 moves you towards zero, but not past it, so the answer is still negative.' }
+            { start: -6, steps: 4, direction: 1, sum: '−6 + 4', showSum: false, result: 'Adding 4 to −6 moves you towards zero, but not past it, so the answer is still negative.' }
         ] },
         { title: 'Taking away from a negative number', kind: 'journeys', slot: 2,
         heading: 'If you start on a negative number and take away a positive number, you still move left.', lines: [
             'That takes you further below zero, so the answer is more negative.'
         ], journeys: [
-            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', showSum: false, tapCue: false, instruction: 'Start at −2 and move 3 steps to the left.' }
+            { start: -2, steps: 3, direction: -1, sum: '−2 − 3', showSum: false }
         ] },
         { title: 'Two minus signs in one sum', kind: 'read',
         heading: 'Sometimes you have to take away a negative number.', lines: [], afterSum: [
@@ -94,14 +94,15 @@
     }
 
     // Every Learn line has the same scale, with all 21 values on one row.
-    function numberLine({ start, position = start, hops = 0, direction = 1, startLabel = true }) {
+    function numberLine({ start, position = start, hops = 0, direction = 1 }) {
         const x = value => 30 + (value + 10) * 30;
         const phone = window.matchMedia('(max-width: 600px)').matches;
         const axis = phone ? 210 : 80;
-        const height = phone ? 296 : 140;
-        let picture = startLabel ?
-            `<text class="nn-start-label" x="${x(start)}" y="${phone ? 85 : 24}">start</text>` : '';
-        picture += `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
+        const height = phone ? 296 : 150;
+        // "start" and "end" sit under the numbers they name, clear of the hops.
+        const label = (text, value) => `<text class="nn-end-label" x="${x(value)}" y="${axis + (phone ? 66 : 56)}">${text}</text>`;
+        let picture = `<path class="nn-axis" d="M 15 ${axis} H 645"/>`;
+        if (hops) picture += label('start', start) + `<g class="nn-end" style="--hop: ${hops}">${label('end', position)}</g>`;
         for (let value = -10; value <= 10; value++) {
             const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
             picture += `<path class="nn-tick ${tone}" d="M ${x(value)} ${axis - 7} V ${axis + 7}"/>
@@ -285,7 +286,6 @@
                 screen.journeys.forEach(item => {
                     if (item.result) paragraph(item.result);
                     if (item.showSum !== false) paragraph(item.sum, 'nn-sum');
-                    paragraph(item.instruction, 'nn-instruction');
                     journey(item);
                 });
             } else if (screen.kind === 'read') {
