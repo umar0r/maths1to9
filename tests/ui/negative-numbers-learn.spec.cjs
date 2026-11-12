@@ -132,7 +132,9 @@ for (const width of [1280, 375]) {
             if (screen === 8) await expect(root(page).getByText('Tap to show the next line.')).toHaveCount(0);
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
-                await expect(root(page).locator('.nn-box-sum')).toHaveText('3 − (−2) = 3 + 2 = 5');
+                // Learn has no feedback box: the reason is a plain line.
+                await expect(root(page).getByText('Subtracting −2 has the same effect as adding 2.', { exact: true })).toBeVisible();
+                await expect(root(page).locator('.question-feedback')).toHaveCount(0);
             }
             await main(page).click();
         }
