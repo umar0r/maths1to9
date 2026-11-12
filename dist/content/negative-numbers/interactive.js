@@ -277,8 +277,18 @@
         function showPattern() {
             const pattern = document.createElement('div');
             pattern.className = 'nn-pattern';
-            const rows = document.createElement('div');
-            pattern.append(rows);
+            if (new URLSearchParams(window.location.search).has('preview-reset')) {
+                const reset = document.createElement('button');
+                reset.type = 'button';
+                reset.className = 'lesson-back nn-pattern-reset';
+                reset.textContent = 'Reset slide';
+                reset.addEventListener('click', () => {
+                    section.update(state => { state.pattern = 1; });
+                    render();
+                    root.querySelector('.nn-pattern-reset').focus({ preventScroll: true });
+                });
+                root.append(reset);
+            }
             root.append(pattern);
 
             function addRow(answer) {
@@ -286,7 +296,7 @@
                 const row = document.createElement('div');
                 row.className = answer >= 4 ? 'nn-pattern-row nn-highlight' : 'nn-pattern-row';
                 row.innerHTML = `<span>3 − ${subtract < 0 ? `(${signed(subtract)})` : subtract}</span><span>= ${answer}</span><small>${answer ? `up ${answer}` : ''}</small>`;
-                rows.append(row);
+                pattern.append(row);
             }
 
             for (let answer = 0; answer < state.pattern; answer++) addRow(answer);
@@ -297,11 +307,13 @@
             card.className = 'nn-punch-card nn-pattern-card';
             card.textContent = '−1';
             card.setAttribute('aria-label', '−1, show the next sum');
+            card.style.gridRow = state.pattern;
             pattern.append(card);
             card.addEventListener('click', () => {
                 section.update(state => { state.pattern++; });
                 addRow(state.pattern - 1);
                 if (complete()) card.remove();
+                else card.style.gridRow = state.pattern;
             });
         }
 
