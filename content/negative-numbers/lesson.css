@@ -315,9 +315,9 @@
     fill: currentColor;
 }
 
-.nn-number-line .nn-start-label {
+.nn-number-line .nn-end-label {
     fill: #65655f;
-    font-size: 21px;
+    font-size: 13px;
 }
 
 /* Small enough for all 21 numbers to fit on one row. */
@@ -678,8 +678,8 @@
         font-size: 30px;
     }
 
-    .nn-number-line .nn-start-label {
-        font-size: 26px;
+    .nn-number-line .nn-end-label {
+        font-size: 20px;
     }
 
     .nn-number-line .nn-value {
@@ -976,6 +976,7 @@
 }
 
 .nn-drawn .nn-hop-count,
+.nn-drawn .nn-end,
 .nn-drawn .nn-dot {
     opacity: 0;
     animation: nn-appear .25s ease-out forwards;
@@ -993,6 +994,7 @@
 @media (prefers-reduced-motion: reduce) {
     .nn-drawn .nn-hop,
     .nn-drawn .nn-hop-count,
+    .nn-drawn .nn-end,
     .nn-drawn .nn-dot {
         animation: none;
         stroke-dashoffset: 0;
