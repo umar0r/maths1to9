@@ -72,6 +72,6 @@ $pageTitle = 'Understanding fractions';
     <script src="./interactive.js?v=13"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

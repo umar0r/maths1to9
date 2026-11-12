@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { watchForErrors } = require('./helpers.cjs');
+const { watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 for (const phone of [false, true]) test.describe('graph types small graph gate ' + (phone ? 'phone touch' : 'desktop mouse'), () => {
     test.use({viewport:{width:phone?375:1280,height:phone?812:800},hasTouch:phone,isMobile:phone});
     test('recognising-graph-types small inert graphs route clicks and Tab to option buttons', async ({page}) => {
@@ -187,10 +187,14 @@ for(const phone of [false,true])test.describe('graph types custom answers '+(pho
             await main(page).click();
             expect(await group.locator('.maths-graph__board').evaluateAll(boards=>boards.map(board=>board.id))).toEqual(ids);
         }
-        await pick(q.widget.correctId);await main(page).click();await reload(page);
-        await expect(root(page).locator('.question-feedback.is-correct')).toHaveCount(1);
-        await expect(group.locator('[data-option-id="'+q.widget.correctId+'"]')).toHaveClass(/is-correct/);
-        await page.screenshot({path:'/tmp/graphtypes-choice-'+(phone?'375':'1280')+'.png',fullPage:true});
+        // Try it goes straight on after a right answer; Back shows it, kept after a reload.
+        await pick(q.widget.correctId);
+        await checkThenMoveOn(page,async()=>{
+            await reload(page);
+            await expect(root(page).locator('.question-feedback.is-correct')).toHaveCount(1);
+            await expect(group.locator('[data-option-id="'+q.widget.correctId+'"]')).toHaveClass(/is-correct/);
+            await page.screenshot({path:'/tmp/graphtypes-choice-'+(phone?'375':'1280')+'.png',fullPage:true});
+        });
         expect(errors).toEqual([]);
     });
 });

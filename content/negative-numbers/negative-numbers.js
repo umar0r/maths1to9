@@ -190,16 +190,8 @@
     function multiplyExamples() {
         return [
             {
-                questionType: 'multiply', input: 'number', signs: ['−', '+'],
-                prompt: 'Work out −6 × 4.',
-                rule: 'Negative × positive = negative. Different signs give a negative answer.', answer: '−24',
-                feedback: '6 × 4 = 24. The signs are different, so the answer is negative.',
-                rules: [
-                    { value: '24', feedback: 'The signs are different, so the answer is negative, not positive.' },
-                    { value: '−2', feedback: 'That adds −6 and 4. This question multiplies them.' },
-                    { value: '−10', feedback: 'That takes 4 away from −6. This question multiplies them.' }
-                ],
-                fallback: 'Work out 6 × 4, then use the table to find the sign.'
+                questionType: 'multiply', input: 'conveyor',
+                prompt: 'Tap a card to flip its sign. See what comes out of the machine.'
             },
             {
                 questionType: 'multiply', input: 'number', signs: ['−', '−'],
@@ -211,17 +203,6 @@
                     { value: '−9', feedback: 'That adds −6 and −3. This question multiplies them.' }
                 ],
                 fallback: 'Work out 6 × 3, then use the grid to find the sign.'
-            },
-            {
-                questionType: 'multiply', input: 'tap', square: ['−', '−'],
-                prompt: 'Tap the square that gives the sign of −8 × −2.',
-                rule: 'Negative × negative = positive. The same signs give a positive answer.',
-                feedback: 'Both numbers are negative, so use the − row and the − column.',
-                wrong: {
-                    '+,+': 'Both numbers are negative, so neither one is on a + line.',
-                    '+,−': '−8 is negative, so it goes on the − row, not the + row.',
-                    '−,+': '−2 is negative, so it goes on the − column, not the + column.'
-                }
             },
             {
                 questionType: 'multiply', input: 'reveal',
@@ -258,12 +239,15 @@
                 option('They cancel out, so you ignore the number.', 'You still use the number. The two signs turn into a plus, so you add it.'),
                 option('They turn into a plus, and the first number changes sign too.', 'The first number stays exactly as it is. Only the two signs change.')
             ]),
-            understanding('What sign do you get when you multiply a negative number by a positive number?', [
-                option('A minus, because the two signs are different.', 'Right. Different signs give a negative answer.', true),
-                option('A plus, because one of the numbers is positive.', 'One positive number isn\'t enough. The signs are different, so the answer is negative.'),
-                option('A plus, because two signs make a plus.', 'Only two signs that are the same make a plus. These are different.'),
-                option('It depends which number is bigger.', 'The size doesn\'t matter when you multiply. Different signs always give a negative answer.')
-            ]),
+            {
+                ...understanding('The table shows the sign of the answer when you multiply. What goes in the empty square?', [
+                    option('+, because the two signs are the same.', 'Right. − × − has two signs the same, so the answer is positive.', true),
+                    option('−, because both signs are negative.', 'Two negatives don\'t give a negative here. The signs are the same, so the answer is positive.'),
+                    option('−, because the square next to it is −.', 'Each square only depends on its own row and column. − and − are the same, so it is +.'),
+                    option('It depends which numbers you multiply.', 'The size of the numbers doesn\'t change the sign. The same signs always give +.')
+                ]),
+                figure: drawTableWithGap
+            },
             understanding('You start on a negative number and take away a positive number. What happens?', [
                 option('You move left, further below zero, so the answer is more negative.', 'Right. Taking away moves you left, away from zero.', true),
                 option('You move right, towards zero.', 'Taking away a positive number always moves you left.'),
@@ -697,26 +681,16 @@
 
     const gridColour = square => `nn-grid-${square.answer === '+' ? 'plus' : 'minus'}`;
 
-    // The grid pupils fill in, one tap per square.
-    function drawSignGrid(host, filled, last, onTap) {
+    // Check: the sign table, filled in apart from the − × − square.
+    function drawTableWithGap(host) {
         drawGrid(host, (square, i) => {
             const cell = document.createElement('span');
-            cell.className = `nn-grid-cell ${filled[i] ? gridColour(square) : ''} ${last === i ? 'nn-grid-last' : ''}`;
-            cell.textContent = filled[i] ? square.answer : '?';
-            if (!filled[i]) {
-                cell.setAttribute('role', 'button');
-                cell.setAttribute('aria-label', `${square.row} times ${square.column}`);
-                cell.tabIndex = 0;
-                cell.addEventListener('click', () => onTap(i));
-                cell.addEventListener('keydown', event => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    onTap(i);
-                });
-            }
+            const gap = square.row === '−' && square.column === '−';
+            cell.className = `nn-grid-cell ${gap ? 'nn-grid-last' : gridColour(square)}`;
+            cell.textContent = gap ? '?' : square.answer;
+            if (gap) cell.setAttribute('aria-label', 'empty square, − row and − column');
             return cell;
         });
-        if (last !== null) paragraph(host, SIGN_GRID[last].sum, 'nn-grid-sum');
     }
 
     // The sign table. The chosen row is red and the chosen column blue, so the
@@ -752,40 +726,10 @@
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
-    // Try it: the pupil taps a square. A wrong square colours its row and
-    // column and explains why; the right one finishes the question.
-    function drawTapSquare(host, question, tried, solved, onTap) {
-        const last = tried.at(-1);
-        const picked = solved ? question.square : last?.split(',') || [];
-        const table = document.createElement('table');
-        table.className = 'nn-sign-table';
-        table.innerHTML = signTable(...picked);
-        host.append(table);
-        paragraph(host, question.rule, 'nn-grid-rule');
-        if (!solved) {
-            table.querySelectorAll('tbody td').forEach((cell, i) => {
-                const { row, column } = SIGN_GRID[i];
-                const key = `${row},${column}`;
-                if (tried.includes(key)) return;
-                cell.setAttribute('role', 'button');
-                cell.setAttribute('aria-label', `${row} row, ${column} column`);
-                cell.tabIndex = 0;
-                cell.addEventListener('click', () => onTap(key));
-                cell.addEventListener('keydown', event => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    onTap(key);
-                });
-            });
-        }
-        if (solved) correctBox(host, `Correct. ${question.feedback}`, '', 'interactive');
-        else if (last) feedbackBox(host, 'interactive', { correct: false, text: question.wrong[last] });
-    }
-
     window.NegativeNumbers = {
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, drawSignGrid, withSignGrid, drawDragToAnswer, drawTapSquare
+        multiplyExamples, withSignGrid, drawDragToAnswer
     };
 })();

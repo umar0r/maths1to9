@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/rounding-and-significant-figures.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -99,6 +99,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -221,10 +229,7 @@ for (const width of [1280, 375]) {
             }
             if (card === 2) await page.locator('.question-card:visible input[type=text]').fill('2,700.0');
             else await solve(page);
-            await mainAction(page).click();
-            await expect(mainAction(page)).toHaveText('Continue');
-            if (card % 3 === 2) await expect(page.locator('.significant-equation:visible')).toHaveCount(1);
-            await mainAction(page).click();
+            await checkThenMoveOn(page, card % 3 === 2 ? () => expect(page.locator('.significant-equation:visible')).toHaveCount(1) : undefined);
         }
         await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
         await expect(page.locator('.significant-digits:visible')).toHaveCount(12);

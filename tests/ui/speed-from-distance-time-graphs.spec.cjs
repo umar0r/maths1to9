@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 const slug = 'speed-from-distance-time-graphs';
 const main = page => page.locator(`${MAIN_ACTION}:visible`).first();
 const board = page => page.locator('.maths-graph__board:visible').first();
@@ -92,7 +92,7 @@ async function capture(page, name) {
     if (process.env.SPEED_REVIEW_OUTPUT) await page.evaluate(() => window.scrollTo(0, 0));
     if (process.env.SPEED_REVIEW_OUTPUT) await page.screenshot({ path: `${process.env.SPEED_REVIEW_OUTPUT}/${page.viewportSize().width}-${name}.png`, fullPage: true });
 }
-async function answer(page, definition, order) {
+async function answer(page, definition, order, tryIt = false) {
     if (definition.input === 'choice') {
         const correct = definition.options.findIndex(option => option.correct);
         await page.locator('.question-card-options:visible button').nth(order ? order.indexOf(correct) : correct).click();
@@ -100,7 +100,9 @@ async function answer(page, definition, order) {
         const inputs = page.locator('.question-card input:visible');
         for (const [i, field] of (definition.fields || [{ id: null }]).entries()) await inputs.nth(i).fill(field.id ? definition.answer[field.id] : definition.answer);
     }
-    await main(page).click(); await expect(main(page)).toHaveText('Continue');
+    // Try it goes straight on after a right answer; other sections show Continue.
+    if (tryIt) await checkThenMoveOn(page);
+    else { await main(page).click(); await expect(main(page)).toHaveText('Continue'); }
 }
 async function solvePractice(page, wrong = false) {
     const saved = await state(page, 'question-bank');
@@ -184,8 +186,7 @@ for (const mode of [{ name: 'desktop', width: 1280, touch: false }, { name: 'pho
                     await page.locator('.question-card input:visible').fill('0.25'); await reload(page);
                     await main(page).click(); await expect(main(page)).toHaveText('Try again'); await reload(page); await main(page).click();
                 }
-                await answer(page, definition, saved.order[i]); await capture(page, `try-${i}`); await backAndForward(page); await reload(page);
-                await main(page).click();
+                await answer(page, definition, saved.order[i], true); await capture(page, `try-${i}`); await backAndForward(page); await reload(page);
             }
             await backAndForward(page); await main(page).click();
             for (let i = 0; i < 6; i++) await solvePractice(page, mode.touch && i === 0);

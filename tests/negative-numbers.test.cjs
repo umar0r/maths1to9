@@ -38,7 +38,7 @@ test('negative-numbers: every fixed and generated calculation has the right answ
     questions.forEach(verifyMaths);
     assert.equal(Q.checks().length, 5);
     assert.equal(answer(Q.checks()[1]), 'They turn into a plus, so you add.');
-    assert.equal(answer(Q.checks()[2]), 'A minus, because the two signs are different.');
+    assert.equal(answer(Q.checks()[2]), '+, because the two signs are the same.');
 });
 
 test('negative-numbers: every choice has four distinct options and one correct answer', () => {

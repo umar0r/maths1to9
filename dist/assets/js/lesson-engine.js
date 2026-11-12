@@ -844,6 +844,8 @@
             if (config.input === 'choice') outcome.option = saved.selected;
             else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
             config.onFeedback?.(outcome);
+            // Try it: a right answer goes straight on, with no Continue press.
+            if (correct && sectionId === 'interactive' && config.onContinue) act();
         }
         update();
         return { result };

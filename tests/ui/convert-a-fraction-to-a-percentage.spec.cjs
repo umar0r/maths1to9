@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/convert-a-fraction-to-a-percentage.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -99,6 +99,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -178,14 +186,13 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(page.locator('.fraction-equation:visible')).not.toContainText('0.375');
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.fraction-equation:visible')).toContainText('0.375');
-        await mainAction(page).click();
+        await checkThenMoveOn(page, () => expect(page.locator('.fraction-equation:visible')).toContainText('0.375'));
         await expect(page.locator('.fraction-equation:visible')).not.toContainText('37.5%');
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.fraction-equation:visible')).toContainText('37.5%');
-        await page.screenshot({ path: `/private/tmp/fraction-percentage-try-${width}.png`, fullPage: true });
+        await checkThenMoveOn(page, async () => {
+            await expect(page.locator('.fraction-equation:visible')).toContainText('37.5%');
+            await page.screenshot({ path: `/private/tmp/fraction-percentage-try-${width}.png`, fullPage: true });
+        });
         await context.close();
     });
 }

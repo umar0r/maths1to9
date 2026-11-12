@@ -83,7 +83,12 @@ for (const lesson of lessons) {
                     await main.click();
                     await solve(page, memory);
                     await main.click();
-                    await expect(main, `the right answer after a retry should be accepted at ${state.where}`).toHaveText(/Continue|Next|All lessons/);
+                    // Try it goes straight on after a right answer; other sections show Continue.
+                    if (section === 'interactive') {
+                        await expect.poll(async () => (await screen(page)).where, `the right answer after a retry should move on at ${state.where}`).not.toBe(state.where);
+                    } else {
+                        await expect(main, `the right answer after a retry should be accepted at ${state.where}`).toHaveText(/Continue|Next|All lessons/);
+                    }
                     wrongChecked++;
                 }
                 continue;

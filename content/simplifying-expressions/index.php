@@ -68,6 +68,6 @@ $pageTitle = 'Simplifying expressions';
     <script src="./algebra.js?v=1"></script>
     <script src="./questions.js?v=1"></script>
     <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

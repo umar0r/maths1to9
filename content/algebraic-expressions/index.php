@@ -67,6 +67,6 @@ $pageTitle = 'Writing algebraic expressions';
     <script src="./expressions.js?v=1"></script>
     <script src="./questions.js?v=16"></script>
     <script src="./interactive.js?v=14"></script>
-    <script src="../../assets/js/lesson-engine.js?v=53"></script>
+    <script src="../../assets/js/lesson-engine.js?v=54"></script>
 </body>
 </html>

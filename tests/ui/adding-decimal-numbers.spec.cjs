@@ -100,6 +100,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
