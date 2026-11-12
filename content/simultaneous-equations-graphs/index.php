@@ -28,7 +28,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=46">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=47">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="./lesson.css?v=3">
