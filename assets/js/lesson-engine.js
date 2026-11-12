@@ -1799,7 +1799,8 @@
 
     // Feedback shows the way Brilliant does it: the main button bar sticks
     // to the bottom of the screen, and the newest feedback sits just above
-    // the button, so the pupil always sees both, however tall the card is.
+    // the button on the right, so the pupil always sees both, however tall
+    // the card is.
     // On a phone the bar is a coloured sheet across the bottom of the
     // screen (see app.css). Older answered cards on the same screen keep
     // their feedback inside the card. Lessons append the box inside their
@@ -1810,7 +1811,8 @@
         const phone = window.matchMedia('(max-width: 767px)');
         let live = null;
 
-        // Sit the box just above the main button, lined up with the card.
+        // Sit the box just above the main button, lined up with the card's
+        // right edge.
         const follow = () => {
             if (!live) return;
             const buttons = controls.querySelector('.lesson-controls__buttons') || controls;
@@ -1824,7 +1826,7 @@
             }
             const cardBox = live.closest('.lesson-section').getBoundingClientRect();
             live.style.setProperty('--feedback-top', `${buttonsTop - aboveButtons - live.offsetHeight}px`);
-            live.style.setProperty('--feedback-left', `${cardBox.left}px`);
+            live.style.setProperty('--feedback-right', `${document.documentElement.clientWidth - cardBox.right}px`);
             live.style.setProperty('--feedback-width', `${cardBox.width}px`);
         };
 
