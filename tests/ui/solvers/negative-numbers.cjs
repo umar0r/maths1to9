@@ -20,6 +20,14 @@ module.exports = async function solve(page) {
         else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
     };
     const numbers = (text.match(/[−-]?\d+/g) || []).map(number);
+    const choose = name => page.getByRole('button', { name, exact: true }).click().then(() => true);
+    // Question-bank Practice questions.
+    let match;
+    if ((match = text.match(/^Work out \(−([\d.]+)\) × \(−([\d.]+)\)\.$/))) { await give(Math.round(Number(match[1]) * 10 * Number(match[2])) / 10); return true; }
+    if ((match = text.match(/^Work out −(\d+) ÷ −(\d+), then/))) return choose(`${match[1] / match[2]}, then −${match[1] / match[2]}`);
+    if ((match = text.match(/^n = −(\d+)\. What is n²/))) return choose(String(match[1] * match[1]));
+    if (text.startsWith('p and q are different positive numbers')) return choose('p − n');
+    if (text.startsWith('What number is exactly halfway between')) { await give((numbers[0] + numbers[1]) / 2); return true; }
     if (text.includes('×')) {
         if (text.includes('? ×')) await give(numbers[1] / numbers[0]);
         else await give(numbers[0] * numbers[1]);

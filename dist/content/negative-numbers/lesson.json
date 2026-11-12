@@ -30,7 +30,12 @@
             "temperature-rise": "calculate-negative-numbers",
             "temperature-two-steps": "calculate-negative-numbers",
             "missing-add": "calculate-negative-numbers",
-            "either-way": "calculate-negative-numbers"
+            "either-way": "calculate-negative-numbers",
+            "decimal-multiply": "calculate-negative-numbers",
+            "divide-pair": "calculate-negative-numbers",
+            "square-negative": "calculate-negative-numbers",
+            "always-positive": "calculate-negative-numbers",
+            "halfway": "calculate-negative-numbers"
         }
     },
     "explanation": {
@@ -52,7 +57,7 @@
         "hide_heading": true,
         "title": "Practise subtracting negative numbers",
         "intro": "",
-        "session_length": 11
+        "session_length": 16
     },
     "section_order": [
         "explanation",

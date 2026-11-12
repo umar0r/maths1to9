@@ -292,7 +292,9 @@
                         section.update(state => { state.journeys[screen.slot][i]++; });
                         render();
                     });
-                    if (counts[i] === item.steps) {
+                    // A box with only the sum would repeat what's on screen, so
+                    // only screens with something to say get one.
+                    if (counts[i] === item.steps && item.result) {
                         window.NegativeNumbers.correctBox(root, item.result || '', `${item.sum} = ${signed(item.start + item.steps * item.direction)}`);
                     }
                 });
