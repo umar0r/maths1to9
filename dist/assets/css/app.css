@@ -2252,6 +2252,30 @@ a {
     border: 1px solid #ecdcae;
 }
 
+/* Every feedback box sits outside the card, under its bottom-right corner.
+   The engine (placeFeedback in lesson-engine.js) reserves the room under
+   the card and stacks the boxes if a screen shows more than one. */
+.lesson-section-container {
+    padding-bottom: var(--feedback-space, 0px);
+}
+
+.lesson-section .question-feedback.is-visible {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 18px + var(--feedback-offset, 0px));
+    right: calc(-2px - var(--feedback-across, 0px));
+    width: max-content;
+    max-width: min(560px, var(--feedback-room, calc(100% + 4px)));
+    margin: 0;
+    box-shadow: var(--shadow-small);
+    transform-origin: top right;
+}
+
+/* The bubble's small corner points up at the card. */
+.lesson-section .question-feedback--bubble.is-visible {
+    border-radius: 22px 6px 22px 22px;
+}
+
 @keyframes feedback-pop {
     from {
         opacity: 0;
