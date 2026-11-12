@@ -750,7 +750,7 @@
 
         pages.forEach((page, index) => {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
-                if (!api.goToSection('interactive', { moveFocus: false })) {
+                if (!api.goToSection('interactive', { moveFocus: false, unlock: true })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
@@ -761,7 +761,7 @@
         reportProgress();
         render();
         const requested = pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
-        if (requested >= 0 && api.goToSection('interactive', { moveFocus: false })) {
+        if (requested >= 0 && api.goToSection('interactive', { moveFocus: false, unlock: true })) {
             jumpTo(requested);
         }
     }
