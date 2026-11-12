@@ -144,9 +144,11 @@ test('negative-numbers: question-bank Practice questions have the right answers'
     }
     for (const question of of('halfway')) {
         const [low, high] = question.prompt.match(/[−-]?\d+/g).map(evaluate);
-        assert.equal(evaluate(question.answer), (low + high) / 2, question.prompt);
+        assert.equal(evaluate(answer(question)), (low + high) / 2, question.prompt);
         assert.ok(Number.isInteger((low + high) / 2) && low + high !== 0, question.prompt);
-        assert.ok(question.rules.length >= 2 && question.rules.every(rule => evaluate(rule.value) !== (low + high) / 2), question.prompt);
     }
+    // Practice is half multiple choice, half typed.
+    const kinds = Q.practiceTypes.map(type => Q.generate({ type }, seededRandom(1)).input);
+    assert.equal(kinds.filter(kind => kind === 'choice').length, Q.practiceTypes.length / 2);
     assert.equal(answer(of('always-positive')[0]), 'p − n');
 });

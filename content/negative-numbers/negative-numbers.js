@@ -196,21 +196,22 @@
         };
     }
 
-    // The number halfway between a negative and a positive number.
+    // The number halfway between a negative and a positive number. Multiple
+    // choice, so Practice is half choice and half typed.
     function halfway(low, high) {
         const answer = (low + high) / 2;
-        const rules = [
+        const right = `Right. ${signed(low)} + ${high} = ${signed(low + high)}, and ${signed(low + high)} ÷ 2 = ${signed(answer)}.`;
+        const wrong = [
             [(high - low) / 2, `That's half the distance from ${signed(low)} to ${high}. Now count that far right from ${signed(low)}.`],
             [-answer, `Check the sign. ${signed(low)} + ${high} = ${signed(low + high)}, and half of that is ${signed(answer)}.`],
-            [low + high, `That's ${signed(low)} + ${high}. Halve it to find the middle.`]
-        ].map(([value, feedback]) => ({ value: signed(value), feedback }))
-            .filter((rule, index, list) => rule.value !== signed(answer) && list.findIndex(other => other.value === rule.value) === index);
+            [low + high, `That's ${signed(low)} + ${high}. Halve it to find the middle.`],
+            [(low - high) / 2, `That's half the distance, counted the wrong way. Add ${signed(low)} and ${high}, then halve it.`],
+            [answer + 1, `Check your adding: ${signed(low)} + ${high} = ${signed(low + high)}. Half of that is ${signed(answer)}.`]
+        ].filter(([value], index, list) => value !== answer && list.findIndex(([other]) => other === value) === index).slice(0, 3);
         return {
-            questionType: 'halfway', input: 'number', expected: answer, noLine: true,
-            prompt: `What number is exactly halfway between ${signed(low)} and ${high}?`, answer: signed(answer),
-            feedback: `Add the two numbers and halve the answer: ${signed(low)} + ${high} = ${signed(low + high)}, and ${signed(low + high)} ÷ 2 = ${signed(answer)}.`,
-            rules,
-            fallback: `Add ${signed(low)} and ${high}, then divide by 2.`
+            questionType: 'halfway', input: 'choice', expected: answer,
+            prompt: `What number is exactly halfway between ${signed(low)} and ${high}?`,
+            options: [option(signed(answer), right, true), ...wrong.map(([value, feedback]) => option(signed(value), feedback))]
         };
     }
 

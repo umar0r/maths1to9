@@ -129,7 +129,7 @@ test('sessions contain eleven seeded items, all eight types and mixed answer mod
         assert.equal(session.length, 11);
         assert.deepEqual([...new Set(session.map(item => item.type))].sort(), [...Q.types].sort());
         const typed = session.filter(item => item.mode === 'number').length;
-        assert(typed >= 3 && typed <= 5, `${typed} typed questions`);
+        assert.equal(typed, 5, `${typed} typed questions`);
         assert.equal(session.filter(item => item.mode === 'choice').length, 11 - typed);
         assert.equal(JSON.stringify(session), JSON.stringify(Q.pick(seededRandom(seed))));
         for (const item of session) {

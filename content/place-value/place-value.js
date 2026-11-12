@@ -466,9 +466,11 @@
         const original = [{ type: 'digitValue', mode: 'choice' }, { type: 'digitValue', mode: 'number' },
             { type: 'scaledProduct', mode: 'choice' }, { type: 'scaledProduct', mode: 'number' },
             { type: 'powerOfTen', mode: 'choice' }, { type: 'powerOfTen', mode: 'number' }];
-        const examStyle = [{ type: 'wordsToFigures', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }, { type: 'digitCards', mode: 'choice' },
-            { type: 'digitCount', mode: 'choice' }, { type: 'closestNumber', mode: 'choice' },
-            { type: 'numberLine', mode: E.randomInt(0, 1, random) ? 'number' : 'choice' }];
+        // Half choice, half typed: words to figures and the number line take one each.
+        const wordsTyped = E.randomInt(0, 1, random) === 1;
+        const examStyle = [{ type: 'wordsToFigures', mode: wordsTyped ? 'number' : 'choice' }, { type: 'digitCards', mode: 'choice' },
+            { type: 'digitCount', mode: 'number' }, { type: 'closestNumber', mode: 'choice' },
+            { type: 'numberLine', mode: wordsTyped ? 'choice' : 'number' }];
         return E.shuffle([...original, ...examStyle], random)
             .map(item => ({ ...item, seed: E.randomInt(0, 4294967295, random) }));
     }
