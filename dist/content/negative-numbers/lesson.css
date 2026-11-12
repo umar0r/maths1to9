@@ -656,20 +656,55 @@
 }
 
 .nn-transform {
-    display: grid;
-    gap: .25em;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: .3em;
 }
 
 .nn-transform-signs {
-    display: inline-block;
-    min-height: 44px;
+    display: inline-grid;
+    width: 2.1em;
+    position: relative;
+    border-radius: .3rem;
+    background: #fbefdb;
+    text-align: center;
 }
 
-.nn-transform-signs,
-.nn-transform-plus {
-    color: var(--primary);
-    text-shadow: 0 0 8px rgb(37 99 235 / .55), 0 0 14px rgb(37 99 235 / .28);
+.nn-transform-signs > span {
+    grid-area: 1 / 1;
+}
+
+.nn-transform-signs .nn-after {
+    visibility: hidden;
+}
+
+.nn-transform-signs.nn-changed .nn-before {
+    opacity: 0;
+    animation: nn-fade-out .35s;
+}
+
+.nn-transform-signs.nn-changed .nn-after {
+    visibility: visible;
+    animation: nn-fade-in .35s;
+}
+
+.nn-gone {
+    visibility: hidden;
+}
+@keyframes nn-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes nn-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-transform-signs.nn-changed > span {
+        animation: none;
+    }
 }
 
 @media (max-width: 600px) {
