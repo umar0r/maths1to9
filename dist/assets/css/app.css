@@ -2252,28 +2252,115 @@ a {
     border: 1px solid #ecdcae;
 }
 
-/* Every feedback box sits outside the card, under its bottom-right corner.
-   The engine (placeFeedback in lesson-engine.js) reserves the room under
-   the card and stacks the boxes if a screen shows more than one. */
+/* Feedback, the Brilliant way. While a feedback box shows, the main button
+   bar sticks to the bottom of the screen and the box sits just above the
+   button, lined up with the card's left edge. The engine (placeFeedback in
+   lesson-engine.js) sets data-feedback on the bar and works out where the
+   box goes, so it is always on screen. On a phone the bar becomes a
+   coloured sheet across the bottom of the screen (further down). */
 .lesson-section-container {
     padding-bottom: var(--feedback-space, 0px);
 }
 
-.lesson-section .question-feedback.is-visible {
-    position: absolute;
-    z-index: 2;
-    top: calc(100% + 18px + var(--feedback-offset, 0px));
-    right: calc(-2px - var(--feedback-across, 0px));
-    width: max-content;
-    max-width: min(560px, var(--feedback-room, calc(100% + 4px)));
-    margin: 0;
-    box-shadow: var(--shadow-small);
-    transform-origin: top right;
+.lesson-controls[data-feedback] {
+    position: sticky;
+    z-index: 40;
+    bottom: 0;
+    padding-top: calc(var(--feedback-height, 0px) + 24px);
+    background: var(--background);
 }
 
-/* The bubble's small corner points up at the card. */
-.lesson-section .question-feedback--bubble.is-visible {
-    border-radius: 22px 6px 22px 22px;
+/* A soft edge, so the card fades under the bar as it scrolls. */
+.lesson-controls[data-feedback]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 24px;
+    background: linear-gradient(to top, var(--background), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.lesson-section .question-feedback.is-visible[data-feedback-live] {
+    position: fixed;
+    z-index: 41;
+    top: var(--feedback-top, auto);
+    left: var(--feedback-left, auto);
+    width: max-content;
+    max-width: min(560px, var(--feedback-width, 100%));
+    margin: 0;
+    box-shadow: var(--shadow-small);
+    transform-origin: bottom left;
+}
+
+/* Phone: a coloured sheet across the bottom of the screen, holding the
+   feedback and, under it, the main button at full width. */
+@media (max-width: 767px) {
+    .lesson-controls[data-feedback] {
+        position: fixed;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: calc(var(--feedback-height, 0px) + 36px) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+        border-radius: 24px 24px 0 0;
+        background: #f1f5f9;
+        box-shadow: 0 -10px 24px -14px rgba(28, 43, 74, 0.35);
+        animation: feedback-sheet-in 220ms ease-out;
+    }
+
+    .lesson-controls[data-feedback="correct"] {
+        background: #dcf2dc;
+    }
+
+    .lesson-controls[data-feedback="calm"] {
+        background: #fbf1d6;
+    }
+
+    .lesson-controls[data-feedback="incorrect"] {
+        background: #fbe4e2;
+    }
+
+    .lesson-controls[data-feedback]::before {
+        display: none;
+    }
+
+    .lesson-controls[data-feedback] .button-group {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        margin: 0;
+    }
+
+    .lesson-controls[data-feedback] .button {
+        width: 100%;
+    }
+
+    /* The sheet is the colour; the words sit on it without their own box. */
+    .lesson-section .question-feedback.is-visible[data-feedback-live] {
+        left: 20px;
+        right: 20px;
+        width: auto;
+        max-width: none;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        animation: feedback-sheet-in 220ms ease-out;
+    }
+}
+
+@keyframes feedback-sheet-in {
+    from {
+        transform: translateY(var(--feedback-slide, 100%));
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 @keyframes feedback-pop {
@@ -2386,6 +2473,11 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
     .question-feedback--bubble.is-visible {
+        animation: none;
+    }
+
+    .lesson-controls[data-feedback],
+    .lesson-section .question-feedback.is-visible[data-feedback-live] {
         animation: none;
     }
 
