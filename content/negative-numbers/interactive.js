@@ -392,13 +392,15 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 4,
+            version: 6,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                grid: [false, false, false, false], gridLast: null, solved: {}, tried: [],
+                solved: {},
                 reveal: { part: 0, seen: [[], []], last: null },
+                conveyor: { signs: ['+', '+'], seen: [] },
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
+            // Version 6 changed the multiplying slides, so older saves start again.
             upgrade: () => null
         });
         const state = section.state;
@@ -547,6 +549,96 @@
             paint();
         }
 
+        // The sign machine: two punch cards sit in the machine. Tapping a card
+        // flips its sign, and the answer's sign rides out along the belt to the
+        // tray. The first flip finishes the question; the feedback describes
+        // the pair on the cards.
+        function drawConveyor(body, page) {
+            const times = (left, right) => (left === right ? '+' : '−');
+            const word = sign => (sign === '+' ? 'positive' : 'negative');
+            const conveyor = state.conveyor;
+            const { createFeedback } = window.Maths1to9LessonEngine;
+            body.classList.add('nn-conveyor');
+            // Saves from before the cards could flip may hold empty signs.
+            if (!conveyor.signs.every(Boolean)) {
+                section.update(({ conveyor }) => {
+                    conveyor.signs = conveyor.signs.map(sign => sign || '+');
+                });
+            }
+
+            const machine = document.createElement('div');
+            machine.className = 'nn-machine';
+            machine.innerHTML = `
+                <div class="nn-machine__body">
+                    <div class="nn-machine__lights"><span></span><span></span><span></span></div>
+                    <div class="nn-machine__front" role="group" aria-label="Signs in the machine">
+                        <button type="button" class="nn-punch-card"></button>
+                        <span class="nn-machine__times">×</span>
+                        <button type="button" class="nn-punch-card"></button>
+                    </div>
+                </div>
+                <div class="nn-machine__belt" aria-hidden="true"><span class="nn-machine__token"></span></div>
+                <div class="nn-machine__tray" aria-live="polite"></div>`;
+            const cards = [...machine.querySelectorAll('.nn-punch-card')];
+            const token = machine.querySelector('.nn-machine__token');
+            const tray = machine.querySelector('.nn-machine__tray');
+            body.append(machine);
+
+            cards.forEach((card, side) => card.addEventListener('click', () => {
+                section.update(({ conveyor }) => {
+                    conveyor.signs[side] = conveyor.signs[side] === '+' ? '−' : '+';
+                    const key = conveyor.signs.join(',');
+                    if (!conveyor.seen.includes(key)) conveyor.seen.push(key);
+                });
+                if (!solved(page)) {
+                    markSolved(page.number, () => api.setSectionAction('interactive', {
+                        label: 'Next', onClick: nextPage
+                    }));
+                }
+                paint(side);
+            }));
+
+            let feedback;
+            // `flipped` is the card the pupil has just turned over, if any.
+            function paint(flipped = null) {
+                const [left, right] = conveyor.signs;
+                const answer = times(left, right);
+                const shown = conveyor.seen.length > 0;
+                cards.forEach((card, side) => {
+                    const sign = conveyor.signs[side];
+                    card.textContent = sign;
+                    card.setAttribute('aria-label', `${side === 0 ? 'First' : 'Second'} card: ${sign === '+' ? 'plus' : 'minus'}. Tap to flip it.`);
+                    card.classList.remove('is-flipping');
+                    if (side === flipped) {
+                        void card.offsetWidth;
+                        card.classList.add('is-flipping');
+                    }
+                });
+                machine.classList.toggle('is-running', shown);
+                token.textContent = shown ? answer : '';
+                token.hidden = !shown;
+                tray.textContent = shown ? answer : '';
+                tray.setAttribute('aria-label', shown ? `${left} × ${right} = ${answer}` : 'Empty');
+                if (flipped !== null) {
+                    [token, tray].forEach(node => {
+                        node.classList.remove('is-moving');
+                        void node.offsetWidth;
+                        node.classList.add('is-moving');
+                    });
+                }
+                if (shown) {
+                    const reason = left === right
+                        ? `The signs are the same, so the answer is ${word(answer)}.`
+                        : `The signs are different, so the answer is ${word(answer)}.`;
+                    const next = createFeedback('interactive', { correct: true, text: reason });
+                    if (feedback) feedback.replaceWith(next);
+                    else body.append(next);
+                    feedback = next;
+                }
+            }
+            paint();
+        }
+
         // A question the pupil answers by doing, with no Check button.
         function drawHandsOn(container, page) {
             const { question, number } = page;
@@ -559,12 +651,8 @@
             container.append(heading, body);
             if (question.input === 'reveal') {
                 drawRevealCards(heading, body, page);
-            } else if (question.input === 'tap') {
-                NN.drawTapSquare(body, question, state.tried, solved(page), key => {
-                    if (key === question.square.join(',')) return markSolved(number);
-                    section.update(state => { state.tried.push(key); });
-                    render();
-                });
+            } else if (question.input === 'conveyor') {
+                drawConveyor(body, page);
             } else NN.drawDragToAnswer(body, question, solved(page), () => markSolved(number));
         }
 
@@ -582,21 +670,30 @@
             });
         }
 
+        // The four sign rules. Each word sits in its own pastel box: green
+        // for positive, peach for negative.
         function drawGridPage() {
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
-            NN.paragraph(page, 'Tap each square to fill the grid.', 'nn-instruction');
-            NN.drawSignGrid(page, state.grid, state.gridLast, square => {
-                section.update(state => {
-                    state.grid[square] = true;
-                    state.gridLast = square;
-                });
-                render();
-            });
-            const full = state.grid.every(Boolean);
-            if (full) NN.paragraph(page, 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.');
-            return full;
+            const rules = [
+                ['positive', 'positive', 'positive'],
+                ['negative', 'negative', 'positive'],
+                ['positive', 'negative', 'negative'],
+                ['negative', 'positive', 'negative']
+            ];
+            const list = document.createElement('ul');
+            list.className = 'nn-sign-rules';
+            for (const [first, second, answer] of rules) {
+                const item = document.createElement('li');
+                const word = sign => `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`;
+                item.className = 'nn-sign-rule';
+                item.innerHTML = `${word(first)} × ${word(second)} = ${word(answer)}`;
+                list.append(item);
+            }
+            page.append(list);
+            NN.paragraph(page, 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.');
+            return true;
         }
 
         function nextPage() {
@@ -638,13 +735,26 @@
             syncHash();
         }
 
+        // The site isn't open to pupils yet, so a slide link opens any slide,
+        // even one not reached yet. Skipped slides stay unanswered.
+        function jumpTo(screen) {
+            section.update(state => {
+                if (screen > state.index) {
+                    state.index = screen;
+                    state.furthestScreen = screen;
+                }
+            });
+            reportProgress();
+            showScreen(screen);
+        }
+
         pages.forEach((page, index) => {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
                 if (!api.goToSection('interactive', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
-                showScreen(Math.min(index, state.furthestScreen));
+                jumpTo(index);
             });
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
@@ -652,7 +762,7 @@
         render();
         const requested = pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
         if (requested >= 0 && api.goToSection('interactive', { moveFocus: false })) {
-            showScreen(Math.min(requested, state.furthestScreen));
+            jumpTo(requested);
         }
     }
 
