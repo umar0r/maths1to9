@@ -590,17 +590,22 @@
 }
 
 .nn-pattern {
-    --nn-pattern-highlight: #fbefdb;
     display: flex;
     flex-wrap: wrap-reverse;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     gap: .75rem;
     margin: 1.5rem auto;
 }
 
 .nn-ladder {
-    flex: 0 0 4.25rem;
+    flex: 0 0 6.25rem;
+}
+
+.nn-ladder[role="button"] {
+    border-radius: 5px;
+    outline: 2px solid var(--nn-blue);
+    outline-offset: 3px;
 }
 
 .nn-ladder svg {
@@ -608,28 +613,41 @@
     width: 100%;
 }
 
-.nn-ladder text {
-    fill: var(--text);
-    font-size: 14px;
-    font-weight: 800;
-}
-
 .nn-ladder-rails,
 .nn-ladder-rung {
-    stroke: #898981;
-    stroke-width: 1.5;
+    stroke: #475569;
+    stroke-width: 3px;
+    vector-effect: non-scaling-stroke;
 }
 
 .nn-ladder-rung-highlight {
-    stroke: var(--nn-pattern-highlight);
-    stroke-width: 5;
+    stroke: var(--nn-negative);
 }
 
 .nn-ladder-marker {
+    transition: transform .3s ease;
+}
+
+.nn-ladder-marker circle {
     fill: var(--nn-blue);
     stroke: white;
     stroke-width: 2;
-    transition: cy .3s ease;
+}
+
+.nn-ladder-marker text {
+    fill: white;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+@media (max-width: 600px) {
+    .nn-ladder {
+        flex-basis: 5rem;
+    }
+
+    .nn-ladder-marker circle {
+        r: 17.5px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -652,7 +670,7 @@
 }
 
 .nn-pattern-row.nn-highlight {
-    background: var(--nn-pattern-highlight);
+    background: #fbefdb;
 }
 
 .nn-transform {

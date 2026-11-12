@@ -282,21 +282,22 @@
             picture.innerHTML = '<div class="nn-pattern-rows"></div><div class="nn-ladder"></div>';
             const rows = picture.querySelector('.nn-pattern-rows');
             const ladder = picture.querySelector('.nn-ladder');
-            const rungY = value => 212 - value * 40;
+            const rungY = value => 302 - value * 56;
             let rungs = '';
             for (let value = 0; value < 6; value++) {
                 const y = rungY(value);
-                rungs += `<g data-rung="${value}">
-                    <path class="nn-ladder-rung ${value >= 4 ? 'nn-ladder-rung-highlight' : ''}" d="M 8 ${y} H 48"/>
-                    <text x="57" y="${y}" dominant-baseline="central">${value}</text>
-                </g>`;
+                rungs += `<path class="nn-ladder-rung" data-rung="${value}" d="M 20 ${y} H 80"/>`;
             }
-            ladder.innerHTML = `<svg viewBox="0 0 72 224" aria-hidden="true">
-                <path class="nn-ladder-rails" d="M 8 4 V 220 M 48 4 V 220"/>
+            ladder.innerHTML = `<svg viewBox="0 0 100 324" aria-hidden="true">
+                <path class="nn-ladder-rails" d="M 20 9 V 315 M 80 9 V 315"/>
                 ${rungs}
-                <circle class="nn-ladder-marker" cx="28" cy="0" r="7"/>
+                <g class="nn-ladder-marker">
+                    <circle cx="50" cy="0" r="14"/>
+                    <text x="50" y="0" dominant-baseline="central" text-anchor="middle"></text>
+                </g>
             </svg>`;
             const marker = ladder.querySelector('.nn-ladder-marker');
+            const answerLabel = marker.querySelector('text');
             root.append(picture);
 
             function addRow(answer) {
@@ -309,7 +310,11 @@
 
             function moveMarker() {
                 const answer = state.pattern - 1;
-                marker.style.cy = `${rungY(answer)}px`;
+                marker.style.transform = `translateY(${rungY(answer)}px)`;
+                answerLabel.textContent = answer;
+                for (let value = 4; value <= answer; value++) {
+                    ladder.querySelector(`[data-rung="${value}"]`).classList.add('nn-ladder-rung-highlight');
+                }
             }
 
             function finish() {

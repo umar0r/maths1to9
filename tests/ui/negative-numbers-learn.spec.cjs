@@ -90,6 +90,8 @@ for (const width of [1280, 375]) {
             if (screen === 8) {
                 await expect(ladder).toBeVisible();
                 await expect(root(page).locator('.nn-pattern-row')).toHaveCount(1);
+                await expect(ladder.locator('.nn-ladder-marker')).toHaveText('0');
+                await expect(ladder.locator('.nn-ladder-rung-highlight')).toHaveCount(0);
             }
             let taps = 0;
             while (await root(page).locator('[role="button"]').count()) {
@@ -140,8 +142,12 @@ for (const width of [1280, 375]) {
                 const finishedLadder = root(page).getByRole('img', {
                     name: 'The answer climbed from 0 to 5, one rung for each line.'
                 });
-                const topRungY = await finishedLadder.locator('[data-rung="5"] text').getAttribute('y');
-                await expect(finishedLadder.locator('.nn-ladder-marker')).toHaveCSS('cy', `${topRungY}px`);
+                const marker = finishedLadder.locator('.nn-ladder-marker');
+                await expect(marker).toHaveText('5');
+                const topRung = finishedLadder.locator('[data-rung="5"]');
+                const topRungY = await topRung.evaluate(node => node.getPointAtLength(0).y);
+                await expect(marker).toHaveCSS('transform', `matrix(1, 0, 0, 1, 0, ${topRungY})`);
+                await expect(finishedLadder.locator('.nn-ladder-rung-highlight')).toHaveCount(2);
             }
             if (screen === 7) {
                 await expect(root(page).locator('.nn-statement-total')).toContainText('£5');
