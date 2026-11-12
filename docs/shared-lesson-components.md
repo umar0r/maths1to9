@@ -586,6 +586,16 @@ The first argument is the section the box is in: `'explanation'` (Learn),
 
 Question cards call these themselves, and fire the confetti or rocket.
 Working goes inside the same box (append a span), never in a second box.
+
+**Where it sits (added 2026-11-12).** Every visible feedback box is drawn
+outside the card, under its bottom-right corner, on desktop and phone. The
+main button moves down to make room. The engine does this for every
+lesson (`.lesson-section .question-feedback.is-visible` in `app.css`, and
+`placeFeedback` in `lesson-engine.js`, which reserves the room and stacks
+boxes if a screen shows more than one). So a lesson just appends the box
+inside its own card wherever is handy. Never position it yourself, and
+never put a positioned wrapper (`position: relative`) around it, or it
+will be pinned to that wrapper instead of the card.
 A helper used by both Learn and Try it takes the section as an argument.
 
 ## 6. Question set, with Practise again

@@ -1791,8 +1791,66 @@
             controls
         );
 
+        placeFeedback(sectionContainer);
+
         document.title =
             `${state.lesson.title} | Maths1to9`;
+    }
+
+    // Feedback boxes sit outside the card, under its bottom-right corner
+    // (see app.css). They are taken out of the card's flow, so this keeps
+    // room under the card for them, and stacks them if a screen shows more
+    // than one. It watches the sections, so lessons need do nothing.
+    function placeFeedback(sectionContainer) {
+        const gap = 12;
+        // The observer already gathers a burst of changes into one call,
+        // and it only writes style attributes, which it doesn't watch.
+        const update = () => {
+            // Only the section on screen has boxes with a size.
+            const boxes = Array.from(
+                sectionContainer.querySelectorAll('.lesson-section .question-feedback.is-visible')
+            ).filter(box => box.getClientRects().length > 0);
+
+            let offset = 0;
+            boxes.forEach(box => {
+                // CSS pins the box to the card. If a lesson wraps it in a
+                // positioned element, measure the gap to the card instead.
+                const card = box.closest('.lesson-section');
+                const holder = box.offsetParent;
+                let down = 0;
+                let across = 0;
+                if (card && holder && holder !== card) {
+                    // The CSS numbers allow for the card's own border
+                    // (4px under it, 2px at the side), so take those off.
+                    const cardBox = card.getBoundingClientRect();
+                    const holderBox = holder.getBoundingClientRect();
+                    const holderStyle = window.getComputedStyle(holder);
+                    const innerBottom = holderBox.bottom - parseFloat(holderStyle.borderBottomWidth);
+                    const innerRight = holderBox.right - parseFloat(holderStyle.borderRightWidth);
+                    down = cardBox.bottom - innerBottom - 4;
+                    across = cardBox.right - innerRight - 2;
+                }
+                box.style.setProperty('--feedback-offset', `${offset + down}px`);
+                box.style.setProperty('--feedback-across', `${across}px`);
+                if (card) box.style.setProperty('--feedback-room', `${card.offsetWidth}px`);
+                offset += box.offsetHeight + gap;
+            });
+
+            sectionContainer.style.setProperty(
+                '--feedback-space',
+                boxes.length ? `${offset + gap}px` : '0px'
+            );
+        };
+
+        new MutationObserver(update).observe(sectionContainer, {
+            subtree: true,
+            childList: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['class', 'hidden']
+        });
+        window.addEventListener('resize', update);
+        update();
     }
 
     function renderLessonHeader() {
