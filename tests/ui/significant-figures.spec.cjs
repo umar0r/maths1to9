@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/significant-figures.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -92,6 +92,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -172,21 +180,17 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.significant-digit.is-keep:visible')).toContainText('2');
-        await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
-        await mainAction(page).click();
+        await checkThenMoveOn(page, async () => {
+            await expect(page.locator('.significant-digit.is-keep:visible')).toContainText('2');
+            await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
+        });
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.significant-digit.is-look:visible')).toContainText('8');
-        await mainAction(page).click();
+        await checkThenMoveOn(page, () => expect(page.locator('.significant-digit.is-look:visible')).toContainText('8'));
         await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
         await page.screenshot({ path: `/private/tmp/significant-try-${width}.png`, fullPage: true });
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.significant-equation:visible')).toHaveText('0.0283 ≈ 0.03');
-        await mainAction(page).click();
+        await checkThenMoveOn(page, () => expect(page.locator('.significant-equation:visible')).toHaveText('0.0283 ≈ 0.03'));
         for (let card = 0; card < 9; card++) {
             await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
             await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(card % 3 === 0 ? 0 : 1);
@@ -201,9 +205,7 @@ for (const width of [1280, 375]) {
                 await mainAction(page).click();
             }
             await solve(page);
-            await mainAction(page).click();
-            await expect(mainAction(page)).toHaveText('Continue');
-            await mainAction(page).click();
+            await checkThenMoveOn(page);
         }
         await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
         await context.close();

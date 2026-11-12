@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 const slug = 'gradient-and-intercept';
 const main = page => page.locator(`${MAIN_ACTION}:visible`).first();
 const board = page => page.locator('.maths-graph__board:visible').first();
@@ -194,8 +194,10 @@ async function cards(page, section, count, detailed=false, retry=false) {
             await input(page).nth(0).fill(question.answer.m);await input(page).nth(1).fill(String(Number(question.answer.c)+20));await main(page).click();await reload(page);await main(page).click();
             await expect(input(page).nth(0)).toHaveValue(question.answer.m.replace('-','−'));await expect(input(page).nth(1)).toBeFocused();
         }
-        await fillCorrect(page,question);if(detailed)await reload(page);await main(page).click();await expect(main(page)).toHaveText('Continue');
-        if(detailed)await reload(page);await main(page).click();
+        await fillCorrect(page,question);if(detailed)await reload(page);
+        // Try it goes straight on after a right answer; other sections show Continue.
+        if(section==='interactive')await checkThenMoveOn(page);
+        else{await main(page).click();await expect(main(page)).toHaveText('Continue');if(detailed)await reload(page);await main(page).click();}
         if(detailed){await back(page).click();expect(await input(page).count()).toBe(0);await expect(main(page)).toHaveText('Next');await main(page).click();}
     }
 }

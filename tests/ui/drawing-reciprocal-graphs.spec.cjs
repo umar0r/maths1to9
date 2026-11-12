@@ -88,7 +88,10 @@ test.describe('reciprocal early phone gates', () => {
             await clearLabels(page);
             if(i<7)await main(page).click();
         }
-        await until(page,'#try-it-2'); await solve(page); await tableFit(page);
+        // Try it goes straight on after a right answer, so go Back to see the filled table.
+        await until(page,'#try-it-2'); await solve(page); await expect(page).not.toHaveURL(/#try-it-2$/);
+        await page.getByRole('button',{name:'Previous screen',exact:true}).click(); await expect(page).toHaveURL(/#try-it-2$/);
+        await tableFit(page);
         await page.screenshot({path:'/tmp/reciprocal-try-table.png',fullPage:true});
         await until(page,'#check-1'); await solve(page); await tableFit(page);
         await expect(root(page).locator('.reciprocal-cell').first()).toHaveValue('−0.25');

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/percentages-of-amounts.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -99,6 +99,14 @@ for (const width of [1280, 375]) {
                         }
                         await solve(page);
                         await button.click();
+                        if (section === 'interactive') {
+                            // Try it goes straight on after a right answer.
+                            await expect(page).not.toHaveURL(url);
+                            const earned = await score(page);
+                            await reload(page);
+                            expect(await score(page)).toBe(earned);
+                            continue;
+                        }
                         await expect(button).toHaveText('Continue');
                         const earned = await score(page);
                         await reload(page); // correct after a retry
@@ -189,28 +197,25 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.percentage-equation:visible')).toHaveCount(0);
         await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.percentage-equation:visible')).toHaveText('3/4');
-        await mainAction(page).click();
+        await checkThenMoveOn(page, () => expect(page.locator('.percentage-equation:visible')).toHaveText('3/4'));
         await expect(page.locator('.percentage-equation:visible')).toHaveCount(0);
         await expect(page.locator('.percentage-bar:visible .is-shaded')).toHaveCount(1);
         await solve(page);
-        await mainAction(page).click();
-        await expect(page.locator('.percentage-equation:visible')).toHaveText('14');
-        await mainAction(page).click();
+        await checkThenMoveOn(page, () => expect(page.locator('.percentage-equation:visible')).toHaveText('14'));
         await expect(page.locator('.percentage-equation:visible')).toHaveCount(0);
         await expect(page.locator('.percentage-bar:visible .is-shaded')).toHaveCount(3);
         await page.screenshot({ path: `/private/tmp/percentages-try-${width}.png`, fullPage: true });
-        for (let index = 0; index < 9; index++) {
-            await solve(page);
-            await mainAction(page).click();
+        // The rest of Try it, then on to the first Practice question.
+        for (let step = 0; step < 30 && !(await prompt(page).innerText().catch(() => '')).includes('Find 8% of £65'); step++) {
+            if (await solve(page)) continue;
             await mainAction(page).click();
         }
         await expect(prompt(page)).toContainText('Find 8% of £65');
         await page.locator('.question-card:visible input[type=text]').fill('5.20');
+        // The last Try it card goes straight on to the finished examples.
         await mainAction(page).click();
-        await expect(mainAction(page)).toHaveText('Continue');
-        await expect(page.locator('.question-feedback:visible')).toHaveClass(/is-correct/);
+        await expect(page.locator('.question-feedback:visible').last()).toHaveClass(/is-correct/);
+        await expect(page.locator('.question-feedback:visible').last()).toHaveText('0.08 × 65 = 5.2');
         await context.close();
     });
 }

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/adding-decimal-numbers.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const points = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 
@@ -37,9 +37,7 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
             await expect(page.getByLabel('Hundredths digit', { exact: true })).toHaveValue('5');
         }
         await solve(page);
-        await main(page).click();
-        await expect(main(page)).toHaveText('Continue');
-        await main(page).click();
+        await checkThenMoveOn(page);
     }
     await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('10.75');
     await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('4.85');
@@ -94,10 +92,9 @@ test('adding-decimal-numbers: mobile keyboard alignment and supported feedback',
     expect(await points(page) - before).toBe(5);
     await page.reload({ waitUntil: 'networkidle' });
     expect(await points(page) - before).toBe(5);
-    await main(page).click();
+    // Try it went straight on to the next question.
     await solve(page);
-    await main(page).click();
-    await main(page).click();
+    await checkThenMoveOn(page);
     const hundredths = page.locator('.question-card:visible input[aria-label="Hundredths digit"]');
     await hundredths.focus();
     await hundredths.fill('5');
@@ -110,8 +107,7 @@ test('adding-decimal-numbers: mobile keyboard alignment and supported feedback',
     await carry.focus();
     await carry.press('Tab');
     await expect(main(page)).toBeFocused();
-    await main(page).press('Enter');
-    await expect(main(page)).toHaveText('Continue');
+    await checkThenMoveOn(page, undefined, () => main(page).press('Enter'));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: '/private/tmp/decimal-addition-mobile.png', fullPage: true });
     await context.close();
