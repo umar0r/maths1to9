@@ -159,7 +159,7 @@
 
         questions.forEach((question, index) => {
             api.registerHashRoute(`check-${index + 1}`, () => {
-                if (!api.goToSection('comparison', { moveFocus: false })) {
+                if (!api.goToSection('comparison', { moveFocus: false, unlock: true })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
@@ -175,7 +175,7 @@
         const requested = questions.findIndex((question, index) => initialHash === `#check-${index + 1}`);
         if (initialHash === '#summary' && state.finished) {
             if (api.goToSection('comparison', { moveFocus: false })) showScreen(count);
-        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false })) {
+        } else if (requested >= 0 && api.goToSection('comparison', { moveFocus: false, unlock: true })) {
             jumpTo(requested);
         }
     }

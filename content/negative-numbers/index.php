@@ -69,8 +69,8 @@ $pageTitle = 'Negative numbers';
     <script src="./negative-numbers.js?v=29"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=18"></script>
-    <script src="./interactive.js?v=72"></script>
+    <script src="./questions.js?v=19"></script>
+    <script src="./interactive.js?v=73"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=53"></script>
