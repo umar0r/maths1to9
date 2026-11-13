@@ -28,7 +28,7 @@ $pageTitle = 'Solving quadratic equations';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=50">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=51">
     <link rel="stylesheet" href="./lesson.css?v=2">
 
     <!-- Lesson-specific styles -->

@@ -3667,7 +3667,17 @@ noscript p {
 .lesson-back[hidden] { display: none; }
 .lesson-topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .5rem; min-height: 44px; }
 .lesson-topbar > .lesson-back { grid-area: 1 / 1; justify-self: start; }
-.lesson-topbar > .lesson-reset { grid-area: 1 / 3; justify-self: end; justify-content: center; }
+.lesson-topbar > .lesson-reset {
+    grid-area: 1 / 3;
+    justify-self: end;
+    justify-content: center;
+    color: #8193af;
+    -webkit-tap-highlight-color: transparent;
+}
+.lesson-reset:active {
+    background: var(--primary-light);
+    border-radius: 8px;
+}
 .lesson-topbar .lesson-topbar__position { grid-area: 1 / 2; margin: 0; }
 .lesson-topbar__position[hidden] { display: none; }
 .lesson-back:focus-visible { outline: 3px solid var(--primary, #2563eb); outline-offset: 2px; }
