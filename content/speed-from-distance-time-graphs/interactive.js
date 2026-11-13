@@ -72,6 +72,14 @@
             else api.setSectionAction('explanation', { label: 'Next', disabled: !ready, onClick: () => showScreen(state.screen + 1) });
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([
+                ['time', 'sliderReached'], ['position', 'visited', 'walkReached'],
+                ['tap', 'tapFeedback', 'foundStart', 'foundEnd'], ['chosen', 'chosenSections'],
+                ['flatTime', 'flatReached']
+            ][state.screen]);
+                render();
+            });
             timers.forEach(clearTimeout); timers = [];
             graph?.destroy(); graph = null;
             root.replaceChildren();
@@ -195,7 +203,8 @@
                 }
                 paint();
             }
-            if (state.finished || state.screen < state.furthestScreen) {
+            if ((state.finished || state.screen < state.furthestScreen) &&
+                [state.sliderReached, state.walkReached, state.foundEnd, state.chosenSections.length === 2, state.flatReached][state.screen]) {
                 graph?.setEditable(false);
                 root.querySelectorAll('input, button').forEach(control => { control.disabled = true; });
             }

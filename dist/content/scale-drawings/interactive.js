@@ -590,6 +590,7 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => render());
             root.replaceChildren();
             const screen = screens[state.screen];
             const heading = node('h3', screen.title);

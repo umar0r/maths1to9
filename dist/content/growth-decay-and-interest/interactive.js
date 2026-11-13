@@ -226,6 +226,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['sliders', state.screen]]);
+                render();
+            });
             root.replaceChildren();
             const screen = screens[state.screen];
             const heading = node('h3', screen.title);

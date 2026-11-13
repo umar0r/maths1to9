@@ -6,6 +6,15 @@ module.exports = async function solve(page) {
     if (await require('../negative-numbers-learn-helper.cjs')(page)) return true;
     const main = page.locator('.lesson-controls button.button--primary:visible');
     if (await main.isEnabled()) return false;
+    // The sign-rule gaps: a tapped card fills the next gap if it's the
+    // right sign, so tapping each card in turn fills them all.
+    const signCards = page.locator('.nn-sign-card:visible');
+    if (await signCards.count()) {
+        for (let tap = 0; tap < 16 && await page.locator('.nn-sign-gap:visible').count(); tap++) {
+            await signCards.nth(tap % await signCards.count()).click();
+        }
+        return true;
+    }
     const prompt = page.locator('.question-prompt:visible');
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();

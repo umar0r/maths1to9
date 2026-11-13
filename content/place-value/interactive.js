@@ -50,6 +50,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(([['firstCard'], ['selected']][state.screen] || []));
+                render();
+            });
             const screen = screens[state.screen];
             const { escapeHtml } = window.Maths1to9LessonEngine;
             root.innerHTML = `<h3 class="lesson-section__title" data-screen-heading>${escapeHtml(screen.title)}</h3>`;
