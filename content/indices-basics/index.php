@@ -27,7 +27,7 @@ $pageTitle = 'Indices basics';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
     <link rel="stylesheet" href="./lesson.css?v=8">
 </head>
 
@@ -70,9 +70,9 @@ $pageTitle = 'Indices basics';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./indices.js?v=1"></script>
     <script src="./questions.js?v=10"></script>
-    <script src="./interactive.js?v=8"></script>
+    <script src="./interactive.js?v=9"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=59"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>

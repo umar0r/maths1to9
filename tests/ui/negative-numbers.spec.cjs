@@ -137,7 +137,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(70);
-            expect(earned).toBe(265 - penalty);
+            expect(earned).toBe(260 - penalty); // the engine plans 260
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');
@@ -177,7 +177,7 @@ test('negative-numbers: the old last Try it link keeps earlier work and leads to
         const saved = await progress.getLessonActivityState('negative-numbers', 'interactive');
         await progress.saveLessonActivityState('negative-numbers', 'interactive', {
             ...saved,
-            version: 6,
+            version: 7,
             data: { ...saved.data, index: 8, screen: 8, furthestScreen: 8 }
         });
     });

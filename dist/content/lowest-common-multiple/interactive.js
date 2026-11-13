@@ -48,6 +48,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(state.screen === 2 ? ['matches'] : []);
+                render();
+            });
             const screen = screens[state.screen];
             const { escapeHtml } = window.Maths1to9LessonEngine;
             root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;

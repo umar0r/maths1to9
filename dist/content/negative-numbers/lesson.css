@@ -594,12 +594,6 @@
     font-weight: 900;
 }
 
-.nn-pattern-reset {
-    position: absolute;
-    top: -46px;
-    right: -2px;
-}
-
 .nn-pattern {
     display: grid;
     grid-template-columns: minmax(0, max-content) auto;
@@ -829,6 +823,10 @@
 
 .nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
 
+/* Multiplying −1: only its own list shows, in one centred column. */
+.nn-reveal__lists ul[hidden] { display: none; }
+.nn-reveal__lists:has(> ul[hidden]) { grid-template-columns: minmax(0, 1fr); }
+
 /* Try it: the sign machine. Two punch cards sit in the machine; tapping
    one flips its sign, and the answer rides out along the belt to the tray. */
 .nn-machine {
@@ -991,25 +989,107 @@
     margin: 1.25rem auto;
     padding: 0;
     list-style: none;
+    user-select: none;
 }
 
 .nn-sign-rule {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: .4rem;
-    font-size: clamp(1rem, 4.2vw, 1.25rem);
+    gap: .35em;
+    font-size: clamp(1.5rem, 7vw, 2rem);
     font-weight: 700;
 }
 
+/* A given sign: a light box the same size as a blue punch card. */
+.nn-sign-symbol,
+.nn-sign-gap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 1.5em;
+    height: 1.75em;
+    border-radius: .2em;
+}
+
+.nn-sign-symbol--plus { background: #f0f9f5; color: var(--nn-positive); }
+.nn-sign-symbol--minus { background: #fdf3ed; color: var(--nn-negative); }
+
+/* The dashed gap a blue card is dragged into. */
+.nn-sign-gap {
+    border: 2px dashed #b8c2d3;
+    background: #fff;
+}
+
+.nn-sign-gap.is-over {
+    border-color: var(--primary);
+    background: #f2f6ff;
+}
+
+.nn-sign-gap.is-wrong { animation: nn-shake .35s ease-in-out; }
+
+.nn-sign-placed {
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: default;
+    animation: nn-pop .25s ease-out;
+}
+
+.nn-sign-tray {
+    display: flex;
+    justify-content: center;
+    gap: .5em;
+    margin: 1.5rem auto .5rem;
+    font-size: clamp(1.5rem, 7vw, 2rem);
+    font-weight: 700;
+}
+
+.nn-sign-card {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.nn-sign-card.is-dragging {
+    z-index: 5;
+    cursor: grabbing;
+    box-shadow: 0 .1em 0 var(--primary-dark), 0 .3em .8em rgb(30 41 59 / .2);
+}
+
+/* The words page: smaller text, so each line fits on a phone. */
+.nn-sign-rules--words .nn-sign-rule {
+    font-size: clamp(.9rem, 4.2vw, 1.25rem);
+}
+
+.nn-sign-rules--words .nn-sign-rule { gap: .3em; }
+
 .nn-sign-word {
-    padding: .35rem .7rem;
+    padding: .35em .6em;
     border-radius: .5rem;
 }
 
-.nn-sign-word--positive { background: #e3f4ee; color: var(--nn-positive); }
-.nn-sign-word--negative { background: #fbe7dc; color: var(--nn-negative); }
+.nn-sign-word--positive { background: #f0f9f5; color: var(--nn-positive); }
+.nn-sign-word--negative { background: #fdf3ed; color: var(--nn-negative); }
+
+@media (max-width: 600px) {
+    .nn-sign-word { padding: .35em .45em; }
+}
+
+@keyframes nn-shake {
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+@keyframes nn-pop {
+    from { transform: scale(.85); opacity: .4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-sign-gap.is-wrong,
+    .nn-sign-placed { animation: none; }
+}
 
 /* Learn's worked examples: the hops draw in one after another, then the
    count and the landing dot appear. Shown finished for reduced motion. */

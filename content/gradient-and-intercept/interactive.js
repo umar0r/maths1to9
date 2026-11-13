@@ -78,6 +78,10 @@
             return graphs.create(host, { x: [-6, 6], y: [-6, 8], step: { x: 1, y: 1 }, label });
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(([[], ['tap', 'found'], ['position', 'visited', 'reached'], [], ['sliders'], ['hidden']][state.screen] || []));
+                render();
+            });
             graph?.destroy();
             root.replaceChildren();
             const heading = node('h3', titles[state.screen]);

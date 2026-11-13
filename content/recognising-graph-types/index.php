@@ -28,7 +28,7 @@ $pageTitle = 'Recognising graph types';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="./lesson.css?v=2">
@@ -75,9 +75,9 @@ $pageTitle = 'Recognising graph types';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=2"></script>
+    <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=59"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>

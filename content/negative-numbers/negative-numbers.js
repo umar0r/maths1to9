@@ -273,17 +273,6 @@
                 prompt: 'Tap a card to flip its sign. See what comes out of the machine.'
             },
             {
-                questionType: 'multiply', input: 'number', signs: ['−', '−'],
-                prompt: 'Work out −6 × −3.',
-                rule: 'Negative × negative = positive. The same signs give a positive answer.', answer: '18',
-                feedback: '6 × 3 = 18. The signs are the same, so the answer is positive.',
-                rules: [
-                    { value: '−18', feedback: 'The signs are the same, so the answer is positive.' },
-                    { value: '−9', feedback: 'That adds −6 and −3. This question multiplies them.' }
-                ],
-                fallback: 'Work out 6 × 3, then use the grid to find the sign.'
-            },
-            {
                 questionType: 'multiply', input: 'reveal',
                 prompt: 'Tap each card to multiply 1 by it.',
                 feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
@@ -604,10 +593,15 @@
         }
     }
 
+    function resetNumberLine(question) {
+        saveDot(question, question.start);
+        rememberWrong(question, false);
+    }
+
     // A number line whose dot the pupil can drag while working out the answer.
     // Only the typed answer is marked, so moving the dot is never checked.
-    function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease } = {}) {
-        paragraph(host, hint, 'negative-drag-hint');
+    function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease, replay = false } = {}) {
+        if (hint) paragraph(host, hint, 'negative-drag-hint');
         const end = question.start + question.amount;
         const { min, max } = lineRange(question);
         const update = drawLine(host, question.start, end, question.start, false, { min, max, hops: true });
@@ -621,7 +615,7 @@
         }
         function move(next) {
             show(next);
-            saveDot(question, value);
+            if (!replay) saveDot(question, value);
         }
         function pointer(event) {
             const box = track.getBoundingClientRect();
@@ -645,7 +639,7 @@
             move(value + (event.key === 'ArrowRight' ? 1 : -1));
             onRelease?.(value);
         });
-        show(savedDot(question));
+        show(replay ? question.start : savedDot(question));
     }
 
     // Room to go either way, so a wrong turn can be seen too.
@@ -696,7 +690,7 @@
             }
         });
         drawMovableLine(host, question, {
-            hint: 'Drag the dot to the answer.',
+            hint: '',
             onRelease: released => {
                 value = released;
                 showHint();
@@ -733,8 +727,16 @@
             ...config,
             figure(host, options) {
                 figureHost = host;
-                host.hidden = !options.readOnly && !wrongBefore(question);
+                host.hidden = !options.readOnly && (options.replay || !wrongBefore(question));
                 config.figure(host, options);
+            },
+            onReset() {
+                config.onReset?.();
+                rememberWrong(question, false);
+            },
+            onReplayFeedback(result) {
+                config.onReplayFeedback?.(result);
+                if (!result.correct) figureHost.hidden = false;
             },
             onFeedback(result) {
                 config.onFeedback?.(result);
@@ -750,9 +752,10 @@
         if (question.input !== 'number' || question.signs || question.noLine) return question;
         const config = {
             ...question,
-            figure(host, { readOnly }) {
+            onReset() { resetNumberLine(question); },
+            figure(host, { readOnly, replay }) {
                 if (readOnly) drawFinishedLine(host, question);
-                else drawMovableLine(host, question);
+                else drawMovableLine(host, question, { replay });
             }
         };
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
@@ -828,6 +831,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer
+        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
     };
 })();
