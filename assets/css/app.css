@@ -2314,6 +2314,15 @@ a {
     }
 }
 
+/* Clicking the feedback closes it (placeFeedback in lesson-engine.js). */
+.lesson-section .question-feedback.is-visible[data-feedback-live] {
+    cursor: pointer;
+}
+
+.lesson-section .question-feedback.is-visible[data-feedback-dismissed] {
+    display: none;
+}
+
 /* Phone: a coloured sheet across the bottom of the screen, holding the
    feedback and, under it, the main button at full width. */
 @media (max-width: 767px) {

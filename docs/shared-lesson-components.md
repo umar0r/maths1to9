@@ -600,6 +600,9 @@ keep their feedback inside the card.
   of the screen (green when right, pink when wrong, cream for a right
   answer in Try it). The words sit on the sheet and the main button fills
   its width underneath.
+- Clicking or tapping the feedback closes it. It comes back when the
+  lesson shows new feedback (the next answer). On a phone the sheet goes
+  with it.
 
 This is all `placeFeedback` in `lesson-engine.js` and the
 `.lesson-controls[data-feedback]` rules in `app.css`. A lesson just

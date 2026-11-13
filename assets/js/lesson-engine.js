@@ -1924,6 +1924,9 @@
             live.style.setProperty('--feedback-top', `${top}px`);
         };
 
+        // What a box says and how it looks, ignoring the engine's own marks.
+        const feedbackSignature = box => `${box.className}|${box.textContent}`;
+
         // The look of the bar comes from the box: right, wrong, the calm
         // Try it colour, or plain.
         const feedbackState = box => {
@@ -1935,12 +1938,25 @@
         // The observer already gathers a burst of changes into one call,
         // and it only writes style and data attributes, which it doesn't watch.
         const update = () => {
+            // A dismissed box comes back if the lesson gives it new words
+            // or a new look (the next answer).
+            sectionContainer.querySelectorAll('.question-feedback[data-feedback-dismissed]').forEach(box => {
+                if (box.dataset.feedbackDismissed !== feedbackSignature(box)) {
+                    delete box.dataset.feedbackDismissed;
+                }
+            });
+
             // Only the section on screen has boxes with a size. The newest
-            // (last) one goes in the bar.
+            // (last) one goes in the bar. A dismissed box has no size, so
+            // check its parent instead; once it is dismissed nothing takes
+            // its place.
             const boxes = Array.from(
                 sectionContainer.querySelectorAll('.lesson-section .question-feedback.is-visible')
-            ).filter(box => box.getClientRects().length > 0);
-            const newest = boxes[boxes.length - 1] || null;
+            ).filter(box => box.hasAttribute('data-feedback-dismissed')
+                ? box.parentElement.getClientRects().length > 0
+                : box.getClientRects().length > 0);
+            const last = boxes[boxes.length - 1] || null;
+            const newest = last && !last.hasAttribute('data-feedback-dismissed') ? last : null;
 
             if (live && live !== newest) delete live.dataset.feedbackLive;
             live = newest;
@@ -1963,12 +1979,19 @@
             follow();
         };
 
+        // Clicking the feedback closes it, like a notification.
+        sectionContainer.addEventListener('click', event => {
+            const box = event.target.closest('.question-feedback[data-feedback-live]');
+            if (!box) return;
+            box.dataset.feedbackDismissed = feedbackSignature(box);
+        });
+
         new MutationObserver(update).observe(sectionContainer, {
             subtree: true,
             childList: true,
             characterData: true,
             attributes: true,
-            attributeFilter: ['class', 'hidden']
+            attributeFilter: ['class', 'hidden', 'data-feedback-dismissed']
         });
         window.addEventListener('resize', update);
         window.addEventListener('scroll', follow, { passive: true });
