@@ -27,7 +27,7 @@ $pageTitle = 'Adding decimal numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=53">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
     <link rel="stylesheet" href="./lesson.css?v=9">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Adding decimal numbers';
     <script src="./interactive.js?v=17"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=60"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>

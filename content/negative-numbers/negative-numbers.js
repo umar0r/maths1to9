@@ -674,8 +674,10 @@
         return `That's the right way. You need to move ${steps} places in total.`;
     }
 
-    // Try it: the pupil drags the dot, and landing on the answer finishes it.
-    function drawDragToAnswer(host, question, solved, onSolved) {
+    // Try it: the pupil drags the dot and presses Check. A hint shows while
+    // the dot is off the answer; nothing shows when it sits on the answer,
+    // so Check is what tells them they're right.
+    function drawDragToAnswer(host, question, solved, { onSolved, setAction }) {
         const end = question.start + question.amount;
         if (solved) {
             drawFinishedLine(host, question);
@@ -683,20 +685,31 @@
             correctBox(host, question.correct, question.working, 'interactive');
             return;
         }
+        let value = savedDot(question);
         let hint;
-        const showHint = value => {
-            hint.textContent = dragHint(question, value);
+        const showHint = () => {
+            hint.textContent = value === end ? '' : dragHint(question, value);
             hint.classList.toggle('is-visible', hint.textContent !== '');
         };
+        const askToCheck = () => setAction({
+            label: 'Check',
+            disabled: value === question.start,
+            onClick: () => {
+                if (value === end) onSolved();
+                else showHint();
+            }
+        });
         drawMovableLine(host, question, {
             hint: '',
-            onRelease: value => {
-                if (value === end) onSolved();
-                else showHint(value);
+            onRelease: released => {
+                value = released;
+                showHint();
+                askToCheck();
             }
         });
         hint = feedbackBox(host, 'interactive', { correct: false, visible: false });
-        showHint(savedDot(question));
+        showHint();
+        askToCheck();
     }
 
     // Remembers a wrong answer, so a reload still shows the line.

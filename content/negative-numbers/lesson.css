@@ -480,6 +480,11 @@
     font-weight: 900;
 }
 
+/* Inside a feedback box the working is smaller, to match the 14px feedback. */
+.question-feedback .nn-box-sum {
+    font-size: 1rem;
+}
+
 .question-feedback .nn-box-sum:first-child {
     margin-top: 0;
 }
@@ -817,6 +822,10 @@
 }
 
 .nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
+
+/* Multiplying −1: only its own list shows, in one centred column. */
+.nn-reveal__lists ul[hidden] { display: none; }
+.nn-reveal__lists:has(> ul[hidden]) { grid-template-columns: minmax(0, 1fr); }
 
 /* Try it: the sign machine. Two punch cards sit in the machine; tapping
    one flips its sign, and the answer rides out along the belt to the tray. */

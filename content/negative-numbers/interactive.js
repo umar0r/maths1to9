@@ -556,6 +556,8 @@
                 rows.forEach((list, partIndex) => list.forEach((row, index) => {
                     row.hidden = !seen[partIndex].includes(values[index]);
                 }));
+                // Once they're multiplying −1, the 1 × list is put away.
+                lists.children[0].hidden = part === 1;
                 if (done && !feedback) {
                     feedback = createFeedback('interactive', { correct: true, text: page.question.feedback });
                     body.append(feedback);
@@ -668,7 +670,10 @@
                 drawRevealCards(heading, body, page);
             } else if (question.input === 'conveyor') {
                 drawConveyor(body, page);
-            } else NN.drawDragToAnswer(body, question, solved(page), () => markSolved(number));
+            } else NN.drawDragToAnswer(body, question, solved(page), {
+                onSolved: () => markSolved(number),
+                setAction: action => api.setSectionAction('interactive', action)
+            });
         }
 
         function drawExample(container, page, readOnly) {
@@ -678,7 +683,7 @@
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
-                ...NN.withSignGrid(prepared), sectionId: 'interactive', questionId: `example-${number + 1}`,
+                ...prepared, sectionId: 'interactive', questionId: `example-${number + 1}`,
                 scored: false, readOnly,
                 onFeedback: reportProgress,
                 onContinue: continuePage
@@ -898,7 +903,8 @@
                 } : {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
-                else if (!page.question.signs) api.setSectionAction('interactive', {
+                // Unsolved drag questions set their own Check button.
+                else if (!page.question.signs && (page.question.input !== 'drag' || solved(page))) api.setSectionAction('interactive', {
                     label: 'Next', disabled: !solved(page), onClick: nextPage
                 });
             }
