@@ -149,6 +149,10 @@
             heading.focus();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -284,9 +288,9 @@
         function card(host, index, readOnly) {
             const config = examples[index];
             // The first card shows the table above it; the second card's table is its own answer area.
-            api.createQuestion(host, { ...config, options: index === 4 ? state.crossOrder.map(i => config.options[i]) : undefined, figure(figure) {
+            api.createQuestion(host, { ...config, options: index === 4 ? state.crossOrder.map(i => config.options[i]) : undefined, figure(figure, { replay }) {
                 equation(figure, guided);
-                if (index === 0) figure.append(Q.table(guided, { filled: state.cards['example-1']?.correct ? [-2] : [] }));
+                if (index === 0) figure.append(Q.table(guided, { filled: !replay && state.cards['example-1']?.correct ? [-2] : [] }));
             }, sectionId: 'interactive', questionId: `example-${index + 1}`, scored: false, readOnly,
                 onFeedback(result) {
                     report();
@@ -294,6 +298,10 @@
                 }, onContinue: advance });
         }
         function render() {
+            api.setSectionReset('interactive', state.screen === 2 || state.screen === 3 ? () => {
+                section.resetFields(state.screen === 2 ? ['plotted'] : ['joined']);
+                render();
+            } : null);
             board?.destroy(); board = null; root.replaceChildren();
             root.append(node('h3', state.screen === 5 ? 'Your completed examples' : ['First column.', 'The rest of the table.', 'Plot.', 'Join them.', 'Where does it cross?'][state.screen]));
             equation(root, guided);

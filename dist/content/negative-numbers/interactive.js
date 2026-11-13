@@ -277,18 +277,6 @@
         function showPattern() {
             const pattern = document.createElement('div');
             pattern.className = 'nn-pattern';
-            if (new URLSearchParams(window.location.search).has('preview-reset')) {
-                const reset = document.createElement('button');
-                reset.type = 'button';
-                reset.className = 'lesson-back nn-pattern-reset';
-                reset.textContent = 'Reset slide';
-                reset.addEventListener('click', () => {
-                    section.update(state => { state.pattern = 1; });
-                    render();
-                    root.querySelector('.nn-pattern-reset').focus({ preventScroll: true });
-                });
-                root.append(reset);
-            }
             root.append(pattern);
 
             function addRow(answer) {
@@ -320,6 +308,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(({ thermometer: ['temperature'], fee: ['feeRemoved'], pattern: ['pattern'], method: [['changed', 0]] }[screens[state.screen].kind] || []));
+                render();
+            });
             const screen = screens[state.screen];
             // Each screen's main idea is its only heading; the Learn section
             // title is hidden in lesson.json.
@@ -728,6 +720,15 @@
         function render() {
             root.replaceChildren();
             const page = pages[state.screen];
+            api.setSectionReset('interactive', page.kind === 'grid' ? () => render()
+                : page.question.signs ? null : () => {
+                    const { question, number } = page;
+                    section.update(state => { delete state.solved[number]; });
+                    if (question.input === 'reveal') section.resetFields(['reveal']);
+                    else if (question.input === 'conveyor') section.resetFields(['conveyor']);
+                    else NN.resetNumberLine(question);
+                    render();
+                });
             // The section title is hidden. A question's prompt is its page's only
             // heading; the review and grid pages draw their own.
             if (page.kind !== 'question') {

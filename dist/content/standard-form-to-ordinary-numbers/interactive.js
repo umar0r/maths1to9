@@ -169,6 +169,10 @@
             render();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['chartSteps', state.screen]]);
+                render();
+            });
             const screen = screens[state.screen];
             root.replaceChildren();
             const heading = textNode('h3', screen.title);
@@ -185,7 +189,7 @@
             if (screen.direction) {
                 if (screen.direction < 0) maths(visual, String.raw`4.2 \times 10^{-3}`);
                 visual.append(textNode('p', screen.direction > 0 ? 'Press × 10 three times.' : 'Press ÷ 10 three times.'));
-                drawChart(visual, screen.direction, state.chartSteps[state.screen], state.screen < state.furthestScreen, () => {
+                drawChart(visual, screen.direction, state.chartSteps[state.screen], state.screen < state.furthestScreen && state.chartSteps[state.screen] >= 3, () => {
                     const focused = document.activeElement?.textContent;
                     section.update(state => { state.chartSteps[state.screen]++; });
                     render();

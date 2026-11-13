@@ -94,6 +94,10 @@
             render();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen], ...(state.screen === 2 ? ['position', 'moved'] : [])]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -282,7 +286,7 @@
                         feedback.textContent = result.feedback;
                         feedback.className = window.Maths1to9LessonEngine.feedbackClassName('interactive', { correct: result.correct === true });
                         reportProgress();
-                        if (result.correct && index === 0) advance();
+                        if (result.correct && index === 0 && state.screen === state.index) advance();
                         else if (result.correct) {
                             board.segment(line.from, line.to, { tone: 'correct' });
                             board.setEditable(false);
@@ -301,6 +305,10 @@
             });
         }
         function render() {
+            api.setSectionReset('interactive', state.screen < 2 ? () => {
+                section.resetFields([['drafts', state.screen], 'feedback', 'correct', state.screen === 0 ? 'horizontal' : 'vertical']);
+                render();
+            } : null);
             boards.forEach(board => board.destroy());
             boards = [];
             root.replaceChildren();
@@ -314,7 +322,7 @@
                     drawCard(container, index, true);
                 }
                 api.clearSectionAction('interactive');
-            } else if (state.screen < 2) drawing(state.screen, state.screen < state.index);
+            } else if (state.screen < 2) drawing(state.screen, state.screen < state.index && Boolean(state[state.screen === 0 ? 'horizontal' : 'vertical']));
             else drawCard(root, state.screen, state.screen < state.index);
             action();
             reportProgress();

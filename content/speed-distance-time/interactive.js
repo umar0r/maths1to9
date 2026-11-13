@@ -354,6 +354,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(state.screen === 4 ? ['cover'] : [['values', state.screen]]);
+                render();
+            });
             root.replaceChildren();
             const screen = screens[state.screen];
             const heading = node('h3', screen.title);

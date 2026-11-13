@@ -52,6 +52,10 @@
             render();const heading=root.querySelector('h3');heading.tabIndex=-1;heading.focus();
         }
         function render(){
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);timers=[];boards.forEach(board=>board.destroy());boards=[];root.replaceChildren();
             const screen=learn[state.screen],animate=!state.seen[state.screen]&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
             let delay=0;

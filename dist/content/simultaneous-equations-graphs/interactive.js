@@ -56,6 +56,10 @@
             heading.focus();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -251,6 +255,7 @@
                 ...config, figure,
                 options: state.order[index].map(i => config.options[i]),
                 sectionId: 'interactive', questionId: `example-${index}`, scored: false, readOnly,
+                onReset() { if (index === 4) section.resetFields(['help']); },
                 onFeedback(result) {
                     report();
                     if (index === 2 && result.correct) {
@@ -266,6 +271,10 @@
             });
         }
         function render() {
+            api.setSectionReset('interactive', state.screen === 0 ? () => {
+                section.resetFields(['tap', 'found']);
+                render();
+            } : null);
             board?.destroy();
             board = null;
             root.replaceChildren();

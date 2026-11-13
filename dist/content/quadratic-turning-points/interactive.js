@@ -73,6 +73,10 @@
             title.focus();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -282,6 +286,10 @@
         }
 
         function render() {
+            api.setSectionReset('interactive', state.screen === 0 ? () => {
+                section.resetFields(['dot', 'found']);
+                render();
+            } : null);
             board?.destroy();
             board = null;
             root.replaceChildren();

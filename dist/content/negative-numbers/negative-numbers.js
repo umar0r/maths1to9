@@ -614,9 +614,14 @@
         }
     }
 
+    function resetNumberLine(question) {
+        saveDot(question, question.start);
+        rememberWrong(question, false);
+    }
+
     // A number line whose dot the pupil can drag while working out the answer.
     // Only the typed answer is marked, so moving the dot is never checked.
-    function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease } = {}) {
+    function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease, replay = false } = {}) {
         paragraph(host, hint, 'negative-drag-hint');
         const end = question.start + question.amount;
         const { min, max } = lineRange(question);
@@ -631,7 +636,7 @@
         }
         function move(next) {
             show(next);
-            saveDot(question, value);
+            if (!replay) saveDot(question, value);
         }
         function pointer(event) {
             const box = track.getBoundingClientRect();
@@ -655,7 +660,7 @@
             move(value + (event.key === 'ArrowRight' ? 1 : -1));
             onRelease?.(value);
         });
-        show(savedDot(question));
+        show(replay ? question.start : savedDot(question));
     }
 
     // Room to go either way, so a wrong turn can be seen too.
@@ -743,8 +748,16 @@
             ...config,
             figure(host, options) {
                 figureHost = host;
-                host.hidden = !options.readOnly && !wrongBefore(question);
+                host.hidden = !options.readOnly && (options.replay || !wrongBefore(question));
                 config.figure(host, options);
+            },
+            onReset() {
+                config.onReset?.();
+                rememberWrong(question, false);
+            },
+            onReplayFeedback(result) {
+                config.onReplayFeedback?.(result);
+                if (!result.correct) figureHost.hidden = false;
             },
             onFeedback(result) {
                 config.onFeedback?.(result);
@@ -760,9 +773,10 @@
         if (question.input !== 'number' || question.signs || question.noLine) return question;
         const config = {
             ...question,
-            figure(host, { readOnly }) {
+            onReset() { resetNumberLine(question); },
+            figure(host, { readOnly, replay }) {
                 if (readOnly) drawFinishedLine(host, question);
-                else drawMovableLine(host, question);
+                else drawMovableLine(host, question, { replay });
             }
         };
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
@@ -838,6 +852,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer
+        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
     };
 })();

@@ -594,12 +594,6 @@
     font-weight: 900;
 }
 
-.nn-pattern-reset {
-    position: absolute;
-    top: -46px;
-    right: -2px;
-}
-
 .nn-pattern {
     display: grid;
     grid-template-columns: minmax(0, max-content) auto;

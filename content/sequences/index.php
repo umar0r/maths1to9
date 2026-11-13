@@ -27,7 +27,7 @@ $pageTitle = 'Continuing a sequence';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=51">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
     <link rel="stylesheet" href="./lesson.css?v=15">
 </head>
 
@@ -70,9 +70,9 @@ $pageTitle = 'Continuing a sequence';
     <script src="./sequences.js?v=15"></script>
     <script src="./visuals.js?v=15"></script>
     <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=15"></script>
+    <script src="./interactive.js?v=17"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=58"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>
