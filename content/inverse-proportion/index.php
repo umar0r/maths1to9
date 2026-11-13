@@ -27,7 +27,7 @@ $pageTitle = 'Inverse proportion';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=49">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=50">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -72,6 +72,6 @@ $pageTitle = 'Inverse proportion';
     <script src="./interactive.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=57"></script>
+    <script src="../../assets/js/lesson-engine.js?v=58"></script>
 </body>
 </html>
