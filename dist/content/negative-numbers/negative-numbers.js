@@ -622,7 +622,7 @@
     // A number line whose dot the pupil can drag while working out the answer.
     // Only the typed answer is marked, so moving the dot is never checked.
     function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease, replay = false } = {}) {
-        paragraph(host, hint, 'negative-drag-hint');
+        if (hint) paragraph(host, hint, 'negative-drag-hint');
         const end = question.start + question.amount;
         const { min, max } = lineRange(question);
         const update = drawLine(host, question.start, end, question.start, false, { min, max, hops: true });
@@ -700,7 +700,7 @@
             hint.classList.toggle('is-visible', hint.textContent !== '');
         };
         drawMovableLine(host, question, {
-            hint: 'Drag the dot to the answer.',
+            hint: '',
             onRelease: value => {
                 if (value === end) onSolved();
                 else showHint(value);
