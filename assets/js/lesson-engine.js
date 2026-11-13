@@ -136,6 +136,23 @@
                     throw error;
                 }
             },
+            resetFields(paths) {
+                const defaults = jsonState(initial(), key);
+                this.update(state => {
+                    for (const path of paths) {
+                        const [field, item] = Array.isArray(path) ? path : [path];
+                        if (item === undefined) {
+                            if (Object.hasOwn(defaults, field)) state[field] = defaults[field];
+                            else delete state[field];
+                        } else if (Object.hasOwn(defaults[field], item)) {
+                            state[field][item] = defaults[field][item];
+                        } else if (Array.isArray(state[field])) {
+                            // Keep saved arrays dense for JSON validation.
+                            if (item < state[field].length) state[field][item] = false;
+                        } else delete state[field][item];
+                    }
+                });
+            },
             reset() {
                 replaceState(jsonState(initial(), key));
                 queueSave();
@@ -508,6 +525,7 @@
     // Dependencies are explicit so the cycle can also be tested without the engine UI.
     function createQuestion(container, config, section, api) {
         const { sectionId, questionId } = config;
+        const isReplay = config.replay === true;
         if (!section?.state || !sectionId || !questionId) {
             throw new TypeError('createQuestion requires an opened section state and stable ids.');
         }
@@ -559,16 +577,18 @@
         if (custom && ['render', 'isEmpty', 'mark', 'answerText'].some(name => typeof widget?.[name] !== 'function')) {
             throw new TypeError(`Custom question "${questionId}" requires render, isEmpty, mark and answerText.`);
         }
-        if (!section.state.cards?.[questionId]) {
+        const freshAnswer = () => ({
+            selected: null, rejected: [], value: custom ? null : fields ? Object.fromEntries(fields.map(field => [field.id, ''])) : '', phase: 'answer',
+            firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
+        });
+        if (!isReplay && !section.state.cards?.[questionId]) {
             section.update(state => {
                 state.cards ??= {};
-                state.cards[questionId] = {
-                    selected: null, rejected: [], value: custom ? null : fields ? Object.fromEntries(fields.map(field => [field.id, ''])) : '', phase: 'answer',
-                    firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
-                };
+                state.cards[questionId] = freshAnswer();
             });
         }
-        const saved = section.state.cards[questionId];
+        const saved = isReplay ? freshAnswer() : section.state.cards[questionId];
+        const updateAnswer = isReplay ? change => change() : change => section.update(change);
         const options = config.options || [];
         let released = false;
         function matches(value, expected, fieldId) {
@@ -620,7 +640,7 @@
                 value: saved.value, editable: !config.readOnly && saved.phase === 'answer',
                 onChange(value) {
                     if (config.readOnly || saved.phase !== 'answer' || released) return;
-                    section.update(() => { saved.value = JSON.parse(JSON.stringify(value)); });
+                    updateAnswer(() => { saved.value = JSON.parse(JSON.stringify(value)); });
                     setAction();
                 }
             });
@@ -650,8 +670,8 @@
                 button.type = 'button';
                 button.addEventListener('click', () => {
                     if (saved.phase !== 'answer' || saved.rejected.includes(index) || released) return;
-                    section.update(() => { saved.selected = index; });
-                    section.update(() => { saved.invalid = false; });
+                    updateAnswer(() => { saved.selected = index; });
+                    updateAnswer(() => { saved.invalid = false; });
                     update();
                 });
                 buttons.push({ button, rejectionMark: false });
@@ -675,7 +695,7 @@
                 box.value = fields ? saved.value[field.id] : saved.value;
                 box.addEventListener('input', () => {
                     if (saved.phase !== 'answer' || released) return;
-                    section.update(() => {
+                    updateAnswer(() => {
                         if (fields) saved.value[field.id] = box.value;
                         else saved.value = box.value;
                         saved.invalid = false;
@@ -767,7 +787,7 @@
                 return;
             }
             if (saved.phase === 'wrong') {
-                section.update(() => {
+                updateAnswer(() => {
                     saved.phase = 'answer';
                     saved.selected = null;
                     if (!fields) saved.value = custom ? null : '';
@@ -802,7 +822,7 @@
                 if (empty()) return;
                 const invalid = fieldInputs.find(({ id }) => fractionValue(saved.value[id]) === null);
                 if (invalid) {
-                    section.update(() => { saved.invalid = invalid.id; });
+                    updateAnswer(() => { saved.invalid = invalid.id; });
                     update();
                     invalid.box.focus();
                     return;
@@ -816,7 +836,7 @@
                     ? (fractionValue(saved.value) === null ? null : fractionText(saved.value))
                     : tidyNumber(saved.value);
                 if (value === null) {
-                    section.update(() => { saved.invalid = true; });
+                    updateAnswer(() => { saved.invalid = true; });
                     update();
                     return;
                 }
@@ -824,7 +844,7 @@
                 response = correct ? { feedback: config.feedback || '' }
                     : (config.rules || []).find(rule => matches(value, rule.value)) || { feedback: config.fallback || '' };
             }
-            section.update(() => {
+            updateAnswer(() => {
                 if (saved.firstCorrect === null) saved.firstCorrect = correct;
                 saved.correct = correct;
                 saved.phase = correct ? 'correct' : 'wrong';
@@ -833,7 +853,7 @@
                 if (value !== undefined) saved.value = value;
                 if (!correct && config.input === 'choice') saved.rejected.push(saved.selected);
             });
-            if (config.scored === true) {
+            if (!isReplay && config.scored === true) {
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
@@ -843,7 +863,7 @@
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
             else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
-            config.onFeedback?.(outcome);
+            if (!isReplay) config.onFeedback?.(outcome);
             // Try it: a right answer goes straight on, with no Continue press.
             if (correct && sectionId === 'interactive' && config.onContinue) act();
         }
@@ -1106,6 +1126,8 @@
         sectionActions: new Map(),
         // "Question 3 of 10" for a section, shown on the Back row.
         sectionPositions: new Map(),
+        sectionResets: new Map(),
+        questionResets: new Map(),
         questionSets: new Set(),
         sectionStates: new Map(),
         backNavigation: null,
@@ -1750,7 +1772,19 @@
         }
         const position = createElement('p', 'question-number lesson-topbar__position');
         position.hidden = true;
-        topbar.append(position);
+        const reset = createElement('button', 'lesson-back lesson-reset', 'Reset');
+        reset.type = 'button';
+        reset.setAttribute('aria-label', 'Reset card');
+        reset.hidden = true;
+        reset.addEventListener('click', () => {
+            const id = state.sections[state.currentIndex]?.id;
+            const question = currentQuestionReset(id);
+            const restart = state.sectionResets.get(id);
+            if (question) question.run();
+            else restart?.();
+        });
+        elements.resetButton = reset;
+        topbar.append(position, reset);
         elements.position = position;
         sectionContainer.append(topbar);
 
@@ -3310,6 +3344,11 @@
         updateScoreHeader();
     }
 
+    function currentQuestionReset(sectionId) {
+        const cards = state.questionResets.get(sectionId) || [];
+        return cards.find(card => card.container.isConnected && card.container.getClientRects().length > 0);
+    }
+
     function updateControls() {
         const complete =
             isSectionComplete(state.currentIndex);
@@ -3321,6 +3360,9 @@
             state.sectionActions.get(section?.id);
 
         if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
+        if (elements.resetButton) {
+            elements.resetButton.hidden = !state.sectionResets.has(section?.id) && !currentQuestionReset(section?.id);
+        }
         if (elements.position) {
             const position = state.sectionPositions.get(section?.id) || '';
             elements.position.textContent = position;
@@ -3605,6 +3647,12 @@
                 updateControls();
             },
 
+            setSectionReset(sectionId, restart) {
+                if (restart) state.sectionResets.set(sectionId, restart);
+                else state.sectionResets.delete(sectionId);
+                updateControls();
+            },
+
             setSectionBack(sectionId, handler) {
                 if (findSectionIndex(sectionId) === -1) return;
                 state.backNavigation.set(sectionId, handler);
@@ -3625,8 +3673,39 @@
             },
 
             createQuestion(container, config) {
-                return window.Maths1to9LessonEngine.createQuestion(container, config,
-                    state.sectionStates.get(config.sectionId), window.Maths1to9Lesson);
+                const { sectionId, questionId } = config;
+                const section = state.sectionStates.get(sectionId);
+                const api = window.Maths1to9Lesson;
+                const card = window.Maths1to9LessonEngine.createQuestion(container, config, section, api);
+                const cards = (state.questionResets.get(sectionId) || []).filter(item =>
+                    item.container !== container && item.container.isConnected);
+                cards.push({ container, run() {
+                    if (config.readOnly) {
+                        const previous = state.sectionActions.get(sectionId);
+                        // Review cards replay without replacing a recorded answer.
+                        window.Maths1to9LessonEngine.createQuestion(container, {
+                            ...config, readOnly: false, replay: true,
+                            onContinue: () => {
+                                if (previous) api.setSectionAction(sectionId, previous);
+                                previous?.onClick();
+                            }
+                        }, section, api);
+                    } else {
+                        config.onReset?.();
+                        section.update(saved => {
+                            const answer = saved.cards[questionId];
+                            saved.cards[questionId] = { ...answer,
+                                selected: null, rejected: [], value: config.input === 'custom' ? null
+                                    : config.fields ? Object.fromEntries(config.fields.map(field => [field.id, ''])) : '',
+                                phase: 'answer', correct: null, feedback: '', hint: null, invalid: false
+                            };
+                        });
+                        api.createQuestion(container, config);
+                    }
+                } });
+                state.questionResets.set(sectionId, cards);
+                updateControls();
+                return card;
             },
 
             registerHashRoute(id, handler, aliases = []) {

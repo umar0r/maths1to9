@@ -48,6 +48,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(screens[state.screen].explore ? ['lineValue', 'explored'] : []);
+                render();
+            });
             const screen = screens[state.screen];
             const { escapeHtml } = window.Maths1to9LessonEngine;
             root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
@@ -62,7 +66,7 @@
                 api.setSectionAction('explanation', {
                     label: 'Next idea', onClick: () => showScreen(state.screen + 1)
                 });
-            }, state.screen < state.furthestScreen);
+            }, state.screen < state.furthestScreen && state.explored);
             if (state.explored) api.recordActivity({ id: 'rounding-line:explored', kind: 'explore' });
             api.setSectionBack('explanation', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)

@@ -68,6 +68,10 @@
             graph.arrow([4, 8], [4, 20], { tone: 'ink', label: '12 cm', labelSide: 'right' });
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(({ 0: ['week'], 2: ['chosen'] }[state.screen] || []));
+                render();
+            });
             graphs.forEach(graph => graph.destroy()); graphs = [];
             root.replaceChildren();
             const screen = J.learnScreens[state.screen];

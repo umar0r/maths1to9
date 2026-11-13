@@ -72,6 +72,14 @@
             else api.setSectionAction('explanation', { label: 'Next', disabled: !ready, onClick: () => showScreen(state.screen + 1) });
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([
+                ['time', 'sliderReached'], ['position', 'visited', 'walkReached'],
+                ['tap', 'tapFeedback', 'foundStart', 'foundEnd'], ['chosen', 'chosenSections'],
+                ['flatTime', 'flatReached']
+            ][state.screen]);
+                render();
+            });
             timers.forEach(clearTimeout); timers = [];
             graph?.destroy(); graph = null;
             root.replaceChildren();

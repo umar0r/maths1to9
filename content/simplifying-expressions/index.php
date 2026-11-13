@@ -28,7 +28,7 @@ $pageTitle = 'Simplifying expressions';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=47">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -67,7 +67,7 @@ $pageTitle = 'Simplifying expressions';
     <script src="../../assets/js/progress.js?v=3"></script>
     <script src="./algebra.js?v=1"></script>
     <script src="./questions.js?v=1"></script>
-    <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=55"></script>
+    <script src="./interactive.js?v=14"></script>
+    <script src="../../assets/js/lesson-engine.js?v=56"></script>
 </body>
 </html>

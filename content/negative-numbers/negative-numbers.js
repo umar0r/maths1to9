@@ -614,6 +614,11 @@
         }
     }
 
+    function resetNumberLine(question) {
+        saveDot(question, question.start);
+        rememberWrong(question, false);
+    }
+
     // A number line whose dot the pupil can drag while working out the answer.
     // Only the typed answer is marked, so moving the dot is never checked.
     function drawMovableLine(host, question, { hint = 'Drag the dot to help you work it out.', onRelease } = {}) {
@@ -733,6 +738,10 @@
                 host.hidden = !options.readOnly && !wrongBefore(question);
                 config.figure(host, options);
             },
+            onReset() {
+                config.onReset?.();
+                rememberWrong(question, false);
+            },
             onFeedback(result) {
                 config.onFeedback?.(result);
                 rememberWrong(question, !result.correct);
@@ -747,6 +756,7 @@
         if (question.input !== 'number' || question.signs || question.noLine) return question;
         const config = {
             ...question,
+            onReset() { resetNumberLine(question); },
             figure(host, { readOnly }) {
                 if (readOnly) drawFinishedLine(host, question);
                 else drawMovableLine(host, question);
@@ -825,6 +835,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer
+        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
     };
 })();

@@ -166,6 +166,10 @@
             heading.focus();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -296,6 +300,10 @@
                 }, onContinue: advance });
         }
         function render() {
+            api.setSectionReset('interactive', state.screen === 2 || state.screen === 3 ? () => {
+                section.resetFields(state.screen === 2 ? ['plotted'] : ['joined']);
+                render();
+            } : null);
             board?.destroy(); board = null; root.replaceChildren();
             root.append(node('h3', state.screen === 4 ? 'Your completed examples' : ['First column.', 'The rest of the table.', 'Plot.', 'Join them.'][state.screen]));
             equation(root, guided);
