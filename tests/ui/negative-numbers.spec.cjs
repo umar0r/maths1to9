@@ -75,7 +75,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('Continue');
         });
 
-        test('the Practice thermometer sets the temperature by dragging or typing', async ({ page }) => {
+        test('the sideways Practice thermometer is the answer control', async ({ page }) => {
             await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
             await page.evaluate(() => window.Maths1to9Lesson.goToSection('question-bank', { unlock: true }));
             for (let step = 0; step < 20 && !(await prompt(page).innerText()).startsWith('It is '); step++) {
@@ -86,20 +86,38 @@ for (const width of [1280, 375]) {
             const start = -Number(sum[1]);
             const answer = start + Number(sum[2]);
             const thermometer = page.getByRole('slider', { name: 'Set the temperature' });
-            const input = page.getByRole('textbox', { name: 'Your answer' });
-
-            await expect(thermometer.locator('.nn-level-label')).toHaveText(`${String(start).replace('-', '−')}°C`);
+            await expect(page.getByRole('textbox', { name: 'Your answer' })).toHaveCount(0);
+            await expect(thermometer).toHaveClass(/nn-side/);
+            await expect(thermometer.locator('.nn-side-level-label')).toHaveText(`${String(start).replace('-', '−')}°C`);
             await expect(mainAction(page)).toBeDisabled();
-            const bulb = await thermometer.locator('.nn-level').boundingBox();
-            await page.mouse.move(bulb.x + bulb.width / 2, bulb.y);
+
+            const marker = await thermometer.locator('.nn-level').boundingBox();
+            const [first, second] = await Promise.all([0, 1].map(index =>
+                thermometer.locator('.nn-tick').nth(index).boundingBox()));
+            const pixelsPerDegree = second.x - first.x;
+            const x = marker.x;
+            const y = marker.y + marker.height / 2;
+            await page.mouse.move(x, y);
             await page.mouse.down();
-            await page.mouse.move(bulb.x + bulb.width / 2 + 20, bulb.y, { steps: 5 });
+            await page.mouse.move(x, y - 2 * pixelsPerDegree, { steps: 5 });
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(start + 2));
+            await page.mouse.move(x, y - pixelsPerDegree, { steps: 5 });
             await page.mouse.up();
-            await expect(input).toHaveValue(String(start + 2).replace('-', '−'));
-            await input.fill(String(answer));
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(start + 1));
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Try again');
+            await mainAction(page).click();
+            await expect(thermometer).toBeFocused();
+            await expect(mainAction(page)).toBeDisabled();
+
+            const resetMarker = await thermometer.locator('.nn-level').boundingBox();
+            await page.mouse.move(resetMarker.x, y);
+            await page.mouse.down();
+            await page.mouse.move(resetMarker.x + (answer - start) * pixelsPerDegree, y, { steps: 8 });
+            await page.mouse.up();
             await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
             await reload(page);
-            await expect(input).toHaveValue(String(answer));
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
             await mainAction(page).click();
             await expect(mainAction(page)).toHaveText('Continue');
         });

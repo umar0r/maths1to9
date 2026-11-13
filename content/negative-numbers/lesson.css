@@ -172,25 +172,21 @@
     border-radius: .5rem;
 }
 
-.negative-answer-widget--thermometer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
-}
-
-.negative-answer-widget--thermometer .question-answer-label {
-    flex: 1 1 12rem;
-    min-width: 0;
-}
-
-.negative-answer-widget--thermometer input {
-    width: 100%;
-    box-sizing: border-box;
-}
-
 .negative-answer-widget--thermometer .nn-thermometer {
-    margin: 0;
+    max-width: 46rem;
+    margin-inline: auto;
+}
+
+.negative-answer-widget--thermometer .nn-side-level-label {
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-anchor: middle;
+}
+
+@media (max-width: 600px) {
+    .negative-answer-widget--thermometer .nn-side-level-label {
+        font-size: 2.4rem;
+    }
 }
 
 .negative-answer-widget--thermometer .nn-thermometer[aria-disabled="false"] {

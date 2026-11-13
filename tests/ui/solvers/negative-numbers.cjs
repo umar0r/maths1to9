@@ -42,6 +42,16 @@ module.exports = async function solve(page) {
         else await give(numbers[0] * numbers[1]);
         return true;
     }
+    const thermometer = page.getByRole('slider', { name: 'Set the temperature' });
+    if (await thermometer.isVisible()) {
+        const answer = numbers[0] + numbers[1];
+        const current = Number(await thermometer.getAttribute('aria-valuenow'));
+        await thermometer.focus();
+        for (let step = 0; step < Math.abs(answer - current); step++) {
+            await thermometer.press(answer > current ? 'ArrowUp' : 'ArrowDown');
+        }
+        return true;
+    }
     if (text.startsWith('It is ')) {
         const [start, first, second] = numbers;
         await give(text.includes('falls') ? start - first + second : start + first);

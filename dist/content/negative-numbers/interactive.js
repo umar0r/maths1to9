@@ -51,25 +51,6 @@
 
     const signed = value => String(value).replace('-', '−');
 
-    // The same thermometer lying on its side: bulb on the left, −10 to 10
-    // left to right, with the numbers upright underneath.
-    function sidewaysThermometer(level) {
-        const phone = window.matchMedia('(max-width: 600px)').matches;
-        const x = value => 70 + (value + 10) * 30;
-        const tube = 40, bulb = 30;
-        const labelY = tube + (phone ? 52 : 40);
-        let picture = `<rect class="nn-tube" x="${bulb}" y="${tube - 11}" width="${x(10) + 20 - bulb}" height="22" rx="11"/>
-            <circle class="nn-bulb" cx="${bulb}" cy="${tube}" r="22"/>
-            <rect class="nn-mercury" x="${bulb}" y="${tube - 5}" width="${x(level) - bulb}" height="10"/>`;
-        for (let value = -10; value <= 10; value++) {
-            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
-            picture += `<path class="nn-tick" d="M ${x(value)} ${tube + 13} V ${tube + (value % 5 ? 21 : 27)}"/>
-                <text class="nn-value nn-scale ${tone}" x="${x(value)}" y="${labelY}">${signed(value)}</text>`;
-        }
-        picture += `<path class="nn-level" d="M ${x(level)} ${tube - 15} V ${tube + 15}"/>`;
-        return `<svg viewBox="0 -20 ${x(10) + 30} ${labelY + 30}" aria-hidden="true">${picture}</svg>`;
-    }
-
     // Every Learn line has the same scale, with all 21 values on one row.
     function numberLine({ start, position = start, hops = 0, direction = 1 }) {
         const x = value => 30 + (value + 10) * 30;
@@ -239,7 +220,7 @@
             picture.className = 'nn-thermometer nn-side';
             picture.setAttribute('role', 'img');
             picture.setAttribute('aria-label', 'The thermometer lying on its side, from −10 on the left to 10 on the right, showing −3°C.');
-            picture.innerHTML = sidewaysThermometer(-3);
+            picture.innerHTML = window.NegativeNumbers.sidewaysThermometer(-3);
             root.append(picture);
         }
 
