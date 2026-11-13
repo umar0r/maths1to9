@@ -32,7 +32,7 @@ $pageTitle = 'My lesson title';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=51">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
 </head>
 
 <body
@@ -81,6 +81,6 @@ $pageTitle = 'My lesson title';
     <script src="./interactive.js?v=11"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=58"></script>
+    <script src="../../assets/js/lesson-engine.js?v=59"></script>
 </body>
 </html>

@@ -28,7 +28,7 @@ $pageTitle = 'Solving quadratic equations';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=51">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
     <link rel="stylesheet" href="./lesson.css?v=2">
 
     <!-- Lesson-specific styles -->
@@ -87,6 +87,6 @@ $pageTitle = 'Solving quadratic equations';
     <script src="./interactive.js?v=14"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=58"></script>
+    <script src="../../assets/js/lesson-engine.js?v=59"></script>
 </body>
 </html>

@@ -589,13 +589,14 @@ Working goes inside the same box (append a span), never in a second box.
 
 **Where it sits (changed 2026-11-12, the Brilliant way).** While a
 feedback box shows, the engine sticks the main button bar to the bottom of
-the screen and puts the box just above the button, so the pupil always
+the screen and puts the box just below the button (above it on a
+phone), so the pupil always
 sees the feedback and the button together, however tall the card is.
 Only the newest box on the screen goes in the bar; older answered cards
 still on the screen keep their feedback inside the card.
 
-- Desktop and tablet (768px and wider): the bubble sits above the button,
-  lined up with the card's right edge.
+- Desktop and tablet (768px and wider): the bubble sits under the button,
+  centred.
 - Phone (under 768px): the bar becomes a coloured sheet across the bottom
   of the screen (green when right, pink when wrong, cream for a right
   answer in Try it). The words sit on the sheet and the main button fills
