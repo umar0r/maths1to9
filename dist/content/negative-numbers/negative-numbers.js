@@ -742,6 +742,10 @@
                 config.onReset?.();
                 rememberWrong(question, false);
             },
+            onReplayFeedback(result) {
+                config.onReplayFeedback?.(result);
+                if (!result.correct) figureHost.hidden = false;
+            },
             onFeedback(result) {
                 config.onFeedback?.(result);
                 rememberWrong(question, !result.correct);
