@@ -287,17 +287,7 @@
                 questionType: 'multiply', input: 'reveal',
                 prompt: 'Tap each card to multiply 1 by it.',
                 feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
-            },
-            {
-                questionType: 'multiply', input: 'number', signs: ['−', '−'],
-                prompt: 'Sam says −3 × −5 = −15. What is the right answer?',
-                rule: 'Negative × negative = positive. The same signs give a positive answer.', answer: '15',
-                feedback: 'The signs are the same, so the answer is positive.',
-                rules: [
-                    { value: '−15', feedback: 'That is Sam\'s answer. The signs are the same, so it should be positive.' },
-                    { value: '−8', feedback: 'That adds −3 and −5. This question multiplies them.' }
-                ],
-                fallback: 'Work out 3 × 5, then use the table to find the sign.'
+
             }
         ];
     }

@@ -137,7 +137,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(70);
-            expect(earned).toBe(270 - penalty);
+            expect(earned).toBe(265 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');
@@ -164,6 +164,32 @@ for (const width of [1280, 375]) {
         });
     });
 }
+
+test('negative-numbers: the old last Try it link keeps earlier work and leads to Practice', async ({ page }) => {
+    await page.goto('content/negative-numbers/#try-it-8', { waitUntil: 'networkidle' });
+    await expect(prompt(page)).toHaveText('Tap each card to multiply 1 by it.');
+    await solve(page);
+    await expect(mainAction(page)).toBeEnabled();
+    const points = await score(page);
+
+    await page.evaluate(async () => {
+        const progress = window.Maths1to9Progress;
+        const saved = await progress.getLessonActivityState('negative-numbers', 'interactive');
+        await progress.saveLessonActivityState('negative-numbers', 'interactive', {
+            ...saved,
+            version: 6,
+            data: { ...saved.data, index: 8, screen: 8, furthestScreen: 8 }
+        });
+    });
+    // Use a full load so the legacy state is read again.
+    await page.goto('content/negative-numbers/?legacy=1#try-it-9', { waitUntil: 'networkidle' });
+    await expect(page).toHaveURL(/#try-it-8$/);
+    await expect(prompt(page)).toHaveText('Now tap each card to multiply −1 by it.');
+    await expect(mainAction(page)).toBeEnabled();
+    expect(await score(page)).toBe(points);
+    await mainAction(page).click();
+    await expect.poll(() => page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id)).toBe('question-bank');
+});
 
 test('negative-numbers: built static lesson finishes and All lessons reaches its homepage', async ({ page }) => {
     test.setTimeout(120_000);
