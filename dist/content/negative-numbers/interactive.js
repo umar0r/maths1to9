@@ -502,21 +502,6 @@
             group.setAttribute('aria-label', 'Numbers to multiply by');
             body.append(group);
 
-            const lists = document.createElement('div');
-            lists.className = 'nn-reveal__lists';
-            body.append(lists);
-            const rows = factors.map(first => {
-                const list = document.createElement('ul');
-                list.setAttribute('aria-label', `Multiplying ${signed(first)}`);
-                lists.append(list);
-                return values.map(value => {
-                    const row = document.createElement('li');
-                    row.textContent = `${signed(first)} × ${signed(value)} = ${signed(first * value)}`;
-                    list.append(row);
-                    return row;
-                });
-            });
-
             let feedback;
             const buttons = values.map(value => {
                 const button = document.createElement('button');
@@ -562,12 +547,6 @@
                     button.setAttribute('aria-pressed', String(used));
                     button.disabled = done;
                 });
-                rows.forEach((list, partIndex) => list.forEach((row, index) => {
-                    row.hidden = !seen[partIndex].includes(values[index]);
-                }));
-                // Once they're multiplying −1, no list shows: the sum above
-                // and the feedback say it all.
-                lists.hidden = part === 1;
                 if (done && !feedback) {
                     feedback = createFeedback('interactive', { correct: true, text: page.question.feedback });
                     body.append(feedback);
