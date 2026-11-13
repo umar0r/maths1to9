@@ -823,9 +823,8 @@
 
 .nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
 
-/* Multiplying −1: only its own list shows, in one centred column. */
-.nn-reveal__lists ul[hidden] { display: none; }
-.nn-reveal__lists:has(> ul[hidden]) { grid-template-columns: minmax(0, 1fr); }
+/* Multiplying −1: no list shows. */
+.nn-reveal__lists[hidden] { display: none; }
 
 /* Try it: the sign machine. Two punch cards sit in the machine; tapping
    one flips its sign, and the answer rides out along the belt to the tray. */
