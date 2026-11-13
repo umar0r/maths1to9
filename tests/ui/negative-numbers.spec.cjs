@@ -208,8 +208,9 @@ for (const width of [1280, 375]) {
                     }
                     await solve(page);
                 }
-                // The sign machine keeps Next locked until a card is flipped.
-                if (await page.locator('.nn-punch-card:visible').count() && !await button.isEnabled()) {
+                // The sign machine and thermometer need a move before the main action.
+                const handsOn = page.locator('.nn-punch-card:visible, .negative-answer-widget--thermometer [role="slider"]:visible');
+                if (await handsOn.count() && !await button.isEnabled()) {
                     await solve(page);
                     continue;
                 }
