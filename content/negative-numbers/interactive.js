@@ -406,7 +406,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 6,
+            version: 7,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 solved: {},
@@ -416,7 +416,7 @@
                 signRules: [false, false, false, false],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
-            // Version 6 changed the multiplying slides, so older saves start again.
+            // Version 7 changed the multiplying slides, so older saves start again.
             upgrade: () => null
         });
         const state = section.state;
@@ -722,6 +722,8 @@
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
+            // The signs page shows the sign table above the rules.
+            if (!words) NN.drawSignTable(page);
             const name = sign => (words ? sign : sign === '+' ? 'plus' : 'minus');
             const symbol = sign => (words
                 ? `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`

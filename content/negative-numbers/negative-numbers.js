@@ -273,17 +273,6 @@
                 prompt: 'Tap a card to flip its sign. See what comes out of the machine.'
             },
             {
-                questionType: 'multiply', input: 'number', signs: ['−', '−'],
-                prompt: 'Work out −6 × −3.',
-                rule: 'Negative × negative = positive. The same signs give a positive answer.', answer: '18',
-                feedback: '6 × 3 = 18. The signs are the same, so the answer is positive.',
-                rules: [
-                    { value: '−18', feedback: 'The signs are the same, so the answer is positive.' },
-                    { value: '−9', feedback: 'That adds −6 and −3. This question multiplies them.' }
-                ],
-                fallback: 'Work out 6 × 3, then use the grid to find the sign.'
-            },
-            {
                 questionType: 'multiply', input: 'reveal',
                 prompt: 'Tap each card to multiply 1 by it.',
                 feedback: 'Multiplying by −1 swaps the sign. 1 becomes −1, and −1 becomes 1. So −1 × −1 = 1.'
@@ -820,6 +809,15 @@
             <tbody>${line('+')}${line('−')}</tbody>`;
     }
 
+    // The plain sign table, with nothing coloured: shown on the Try it page
+    // where pupils drag + and − into the sign rules.
+    function drawSignTable(host) {
+        const table = document.createElement('table');
+        table.className = 'nn-sign-table';
+        table.innerHTML = signTable(null, null);
+        host.append(table);
+    }
+
     // A small table beside a multiplying question, with its signs coloured.
     function withSignGrid(question, { afterWrongAnswer = false } = {}) {
         const config = {
@@ -839,6 +837,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withSignGrid, drawSignTable, drawDragToAnswer, resetNumberLine
     };
 })();
