@@ -660,7 +660,8 @@
             paint();
         }
 
-        // A question the pupil answers by doing, with no Check button.
+        // A question the pupil answers by doing. Drag questions are marked when
+        // the pupil presses Check; the tap cards have no Check button.
         function drawHandsOn(container, page) {
             const { question, number } = page;
             const heading = document.createElement('h3');
@@ -674,7 +675,10 @@
                 drawRevealCards(heading, body, page);
             } else if (question.input === 'conveyor') {
                 drawConveyor(body, page);
-            } else NN.drawDragToAnswer(body, question, solved(page), () => markSolved(number));
+            } else NN.drawDragToAnswer(body, question, solved(page), {
+                onSolved: () => markSolved(number),
+                setAction: action => api.setSectionAction('interactive', action)
+            });
         }
 
         function drawExample(container, page, readOnly) {
@@ -749,7 +753,8 @@
                 } : {
                     label: 'Next', onClick: () => showScreen(state.screen + 1)
                 });
-                else if (!page.question.signs) api.setSectionAction('interactive', {
+                // Unsolved drag questions set their own Check button.
+                else if (!page.question.signs && (page.question.input !== 'drag' || solved(page))) api.setSectionAction('interactive', {
                     label: 'Next', disabled: !solved(page), onClick: nextPage
                 });
             }

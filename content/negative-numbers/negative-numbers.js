@@ -680,8 +680,9 @@
         return `That's the right way. You need to move ${steps} places in total.`;
     }
 
-    // Try it: the pupil drags the dot, and landing on the answer finishes it.
-    function drawDragToAnswer(host, question, solved, onSolved) {
+    // Try it: the pupil drags the dot, then presses Check. Nothing is marked
+    // while they drag; feedback only shows after Check.
+    function drawDragToAnswer(host, question, solved, { onSolved, setAction }) {
         const end = question.start + question.amount;
         if (solved) {
             drawFinishedLine(host, question);
@@ -689,20 +690,35 @@
             correctBox(host, question.correct, question.working, 'interactive');
             return;
         }
+        let value = savedDot(question);
         let hint;
-        const showHint = value => {
+        const engine = window.Maths1to9LessonEngine;
+        function hideHint() {
+            hint.textContent = '';
+            hint.className = engine.feedbackClassName('interactive', { correct: false, visible: false });
+        }
+        function askToCheck() {
+            setAction({ label: 'Check', disabled: value === question.start, onClick: check });
+        }
+        function check() {
+            if (value === end) {
+                onSolved();
+                return;
+            }
             hint.textContent = dragHint(question, value);
-            hint.classList.toggle('is-visible', hint.textContent !== '');
-        };
+            hint.className = engine.feedbackClassName('interactive', { correct: false, visible: true });
+            setAction({ label: 'Try again', onClick: () => { hideHint(); askToCheck(); } });
+        }
         drawMovableLine(host, question, {
             hint: 'Drag the dot to the answer.',
-            onRelease: value => {
-                if (value === end) onSolved();
-                else showHint(value);
+            onRelease: released => {
+                value = released;
+                hideHint();
+                askToCheck();
             }
         });
         hint = feedbackBox(host, 'interactive', { correct: false, visible: false });
-        showHint(savedDot(question));
+        askToCheck();
     }
 
     // Remembers a wrong answer, so a reload still shows the line.
