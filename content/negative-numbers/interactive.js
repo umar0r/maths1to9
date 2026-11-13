@@ -684,18 +684,17 @@
             });
         }
 
-        // The four sign rules, each with one word missing: the answer on some
-        // lines, the second sign on others. Pupils drag "positive" or
-        // "negative" into the dashed gap, or tap a word to fill the next gap.
-        // Each word sits in its own pastel box: green for positive, peach
-        // for negative.
+        // The four sign rules, each with one sign missing: the answer on some
+        // lines, the second sign on others. Pupils drag a blue + or − card
+        // into the dashed gap, or tap a card to fill the next gap. The given
+        // signs sit in light boxes: green for +, peach for −.
         function drawGridPage() {
             const { createFeedback } = window.Maths1to9LessonEngine;
             const rules = [
-                { words: ['positive', 'positive', 'positive'], gap: 2 },
-                { words: ['negative', 'negative', 'positive'], gap: 1 },
-                { words: ['positive', 'negative', 'negative'], gap: 2 },
-                { words: ['negative', 'positive', 'negative'], gap: 1 }
+                { signs: ['+', '+', '+'], gap: 2 },
+                { signs: ['−', '−', '+'], gap: 1 },
+                { signs: ['+', '−', '−'], gap: 2 },
+                { signs: ['−', '+', '−'], gap: 1 }
             ];
             // Saves from before the gaps hold no answers yet.
             if (!Array.isArray(state.signRules)) {
@@ -704,18 +703,19 @@
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
-            const word = sign => `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`;
+            const name = sign => (sign === '+' ? 'plus' : 'minus');
+            const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
             const list = document.createElement('ul');
             list.className = 'nn-sign-rules';
             const gaps = rules.map((rule, line) => {
                 const item = document.createElement('li');
                 item.className = 'nn-sign-rule';
-                const parts = rule.words.map((sign, index) => (index === rule.gap
-                    ? '<span class="nn-sign-gap"></span>' : word(sign)));
+                const parts = rule.signs.map((sign, index) => (index === rule.gap
+                    ? '<span class="nn-sign-gap"></span>' : symbol(sign)));
                 item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
                 list.append(item);
                 const gap = item.querySelector('.nn-sign-gap');
-                gap.setAttribute('aria-label', `Line ${line + 1}: missing word`);
+                gap.setAttribute('aria-label', `Line ${line + 1}: missing sign`);
                 return gap;
             });
             page.append(list);
@@ -723,15 +723,15 @@
             const tray = document.createElement('div');
             tray.className = 'nn-sign-tray';
             tray.setAttribute('role', 'group');
-            tray.setAttribute('aria-label', 'Words to drag into the gaps');
+            tray.setAttribute('aria-label', 'Signs to drag into the gaps');
             page.append(tray);
             const full = () => state.signRules.every(Boolean);
             const nextGap = () => state.signRules.indexOf(false);
 
             function fillGap(line) {
-                const sign = rules[line].words[rules[line].gap];
+                const sign = rules[line].signs[rules[line].gap];
                 const placed = document.createElement('span');
-                placed.className = `nn-sign-word nn-sign-word--${sign} nn-sign-word--placed`;
+                placed.className = 'nn-punch-card nn-sign-placed';
                 placed.textContent = sign;
                 gaps[line].replaceWith(placed);
                 gaps[line] = placed;
@@ -746,11 +746,11 @@
                 api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
             }
 
-            // A word dropped on a gap: right words stay, wrong ones shake.
+            // A card dropped on a gap: right signs stay, wrong ones shake.
             function place(line, sign) {
                 if (line < 0 || state.signRules[line]) return;
                 const rule = rules[line];
-                if (rule.words[rule.gap] !== sign) {
+                if (rule.signs[rule.gap] !== sign) {
                     const gap = gaps[line];
                     gap.classList.remove('is-wrong');
                     void gap.offsetWidth;
@@ -762,12 +762,12 @@
                 if (full()) finish();
             }
 
-            ['positive', 'negative'].forEach(sign => {
+            ['+', '−'].forEach(sign => {
                 const card = document.createElement('button');
                 card.type = 'button';
-                card.className = `nn-sign-word nn-sign-word--${sign} nn-sign-card`;
+                card.className = 'nn-punch-card nn-sign-card';
                 card.textContent = sign;
-                card.setAttribute('aria-label', `${sign}: drag it into a gap, or tap to fill the next gap`);
+                card.setAttribute('aria-label', `${name(sign)}: drag it into a gap, or tap to fill the next gap`);
                 tray.append(card);
                 let drag = null;
                 let dragged = false;

@@ -985,30 +985,31 @@
 
 .nn-sign-rule {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: .4rem;
-    font-size: clamp(1rem, 4.2vw, 1.25rem);
+    gap: .35em;
+    font-size: clamp(1.5rem, 7vw, 2rem);
     font-weight: 700;
 }
 
-.nn-sign-word {
-    padding: .35rem .7rem;
-    border-radius: .5rem;
+/* A given sign: a light box the same size as a blue punch card. */
+.nn-sign-symbol,
+.nn-sign-gap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 1.5em;
+    height: 1.75em;
+    border-radius: .2em;
 }
 
-.nn-sign-word--positive { background: #f0f9f5; color: var(--nn-positive); }
-.nn-sign-word--negative { background: #fdf3ed; color: var(--nn-negative); }
+.nn-sign-symbol--plus { background: #f0f9f5; color: var(--nn-positive); }
+.nn-sign-symbol--minus { background: #fdf3ed; color: var(--nn-negative); }
 
-/* The dashed gap a word is dragged into: the same size as a word box. */
+/* The dashed gap a blue card is dragged into. */
 .nn-sign-gap {
-    display: inline-block;
-    box-sizing: border-box;
-    min-width: 6.2em;
-    height: 2.1em;
     border: 2px dashed #b8c2d3;
-    border-radius: .5rem;
     background: #fff;
 }
 
@@ -1019,22 +1020,24 @@
 
 .nn-sign-gap.is-wrong { animation: nn-shake .35s ease-in-out; }
 
-.nn-sign-word--placed { animation: nn-pop .25s ease-out; }
+.nn-sign-placed {
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: default;
+    animation: nn-pop .25s ease-out;
+}
 
 .nn-sign-tray {
     display: flex;
     justify-content: center;
-    gap: .75rem;
+    gap: .5em;
     margin: 1.5rem auto .5rem;
-    font-size: clamp(1rem, 4.2vw, 1.25rem);
+    font-size: clamp(1.5rem, 7vw, 2rem);
     font-weight: 700;
 }
 
 .nn-sign-card {
-    position: relative;
-    font: inherit;
-    border: 1px solid #e3e8f0;
-    box-shadow: 0 .12em 0 #e3e8f0;
     cursor: grab;
     touch-action: none;
     user-select: none;
@@ -1043,7 +1046,7 @@
 .nn-sign-card.is-dragging {
     z-index: 5;
     cursor: grabbing;
-    box-shadow: 0 .4em 1em rgb(30 41 59 / .15);
+    box-shadow: 0 .1em 0 var(--primary-dark), 0 .3em .8em rgb(30 41 59 / .2);
 }
 
 @keyframes nn-shake {
@@ -1057,7 +1060,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .nn-sign-gap.is-wrong,
-    .nn-sign-word--placed { animation: none; }
+    .nn-sign-placed { animation: none; }
 }
 
 /* Learn's worked examples: the hops draw in one after another, then the
@@ -1106,17 +1109,4 @@
 .nn-drawn .nn-value.nn-key {
     color: var(--nn-blue);
     font-weight: 800;
-}
-
-/* On a phone each sign rule stays on one line. */
-@media (max-width: 600px) {
-    .nn-sign-rule {
-        flex-wrap: nowrap;
-        gap: .25rem;
-        font-size: .9rem;
-    }
-
-    .nn-sign-rule .nn-sign-word { padding: .35rem .45rem; }
-
-    .nn-sign-gap { min-width: 5.4em; }
 }
