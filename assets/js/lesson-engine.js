@@ -213,6 +213,7 @@
                 window.history[replace ? 'replaceState' : 'pushState'](null, '', url);
             },
             hasHash() { return routes.has(readHash()); },
+            count(pattern) { return [...routes.keys()].filter(key => pattern.test(key)).length; },
             destroy() { window.removeEventListener('hashchange', openHash); }
         };
     }
@@ -1101,6 +1102,9 @@
     const initialHash = window.location.hash;
     const router = window.Maths1to9LessonEngine.createRouter();
     const activityProgress = new Map();
+    // How far through Learn the pupil has got, from its learn-1, learn-2…
+    // screens. Fills the stage progress only; it never awards points.
+    let learnScreensReached = 0;
     let scoreTracker;
     const app = document.getElementById('lesson-app');
 
@@ -1751,13 +1755,38 @@
         const header = renderLessonHeader();
         const navigation = renderSectionNavigation();
 
-        // The stage dots sit in the site header, opposite the logo.
+        // The stage dots sit in the site header. On a narrow screen only
+        // the current stage shows (see app.css).
         const siteHeader = document.querySelector('.site-header__inner');
         const stagesInSiteHeader = Boolean(siteHeader) &&
             navigation.classList.contains('lesson-navigation--stages');
 
-        if (stagesInSiteHeader) {
-            siteHeader.append(navigation);
+        // The lesson title sits in the site header, next to the logo.
+        const logo = siteHeader?.querySelector('.site-logo');
+        const title = header.querySelector('.lesson-header__title');
+
+        if (logo && title) {
+            let start = siteHeader.querySelector('.site-header__start');
+
+            if (!start) {
+                start = createElement('div', 'site-header__start');
+                logo.replaceWith(start);
+                start.append(logo);
+            }
+
+            start.querySelector('.lesson-header__title')?.remove();
+            start.append(title);
+        }
+
+        // The marks pill sits in the site header, after the stage dots.
+        // With the title and the marks moved up, the lesson header is empty,
+        // so the site header takes its place and sticks to the top.
+        const marksInSiteHeader = Boolean(logo && title);
+
+        if (marksInSiteHeader) {
+            siteHeader.querySelector('.lesson-header__stage-progress')?.remove();
+            siteHeader.append(elements.headerStageProgress);
+            siteHeader.closest('.site-header')?.classList.add('site-header--lesson');
         }
 
         const sectionContainer = createElement(
@@ -1875,8 +1904,15 @@
 
         const controls = renderLessonControls();
 
+        if (stagesInSiteHeader) {
+            siteHeader.insertBefore(
+                navigation,
+                siteHeader.querySelector('.lesson-header__stage-progress')
+            );
+        }
+
         app.append(
-            header,
+            ...(marksInSiteHeader ? [] : [header]),
             ...(stagesInSiteHeader ? [] : [navigation]),
             sectionContainer,
             controls
@@ -2079,7 +2115,10 @@
 
         stageProgress.hidden = true;
         stageProgress.setAttribute('role', 'status');
-        stageProgress.append(createElement('span'));
+        stageProgress.append(
+            createElement('span', 'lesson-header__stage-progress-points'),
+            createElement('span', 'lesson-header__stage-progress-label', 'marks')
+        );
         inner.append(stageProgress);
         elements.headerStageProgress = stageProgress;
 
@@ -3410,11 +3449,19 @@
                 const id = state.sections[sectionIndex].id;
                 if (state.completedSections.has(id)) return sum + 1;
                 if (activityProgress.has(id)) return sum + activityProgress.get(id);
+                if (id === 'explanation') return sum + learnScreenProgress();
                 return sum;
             }, 0);
             window.Maths1to9LessonEngine.updateStageProgress(button, completed, group.sectionIndexes.length);
             button.classList.toggle('lesson-navigation__button--complete', completed === group.sectionIndexes.length);
         });
+    }
+
+    // Screen 1 of 8 shows nothing done; the last screen shows 7 of 8. The
+    // stage fills completely once Learn is finished.
+    function learnScreenProgress() {
+        const total = router.count(/^learn-\d+$/);
+        return total > 0 ? Math.max(0, learnScreensReached - 1) / total : 0;
     }
 
     function updateScoreHeader() {
@@ -3424,7 +3471,9 @@
         ring.hidden = false;
         ring.style.setProperty('--stage-progress', `${score.maximumPoints ? score.points / score.maximumPoints * 100 : 0}%`);
         ring.setAttribute('aria-label', `${score.points} of ${score.maximumPoints} points earned`);
-        ring.querySelector('span').textContent = String(score.points);
+        ring.querySelector('.lesson-header__stage-progress-points').textContent = String(score.points);
+        ring.querySelector('.lesson-header__stage-progress-label').textContent =
+            score.points === 1 ? 'mark' : 'marks';
     }
 
     function updateHeaderMode() {
@@ -3835,6 +3884,11 @@
             },
 
             setSlideHash(id, options) {
+                const learnScreen = /^learn-(\d+)$/.exec(id);
+                if (learnScreen) {
+                    learnScreensReached = Math.max(learnScreensReached, Number(learnScreen[1]));
+                    updateProgress();
+                }
                 router.sync(id, options);
                 if (elements.resetButton) queueMicrotask(updateResetVisibility);
             },
