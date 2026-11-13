@@ -27,7 +27,7 @@ $pageTitle = 'How long does it take?';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=49">
     <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
