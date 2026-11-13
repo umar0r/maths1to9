@@ -809,15 +809,6 @@
             <tbody>${line('+')}${line('−')}</tbody>`;
     }
 
-    // The plain sign table, with nothing coloured: shown on the Try it page
-    // where pupils drag + and − into the sign rules.
-    function drawSignTable(host) {
-        const table = document.createElement('table');
-        table.className = 'nn-sign-table';
-        table.innerHTML = signTable(null, null);
-        host.append(table);
-    }
-
     // A small table beside a multiplying question, with its signs coloured.
     function withSignGrid(question, { afterWrongAnswer = false } = {}) {
         const config = {
@@ -837,6 +828,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawSignTable, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
     };
 })();

@@ -722,8 +722,6 @@
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
-            // The signs page shows the sign table above the rules.
-            NN.drawSignTable(page);
             const name = sign => (sign === '+' ? 'plus' : 'minus');
             const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
             const list = document.createElement('ul');
