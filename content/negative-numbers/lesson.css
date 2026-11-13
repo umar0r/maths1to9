@@ -480,6 +480,11 @@
     font-weight: 900;
 }
 
+/* Inside a feedback box the working is smaller, to match the 14px feedback. */
+.question-feedback .nn-box-sum {
+    font-size: 1rem;
+}
+
 .question-feedback .nn-box-sum:first-child {
     margin-top: 0;
 }
