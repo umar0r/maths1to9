@@ -761,6 +761,172 @@
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
+    // The upright Learn thermometer, with a scale that can also fit Practice sums.
+    const thermometerTop = 24;
+    function thermometerScale(min, max) {
+        const step = 320 / (max - min);
+        return { min, max, step, height: 410 };
+    }
+
+    const thermometerY = (value, scale) => thermometerTop + (scale.max - value) * scale.step;
+
+    function thermometer(level, scale) {
+        const { min, max, height } = scale;
+        const tube = 60;
+        const bulb = thermometerY(min, scale) + 34;
+        let picture = `<rect class="nn-tube" x="${tube - 11}" y="${thermometerTop - 14}" width="22" height="${bulb - thermometerTop}" rx="11"/>
+            <circle class="nn-bulb" cx="${tube}" cy="${bulb}" r="22"/>
+            <rect class="nn-mercury" x="${tube - 5}" y="${thermometerY(level, scale)}" width="10" height="${bulb - thermometerY(level, scale)}"/>`;
+        for (let value = min; value <= max; value++) {
+            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
+            const y = thermometerY(value, scale);
+            picture += `<path class="nn-tick" d="M ${tube + 13} ${y} H ${tube + (value % 5 ? 21 : 27)}"/>`;
+            if (max - min <= 20 || value % 5 === 0) picture += `<text class="nn-value nn-scale ${tone}" x="${tube + 33}" y="${y + 4}">${signed(value)}</text>`;
+        }
+        picture += `<path class="nn-level" d="M ${tube - 15} ${thermometerY(level, scale)} H ${tube + 15}"/>
+            <text class="nn-level-label" x="${tube - 19}" y="${thermometerY(level, scale) + 5}">${signed(level)}°C</text>`;
+        return `<svg viewBox="0 0 160 ${height}" aria-hidden="true">${picture}</svg>`;
+    }
+
+    function withAnswerVisual(question, { thermometer: useThermometer = false } = {}) {
+        if (question.input !== 'number' || question.noLine) return question;
+        const { tidyNumber } = window.Maths1to9LessonEngine;
+        const { start, amount } = question;
+        const end = start + amount;
+        const { min, max } = lineRange(question);
+        const scale = useThermometer ? thermometerScale(min, max) : null;
+
+        return {
+            ...question,
+            input: 'custom',
+            widget: {
+                render(host, { onChange }) {
+                    host.className = 'negative-answer-widget';
+                    let control;
+                    let draw;
+                    if (useThermometer) {
+                        host.classList.add('negative-answer-widget--thermometer');
+                        control = document.createElement('div');
+                        control.className = 'nn-thermometer negative-answer-control';
+                        control.setAttribute('aria-orientation', 'vertical');
+                        draw = value => { control.innerHTML = thermometer(value, scale); };
+                        host.append(control);
+                    } else {
+                        draw = drawLine(host, start, end, start, false, { min, max, hops: true });
+                        control = host.querySelector('.negative-line');
+                        control.classList.add('negative-answer-control');
+                    }
+                    control.setAttribute('role', 'slider');
+                    control.setAttribute('aria-valuemin', min);
+                    control.setAttribute('aria-valuemax', max);
+
+                    const label = document.createElement('label');
+                    label.className = 'question-answer-label';
+                    label.textContent = 'Your answer';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.inputMode = 'decimal';
+                    input.autocomplete = 'off';
+                    label.append(input);
+                    host.append(label);
+
+                    let position = start;
+                    let editable;
+                    function show(value) {
+                        const number = tidyNumber(value ?? '');
+                        const selected = number !== null && Number.isInteger(Number(number)) &&
+                            Number(number) >= min && Number(number) <= max;
+                        position = selected ? Number(number) : start;
+                        draw(position);
+                        control.setAttribute('aria-label', useThermometer ? 'Set the temperature' : 'Choose an answer on the number line');
+                        control.setAttribute('aria-valuenow', position);
+                        control.setAttribute('aria-valuetext', selected ? (useThermometer ? `${signed(position)}°C` : signed(position)) : `Starting at ${signed(start)}. No number selected.`);
+                        input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
+                    }
+
+                    function select(value) {
+                        input.value = signed(value);
+                        show(input.value);
+                        onChange(input.value);
+                    }
+
+                    const clamp = value => Math.max(min, Math.min(max, value));
+                    if (useThermometer) {
+                        let drag;
+                        function move(event) {
+                            const dx = event.clientX - drag.x;
+                            const dy = event.clientY - drag.y;
+                            const degrees = drag.horizontal
+                                ? drag.position + dx / 10
+                                : max - ((event.clientY - drag.box.top) / drag.box.height * scale.height - thermometerTop) / scale.step;
+                            select(clamp(Math.round(degrees)));
+                        }
+                        control.addEventListener('pointerdown', event => {
+                            if (!editable || !event.isPrimary || event.button !== 0) return;
+                            control.setPointerCapture(event.pointerId);
+                            drag = { x: event.clientX, y: event.clientY, position, box: control.querySelector('svg').getBoundingClientRect() };
+                        });
+                        control.addEventListener('pointermove', event => {
+                            if (!editable || !control.hasPointerCapture(event.pointerId)) return;
+                            if (drag.horizontal === undefined) {
+                                const dx = Math.abs(event.clientX - drag.x);
+                                const dy = Math.abs(event.clientY - drag.y);
+                                if (Math.max(dx, dy) < 4) return;
+                                drag.horizontal = dx > dy;
+                            }
+                            move(event);
+                        });
+                        control.addEventListener('pointerup', event => {
+                            if (editable && control.hasPointerCapture(event.pointerId)) move(event);
+                        });
+                    } else {
+                        const track = control.querySelector('.negative-track');
+                        control.addEventListener('click', event => {
+                            if (!editable) return;
+                            const box = track.getBoundingClientRect();
+                            select(clamp(Math.round(min + (event.clientX - box.left) / box.width * (max - min))));
+                        });
+                    }
+                    control.addEventListener('keydown', event => {
+                        const directions = useThermometer
+                            ? { ArrowLeft: -1, ArrowRight: 1, ArrowDown: -1, ArrowUp: 1 }
+                            : { ArrowLeft: -1, ArrowRight: 1 };
+                        const step = directions[event.key];
+                        if (!editable || (!step && event.key !== 'Home' && event.key !== 'End')) return;
+                        event.preventDefault();
+                        if (event.key === 'Home') select(min);
+                        else if (event.key === 'End') select(max);
+                        else select(clamp(position + step));
+                    });
+                    input.addEventListener('input', () => {
+                        show(input.value);
+                        onChange(input.value);
+                    });
+
+                    return {
+                        update({ value, editable: canAnswer }) {
+                            editable = canAnswer;
+                            control.tabIndex = canAnswer ? 0 : -1;
+                            control.setAttribute('aria-disabled', String(!canAnswer));
+                            input.disabled = !canAnswer;
+                            input.value = value ?? '';
+                            show(value);
+                        },
+                        focus() { input.focus(); }
+                    };
+                },
+                isEmpty(value) { return tidyNumber(value ?? '') === null; },
+                mark(value) {
+                    const answer = Number(tidyNumber(value));
+                    const correct = answer === end;
+                    const mistake = question.rules.find(rule => Number(tidyNumber(rule.value)) === answer);
+                    return { correct, feedback: correct ? question.feedback : mistake?.feedback ?? question.fallback };
+                },
+                answerText(value) { return tidyNumber(value) ?? value; }
+            }
+        };
+    }
+
     // The sign grid: row sign, column sign and the sign of the answer.
     const SIGN_GRID = [
         { row: '+', column: '+', answer: '+', sum: '2 × 3 = 6' },
@@ -831,6 +997,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, drawDragToAnswer, resetNumberLine
     };
 })();

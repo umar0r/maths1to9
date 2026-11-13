@@ -316,14 +316,11 @@ too far if they went past.
 
 ## Number line in the questions
 
-Every typed "Work out" question in Practice has a number line. The pupil drags the dot to help them work it out, and hops
-appear from the start to the dot. Above the hops it says how far they've
-moved (+4, or −3 going left), and the number they're on shows below the line. Only the
-typed answer is marked. The line stretches to fit the sum, with room to go
-the wrong way. Lines longer than 20 only label every fifth number.
-
-In Practice the line stays hidden at first. It appears after the first wrong
-answer on that question, and works the same way from then on.
+Practice shows a number line on typed questions where one move shows the
+calculation. Pupils can tap the line or type the number, then press Check.
+The line shows the hops and the selected number. Longer lines only label
+every fifth number so the labels fit. The temperature-rise question uses
+the Learn thermometer. Pupils can drag it or type the temperature.
 
 ## Practice
 

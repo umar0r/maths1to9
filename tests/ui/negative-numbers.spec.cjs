@@ -36,6 +36,74 @@ async function finishQuestions(page) {
 for (const width of [1280, 375]) {
     test.describe(`negative-numbers ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
+        test('the Practice number line and typed answer stay in sync', async ({ page }) => {
+            await page.goto('content/negative-numbers/#question-bank-question-1', { waitUntil: 'networkidle' });
+            await page.evaluate(() => window.Maths1to9Lesson.goToSection('question-bank', { unlock: true }));
+            const sum = (await prompt(page).innerText()).match(/^Work out (\d+) − (\d+)\.$/);
+            expect(sum).not.toBeNull();
+            const start = Number(sum[1]);
+            const answer = start - Number(sum[2]);
+            const line = page.getByRole('slider', { name: 'Choose an answer on the number line' });
+            const input = page.getByRole('textbox', { name: 'Your answer' });
+            const tapNumber = async number => {
+                const min = Number(await line.getAttribute('aria-valuemin'));
+                const max = Number(await line.getAttribute('aria-valuemax'));
+                const track = line.locator('.negative-track');
+                const box = await track.boundingBox();
+                const options = { position: { x: box.width * (number - min) / (max - min), y: 40 } };
+                if (width === 375) await track.tap(options);
+                else await track.click(options);
+            };
+
+            await expect(line).toBeVisible();
+            await expect(mainAction(page)).toBeDisabled();
+            await tapNumber(start);
+            await expect(input).toHaveValue(String(start));
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Try again');
+            await mainAction(page).click();
+            await expect(input).toHaveValue('');
+            await input.fill(String(answer));
+            await expect(line).toHaveAttribute('aria-valuenow', String(answer));
+            await reload(page);
+            await expect(input).toHaveValue(String(answer));
+            await expect(line).toHaveAttribute('aria-valuenow', String(answer));
+            await input.clear();
+            await tapNumber(answer);
+            await expect(input).toHaveValue(String(answer).replace('-', '−'));
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Continue');
+        });
+
+        test('the Practice thermometer sets the temperature by dragging or typing', async ({ page }) => {
+            await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
+            await page.evaluate(() => window.Maths1to9Lesson.goToSection('question-bank', { unlock: true }));
+            for (let step = 0; step < 20 && !(await prompt(page).innerText()).startsWith('It is '); step++) {
+                if (!await solve(page)) await mainAction(page).click();
+            }
+            const sum = (await prompt(page).innerText()).match(/^It is −(\d+)°C.* goes up by (\d+)°C/);
+            expect(sum).not.toBeNull();
+            const start = -Number(sum[1]);
+            const answer = start + Number(sum[2]);
+            const thermometer = page.getByRole('slider', { name: 'Set the temperature' });
+            const input = page.getByRole('textbox', { name: 'Your answer' });
+
+            await expect(thermometer.locator('.nn-level-label')).toHaveText(`${String(start).replace('-', '−')}°C`);
+            await expect(mainAction(page)).toBeDisabled();
+            const bulb = await thermometer.locator('.nn-level').boundingBox();
+            await page.mouse.move(bulb.x + bulb.width / 2, bulb.y);
+            await page.mouse.down();
+            await page.mouse.move(bulb.x + bulb.width / 2 + 20, bulb.y, { steps: 5 });
+            await page.mouse.up();
+            await expect(input).toHaveValue(String(start + 2).replace('-', '−'));
+            await input.fill(String(answer));
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
+            await reload(page);
+            await expect(input).toHaveValue(String(answer));
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Continue');
+        });
+
         test('new work survives retries, reloads, Back and two more Practice sessions', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
@@ -70,10 +138,6 @@ for (const width of [1280, 375]) {
                     const options = page.locator('.question-card-options:visible button');
                     const kind = await options.count() ? 'choice' : 'number';
                     const key = `${section}:${kind}`;
-                    // Practice hides the line until a wrong answer.
-                    if (kind === 'number' && !(await prompt(page).innerText()).includes('×') && (section !== 'question-bank' || !tested.has(key))) {
-                        await expect(page.locator('.negative-line--movable:visible')).toHaveCount(section === 'question-bank' ? 0 : 1);
-                    }
                     if (kind === 'choice' || !tested.has(key)) {
                         if (section !== 'interactive') penalty += 5;
                         tested.add(key);

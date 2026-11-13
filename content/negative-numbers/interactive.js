@@ -51,27 +51,6 @@
 
     const signed = value => String(value).replace('-', '−');
 
-    // An upright thermometer from −10°C to 10°C, filled up to the level.
-    const THERMOMETER = { top: 24, step: 16, tube: 60, height: 410 };
-    const thermometerY = value => THERMOMETER.top + (10 - value) * THERMOMETER.step;
-
-    function thermometer(level) {
-        const { top, tube, height } = THERMOMETER;
-        const bulb = thermometerY(-10) + 34;
-        let picture = `<rect class="nn-tube" x="${tube - 11}" y="${top - 14}" width="22" height="${bulb - top}" rx="11"/>
-            <circle class="nn-bulb" cx="${tube}" cy="${bulb}" r="22"/>
-            <rect class="nn-mercury" x="${tube - 5}" y="${thermometerY(level)}" width="10" height="${bulb - thermometerY(level)}"/>`;
-        for (let value = -10; value <= 10; value++) {
-            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
-            const y = thermometerY(value);
-            picture += `<path class="nn-tick" d="M ${tube + 13} ${y} H ${tube + (value % 5 ? 21 : 27)}"/>
-                <text class="nn-value nn-scale ${tone}" x="${tube + 33}" y="${y + 4}">${signed(value)}</text>`;
-        }
-        picture += `<path class="nn-level" d="M ${tube - 15} ${thermometerY(level)} H ${tube + 15}"/>
-            <text class="nn-level-label" x="${tube - 19}" y="${thermometerY(level) + 5}">${signed(level)}°C</text>`;
-        return `<svg viewBox="0 0 160 ${height}" aria-hidden="true">${picture}</svg>`;
-    }
-
     // The same thermometer lying on its side: bulb on the left, −10 to 10
     // left to right, with the numbers upright underneath.
     function sidewaysThermometer(level) {
@@ -213,6 +192,8 @@
 
         // Screen 1: drag the level up and down the thermometer.
         function exploreThermometer() {
+            const { thermometer, thermometerScale, thermometerY } = window.NegativeNumbers;
+            const scale = thermometerScale(-10, 10);
             paragraph('Drag the red line up and down the thermometer.', 'nn-instruction');
             const picture = document.createElement('div');
             picture.className = 'nn-thermometer nn-explore';
@@ -224,7 +205,7 @@
             caption.setAttribute('aria-live', 'polite');
             function draw() {
                 const value = state.temperature;
-                picture.innerHTML = thermometer(value);
+                picture.innerHTML = thermometer(value, scale);
                 caption.textContent = value === 0 ? "It's 0°C. Zero is neither positive nor negative." :
                     `It's ${signed(value)}°C. That's ${Math.abs(value)} degrees ${value < 0 ? 'below' : 'above'} zero, so it's a ${value < 0 ? 'negative' : 'positive'} number.`;
             }
@@ -234,8 +215,8 @@
             }
             function pointer(event) {
                 const box = picture.querySelector('svg').getBoundingClientRect();
-                const y = (event.clientY - box.top) / box.height * THERMOMETER.height;
-                move(Math.round(10 - (y - THERMOMETER.top) / THERMOMETER.step));
+                const y = (event.clientY - box.top) / box.height * scale.height;
+                move(Math.round(10 - (y - thermometerY(10, scale)) / scale.step));
             }
             picture.addEventListener('pointerdown', event => {
                 picture.setPointerCapture(event.pointerId);
