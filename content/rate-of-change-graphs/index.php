@@ -28,7 +28,7 @@ $pageTitle = 'Rates of change on graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=51">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
 </head>
 
 <body

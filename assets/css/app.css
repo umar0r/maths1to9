@@ -3671,7 +3671,6 @@ noscript p {
     grid-area: 1 / 3;
     justify-self: end;
     justify-content: center;
-    color: #8193af;
     -webkit-tap-highlight-color: transparent;
 }
 .lesson-reset:active {
