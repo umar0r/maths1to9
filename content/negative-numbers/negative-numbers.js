@@ -761,6 +761,99 @@
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
+    function withAnswerLine(question) {
+        if (question.input !== 'number' || question.noLine) return question;
+        const { tidyNumber } = window.Maths1to9LessonEngine;
+        const { start, amount } = question;
+        const end = start + amount;
+        const { min, max } = lineRange(question);
+
+        return {
+            ...question,
+            input: 'custom',
+            widget: {
+                render(host, { onChange }) {
+                    host.className = 'negative-answer-widget';
+                    const draw = drawLine(host, start, end, start, false, { min, max, hops: true });
+                    const line = host.querySelector('.negative-line');
+                    const track = line.querySelector('.negative-track');
+                    line.classList.add('negative-line--answer');
+                    line.setAttribute('role', 'slider');
+                    line.setAttribute('aria-valuemin', min);
+                    line.setAttribute('aria-valuemax', max);
+
+                    const label = document.createElement('label');
+                    label.className = 'question-answer-label';
+                    label.textContent = 'Your answer';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.inputMode = 'decimal';
+                    input.autocomplete = 'off';
+                    label.append(input);
+                    host.append(label);
+
+                    let position = start;
+                    let editable;
+                    function show(value) {
+                        const number = tidyNumber(value ?? '');
+                        const selected = number !== null && Number.isInteger(Number(number)) &&
+                            Number(number) >= min && Number(number) <= max;
+                        position = selected ? Number(number) : start;
+                        draw(position);
+                        line.setAttribute('aria-label', 'Choose an answer on the number line');
+                        line.setAttribute('aria-valuenow', position);
+                        line.setAttribute('aria-valuetext', selected ? signed(position) : `Starting at ${signed(start)}. No number selected.`);
+                        input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
+                    }
+
+                    function select(value) {
+                        input.value = signed(value);
+                        show(input.value);
+                        onChange(input.value);
+                    }
+
+                    line.addEventListener('click', event => {
+                        if (!editable) return;
+                        const box = track.getBoundingClientRect();
+                        const position = (event.clientX - box.left) / box.width;
+                        select(Math.round(min + Math.max(0, Math.min(1, position)) * (max - min)));
+                    });
+                    line.addEventListener('keydown', event => {
+                        if (!editable || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                        event.preventDefault();
+                        if (event.key === 'Home') select(min);
+                        else if (event.key === 'End') select(max);
+                        else select(Math.max(min, Math.min(max, position + (event.key === 'ArrowRight' ? 1 : -1))));
+                    });
+                    input.addEventListener('input', () => {
+                        show(input.value);
+                        onChange(input.value);
+                    });
+
+                    return {
+                        update({ value, editable: canAnswer }) {
+                            editable = canAnswer;
+                            line.tabIndex = canAnswer ? 0 : -1;
+                            line.setAttribute('aria-disabled', String(!canAnswer));
+                            input.disabled = !canAnswer;
+                            input.value = value ?? '';
+                            show(value);
+                        },
+                        focus() { input.focus(); }
+                    };
+                },
+                isEmpty(value) { return tidyNumber(value ?? '') === null; },
+                mark(value) {
+                    const answer = Number(tidyNumber(value));
+                    const correct = answer === end;
+                    const mistake = question.rules.find(rule => Number(tidyNumber(rule.value)) === answer);
+                    return { correct, feedback: correct ? question.feedback : mistake?.feedback ?? question.fallback };
+                },
+                answerText(value) { return tidyNumber(value) ?? value; }
+            }
+        };
+    }
+
     // The sign grid: row sign, column sign and the sign of the answer.
     const SIGN_GRID = [
         { row: '+', column: '+', answer: '+', sum: '2 × 3 = 6' },
@@ -831,6 +924,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withSignGrid, withAnswerLine, drawDragToAnswer, resetNumberLine
     };
 })();

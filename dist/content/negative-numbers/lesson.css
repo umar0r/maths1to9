@@ -162,6 +162,20 @@
     height: 1.5rem;
 }
 
+.negative-line--answer[aria-disabled="false"] {
+    cursor: pointer;
+    touch-action: pan-y;
+}
+
+.negative-line--answer:focus-visible {
+    outline: 2px solid #175ca1;
+    border-radius: .5rem;
+}
+
+.question-card:has(> .retained-result__answer) .negative-answer-widget .question-answer-label {
+    display: none;
+}
+
 /* The sign grid on Try it, drawn like the Place value table: thin grey
    lines, a rounded edge and a dark grey top row and first column. */
 .nn-sign-grid {
