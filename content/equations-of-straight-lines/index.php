@@ -27,7 +27,7 @@ $pageTitle = 'Using y = mx + c';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=53">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
 </head>
 
 <body
@@ -73,10 +73,10 @@ $pageTitle = 'Using y = mx + c';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./equations.js?v=1"></script>
-    <script src="./interactive.js?v=4"></script>
+    <script src="./interactive.js?v=5"></script>
     <script src="./questions.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=60"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>

@@ -2,12 +2,14 @@
 module.exports = async function solveLearn(page) {
     const root = page.locator('.nn-learn:visible');
     if (!await root.count()) return false;
-    // Try it: press the arrow keys until the dot lands on the answer.
+    // Try it: press the arrow keys until the dot lands on the answer. Once
+    // it's there, the main button (Check) marks it, so leave that to the caller.
     const line = page.locator('.negative-line--movable:visible');
     if (await line.count()) {
         const target = Number(await line.getAttribute('data-answer'));
-        await line.focus();
         const dot = Number((await page.locator('.negative-dot-value:visible').innerText()).replace('−', '-'));
+        if (dot === target) return false;
+        await line.focus();
         for (let step = 0; step < Math.abs(target - dot); step++) await line.press(target > dot ? 'ArrowRight' : 'ArrowLeft');
         return true;
     }

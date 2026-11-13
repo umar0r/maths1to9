@@ -62,7 +62,10 @@ for (const width of [1280, 375]) {
                     await reload(page);
                     await expect(page.getByLabel(await control.getAttribute('aria-label'), { exact: true })).toHaveValue(await control.getAttribute('max'));
                 }
-                if (await prompt(page).count() && await button.innerText() === 'Check') {
+                // Drag questions say Check too, but have no options or box to
+                // type in; the solver moves the dot and the loop presses Check.
+                const answerable = await page.locator('.question-card:visible input[type=text], .question-card-options:visible button').count();
+                if (await prompt(page).count() && await button.innerText() === 'Check' && answerable) {
                     const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
                     const options = page.locator('.question-card-options:visible button');
                     const kind = await options.count() ? 'choice' : 'number';
@@ -202,13 +205,18 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.question-feedback.is-incorrect:visible')).toHaveText('You went left. Taking away a negative is the same as adding, so go right.');
         await page.reload({ waitUntil: 'networkidle' });
         await expect(page.locator('.negative-line--movable:visible')).toHaveAttribute('aria-label', /The dot is on 4/);
-        await expect(mainAction(page)).toBeDisabled();
-        // Dragging onto the answer finishes it.
+        // Once the dot has moved, the main button is Check.
+        await expect(mainAction(page)).toHaveText('Check');
+        await expect(mainAction(page)).toBeEnabled();
+        // Dragging onto the answer clears the hint; Check then finishes it.
         const box = await page.locator('.negative-track:visible').boundingBox();
         await page.mouse.move(box.x + box.width * 14 / 20, box.y + 40);
         await page.mouse.down();
         await page.mouse.move(box.x + box.width * 18 / 20, box.y + 40, { steps: 6 });
         await page.mouse.up();
+        await expect(page.locator('.question-feedback.is-incorrect:visible')).toHaveCount(0);
+        await expect(page.locator('.negative-line--solved:visible')).toHaveCount(0);
+        await mainAction(page).click();
         await expect(page.locator('.negative-line--solved:visible')).toHaveCount(1);
         await expect(page.locator('.negative-hop-count:visible')).toHaveText('+3');
         await expect(page.locator('.question-feedback.is-correct:visible')).toContainText('Correct. Taking away −3 is the same as adding 3, so you moved 3 places right.');

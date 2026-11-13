@@ -27,7 +27,7 @@ $pageTitle = 'Horizontal and vertical lines';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=53">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=54">
 </head>
 
 <body
@@ -74,10 +74,10 @@ $pageTitle = 'Horizontal and vertical lines';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./lines.js?v=3"></script>
-    <script src="./interactive.js?v=5"></script>
+    <script src="./interactive.js?v=6"></script>
     <script src="./questions.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=60"></script>
+    <script src="../../assets/js/lesson-engine.js?v=61"></script>
 </body>
 </html>
