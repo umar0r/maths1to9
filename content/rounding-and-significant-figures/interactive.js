@@ -152,13 +152,19 @@
             container.append(visual);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
+            function drawAnswer(correct) {
+                visual.replaceChildren();
+                window.Rounding.drawExample(visual, example, correct);
+            }
             api.createQuestion(cardRoot, {
                 ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
                 scored: false, readOnly,
+                onReset: () => drawAnswer(false),
+                onReplayReset: () => drawAnswer(false),
+                onReplayFeedback: result => drawAnswer(result.correct),
                 onFeedback(result) {
                     reportProgress();
-                    visual.replaceChildren();
-                    window.Rounding.drawExample(visual, example, result.correct);
+                    drawAnswer(result.correct);
                 },
                 onContinue: continueExample
             });

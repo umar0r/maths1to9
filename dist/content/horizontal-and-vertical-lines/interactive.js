@@ -78,6 +78,10 @@
             });
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['items', state.screen]]);
+                render();
+            });
             graph?.destroy();
             root.replaceChildren();
             const index = state.screen;
@@ -138,14 +142,14 @@
                 });
                 join();
                 draggable.update();
-                graph.setEditable(index === state.furthestScreen && !state.finished);
+                graph.setEditable(index === state.furthestScreen && !state.finished || !item.correct);
             } else {
                 const instruction = node('p', 'Drag across the graph to draw ');
                 if (axis === 'x') instruction.textContent = 'Drag up and down on the graph to draw ';
                 maths(instruction, axis, 4);
                 instruction.append('.');
                 root.append(instruction);
-                graph = live(root, target, item.line, index < state.furthestScreen || state.finished, line => {
+                graph = live(root, target, item.line, (index < state.furthestScreen || state.finished) && item.correct, line => {
                     section.update(() => { item.line = line; item.correct = line !== null && judge(line, target).correct; });
                     action();
                 }, 'explanation');
@@ -222,12 +226,16 @@
             container.append(ending);
         }
         function render() {
+            api.setSectionReset('interactive', state.screen < examples.length ? () => {
+                section.resetFields([['items', state.screen]]);
+                render();
+            } : null);
             mounted.forEach(graph => graph.destroy()); mounted = [];
             root.replaceChildren();
             if (state.screen === 4) {
                 const heading = node('h3', 'Your completed examples'); heading.dataset.screenHeading = ''; root.append(heading);
                 examples.forEach((example, index) => draw(index, true));
-            } else draw(state.screen, state.screen < state.index);
+            } else draw(state.screen, state.screen < state.index && state.items[state.screen].correct);
             api.setSectionBack('interactive', state.screen > 0 ? { onClick: () => showScreen(state.screen - 1) } : null);
             if (state.finished) event('interactive', 'complete');
             action(); syncHash();

@@ -408,6 +408,10 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['values', state.screen], ...({ 4: [['covers', 'density']], 7: [['covers', 'pressure']] }[state.screen] || [])]);
+                render();
+            });
             root.replaceChildren();
             const screen = screens[state.screen];
             const heading = node('h3', screen.title);

@@ -193,6 +193,10 @@
             }
         }
         function render(animate = false) {
+            api.setSectionReset('explanation', () => {
+                section.resetFields(([['drawn'], [['choices', 1]], [['steps', 2]], [['steps', 3]], [['steps', 4]], [['choices', 5]], ['sides']][state.screen] || []));
+                render();
+            });
             clearTimeout(timer); graph?.destroy(); graph = null; root.replaceChildren(); root.dataset.animate = String(animate);
             const heading = node('h3', titles[state.screen]); heading.dataset.screenHeading = ''; root.append(heading);
             const screen = state.screen;

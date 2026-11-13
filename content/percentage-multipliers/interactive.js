@@ -285,7 +285,7 @@
 
         function render() {
             api.setSectionReset('explanation', () => {
-                section.resetFields([['sliders', state.screen], ...(state.screen === 3 ? ['direction'] : [])]);
+                section.resetFields([['sliders', state.screen], ...(state.screen === 4 ? ['direction'] : [])]);
                 render();
             });
             root.replaceChildren();

@@ -43,7 +43,7 @@
             if (data.point) graph.point(data.point, { tone: 'correct', size: 'large' });
         }
         return {
-            figure(host) { graph = drawGraph(host, data); if (correct) reveal(); },
+            figure(host, { replay } = {}) { graph = drawGraph(host, data); if (correct && !replay) reveal(); },
             onFeedback(result) { if (result.correct) reveal(); }
         };
     }

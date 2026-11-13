@@ -416,6 +416,11 @@
         }
 
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['steps', state.screen]]);
+                render();
+            });
+            busy = false;
             root.replaceChildren();
             const index = state.screen;
             const screen = screens[index];
@@ -470,6 +475,7 @@
                 if (animation) {
                     busy = true;
                     animation.then(() => {
+                        if (current !== picture) return;
                         busy = false;
                         saveStep(index, answer.step);
                     });
@@ -498,6 +504,7 @@
                 picture.mover.moveTo(polar([0, 0], size, 2.6));
                 picture.label.setLabel(degrees(Math.round(size)));
             }).then(() => {
+                if (current !== picture) return;
                 busy = false;
                 saveSteps(index, [card.key]);
             });

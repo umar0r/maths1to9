@@ -290,9 +290,9 @@
         function card(host, index, readOnly) {
             const config = examples[index];
             // The first card shows the table above it; the second card's table is its own answer area.
-            api.createQuestion(host, { ...config, figure(figure) {
+            api.createQuestion(host, { ...config, figure(figure, { replay }) {
                 equation(figure, guided);
-                if (index === 0) figure.append(Q.table(guided, { filled: state.cards['example-1']?.correct ? [-2] : [] }));
+                if (index === 0) figure.append(Q.table(guided, { filled: !replay && state.cards['example-1']?.correct ? [-2] : [] }));
             }, sectionId: 'interactive', questionId: `example-${index + 1}`, scored: false, readOnly,
                 onFeedback(result) {
                     report();

@@ -131,9 +131,6 @@
                 paragraphs(root, screen.maths, 'rates-working');
                 paragraphs(root, screen.lines.slice(1));
             }
-            if (state.finished || state.screen < state.furthestScreen) {
-                root.querySelectorAll('input').forEach(input => { input.disabled = true; });
-            }
             api.setSectionBack('explanation', state.screen > 0 ? { onClick: () => showScreen(state.screen - 1) } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
             if (state.screen === J.learnScreens.length - 1) api.clearSectionAction('explanation');
@@ -176,6 +173,7 @@
             const visual = J.cardVisual(example.graph, state.cards[`example-${index + 1}`]?.correct === true);
             return api.createQuestion(cardRoot, { ...example, ...visual, options: state.order[index].map(option => example.options[option]),
                 sectionId: 'interactive', questionId: `example-${index + 1}`, scored: false, readOnly,
+                onReplayFeedback: visual.onFeedback,
                 onFeedback(result) { visual.onFeedback(result); report(); }, onContinue() {
                     section.update(state => { state.index++; state.screen = state.index; state.furthestScreen = state.screen; state.finished = state.index === examples.length; }); render();
                 } });

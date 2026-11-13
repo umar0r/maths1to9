@@ -137,6 +137,7 @@
                 }
             },
             resetFields(paths) {
+                if (!paths.length) return;
                 const defaults = jsonState(initial(), key);
                 this.update(state => {
                     for (const path of paths) {
@@ -144,12 +145,12 @@
                         if (item === undefined) {
                             if (Object.hasOwn(defaults, field)) state[field] = defaults[field];
                             else delete state[field];
-                        } else if (Object.hasOwn(defaults[field], item)) {
+                        } else if (Object.hasOwn(defaults[field] ?? {}, item)) {
                             state[field][item] = defaults[field][item];
                         } else if (Array.isArray(state[field])) {
                             // Keep saved arrays dense for JSON validation.
                             if (item < state[field].length) state[field][item] = false;
-                        } else delete state[field][item];
+                        } else if (state[field]) delete state[field][item];
                     }
                 });
             },
@@ -630,7 +631,7 @@
         if (typeof config.figure === 'function') {
             const host = document.createElement('div');
             article.append(host);
-            config.figure(host, { readOnly: config.readOnly === true });
+            config.figure(host, { readOnly: config.readOnly === true, replay: isReplay });
         }
         let handle;
         if (custom) {
@@ -863,7 +864,8 @@
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
             else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
-            if (!isReplay) config.onFeedback?.(outcome);
+            if (isReplay) config.onReplayFeedback?.(outcome);
+            else config.onFeedback?.(outcome);
             // Try it: a right answer goes straight on, with no Continue press.
             if (correct && sectionId === 'interactive' && config.onContinue) act();
         }
@@ -3348,7 +3350,8 @@
 
     function currentQuestionReset(sectionId) {
         const cards = state.questionResets.get(sectionId) || [];
-        return cards.find(card => card.container.isConnected && card.container.getClientRects().length > 0);
+        const visible = cards.filter(card => card.container.isConnected && card.container.getClientRects().length > 0);
+        return visible.length === 1 ? visible[0] : null;
     }
 
     function updateControls() {
@@ -3681,15 +3684,17 @@
                 const card = window.Maths1to9LessonEngine.createQuestion(container, config, section, api);
                 const cards = (state.questionResets.get(sectionId) || []).filter(item =>
                     item.container !== container && item.container.isConnected);
+                let reviewAction;
                 cards.push({ container, run() {
-                    if (config.readOnly) {
-                        const previous = state.sectionActions.get(sectionId);
+                    if (config.readOnly || section.state.cards[questionId]?.correct === true) {
+                        reviewAction ??= state.sectionActions.get(sectionId);
+                        config.onReplayReset?.();
                         // Review cards replay without replacing a recorded answer.
                         window.Maths1to9LessonEngine.createQuestion(container, {
                             ...config, readOnly: false, replay: true,
                             onContinue: () => {
-                                if (previous) api.setSectionAction(sectionId, previous);
-                                previous?.onClick();
+                                if (reviewAction) api.setSectionAction(sectionId, reviewAction);
+                                reviewAction?.onClick();
                             }
                         }, section, api);
                     } else {

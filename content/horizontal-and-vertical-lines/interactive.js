@@ -142,14 +142,14 @@
                 });
                 join();
                 draggable.update();
-                graph.setEditable(index === state.furthestScreen && !state.finished);
+                graph.setEditable(index === state.furthestScreen && !state.finished || !item.correct);
             } else {
                 const instruction = node('p', 'Drag across the graph to draw ');
                 if (axis === 'x') instruction.textContent = 'Drag up and down on the graph to draw ';
                 maths(instruction, axis, 4);
                 instruction.append('.');
                 root.append(instruction);
-                graph = live(root, target, item.line, index < state.furthestScreen || state.finished, line => {
+                graph = live(root, target, item.line, (index < state.furthestScreen || state.finished) && item.correct, line => {
                     section.update(() => { item.line = line; item.correct = line !== null && judge(line, target).correct; });
                     action();
                 }, 'explanation');

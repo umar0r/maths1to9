@@ -73,7 +73,7 @@ $pageTitle = 'Rates of change on graphs';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./rates.js?v=2"></script>
+    <script src="./rates.js?v=3"></script>
     <script src="./interactive.js?v=3"></script>
     <script src="./questions.js?v=2"></script>
 

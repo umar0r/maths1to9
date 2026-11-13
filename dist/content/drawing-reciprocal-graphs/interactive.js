@@ -146,6 +146,10 @@
             heading.focus();
         }
         function render() {
+            api.setSectionReset('explanation', () => {
+                section.resetFields([['seen', state.screen]]);
+                render();
+            });
             timers.forEach(clearTimeout);
             timers = [];
             board?.destroy();
@@ -288,6 +292,10 @@
                 onFeedback: report, onContinue: advance });
         }
         function render() {
+            api.setSectionReset('interactive', state.screen === 2 || state.screen === 3 ? () => {
+                section.resetFields(state.screen === 2 ? ['plotted'] : ['joined']);
+                render();
+            } : null);
             board?.destroy(); board = null; root.replaceChildren();
             root.append(node('h3', state.screen === 5 ? 'Your completed examples' : ['One value.', 'The table.', 'Plot.', 'Join them.', 'Bigger x.'][state.screen]));
             equation(root, guided);
