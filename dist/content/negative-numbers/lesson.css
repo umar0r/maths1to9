@@ -1049,6 +1049,42 @@
     box-shadow: 0 .1em 0 var(--primary-dark), 0 .3em .8em rgb(30 41 59 / .2);
 }
 
+/* The words page: smaller text, so each line fits on a phone. */
+.nn-sign-rules--words .nn-sign-rule,
+.nn-sign-tray--words {
+    font-size: clamp(.9rem, 4.2vw, 1.25rem);
+}
+
+.nn-sign-rules--words .nn-sign-rule { gap: .3em; }
+
+.nn-sign-word {
+    padding: .35em .6em;
+    border-radius: .5rem;
+}
+
+.nn-sign-word--positive { background: #f0f9f5; color: var(--nn-positive); }
+.nn-sign-word--negative { background: #fdf3ed; color: var(--nn-negative); }
+
+.nn-sign-rules--words .nn-sign-gap {
+    width: 5.6em;
+    height: 2.1em;
+    border-radius: .5rem;
+}
+
+.nn-sign-tray--words .nn-sign-card {
+    font: inherit;
+    border: 1px solid #e3e8f0;
+    box-shadow: 0 .12em 0 #e3e8f0;
+}
+
+.nn-sign-tray--words .nn-sign-card.is-dragging {
+    box-shadow: 0 .4em 1em rgb(30 41 59 / .15);
+}
+
+@media (max-width: 600px) {
+    .nn-sign-word { padding: .35em .45em; }
+}
+
 @keyframes nn-shake {
     25% { transform: translateX(-4px); }
     75% { transform: translateX(4px); }

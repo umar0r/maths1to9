@@ -390,14 +390,15 @@
 
     async function mountTryIt(root) {
         const NN = window.NegativeNumbers;
-        // Try it runs: number line examples, the sign grid, then the multiplying
+        // Try it runs: number line examples, the two sign-rule pages, then the multiplying
         // examples. The last one goes straight on to Practice.
         const questions = [...examples(), ...NN.multiplyExamples()];
         const firstMultiply = examples().length;
         const questionPages = (from, to) => questions.slice(from, to).map((question, i) => ({ kind: 'question', question, number: from + i }));
         const pages = [
             ...questionPages(0, firstMultiply),
-            { kind: 'grid' },
+            { kind: 'grid', mode: 'words' },
+            { kind: 'grid', mode: 'signs' },
             ...questionPages(firstMultiply, questions.length)
         ];
         const lastPage = pages.length - 1;
@@ -411,6 +412,7 @@
                 solved: {},
                 reveal: { part: 0, seen: [[], []], last: null },
                 conveyor: { signs: ['+', '+'], seen: [] },
+                wordRules: [false, false, false, false],
                 signRules: [false, false, false, false],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
@@ -685,28 +687,47 @@
         }
 
         // The four sign rules, each with one sign missing: the answer on some
-        // lines, the second sign on others. Pupils drag a blue + or − card
-        // into the dashed gap, or tap a card to fill the next gap. The given
-        // signs sit in light boxes: green for +, peach for −.
-        function drawGridPage() {
+        // lines, the second sign on others. Pupils drag a card into the dashed
+        // gap, or tap a card to fill the next gap. The words page comes
+        // first (positive × negative = negative), in pastel boxes: green for
+        // positive, peach for negative. Then the signs page (+ × − = −),
+        // where the blue + and − punch cards go into the gaps.
+        const GRIDS = {
+            words: {
+                field: 'wordRules', values: ['positive', 'negative'], label: 'Words',
+                feedback: 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.'
+            },
+            signs: {
+                field: 'signRules', values: ['+', '−'], label: 'Signs',
+                feedback: 'Same signs give +. Different signs give −.'
+            }
+        };
+
+        function drawGridPage(mode) {
             const { createFeedback } = window.Maths1to9LessonEngine;
+            const grid = GRIDS[mode];
+            const words = mode === 'words';
+            const [plus, minus] = grid.values;
             const rules = [
-                { signs: ['+', '+', '+'], gap: 2 },
-                { signs: ['−', '−', '+'], gap: 1 },
-                { signs: ['+', '−', '−'], gap: 2 },
-                { signs: ['−', '+', '−'], gap: 1 }
+                { signs: [plus, plus, plus], gap: 2 },
+                { signs: [minus, minus, plus], gap: 1 },
+                { signs: [plus, minus, minus], gap: 2 },
+                { signs: [minus, plus, minus], gap: 1 }
             ];
             // Saves from before the gaps hold no answers yet.
-            if (!Array.isArray(state.signRules)) {
-                section.update(state => { state.signRules = rules.map(() => false); });
+            if (!Array.isArray(state[grid.field])) {
+                section.update(state => { state[grid.field] = rules.map(() => false); });
             }
+            const filled = state[grid.field];
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
-            const name = sign => (sign === '+' ? 'plus' : 'minus');
-            const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
+            const name = sign => (words ? sign : sign === '+' ? 'plus' : 'minus');
+            const symbol = sign => (words
+                ? `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`
+                : `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`);
             const list = document.createElement('ul');
-            list.className = 'nn-sign-rules';
+            list.className = `nn-sign-rules nn-sign-rules--${mode}`;
             const gaps = rules.map((rule, line) => {
                 const item = document.createElement('li');
                 item.className = 'nn-sign-rule';
@@ -715,23 +736,25 @@
                 item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
                 list.append(item);
                 const gap = item.querySelector('.nn-sign-gap');
-                gap.setAttribute('aria-label', `Line ${line + 1}: missing sign`);
+                gap.setAttribute('aria-label', `Line ${line + 1}: missing ${words ? 'word' : 'sign'}`);
                 return gap;
             });
             page.append(list);
 
             const tray = document.createElement('div');
-            tray.className = 'nn-sign-tray';
+            tray.className = `nn-sign-tray nn-sign-tray--${mode}`;
             tray.setAttribute('role', 'group');
-            tray.setAttribute('aria-label', 'Signs to drag into the gaps');
+            tray.setAttribute('aria-label', `${grid.label} to drag into the gaps`);
             page.append(tray);
-            const full = () => state.signRules.every(Boolean);
-            const nextGap = () => state.signRules.indexOf(false);
+            const full = () => filled.every(Boolean);
+            const nextGap = () => filled.indexOf(false);
 
             function fillGap(line) {
                 const sign = rules[line].signs[rules[line].gap];
                 const placed = document.createElement('span');
-                placed.className = 'nn-punch-card nn-sign-placed';
+                placed.className = words
+                    ? `nn-sign-word nn-sign-word--${sign} nn-sign-placed`
+                    : 'nn-punch-card nn-sign-placed';
                 placed.textContent = sign;
                 gaps[line].replaceWith(placed);
                 gaps[line] = placed;
@@ -741,14 +764,14 @@
                 tray.remove();
                 page.append(createFeedback('interactive', {
                     correct: true,
-                    text: 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.'
+                    text: grid.feedback
                 }));
                 api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
             }
 
             // A card dropped on a gap: right signs stay, wrong ones shake.
             function place(line, sign) {
-                if (line < 0 || state.signRules[line]) return;
+                if (line < 0 || filled[line]) return;
                 const rule = rules[line];
                 if (rule.signs[rule.gap] !== sign) {
                     const gap = gaps[line];
@@ -757,15 +780,17 @@
                     gap.classList.add('is-wrong');
                     return;
                 }
-                section.update(state => { state.signRules[line] = true; });
+                section.update(state => { state[grid.field][line] = true; });
                 fillGap(line);
                 if (full()) finish();
             }
 
-            ['+', '−'].forEach(sign => {
+            grid.values.forEach(sign => {
                 const card = document.createElement('button');
                 card.type = 'button';
-                card.className = 'nn-punch-card nn-sign-card';
+                card.className = words
+                    ? `nn-sign-word nn-sign-word--${sign} nn-sign-card`
+                    : 'nn-punch-card nn-sign-card';
                 card.textContent = sign;
                 card.setAttribute('aria-label', `${name(sign)}: drag it into a gap, or tap to fill the next gap`);
                 tray.append(card);
@@ -811,7 +836,7 @@
                 });
             });
 
-            state.signRules.forEach((filled, line) => { if (filled) fillGap(line); });
+            filled.forEach((done, line) => { if (done) fillGap(line); });
             if (full()) finish();
             return full();
         }
@@ -825,7 +850,7 @@
             root.replaceChildren();
             const page = pages[state.screen];
             api.setSectionReset('interactive', page.kind === 'grid' ? () => {
-                section.resetFields(['signRules']);
+                section.resetFields([GRIDS[page.mode].field]);
                 render();
             }
                 : page.question.signs ? null : () => {
@@ -850,7 +875,7 @@
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
             if (page.kind === 'grid') {
-                if (!drawGridPage()) api.setSectionAction('interactive', { label: 'Next', disabled: true, onClick: nextPage });
+                if (!drawGridPage(page.mode)) api.setSectionAction('interactive', { label: 'Next', disabled: true, onClick: nextPage });
             } else {
                 const readOnly = state.screen < state.index || state.finished;
                 drawExample(root, page, readOnly);
