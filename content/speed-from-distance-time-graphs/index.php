@@ -28,7 +28,7 @@ $pageTitle = 'Speed from a distance–time graph';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=49">
 </head>
 
 <body
@@ -78,6 +78,6 @@ $pageTitle = 'Speed from a distance–time graph';
     <script src="./questions.js?v=4"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=56"></script>
+    <script src="../../assets/js/lesson-engine.js?v=57"></script>
 </body>
 </html>

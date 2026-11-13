@@ -27,7 +27,7 @@ $pageTitle = 'Negative numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=49">
     <link rel="stylesheet" href="./lesson.css?v=58">
 </head>
 
@@ -66,13 +66,13 @@ $pageTitle = 'Negative numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./negative-numbers.js?v=31"></script>
+    <script src="./negative-numbers.js?v=32"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=21"></script>
-    <script src="./interactive.js?v=84"></script>
+    <script src="./interactive.js?v=85"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=56"></script>
+    <script src="../../assets/js/lesson-engine.js?v=57"></script>
 </body>
 </html>

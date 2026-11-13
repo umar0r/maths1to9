@@ -1798,7 +1798,7 @@
     }
 
     // Feedback shows the way Brilliant does it: the main button bar sticks
-    // to the bottom of the screen, and the newest feedback sits just above
+    // to the bottom of the screen, and the newest feedback sits just below
     // the button on the right, so the pupil always sees both, however tall
     // the card is.
     // On a phone the bar is a coloured sheet across the bottom of the
@@ -1807,25 +1807,25 @@
     // card as usual; this watches the sections and the scroll, so they
     // need do nothing else.
     function placeFeedback(sectionContainer, controls) {
-        const aboveButtons = 16;
+        const belowButtons = 16;
         const phone = window.matchMedia('(max-width: 767px)');
         let live = null;
 
-        // Sit the box just above the main button, lined up with the card's
+        // Sit the box just below the main button, lined up with the card's
         // right edge.
         const follow = () => {
             if (!live) return;
             const buttons = controls.querySelector('.lesson-controls__buttons') || controls;
-            let buttonsTop = window.innerHeight;
+            let buttonsBottom = window.innerHeight;
             if (phone.matches) {
                 // The sheet is fixed to the bottom of the screen. Work from
                 // its size, not where it is drawn, because it slides up.
-                buttonsTop = window.innerHeight - controls.offsetHeight + buttons.offsetTop;
+                buttonsBottom = window.innerHeight - controls.offsetHeight + buttons.offsetTop + buttons.offsetHeight;
             } else if (buttons.getClientRects().length > 0) {
-                buttonsTop = buttons.getBoundingClientRect().top;
+                buttonsBottom = buttons.getBoundingClientRect().bottom;
             }
             const cardBox = live.closest('.lesson-section').getBoundingClientRect();
-            live.style.setProperty('--feedback-top', `${buttonsTop - aboveButtons - live.offsetHeight}px`);
+            live.style.setProperty('--feedback-top', `${buttonsBottom + belowButtons}px`);
             live.style.setProperty('--feedback-right', `${document.documentElement.clientWidth - cardBox.right}px`);
             live.style.setProperty('--feedback-width', `${cardBox.width}px`);
         };

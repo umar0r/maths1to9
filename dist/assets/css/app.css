@@ -2266,7 +2266,7 @@ a {
     position: sticky;
     z-index: 40;
     bottom: 0;
-    padding-top: calc(var(--feedback-height, 0px) + 24px);
+    padding-bottom: calc(var(--feedback-height, 0px) + 24px);
     background: var(--background);
 }
 
@@ -2291,23 +2291,23 @@ a {
     max-width: min(560px, var(--feedback-width, 100%));
     margin: 0;
     box-shadow: var(--shadow-small);
-    transform-origin: bottom right;
+    transform-origin: top right;
 }
 
-/* The bubble's small corner points down at the button. */
+/* The bubble's small corner points up at the button. */
 .lesson-section .question-feedback--bubble.is-visible[data-feedback-live] {
-    border-radius: 22px 22px 6px 22px;
+    border-radius: 22px 6px 22px 22px;
 }
 
 /* Phone: a coloured sheet across the bottom of the screen, holding the
-   feedback and, under it, the main button at full width. */
+   main button at full width and, under it, the feedback. */
 @media (max-width: 767px) {
     .lesson-controls[data-feedback] {
         position: fixed;
         left: 0;
         right: 0;
         margin: 0;
-        padding: calc(var(--feedback-height, 0px) + 36px) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+        padding: 16px 16px calc(var(--feedback-height, 0px) + 36px + env(safe-area-inset-bottom, 0px));
         border-radius: 24px 24px 0 0;
         background: #f1f5f9;
         box-shadow: 0 -10px 24px -14px rgba(28, 43, 74, 0.35);
