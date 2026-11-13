@@ -1761,7 +1761,7 @@
                 }
             }
         });
-        /* One row above the sections: Back on the left, the question counter on the right. */
+        /* Back and Reset share a row with the question counter. */
         const topbar = createElement('div', 'lesson-topbar');
         if (state.lesson.navigation?.back_button === true) {
             const back = createElement('button', 'lesson-back', '‹ Back');
@@ -1774,7 +1774,13 @@
         }
         const position = createElement('p', 'question-number lesson-topbar__position');
         position.hidden = true;
-        const reset = createElement('button', 'lesson-back lesson-reset', 'Reset');
+        const reset = createElement('button', 'lesson-back lesson-reset');
+        reset.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 10a8 8 0 1 1 1 7 M4 4v6h6"/>
+            </svg>`;
+        reset.title = 'Reset card';
         reset.type = 'button';
         reset.setAttribute('aria-label', 'Reset card');
         reset.hidden = true;
