@@ -402,11 +402,12 @@
             ...questionPages(firstMultiply, questions.length)
         ];
         const lastPage = pages.length - 1;
+        const removedSlideHash = 'try-it-9';
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 7,
+            version: 8,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 solved: {},
@@ -415,8 +416,16 @@
                 signRules: [false, false, false, false],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
-            // Version 7 changed the multiplying slides, so older saves start again.
-            upgrade: () => null
+            upgrade: (saved, version) => {
+                if (version !== 7) return null;
+                // The last card was removed. Keep the earlier answers and slide state.
+                return {
+                    ...saved,
+                    index: Math.min(saved.index, lastPage),
+                    screen: Math.min(saved.screen, lastPage),
+                    furthestScreen: Math.min(saved.furthestScreen, lastPage)
+                };
+            }
         });
         const state = section.state;
         section.save();
@@ -931,12 +940,15 @@
                     return;
                 }
                 jumpTo(index);
-            });
+                queueMicrotask(syncHash);
+            }, index === lastPage ? [removedSlideHash] : []);
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
+        const requested = initialHash === `#${removedSlideHash}`
+            ? lastPage
+            : pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
         if (requested >= 0 && api.goToSection('interactive', { moveFocus: false, unlock: true })) {
             jumpTo(requested);
         }

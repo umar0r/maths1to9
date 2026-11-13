@@ -280,7 +280,7 @@ Try it (−4 − (−9)), Practice (Sam's mistake) and Check.
 
 ## Try it: multiplying negative numbers
 
-Try it runs: the four number line examples, the sign grid, then five
+Try it runs: the four number line examples, the sign grid, then the
 multiplying examples. The last one goes straight on to Practice.
 
 **Sign grid page.** Heading: "When you multiply, the two signs tell you the
@@ -301,7 +301,6 @@ and its column pastel blue, so the square where they cross is purple:
 3. Tap: Tap the square that gives the sign of −8 × −2. A wrong square colours
    its row and column and explains why.
 4. Tap: Reveal the products of 1 and then −1 with the cards 1, 0 and −1.
-5. Typed: Sam says −3 × −5 = −15. What is the right answer?
 
 **Number line examples, in this order:** 5 − (−3), 3 − 8, −4 − (−9), −6 + 9.
 Never three of the same kind in a row.
