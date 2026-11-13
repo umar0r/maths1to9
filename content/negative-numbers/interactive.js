@@ -411,6 +411,7 @@
                 solved: {},
                 reveal: { part: 0, seen: [[], []], last: null },
                 conveyor: { signs: ['+', '+'], seen: [] },
+                signRules: [false, false, false, false],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             // Version 6 changed the multiplying slides, so older saves start again.
@@ -683,30 +684,136 @@
             });
         }
 
-        // The four sign rules. Each word sits in its own pastel box: green
-        // for positive, peach for negative.
+        // The four sign rules, each with one word missing: the answer on some
+        // lines, the second sign on others. Pupils drag "positive" or
+        // "negative" into the dashed gap, or tap a word to fill the next gap.
+        // Each word sits in its own pastel box: green for positive, peach
+        // for negative.
         function drawGridPage() {
+            const { createFeedback } = window.Maths1to9LessonEngine;
+            const rules = [
+                { words: ['positive', 'positive', 'positive'], gap: 2 },
+                { words: ['negative', 'negative', 'positive'], gap: 1 },
+                { words: ['positive', 'negative', 'negative'], gap: 2 },
+                { words: ['negative', 'positive', 'negative'], gap: 1 }
+            ];
+            // Saves from before the gaps hold no answers yet.
+            if (!Array.isArray(state.signRules)) {
+                section.update(state => { state.signRules = rules.map(() => false); });
+            }
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
-            const rules = [
-                ['positive', 'positive', 'positive'],
-                ['negative', 'negative', 'positive'],
-                ['positive', 'negative', 'negative'],
-                ['negative', 'positive', 'negative']
-            ];
+            const word = sign => `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`;
             const list = document.createElement('ul');
             list.className = 'nn-sign-rules';
-            for (const [first, second, answer] of rules) {
+            const gaps = rules.map((rule, line) => {
                 const item = document.createElement('li');
-                const word = sign => `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`;
                 item.className = 'nn-sign-rule';
-                item.innerHTML = `${word(first)} × ${word(second)} = ${word(answer)}`;
+                const parts = rule.words.map((sign, index) => (index === rule.gap
+                    ? '<span class="nn-sign-gap"></span>' : word(sign)));
+                item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
                 list.append(item);
-            }
+                const gap = item.querySelector('.nn-sign-gap');
+                gap.setAttribute('aria-label', `Line ${line + 1}: missing word`);
+                return gap;
+            });
             page.append(list);
-            NN.paragraph(page, 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.');
-            return true;
+
+            const tray = document.createElement('div');
+            tray.className = 'nn-sign-tray';
+            tray.setAttribute('role', 'group');
+            tray.setAttribute('aria-label', 'Words to drag into the gaps');
+            page.append(tray);
+            const full = () => state.signRules.every(Boolean);
+            const nextGap = () => state.signRules.indexOf(false);
+
+            function fillGap(line) {
+                const sign = rules[line].words[rules[line].gap];
+                const placed = document.createElement('span');
+                placed.className = `nn-sign-word nn-sign-word--${sign} nn-sign-word--placed`;
+                placed.textContent = sign;
+                gaps[line].replaceWith(placed);
+                gaps[line] = placed;
+            }
+
+            function finish() {
+                tray.remove();
+                page.append(createFeedback('interactive', {
+                    correct: true,
+                    text: 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.'
+                }));
+                api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
+            }
+
+            // A word dropped on a gap: right words stay, wrong ones shake.
+            function place(line, sign) {
+                if (line < 0 || state.signRules[line]) return;
+                const rule = rules[line];
+                if (rule.words[rule.gap] !== sign) {
+                    const gap = gaps[line];
+                    gap.classList.remove('is-wrong');
+                    void gap.offsetWidth;
+                    gap.classList.add('is-wrong');
+                    return;
+                }
+                section.update(state => { state.signRules[line] = true; });
+                fillGap(line);
+                if (full()) finish();
+            }
+
+            ['positive', 'negative'].forEach(sign => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = `nn-sign-word nn-sign-word--${sign} nn-sign-card`;
+                card.textContent = sign;
+                card.setAttribute('aria-label', `${sign}: drag it into a gap, or tap to fill the next gap`);
+                tray.append(card);
+                let drag = null;
+                let dragged = false;
+                card.addEventListener('pointerdown', event => {
+                    drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+                    dragged = false;
+                    card.setPointerCapture(event.pointerId);
+                });
+                card.addEventListener('pointermove', event => {
+                    if (!drag || event.pointerId !== drag.id) return;
+                    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+                    if (!dragged && Math.hypot(dx, dy) < 6) return;
+                    dragged = true;
+                    card.classList.add('is-dragging');
+                    card.style.transform = `translate(${dx}px, ${dy}px)`;
+                    gaps.forEach(gap => {
+                        const box = gap.getBoundingClientRect();
+                        gap.classList.toggle('is-over', event.clientX >= box.left && event.clientX <= box.right
+                            && event.clientY >= box.top && event.clientY <= box.bottom);
+                    });
+                });
+                const drop = event => {
+                    if (!drag || event.pointerId !== drag.id) return;
+                    drag = null;
+                    card.classList.remove('is-dragging');
+                    card.style.transform = '';
+                    if (!dragged) return;
+                    const line = gaps.findIndex(gap => gap.classList.contains('is-over'));
+                    gaps.forEach(gap => gap.classList.remove('is-over'));
+                    place(line, sign);
+                };
+                card.addEventListener('pointerup', drop);
+                card.addEventListener('pointercancel', drop);
+                // A tap (or Enter) fills the next empty gap, line by line.
+                card.addEventListener('click', () => {
+                    if (dragged) {
+                        dragged = false;
+                        return;
+                    }
+                    place(nextGap(), sign);
+                });
+            });
+
+            state.signRules.forEach((filled, line) => { if (filled) fillGap(line); });
+            if (full()) finish();
+            return full();
         }
 
         function nextPage() {
@@ -717,7 +824,10 @@
         function render() {
             root.replaceChildren();
             const page = pages[state.screen];
-            api.setSectionReset('interactive', page.kind === 'grid' ? () => render()
+            api.setSectionReset('interactive', page.kind === 'grid' ? () => {
+                section.resetFields(['signRules']);
+                render();
+            }
                 : page.question.signs ? null : () => {
                     const { question, number } = page;
                     section.update(state => { delete state.solved[number]; });
@@ -740,8 +850,7 @@
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
             if (page.kind === 'grid') {
-                const full = drawGridPage();
-                api.setSectionAction('interactive', { label: 'Next', disabled: !full, onClick: nextPage });
+                if (!drawGridPage()) api.setSectionAction('interactive', { label: 'Next', disabled: true, onClick: nextPage });
             } else {
                 const readOnly = state.screen < state.index || state.finished;
                 drawExample(root, page, readOnly);

@@ -980,6 +980,7 @@
     margin: 1.25rem auto;
     padding: 0;
     list-style: none;
+    user-select: none;
 }
 
 .nn-sign-rule {
@@ -997,8 +998,67 @@
     border-radius: .5rem;
 }
 
-.nn-sign-word--positive { background: #e3f4ee; color: var(--nn-positive); }
-.nn-sign-word--negative { background: #fbe7dc; color: var(--nn-negative); }
+.nn-sign-word--positive { background: #f0f9f5; color: var(--nn-positive); }
+.nn-sign-word--negative { background: #fdf3ed; color: var(--nn-negative); }
+
+/* The dashed gap a word is dragged into: the same size as a word box. */
+.nn-sign-gap {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 6.2em;
+    height: 2.1em;
+    border: 2px dashed #b8c2d3;
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.nn-sign-gap.is-over {
+    border-color: var(--primary);
+    background: #f2f6ff;
+}
+
+.nn-sign-gap.is-wrong { animation: nn-shake .35s ease-in-out; }
+
+.nn-sign-word--placed { animation: nn-pop .25s ease-out; }
+
+.nn-sign-tray {
+    display: flex;
+    justify-content: center;
+    gap: .75rem;
+    margin: 1.5rem auto .5rem;
+    font-size: clamp(1rem, 4.2vw, 1.25rem);
+    font-weight: 700;
+}
+
+.nn-sign-card {
+    position: relative;
+    font: inherit;
+    border: 1px solid #e3e8f0;
+    box-shadow: 0 .12em 0 #e3e8f0;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.nn-sign-card.is-dragging {
+    z-index: 5;
+    cursor: grabbing;
+    box-shadow: 0 .4em 1em rgb(30 41 59 / .15);
+}
+
+@keyframes nn-shake {
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+@keyframes nn-pop {
+    from { transform: scale(.85); opacity: .4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nn-sign-gap.is-wrong,
+    .nn-sign-word--placed { animation: none; }
+}
 
 /* Learn's worked examples: the hops draw in one after another, then the
    count and the landing dot appear. Shown finished for reduced motion. */
@@ -1046,4 +1106,17 @@
 .nn-drawn .nn-value.nn-key {
     color: var(--nn-blue);
     font-weight: 800;
+}
+
+/* On a phone each sign rule stays on one line. */
+@media (max-width: 600px) {
+    .nn-sign-rule {
+        flex-wrap: nowrap;
+        gap: .25rem;
+        font-size: .9rem;
+    }
+
+    .nn-sign-rule .nn-sign-word { padding: .35rem .45rem; }
+
+    .nn-sign-gap { min-width: 5.4em; }
 }
