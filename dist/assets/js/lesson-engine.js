@@ -288,7 +288,8 @@
         };
     }
     // A short celebration when a pupil gets an answer right: confetti in
-    // Practice, a rocket in Check. Starts at the bubble's bottom-left corner.
+    // Practice, a rocket in Check. Starts at the feedback box's left edge,
+    // wherever the engine has put it.
     // Does nothing for pupils who ask for reduced motion.
     const celebrationColours = ['#22c55e', '#facc15', '#3b82f6', '#f97316', '#ec4899', '#a855f7'];
     const rocketPicture = `
@@ -304,12 +305,28 @@
     function celebrate(anchor, kind = 'confetti') {
         if (!anchor?.getBoundingClientRect) return;
         if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        // Wait until placeFeedback has moved the box into the corner (or the
+        // phone sheet): its watcher runs just before this.
+        queueMicrotask(() => startCelebration(anchor, kind));
+    }
+    function startCelebration(anchor, kind) {
         const box = anchor.getBoundingClientRect();
+        // The box slides in, so its drawn position is not where it ends up.
+        // The engine has already worked out where that is: read its fixed
+        // left and top, which leave the slide out.
+        let { left, top } = box;
+        if (anchor.hasAttribute('data-feedback-live')) {
+            const placed = getComputedStyle(anchor);
+            const placedLeft = parseFloat(placed.left);
+            const placedTop = parseFloat(placed.top);
+            if (Number.isFinite(placedLeft)) left = placedLeft;
+            if (Number.isFinite(placedTop)) top = placedTop;
+        }
         const burst = document.createElement('div');
         burst.className = 'celebration';
         burst.setAttribute('aria-hidden', 'true');
-        burst.style.left = `${box.left + 18}px`;
-        burst.style.top = `${box.top + box.height / 2}px`;
+        burst.style.left = `${left + 18}px`;
+        burst.style.top = `${top + box.height / 2}px`;
         if (kind === 'rocket') {
             const rocket = document.createElement('span');
             rocket.className = 'celebration__rocket';
@@ -1871,41 +1888,40 @@
             `${state.lesson.title} | Maths1to9`;
     }
 
-    // Feedback shows the way Brilliant does it: the main button bar sticks
-    // to the bottom of the screen, and the newest feedback sits just below
-    // the button, centred under it, so the pupil always sees both, however
-    // tall the card is. On a phone the bar is a coloured sheet across the
-    // bottom of the screen, with the feedback above the button (see
-    // app.css). Older answered cards on the same screen keep their
-    // feedback inside the card. Lessons append the box inside their
-    // card as usual; this watches the sections and the scroll, so they
-    // need do nothing else.
+    // Feedback shows like a notification. On a computer or tablet the
+    // newest feedback sits in the top right corner of the screen, just
+    // under the lesson header, which holds the score,
+    // and the main button bar sticks to the bottom of the screen. On a
+    // phone the bar is a coloured sheet across the bottom of the screen,
+    // with the feedback above the button (see app.css). Older answered
+    // cards on the same screen keep their feedback inside the card.
+    // Lessons append the box inside their card as usual; this watches the
+    // sections and the scroll, so they need do nothing else.
     function placeFeedback(sectionContainer, controls) {
         const gap = 16;
         const phone = window.matchMedia('(max-width: 767px)');
         let live = null;
 
-        // Desktop: sit the box just below the main button, centred on the
-        // card. Phone: just above the button, in the sheet.
+        // Desktop: the top right corner. Phone: just above the button, in
+        // the sheet.
         const follow = () => {
             if (!live) return;
-            const buttons = controls.querySelector('.lesson-controls__buttons') || controls;
             let top;
             if (phone.matches) {
                 // The sheet is fixed to the bottom of the screen. Work from
                 // its size, not where it is drawn, because it slides up.
+                const buttons = controls.querySelector('.lesson-controls__buttons') || controls;
                 const buttonsTop = window.innerHeight - controls.offsetHeight + buttons.offsetTop;
                 top = buttonsTop - gap - live.offsetHeight;
             } else {
-                const buttonsBottom = buttons.getClientRects().length > 0
-                    ? buttons.getBoundingClientRect().bottom
-                    : window.innerHeight;
-                top = buttonsBottom + gap;
+                // Clear the lesson header (it sticks to the top and holds
+                // the score), or the site header if there isn't one.
+                const header = document.querySelector('.lesson-header') ||
+                    document.querySelector('.site-header');
+                const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+                top = Math.max(0, headerBottom) + gap;
             }
-            const cardBox = live.closest('.lesson-section').getBoundingClientRect();
             live.style.setProperty('--feedback-top', `${top}px`);
-            live.style.setProperty('--feedback-left', `${cardBox.left + (cardBox.width - live.offsetWidth) / 2}px`);
-            live.style.setProperty('--feedback-width', `${cardBox.width}px`);
         };
 
         // The look of the bar comes from the box: right, wrong, the calm
@@ -1956,6 +1972,9 @@
         });
         window.addEventListener('resize', update);
         window.addEventListener('scroll', follow, { passive: true });
+        // The lesson header changes height as it shrinks on scroll.
+        const header = document.querySelector('.lesson-header');
+        if (header && window.ResizeObserver) new ResizeObserver(follow).observe(header);
         update();
     }
 

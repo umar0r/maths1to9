@@ -587,16 +587,15 @@ The first argument is the section the box is in: `'explanation'` (Learn),
 Question cards call these themselves, and fire the confetti or rocket.
 Working goes inside the same box (append a span), never in a second box.
 
-**Where it sits (changed 2026-11-12, the Brilliant way).** While a
-feedback box shows, the engine sticks the main button bar to the bottom of
-the screen and puts the box just below the button (above it on a
-phone), so the pupil always
-sees the feedback and the button together, however tall the card is.
-Only the newest box on the screen goes in the bar; older answered cards
-still on the screen keep their feedback inside the card.
+**Where it sits (changed 2026-11-13).** While a feedback box shows, the
+engine sticks the main button bar to the bottom of the screen and puts the
+box where the pupil always sees it, however tall the card is. Only the
+newest box on the screen moves; older answered cards still on the screen
+keep their feedback inside the card.
 
-- Desktop and tablet (768px and wider): the bubble sits under the button,
-  centred.
+- Desktop and tablet (768px and wider): the box shows like a notification
+  in the top right corner of the screen, just under the lesson header. It
+  keeps its usual colours and slides in from the right.
 - Phone (under 768px): the bar becomes a coloured sheet across the bottom
   of the screen (green when right, pink when wrong, cream for a right
   answer in Try it). The words sit on the sheet and the main button fills
