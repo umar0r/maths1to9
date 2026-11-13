@@ -73,6 +73,6 @@ $pageTitle = 'Adding decimal numbers';
     <script src="./interactive.js?v=17"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=62"></script>
+    <script src="../../assets/js/lesson-engine.js?v=63"></script>
 </body>
 </html>

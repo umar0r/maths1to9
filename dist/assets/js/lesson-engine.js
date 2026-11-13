@@ -288,7 +288,8 @@
         };
     }
     // A short celebration when a pupil gets an answer right: confetti in
-    // Practice, a rocket in Check. Starts at the bubble's bottom-left corner.
+    // Practice, a rocket in Check. Starts at the feedback box's left edge,
+    // wherever the engine has put it.
     // Does nothing for pupils who ask for reduced motion.
     const celebrationColours = ['#22c55e', '#facc15', '#3b82f6', '#f97316', '#ec4899', '#a855f7'];
     const rocketPicture = `
@@ -304,12 +305,28 @@
     function celebrate(anchor, kind = 'confetti') {
         if (!anchor?.getBoundingClientRect) return;
         if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        // Wait until placeFeedback has moved the box into the corner (or the
+        // phone sheet): its watcher runs just before this.
+        queueMicrotask(() => startCelebration(anchor, kind));
+    }
+    function startCelebration(anchor, kind) {
         const box = anchor.getBoundingClientRect();
+        // The box slides in, so its drawn position is not where it ends up.
+        // The engine has already worked out where that is: read its fixed
+        // left and top, which leave the slide out.
+        let { left, top } = box;
+        if (anchor.hasAttribute('data-feedback-live')) {
+            const placed = getComputedStyle(anchor);
+            const placedLeft = parseFloat(placed.left);
+            const placedTop = parseFloat(placed.top);
+            if (Number.isFinite(placedLeft)) left = placedLeft;
+            if (Number.isFinite(placedTop)) top = placedTop;
+        }
         const burst = document.createElement('div');
         burst.className = 'celebration';
         burst.setAttribute('aria-hidden', 'true');
-        burst.style.left = `${box.left + 18}px`;
-        burst.style.top = `${box.top + box.height / 2}px`;
+        burst.style.left = `${left + 18}px`;
+        burst.style.top = `${top + box.height / 2}px`;
         if (kind === 'rocket') {
             const rocket = document.createElement('span');
             rocket.className = 'celebration__rocket';
