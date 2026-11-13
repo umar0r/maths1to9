@@ -595,7 +595,7 @@ Only the newest box on the screen goes in the bar; older answered cards
 still on the screen keep their feedback inside the card.
 
 - Desktop and tablet (768px and wider): the bubble sits above the button,
-  lined up with the card's left edge.
+  lined up with the card's right edge.
 - Phone (under 768px): the bar becomes a coloured sheet across the bottom
   of the screen (green when right, pink when wrong, cream for a right
   answer in Try it). The words sit on the sheet and the main button fills

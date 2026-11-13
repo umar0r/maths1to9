@@ -27,7 +27,7 @@ $pageTitle = 'Convert a fraction to a percentage';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=49">
     <link rel="stylesheet" href="./lesson.css?v=7">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Convert a fraction to a percentage';
     <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=56"></script>
+    <script src="../../assets/js/lesson-engine.js?v=57"></script>
 </body>
 </html>
