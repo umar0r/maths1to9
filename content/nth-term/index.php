@@ -27,7 +27,7 @@ $pageTitle = 'Using the nth term';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=52">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=53">
     <link rel="stylesheet" href="./lesson.css?v=16">
 </head>
 
@@ -73,6 +73,6 @@ $pageTitle = 'Using the nth term';
     <script src="./interactive.js?v=18"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=58"></script>
+    <script src="../../assets/js/lesson-engine.js?v=60"></script>
 </body>
 </html>

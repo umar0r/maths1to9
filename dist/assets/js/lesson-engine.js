@@ -1777,7 +1777,7 @@
         const reset = createElement('button', 'lesson-back lesson-reset');
         reset.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M4 10a8 8 0 1 1 1 7 M4 4v6h6"/>
             </svg>`;
         reset.title = 'Reset card';
@@ -1788,8 +1788,18 @@
             const id = state.sections[state.currentIndex]?.id;
             const question = currentQuestionReset(id);
             const restart = state.sectionResets.get(id);
+            setResetInteraction(resetInteractionKey(id, question), false);
             if (question) question.run();
             else restart?.();
+            updateResetVisibility();
+            if (reset.hidden) {
+                const card = state.sectionElements[state.currentIndex];
+                const heading = card.querySelector('[data-screen-heading], h2, h3');
+                if (heading) {
+                    heading.tabIndex = -1;
+                    heading.focus({ preventScroll: true });
+                }
+            }
         });
         elements.resetButton = reset;
         topbar.append(position, reset);
@@ -1823,6 +1833,28 @@
                 return section;
             }
         );
+
+        function recordCardInteraction(event) {
+            const card = state.sectionElements[state.currentIndex];
+            if (!card?.contains(event.target)) return;
+            const id = state.sections[state.currentIndex].id;
+            const question = currentQuestionReset(id);
+            if (!question && !state.sectionResets.has(id)) return;
+            const target = event.target;
+            if (event.type === 'click' && !target.closest('button, [role="button"]')) return;
+            if (event.type === 'pointerup' && !target.closest('[role="application"], [role="slider"], svg[role="group"]')) return;
+            if (event.type === 'keydown' && (
+                !target.closest('[role="application"], [role="slider"], [role="button"]') ||
+                !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', ' '].includes(event.key)
+            )) return;
+            const key = resetInteractionKey(id, question);
+            if (!hasResetInteraction(key)) setResetInteraction(key, true);
+            // A control can replace its card or navigate during the same event.
+            queueMicrotask(updateResetVisibility);
+        }
+        for (const type of ['click', 'input', 'change', 'pointerup', 'keydown']) {
+            sectionContainer.addEventListener(type, recordCardInteraction, true);
+        }
 
         const controls = renderLessonControls();
 
@@ -3360,6 +3392,39 @@
         return visible.length === 1 ? visible[0] : null;
     }
 
+    function resetInteractionKey(sectionId, question) {
+        const slide = question?.id || window.location.hash || sectionId;
+        const practice = sectionId === 'question-bank' && state.sectionStates.get(sectionId)?.state;
+        const session = practice ? `:${practice.session}:${practice.items[practice.screen]?.seed}` : '';
+        return `maths1to9-reset:${state.slug}:${slide}${session}`;
+    }
+
+    // Track actions by card so a refresh or Back keeps the affordance.
+    const resetInteractions = new Map();
+    function hasResetInteraction(key) {
+        if (resetInteractions.has(key)) return resetInteractions.get(key);
+        try { return window.sessionStorage.getItem(key) === '1'; }
+        catch { return false; }
+    }
+
+    function setResetInteraction(key, interacted) {
+        resetInteractions.set(key, interacted);
+        try {
+            if (interacted) window.sessionStorage.setItem(key, '1');
+            else window.sessionStorage.removeItem(key);
+        } catch {
+            // The button still works when browser storage is unavailable.
+        }
+    }
+
+    function updateResetVisibility() {
+        if (!elements.resetButton) return;
+        const id = state.sections[state.currentIndex]?.id;
+        const question = currentQuestionReset(id);
+        elements.resetButton.hidden = !(question || state.sectionResets.has(id)) ||
+            !hasResetInteraction(resetInteractionKey(id, question));
+    }
+
     function updateControls() {
         const complete =
             isSectionComplete(state.currentIndex);
@@ -3371,9 +3436,7 @@
             state.sectionActions.get(section?.id);
 
         if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
-        if (elements.resetButton) {
-            elements.resetButton.hidden = !state.sectionResets.has(section?.id) && !currentQuestionReset(section?.id);
-        }
+        updateResetVisibility();
         if (elements.position) {
             const position = state.sectionPositions.get(section?.id) || '';
             elements.position.textContent = position;
@@ -3691,7 +3754,7 @@
                 const cards = (state.questionResets.get(sectionId) || []).filter(item =>
                     item.container !== container && item.container.isConnected);
                 let reviewAction;
-                cards.push({ container, run() {
+                cards.push({ container, id: questionId, run() {
                     if (config.readOnly || section.state.cards[questionId]?.correct === true) {
                         reviewAction ??= state.sectionActions.get(sectionId);
                         config.onReplayReset?.();
@@ -3725,7 +3788,10 @@
                 router.register(id, handler, aliases);
             },
 
-            setSlideHash(id, options) { router.sync(id, options); },
+            setSlideHash(id, options) {
+                router.sync(id, options);
+                if (elements.resetButton) queueMicrotask(updateResetVisibility);
+            },
 
             setSectionProgress(sectionId, completed, total) {
                 if (findSectionIndex(sectionId) === -1 || !Number.isFinite(total) || !Number.isFinite(completed)) return;
