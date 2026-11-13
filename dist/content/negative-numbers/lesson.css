@@ -800,32 +800,6 @@
     }
 }
 
-.nn-reveal__lists {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .45rem;
-    max-width: 24rem;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.nn-reveal__lists ul {
-    display: grid;
-    grid-template-rows: repeat(3, 1.9rem);
-    align-items: center;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: clamp(.86rem, 4.1vw, 1.15rem);
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.nn-reveal__lists li[hidden] { display: block; visibility: hidden; }
-
-/* Multiplying −1: no list shows. */
-.nn-reveal__lists[hidden] { display: none; }
-
 /* Try it: the sign machine. Two punch cards sit in the machine; tapping
    one flips its sign, and the answer rides out along the belt to the tray. */
 .nn-machine {
