@@ -75,6 +75,35 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('Continue');
         });
 
+        test('the Practice thermometer sets the temperature by dragging or typing', async ({ page }) => {
+            await page.goto('content/negative-numbers/', { waitUntil: 'networkidle' });
+            await page.evaluate(() => window.Maths1to9Lesson.goToSection('question-bank', { unlock: true }));
+            for (let step = 0; step < 20 && !(await prompt(page).innerText()).startsWith('It is '); step++) {
+                if (!await solve(page)) await mainAction(page).click();
+            }
+            const sum = (await prompt(page).innerText()).match(/^It is −(\d+)°C.* goes up by (\d+)°C/);
+            expect(sum).not.toBeNull();
+            const start = -Number(sum[1]);
+            const answer = start + Number(sum[2]);
+            const thermometer = page.getByRole('slider', { name: 'Set the temperature' });
+            const input = page.getByRole('textbox', { name: 'Your answer' });
+
+            await expect(thermometer.locator('.nn-level-label')).toHaveText(`${String(start).replace('-', '−')}°C`);
+            await expect(mainAction(page)).toBeDisabled();
+            const bulb = await thermometer.locator('.nn-level').boundingBox();
+            await page.mouse.move(bulb.x + bulb.width / 2, bulb.y);
+            await page.mouse.down();
+            await page.mouse.move(bulb.x + bulb.width / 2 + 20, bulb.y, { steps: 5 });
+            await page.mouse.up();
+            await expect(input).toHaveValue(String(start + 2).replace('-', '−'));
+            await input.fill(String(answer));
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
+            await reload(page);
+            await expect(input).toHaveValue(String(answer));
+            await mainAction(page).click();
+            await expect(mainAction(page)).toHaveText('Continue');
+        });
+
         test('new work survives retries, reloads, Back and two more Practice sessions', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);

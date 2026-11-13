@@ -17,9 +17,9 @@
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,
             question(item, random) {
-                const { generate, withAnswerLine, withSignGrid } = window.NegativeNumbers;
+                const { generate, withAnswerVisual, withSignGrid } = window.NegativeNumbers;
                 const generated = generate(item, random);
-                return generated.signs ? withSignGrid(generated, { afterWrongAnswer: true }) : withAnswerLine(generated);
+                return generated.signs ? withSignGrid(generated, { afterWrongAnswer: true }) : withAnswerVisual(generated, { thermometer: item.type === 'temperature-rise' });
             },
             upgrade: () => null
         });

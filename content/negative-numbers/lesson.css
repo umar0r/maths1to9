@@ -162,14 +162,40 @@
     height: 1.5rem;
 }
 
-.negative-line--answer[aria-disabled="false"] {
+.negative-answer-control[aria-disabled="false"] {
     cursor: pointer;
     touch-action: pan-y;
 }
 
-.negative-line--answer:focus-visible {
+.negative-answer-control:focus-visible {
     outline: 2px solid #175ca1;
     border-radius: .5rem;
+}
+
+.negative-answer-widget--thermometer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.negative-answer-widget--thermometer .question-answer-label {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.negative-answer-widget--thermometer input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.negative-answer-widget--thermometer .nn-thermometer {
+    margin: 0;
+}
+
+.negative-answer-widget--thermometer .nn-thermometer[aria-disabled="false"] {
+    cursor: grab;
+    touch-action: none;
 }
 
 .question-card:has(> .retained-result__answer) .negative-answer-widget .question-answer-label {

@@ -319,7 +319,8 @@ too far if they went past.
 Practice shows a number line on typed questions where one move shows the
 calculation. Pupils can tap the line or type the number, then press Check.
 The line shows the hops and the selected number. Longer lines only label
-every fifth number so the labels fit.
+every fifth number so the labels fit. The temperature-rise question uses
+the Learn thermometer. Pupils can drag it or type the temperature.
 
 ## Practice
 
