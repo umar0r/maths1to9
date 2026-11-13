@@ -2254,7 +2254,7 @@ a {
 
 /* Feedback, the Brilliant way. While a feedback box shows, the main button
    bar sticks to the bottom of the screen and the box sits just above the
-   button, lined up with the card's left edge. The engine (placeFeedback in
+   button, lined up with the card's right edge. The engine (placeFeedback in
    lesson-engine.js) sets data-feedback on the bar and works out where the
    box goes, so it is always on screen. On a phone the bar becomes a
    coloured sheet across the bottom of the screen (further down). */
@@ -2286,12 +2286,17 @@ a {
     position: fixed;
     z-index: 41;
     top: var(--feedback-top, auto);
-    left: var(--feedback-left, auto);
+    right: var(--feedback-right, auto);
     width: max-content;
     max-width: min(560px, var(--feedback-width, 100%));
     margin: 0;
     box-shadow: var(--shadow-small);
-    transform-origin: bottom left;
+    transform-origin: bottom right;
+}
+
+/* The bubble's small corner points down at the button. */
+.lesson-section .question-feedback--bubble.is-visible[data-feedback-live] {
+    border-radius: 22px 22px 6px 22px;
 }
 
 /* Phone: a coloured sheet across the bottom of the screen, holding the

@@ -27,7 +27,7 @@ $pageTitle = 'Multiplying numbers in standard form';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=47">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=48">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -74,6 +74,6 @@ $pageTitle = 'Multiplying numbers in standard form';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=55"></script>
+    <script src="../../assets/js/lesson-engine.js?v=56"></script>
 </body>
 </html>
