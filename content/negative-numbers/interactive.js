@@ -565,8 +565,9 @@
                 rows.forEach((list, partIndex) => list.forEach((row, index) => {
                     row.hidden = !seen[partIndex].includes(values[index]);
                 }));
-                // Once they're multiplying −1, the 1 × list is put away.
-                lists.children[0].hidden = part === 1;
+                // Once they're multiplying −1, no list shows: the sum above
+                // and the feedback say it all.
+                lists.hidden = part === 1;
                 if (done && !feedback) {
                     feedback = createFeedback('interactive', { correct: true, text: page.question.feedback });
                     body.append(feedback);
