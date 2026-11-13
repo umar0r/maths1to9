@@ -2252,12 +2252,13 @@ a {
     border: 1px solid #ecdcae;
 }
 
-/* Feedback, the Brilliant way. While a feedback box shows, the main button
-   bar sticks to the bottom of the screen and the box sits just below the
-   button, centred under it. The engine (placeFeedback in
-   lesson-engine.js) sets data-feedback on the bar and works out where the
-   box goes, so it is always on screen. On a phone the bar becomes a
-   coloured sheet across the bottom of the screen (further down). */
+/* Feedback shows like a notification. On a computer or tablet the newest
+   feedback box sits in the top right corner of the screen, and the main
+   button bar sticks to the bottom of the screen. The engine
+   (placeFeedback in lesson-engine.js) sets data-feedback on the bar and
+   works out how far down the box goes, so it clears the lesson header. On
+   a phone the bar becomes a coloured sheet across the bottom of the
+   screen (further down). */
 .lesson-section-container {
     padding-bottom: var(--feedback-space, 0px);
 }
@@ -2266,7 +2267,7 @@ a {
     position: sticky;
     z-index: 40;
     bottom: 0;
-    padding-bottom: calc(var(--feedback-height, 0px) + 24px);
+    padding-bottom: 24px;
     background: var(--background);
 }
 
@@ -2285,18 +2286,32 @@ a {
 .lesson-section .question-feedback.is-visible[data-feedback-live] {
     position: fixed;
     z-index: 41;
-    top: var(--feedback-top, auto);
-    left: var(--feedback-left, auto);
-    width: max-content;
-    max-width: min(560px, var(--feedback-width, 100%));
+    top: var(--feedback-top, 16px);
+    right: 20px;
+    left: auto;
+    width: 360px;
+    max-width: calc(100vw - 40px);
     margin: 0;
-    box-shadow: var(--shadow-small);
-    transform-origin: top center;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px -8px rgba(28, 43, 74, 0.28), 0 2px 6px rgba(28, 43, 74, 0.08);
+    transform-origin: top right;
+    animation: feedback-notification-in 240ms ease-out;
 }
 
-/* Centred under the button, so the bubble is rounded all round. */
 .lesson-section .question-feedback--bubble.is-visible[data-feedback-live] {
-    border-radius: 22px;
+    border-radius: 18px;
+}
+
+@keyframes feedback-notification-in {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* Phone: a coloured sheet across the bottom of the screen, holding the
