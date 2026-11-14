@@ -281,3 +281,5 @@
 .pv-tap-card[aria-pressed=true] { border-color: #155e75; background: #ecfeff; }
 .pv-tap-card:focus-visible { outline: 3px solid #155e75; outline-offset: 2px; }
 .pv-tap-card:disabled { color: inherit; opacity: 1; cursor: default; }
+
+.pv-learned { display: grid; gap: .9rem; margin: 1.25rem 0 0; padding-left: 1.25rem; line-height: 1.5; }

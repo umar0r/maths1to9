@@ -83,6 +83,7 @@
     "comparison": {
         "eyebrow": "Check",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Check what you’ve learned",
         "intro": "",
         "questions": [
@@ -103,8 +104,14 @@
             }
         ],
         "summary": {
-            "title": "You've finished Place value",
-            "points": []
+            "title": "What you've learned",
+            "points": [
+                {"text": "Each digit is worth a different amount depending on its column. In 670, the 7 is in the tens column, so it is worth 70."},
+                {"text": "Digits after the decimal point are worth less than one. The columns are tenths, hundredths, thousandths and so on."},
+                {"text": "A longer decimal is not always bigger. 0.8 is the same as 0.80, so 0.8 is bigger than 0.75."},
+                {"text": "Multiplying by 10 moves every digit one column to the left. Dividing by 10 moves every digit one column to the right."},
+                {"text": "If you divide one number by 10 and multiply the other by 10, the answer stays the same. 384 × 2 and 38.4 × 20 both make 768."}
+            ]
         }
     },
     "score_activities": [

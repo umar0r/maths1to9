@@ -77,6 +77,6 @@ $pageTitle = 'Drawing reciprocal graphs';
     <script src="./interactive.js?v=4"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=75"></script>
+    <script src="../../assets/js/lesson-engine.js?v=76"></script>
 </body>
 </html>

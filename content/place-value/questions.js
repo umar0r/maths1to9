@@ -23,8 +23,7 @@
 
     async function mountCheck(root, lesson) {
         const api = window.Maths1to9Lesson;
-        const { renderResults, renderScorePanel, escapeHtml } = window.Maths1to9LessonEngine;
-        const questions = window.PlaceValue.checks();
+                const questions = window.PlaceValue.checks();
         const count = questions.length;
         sectionEvent('gate');
         api.setSectionAction('comparison', { label: 'Check', disabled: true, onClick() {} });
@@ -79,25 +78,14 @@
         }
 
         function renderEnding() {
-            const rows = questions.map((question, index) => {
-                const cardRoot = document.createElement('div');
-                return api.createQuestion(cardRoot, questionConfig(index, true)).result();
-            });
-            const scorePanel = document.createElement('div');
-            const results = document.createElement('div');
-            root.append(scorePanel, results);
-            renderScorePanel(scorePanel, {
-                correct: rows.filter(row => row.firstCorrect === true).length, total: count
-            });
-            renderResults(results, rows, { heading: 'Your Check results' });
-            const summary = document.createElement('section');
-            summary.innerHTML = `<h3>${escapeHtml(lesson.comparison.summary.title)}</h3>`;
+            const list = document.createElement('ul');
+            list.className = 'pv-learned';
             for (const point of lesson.comparison.summary.points) {
-                const paragraph = document.createElement('p');
-                paragraph.textContent = point.text;
-                summary.append(paragraph);
+                const item = document.createElement('li');
+                item.textContent = point.text;
+                list.append(item);
             }
-            root.append(summary);
+            root.append(list);
             api.setSectionAction('comparison', {
                 label: 'All lessons',
                 async onClick() {
@@ -113,7 +101,7 @@
             if (state.screen === count) {
                 const heading = document.createElement('h3');
                 heading.dataset.screenHeading = '';
-                heading.textContent = 'Your completed Check';
+                heading.textContent = lesson.comparison.summary.title;
                 root.append(heading);
             }
             api.setSectionBack('comparison', state.screen > 0 ? {
