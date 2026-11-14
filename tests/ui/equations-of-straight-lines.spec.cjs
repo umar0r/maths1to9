@@ -79,7 +79,7 @@ for (const site of ['', '/dist']) for (const phone of [false, true]) {
                 points = checkScreen(await screen(page), points);
                 if (hash !== previousHash) {
                     await reload(page); await layout(page, hash.slice(1));
-                    if (await back(page).isVisible()) {
+                    if (await back(page).isEnabled()) {
                         await back(page).click(); await expect(main(page)).toBeEnabled(); await main(page).click();
                         await expect(page).toHaveURL(new RegExp(`${hash}$`));
                     }

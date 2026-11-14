@@ -109,7 +109,7 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe('g
             }else await shapesOnly(page);
             if(hash!==prior){
                 await reload(page);await clippedPlots(page);
-                if(await page.getByRole('button',{name:'Previous screen',exact:true}).isVisible()){
+                if(await page.getByRole('button',{name:'Previous screen',exact:true}).isEnabled()){
                     await page.getByRole('button',{name:'Previous screen',exact:true}).click();
                     await main(page).click();await expect(page).toHaveURL(new RegExp(hash+'$'));
                 }

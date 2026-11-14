@@ -224,8 +224,10 @@ have it and some won't. That's expected.
 - Text "‹ Back". `aria-label="Previous screen"`.
 - Looks like a quiet text link: muted text colour, no border or background,
   small type, at least a 44 × 44 px touch area. Visible focus outline.
-- Hidden (`hidden` attribute, not just invisible) when there is nothing to
-  go back to.
+- Always shown, on every screen. When there is nothing to go back to it is
+  greyed out (`disabled`), not hidden, so the row never jumps. The Reset
+  button (↺) at the top right works the same way: greyed out until there is
+  something on the card to reset.
 
 ### What it does
 

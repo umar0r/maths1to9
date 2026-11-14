@@ -50,7 +50,7 @@ for (const lesson of lessons) {
             // Back then Next from an unanswered Practice question, once per lesson.
             if (!backChecked && /question-bank-question-[2-9]/.test(state.hash) && mainText === 'Check' && state.mainActions[0]?.disabled) {
                 const back = page.getByRole('button', { name: 'Previous screen' });
-                if (await back.isVisible().catch(() => false)) {
+                if (await back.isEnabled().catch(() => false)) {
                     const before = await scoreOf(page);
                     await back.click();
                     await expect(main, `Back should show Next at ${state.where}`).toHaveText('Next');

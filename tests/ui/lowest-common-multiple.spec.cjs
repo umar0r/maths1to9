@@ -49,7 +49,7 @@ for (const width of [1280, 375]) {
                 }
                 const url = page.url();
                 const previous = page.getByRole('button', { name: 'Previous screen', exact: true });
-                if (!visited.has(url) && await previous.isVisible()) {
+                if (!visited.has(url) && await previous.isEnabled()) {
                     visited.add(url);
                     const points = await score(page);
                     await previous.click(); await main(page).click();
