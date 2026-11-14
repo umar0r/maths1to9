@@ -183,15 +183,18 @@
         };
     }
 
+    // A negative number times itself. Exam papers ask this as "n²"; here it
+    // is a plain sum, because the lesson doesn't teach letters or squares.
     function squareNegative(size) {
+        const square = size * size;
         return {
             questionType: 'square-negative', input: 'choice',
-            prompt: `n = −${size}. What is n²? (n² means n × n.)`,
+            prompt: `Work out (−${size}) × (−${size}).`,
             options: [
-                option(String(size * size), `Right. −${size} × −${size} = ${size * size}. ${signReason(true)}`, true),
-                option(`−${size * size}`, `n² is −${size} × −${size}. ${signReason(true)}`),
-                option(`−${2 * size}`, `That doubles −${size}. n² means −${size} × −${size}, not −${size} × 2.`),
-                option(String(2 * size), `That's 2 × ${size}. n² means −${size} × −${size}.`)
+                option(String(square), `Right. ${size} × ${size} = ${square}. ${signReason(true)}`, true),
+                option(`−${square}`, `${size} × ${size} = ${square}, but check the sign. ${signReason(true)}`),
+                option(`−${2 * size}`, `That adds −${size} and −${size}. This question multiplies them.`),
+                option(String(2 * size), `That's ${size} + ${size}. Multiply ${size} by ${size} instead.`)
             ]
         };
     }
@@ -215,15 +218,16 @@
         };
     }
 
-    function alwaysPositive() {
+    // Which sum has a positive answer? `big` is always bigger than `small`.
+    function alwaysPositive(big, small) {
         return {
             questionType: 'always-positive', input: 'choice',
-            prompt: 'p and q are different positive numbers. n is a negative number. Which of these is always positive?',
+            prompt: 'Which of these has a positive answer?',
             options: [
-                option('p − n', 'Right. Taking away a negative is the same as adding, so p − n is p plus a positive number.', true),
-                option('p + n', 'This can be positive or negative. It depends on which is bigger: p or the size of n.'),
-                option('p − q', 'This is negative when q is bigger than p.'),
-                option('p ÷ n', 'A positive number divided by a negative number is always negative.')
+                option(`${big} − (−${small})`, `Right. Taking away a negative is the same as adding, so ${big} − (−${small}) = ${big} + ${small} = ${big + small}.`, true),
+                option(`−${big} + ${small}`, `−${big} + ${small} = −${big - small}. Start at −${big} and move ${small} right: you don't reach zero.`),
+                option(`${small} − ${big}`, `${small} − ${big} = −${big - small}. Taking away more than ${small} takes you below zero.`),
+                option(`${big} × (−${small})`, `${big} × (−${small}) = −${big * small}. ${signReason(false)}`)
             ]
         };
     }
@@ -383,7 +387,7 @@
             if (low + high === 0) high += 2;
             question = halfway(low, high);
         } else if (item.type === 'always-positive') {
-            question = alwaysPositive();
+            question = alwaysPositive(integer(6, 12), integer(2, 5));
         } else if (item.type === 'multiply-same') {
             question = multiplySame(integer(2, 9), integer(2, 9));
         } else if (item.type.startsWith('rewrite')) {

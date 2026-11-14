@@ -142,6 +142,7 @@ test('negative-numbers: question-bank Practice questions have the right answers'
     }
     for (const question of of('square-negative')) {
         const size = Number(question.prompt.match(/−(\d+)/)[1]);
+        assert.equal(question.prompt, `Work out (−${size}) × (−${size}).`);
         assert.equal(answer(question), String(size * size));
     }
     for (const question of of('halfway')) {
@@ -152,5 +153,13 @@ test('negative-numbers: question-bank Practice questions have the right answers'
     // Practice is half multiple choice, half typed.
     const kinds = Q.practiceTypes.map(type => Q.generate({ type }, seededRandom(1)).input);
     assert.equal(kinds.filter(kind => kind === 'choice').length, Q.practiceTypes.length / 2);
-    assert.equal(answer(of('always-positive')[0]), 'p − n');
+    // No letters: the lesson never teaches algebra.
+    for (const question of of('always-positive')) {
+        const [big, small] = answer(question).match(/\d+/g).map(Number);
+        assert.ok(big > small, question.prompt);
+        assert.equal(answer(question), `${big} − (−${small})`);
+    }
+    for (const question of [...of('square-negative'), ...of('always-positive')]) {
+        assert.ok(!/[a-z]²|\b[npq]\b/.test(question.prompt + question.options.map(o => o.label).join(' ')), question.prompt);
+    }
 });
