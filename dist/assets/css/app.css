@@ -3831,8 +3831,8 @@ noscript p {
 }
 .lesson-back[hidden] { display: none; }
 .lesson-topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .5rem; min-height: 44px; }
-/* When Back, the position and Reset are all hidden, the row takes no space. */
-.lesson-topbar:not(:has(> :not([hidden]))) { display: none; }
+/* On a screen with no Back, position or Reset, the row takes no space. */
+.lesson-topbar--empty { display: none; }
 .lesson-topbar > .lesson-back { grid-area: 1 / 1; justify-self: start; }
 .lesson-topbar > .lesson-reset {
     grid-area: 1 / 3;

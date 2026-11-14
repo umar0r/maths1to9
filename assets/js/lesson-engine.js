@@ -3516,8 +3516,22 @@
         if (!elements.resetButton) return;
         const id = state.sections[state.currentIndex]?.id;
         const question = currentQuestionReset(id);
-        elements.resetButton.hidden = !(question || state.sectionResets.has(id)) ||
+        const resettable = Boolean(question || state.sectionResets.has(id));
+        elements.resetButton.hidden = !resettable ||
             !hasResetInteraction(resetInteractionKey(id, question));
+        updateTopbarSpace(resettable);
+    }
+
+    // The Back/Reset row takes no space on a screen that can never show
+    // either, so the card sits higher. On a screen with a reset it keeps its
+    // space from the start, so the card doesn't jump when Reset appears.
+    function updateTopbarSpace(resettable) {
+        const topbar = elements.resetButton?.parentElement;
+        if (!topbar) return;
+        const empty = !resettable &&
+            (elements.backButton?.hidden ?? true) &&
+            (elements.position?.hidden ?? true);
+        topbar.classList.toggle('lesson-topbar--empty', empty);
     }
 
     function updateControls() {
@@ -3537,6 +3551,7 @@
             elements.position.textContent = position;
             elements.position.hidden = position === '';
         }
+        updateResetVisibility();
         const reviewing = state.lesson.navigation?.back_button === true || state.questionSets.has(section?.id);
         const finishedAction = state.finished && !reviewing;
         const showSectionAction = Boolean(sectionAction) && !finishedAction;

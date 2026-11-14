@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/highest-common-factor.cjs');
-const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, goToStage } = require('./helpers.cjs');
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 async function finish(page, stopAtPractice = false) {
     for (let step = 0; step < 150; step++) {
@@ -30,7 +30,7 @@ for (const width of [1280, 375]) {
             const old = await page.evaluate(() => window.Maths1to9Progress.getLessonActivityState('highest-common-factor', 'question-bank'));
             for (let session = 2; session <= 3; session++) {
                 await page.getByRole('button', { name: 'Practise again', exact: true }).click();
-                await expect(page.getByRole('button', { name: /^Check,/ })).toBeEnabled();
+                await expect(page.locator('.lesson-navigation__button', { hasText: 'Check' })).toBeEnabled();
                 // A typed retry remains one question's evidence and survives reload.
                 if (session === 2) {
                     await solve(page); await main(page).click(); await main(page).click();
@@ -53,9 +53,9 @@ for (const width of [1280, 375]) {
                 expect(saved.data.items).not.toEqual(old.data.items);
                 await expect.poll(() => skillCount(page)).toBe(evidence + (session - 1) * 6);
                 await expect(page.locator('details')).toHaveCount(session - 1);
-                await page.getByRole('button', { name: /^Check,/ }).click();
+                await goToStage(page, 'Check');
                 await expect(main(page)).toHaveText('All lessons');
-                await page.getByRole('button', { name: /^Practice,/ }).click();
+                await goToStage(page, 'Practice');
             }
             expect(errors).toEqual([]);
         });

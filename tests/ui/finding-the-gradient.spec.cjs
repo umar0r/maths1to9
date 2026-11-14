@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn, goToStage } = require('./helpers.cjs');
 const slug = 'finding-the-gradient';
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const input = page => page.locator('.question-card input:visible');
@@ -289,7 +289,7 @@ async function checkQuestions(page, revisits, start = 0) {
 async function repeatTwice(page) {
     const before = await page.evaluate(() => window.Maths1to9Lesson.getProgress());
     const evidence = await page.evaluate(async () => (await window.Maths1to9Progress.getSkillProgress('calculate-gradient')).assessedQuestions);
-    await page.getByRole('button', { name: /^Practice,/ }).click();
+    await goToStage(page, 'Practice');
     for (let session = 2; session <= 3; session++) {
         await page.getByRole('button', { name: 'Practise again', exact: true }).click();
         await practice(page, { decimal: session === 2 });
@@ -300,9 +300,9 @@ async function repeatTwice(page) {
         expect(progress.finished).toBe(true);
         expect(await page.evaluate(async () => (await window.Maths1to9Progress.getSkillProgress('calculate-gradient')).assessedQuestions))
             .toBe(evidence + (session - 1) * 6);
-        await page.getByRole('button', { name: /^Check,/ }).click();
+        await goToStage(page, 'Check');
         await expect(main(page)).toHaveText('All lessons');
-        if (session < 3) await page.getByRole('button', { name: /^Practice,/ }).click();
+        if (session < 3) await goToStage(page, 'Practice');
     }
 }
 const modes = [

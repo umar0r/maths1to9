@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/adding-decimal-numbers.cjs');
-const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn, goToStage } = require('./helpers.cjs');
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const points = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 
@@ -65,7 +65,7 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
     await main(page).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
-    await page.locator('.lesson-navigation__button[data-stage-index="2"]').click();
+    await goToStage(page, 'Practice');
     await expect(page.locator('#lesson-section-question-bank .retained-results > li')).toHaveCount(6);
     expect(await points(page)).toBe(160);
     await expect(main(page)).toHaveCount(1);
