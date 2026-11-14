@@ -191,8 +191,9 @@
      * It clears everything the lesson saved: its progress record
      * (position, answers, score), the evidence for its skills,
      * the engine's card-reset flags and any keys the lesson keeps
-     * itself (e.g. "negative-numbers-dot:…"). Then the page
-     * reloads so every badge and Daily Review card is redrawn.
+     * itself (e.g. "negative-numbers-dot:…"). It asks first in a
+     * notification, then reloads so every badge and Daily Review
+     * card is redrawn.
      * ------------------------------------------------------------------ */
 
     const RESET_ICON = `
@@ -255,28 +256,7 @@
         }
     }
 
-    async function resetLesson(button) {
-        const card = button.closest('.lesson-card');
-        const slug = button.dataset.slug ?? '';
-
-        if (!card || slug === '') {
-            return;
-        }
-
-        const confirmed = window.confirm(
-            `Start ${button.dataset.title} again from the beginning? ` +
-            'Your answers and score for this lesson will be cleared.'
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        const skillIds = (card.dataset.skills ?? '')
-            .split(',')
-            .map((skillId) => skillId.trim())
-            .filter(Boolean);
-
+    async function resetLesson(slug, skillIds) {
         await progressApi.clearLessonProgress(slug);
         await Promise.all(
             skillIds.map(
@@ -298,6 +278,81 @@
         window.location.reload();
     }
 
+    /* Asks first in the same notification bubble lessons use for
+     * feedback: top right on a computer, along the bottom on a
+     * phone. Clicking it, clicking elsewhere or Escape closes it. */
+    let openNotice = null;
+
+    function closeNotice() {
+        openNotice?.remove();
+        openNotice = null;
+    }
+
+    function showResetNotice(button) {
+        const card = button.closest('.lesson-card');
+        const slug = button.dataset.slug ?? '';
+
+        if (!card || slug === '') {
+            return;
+        }
+
+        closeNotice();
+
+        const skillIds = (card.dataset.skills ?? '')
+            .split(',')
+            .map((skillId) => skillId.trim())
+            .filter(Boolean);
+        const notice = document.createElement('div');
+        const text = document.createElement('p');
+        const confirm = document.createElement('button');
+
+        notice.className =
+            'question-feedback question-feedback--bubble ' +
+            'question-feedback--calm is-visible is-correct home-notice';
+        notice.setAttribute('role', 'alertdialog');
+        notice.setAttribute('aria-label', 'Reset lesson');
+        notice.style.setProperty(
+            '--notice-top',
+            `${(document.querySelector('.home-header')
+                ?.getBoundingClientRect().bottom ?? 0) + 16}px`
+        );
+
+        text.textContent =
+            `Start ${button.dataset.title} again from the beginning? ` +
+            'Your answers and score for this lesson will be cleared.';
+
+        confirm.type = 'button';
+        confirm.className = 'cta-button home-notice__button';
+        confirm.textContent = 'Start again';
+        confirm.addEventListener('click', (event) => {
+            event.stopPropagation();
+            confirm.disabled = true;
+            resetLesson(slug, skillIds);
+        });
+
+        notice.addEventListener('click', closeNotice);
+        notice.append(text, confirm);
+        document.body.append(notice);
+        openNotice = notice;
+        confirm.focus();
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeNotice();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (
+            openNotice &&
+            !openNotice.contains(event.target) &&
+            !event.target.closest?.('.lesson-card__reset')
+        ) {
+            closeNotice();
+        }
+    });
+
     /* One listener covers catalogue cards and their Daily Review
      * copies. The button sits inside the card link, so stop the
      * click from opening the lesson. */
@@ -310,7 +365,7 @@
 
         event.preventDefault();
         event.stopPropagation();
-        resetLesson(button);
+        showResetNotice(button);
     });
 
     /* ------------------------------------------------------------------ *

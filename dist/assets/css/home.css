@@ -507,6 +507,76 @@
     display: block;
 }
 
+/* "Start again?" notice for the Reset arrow. The bubble look comes from
+   the shared .question-feedback classes in app.css; this only places it
+   like a lesson's feedback notification: top right on a computer, along
+   the bottom on a phone. */
+.home-notice {
+    position: fixed;
+    z-index: 41;
+    top: var(--notice-top, 16px);
+    right: 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    margin: 0;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px -8px rgba(28, 43, 74, 0.28), 0 2px 6px rgba(28, 43, 74, 0.08);
+    cursor: pointer;
+    transform-origin: top right;
+    animation: home-notice-in 240ms ease-out;
+}
+
+.home-notice p {
+    margin: 0 0 12px;
+}
+
+.home-notice__button {
+    width: 100%;
+    cursor: pointer;
+}
+
+@keyframes home-notice-in {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 767px) {
+    .home-notice {
+        top: auto;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        left: 16px;
+        width: auto;
+        max-width: none;
+        animation-name: home-notice-up;
+    }
+}
+
+@keyframes home-notice-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-notice {
+        animation: none;
+    }
+}
+
 .lesson-card__title {
     display: block;
     font-size: 1.18rem;
