@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors, screen, checkScreen } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, screen, checkScreen, goToStage } = require('./helpers.cjs');
 const solve = require('./solvers/quadratic-turning-points.cjs');
 const { read, nudge } = solve;
 
@@ -162,7 +162,7 @@ test.describe('phone checks', () => {
         await until(page, '#check-1');
         await until(page, '#summary');
         const score = await page.evaluate(() => Maths1to9Lesson.getScore());
-        await page.getByRole('button', { name: /^Practice,/ }).click();
+        await goToStage(page, 'Practice');
         await page.getByRole('button', { name: 'Practise again', exact: true }).click();
         await reload(page);
         await until(page, '#question-bank-question-6');

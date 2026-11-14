@@ -31,7 +31,8 @@ async function screen(page) {
             where: `${location.hash || '(no hash)'} "${text([...document.querySelectorAll('h2')].find(visible) ?? document.body).slice(0, 60)}"`,
             hash: location.hash,
             heading: text([...document.querySelectorAll('h2')].find(visible) ?? document.body).slice(0, 80),
-            scores: scores.map(el => ({ text: text(el), label: el.getAttribute('aria-label') ?? '', inHeader: !!el.closest('header') })),
+            // The marks pill holds the number, then a "marks" tag.
+            scores: scores.map(el => ({ text: text(el.querySelector('.lesson-header__stage-progress-points') ?? el), label: el.getAttribute('aria-label') ?? '', inHeader: !!el.closest('header') })),
             mainActions: [...document.querySelectorAll(MAIN_ACTION)].filter(visible).map(b => ({ text: text(b), disabled: b.disabled })),
             continues: buttons.filter(b => /^continue\b/i.test(text(b))).length
         };
@@ -93,4 +94,14 @@ async function checkThenMoveOn(page, look, submit) {
     await expect.poll(() => signature(page)).toBe(after);
 }
 
-module.exports = { SCORE, MAIN_ACTION, watchForErrors, screen, screenProblems, checkScreen, checkThenMoveOn };
+// Open a stage ("Practice", "Check"). On a computer the pupil taps it in the
+// stepper. A phone shows only the current stage, so pupils can't jump there:
+// the test opens the stage's link (#practice, #check) instead.
+async function goToStage(page, label) {
+    const button = page.getByRole('button', { name: new RegExp(`^${label},`) });
+    if (await button.isVisible()) await button.click();
+    else await page.evaluate(id => { location.hash = id; }, label.toLowerCase().replace(/\s+/g, '-'));
+    await expect(page.locator('.lesson-navigation__button[aria-pressed="true"]')).toContainText(label);
+}
+
+module.exports = { SCORE, MAIN_ACTION, watchForErrors, screen, screenProblems, checkScreen, checkThenMoveOn, goToStage };

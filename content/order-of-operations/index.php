@@ -27,7 +27,7 @@ $pageTitle = 'Order of operations';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=56">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
     <link rel="stylesheet" href="./lesson.css?v=4">
 </head>
 
@@ -37,9 +37,8 @@ $pageTitle = 'Order of operations';
 >
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="site-logo" href="../../">
+            <a class="site-logo" href="../../" aria-label="Maths1to9 home">
                 <span class="site-logo__mark" aria-hidden="true">1–9</span>
-                <span>Maths1to9</span>
             </a>
         </div>
     </header>

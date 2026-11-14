@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/rounding-and-significant-figures.cjs');
-const { MAIN_ACTION, watchForErrors, checkThenMoveOn } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, checkThenMoveOn, goToStage } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
@@ -133,7 +133,7 @@ for (const width of [1280, 375]) {
             await expect(page).toHaveURL(/\/$/);
             expect((await page.request.get(page.url())).ok()).toBe(true);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-            await page.locator('.lesson-navigation__button[data-stage-index="2"]').click();
+            await goToStage(page, 'Practice');
             const evidenceBefore = await page.evaluate(() => window.Maths1to9Progress.getSkillProgress('round-decimal-places'));
             for (let session = 0; session < 2; session++) {
                 await page.getByRole('button', { name: 'Practise again', exact: true }).click();

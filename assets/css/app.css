@@ -136,7 +136,118 @@ a {
     justify-content: space-between;
 }
 
+/* The logo and the lesson title share the left of the site header. */
+.site-header__start {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 14px;
+    margin-right: 16px;
+}
+
+.site-header .lesson-header__title {
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    overflow: hidden;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+    .site-header__start {
+        gap: 10px;
+        margin-right: 8px;
+    }
+
+    .site-header .lesson-header__title {
+        font-size: 0.95rem;
+    }
+}
+
+/* On a lesson page the site header holds the title and marks, and sticks. */
+.site-header--lesson {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+/* The marks pill: the points, then a small "marks" tag. A thin blue
+   bar along the bottom fills up as the pupil earns marks. */
+.site-header .lesson-header__stage-progress {
+    position: relative;
+    top: auto;
+    right: auto;
+    overflow: hidden;
+    display: inline-flex;
+    flex: none;
+    width: auto;
+    height: 38px;
+    align-items: center;
+    gap: 7px;
+    margin-left: 20px;
+    padding: 0 5px 0 13px;
+    background: var(--surface);
+    border: 3px solid var(--border);
+    border-radius: 999px;
+}
+
+.site-header .lesson-header__stage-progress::before {
+    display: none;
+}
+
+.site-header .lesson-header__stage-progress::after {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--stage-progress, 0%);
+    height: 3px;
+    background: var(--primary);
+    content: '';
+    transition: width 300ms ease;
+}
+
+.site-header .lesson-header__stage-progress-points {
+    color: var(--primary-dark);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.site-header .lesson-header__stage-progress-label {
+    padding: 4px 8px;
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+@media (max-width: 520px) {
+    .site-header .lesson-header__stage-progress {
+        height: 32px;
+        gap: 5px;
+        margin-left: 8px;
+        padding: 0 4px 0 9px;
+        border-width: 2px;
+    }
+
+    .site-header .lesson-header__stage-progress-points {
+        font-size: 0.85rem;
+    }
+
+    .site-header .lesson-header__stage-progress-label {
+        padding: 3px 6px;
+        font-size: 0.64rem;
+    }
+}
+
 .site-logo {
+    flex: none;
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -155,10 +266,18 @@ a {
     background: linear-gradient(135deg, var(--primary) 0%, #6d5cf0 100%);
     color: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 2px 0 var(--primary-dark);
+    box-shadow: 2px 3px 0 var(--primary-dark);
     font-size: 0.8rem;
     font-weight: 900;
     letter-spacing: -0.04em;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+/* On hover the logo presses in like a button. */
+.site-logo:hover .site-logo__mark,
+.site-logo:focus-visible .site-logo__mark {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 2px 0 var(--primary-dark), inset 1px 2px 3px rgba(0, 0, 0, 0.25);
 }
 
 .lesson-loading {
@@ -364,7 +483,7 @@ a {
 .lesson-header--compact .lesson-header__stage-progress {
     position: static;
     flex: none;
-    margin-left: 20px;
+    margin-left: auto;
 }
 
 .lesson-header--compact .lesson-header__practice-progress {
@@ -876,23 +995,45 @@ a {
     width: calc(100% - 26px);
 }
 
-/* On a phone only the numbered dots fit beside the logo. */
-@media (max-width: 520px) {
+/* On a narrow screen only the current stage shows, as its number and name.
+   A blue ring round the number fills as the pupil works through the stage. */
+@media (max-width: 760px) {
+    .site-header--lesson ~ .lesson-page {
+        margin-top: 16px;
+    }
+
     .site-header .lesson-navigation--stages {
-        flex: 0 1 136px;
-        width: 136px;
+        flex: none;
+        width: auto;
     }
 
-    .site-header .lesson-navigation--stages .lesson-navigation__button,
+    .site-header .lesson-navigation--stages .lesson-navigation__button:not([aria-pressed="true"]) {
+        display: none;
+    }
+
     .site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"] {
-        min-height: 44px;
-        align-content: center;
-        gap: 0;
-        font-size: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        font-size: 0.78rem;
+        font-weight: 800;
+        white-space: nowrap;
     }
 
-    .site-header .lesson-navigation--stages .lesson-navigation__button:not(:last-child)::after {
-        top: 21px;
+    .site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"]::before {
+        width: 28px;
+        height: 28px;
+        background:
+            radial-gradient(circle closest-side, var(--primary) 0 calc(100% - 4px), transparent calc(100% - 3.5px)),
+            conic-gradient(var(--primary) var(--stage-fill, 0%), var(--border) 0);
+        border: 0;
+        box-shadow: none;
+        font-size: 0.7rem;
+    }
+
+    .site-header .lesson-navigation--stages .lesson-navigation__button[aria-pressed="true"]::after {
+        display: none;
     }
 }
 
@@ -3690,6 +3831,8 @@ noscript p {
 }
 .lesson-back[hidden] { display: none; }
 .lesson-topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .5rem; min-height: 44px; }
+/* On a screen with no Back, position or Reset, the row takes no space. */
+.lesson-topbar--empty { display: none; }
 .lesson-topbar > .lesson-back { grid-area: 1 / 1; justify-self: start; }
 .lesson-topbar > .lesson-reset {
     grid-area: 1 / 3;

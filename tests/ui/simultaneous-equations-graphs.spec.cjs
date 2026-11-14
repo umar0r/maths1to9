@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors, screen, checkScreen } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, screen, checkScreen, goToStage } = require('./helpers.cjs');
 const solve = require('./solvers/simultaneous-equations-graphs.cjs');
 const { read, tap } = solve;
 
@@ -192,7 +192,7 @@ test.describe('simultaneous-equations-graphs phone checks', () => {
         await solve(page);
         await until(page, '#summary');
         const score = await page.evaluate(() => Maths1to9Lesson.getScore());
-        await page.getByRole('button', { name: /^Practice,/ }).click();
+        await goToStage(page, 'Practice');
         for (let session = 2; session <= 3; session++) {
             await page.getByRole('button', { name: 'Practise again', exact: true }).click();
             await reload(page);
