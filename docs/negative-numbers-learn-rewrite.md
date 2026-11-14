@@ -255,14 +255,14 @@ this screen.
 
 **Text:**
 
-> So when you take away a negative, you can add instead. The take-away sign
-> and the negative sign turn into a plus.
+> So when you take away a negative, you can add instead.
+
+Above the equation: “Tap the negative signs to turn them into a plus.”
 
 **What the pupil does:**
 
 1. `3 − (−4)` is shown large with the two signs `− (−` highlighted.
-   "Tap the two minus signs to turn them into a plus." On tap, the two
-   signs and the bracket fade and a `+` takes their place, and the line reads
+   On tap, the two signs and the bracket fade and a `+` takes their place, and the line reads
    `3 − (−4) = 3 + 4`.
 2. The working appears straight away: **3 − (−4) = 3 + 4 = 7**
 
@@ -280,17 +280,10 @@ Try it (−4 − (−9)), Practice (Sam's mistake) and Check.
 
 ## Try it: multiplying negative numbers
 
-Try it runs: the four number line examples, the sign grid, then the
+Try it runs: the four number line examples, the sign-rule page, then the
 multiplying examples. The last one goes straight on to Practice.
 
-**Sign grid page.** Heading: "When you multiply, the two signs tell you the
-sign of the answer." "Tap each square to fill the grid." A grid with + and −
-along the top and down the side, and four squares showing ?. Tapping a
-square shows its sign and an example under the grid: 2 × 3 = 6, 2 × −3 = −6,
-−2 × 3 = −6 or −2 × −3 = 6. Once all four are filled:
-
-> When the two signs are the same, the answer is positive. When they are
-> different, the answer is negative.
+**Sign-rule page.** Show the four completed multiplication rules in words.
 
 **Multiplying examples.** Each has a small table of the signs, with heavier
 lines around the top row and first column. The question's row is pastel red
@@ -320,9 +313,13 @@ Practice shows a number line on typed questions where one move shows the
 calculation. Pupils can tap the line or type the number, then press Check.
 The line shows the hops and the selected number. Longer lines only label
 every fifth number so the labels fit. The temperature-rise question uses
-the Learn thermometer. Pupils can drag it or type the temperature.
+the sideways Learn thermometer. Pupils drag the level to set the
+temperature, then press Check.
 
 ## Practice
+
+The final question is the blue sign-card activity. Pupils fill all four
+gaps and press Check before the Practice results.
 
 Eleven questions in a fixed mix, with new numbers each session, so the same
 kind of sum never comes three times in a row:

@@ -331,7 +331,7 @@
 
     function pick(random) {
         const { randomInt } = window.Maths1to9LessonEngine;
-        return practiceTypes.map(type => ({ type, seed: randomInt(0, 4294967295, random) }));
+        return [...practiceTypes, 'sign-cards'].map(type => ({ type, seed: randomInt(0, 4294967295, random) }));
     }
 
     function prepare(question, random) {
@@ -344,7 +344,9 @@
         const { randomInt } = window.Maths1to9LessonEngine;
         const integer = (min, max) => randomInt(min, max, random);
         let question;
-        if (item.type === 'take-positive') {
+        if (item.type === 'sign-cards') {
+            return signCards();
+        } else if (item.type === 'take-positive') {
             const start = integer(1, 9);
             question = takePositive(start, start + integer(1, 9));
         } else if (item.type === 'add-two-negatives') {
@@ -788,13 +790,33 @@
         return `<svg viewBox="0 0 160 ${height}" aria-hidden="true">${picture}</svg>`;
     }
 
+    const sidewaysStep = 30;
+
+    // The Learn thermometer lies on its side, with the colder values on the left.
+    function sidewaysThermometer(level, { min = -10, max = 10, showLevel = false } = {}) {
+        const phone = window.matchMedia('(max-width: 600px)').matches;
+        const x = value => 70 + (value - min) * sidewaysStep;
+        const tube = 40, bulb = 30;
+        const labelY = tube + (phone ? 52 : 40);
+        let picture = `<rect class="nn-tube" x="${bulb}" y="${tube - 11}" width="${x(max) + 20 - bulb}" height="22" rx="11"/>
+            <circle class="nn-bulb" cx="${bulb}" cy="${tube}" r="22"/>
+            <rect class="nn-mercury" x="${bulb}" y="${tube - 5}" width="${x(level) - bulb}" height="10"/>`;
+        for (let value = min; value <= max; value++) {
+            const tone = value < 0 ? 'nn-negative' : value > 0 ? 'nn-positive' : 'nn-zero';
+            picture += `<path class="nn-tick" d="M ${x(value)} ${tube + 13} V ${tube + (value % 5 ? 21 : 27)}"/>`;
+            if (!showLevel || value % 5 === 0) picture += `<text class="nn-value nn-scale ${tone}" x="${x(value)}" y="${labelY}">${signed(value)}</text>`;
+        }
+        picture += `<path class="nn-level" d="M ${x(level)} ${tube - 15} V ${tube + 15}"/>`;
+        if (showLevel) picture += `<text class="nn-side-level-label" x="${x(level)}" y="10">${signed(level)}°C</text>`;
+        return `<svg viewBox="0 -20 ${x(max) + 30} ${labelY + 30}" aria-hidden="true">${picture}</svg>`;
+    }
+
     function withAnswerVisual(question, { thermometer: useThermometer = false } = {}) {
         if (question.input !== 'number' || question.noLine) return question;
         const { tidyNumber } = window.Maths1to9LessonEngine;
         const { start, amount } = question;
         const end = start + amount;
         const { min, max } = lineRange(question);
-        const scale = useThermometer ? thermometerScale(min, max) : null;
 
         return {
             ...question,
@@ -807,9 +829,8 @@
                     if (useThermometer) {
                         host.classList.add('negative-answer-widget--thermometer');
                         control = document.createElement('div');
-                        control.className = 'nn-thermometer negative-answer-control';
-                        control.setAttribute('aria-orientation', 'vertical');
-                        draw = value => { control.innerHTML = thermometer(value, scale); };
+                        control.className = 'nn-thermometer nn-side negative-answer-control';
+                        draw = value => { control.innerHTML = sidewaysThermometer(value, { min, max, showLevel: true }); };
                         host.append(control);
                     } else {
                         draw = drawLine(host, start, end, start, false, { min, max, hops: true });
@@ -820,15 +841,22 @@
                     control.setAttribute('aria-valuemin', min);
                     control.setAttribute('aria-valuemax', max);
 
-                    const label = document.createElement('label');
-                    label.className = 'question-answer-label';
-                    label.textContent = 'Your answer';
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.inputMode = 'decimal';
-                    input.autocomplete = 'off';
-                    label.append(input);
-                    host.append(label);
+                    let input;
+                    if (!useThermometer) {
+                        const label = document.createElement('label');
+                        label.className = 'question-answer-label';
+                        label.textContent = 'Your answer';
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.inputMode = 'decimal';
+                        input.autocomplete = 'off';
+                        label.append(input);
+                        host.append(label);
+                        input.addEventListener('input', () => {
+                            show(input.value);
+                            onChange(input.value);
+                        });
+                    }
 
                     let position = start;
                     let editable;
@@ -841,30 +869,31 @@
                         control.setAttribute('aria-label', useThermometer ? 'Set the temperature' : 'Choose an answer on the number line');
                         control.setAttribute('aria-valuenow', position);
                         control.setAttribute('aria-valuetext', selected ? (useThermometer ? `${signed(position)}°C` : signed(position)) : `Starting at ${signed(start)}. No number selected.`);
-                        input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
+                        if (input) input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
                     }
 
                     function select(value) {
-                        input.value = signed(value);
-                        show(input.value);
-                        onChange(input.value);
+                        const answer = signed(value);
+                        if (input) input.value = answer;
+                        show(answer);
+                        onChange(answer);
                     }
 
                     const clamp = value => Math.max(min, Math.min(max, value));
                     if (useThermometer) {
                         let drag;
                         function move(event) {
-                            const dx = event.clientX - drag.x;
-                            const dy = event.clientY - drag.y;
-                            const degrees = drag.horizontal
-                                ? drag.position + dx / 10
-                                : max - ((event.clientY - drag.box.top) / drag.box.height * scale.height - thermometerTop) / scale.step;
-                            select(clamp(Math.round(degrees)));
+                            // A vertical drag raises or lowers the temperature. Along
+                            // the tube, dragging right warms it and dragging left cools it.
+                            const distance = drag.horizontal ? event.clientX - drag.x : drag.y - event.clientY;
+                            select(clamp(drag.position + Math.round(distance / drag.pixelsPerDegree)));
                         }
                         control.addEventListener('pointerdown', event => {
                             if (!editable || !event.isPrimary || event.button !== 0) return;
                             control.setPointerCapture(event.pointerId);
-                            drag = { x: event.clientX, y: event.clientY, position, box: control.querySelector('svg').getBoundingClientRect() };
+                            const svg = control.querySelector('svg');
+                            const pixelsPerDegree = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width * sidewaysStep;
+                            drag = { x: event.clientX, y: event.clientY, position, pixelsPerDegree };
                         });
                         control.addEventListener('pointermove', event => {
                             if (!editable || !control.hasPointerCapture(event.pointerId)) return;
@@ -877,7 +906,7 @@
                             move(event);
                         });
                         control.addEventListener('pointerup', event => {
-                            if (editable && control.hasPointerCapture(event.pointerId)) move(event);
+                            if (editable && control.hasPointerCapture(event.pointerId) && drag.horizontal !== undefined) move(event);
                         });
                     } else {
                         const track = control.querySelector('.negative-track');
@@ -898,21 +927,18 @@
                         else if (event.key === 'End') select(max);
                         else select(clamp(position + step));
                     });
-                    input.addEventListener('input', () => {
-                        show(input.value);
-                        onChange(input.value);
-                    });
-
                     return {
                         update({ value, editable: canAnswer }) {
                             editable = canAnswer;
                             control.tabIndex = canAnswer ? 0 : -1;
                             control.setAttribute('aria-disabled', String(!canAnswer));
-                            input.disabled = !canAnswer;
-                            input.value = value ?? '';
+                            if (input) {
+                                input.disabled = !canAnswer;
+                                input.value = value ?? '';
+                            }
                             show(value);
                         },
-                        focus() { input.focus(); }
+                        focus() { (input ?? control).focus(); }
                     };
                 },
                 isEmpty(value) { return tidyNumber(value ?? '') === null; },
@@ -993,10 +1019,152 @@
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
+    const multiplicationSigns = [
+        ['positive', 'positive', 'positive'],
+        ['negative', 'negative', 'positive'],
+        ['positive', 'negative', 'negative'],
+        ['negative', 'positive', 'negative']
+    ];
+
+    function signCards() {
+        const rules = multiplicationSigns.map((row, index) => ({
+            signs: row.map(word => word === 'positive' ? '+' : '−'),
+            gap: index % 2 === 0 ? 2 : 1
+        }));
+        const complete = value => Array.isArray(value) && value.length === rules.length && value.every(Boolean);
+        return {
+            questionType: 'sign-cards',
+            input: 'custom',
+            prompt: 'Fill in the missing signs.',
+            widget: {
+                render(host, { onChange }) {
+                    let filled;
+                    let editable;
+                    const page = document.createElement('div');
+                    page.className = 'nn-learn';
+                    host.append(page);
+                    const name = sign => (sign === '+' ? 'plus' : 'minus');
+                    const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
+                    const list = document.createElement('ul');
+                    list.className = 'nn-sign-rules nn-sign-rules--signs';
+                    const gaps = rules.map((rule, line) => {
+                        const item = document.createElement('li');
+                        item.className = 'nn-sign-rule';
+                        const parts = rule.signs.map((sign, index) => (index === rule.gap
+                            ? '<span class="nn-sign-gap"></span>' : symbol(sign)));
+                        item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
+                        list.append(item);
+                        const gap = item.querySelector('.nn-sign-gap');
+                        gap.setAttribute('aria-label', `Line ${line + 1}: missing sign`);
+                        return gap;
+                    });
+                    page.append(list);
+
+                    const tray = document.createElement('div');
+                    tray.className = 'nn-sign-tray';
+                    tray.setAttribute('role', 'group');
+                    tray.setAttribute('aria-label', 'Signs to drag into the gaps');
+                    page.append(tray);
+                    const full = () => filled.every(Boolean);
+                    const nextGap = () => filled.indexOf(false);
+
+                    function fillGap(line) {
+                        const sign = rules[line].signs[rules[line].gap];
+                        const placed = document.createElement('span');
+                        placed.className = 'nn-punch-card nn-sign-placed';
+                        placed.textContent = sign;
+                        gaps[line].replaceWith(placed);
+                        gaps[line] = placed;
+                    }
+
+                    // A card dropped on a gap: right signs stay, wrong ones shake.
+                    function place(line, sign) {
+                        if (!editable || line < 0 || filled[line]) return;
+                        const rule = rules[line];
+                        if (rule.signs[rule.gap] !== sign) {
+                            const gap = gaps[line];
+                            gap.classList.remove('is-wrong');
+                            void gap.offsetWidth;
+                            gap.classList.add('is-wrong');
+                            return;
+                        }
+                        filled[line] = true;
+                        onChange(filled);
+                        fillGap(line);
+                        tray.hidden = full();
+                    }
+
+                    ['+', '−'].forEach(sign => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.className = 'nn-punch-card nn-sign-card';
+                        card.textContent = sign;
+                        card.setAttribute('aria-label', `${name(sign)}: drag it into a gap, or tap to fill the next gap`);
+                        tray.append(card);
+                        let drag = null;
+                        let dragged = false;
+                        card.addEventListener('pointerdown', event => {
+                            if (!editable) return;
+                            drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+                            dragged = false;
+                            card.setPointerCapture(event.pointerId);
+                        });
+                        card.addEventListener('pointermove', event => {
+                            if (!drag || event.pointerId !== drag.id) return;
+                            const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+                            if (!dragged && Math.hypot(dx, dy) < 6) return;
+                            dragged = true;
+                            card.classList.add('is-dragging');
+                            card.style.transform = `translate(${dx}px, ${dy}px)`;
+                            gaps.forEach(gap => {
+                                const box = gap.getBoundingClientRect();
+                                gap.classList.toggle('is-over', event.clientX >= box.left && event.clientX <= box.right
+                                    && event.clientY >= box.top && event.clientY <= box.bottom);
+                            });
+                        });
+                        const drop = event => {
+                            if (!drag || event.pointerId !== drag.id) return;
+                            drag = null;
+                            card.classList.remove('is-dragging');
+                            card.style.transform = '';
+                            if (!dragged) return;
+                            const line = gaps.findIndex(gap => gap.classList.contains('is-over'));
+                            gaps.forEach(gap => gap.classList.remove('is-over'));
+                            place(line, sign);
+                        };
+                        card.addEventListener('pointerup', drop);
+                        card.addEventListener('pointercancel', drop);
+                        // A tap (or Enter) fills the next empty gap, line by line.
+                        card.addEventListener('click', () => {
+                            if (dragged) {
+                                dragged = false;
+                                return;
+                            }
+                            place(nextGap(), sign);
+                        });
+                    });
+                    return {
+                        update({ value, editable: canAnswer }) {
+                            editable = canAnswer;
+                            filled = value?.slice() ?? rules.map(() => false);
+                            filled.forEach((done, line) => {
+                                if (done && gaps[line].classList.contains('nn-sign-gap')) fillGap(line);
+                            });
+                            tray.hidden = !editable || full();
+                        }
+                    };
+                },
+                isEmpty(value) { return !complete(value); },
+                mark() { return { correct: true, feedback: 'Same signs give +. Different signs give −.' }; },
+                answerText(value) { return complete(value) ? '+, −, −, +' : ''; }
+            }
+        };
+    }
+
     window.NegativeNumbers = {
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
-        practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, drawDragToAnswer, resetNumberLine
+        multiplicationSigns, practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
+        multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, sidewaysThermometer, drawDragToAnswer, resetNumberLine
     };
 })();

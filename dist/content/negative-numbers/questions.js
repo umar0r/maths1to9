@@ -13,7 +13,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 3, count: api.getLesson().question_bank.session_length,
+            version: 4, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,
             question(item, random) {
@@ -21,7 +21,17 @@
                 const generated = generate(item, random);
                 return generated.signs ? withSignGrid(generated, { afterWrongAnswer: true }) : withAnswerVisual(generated, { thermometer: item.type === 'temperature-rise' });
             },
-            upgrade: () => null
+            upgrade: (saved, version) => {
+                if (version !== 3) return null;
+                // Keep existing questions and answers. A finished session now
+                // has one final question before its results.
+                const seed = (saved.items.at(-1).seed + 1) >>> 0;
+                return {
+                    ...saved,
+                    items: [...saved.items, { type: 'sign-cards', seed }],
+                    finished: false
+                };
+            }
         });
     }
 
