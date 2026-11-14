@@ -31,16 +31,20 @@
     },
     "explanation": {
         "eyebrow": "Learn",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Round whole numbers and decimals"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
         "title": "Choose the digits, then round",
         "intro": ""
     },
     "question_bank": {
         "hide_heading": true,
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise rounding",
         "intro": "",
         "session_length": 6
@@ -83,6 +87,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you have learnt",
         "intro": "",
         "questions": [

@@ -41,7 +41,7 @@ for (const width of [1280, 375]) {
             const errors = watchForErrors(page);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
             await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByText('Rounding replaces a number with a nearby, simpler number.', { exact: true })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Rounding means finding the closest simpler number.', exact: true })).toBeVisible();
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();
@@ -173,6 +173,7 @@ for (const width of [1280, 375]) {
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
         await expect(prompt(page)).toHaveCount(0);
+        await mainAction(page).click();
         await expect(page.locator('.rounding-marker:visible')).toHaveText('67');
         await expect(page.locator('.significant-equation:visible')).toHaveText('67 ≈ 70');
         await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
@@ -207,11 +208,11 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-        for (let index = 1; index < 11; index++) {
+        for (let index = 1; index < 12; index++) {
             await mainAction(page).click();
-            if (index === 1) await solve(page);
+            if (index === 2) await solve(page);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-            if ([5, 7, 9].includes(index)) await page.screenshot({ path: `/private/tmp/rounding-learn-${index + 1}-${width}.png`, fullPage: true });
+            if ([6, 8, 10].includes(index)) await page.screenshot({ path: `/private/tmp/rounding-learn-${index + 1}-${width}.png`, fullPage: true });
         }
         await mainAction(page).click();
         await expect(page.getByRole('heading', { name: 'Example 1 of 4 · Step 1 of 3', exact: true })).toBeVisible();

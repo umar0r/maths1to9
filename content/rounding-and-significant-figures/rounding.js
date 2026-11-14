@@ -182,7 +182,8 @@
         return prepare(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt), random);
     }
     const learnScreens = [
-        { title: 'What is rounding?', lines: ['Rounding replaces a number with a nearby, simpler number.', 'To round to the nearest 10, choose the closest ten. 67 is closer to 70 than to 60.'], line: true, caption: 'The ≈ sign means about the same as.' },
+        { title: 'Rounding means finding the closest simpler number.', lines: [] },
+        { title: 'To round to the nearest 10, choose the closest ten.', lines: ['67 is closer to 70 than to 60.'], line: true, caption: 'The ≈ sign means about the same as.' },
         { title: 'Which ten is nearest?', lines: ['Move the number along the line. Watch which ten is closest.', '65 is halfway between 60 and 70. At halfway, round up.'], line: true, explore: true },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
         { title: 'Round to the nearest 100', lines: ['To round 642 to the nearest 100, keep 6 in the hundreds place.', 'The next digit is 4, so keep the 6. Fill the tens and ones places with zeros.'], number: '642', kind: 'nearest', accuracy: 2, equations: ['642 ≈ 600'] },
@@ -265,7 +266,7 @@
     function drawLearn(host, index, lineValue, onChange, readOnly) {
         const screen = learnScreens[index];
         if (screen.line) drawLine(host, screen.explore ? lineValue : 67, screen.explore, onChange, readOnly);
-        else drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) });
+        else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) });
         for (const equation of screen.equations || []) text(host, 'p', equation, 'significant-equation');
         if (screen.caption) text(host, 'p', screen.caption);
     }
