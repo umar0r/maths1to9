@@ -1450,7 +1450,7 @@
     const learnScreens = [
         { title: 'Place value tells you what each digit is worth.', lines: [
             'A digit is one of the symbols 0 to 9.',
-            'In 670, the 6 is in the hundreds column. It is worth 6 × 100 = 600. The 7 is in the tens column. It is worth 7 × 10 = 70. The 0 holds the digits place.'
+            'In 670, the 6 is in the hundreds column. It is worth 6 × 100 = 600. The 7 is in the tens column. It is worth 7 × 10 = 70. The 0 is in the ones (units) column.'
         ] },
         { title: 'A digit’s position decides its value.', lines: [] },
         { title: 'Digits after the decimal point are less than one.', lines: [] },
@@ -1585,7 +1585,7 @@
         const cards = digits.map((digit, index) => {
             const card = element('button', '', 'pv-number-column pv-number-column--tap');
             card.type = 'button';
-            card.append(element('span', placeNames[2 - index]), element('strong', digit));
+            card.append(element('span', ['hundreds', 'tens', 'units'][index]), element('strong', digit));
             card.addEventListener('click', () => {
                 section.update(state => { state.firstCard = index; });
                 paint();
