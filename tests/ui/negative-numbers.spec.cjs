@@ -265,7 +265,8 @@ for (const width of [1280, 375]) {
             expect(earned).toBe(270 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
-            await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');
+            await expect(page.getByRole('heading', { name: "What you've learned" })).toBeVisible();
+            await expect(page.locator('#negative-numbers-comparison .negative-learned li')).toHaveCount(5);
             await goBackAndForward(page);
             await mainAction(page).click();
             await expect(page).toHaveURL(/\/$/);

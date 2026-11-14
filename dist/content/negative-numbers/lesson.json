@@ -120,8 +120,24 @@
             }
         ],
         "summary": {
-            "title": "Your Check is complete",
-            "points": []
+            "title": "What you've learned",
+            "points": [
+                {
+                    "text": "Negative numbers are numbers below zero, like −3 °C on a thermometer."
+                },
+                {
+                    "text": "On a number line, adding moves you right and taking away moves you left. This still works when you start on a negative number: −2 − 3 = −5."
+                },
+                {
+                    "text": "Taking away a negative number is the same as adding. 5 − (−3) = 5 + 3 = 8."
+                },
+                {
+                    "text": "When you multiply or divide two numbers with the same sign, the answer is positive. −4 × −3 = 12."
+                },
+                {
+                    "text": "When you multiply or divide two numbers with different signs, the answer is negative. −12 ÷ 3 = −4."
+                }
+            ]
         }
     },
     "score_activities": [
