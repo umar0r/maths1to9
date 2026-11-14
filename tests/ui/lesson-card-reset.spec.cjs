@@ -43,7 +43,9 @@ test('Reset keeps the seeded question and its first-attempt evidence', async ({ 
     await expect.poll(savedPractice).toBeDefined();
     const stateBefore = await savedPractice();
     const options = question.getByRole('group', { name: 'Choose an answer' }).getByRole('button');
+    const line = question.getByRole('slider', { name: 'Choose an answer on the number line' });
     if (await options.count()) await options.first().click();
+    else if (await line.count()) await line.press('Home');
     else await question.locator('input').first().fill('12345');
     await page.locator(`${MAIN_ACTION}:visible`).click();
     const score = await page.evaluate(() => Maths1to9Lesson.getScore());

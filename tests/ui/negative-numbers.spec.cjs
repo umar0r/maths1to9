@@ -36,7 +36,7 @@ async function finishQuestions(page) {
 for (const width of [1280, 375]) {
     test.describe(`negative-numbers ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
-        test('the Practice number line and typed answer stay in sync', async ({ page }) => {
+        test('the Practice number line selects and resets the answer', async ({ page }) => {
             await page.goto('content/negative-numbers/#question-bank-question-1', { waitUntil: 'networkidle' });
             await page.evaluate(() => window.Maths1to9Lesson.goToSection('question-bank', { unlock: true }));
             const sum = (await prompt(page).innerText()).match(/^Work out (\d+) − (\d+)\.$/);
@@ -44,7 +44,7 @@ for (const width of [1280, 375]) {
             const start = Number(sum[1]);
             const answer = start - Number(sum[2]);
             const line = page.getByRole('slider', { name: 'Choose an answer on the number line' });
-            const input = page.getByRole('textbox', { name: 'Your answer' });
+            const reset = page.getByRole('button', { name: 'Reset card' });
             const tapNumber = async number => {
                 const min = Number(await line.getAttribute('aria-valuemin'));
                 const max = Number(await line.getAttribute('aria-valuemax'));
@@ -56,21 +56,28 @@ for (const width of [1280, 375]) {
             };
 
             await expect(line).toBeVisible();
+            await expect(page.getByRole('textbox', { name: 'Your answer' })).toHaveCount(0);
             await expect(mainAction(page)).toBeDisabled();
+            await expect(reset).toBeDisabled();
             await tapNumber(start);
-            await expect(input).toHaveValue(String(start));
+            await expect(reset).toBeEnabled();
             await mainAction(page).click();
             await expect(mainAction(page)).toHaveText('Try again');
             await mainAction(page).click();
-            await expect(input).toHaveValue('');
-            await input.fill(String(answer));
+            await expect(line).toBeFocused();
+
+            await line.press('Home');
+            await expect(reset).toBeEnabled();
+            await reset.click();
+            await expect(line).toHaveAttribute('aria-valuenow', String(start));
+            await expect(reset).toBeDisabled();
+            await expect(mainAction(page)).toBeDisabled();
+
+            await tapNumber(answer);
             await expect(line).toHaveAttribute('aria-valuenow', String(answer));
             await reload(page);
-            await expect(input).toHaveValue(String(answer));
             await expect(line).toHaveAttribute('aria-valuenow', String(answer));
-            await input.clear();
-            await tapNumber(answer);
-            await expect(input).toHaveValue(String(answer).replace('-', '−'));
+            await expect(reset).toBeEnabled();
             await mainAction(page).click();
             await expect(mainAction(page)).toHaveText('Continue');
         });
@@ -110,11 +117,23 @@ for (const width of [1280, 375]) {
             await expect(thermometer).toBeFocused();
             await expect(mainAction(page)).toBeDisabled();
 
-            const resetMarker = await thermometer.locator('.nn-level').boundingBox();
-            await page.mouse.move(resetMarker.x, y);
-            await page.mouse.down();
-            await page.mouse.move(resetMarker.x + (answer - start) * pixelsPerDegree, y, { steps: 8 });
-            await page.mouse.up();
+            const tapTick = async value => {
+                const min = Number(await thermometer.getAttribute('aria-valuemin'));
+                const svg = thermometer.locator('svg');
+                const tick = await thermometer.locator('.nn-tick').nth(value - min).boundingBox();
+                const box = await svg.boundingBox();
+                const options = { position: { x: tick.x - box.x, y: y - box.y } };
+                if (width === 375) await svg.tap(options);
+                else await svg.click(options);
+            };
+            await tapTick(start - 1);
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(start - 1));
+            const reset = page.getByRole('button', { name: 'Reset card' });
+            await expect(reset).toBeEnabled();
+            await reset.click();
+            await expect(thermometer).toHaveAttribute('aria-valuenow', String(start));
+            await expect(mainAction(page)).toBeDisabled();
+            await tapTick(answer);
             await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
             await reload(page);
             await expect(thermometer).toHaveAttribute('aria-valuenow', String(answer));
@@ -230,8 +249,8 @@ for (const width of [1280, 375]) {
                     signCardsVisited = true;
                     continue;
                 }
-                // The sign machine and thermometer need a move before the main action.
-                const handsOn = page.locator('.nn-punch-card:visible, .negative-answer-widget--thermometer [role="slider"]:visible');
+                // The sign machine and answer visuals need a move before the main action.
+                const handsOn = page.locator('.nn-punch-card:visible, .negative-answer-widget [role="slider"]:visible');
                 if (await handsOn.count() && !await button.isEnabled()) {
                     await solve(page);
                     continue;

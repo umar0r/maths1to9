@@ -665,6 +665,7 @@
                 onChange(value) {
                     if (config.readOnly || saved.phase !== 'answer' || released) return;
                     updateAnswer(() => { saved.value = JSON.parse(JSON.stringify(value)); });
+                    api.recordQuestionInteraction?.(sectionId, questionId);
                     setAction();
                 }
             });
@@ -3855,6 +3856,14 @@
                 if (!container) throw new Error(`No question set container for ${sectionId}.`);
                 state.questionSets.add(sectionId);
                 return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);
+            },
+
+            recordQuestionInteraction(sectionId, questionId) {
+                if (state.sections[state.currentIndex]?.id !== sectionId) return;
+                const question = currentQuestionReset(sectionId);
+                if (question?.id !== questionId) return;
+                const key = resetInteractionKey(sectionId, question);
+                if (!hasResetInteraction(key)) setResetInteraction(key, true);
             },
 
             createQuestion(container, config) {

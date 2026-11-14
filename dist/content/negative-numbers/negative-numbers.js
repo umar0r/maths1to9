@@ -289,11 +289,11 @@
     function checks() {
         const understanding = (prompt, options) => ({ questionType: 'understanding', input: 'choice', prompt, options });
         return [
-            understanding('On a number line, what do + and − tell you to do?', [
-                option('+ means move right. − means move left.', 'Right. Adding moves you right and taking away moves you left.', true),
-                option('+ means move left. − means move right.', 'That is the wrong way round. Numbers get bigger as you go right, so adding moves you right.'),
-                option('+ and − both mean move right.', 'They go opposite ways. Taking away moves you left.'),
-                option('They only tell you if the answer is positive or negative.', 'They also tell you which way to move: + goes right and − goes left.')
+            understanding('You use a number line to work out a sum. Which way do you move when you add, and when you take away?', [
+                option('Adding moves you right. Taking away moves you left.', 'Right. Numbers get bigger as you go right, so adding moves you right and taking away moves you left.', true),
+                option('Adding moves you left. Taking away moves you right.', 'That is the wrong way round. Numbers get bigger as you go right, so adding moves you right.'),
+                option('Adding and taking away both move you right.', 'They go opposite ways. Taking away makes the number smaller, so you move left.'),
+                option('Taking away always moves you towards zero.', 'Not always. Taking away moves you left, even when that takes you further below zero.')
             ]),
             understanding('What happens to the two minus signs when you take away a negative number?', [
                 option('They turn into a plus, so you add.', 'Right. Taking away a negative is the same as adding.', true),
@@ -795,11 +795,12 @@
     }
 
     const sidewaysStep = 30;
+    const sidewaysStart = 70;
 
     // The Learn thermometer lies on its side, with the colder values on the left.
     function sidewaysThermometer(level, { min = -10, max = 10, showLevel = false } = {}) {
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const x = value => 70 + (value - min) * sidewaysStep;
+        const x = value => sidewaysStart + (value - min) * sidewaysStep;
         const tube = 40, bulb = 30;
         const labelY = tube + (phone ? 52 : 40);
         let picture = `<rect class="nn-tube" x="${bulb}" y="${tube - 11}" width="${x(max) + 20 - bulb}" height="22" rx="11"/>
@@ -845,23 +846,6 @@
                     control.setAttribute('aria-valuemin', min);
                     control.setAttribute('aria-valuemax', max);
 
-                    let input;
-                    if (!useThermometer) {
-                        const label = document.createElement('label');
-                        label.className = 'question-answer-label';
-                        label.textContent = 'Your answer';
-                        input = document.createElement('input');
-                        input.type = 'text';
-                        input.inputMode = 'decimal';
-                        input.autocomplete = 'off';
-                        label.append(input);
-                        host.append(label);
-                        input.addEventListener('input', () => {
-                            show(input.value);
-                            onChange(input.value);
-                        });
-                    }
-
                     let position = start;
                     let editable;
                     function show(value) {
@@ -873,12 +857,10 @@
                         control.setAttribute('aria-label', useThermometer ? 'Set the temperature' : 'Choose an answer on the number line');
                         control.setAttribute('aria-valuenow', position);
                         control.setAttribute('aria-valuetext', selected ? (useThermometer ? `${signed(position)}°C` : signed(position)) : `Starting at ${signed(start)}. No number selected.`);
-                        if (input) input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
                     }
 
                     function select(value) {
                         const answer = signed(value);
-                        if (input) input.value = answer;
                         show(answer);
                         onChange(answer);
                     }
@@ -896,8 +878,13 @@
                             if (!editable || !event.isPrimary || event.button !== 0) return;
                             control.setPointerCapture(event.pointerId);
                             const svg = control.querySelector('svg');
-                            const pixelsPerDegree = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width * sidewaysStep;
-                            drag = { x: event.clientX, y: event.clientY, position, pixelsPerDegree };
+                            const box = svg.getBoundingClientRect();
+                            const scale = box.width / svg.viewBox.baseVal.width;
+                            drag = {
+                                x: event.clientX, y: event.clientY, position,
+                                firstTick: box.left + sidewaysStart * scale,
+                                pixelsPerDegree: sidewaysStep * scale
+                            };
                         });
                         control.addEventListener('pointermove', event => {
                             if (!editable || !control.hasPointerCapture(event.pointerId)) return;
@@ -910,7 +897,12 @@
                             move(event);
                         });
                         control.addEventListener('pointerup', event => {
-                            if (editable && control.hasPointerCapture(event.pointerId) && drag.horizontal !== undefined) move(event);
+                            if (!editable || !control.hasPointerCapture(event.pointerId)) return;
+                            if (drag.horizontal === undefined) {
+                                select(clamp(min + Math.round((event.clientX - drag.firstTick) / drag.pixelsPerDegree)));
+                            } else {
+                                move(event);
+                            }
                         });
                     } else {
                         const track = control.querySelector('.negative-track');
@@ -936,13 +928,9 @@
                             editable = canAnswer;
                             control.tabIndex = canAnswer ? 0 : -1;
                             control.setAttribute('aria-disabled', String(!canAnswer));
-                            if (input) {
-                                input.disabled = !canAnswer;
-                                input.value = value ?? '';
-                            }
                             show(value);
                         },
-                        focus() { (input ?? control).focus(); }
+                        focus() { control.focus(); }
                     };
                 },
                 isEmpty(value) { return tidyNumber(value ?? '') === null; },
@@ -988,39 +976,6 @@
             if (gap) cell.setAttribute('aria-label', 'empty square, − row and − column');
             return cell;
         });
-    }
-
-    // The sign table. The chosen row is red and the chosen column blue, so the
-    // square where they cross turns purple.
-    function signTable(row, column) {
-        const tint = (inRow, inColumn) => {
-            if (inRow && inColumn) return ' class="nn-table-both"';
-            if (inRow) return ' class="nn-table-row"';
-            return inColumn ? ' class="nn-table-column"' : '';
-        };
-        const line = sign => `<tr><th scope="row"${tint(sign === row, false)}>${sign}</th>
-            ${['+', '−'].map(top => {
-                const square = SIGN_GRID.find(item => item.row === sign && item.column === top);
-                return `<td${tint(sign === row && top === column, sign === row && top === column)}>${square.answer}</td>`;
-            }).join('')}</tr>`;
-        return `<caption class="visually-hidden">Signs when you multiply</caption>
-            <thead><tr><th scope="col">×</th><th scope="col"${tint(false, column === '+')}>+</th><th scope="col"${tint(false, column === '−')}>−</th></tr></thead>
-            <tbody>${line('+')}${line('−')}</tbody>`;
-    }
-
-    // A small table beside a multiplying question, with its signs coloured.
-    function withSignGrid(question, { afterWrongAnswer = false } = {}) {
-        const config = {
-            ...question,
-            figure(host) {
-                const table = document.createElement('table');
-                table.className = 'nn-sign-table';
-                table.innerHTML = signTable(...question.signs);
-                host.append(table);
-                if (question.rule) paragraph(host, question.rule, 'nn-grid-rule');
-            }
-        };
-        return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
     const multiplicationSigns = [
@@ -1169,6 +1124,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         multiplicationSigns, practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, sidewaysThermometer, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withAnswerVisual, thermometer, thermometerScale, thermometerY, sidewaysThermometer, drawDragToAnswer, resetNumberLine
     };
 })();

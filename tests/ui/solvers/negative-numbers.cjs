@@ -24,9 +24,17 @@ module.exports = async function solve(page) {
         return true;
     }
     const options2 = page.locator('.question-card-options:visible button');
+    const line = page.getByRole('slider', { name: 'Choose an answer on the number line' });
     const give = async value => {
         if (await options2.count()) await page.getByRole('button', { name: signed(value), exact: true }).click();
-        else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
+        else if (await line.isVisible()) {
+            const min = Number(await line.getAttribute('aria-valuemin'));
+            const max = Number(await line.getAttribute('aria-valuemax'));
+            const track = line.locator('.negative-track');
+            const { x, y, width } = await track.boundingBox();
+            const box = await line.boundingBox();
+            await line.click({ position: { x: x - box.x + width * (value - min) / (max - min), y: y - box.y + 40 } });
+        } else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
     };
     const numbers = (text.match(/[−-]?\d+/g) || []).map(number);
     const choose = name => page.getByRole('button', { name, exact: true }).click().then(() => true);
@@ -76,7 +84,7 @@ module.exports = async function solve(page) {
     const calculation = text.match(/([−-]?\d+)\s*−\s*\(−(\d+)\)/);
     const options = page.locator('.question-card-options:visible button');
     const understanding = {
-        'On a number line, what do + and − tell you to do?': '+ means move right. − means move left.',
+        'You use a number line to work out a sum. Which way do you move when you add, and when you take away?': 'Adding moves you right. Taking away moves you left.',
         'What happens to the two minus signs when you take away a negative number?': 'They turn into a plus, so you add.',
         'What sign do you get when you multiply a negative number by a positive number?': 'A minus, because the two signs are different.',
         'The table shows the sign of the answer when you multiply. What goes in the empty square?': '+, because the two signs are the same.',
@@ -92,7 +100,7 @@ module.exports = async function solve(page) {
         } else if (await options.count()) {
             await page.getByRole('button', { name: `${signed(start)} + ${amount}`, exact: true }).click();
         } else {
-            await page.locator('.question-card:visible input[type=text]').fill(String(start + amount));
+            await give(start + amount);
         }
     } else throw new Error(`Cannot solve negative-numbers question: ${text}`);
     return true;
