@@ -203,7 +203,8 @@ test('equations-of-straight-lines partial answers, reload phases, repeated Pract
     for (let step = 0; step < 75 && !/#question-bank-question-9$/.test(page.url()); step++) {
         if (!await solve(page)) await main(page).click();
     }
-    await expect(root(page).locator('.retained-result__answer').first()).toContainText('2nd try');
+    await root(page).getByText('Show all answers', { exact: true }).click();
+    await expect(root(page).locator('.practice-summary__table tbody tr').first()).toContainText('Correct after a retry');
     await main(page).click();
     for (let step = 0; step < 45 && !/#summary$/.test(page.url()); step++) {
         if (!await solve(page)) await main(page).click();
@@ -224,7 +225,7 @@ test('equations-of-straight-lines partial answers, reload phases, repeated Pract
     const last = await state(page, 'question-bank');
     expect((await state(page, 'comparison')).finished).toBe(true);
     expect(last.session).toBe(3); expect(last.earlier).toHaveLength(2); expect(last.items).not.toEqual(first.items);
-    await expect(root(page).locator('details')).toHaveCount(2);
+    await expect(root(page).locator('details')).toHaveCount(3); // Show all answers + two earlier sessions
     const skill = await page.evaluate(() => Maths1to9Progress.getSkillProgress('use-y-mx-c'));
     expect(skill.assessedQuestions).toBeGreaterThanOrEqual(24);
     expect(errors).toEqual([]);

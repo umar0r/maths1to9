@@ -10,7 +10,8 @@ test('place-value final check sends each answer to its intended skills', async (
     await page.evaluate(() => window.Maths1to9Lesson.goToSection('comparison', {unlock:true}));
     const main = page.locator('.lesson-controls button.button--primary:visible');
     for (let i = 1; i <= 5; i++) {
-        await expect(page.getByRole('heading', {name:`Question ${i} of 5`, exact:true})).toBeVisible();
+        // Check shows no section heading and no question counter.
+        await expect(page.getByText(/Check what you|Question \d+ of 5/)).toHaveCount(0);
         await solve(page, {});
         await expect(main).toHaveText('Check');
         await expect(main).toBeEnabled();
