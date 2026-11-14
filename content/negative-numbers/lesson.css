@@ -1059,6 +1059,8 @@
     font-weight: 700;
 }
 
+.nn-sign-tray[hidden] { display: none; }
+
 .nn-sign-card {
     cursor: grab;
     touch-action: none;

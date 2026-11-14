@@ -331,7 +331,7 @@
 
     function pick(random) {
         const { randomInt } = window.Maths1to9LessonEngine;
-        return practiceTypes.map(type => ({ type, seed: randomInt(0, 4294967295, random) }));
+        return [...practiceTypes, 'sign-cards'].map(type => ({ type, seed: randomInt(0, 4294967295, random) }));
     }
 
     function prepare(question, random) {
@@ -344,7 +344,9 @@
         const { randomInt } = window.Maths1to9LessonEngine;
         const integer = (min, max) => randomInt(min, max, random);
         let question;
-        if (item.type === 'take-positive') {
+        if (item.type === 'sign-cards') {
+            return signCards();
+        } else if (item.type === 'take-positive') {
             const start = integer(1, 9);
             question = takePositive(start, start + integer(1, 9));
         } else if (item.type === 'add-two-negatives') {
@@ -993,10 +995,152 @@
         return afterWrongAnswer ? revealAfterWrong(config, question) : config;
     }
 
+    const multiplicationSigns = [
+        ['positive', 'positive', 'positive'],
+        ['negative', 'negative', 'positive'],
+        ['positive', 'negative', 'negative'],
+        ['negative', 'positive', 'negative']
+    ];
+
+    function signCards() {
+        const rules = multiplicationSigns.map((row, index) => ({
+            signs: row.map(word => word === 'positive' ? '+' : '−'),
+            gap: index % 2 === 0 ? 2 : 1
+        }));
+        const complete = value => Array.isArray(value) && value.length === rules.length && value.every(Boolean);
+        return {
+            questionType: 'sign-cards',
+            input: 'custom',
+            prompt: 'Fill in the missing signs.',
+            widget: {
+                render(host, { onChange }) {
+                    let filled;
+                    let editable;
+                    const page = document.createElement('div');
+                    page.className = 'nn-learn';
+                    host.append(page);
+                    const name = sign => (sign === '+' ? 'plus' : 'minus');
+                    const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
+                    const list = document.createElement('ul');
+                    list.className = 'nn-sign-rules nn-sign-rules--signs';
+                    const gaps = rules.map((rule, line) => {
+                        const item = document.createElement('li');
+                        item.className = 'nn-sign-rule';
+                        const parts = rule.signs.map((sign, index) => (index === rule.gap
+                            ? '<span class="nn-sign-gap"></span>' : symbol(sign)));
+                        item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
+                        list.append(item);
+                        const gap = item.querySelector('.nn-sign-gap');
+                        gap.setAttribute('aria-label', `Line ${line + 1}: missing sign`);
+                        return gap;
+                    });
+                    page.append(list);
+
+                    const tray = document.createElement('div');
+                    tray.className = 'nn-sign-tray';
+                    tray.setAttribute('role', 'group');
+                    tray.setAttribute('aria-label', 'Signs to drag into the gaps');
+                    page.append(tray);
+                    const full = () => filled.every(Boolean);
+                    const nextGap = () => filled.indexOf(false);
+
+                    function fillGap(line) {
+                        const sign = rules[line].signs[rules[line].gap];
+                        const placed = document.createElement('span');
+                        placed.className = 'nn-punch-card nn-sign-placed';
+                        placed.textContent = sign;
+                        gaps[line].replaceWith(placed);
+                        gaps[line] = placed;
+                    }
+
+                    // A card dropped on a gap: right signs stay, wrong ones shake.
+                    function place(line, sign) {
+                        if (!editable || line < 0 || filled[line]) return;
+                        const rule = rules[line];
+                        if (rule.signs[rule.gap] !== sign) {
+                            const gap = gaps[line];
+                            gap.classList.remove('is-wrong');
+                            void gap.offsetWidth;
+                            gap.classList.add('is-wrong');
+                            return;
+                        }
+                        filled[line] = true;
+                        onChange(filled);
+                        fillGap(line);
+                        tray.hidden = full();
+                    }
+
+                    ['+', '−'].forEach(sign => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.className = 'nn-punch-card nn-sign-card';
+                        card.textContent = sign;
+                        card.setAttribute('aria-label', `${name(sign)}: drag it into a gap, or tap to fill the next gap`);
+                        tray.append(card);
+                        let drag = null;
+                        let dragged = false;
+                        card.addEventListener('pointerdown', event => {
+                            if (!editable) return;
+                            drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+                            dragged = false;
+                            card.setPointerCapture(event.pointerId);
+                        });
+                        card.addEventListener('pointermove', event => {
+                            if (!drag || event.pointerId !== drag.id) return;
+                            const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+                            if (!dragged && Math.hypot(dx, dy) < 6) return;
+                            dragged = true;
+                            card.classList.add('is-dragging');
+                            card.style.transform = `translate(${dx}px, ${dy}px)`;
+                            gaps.forEach(gap => {
+                                const box = gap.getBoundingClientRect();
+                                gap.classList.toggle('is-over', event.clientX >= box.left && event.clientX <= box.right
+                                    && event.clientY >= box.top && event.clientY <= box.bottom);
+                            });
+                        });
+                        const drop = event => {
+                            if (!drag || event.pointerId !== drag.id) return;
+                            drag = null;
+                            card.classList.remove('is-dragging');
+                            card.style.transform = '';
+                            if (!dragged) return;
+                            const line = gaps.findIndex(gap => gap.classList.contains('is-over'));
+                            gaps.forEach(gap => gap.classList.remove('is-over'));
+                            place(line, sign);
+                        };
+                        card.addEventListener('pointerup', drop);
+                        card.addEventListener('pointercancel', drop);
+                        // A tap (or Enter) fills the next empty gap, line by line.
+                        card.addEventListener('click', () => {
+                            if (dragged) {
+                                dragged = false;
+                                return;
+                            }
+                            place(nextGap(), sign);
+                        });
+                    });
+                    return {
+                        update({ value, editable: canAnswer }) {
+                            editable = canAnswer;
+                            filled = value?.slice() ?? rules.map(() => false);
+                            filled.forEach((done, line) => {
+                                if (done && gaps[line].classList.contains('nn-sign-gap')) fillGap(line);
+                            });
+                            tray.hidden = !editable || full();
+                        }
+                    };
+                },
+                isEmpty(value) { return !complete(value); },
+                mark() { return { correct: true, feedback: 'Same signs give +. Different signs give −.' }; },
+                answerText(value) { return complete(value) ? '+, −, −, +' : ''; }
+            }
+        };
+    }
+
     window.NegativeNumbers = {
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
-        practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
+        multiplicationSigns, practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
         multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, drawDragToAnswer, resetNumberLine
     };
 })();

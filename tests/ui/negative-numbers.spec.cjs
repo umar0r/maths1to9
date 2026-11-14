@@ -113,6 +113,7 @@ for (const width of [1280, 375]) {
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();
+            let signCardsVisited = false;
             for (let step = 0; step < 160; step++) {
                 if (await require('./negative-numbers-learn-helper.cjs')(page)) continue;
                 const url = page.url();
@@ -190,6 +191,21 @@ for (const width of [1280, 375]) {
                     }
                     await solve(page);
                 }
+                if (!signCardsVisited && await page.locator('.nn-sign-card:visible').count()) {
+                    expect(new URL(page.url()).hash).toBe('#question-bank-question-17');
+                    await expect(button).toBeDisabled();
+                    await page.getByRole('button', { name: /^plus: drag/ }).click();
+                    await reload(page);
+                    await expect(page.locator('.nn-sign-placed:visible')).toHaveCount(1);
+                    await solve(page);
+                    await expect(page.locator('.nn-sign-placed:visible')).toHaveCount(4);
+                    await button.click();
+                    await expect(button).toHaveText('Continue');
+                    await button.click();
+                    await expect(page.getByRole('heading', { name: 'Your practice results' })).toBeVisible();
+                    signCardsVisited = true;
+                    continue;
+                }
                 // The sign machine keeps Next locked until a card is flipped.
                 if (await page.locator('.nn-punch-card:visible').count() && !await button.isEnabled()) {
                     await solve(page);
@@ -201,7 +217,8 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(70);
-            expect(earned).toBe(260 - penalty); // the engine plans 260
+            expect(signCardsVisited).toBe(true);
+            expect(earned).toBe(270 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#negative-numbers-comparison .retained-results')).toContainText('2nd try');
@@ -247,7 +264,7 @@ test('negative-numbers: the old last Try it link keeps earlier work and leads to
     });
     // Use a full load so the legacy state is read again.
     await page.goto('content/negative-numbers/?legacy=1#try-it-9', { waitUntil: 'networkidle' });
-    await expect(page).toHaveURL(/#try-it-8$/);
+    await expect(page).toHaveURL(/#try-it-7$/);
     await expect(prompt(page)).toHaveText('Now tap each card to multiply −1 by it.');
     await expect(mainAction(page)).toBeEnabled();
     expect(await score(page)).toBe(points);
