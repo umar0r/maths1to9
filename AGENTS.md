@@ -97,6 +97,13 @@ The best example of a finished lesson is the newest one in
     handlers (`setSectionBack`) and card resets as
     `docs/shared-lesson-components.md` says, so they work on every screen.
 
+24. **Answered questions look as the pupil left them.** When a pupil goes
+    Back to a Practice or Check question they've answered, they see the
+    real question: the four choices or the answer box, locked, with their
+    answer marked and the feedback. Never a line of text like
+    "306.84 2nd try". Practice does this already. For Check, pass
+    `lockedReview: true` to `api.createQuestion`.
+
 **Practice results.** Use the shared lesson engine for the results screen.
 Show the first-time score and any questions that needed a retry. Keep the
 full answer table collapsed under **Show all answers**. Use the shared

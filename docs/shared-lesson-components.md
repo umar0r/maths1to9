@@ -376,6 +376,7 @@ const card = Maths1to9Lesson.createQuestion(container, {
     // rules: [{ value: '6', feedback: "That's the HCF.", hint: 'The HCF uses only the overlap.' }, …],
     // fallback: 'Multiply every tile: 2 × 3 × 3 × 2 × 2.',
     readOnly: false,              // true: show the finished card, no input
+    lockedReview: false,          // true: a read-only card keeps its choices or box, locked
     onFeedback: (result) => {},   // optional: lesson flashes its own visual
     onContinue: () => {}          // lesson moves on (next question, next step)
 });
@@ -497,6 +498,10 @@ Plain cards without `tolerance` are unchanged.
   `questionId`. A reload restores the exact phase, feedback and main button.
 - `readOnly: true` (used by the back button and by finished sections) shows
   the pupil's answer, the mark and the feedback, with no input and no Check.
+  A Practice card, or any card with `lockedReview: true`, instead redraws the
+  choices or answer box, locked, with the pupil's answer marked. Check cards
+  pass `lockedReview: true` so going Back shows the real question
+  (AGENTS.md rule 24).
 - `onFeedback(result)` receives `{ correct, firstCorrect, option or value,
   hint }`, so a lesson can flash tiles or move part of its own picture. The
   card doesn't wait for the lesson; any pause before Continue is the
