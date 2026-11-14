@@ -978,39 +978,6 @@
         });
     }
 
-    // The sign table. The chosen row is red and the chosen column blue, so the
-    // square where they cross turns purple.
-    function signTable(row, column) {
-        const tint = (inRow, inColumn) => {
-            if (inRow && inColumn) return ' class="nn-table-both"';
-            if (inRow) return ' class="nn-table-row"';
-            return inColumn ? ' class="nn-table-column"' : '';
-        };
-        const line = sign => `<tr><th scope="row"${tint(sign === row, false)}>${sign}</th>
-            ${['+', '−'].map(top => {
-                const square = SIGN_GRID.find(item => item.row === sign && item.column === top);
-                return `<td${tint(sign === row && top === column, sign === row && top === column)}>${square.answer}</td>`;
-            }).join('')}</tr>`;
-        return `<caption class="visually-hidden">Signs when you multiply</caption>
-            <thead><tr><th scope="col">×</th><th scope="col"${tint(false, column === '+')}>+</th><th scope="col"${tint(false, column === '−')}>−</th></tr></thead>
-            <tbody>${line('+')}${line('−')}</tbody>`;
-    }
-
-    // A small table beside a multiplying question, with its signs coloured.
-    function withSignGrid(question, { afterWrongAnswer = false } = {}) {
-        const config = {
-            ...question,
-            figure(host) {
-                const table = document.createElement('table');
-                table.className = 'nn-sign-table';
-                table.innerHTML = signTable(...question.signs);
-                host.append(table);
-                if (question.rule) paragraph(host, question.rule, 'nn-grid-rule');
-            }
-        };
-        return afterWrongAnswer ? revealAfterWrong(config, question) : config;
-    }
-
     const multiplicationSigns = [
         ['positive', 'positive', 'positive'],
         ['negative', 'negative', 'positive'],
@@ -1157,6 +1124,6 @@
         signed, paragraph, correctBox, equation, working, rewrite, calculate, checks,
         dragTakeNegative, dragTakePositive, dragAdd,
         multiplicationSigns, practiceTypes, pick, prepare, generate, drawLine, drawJourney, drawExplore, drawAnswerLine, withMovableLine,
-        multiplyExamples, withSignGrid, withAnswerVisual, thermometer, thermometerScale, thermometerY, sidewaysThermometer, drawDragToAnswer, resetNumberLine
+        multiplyExamples, withAnswerVisual, thermometer, thermometerScale, thermometerY, sidewaysThermometer, drawDragToAnswer, resetNumberLine
     };
 })();
