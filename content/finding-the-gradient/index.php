@@ -84,6 +84,6 @@ $pageTitle = 'Finding the gradient';
     <script src="./questions.js?v=1"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=64"></script>
+    <script src="../../assets/js/lesson-engine.js?v=65"></script>
 </body>
 </html>

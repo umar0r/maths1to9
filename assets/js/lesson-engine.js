@@ -640,7 +640,8 @@
             };
         }
         const article = document.createElement('article');
-        article.className = 'question-card question-card--bare';
+        article.className = config.readOnly ? 'question-card question-card--bare question-card--read-only'
+            : 'question-card question-card--bare';
         const heading = resultText('h3', config.prompt, 'question-prompt');
         heading.dataset.screenHeading = '';
         article.append(heading);
@@ -666,10 +667,12 @@
         }
         if (config.readOnly) {
             api.clearSectionAction(sectionId);
-            const row = result();
-            const answer = resultText('p', row.answer, 'retained-result__answer');
-            appendResultMark(answer, row);
-            article.append(answer);
+            if (sectionId !== 'question-bank') {
+                const row = result();
+                const answer = resultText('p', row.answer, 'retained-result__answer');
+                appendResultMark(answer, row);
+                article.append(answer);
+            }
             if (saved.feedback) {
                 article.append(createFeedback(sectionId, { correct: saved.correct === true, text: saved.feedback }));
             }

@@ -194,7 +194,7 @@
     touch-action: none;
 }
 
-.question-card:has(> .retained-result__answer) .negative-answer-widget .question-answer-label {
+.question-card--read-only .negative-answer-widget .question-answer-label {
     display: none;
 }
 

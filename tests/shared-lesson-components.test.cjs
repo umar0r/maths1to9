@@ -390,6 +390,7 @@ test('shared result marks and score rings expose hidden words instead of generic
 function questionFixture(config, restored) {
     const fixture = resultsFixture();
     const container = fixture.node('div');
+    const sectionId = config?.sectionId ?? 'comparison';
     const section = {
         state: restored || {},
         writes: 0,
@@ -400,8 +401,8 @@ function questionFixture(config, restored) {
     let continued = 0;
     let action;
     const api = {
-        setSectionAction(id, next) { assert.equal(id, 'comparison'); action = next; },
-        clearSectionAction(id) { assert.equal(id, 'comparison'); action = null; },
+        setSectionAction(id, next) { assert.equal(id, sectionId); action = next; },
+        clearSectionAction(id) { assert.equal(id, sectionId); action = null; },
         recordAssessment(record) { assessments.push(record); }
     };
     const options = { sectionId: 'comparison', questionId: 'stable-1', questionType: 'test',
@@ -489,6 +490,19 @@ test('shared question records each Check once with one stable score slot and no 
     assert.equal(review.card.result().answer, '4');
     assert.equal(review.container.children[0].children[1].children[0].textContent, '2nd try');
     assert.equal(tracker.getScore().points, 5);
+});
+
+test('reviewed Practice cards retain feedback and results without an answer line', () => {
+    const card = questionFixture({ sectionId: 'question-bank' });
+    card.click(1);
+    card.action.onClick();
+    const review = card.reload({ readOnly: true });
+    assert.equal(review.card.result().answer, '4');
+    assert.equal(review.card.result().firstCorrect, true);
+    const [heading, feedback] = review.container.children[0].children;
+    assert.equal(review.container.children[0].children.length, 2);
+    assert.equal(heading.textContent, 'Choose a number');
+    assert.equal(feedback.textContent, 'Right');
 });
 
 test('shared unscored questions retain firstCorrect without recording assessments', () => {
@@ -1263,7 +1277,7 @@ test('question-set results include units for one-box and field cards, including 
     for (const answer of expected) assert.equal(unitNodes(container, 'span').filter(node => node.textContent === answer).length, 1);
     back.onClick();
     assert.equal(unitNodes(container, 'input').length, 0);
-    assert.equal(unitNodes(container, 'p').filter(node => node.textContent === expected[1]).length, 1);
+    assert.equal(unitNodes(container, 'p').filter(node => node.textContent === expected[1]).length, 0);
     action.onClick();
     unitNodes(container, 'button').find(button => button.textContent === 'Practise again').events.click();
     finish();

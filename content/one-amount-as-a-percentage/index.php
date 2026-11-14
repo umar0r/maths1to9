@@ -72,6 +72,6 @@ $pageTitle = 'One amount as a percentage of another';
     <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=64"></script>
+    <script src="../../assets/js/lesson-engine.js?v=65"></script>
 </body>
 </html>
