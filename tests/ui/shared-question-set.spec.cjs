@@ -38,9 +38,9 @@ test('algebraic repeat Practice restores saved questions, freezes points and ret
         expect(progress.score).toEqual(before.score);
         expect(progress.finished).toBe(before.finished);
         await expect.poll(algebraEvidence).toBe(evidence + (session - 1) * count);
-        await expect(page.locator('details')).toHaveCount(session - 1);
+        await expect(page.locator('details')).toHaveCount(session); // Show all answers + earlier sessions
         // Practice is no longer the last section, so its finished screen leads on to Check.
-        await expect(main(page)).toHaveText('Continue');
+        await expect(main(page)).toHaveText('Start Check');
     }
     await main(page).click();
     expect(await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id)).toBe('comparison');

@@ -97,6 +97,12 @@ The best example of a finished lesson is the newest one in
     handlers (`setSectionBack`) and card resets as
     `docs/shared-lesson-components.md` says, so they work on every screen.
 
+**Practice results.** Use the shared lesson engine for the results screen.
+Show the first-time score and any questions that needed a retry. Keep the
+full answer table collapsed under **Show all answers**. Use the shared
+**Practise again** button and **Start Check** as the main action when Check
+comes next.
+
 ## 6. How to build a lesson, step by step
 
 Do these in order. Don't skip a step because it seems obvious.

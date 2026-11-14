@@ -52,7 +52,7 @@ for (const width of [1280, 375]) {
                 expect(saved.data.session).toBe(session);
                 expect(saved.data.items).not.toEqual(old.data.items);
                 await expect.poll(() => skillCount(page)).toBe(evidence + (session - 1) * 6);
-                await expect(page.locator('details')).toHaveCount(session - 1);
+                await expect(page.locator('details')).toHaveCount(session); // Show all answers + earlier sessions
                 await goToStage(page, 'Check');
                 await expect(main(page)).toHaveText('All lessons');
                 await goToStage(page, 'Practice');

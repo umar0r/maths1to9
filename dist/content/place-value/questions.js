@@ -98,10 +98,12 @@
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
-            heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === count ? lesson.comparison.summary.title : `Question ${state.screen + 1} of ${count}`;
-            root.append(heading);
+            if (state.screen === count) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.textContent = lesson.comparison.summary.title;
+                root.append(heading);
+            }
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);

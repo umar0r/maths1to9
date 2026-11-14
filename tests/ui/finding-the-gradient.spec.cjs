@@ -103,7 +103,8 @@ async function previousSection(page) {
     const hash = new URL(page.url()).hash;
     const score = await page.evaluate(() => window.Maths1to9Lesson.getScore());
     await back(page).click();
-    await expect(main(page)).toHaveText('Continue');
+    // Back from Check lands on the Practice results, whose button says Start Check.
+    await expect(main(page)).toHaveText(/^(Continue|Start Check)$/);
     await reload(page);
     await main(page).click();
     expect(new URL(page.url()).hash).toBe(hash);
@@ -295,7 +296,7 @@ async function repeatTwice(page) {
         await page.getByRole('button', { name: 'Practise again', exact: true }).click();
         await practice(page, { decimal: session === 2 });
         expect((await state(page, 'question-bank')).session).toBe(session);
-        await expect(page.locator('details:visible')).toHaveCount(session - 1);
+        await expect(page.locator('details:visible')).toHaveCount(session); // Show all answers + earlier sessions
         const progress = await page.evaluate(() => window.Maths1to9Lesson.getProgress());
         expect(progress.score).toEqual(before.score);
         expect(progress.finished).toBe(true);
@@ -507,7 +508,8 @@ for (const mode of modes) {
             const saved = await state(page, 'question-bank');
             expect(saved.cards['question-bank:1:2'].value).toBe('2/4');
             expect(saved.cards['question-bank:1:2'].firstCorrect).toBe(false);
-            await expect(page.locator('.retained-results:visible')).toContainText('2nd try');
+            await page.getByText('Show all answers', { exact: true }).click();
+            await expect(page.locator('.practice-summary__table:visible')).toContainText('Correct after a retry');
             await main(page).click();
             await input(page).fill('2/3');
             await input(page).press('Enter');

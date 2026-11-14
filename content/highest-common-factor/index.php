@@ -27,7 +27,7 @@ $pageTitle = 'Highest common factor';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=58">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
     <link rel="stylesheet" href="./lesson.css?v=8">
 </head>
 
@@ -68,10 +68,10 @@ $pageTitle = 'Highest common factor';
     <script src="./hcf.js?v=6"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=6"></script>
+    <script src="./questions.js?v=7"></script>
     <script src="./interactive.js?v=13"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=67"></script>
+    <script src="../../assets/js/lesson-engine.js?v=76"></script>
 </body>
 </html>
