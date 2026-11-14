@@ -73,6 +73,6 @@ $pageTitle = 'Angle facts';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=66"></script>
+    <script src="../../assets/js/lesson-engine.js?v=67"></script>
 </body>
 </html>

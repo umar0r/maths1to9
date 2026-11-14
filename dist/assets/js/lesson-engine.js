@@ -776,9 +776,7 @@
                 button.disabled = lockedCard || saved.phase !== 'answer' || rejected;
                 button.setAttribute('aria-pressed', String(selected));
                 if (rejected && !item.rejectionMark) {
-                    const cross = resultText('span', ' ×');
-                    cross.setAttribute('aria-hidden', 'true');
-                    button.append(cross, resultText('span', ' Incorrect option', 'visually-hidden'));
+                    button.append(resultText('span', ' Incorrect option', 'visually-hidden'));
                     item.rejectionMark = true;
                 }
             }

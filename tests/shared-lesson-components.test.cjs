@@ -452,7 +452,8 @@ test('shared question choice cycle retains rejected choices and immutable firstC
     const choices = harness.container.children[0].children[1].children;
     assert.equal(choices[0].disabled, true);
     assert.match(choices[0].className, /is-rejected/);
-    assert.equal(choices[0].children[0].textContent, ' ×');
+    assert.equal(choices[0].children[0].textContent, ' Incorrect option');
+    assert.doesNotMatch(choices[0].textContent, /×/);
     assert.equal(choices[1].disabled, false);
     harness.click(0);
     assert.equal(harness.section.state.cards['stable-1'].selected, null);

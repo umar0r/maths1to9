@@ -77,6 +77,6 @@ $pageTitle = 'Horizontal and vertical lines';
     <script src="./questions.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=66"></script>
+    <script src="../../assets/js/lesson-engine.js?v=67"></script>
 </body>
 </html>
