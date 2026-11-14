@@ -194,10 +194,6 @@
     touch-action: none;
 }
 
-.question-card--read-only .negative-answer-widget .question-answer-label {
-    display: none;
-}
-
 /* The sign grid on Try it, drawn like the Place value table: thin grey
    lines, a rounded edge and a dark grey top row and first column. */
 .nn-sign-grid {
