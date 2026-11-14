@@ -31,8 +31,9 @@ module.exports = async function solve(page) {
             const min = Number(await line.getAttribute('aria-valuemin'));
             const max = Number(await line.getAttribute('aria-valuemax'));
             const track = line.locator('.negative-track');
-            const { width } = await track.boundingBox();
-            await track.click({ position: { x: width * (value - min) / (max - min), y: 40 } });
+            const { x, y, width } = await track.boundingBox();
+            const box = await line.boundingBox();
+            await line.click({ position: { x: x - box.x + width * (value - min) / (max - min), y: y - box.y + 40 } });
         } else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
     };
     const numbers = (text.match(/[−-]?\d+/g) || []).map(number);

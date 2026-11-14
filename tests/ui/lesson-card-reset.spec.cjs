@@ -49,6 +49,8 @@ test('Reset keeps the seeded question and its first-attempt evidence', async ({ 
     else await question.locator('input').first().fill('12345');
     await page.locator(`${MAIN_ACTION}:visible`).click();
     const score = await page.evaluate(() => Maths1to9Lesson.getScore());
+    // Desktop feedback can cover the top-right controls until dismissed.
+    await question.locator('.question-feedback.is-visible').click();
     await expect(reset).toBeVisible();
     await reset.click();
     await expect(reset).toBeHidden();
