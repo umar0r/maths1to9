@@ -377,7 +377,9 @@ const card = Maths1to9Lesson.createQuestion(container, {
     // fallback: 'Multiply every tile: 2 × 3 × 3 × 2 × 2.',
     readOnly: false,              // true: show the finished card, no input
     onFeedback: (result) => {},   // optional: lesson flashes its own visual
-    onContinue: () => {}          // lesson moves on (next question, next step)
+    onContinue: () => {},         // lesson moves on (next question, next step)
+    autoContinue: true            // Try it only: false keeps the right-answer
+                                  // feedback up until the pupil presses Continue
 });
 
 card.result();   // a row for renderResults

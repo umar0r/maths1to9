@@ -71,6 +71,6 @@ $pageTitle = 'Density and pressure';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=76"></script>
+    <script src="../../assets/js/lesson-engine.js?v=77"></script>
 </body>
 </html>
