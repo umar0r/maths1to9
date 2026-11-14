@@ -9,11 +9,11 @@ test('Reset restarts one Learn card and survives reload at phone width', async (
     const nextSum = page.getByRole('button', { name: '−1, show the next sum' });
     const rows = page.locator('.nn-pattern-row');
     await expect(nextSum).toBeVisible();
-    await expect(reset).toBeHidden();
+    await expect(reset).toBeDisabled();
     await nextSum.click();
-    await expect(reset).toBeVisible();
+    await expect(reset).toBeEnabled();
     await page.reload({ waitUntil: 'networkidle' });
-    await expect(reset).toBeVisible();
+    await expect(reset).toBeEnabled();
     const resetBox = await reset.boundingBox();
     const backBox = await back.boundingBox();
     expect(resetBox.x).toBeGreaterThan(backBox.x + backBox.width);
@@ -22,7 +22,7 @@ test('Reset restarts one Learn card and survives reload at phone width', async (
     await expect(rows).toHaveCount(6);
     await reset.click();
     await expect(rows).toHaveCount(1);
-    await expect(reset).toBeHidden();
+    await expect(reset).toBeDisabled();
     await page.reload({ waitUntil: 'networkidle' });
     await expect(rows).toHaveCount(1);
     await expect(nextSum).toBeVisible();
@@ -36,7 +36,7 @@ test('Reset keeps the seeded question and its first-attempt evidence', async ({ 
     const question = page.locator('#lesson-section-question-bank .question-card:visible');
     await expect(question).toBeVisible();
     const reset = page.getByRole('button', { name: 'Reset card' });
-    await expect(reset).toBeHidden();
+    await expect(reset).toBeDisabled();
     const prompt = await question.locator('.question-prompt').textContent();
     const savedPractice = () => page.evaluate(async () =>
         (await Maths1to9Progress.getLessonActivityState('negative-numbers', 'question-bank'))?.data);
@@ -47,9 +47,9 @@ test('Reset keeps the seeded question and its first-attempt evidence', async ({ 
     else await question.locator('input').first().fill('12345');
     await page.locator(`${MAIN_ACTION}:visible`).click();
     const score = await page.evaluate(() => Maths1to9Lesson.getScore());
-    await expect(reset).toBeVisible();
+    await expect(reset).toBeEnabled();
     await reset.click();
-    await expect(reset).toBeHidden();
+    await expect(reset).toBeDisabled();
     await expect(question.locator('.question-prompt')).toHaveText(prompt);
     await expect(question.locator('.question-feedback.is-visible')).toHaveCount(0);
     await expect(page.locator(`${MAIN_ACTION}:visible`)).toBeDisabled();
@@ -61,4 +61,14 @@ test('Reset keeps the seeded question and its first-attempt evidence', async ({ 
     const stateAfter = await savedPractice();
     expect(stateAfter.items).toEqual(stateBefore.items);
     expect(stateAfter.screen).toBe(stateBefore.screen);
+});
+
+test('Back and Reset always show, greyed out until there is something to do', async ({ page }) => {
+    await page.goto('content/place-value/');
+    const back = page.getByRole('button', { name: 'Previous screen' });
+    const reset = page.getByRole('button', { name: 'Reset card' });
+    await expect(back).toBeVisible();
+    await expect(back).toBeDisabled();
+    await expect(reset).toBeVisible();
+    await expect(reset).toBeDisabled();
 });

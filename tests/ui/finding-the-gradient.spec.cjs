@@ -93,7 +93,8 @@ async function backForward(page) {
     await back(page).click();
     await expect(main(page)).toHaveText('Next');
     await reload(page);
-    await expect(input(page)).toHaveCount(0);
+    // The answered card keeps its answer boxes, locked.
+    await expect(page.locator('.question-card input:visible:enabled')).toHaveCount(0);
     await main(page).click();
     expect(await page.evaluate(() => window.Maths1to9Lesson.getScore())).toEqual(before);
 }

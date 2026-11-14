@@ -28,7 +28,7 @@ $pageTitle = 'Rates of change on graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=58">
 </head>
 
 <body
@@ -77,6 +77,6 @@ $pageTitle = 'Rates of change on graphs';
     <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=65"></script>
+    <script src="../../assets/js/lesson-engine.js?v=66"></script>
 </body>
 </html>

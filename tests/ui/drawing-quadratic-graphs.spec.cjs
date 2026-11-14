@@ -51,7 +51,7 @@ for(const site of ['', '/dist'])for(const phone of [false,true])test.describe(`d
             if (process.env.DEBUG_RUN) console.log(i,hash,await main(page).textContent(),(await read(page)).s?.screen);
             if(hash!==prior) {
                 await reload(page);await layout(page);
-                if(await page.getByRole('button',{name:'Previous screen',exact:true}).isVisible()) {
+                if(await page.getByRole('button',{name:'Previous screen',exact:true}).isEnabled()) {
                     await page.getByRole('button',{name:'Previous screen',exact:true}).click();await main(page).click();await expect(page).toHaveURL(new RegExp(`${hash}$`));
                 }
                 prior=hash;

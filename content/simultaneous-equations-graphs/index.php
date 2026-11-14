@@ -28,7 +28,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=58">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="./lesson.css?v=3">
@@ -77,6 +77,6 @@ $pageTitle = 'Solving simultaneous equations using graphs';
     <script src="./interactive.js?v=5"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=65"></script>
+    <script src="../../assets/js/lesson-engine.js?v=66"></script>
 </body>
 </html>

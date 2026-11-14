@@ -27,7 +27,7 @@ $pageTitle = 'Direct proportion';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=58">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -71,6 +71,6 @@ $pageTitle = 'Direct proportion';
     <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=65"></script>
+    <script src="../../assets/js/lesson-engine.js?v=66"></script>
 </body>
 </html>

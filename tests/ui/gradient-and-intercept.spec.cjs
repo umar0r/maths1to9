@@ -198,7 +198,7 @@ async function cards(page, section, count, detailed=false, retry=false) {
         // Try it goes straight on after a right answer; other sections show Continue.
         if(section==='interactive')await checkThenMoveOn(page);
         else{await main(page).click();await expect(main(page)).toHaveText('Continue');if(detailed)await reload(page);await main(page).click();}
-        if(detailed){await back(page).click();expect(await input(page).count()).toBe(0);await expect(main(page)).toHaveText('Next');await main(page).click();}
+        if(detailed){await back(page).click();expect(await page.locator('.question-card input:visible:enabled').count()).toBe(0);await expect(main(page)).toHaveText('Next');await main(page).click();}
     }
 }
 const modes=[{name:'desktop',viewport:{width:1280,height:1000}},{name:'375px',viewport:{width:375,height:1000}},{name:'touch',viewport:{width:375,height:1000},hasTouch:true,isMobile:true}];
@@ -227,7 +227,7 @@ for(const mode of modes) test.describe(mode.name,()=>{
         await page.getByRole('button',{name:wrong.label,exact:true}).click();await main(page).click();await reload(page);
         await expect(page.locator('.question-feedback:visible')).toHaveText(wrong.feedback);await expect(main(page)).toHaveText('Try again');
         await main(page).click();await fillCorrect(page,question);await main(page).click();await reload(page);await main(page).click();
-        await back(page).click();expect(await input(page).count()).toBe(0);await reload(page);await main(page).click();
+        await back(page).click();expect(await page.locator('.question-card input:visible:enabled').count()).toBe(0);await reload(page);await main(page).click();
         await cards(page,'comparison',6);await reload(page);await expect(main(page)).toHaveText('All lessons');
         expect(errors).toEqual([]);
     });

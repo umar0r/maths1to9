@@ -13,7 +13,7 @@ async function reload(page) {
 }
 
 async function goBackAndForward(page) {
-    if (!await back(page).isVisible()) return;
+    if (!await back(page).isEnabled()) return;
     const url = page.url();
     const points = await score(page);
     await back(page).click();
