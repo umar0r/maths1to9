@@ -13,7 +13,7 @@ async function reload(page) {
 }
 
 async function goBackAndForward(page) {
-    if (!await back(page).isVisible()) return;
+    if (!await back(page).isEnabled()) return;
     const url = page.url();
     const points = await score(page);
     await back(page).click();
@@ -58,26 +58,26 @@ for (const width of [1280, 375]) {
             await expect(line).toBeVisible();
             await expect(page.getByRole('textbox', { name: 'Your answer' })).toHaveCount(0);
             await expect(mainAction(page)).toBeDisabled();
-            await expect(reset).toBeHidden();
+            await expect(reset).toBeDisabled();
             await tapNumber(start);
-            await expect(reset).toBeVisible();
+            await expect(reset).toBeEnabled();
             await mainAction(page).click();
             await expect(mainAction(page)).toHaveText('Try again');
             await mainAction(page).click();
             await expect(line).toBeFocused();
 
             await line.press('Home');
-            await expect(reset).toBeVisible();
+            await expect(reset).toBeEnabled();
             await reset.click();
             await expect(line).toHaveAttribute('aria-valuenow', String(start));
-            await expect(reset).toBeHidden();
+            await expect(reset).toBeDisabled();
             await expect(mainAction(page)).toBeDisabled();
 
             await tapNumber(answer);
             await expect(line).toHaveAttribute('aria-valuenow', String(answer));
             await reload(page);
             await expect(line).toHaveAttribute('aria-valuenow', String(answer));
-            await expect(reset).toBeVisible();
+            await expect(reset).toBeEnabled();
             await mainAction(page).click();
             await expect(mainAction(page)).toHaveText('Continue');
         });
@@ -129,7 +129,7 @@ for (const width of [1280, 375]) {
             await tapTick(start - 1);
             await expect(thermometer).toHaveAttribute('aria-valuenow', String(start - 1));
             const reset = page.getByRole('button', { name: 'Reset card' });
-            await expect(reset).toBeVisible();
+            await expect(reset).toBeEnabled();
             await reset.click();
             await expect(thermometer).toHaveAttribute('aria-valuenow', String(start));
             await expect(mainAction(page)).toBeDisabled();

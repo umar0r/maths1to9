@@ -17,9 +17,12 @@
             practiseAgain: true, heading: 'Your practice results',
             pick: window.NegativeNumbers.pick,
             question(item, random) {
-                const { generate, withAnswerVisual, withSignGrid } = window.NegativeNumbers;
+                const { generate, withAnswerVisual } = window.NegativeNumbers;
                 const generated = generate(item, random);
-                return generated.signs ? withSignGrid(generated, { afterWrongAnswer: true }) : withAnswerVisual(generated, { thermometer: item.type === 'temperature-rise' });
+                // Multiplying and dividing questions are just a box or four
+                // choices: no picture.
+                if (generated.signs) return generated;
+                return withAnswerVisual(generated, { thermometer: item.type === 'temperature-rise' });
             },
             upgrade: (saved, version) => {
                 if (version !== 3) return null;

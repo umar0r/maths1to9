@@ -227,48 +227,6 @@
 .nn-sign-grid > :nth-last-child(3) { border-bottom-left-radius: 6px; }
 .nn-sign-grid > :last-child { border-bottom-right-radius: 6px; }
 
-.nn-sign-table {
-    margin: 1rem auto;
-    border-collapse: collapse;
-    font-size: 1.2rem;
-    font-weight: 800;
-    text-align: center;
-}
-
-.nn-sign-table th,
-.nn-sign-table td {
-    width: 3rem;
-    height: 3rem;
-    border: 1px solid #c9d5e6;
-}
-
-/* Heavier lines mark off the top row and the first column. */
-.nn-sign-table thead th {
-    border-bottom: 3px solid #1f2a44;
-}
-
-.nn-sign-table tr > :first-child {
-    border-right: 3px solid #1f2a44;
-}
-
-.nn-grid-rule {
-    margin: 12px 0 16px;
-    text-align: center;
-    font-weight: 700;
-}
-
-.nn-sign-table .nn-table-row {
-    background: #fbdfdf;
-}
-
-.nn-sign-table .nn-table-column {
-    background: #dbe8fb;
-}
-
-.nn-sign-table .nn-table-both {
-    background: #d9c8f2;
-}
-
 /* The question takes focus for screen readers; it isn't something to tap. */
 .question-prompt:focus {
     outline: none;
@@ -572,10 +530,6 @@
 .nn-learn .nn-fee-sum {
     font-size: 1.25rem;
     font-weight: 800;
-}
-
-.nn-sign-table td[role="button"] {
-    cursor: pointer;
 }
 
 .nn-statement {

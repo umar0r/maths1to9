@@ -84,7 +84,7 @@ module.exports = async function solve(page) {
     const calculation = text.match(/([−-]?\d+)\s*−\s*\(−(\d+)\)/);
     const options = page.locator('.question-card-options:visible button');
     const understanding = {
-        'On a number line, what do + and − tell you to do?': '+ means move right. − means move left.',
+        'You use a number line to work out a sum. Which way do you move when you add, and when you take away?': 'Adding moves you right. Taking away moves you left.',
         'What happens to the two minus signs when you take away a negative number?': 'They turn into a plus, so you add.',
         'What sign do you get when you multiply a negative number by a positive number?': 'A minus, because the two signs are different.',
         'The table shows the sign of the answer when you multiply. What goes in the empty square?': '+, because the two signs are the same.',

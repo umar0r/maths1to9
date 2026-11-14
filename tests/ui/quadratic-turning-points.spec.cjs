@@ -49,7 +49,7 @@ for (const site of ['', '/dist']) for (const phone of [false, true]) {
                     await reload(page);
                     expect(await noSideways(page)).toBe(true);
                     const back = page.getByRole('button', { name: 'Previous screen', exact: true });
-                    if (await back.isVisible()) {
+                    if (await back.isEnabled()) {
                         await back.click();
                         await main(page).click();
                         await expect(page).toHaveURL(new RegExp(`${hash}$`));

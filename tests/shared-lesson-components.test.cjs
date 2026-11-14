@@ -494,17 +494,20 @@ test('shared question records each Check once with one stable score slot and no 
     assert.equal(tracker.getScore().points, 5);
 });
 
-test('reviewed Practice cards retain feedback and results without an answer line', () => {
+test('reviewed Practice cards show the locked choices as the pupil left them, with no answer line', () => {
     const card = questionFixture({ sectionId: 'question-bank' });
     card.click(1);
     card.action.onClick();
     const review = card.reload({ readOnly: true });
     assert.equal(review.card.result().answer, '4');
     assert.equal(review.card.result().firstCorrect, true);
-    const [heading, feedback] = review.container.children[0].children;
-    assert.equal(review.container.children[0].children.length, 2);
+    const [heading, group, feedback] = review.container.children[0].children;
+    assert.equal(review.container.children[0].children.length, 3);
     assert.equal(heading.textContent, 'Choose a number');
-    assert.equal(feedback.textContent, 'Right');
+    assert.equal(group.attributes.role, 'group');
+    assert.ok(group.children.every(button => button.disabled));
+    assert.match(group.children[1].className, /is-correct/);
+    assert.equal(feedback.children[0].textContent, 'Right');
 });
 
 test('shared unscored questions retain firstCorrect without recording assessments', () => {
@@ -1097,7 +1100,8 @@ test('fields work through question-set results, Back and Practise again with ret
     assert.equal(find(container, 'td').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 1);
     back.onClick();
     assert.equal(current.readOnly, true);
-    assert.equal(find(container, 'input').length, 0);
+    // The answered card keeps the pupil's typed answers, locked.
+    assert.deepEqual(find(container, 'input').map(box => [box.value, box.disabled]), [['−1', true], ['2/4', true]]);
     action.onClick();
     find(container, 'button').find(button => button.textContent === 'Practise again').events.click();
     assert.equal(section.state.session, 2);
@@ -1279,7 +1283,7 @@ test('question-set results include units for one-box and field cards, including 
     finish();
     for (const answer of expected) assert.equal(unitNodes(container, 'td').filter(node => node.textContent === answer).length, 1);
     back.onClick();
-    assert.equal(unitNodes(container, 'input').length, 0);
+    assert.deepEqual(unitNodes(container, 'input').map(box => [box.value, box.disabled]), [['12', true], ['4', true]]);
     assert.equal(unitNodes(container, 'p').filter(node => node.textContent === expected[1]).length, 0);
     action.onClick();
     unitNodes(container, 'button').find(button => button.textContent === 'Practise again').events.click();

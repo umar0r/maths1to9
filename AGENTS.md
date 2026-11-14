@@ -89,6 +89,14 @@ The best example of a finished lesson is the newest one in
     in the lesson folder: `build.sh` publishes everything in it.
 11. **Never merge into `main` or push `main`.** Push only your own branch.
 
+23. **Back and Reset on every screen.** Every lesson turns on
+    `"navigation": { "back_button": true }` (the template already does).
+    The engine then shows "‹ Back" at the top left of the card and Reset
+    (↺) at the top right on every screen. They are greyed out when there
+    is nothing to go back to or reset; they never disappear. Register back
+    handlers (`setSectionBack`) and card resets as
+    `docs/shared-lesson-components.md` says, so they work on every screen.
+
 **Practice results.** Use the shared lesson engine for the results screen.
 Show the first-time score and any questions that needed a retry. Keep the
 full answer table collapsed under **Show all answers**. Use the shared

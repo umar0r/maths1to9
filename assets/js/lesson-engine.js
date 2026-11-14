@@ -677,6 +677,10 @@
                 correct: saved.correct, explanation: saved.feedback
             };
         }
+        // A Practice card the pupil has answered and moved on from shows
+        // just as they left it: the choices or typed box, locked, with their
+        // answer marked. A custom widget already draws the answer itself.
+        const lockedCard = config.readOnly && sectionId === 'question-bank' && !custom;
         const article = document.createElement('article');
         article.className = config.readOnly ? 'question-card question-card--bare question-card--read-only'
             : 'question-card question-card--bare';
@@ -704,7 +708,7 @@
             });
             handle.update({ value: saved.value, editable: !config.readOnly && saved.phase === 'answer', phase: saved.phase });
         }
-        if (config.readOnly) {
+        if (config.readOnly && !lockedCard) {
             api.clearSectionAction(sectionId);
             if (sectionId !== 'question-bank') {
                 const row = result();
@@ -791,6 +795,7 @@
         const feedback = createFeedback(sectionId, { visible: false });
         article.append(feedback);
         function setAction() {
+            if (lockedCard) return;
             api.setSectionAction(sectionId, {
                 label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
@@ -809,7 +814,7 @@
                         : saved.phase === 'wrong' ? ' is-incorrect' : ' is-selected';
                 }
                 if (rejected) button.className += ' is-rejected';
-                button.disabled = saved.phase !== 'answer' || rejected;
+                button.disabled = lockedCard || saved.phase !== 'answer' || rejected;
                 button.setAttribute('aria-pressed', String(selected));
                 if (rejected && !item.rejectionMark) {
                     const cross = resultText('span', ' ×');
@@ -820,11 +825,11 @@
             }
             if (input) {
                 input.value = saved.value;
-                input.disabled = saved.phase !== 'answer';
+                input.disabled = lockedCard || saved.phase !== 'answer';
             }
             for (const { id, box } of fieldInputs) {
                 box.value = saved.value[id];
-                box.disabled = saved.phase !== 'answer';
+                box.disabled = lockedCard || saved.phase !== 'answer';
                 box.setAttribute('aria-invalid', String(saved.invalid === id));
             }
             const shown = saved.invalid || saved.phase !== 'answer';
@@ -843,7 +848,7 @@
             setAction();
         }
         function act() {
-            if (released) return;
+            if (released || lockedCard) return;
             if (saved.phase === 'correct') {
                 released = true;
                 api.clearSectionAction(sectionId);
@@ -1889,7 +1894,7 @@
             const back = createElement('button', 'lesson-back', '‹ Back');
             back.type = 'button';
             back.setAttribute('aria-label', 'Previous screen');
-            back.hidden = true;
+            back.disabled = true;
             back.addEventListener('click', () => state.backNavigation.back());
             topbar.append(back);
             elements.backButton = back;
@@ -1905,7 +1910,7 @@
         reset.title = 'Reset card';
         reset.type = 'button';
         reset.setAttribute('aria-label', 'Reset card');
-        reset.hidden = true;
+        reset.disabled = true;
         reset.addEventListener('click', () => {
             const id = state.sections[state.currentIndex]?.id;
             const question = currentQuestionReset(id);
@@ -1914,7 +1919,7 @@
             if (question) question.run();
             else restart?.();
             updateResetVisibility();
-            if (reset.hidden) {
+            if (reset.disabled) {
                 const card = state.sectionElements[state.currentIndex];
                 const heading = card.querySelector('[data-screen-heading], h2, h3');
                 if (heading) {
@@ -2031,7 +2036,11 @@
                 const header = document.querySelector('.lesson-header') ||
                     document.querySelector('.site-header');
                 const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
-                top = Math.max(0, headerBottom) + gap;
+                // Also clear the Back/Reset row while it's on screen, so the
+                // box never covers Reset.
+                const topbar = document.querySelector('.lesson-topbar');
+                const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
+                top = Math.max(0, headerBottom, topbarBottom) + gap;
             }
             live.style.setProperty('--feedback-top', `${top}px`);
         };
@@ -3581,21 +3590,10 @@
         const id = state.sections[state.currentIndex]?.id;
         const question = currentQuestionReset(id);
         const resettable = Boolean(question || state.sectionResets.has(id));
-        elements.resetButton.hidden = !resettable ||
+        // Back and Reset always show, so the row never jumps. Each is greyed
+        // out when there is nothing to go back to or reset.
+        elements.resetButton.disabled = !resettable ||
             !hasResetInteraction(resetInteractionKey(id, question));
-        updateTopbarSpace(resettable);
-    }
-
-    // The Back/Reset row takes no space on a screen that can never show
-    // either, so the card sits higher. On a screen with a reset it keeps its
-    // space from the start, so the card doesn't jump when Reset appears.
-    function updateTopbarSpace(resettable) {
-        const topbar = elements.resetButton?.parentElement;
-        if (!topbar) return;
-        const empty = !resettable &&
-            (elements.backButton?.hidden ?? true) &&
-            (elements.position?.hidden ?? true);
-        topbar.classList.toggle('lesson-topbar--empty', empty);
     }
 
     function updateControls() {
@@ -3608,7 +3606,7 @@
         const sectionAction =
             state.sectionActions.get(section?.id);
 
-        if (elements.backButton) elements.backButton.hidden = !state.backNavigation.available();
+        if (elements.backButton) elements.backButton.disabled = !state.backNavigation.available();
         updateResetVisibility();
         if (elements.position) {
             const position = state.sectionPositions.get(section?.id) || '';
