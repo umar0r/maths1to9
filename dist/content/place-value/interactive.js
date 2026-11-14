@@ -160,7 +160,7 @@
             container.append(cardRoot);
             api.createQuestion(cardRoot, {
                 ...window.PlaceValue.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
-                scored: false, readOnly,
+                scored: false, readOnly, autoContinue: false,
                 onFeedback(result) {
                     reportProgress();
                 },
