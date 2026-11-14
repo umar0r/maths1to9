@@ -42,8 +42,11 @@ module.exports = async function solve(page) {
     let match;
     if ((match = text.match(/^Work out \(−([\d.]+)\) × \(−([\d.]+)\)\.$/))) { await give(Math.round(Number(match[1]) * 10 * Number(match[2])) / 10); return true; }
     if ((match = text.match(/^Work out −(\d+) ÷ −(\d+), then/))) return choose(`${match[1] / match[2]}, then −${match[1] / match[2]}`);
-    if ((match = text.match(/^n = −(\d+)\. What is n²/))) return choose(String(match[1] * match[1]));
-    if (text.startsWith('p and q are different positive numbers')) return choose('p − n');
+    if ((match = text.match(/^Work out \(−(\d+)\) × \(−\1\)\./))) return choose(String(match[1] * match[1]));
+    if (text === 'Which of these has a positive answer?') {
+        const right = (await options2.allTextContents()).find(label => /^\d+ − \(−\d+\)$/.test(label.trim()));
+        return choose(right.trim());
+    }
     if (text.startsWith('What number is exactly halfway between')) { await give((numbers[0] + numbers[1]) / 2); return true; }
     if (text.includes('×')) {
         if (text.includes('? ×')) await give(numbers[1] / numbers[0]);

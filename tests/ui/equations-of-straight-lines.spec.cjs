@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { MAIN_ACTION, watchForErrors, screen, checkScreen } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors, screen, checkScreen, goToStage } = require('./helpers.cjs');
 const solve = require('./solvers/equations-of-straight-lines.cjs');
 const slug = 'equations-of-straight-lines';
 const main = page => page.locator(`${MAIN_ACTION}:visible`).first();
@@ -209,7 +209,7 @@ test('equations-of-straight-lines partial answers, reload phases, repeated Pract
         if (!await solve(page)) await main(page).click();
     }
     expect((await state(page, 'comparison')).finished).toBe(true);
-    await page.getByRole('button', { name: /^Practice,/ }).click();
+    await goToStage(page, 'Practice');
     const before = await page.evaluate(() => Maths1to9Lesson.getScore());
     const first = await state(page, 'question-bank');
     for (let session = 2; session <= 3; session++) {
