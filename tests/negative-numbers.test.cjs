@@ -115,6 +115,8 @@ test('negative-numbers: 200 seeds of every type are deterministic and mapped to 
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
         assert.equal(items.length, lesson.question_bank.session_length);
+        assert.equal(items.at(-1).type, 'sign-cards');
+        assert.equal(lesson.assessment.question_types[items.at(-1).type], 'calculate-negative-numbers');
         const inputs = new Set(items.map(item => Q.generate(item, seededRandom(item.seed)).input));
         assert.ok(inputs.has('choice') && inputs.has('number'));
     }

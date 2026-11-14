@@ -68,6 +68,6 @@ $pageTitle = 'Substituting into formulae';
     <script src="./substitution.js?v=2"></script>
     <script src="./questions.js?v=13"></script>
     <script src="./interactive.js?v=14"></script>
-    <script src="../../assets/js/lesson-engine.js?v=64"></script>
+    <script src="../../assets/js/lesson-engine.js?v=65"></script>
 </body>
 </html>

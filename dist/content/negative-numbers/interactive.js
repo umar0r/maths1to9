@@ -351,40 +351,39 @@
 
     async function mountTryIt(root) {
         const NN = window.NegativeNumbers;
-        // Try it runs: number line examples, the two sign-rule pages, then the multiplying
+        // Try it runs: number line examples, the sign-rule page, then the multiplying
         // examples. The last one goes straight on to Practice.
         const questions = [...examples(), ...NN.multiplyExamples()];
         const firstMultiply = examples().length;
         const questionPages = (from, to) => questions.slice(from, to).map((question, i) => ({ kind: 'question', question, number: from + i }));
         const pages = [
             ...questionPages(0, firstMultiply),
-            { kind: 'grid', mode: 'words' },
-            { kind: 'grid', mode: 'signs' },
+            { kind: 'grid' },
             ...questionPages(firstMultiply, questions.length)
         ];
         const lastPage = pages.length - 1;
-        const removedSlideHash = 'try-it-9';
+        const oldLastSlideHashes = ['try-it-8', 'try-it-9'];
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 8,
+            version: 9,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 solved: {},
                 reveal: { part: 0, seen: [[], []], last: null },
                 conveyor: { signs: ['+', '+'], seen: [] },
-                signRules: [false, false, false, false],
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade: (saved, version) => {
-                if (version !== 7) return null;
-                // The last card was removed. Keep the earlier answers and slide state.
+                if (version !== 7 && version !== 8) return null;
+                // The sign cards moved to Practice. Keep the other Try it answers.
+                const moveScreen = screen => Math.min(screen > firstMultiply + 1 ? screen - 1 : screen, lastPage);
                 return {
                     ...saved,
-                    index: Math.min(saved.index, lastPage),
-                    screen: Math.min(saved.screen, lastPage),
-                    furthestScreen: Math.min(saved.furthestScreen, lastPage)
+                    index: moveScreen(saved.index),
+                    screen: moveScreen(saved.screen),
+                    furthestScreen: moveScreen(saved.furthestScreen)
                 };
             }
         });
@@ -640,173 +639,22 @@
             });
         }
 
-        // The four sign rules. The words page comes first and is already
-        // filled in (positive × negative = negative), in pastel boxes: green
-        // for positive, peach for negative. Then the signs page (+ × − = −)
-        // has one sign missing on each line: the answer on some lines, the
-        // second sign on others. Pupils drag a blue + or − punch card into
-        // the dashed gap, or tap a card to fill the next gap.
-        const GRIDS = {
-            words: {
-                values: ['positive', 'negative'],
-                feedback: 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.'
-            },
-            signs: {
-                field: 'signRules', values: ['+', '−'], label: 'Signs',
-                feedback: 'Same signs give +. Different signs give −.'
-            }
-        };
-
-        function drawGridPage(mode) {
-            const { createFeedback } = window.Maths1to9LessonEngine;
-            const grid = GRIDS[mode];
-            const words = mode === 'words';
-            const [plus, minus] = grid.values;
-            const rules = [
-                { signs: [plus, plus, plus], gap: 2 },
-                { signs: [minus, minus, plus], gap: 1 },
-                { signs: [plus, minus, minus], gap: 2 },
-                { signs: [minus, plus, minus], gap: 1 }
-            ];
-            if (words) return drawWordRules(rules, grid.feedback);
-            // Saves from before the gaps hold no answers yet.
-            if (!Array.isArray(state[grid.field])) {
-                section.update(state => { state[grid.field] = rules.map(() => false); });
-            }
-            const filled = state[grid.field];
-            const page = document.createElement('div');
-            page.className = 'nn-learn';
-            root.append(page);
-            const name = sign => (sign === '+' ? 'plus' : 'minus');
-            const symbol = sign => `<span class="nn-sign-symbol nn-sign-symbol--${name(sign)}">${sign}</span>`;
-            const list = document.createElement('ul');
-            list.className = `nn-sign-rules nn-sign-rules--${mode}`;
-            const gaps = rules.map((rule, line) => {
-                const item = document.createElement('li');
-                item.className = 'nn-sign-rule';
-                const parts = rule.signs.map((sign, index) => (index === rule.gap
-                    ? '<span class="nn-sign-gap"></span>' : symbol(sign)));
-                item.innerHTML = `${parts[0]} × ${parts[1]} = ${parts[2]}`;
-                list.append(item);
-                const gap = item.querySelector('.nn-sign-gap');
-                gap.setAttribute('aria-label', `Line ${line + 1}: missing sign`);
-                return gap;
-            });
-            page.append(list);
-
-            const tray = document.createElement('div');
-            tray.className = 'nn-sign-tray';
-            tray.setAttribute('role', 'group');
-            tray.setAttribute('aria-label', `${grid.label} to drag into the gaps`);
-            page.append(tray);
-            const full = () => filled.every(Boolean);
-            const nextGap = () => filled.indexOf(false);
-
-            function fillGap(line) {
-                const sign = rules[line].signs[rules[line].gap];
-                const placed = document.createElement('span');
-                placed.className = 'nn-punch-card nn-sign-placed';
-                placed.textContent = sign;
-                gaps[line].replaceWith(placed);
-                gaps[line] = placed;
-            }
-
-            function finish() {
-                tray.remove();
-                page.append(createFeedback('interactive', {
-                    correct: true,
-                    text: grid.feedback
-                }));
-                api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
-            }
-
-            // A card dropped on a gap: right signs stay, wrong ones shake.
-            function place(line, sign) {
-                if (line < 0 || filled[line]) return;
-                const rule = rules[line];
-                if (rule.signs[rule.gap] !== sign) {
-                    const gap = gaps[line];
-                    gap.classList.remove('is-wrong');
-                    void gap.offsetWidth;
-                    gap.classList.add('is-wrong');
-                    return;
-                }
-                section.update(state => { state[grid.field][line] = true; });
-                fillGap(line);
-                if (full()) finish();
-            }
-
-            grid.values.forEach(sign => {
-                const card = document.createElement('button');
-                card.type = 'button';
-                card.className = 'nn-punch-card nn-sign-card';
-                card.textContent = sign;
-                card.setAttribute('aria-label', `${name(sign)}: drag it into a gap, or tap to fill the next gap`);
-                tray.append(card);
-                let drag = null;
-                let dragged = false;
-                card.addEventListener('pointerdown', event => {
-                    drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
-                    dragged = false;
-                    card.setPointerCapture(event.pointerId);
-                });
-                card.addEventListener('pointermove', event => {
-                    if (!drag || event.pointerId !== drag.id) return;
-                    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
-                    if (!dragged && Math.hypot(dx, dy) < 6) return;
-                    dragged = true;
-                    card.classList.add('is-dragging');
-                    card.style.transform = `translate(${dx}px, ${dy}px)`;
-                    gaps.forEach(gap => {
-                        const box = gap.getBoundingClientRect();
-                        gap.classList.toggle('is-over', event.clientX >= box.left && event.clientX <= box.right
-                            && event.clientY >= box.top && event.clientY <= box.bottom);
-                    });
-                });
-                const drop = event => {
-                    if (!drag || event.pointerId !== drag.id) return;
-                    drag = null;
-                    card.classList.remove('is-dragging');
-                    card.style.transform = '';
-                    if (!dragged) return;
-                    const line = gaps.findIndex(gap => gap.classList.contains('is-over'));
-                    gaps.forEach(gap => gap.classList.remove('is-over'));
-                    place(line, sign);
-                };
-                card.addEventListener('pointerup', drop);
-                card.addEventListener('pointercancel', drop);
-                // A tap (or Enter) fills the next empty gap, line by line.
-                card.addEventListener('click', () => {
-                    if (dragged) {
-                        dragged = false;
-                        return;
-                    }
-                    place(nextGap(), sign);
-                });
-            });
-
-            filled.forEach((done, line) => { if (done) fillGap(line); });
-            if (full()) finish();
-            return full();
-        }
-
-        // The words page: all four rules filled in, nothing to do.
-        function drawWordRules(rules, text) {
+        // The words page shows the four completed multiplication rules.
+        function drawWordRules() {
             const page = document.createElement('div');
             page.className = 'nn-learn';
             root.append(page);
             const word = sign => `<span class="nn-sign-word nn-sign-word--${sign}">${sign}</span>`;
             const list = document.createElement('ul');
             list.className = 'nn-sign-rules nn-sign-rules--words';
-            for (const rule of rules) {
+            for (const [first, second, answer] of window.NegativeNumbers.multiplicationSigns) {
                 const item = document.createElement('li');
                 item.className = 'nn-sign-rule';
-                item.innerHTML = `${word(rule.signs[0])} × ${word(rule.signs[1])} = ${word(rule.signs[2])}`;
+                item.innerHTML = `${word(first)} × ${word(second)} = ${word(answer)}`;
                 list.append(item);
             }
             page.append(list);
-            NN.paragraph(page, text);
-            return true;
+            NN.paragraph(page, 'When the two signs are the same, the answer is positive. When they are different, the answer is negative.');
         }
 
         function nextPage() {
@@ -817,18 +665,14 @@
         function render() {
             root.replaceChildren();
             const page = pages[state.screen];
-            api.setSectionReset('interactive', page.kind === 'grid' ? (page.mode === 'words' ? null : () => {
-                section.resetFields([GRIDS[page.mode].field]);
+            api.setSectionReset('interactive', page.kind === 'grid' || page.question.signs ? null : () => {
+                const { question, number } = page;
+                section.update(state => { delete state.solved[number]; });
+                if (question.input === 'reveal') section.resetFields(['reveal']);
+                else if (question.input === 'conveyor') section.resetFields(['conveyor']);
+                else NN.resetNumberLine(question);
                 render();
-            })
-                : page.question.signs ? null : () => {
-                    const { question, number } = page;
-                    section.update(state => { delete state.solved[number]; });
-                    if (question.input === 'reveal') section.resetFields(['reveal']);
-                    else if (question.input === 'conveyor') section.resetFields(['conveyor']);
-                    else NN.resetNumberLine(question);
-                    render();
-                });
+            });
             // The section title is hidden. A question's prompt is its page's only
             // heading; the review and grid pages draw their own.
             if (page.kind !== 'question') {
@@ -843,8 +687,8 @@
             } : null);
             if (state.finished) sectionEvent('interactive', 'complete');
             if (page.kind === 'grid') {
-                const full = drawGridPage(page.mode);
-                api.setSectionAction('interactive', { label: 'Next', disabled: !full, onClick: nextPage });
+                drawWordRules();
+                api.setSectionAction('interactive', { label: 'Next', onClick: nextPage });
             } else {
                 const readOnly = state.screen < state.index || state.finished;
                 drawExample(root, page, readOnly);
@@ -882,12 +726,12 @@
                 }
                 jumpTo(index);
                 queueMicrotask(syncHash);
-            }, index === lastPage ? [removedSlideHash] : []);
+            }, index === lastPage ? oldLastSlideHashes : []);
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = initialHash === `#${removedSlideHash}`
+        const requested = oldLastSlideHashes.includes(initialHash.slice(1))
             ? lastPage
             : pages.findIndex((page, index) => initialHash === `#try-it-${index + 1}`);
         if (requested >= 0 && api.goToSection('interactive', { moveFocus: false, unlock: true })) {

@@ -194,7 +194,7 @@
     touch-action: none;
 }
 
-.question-card:has(> .retained-result__answer) .negative-answer-widget .question-answer-label {
+.question-card--read-only .negative-answer-widget .question-answer-label {
     display: none;
 }
 
@@ -1054,6 +1054,8 @@
     font-size: clamp(1.5rem, 7vw, 2rem);
     font-weight: 700;
 }
+
+.nn-sign-tray[hidden] { display: none; }
 
 .nn-sign-card {
     cursor: grab;

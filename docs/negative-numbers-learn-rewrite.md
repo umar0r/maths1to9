@@ -280,17 +280,10 @@ Try it (−4 − (−9)), Practice (Sam's mistake) and Check.
 
 ## Try it: multiplying negative numbers
 
-Try it runs: the four number line examples, the sign grid, then the
+Try it runs: the four number line examples, the sign-rule page, then the
 multiplying examples. The last one goes straight on to Practice.
 
-**Sign grid page.** Heading: "When you multiply, the two signs tell you the
-sign of the answer." "Tap each square to fill the grid." A grid with + and −
-along the top and down the side, and four squares showing ?. Tapping a
-square shows its sign and an example under the grid: 2 × 3 = 6, 2 × −3 = −6,
-−2 × 3 = −6 or −2 × −3 = 6. Once all four are filled:
-
-> When the two signs are the same, the answer is positive. When they are
-> different, the answer is negative.
+**Sign-rule page.** Show the four completed multiplication rules in words.
 
 **Multiplying examples.** Each has a small table of the signs, with heavier
 lines around the top row and first column. The question's row is pastel red
@@ -324,6 +317,9 @@ the sideways Learn thermometer. Pupils drag the level to set the
 temperature, then press Check.
 
 ## Practice
+
+The final question is the blue sign-card activity. Pupils fill all four
+gaps and press Check before the Practice results.
 
 Eleven questions in a fixed mix, with new numbers each session, so the same
 kind of sum never comes three times in a row:

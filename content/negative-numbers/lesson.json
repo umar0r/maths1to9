@@ -23,6 +23,7 @@
             "add-to-negative": "calculate-negative-numbers",
             "take-from-negative": "calculate-negative-numbers",
             "add-negative": "calculate-negative-numbers",
+            "sign-cards": "calculate-negative-numbers",
             "multiply-different": "calculate-negative-numbers",
             "multiply-same": "calculate-negative-numbers",
             "multiply-missing": "calculate-negative-numbers",
@@ -57,7 +58,7 @@
         "hide_heading": true,
         "title": "Practise subtracting negative numbers",
         "intro": "",
-        "session_length": 16
+        "session_length": 17
     },
     "section_order": [
         "explanation",
