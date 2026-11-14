@@ -33,7 +33,7 @@ $pageTitle = 'Negative numbers';
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=12"
+    data-lesson-src="./lesson.json?v=13"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -72,6 +72,6 @@ $pageTitle = 'Negative numbers';
     <script src="./interactive.js?v=103"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=76"></script>
+    <script src="../../assets/js/lesson-engine.js?v=77"></script>
 </body>
 </html>

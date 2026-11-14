@@ -195,6 +195,20 @@ On load, look at what is saved under the key:
 Pilot: the LCM Try it, with an `upgrade` from its current saved format. Test
 with a save made before the change: it must come back as it was.
 
+
+## Hiding the answer line on finished cards
+
+When a pupil goes back to a card they have answered, the engine shows their
+answer and a mark (for example "760 ✓") under the card, above the feedback.
+The feedback box already gives the answer, so a lesson can turn the line off
+in `lesson.json`:
+
+```json
+"hide_saved_answer": true
+```
+
+Place value and Negative numbers turn it off. Practice cards never show it.
+
 ## 3. Back button
 
 A subtle way to go back one screen: a small "‹ Back" at

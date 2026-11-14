@@ -710,7 +710,9 @@
         }
         if (config.readOnly && !lockedCard) {
             api.clearSectionAction(sectionId);
-            if (sectionId !== 'question-bank') {
+            // A lesson can turn off the "answer ✓" line under a finished
+            // card: its feedback box already says the answer.
+            if (sectionId !== 'question-bank' && api.getLesson?.().hide_saved_answer !== true) {
                 const row = result();
                 const answer = resultText('p', row.answer, 'retained-result__answer');
                 appendResultMark(answer, row);

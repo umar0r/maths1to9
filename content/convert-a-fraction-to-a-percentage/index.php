@@ -72,6 +72,6 @@ $pageTitle = 'Convert a fraction to a percentage';
     <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=76"></script>
+    <script src="../../assets/js/lesson-engine.js?v=77"></script>
 </body>
 </html>
