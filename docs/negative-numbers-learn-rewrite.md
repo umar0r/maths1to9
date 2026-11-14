@@ -255,14 +255,14 @@ this screen.
 
 **Text:**
 
-> So when you take away a negative, you can add instead. The take-away sign
-> and the negative sign turn into a plus.
+> So when you take away a negative, you can add instead.
+
+Above the equation: “Tap the negative signs to turn them into a plus.”
 
 **What the pupil does:**
 
 1. `3 − (−4)` is shown large with the two signs `− (−` highlighted.
-   "Tap the two minus signs to turn them into a plus." On tap, the two
-   signs and the bracket fade and a `+` takes their place, and the line reads
+   On tap, the two signs and the bracket fade and a `+` takes their place, and the line reads
    `3 − (−4) = 3 + 4`.
 2. The working appears straight away: **3 − (−4) = 3 + 4 = 7**
 

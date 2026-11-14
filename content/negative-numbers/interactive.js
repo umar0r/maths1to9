@@ -44,9 +44,7 @@
         { title: 'What happens when you take away a negative', kind: 'pattern',
         heading: 'Another way of looking at it: start with 3 and take away a smaller number each time.', lines: [] },
         { title: 'Take away a negative: add instead', kind: 'method', slot: 0,
-        heading: 'So when you take away a negative, you can add instead.', lines: [
-            'The take-away sign and the negative sign turn into a plus.'
-        ], start: 3, steps: 4 }
+        heading: 'So when you take away a negative, you can add instead.', lines: [], start: 3, steps: 4 }
     ];
 
     const signed = value => String(value).replace('-', '−');
@@ -320,14 +318,15 @@
             } else {
                 const i = screen.slot;
                 const changed = state.changed[i];
+                const instruction = 'Tap the negative signs to turn them into a plus.';
+                if (!changed) paragraph(instruction, 'nn-instruction');
+
                 const sum = document.createElement('div');
                 sum.className = 'nn-transform nn-sum';
                 const original = changed ? `<span>${signed(screen.start)} − (−${screen.steps}) =</span> ` : '';
                 sum.innerHTML = `${original}<span>${signed(screen.start)}</span> <span class="nn-transform-signs ${changed ? 'nn-changed' : ''}"><span class="nn-before">− (−</span><span class="nn-after">+</span></span> <span>${screen.steps}<span class="${changed ? 'nn-gone' : ''}">)</span></span>`;
                 root.append(sum);
                 if (!changed) {
-                    const instruction = 'Tap the two minus signs to turn them into a plus.';
-                    paragraph(instruction, 'nn-instruction');
                     tapTarget(sum.querySelector('.nn-transform-signs'), instruction, () => {
                         section.update(state => { state.changed[i] = true; });
                         // Keep the sum in place while the old signs fade into the plus.
