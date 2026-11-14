@@ -680,7 +680,9 @@
         // A Practice card the pupil has answered and moved on from shows
         // just as they left it: the choices or typed box, locked, with their
         // answer marked. A custom widget already draws the answer itself.
-        const lockedCard = config.readOnly && sectionId === 'question-bank' && !custom;
+        // A Check card does the same when the lesson asks with lockedReview.
+        const lockedCard = config.readOnly && !custom &&
+            (sectionId === 'question-bank' || config.lockedReview === true);
         const article = document.createElement('article');
         article.className = config.readOnly ? 'question-card question-card--bare question-card--read-only'
             : 'question-card question-card--bare';
