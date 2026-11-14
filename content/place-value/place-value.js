@@ -863,6 +863,7 @@
         const canMove = (moves, name, change) => fits({ ...moves, [name]: moves[name] + change });
         const sentence = moves => `${showing(rows[0], moves.top)} × ${showing(rows[1], moves.bottom)} = ${answer(moves)}`;
         return {
+            checkLabel: 'Continue',
             isEmpty(value) { return !normalise(value).tried; },
             answerText(value) { return sentence(normalise(value)); },
             mark() { return { correct: true, feedback }; },
@@ -1018,6 +1019,7 @@
         });
         const feedback = 'In 46.275, the 4 is worth 40, the 6 is worth 6, the 2 is worth 0.2, the 7 is worth 0.07 and the 5 is worth 0.005.';
         return {
+            checkLabel: 'Continue',
             isEmpty(value) { return normalise(value).seen.includes(false); },
             answerText() { return '40 + 6 + 0.2 + 0.07 + 0.005 = 46.275'; },
             mark() { return { correct: true, feedback }; },

@@ -88,9 +88,16 @@ async function solve(page, memory = {}) {
     if (await explorer.count() && !memory.explored) { await explorer.first().click(); memory.explored = true; return true; }
     const main = page.locator('.lesson-controls button.button--primary:visible');
     const action = await main.innerText();
-    if (action !== 'Check') return false;
     const card = page.locator('.question-card:visible');
+    /* The tap-and-look cards say Continue instead of Check before they are marked. */
+    const looking = action === 'Continue' && await card.locator('.pv-flip, .pv-play:not(.pv-play--words)').count() > 0;
+    if (action !== 'Check' && !looking) return false;
     const prompt = await card.locator('.question-prompt').innerText();
+    if (looking) {
+        memory.looked ??= new Set();
+        if (memory.looked.has(prompt)) return false;
+        memory.looked.add(prompt);
+    }
     const pool = card.locator('.pv-order-pool');
     if (await pool.count()) {
         const values = await pool.locator('button').allTextContents();
