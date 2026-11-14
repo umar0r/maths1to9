@@ -66,7 +66,7 @@ $pageTitle = 'Negative numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./negative-numbers.js?v=42"></script>
+    <script src="./negative-numbers.js?v=43"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=24"></script>
