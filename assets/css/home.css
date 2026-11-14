@@ -480,6 +480,33 @@
     transform: translateX(3px);
 }
 
+/* Reset arrow: same circle as the → arrow, sitting just left of it. */
+.lesson-card__reset {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    padding: 0;
+    place-items: center;
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.lesson-card__reset:hover,
+.lesson-card__reset:focus-visible {
+    background: var(--topic, var(--primary));
+    color: #ffffff;
+    outline: none;
+}
+
+.lesson-card__reset svg {
+    display: block;
+}
+
 .lesson-card__title {
     display: block;
     font-size: 1.18rem;

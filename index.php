@@ -283,7 +283,7 @@ if ($uncategorisedLessons !== []) {
         crossorigin
     >
     <link rel="stylesheet" href="./assets/css/app.css?v=61">
-    <link rel="stylesheet" href="./assets/css/home.css">
+    <link rel="stylesheet" href="./assets/css/home.css?v=2">
 </head>
 
 <body class="home-page">
@@ -485,6 +485,6 @@ if ($uncategorisedLessons !== []) {
         </div>
     </footer>
     <script src="./assets/js/progress.js?v=3" defer></script>
-    <script src="./assets/js/home-progress.js" defer></script>
+    <script src="./assets/js/home-progress.js?v=2" defer></script>
 </body>
 </html>

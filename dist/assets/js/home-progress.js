@@ -164,6 +164,10 @@
                 badge.textContent = 'Continue';
             }
 
+            if (record || assessedSkills.length > 0) {
+                addResetButton(card, record);
+            }
+
             const meta = card.querySelector('.lesson-card__meta');
 
             if (meta) {
@@ -179,6 +183,135 @@
 
         renderDailyReview(bySkill);
     }
+
+    /* ------------------------------------------------------------------ *
+     * Reset a lesson
+     *
+     * A ↺ button beside the → arrow on any card with saved work.
+     * It clears everything the lesson saved: its progress record
+     * (position, answers, score), the evidence for its skills,
+     * the engine's card-reset flags and any keys the lesson keeps
+     * itself (e.g. "negative-numbers-dot:…"). Then the page
+     * reloads so every badge and Daily Review card is redrawn.
+     * ------------------------------------------------------------------ */
+
+    const RESET_ICON = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.25"
+            stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
+            <path d="M4 10a8 8 0 1 1 1 7 M4 4v6h6"/>
+        </svg>`;
+
+    function lessonSlugFor(card, record) {
+        if (typeof record?.slug === 'string' && record.slug !== '') {
+            return record.slug;
+        }
+
+        const parts = normalisePath(new URL(card.href).pathname)
+            .split('/')
+            .filter(Boolean);
+
+        return parts[parts.length - 1] ?? '';
+    }
+
+    function addResetButton(card, record) {
+        const arrow = card.querySelector('.lesson-card__arrow');
+        const title = card
+            .querySelector('.lesson-card__title')
+            ?.textContent.trim() ?? 'this lesson';
+
+        if (!arrow) {
+            return;
+        }
+
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = 'lesson-card__reset';
+        button.title = 'Reset lesson';
+        button.setAttribute('aria-label', `Reset ${title}`);
+        button.dataset.slug = lessonSlugFor(card, record);
+        button.dataset.title = title;
+        button.innerHTML = RESET_ICON;
+        arrow.before(button);
+    }
+
+    function removeKeys(storage, matches) {
+        try {
+            const keys = [];
+
+            for (let i = 0; i < storage.length; i += 1) {
+                const key = storage.key(i);
+
+                if (key && matches(key)) {
+                    keys.push(key);
+                }
+            }
+
+            keys.forEach((key) => storage.removeItem(key));
+        } catch {
+            /* Storage unavailable: nothing to clear. */
+        }
+    }
+
+    async function resetLesson(button) {
+        const card = button.closest('.lesson-card');
+        const slug = button.dataset.slug ?? '';
+
+        if (!card || slug === '') {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Start ${button.dataset.title} again from the beginning? ` +
+            'Your answers and score for this lesson will be cleared.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const skillIds = (card.dataset.skills ?? '')
+            .split(',')
+            .map((skillId) => skillId.trim())
+            .filter(Boolean);
+
+        await progressApi.clearLessonProgress(slug);
+        await Promise.all(
+            skillIds.map(
+                (skillId) => progressApi.clearSkillProgress(skillId)
+            )
+        );
+
+        /* Keys a lesson saves for itself start "<slug>-word:". */
+        removeKeys(
+            window.localStorage,
+            (key) => key.startsWith(`${slug}-`) &&
+                /^[a-z]+:/.test(key.slice(slug.length + 1))
+        );
+        removeKeys(
+            window.sessionStorage,
+            (key) => key.startsWith(`maths1to9-reset:${slug}:`)
+        );
+
+        window.location.reload();
+    }
+
+    /* One listener covers catalogue cards and their Daily Review
+     * copies. The button sits inside the card link, so stop the
+     * click from opening the lesson. */
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest?.('.lesson-card__reset');
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        resetLesson(button);
+    });
 
     /* ------------------------------------------------------------------ *
      * Daily Review
