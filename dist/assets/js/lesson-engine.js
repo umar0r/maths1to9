@@ -3,6 +3,18 @@
  */
 (() => {
     'use strict';
+    function sectionKind(sectionId) {
+        if (typeof sectionId !== 'string') return sectionId;
+        const separator = sectionId.indexOf('--');
+        return separator === -1 ? sectionId : sectionId.slice(0, separator);
+    }
+
+    function sectionPart(sectionId) {
+        if (typeof sectionId !== 'string') return null;
+        const separator = sectionId.indexOf('--');
+        return separator === -1 ? null : sectionId.slice(separator + 2);
+    }
+
     function escapeHtml(value) {
         const entities = {
             '&': '&amp;',
@@ -365,8 +377,9 @@
     // The one place that decides how feedback looks. Learn keeps the plain
     // box; Try it gets a calm cream bubble; Practice and Check a bright one.
     function feedbackLook(sectionId) {
-        if (sectionId === 'interactive') return ' question-feedback--bubble question-feedback--calm';
-        if (sectionId === 'question-bank' || sectionId === 'comparison') return ' question-feedback--bubble';
+        const kind = sectionKind(sectionId);
+        if (kind === 'interactive') return ' question-feedback--bubble question-feedback--calm';
+        if (kind === 'question-bank' || kind === 'comparison') return ' question-feedback--bubble';
         return '';
     }
 
@@ -581,6 +594,7 @@
     // Dependencies are explicit so the cycle can also be tested without the engine UI.
     function createQuestion(container, config, section, api) {
         const { sectionId, questionId } = config;
+        const kind = sectionKind(sectionId);
         const isReplay = config.replay === true;
         if (!section?.state || !sectionId || !questionId) {
             throw new TypeError('createQuestion requires an opened section state and stable ids.');
@@ -680,7 +694,7 @@
         // A Practice card the pupil has answered and moved on from shows
         // just as they left it: the choices or typed box, locked, with their
         // answer marked. A custom widget already draws the answer itself.
-        const lockedCard = config.readOnly && sectionId === 'question-bank' && !custom;
+        const lockedCard = config.readOnly && kind === 'question-bank' && !custom;
         const article = document.createElement('article');
         article.className = config.readOnly ? 'question-card question-card--bare question-card--read-only'
             : 'question-card question-card--bare';
@@ -712,7 +726,7 @@
             api.clearSectionAction(sectionId);
             // A lesson can turn off the "answer ✓" line under a finished
             // card: its feedback box already says the answer.
-            if (sectionId !== 'question-bank' && api.getLesson?.().hide_saved_answer !== true) {
+            if (kind !== 'question-bank' && api.getLesson?.().hide_saved_answer !== true) {
                 const row = result();
                 const answer = resultText('p', row.answer, 'retained-result__answer');
                 appendResultMark(answer, row);
@@ -929,8 +943,8 @@
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
-            if (correct && sectionId === 'question-bank') celebrate(feedback, 'confetti');
-            if (correct && sectionId === 'comparison') celebrate(feedback, 'rocket');
+            if (correct && kind === 'question-bank') celebrate(feedback, 'confetti');
+            if (correct && kind === 'comparison') celebrate(feedback, 'rocket');
             if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
@@ -939,7 +953,7 @@
             else config.onFeedback?.(outcome);
             // Try it: a right answer goes straight on, with no Continue press,
             // unless the card keeps its feedback up (autoContinue: false).
-            if (correct && sectionId === 'interactive' && config.onContinue && config.autoContinue !== false) act();
+            if (correct && kind === 'interactive' && config.onContinue && config.autoContinue !== false) act();
         }
         update();
         return { result };
@@ -947,16 +961,16 @@
 
 
     function assessmentEvidenceId(slug, pageSession, questionId, practice) {
-        const match = questionId.match(/^question-bank:(\d+):(\d+)$/);
-        if (match && practice?.session === Number(match[1])) {
-            const seed = practice.seed ?? practice.items?.[Number(match[2]) - 1]?.seed;
+        const match = questionId.match(/^([^:]+):(\d+):(\d+)$/);
+        if (match && sectionKind(match[1]) === 'question-bank' && practice?.session === Number(match[2])) {
+            const seed = practice.seed ?? practice.items?.[Number(match[3]) - 1]?.seed;
             if (Number.isInteger(seed)) return `${slug}:practice:${seed}:${questionId}`;
         }
         return `${slug}:${pageSession}:${questionId}`;
     }
 
     function questionSetId(sectionId, session, index) {
-        return sectionId === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
+        return sectionKind(sectionId) === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
     }
 
     // Archiving is shared with activities which need their own question renderer.
@@ -974,7 +988,7 @@
 
     async function runQuestionSet(sectionId, config, api, container) {
         if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
-        const isPractice = sectionId === 'question-bank';
+        const isPractice = sectionKind(sectionId) === 'question-bank';
         const initialHash = window.location?.hash || '';
         document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
         api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
@@ -1114,7 +1128,7 @@
                 const sections = api.getSections();
                 const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
                 api.setSectionAction(sectionId, {
-                    label: next ? (isPractice && next.id === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons', onClick: () => {
+                    label: next ? (isPractice && sectionKind(next.id) === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons', onClick: () => {
                         if (config.onContinue) config.onContinue();
                         else {
                             if (next) api.continueSection();
@@ -1154,7 +1168,155 @@
         return { section, render };
     }
 
+    function planSections(lesson) {
+        const sections = [];
+
+        function add(id, label) {
+            sections.push({ id, kind: sectionKind(id), part: sectionPart(id), label });
+        }
+
+        if (hasExplanation(lesson.explanation)) add('explanation', 'Learn');
+        if (hasMethod(lesson.method)) add('method', 'Method');
+        if (hasInteractive(lesson.interactive)) add('interactive', 'Try it');
+        if (hasProductInteractive(lesson.product_interactive)) add('product-interactive', 'Explore');
+        if (hasExplore(lesson.explore)) add('explore', 'Explore');
+        if (hasItems(lesson.worked_examples)) add('worked-examples', 'Worked examples');
+        if (isObject(lesson.summary) && hasItems(lesson.summary.points)) add('summary', 'Summary');
+        if (hasComparison(lesson.comparison)) add('comparison', 'Compare');
+        if (hasQuestionBank(lesson.question_bank)) add('question-bank', 'Practice');
+
+        /*
+         * Optional authored ordering. Sections whose ids are not
+         * listed keep their default position at the end. Lessons
+         * without section_order are untouched.
+         */
+        const order = safeArray(lesson.section_order)
+            .map(normaliseText)
+            .filter(Boolean);
+
+        if (order.length > 0) {
+            sections.sort((a, b) => {
+                const aIndex = order.indexOf(a.id);
+                const bIndex = order.indexOf(b.id);
+
+                return (
+                    (aIndex === -1 ? order.length : aIndex) -
+                    (bIndex === -1 ? order.length : bIndex)
+                );
+            });
+        }
+
+        return sections;
+    }
+
+    function hasExplanation(explanation) {
+        if (!isObject(explanation)) {
+            return false;
+        }
+
+        return Boolean(
+            normaliseText(explanation.title) ||
+            normaliseText(explanation.eyebrow) ||
+            hasItems(explanation.paragraphs) ||
+            hasItems(explanation.key_points) ||
+            hasItems(explanation.cards) ||
+            isObject(explanation.hook)
+        );
+    }
+
+    function hasMethod(method) {
+        return (
+            isObject(method) &&
+            (
+                normaliseText(method.title) !== '' ||
+                hasItems(method.steps)
+            )
+        );
+    }
+
+    function hasInteractive(interactive) {
+        return (
+            isObject(interactive) &&
+            (
+                normaliseText(interactive.title) !== '' ||
+                normaliseText(interactive.intro) !== ''
+            )
+        );
+    }
+
+    function hasQuestionBank(questionBank) {
+        return (
+            isObject(questionBank) &&
+            (
+                normaliseText(questionBank.title) !== '' ||
+                normaliseText(questionBank.intro) !== ''
+            )
+        );
+    }
+
+    function hasProductInteractive(productInteractive) {
+        return (
+            isObject(productInteractive) &&
+            (
+                (
+                    hasItems(productInteractive.factors) &&
+                    normaliseText(productInteractive.product) !== ''
+                ) || hasItems(productInteractive.examples)
+            )
+        );
+    }
+
+    function hasComparison(comparison) {
+        return (
+            isObject(comparison) &&
+            hasItems(comparison.questions)
+        );
+    }
+
+    function hasExplore(explore) {
+        return (
+            isObject(explore) &&
+            hasItems(explore.playgrounds)
+        );
+    }
+
+    function hasItems(value) {
+        return Array.isArray(value) && value.length > 0;
+    }
+
+    function isObject(value) {
+        return (
+            value !== null &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+        );
+    }
+
+    function normaliseText(value) {
+        if (
+            typeof value !== 'string' &&
+            typeof value !== 'number'
+        ) {
+            return '';
+        }
+
+        return String(value).trim();
+    }
+
+    function safeArray(value) {
+        return Array.isArray(value)
+            ? value
+            : [];
+    }
+
     window.Maths1to9LessonEngine = {
+        sectionKind,
+        sectionPart,
+        planSections,
+        hasItems,
+        isObject,
+        normaliseText,
+        safeArray,
         createRouter,
         updateStageProgress,
         calculateScore,
@@ -1183,6 +1345,8 @@
     'use strict';
 
     if (document.body.dataset.lessonRenderer === 'custom') return;
+
+    const { sectionKind, planSections, hasItems, isObject, normaliseText, safeArray } = window.Maths1to9LessonEngine;
 
     const initialHash = window.location.hash;
     const router = window.Maths1to9LessonEngine.createRouter();
@@ -1357,7 +1521,7 @@
             // #summary opens Check on its end-of-lesson summary, for lessons that
             // draw one. Like every hash link it only changes the view: it never
             // completes the questions or awards points.
-            const comparisonIndex = findSectionIndex('comparison');
+            const comparisonIndex = state.sections.findIndex(section => section.kind === 'comparison');
             if (comparisonIndex !== -1) {
                 router.register('summary', () => {
                     showSection(comparisonIndex, { unlock: true });
@@ -1508,167 +1672,37 @@
     }
 
     function createSectionDefinitions(lesson) {
-        const sections = [];
+        const renderers = {
+            explanation: ['lesson-explanation', container => renderExplanation(container, lesson.explanation)],
+            method: ['lesson-method', container => renderMethod(container, lesson.method)],
+            interactive: ['lesson-interactive', container => renderInteractive(container, lesson.interactive)],
+            'product-interactive': ['lesson-interactive', container => renderProductInteractive(container, lesson.product_interactive)],
+            explore: ['lesson-interactive', container => renderExplore(container, lesson.explore)],
+            'worked-examples': ['lesson-worked-examples', container =>
+                renderWorkedExamples(container, lesson.worked_examples, lesson.worked_examples_title)],
+            summary: ['lesson-summary', renderSummary],
+            comparison: ['lesson-questions', container => renderComparison(container, lesson.comparison)],
+            'question-bank': ['lesson-questions', container => renderQuestionBank(container, lesson.question_bank)]
+        };
 
-        if (hasExplanation(lesson.explanation)) {
-            sections.push({
-                id: 'explanation',
-                label: 'Learn',
-                className: 'lesson-explanation',
-                render(container) {
-                    renderExplanation(
-                        container,
-                        lesson.explanation
-                    );
-                }
-            });
-        }
+        return planSections(lesson).map(section => {
+            const [className, render] = renderers[section.kind];
+            return { ...section, className, render };
+        });
 
-        if (hasMethod(lesson.method)) {
-            sections.push({
-                id: 'method',
-                label: 'Method',
-                className: 'lesson-method',
-                render(container) {
-                    renderMethod(
-                        container,
-                        lesson.method
-                    );
-                }
-            });
-        }
-
-        if (hasInteractive(lesson.interactive)) {
-            sections.push({
-                id: 'interactive',
-                label: 'Try it',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderInteractive(
-                        container,
-                        lesson.interactive
-                    );
-                }
-            });
-        }
-
-        if (hasProductInteractive(lesson.product_interactive)) {
-            sections.push({
-                id: 'product-interactive',
-                label: 'Explore',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderProductInteractive(
-                        container,
-                        lesson.product_interactive
-                    );
-                }
-            });
-        }
-
-        if (hasExplore(lesson.explore)) {
-            sections.push({
-                id: 'explore',
-                label: 'Explore',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderExplore(
-                        container,
-                        lesson.explore
-                    );
-                }
-            });
-        }
-
-        if (
-            Array.isArray(lesson.worked_examples) &&
-            lesson.worked_examples.length > 0
-        ) {
-            sections.push({
-                id: 'worked-examples',
-                label: 'Worked examples',
-                className: 'lesson-worked-examples',
-                render(container) {
-                    renderWorkedExamples(
-                        container,
-                        lesson.worked_examples,
-                        lesson.worked_examples_title
-                    );
-                }
-            });
-        }
-
-        if (isObject(lesson.summary) && hasItems(lesson.summary.points)) {
-            sections.push({
-                id: 'summary',
-                label: 'Summary',
-                className: 'lesson-summary',
-                render(container) {
-                    appendSectionHeading(container, lesson.summary, 'Summary', 'Key reminders', 'summary');
-                    const list = createElement('ol', 'lesson-steps');
-                    for (const point of safeArray(lesson.summary.points).filter(isObject)) {
-                        const item = createElement('li', 'lesson-step');
-                        item.append(
-                            createElement('h3', 'lesson-step__title', normaliseText(point.title)),
-                            createElement('p', 'lesson-step__text', normaliseText(point.text))
-                        );
-                        list.append(item);
-                    }
-                    container.append(list);
-                }
-            });
-        }
-
-        if (hasComparison(lesson.comparison)) {
-            sections.push({
-                id: 'comparison',
-                label: 'Compare',
-                className: 'lesson-questions',
-                render(container) {
-                    renderComparison(
-                        container,
-                        lesson.comparison
-                    );
-                }
-            });
-        }
-
-        if (hasQuestionBank(lesson.question_bank)) {
-            sections.push({
-                id: 'question-bank',
-                label: 'Practice',
-                className: 'lesson-questions',
-                render(container) {
-                    renderQuestionBank(
-                        container,
-                        lesson.question_bank
-                    );
-                }
-            });
-        }
-
-        /*
-         * Optional authored ordering. Sections whose ids are not
-         * listed keep their default position at the end. Lessons
-         * without section_order are untouched.
-         */
-        const order = safeArray(lesson.section_order)
-            .map(normaliseText)
-            .filter(Boolean);
-
-        if (order.length > 0) {
-            sections.sort((a, b) => {
-                const aIndex = order.indexOf(a.id);
-                const bIndex = order.indexOf(b.id);
-
-                return (
-                    (aIndex === -1 ? order.length : aIndex) -
-                    (bIndex === -1 ? order.length : bIndex)
+        function renderSummary(container) {
+            appendSectionHeading(container, lesson.summary, 'Summary', 'Key reminders', 'summary');
+            const list = createElement('ol', 'lesson-steps');
+            for (const point of safeArray(lesson.summary.points).filter(isObject)) {
+                const item = createElement('li', 'lesson-step');
+                item.append(
+                    createElement('h3', 'lesson-step__title', normaliseText(point.title)),
+                    createElement('p', 'lesson-step__text', normaliseText(point.text))
                 );
-            });
+                list.append(item);
+            }
+            container.append(list);
         }
-
-        return sections;
     }
 
     /*
@@ -1745,93 +1779,6 @@
         });
 
         return groups;
-    }
-
-    function hasExplanation(explanation) {
-        if (!isObject(explanation)) {
-            return false;
-        }
-
-        return Boolean(
-            normaliseText(explanation.title) ||
-            normaliseText(explanation.eyebrow) ||
-            hasItems(explanation.paragraphs) ||
-            hasItems(explanation.key_points) ||
-            hasItems(explanation.cards) ||
-            isObject(explanation.hook)
-        );
-    }
-
-    function hasMethod(method) {
-        return (
-            isObject(method) &&
-            (
-                normaliseText(method.title) !== '' ||
-                hasItems(method.steps)
-            )
-        );
-    }
-
-    function hasInteractive(interactive) {
-        return (
-            isObject(interactive) &&
-            (
-                normaliseText(interactive.title) !== '' ||
-                normaliseText(interactive.intro) !== ''
-            )
-        );
-    }
-
-    function hasQuestionBank(questionBank) {
-        return (
-            isObject(questionBank) &&
-            (
-                normaliseText(questionBank.title) !== '' ||
-                normaliseText(questionBank.intro) !== ''
-            )
-        );
-    }
-
-    function hasProductInteractive(productInteractive) {
-        return (
-            isObject(productInteractive) &&
-            (
-                (
-                    hasItems(productInteractive.factors) &&
-                    normaliseText(productInteractive.product) !== ''
-                ) || hasItems(productInteractive.examples)
-            )
-        );
-    }
-
-    function hasComparison(comparison) {
-        return (
-            isObject(comparison) &&
-            hasItems(comparison.questions)
-        );
-    }
-
-    function hasItems(value) {
-        return Array.isArray(value) && value.length > 0;
-    }
-
-    function isObject(value) {
-        return (
-            value !== null &&
-            typeof value === 'object' &&
-            !Array.isArray(value)
-        );
-    }
-
-    function normaliseText(value) {
-        if (
-            typeof value !== 'string' &&
-            typeof value !== 'number'
-        ) {
-            return '';
-        }
-
-        return String(value).trim();
     }
 
     function renderLesson() {
@@ -2385,7 +2332,7 @@
                 explanation,
                 'Explanation',
                 'What you need to know',
-                'explanation'
+                container.dataset.lessonSection
             );
         }
 
@@ -2763,7 +2710,7 @@
                 interactive,
                 'Try it',
                 'Try it yourself',
-                'interactive'
+                container.dataset.lessonSection
             );
         }
 
@@ -2791,7 +2738,7 @@
             `${state.slug}-interactive`;
 
         interactiveRoot.dataset.lessonModule =
-            'interactive';
+            sectionKind(container.dataset.lessonSection);
 
         interactiveRoot.dataset.interactive =
             state.slug;
@@ -2911,7 +2858,7 @@
             `${state.slug}-comparison`;
 
         comparisonRoot.dataset.lessonModule =
-            'comparison';
+            sectionKind(container.dataset.lessonSection);
 
         comparisonRoot.dataset.questions =
             JSON.stringify(
@@ -3142,7 +3089,7 @@
                 questionBank,
                 'Question bank',
                 'Practise',
-                'question-bank'
+                container.dataset.lessonSection
             );
 
             appendIntro(
@@ -3523,10 +3470,10 @@
         state.navigationButtons.forEach((button, index) => {
             const group = state.navigationGroups[index];
             const completed = group.sectionIndexes.reduce((sum, sectionIndex) => {
-                const id = state.sections[sectionIndex].id;
+                const { id, kind } = state.sections[sectionIndex];
                 if (state.completedSections.has(id)) return sum + 1;
                 if (activityProgress.has(id)) return sum + activityProgress.get(id);
-                if (id === 'explanation') return sum + learnScreenProgress();
+                if (kind === 'explanation') return sum + learnScreenProgress();
                 return sum;
             }, 0);
             window.Maths1to9LessonEngine.updateStageProgress(button, completed, group.sectionIndexes.length);
@@ -3566,7 +3513,7 @@
 
     function resetInteractionKey(sectionId, question) {
         const slide = question?.id || window.location.hash || sectionId;
-        const practice = sectionId === 'question-bank' && state.sectionStates.get(sectionId)?.state;
+        const practice = sectionKind(sectionId) === 'question-bank' && state.sectionStates.get(sectionId)?.state;
         const session = practice ? `:${practice.session}:${practice.items[practice.screen]?.seed}` : '';
         return `maths1to9-reset:${state.slug}:${slide}${session}`;
     }
@@ -3782,7 +3729,8 @@
 
         // Seeded Practice keeps one skill-evidence identity across page reloads.
         // Other lesson banks retain their existing per-page assessment identities.
-        const practice = state.sectionStates?.get('question-bank')?.state;
+        const [sectionId] = questionId.split(':', 1);
+        const practice = state.sectionStates?.get(sectionId)?.state;
         const stableQuestionId = practice
             ? window.Maths1to9LessonEngine.assessmentEvidenceId(state.slug, assessmentSessionId, questionId, practice)
             : `${state.slug}:${assessmentSessionId}:${questionId}`;
@@ -3916,7 +3864,8 @@
             },
 
             async runQuestionSet(sectionId, config) {
-                const container = document.getElementById(`${state.slug}-${sectionId === 'question-bank' ? 'questions' : 'comparison'}`);
+                const module = sectionKind(sectionId) === 'question-bank' ? 'questions' : 'comparison';
+                const container = document.getElementById(`${state.slug}-${module}`);
                 if (!container) throw new Error(`No question set container for ${sectionId}.`);
                 state.questionSets.add(sectionId);
                 return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);
@@ -3984,16 +3933,17 @@
 
             setSectionProgress(sectionId, completed, total) {
                 if (findSectionIndex(sectionId) === -1 || !Number.isFinite(total) || !Number.isFinite(completed)) return;
+                const kind = sectionKind(sectionId);
                 // Assessed questions earn answer points, not a second guided-step award.
-                if (!['question-bank', 'comparison'].includes(sectionId)) {
+                if (kind !== 'question-bank' && kind !== 'comparison') {
                     for (let step = 0; step < total; step++) {
                         scoreTracker.record({id:`step:${sectionId}:${step}`, kind:'guided', completed:step < Math.floor(completed)});
                     }
                 }
                 const savedCompleted = scoreTracker.export().filter(activity => activity.completed && (
                     activity.id.startsWith(`step:${sectionId}:`) ||
-                    (sectionId === 'question-bank' && activity.id.startsWith('answer:question-bank:')) ||
-                    (sectionId === 'comparison' && activity.id.startsWith('answer:final-check-'))
+                    (kind === 'question-bank' && activity.id.startsWith(`answer:${sectionId}:`)) ||
+                    (kind === 'comparison' && activity.id.startsWith('answer:final-check-'))
                 )).length;
                 activityProgress.set(sectionId, total > 0 ? Math.max(0, Math.min(1, Math.max(completed, savedCompleted) / total)) : 0);
                 updateProgress();
@@ -4177,12 +4127,6 @@
         ).matches ?? false;
     }
 
-    function safeArray(value) {
-        return Array.isArray(value)
-            ? value
-            : [];
-    }
-
     function clamp(value, minimum, maximum) {
         return Math.min(
             Math.max(value, minimum),
@@ -4270,20 +4214,13 @@
         );
     }
 
-    function hasExplore(explore) {
-        return (
-            isObject(explore) &&
-            hasItems(explore.playgrounds)
-        );
-    }
-
     function renderCardExplanation(container, explanation) {
         appendSectionHeading(
             container,
             explanation,
             'Learn',
             'What you need to know',
-            'explanation'
+            container.dataset.lessonSection
         );
 
         renderLessonVideo(
@@ -4672,7 +4609,7 @@
             interactive,
             'Try it',
             'Try it yourself',
-            'interactive'
+            container.dataset.lessonSection
         );
 
         appendIntro(container, interactive.intro);
@@ -4700,7 +4637,8 @@
          * round is complete. Deferred because section renderers
          * run before the lesson controls exist.
          */
-        setTimeout(() => gateSectionById('interactive'), 0);
+        const sectionId = container.dataset.lessonSection;
+        setTimeout(() => gateSectionById(sectionId), 0);
 
         let roundIndex = 0;
         showRound();
@@ -5039,7 +4977,7 @@
                 'lx2-choice__feedback is-correct',
                 'All rounds complete.'
             ));
-            completeSectionById('interactive');
+            completeSectionById(sectionId);
         }
     }
 
