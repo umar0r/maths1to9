@@ -289,11 +289,11 @@
     function checks() {
         const understanding = (prompt, options) => ({ questionType: 'understanding', input: 'choice', prompt, options });
         return [
-            understanding('On a number line, what do + and − tell you to do?', [
-                option('+ means move right. − means move left.', 'Right. Adding moves you right and taking away moves you left.', true),
-                option('+ means move left. − means move right.', 'That is the wrong way round. Numbers get bigger as you go right, so adding moves you right.'),
-                option('+ and − both mean move right.', 'They go opposite ways. Taking away moves you left.'),
-                option('They only tell you if the answer is positive or negative.', 'They also tell you which way to move: + goes right and − goes left.')
+            understanding('You use a number line to work out a sum. Which way do you move when you add, and when you take away?', [
+                option('Adding moves you right. Taking away moves you left.', 'Right. Numbers get bigger as you go right, so adding moves you right and taking away moves you left.', true),
+                option('Adding moves you left. Taking away moves you right.', 'That is the wrong way round. Numbers get bigger as you go right, so adding moves you right.'),
+                option('Adding and taking away both move you right.', 'They go opposite ways. Taking away makes the number smaller, so you move left.'),
+                option('Taking away always moves you towards zero.', 'Not always. Taking away moves you left, even when that takes you further below zero.')
             ]),
             understanding('What happens to the two minus signs when you take away a negative number?', [
                 option('They turn into a plus, so you add.', 'Right. Taking away a negative is the same as adding.', true),
