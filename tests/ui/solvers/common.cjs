@@ -79,7 +79,7 @@ async function htmlDrag(page, source, target) {
 }
 
 // The visible labels of shared-card option buttons, without the rejected
-// mark (×) or its screen-reader text ("Incorrect option").
+// option's screen-reader text ("Incorrect option").
 function optionLabels(buttons) {
     return buttons.evaluateAll(nodes => nodes.map(node => {
         const copy = node.cloneNode(true);
