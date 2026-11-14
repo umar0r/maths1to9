@@ -795,11 +795,12 @@
     }
 
     const sidewaysStep = 30;
+    const sidewaysStart = 70;
 
     // The Learn thermometer lies on its side, with the colder values on the left.
     function sidewaysThermometer(level, { min = -10, max = 10, showLevel = false } = {}) {
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const x = value => 70 + (value - min) * sidewaysStep;
+        const x = value => sidewaysStart + (value - min) * sidewaysStep;
         const tube = 40, bulb = 30;
         const labelY = tube + (phone ? 52 : 40);
         let picture = `<rect class="nn-tube" x="${bulb}" y="${tube - 11}" width="${x(max) + 20 - bulb}" height="22" rx="11"/>
@@ -845,23 +846,6 @@
                     control.setAttribute('aria-valuemin', min);
                     control.setAttribute('aria-valuemax', max);
 
-                    let input;
-                    if (!useThermometer) {
-                        const label = document.createElement('label');
-                        label.className = 'question-answer-label';
-                        label.textContent = 'Your answer';
-                        input = document.createElement('input');
-                        input.type = 'text';
-                        input.inputMode = 'decimal';
-                        input.autocomplete = 'off';
-                        label.append(input);
-                        host.append(label);
-                        input.addEventListener('input', () => {
-                            show(input.value);
-                            onChange(input.value);
-                        });
-                    }
-
                     let position = start;
                     let editable;
                     function show(value) {
@@ -873,12 +857,10 @@
                         control.setAttribute('aria-label', useThermometer ? 'Set the temperature' : 'Choose an answer on the number line');
                         control.setAttribute('aria-valuenow', position);
                         control.setAttribute('aria-valuetext', selected ? (useThermometer ? `${signed(position)}°C` : signed(position)) : `Starting at ${signed(start)}. No number selected.`);
-                        if (input) input.setAttribute('aria-invalid', String(Boolean(input.value.trim()) && number === null));
                     }
 
                     function select(value) {
                         const answer = signed(value);
-                        if (input) input.value = answer;
                         show(answer);
                         onChange(answer);
                     }
@@ -896,8 +878,13 @@
                             if (!editable || !event.isPrimary || event.button !== 0) return;
                             control.setPointerCapture(event.pointerId);
                             const svg = control.querySelector('svg');
-                            const pixelsPerDegree = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width * sidewaysStep;
-                            drag = { x: event.clientX, y: event.clientY, position, pixelsPerDegree };
+                            const box = svg.getBoundingClientRect();
+                            const scale = box.width / svg.viewBox.baseVal.width;
+                            drag = {
+                                x: event.clientX, y: event.clientY, position,
+                                firstTick: box.left + sidewaysStart * scale,
+                                pixelsPerDegree: sidewaysStep * scale
+                            };
                         });
                         control.addEventListener('pointermove', event => {
                             if (!editable || !control.hasPointerCapture(event.pointerId)) return;
@@ -910,7 +897,12 @@
                             move(event);
                         });
                         control.addEventListener('pointerup', event => {
-                            if (editable && control.hasPointerCapture(event.pointerId) && drag.horizontal !== undefined) move(event);
+                            if (!editable || !control.hasPointerCapture(event.pointerId)) return;
+                            if (drag.horizontal === undefined) {
+                                select(clamp(min + Math.round((event.clientX - drag.firstTick) / drag.pixelsPerDegree)));
+                            } else {
+                                move(event);
+                            }
                         });
                     } else {
                         const track = control.querySelector('.negative-track');
@@ -936,13 +928,9 @@
                             editable = canAnswer;
                             control.tabIndex = canAnswer ? 0 : -1;
                             control.setAttribute('aria-disabled', String(!canAnswer));
-                            if (input) {
-                                input.disabled = !canAnswer;
-                                input.value = value ?? '';
-                            }
                             show(value);
                         },
-                        focus() { (input ?? control).focus(); }
+                        focus() { control.focus(); }
                     };
                 },
                 isEmpty(value) { return tidyNumber(value ?? '') === null; },

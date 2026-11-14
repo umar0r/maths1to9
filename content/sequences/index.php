@@ -72,6 +72,6 @@ $pageTitle = 'Continuing a sequence';
     <script src="./interactive.js?v=16"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=65"></script>
+    <script src="../../assets/js/lesson-engine.js?v=66"></script>
 </body>
 </html>

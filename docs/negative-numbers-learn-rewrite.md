@@ -309,12 +309,12 @@ too far if they went past.
 
 ## Number line in the questions
 
-Practice shows a number line on typed questions where one move shows the
-calculation. Pupils can tap the line or type the number, then press Check.
+Practice shows a number line on questions where one move shows the
+calculation. Pupils tap the line to choose their answer, then press Check.
 The line shows the hops and the selected number. Longer lines only label
 every fifth number so the labels fit. The temperature-rise question uses
-the sideways Learn thermometer. Pupils drag the level to set the
-temperature, then press Check.
+the sideways Learn thermometer. Pupils tap the scale or drag the level to
+set the temperature, then press Check.
 
 ## Practice
 

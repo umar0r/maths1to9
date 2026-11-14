@@ -24,9 +24,17 @@ module.exports = async function solve(page) {
         return true;
     }
     const options2 = page.locator('.question-card-options:visible button');
+    const line = page.getByRole('slider', { name: 'Choose an answer on the number line' });
     const give = async value => {
         if (await options2.count()) await page.getByRole('button', { name: signed(value), exact: true }).click();
-        else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
+        else if (await line.isVisible()) {
+            const min = Number(await line.getAttribute('aria-valuemin'));
+            const max = Number(await line.getAttribute('aria-valuemax'));
+            const track = line.locator('.negative-track');
+            const { x, y, width } = await track.boundingBox();
+            const box = await line.boundingBox();
+            await line.click({ position: { x: x - box.x + width * (value - min) / (max - min), y: y - box.y + 40 } });
+        } else await page.locator('.question-card:visible input[type=text]').fill(signed(value));
     };
     const numbers = (text.match(/[−-]?\d+/g) || []).map(number);
     const choose = name => page.getByRole('button', { name, exact: true }).click().then(() => true);
@@ -92,7 +100,7 @@ module.exports = async function solve(page) {
         } else if (await options.count()) {
             await page.getByRole('button', { name: `${signed(start)} + ${amount}`, exact: true }).click();
         } else {
-            await page.locator('.question-card:visible input[type=text]').fill(String(start + amount));
+            await give(start + amount);
         }
     } else throw new Error(`Cannot solve negative-numbers question: ${text}`);
     return true;
