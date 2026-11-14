@@ -27,7 +27,7 @@ $pageTitle = 'Gradient and intercept';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
 </head>
 
 <body
@@ -73,9 +73,9 @@ $pageTitle = 'Gradient and intercept';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./equations.js?v=1"></script>
     <script src="./interactive.js?v=2"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=66"></script>
+    <script src="../../assets/js/lesson-engine.js?v=75"></script>
 </body>
 </html>

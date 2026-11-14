@@ -27,7 +27,7 @@ $pageTitle = 'Fibonacci-type sequences';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=57">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
     <link rel="stylesheet" href="./lesson.css?v=18">
 </head>
 
@@ -68,10 +68,10 @@ $pageTitle = 'Fibonacci-type sequences';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./fibonacci.js?v=19"></script>
     <script src="./visuals.js?v=19"></script>
-    <script src="./questions.js?v=18"></script>
+    <script src="./questions.js?v=19"></script>
     <script src="./interactive.js?v=19"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=66"></script>
+    <script src="../../assets/js/lesson-engine.js?v=75"></script>
 </body>
 </html>

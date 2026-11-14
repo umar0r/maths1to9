@@ -117,10 +117,12 @@
 
         function render() {
             root.replaceChildren();
-            const title = document.createElement('h3');
-            title.dataset.screenHeading = '';
-            title.textContent = state.screen === count ? 'Your completed Check' : `Question ${state.screen + 1} of ${count}`;
-            root.append(title);
+            if (state.screen === count) {
+                const title = document.createElement('h3');
+                title.dataset.screenHeading = '';
+                title.textContent = 'Your completed Check';
+                root.append(title);
+            }
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);

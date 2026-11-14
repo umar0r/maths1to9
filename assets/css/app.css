@@ -3888,6 +3888,35 @@ noscript p {
     box-shadow: none;
 }
 .question-hint { display: block; margin-top: .3rem; }
+/* Typed answers share the same surface, including fields inside lesson diagrams. */
+.lesson-section input:is([type="text"], [type="number"]):not([hidden]) {
+    box-sizing: border-box;
+    min-height: 50px;
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius-medium);
+    background: #fbfcfe;
+    color: var(--text);
+    font: inherit;
+}
+
+.lesson-section input:is([type="text"], [type="number"]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.lesson-section input:is([type="text"], [type="number"])[aria-invalid="true"] {
+    border-color: var(--danger, #b75421);
+}
+
+.question-answer-label input {
+    padding: .65rem .85rem;
+}
+
+.lesson-section input::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+
 .question-answer-label { display: flex; flex-direction: column; gap: .5rem; }
 
 /* Secondary in-page actions share Back's quiet treatment. */
@@ -3914,3 +3943,127 @@ noscript p {
 .question-answer-with-unit { display: flex; align-items: center; gap: .5rem; }
 .question-answer-with-unit input { flex: 1; min-width: 0; width: 100%; box-sizing: border-box; }
 .question-answer-with-unit > span { flex: none; white-space: nowrap; }
+
+.practice-summary__score .lesson-score-panel {
+    margin-block: 0 1.5rem;
+}
+
+.practice-summary__review h3 {
+    margin-bottom: .25rem;
+}
+
+.practice-summary__answers {
+    margin-block: 1rem 1.5rem;
+}
+
+.practice-summary__answers summary {
+    width: fit-content;
+    color: var(--primary-dark);
+    cursor: pointer;
+    padding-block: .35rem;
+    font-weight: 700;
+}
+
+.practice-summary__retry {
+    margin-block: 1rem 1.25rem;
+    text-align: center;
+}
+
+.practice-summary__answer-label {
+    color: var(--text-muted);
+    font-size: .875em;
+}
+
+.lesson-section .practice-summary__again {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 50px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: var(--radius-medium);
+    color: var(--text-soft);
+    background: var(--surface-soft);
+    box-shadow: 0 3px 0 var(--border-dark);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.practice-summary__again svg {
+    width: 1.15em;
+    height: 1.15em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.lesson-section .practice-summary__again:hover {
+    color: var(--text);
+    box-shadow: 0 4px 0 var(--text-muted);
+    transform: translateY(-1px);
+}
+
+.lesson-section .practice-summary__again:active {
+    box-shadow: 0 1px 0 var(--border-dark);
+    transform: translateY(2px);
+}
+
+.lesson-section .practice-summary__again:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+}
+
+.practice-summary__review .retained-result__answer > span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.practice-summary__review .retained-results {
+    display: grid;
+    gap: .65rem;
+}
+
+.practice-summary__review .retained-results > li {
+    padding: .85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-medium);
+    background: var(--primary-light);
+}
+
+.practice-summary__table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: .95rem;
+}
+
+.practice-summary__table th,
+.practice-summary__table td {
+    padding: .65rem .75rem;
+    border: 1px solid var(--border);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.practice-summary__table thead,
+.practice-summary__table tbody tr:nth-child(even) {
+    background: var(--surface-soft);
+}
+
+.practice-summary__question {
+    width: 50%;
+    font-weight: 700;
+}
+
+@media (max-width: 480px) {
+    .practice-summary__table {
+        font-size: .82rem;
+    }
+
+    .practice-summary__table th,
+    .practice-summary__table td {
+        padding: .5rem .35rem;
+    }
+}

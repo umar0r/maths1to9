@@ -133,8 +133,6 @@
                 heading.textContent = 'Your completed Check';
                 root.append(heading);
             }
-            // The engine shows "Question 3 of 5" at the top right, beside Back.
-            api.setSectionPosition('comparison', state.screen === count ? null : `Question ${state.screen + 1} of ${count}`);
             api.setSectionBack('comparison', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);

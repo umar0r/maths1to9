@@ -53,8 +53,9 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
         await main(page).click();
         await main(page).click();
     }
-    await expect(page.locator('#lesson-section-question-bank .retained-results > li')).toHaveCount(6);
-    await expect(page.locator('#lesson-section-question-bank .retained-results')).toContainText(moneyDraft);
+    await page.getByText('Show all answers', { exact: true }).click();
+    await expect(page.locator('#lesson-section-question-bank tbody tr')).toHaveCount(6);
+    await expect(page.locator('#lesson-section-question-bank tbody')).toContainText(moneyDraft);
     await main(page).click();
     await expect(page.getByRole('checkbox')).toHaveCount(0); // No self-assessment checkbox.
     await advance(page);
@@ -66,7 +67,8 @@ test('adding-decimal-numbers: decimal addition journey, scoring and four anchors
     await expect(page).toHaveURL(/\/$/);
     await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
     await goToStage(page, 'Practice');
-    await expect(page.locator('#lesson-section-question-bank .retained-results > li')).toHaveCount(6);
+    await page.getByText('Show all answers', { exact: true }).click();
+    await expect(page.locator('#lesson-section-question-bank tbody tr')).toHaveCount(6);
     expect(await points(page)).toBe(160);
     await expect(main(page)).toHaveCount(1);
     expect(errors).toEqual([]);

@@ -89,6 +89,12 @@ The best example of a finished lesson is the newest one in
     in the lesson folder: `build.sh` publishes everything in it.
 11. **Never merge into `main` or push `main`.** Push only your own branch.
 
+**Practice results.** Use the shared lesson engine for the results screen.
+Show the first-time score and any questions that needed a retry. Keep the
+full answer table collapsed under **Show all answers**. Use the shared
+**Practise again** button and **Start Check** as the main action when Check
+comes next.
+
 ## 6. How to build a lesson, step by step
 
 Do these in order. Don't skip a step because it seems obvious.

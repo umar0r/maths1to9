@@ -277,6 +277,7 @@ function resultsFixture(katex) {
             this.style = { setProperty: (key, value) => { this.attributes[key] = value; } };
         }
         append(...nodes) { this.children.push(...nodes); }
+        prepend(...nodes) { this.children.unshift(...nodes); }
         replaceChildren(...nodes) { this.children = nodes; }
         setAttribute(key, value) { this.attributes[key] = value; }
         addEventListener(name, action) { this.events[name] = action; }
@@ -287,6 +288,7 @@ function resultsFixture(katex) {
         focus() { this.focused = true; }
     }
     const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag),
+        createElementNS: (namespaceURI, tag) => Object.assign(new Node(tag), { namespaceURI }),
         dispatchEvent() {}, addEventListener() {} };
     const fixtureWindow = { katex };
     vm.runInNewContext(source, { window: fixtureWindow, document, CustomEvent: class { constructor(name, options) { this.type = name; this.detail = options?.detail; } } });
@@ -685,7 +687,7 @@ test('question sets rebuild saved seeds, retain the exact cursor and show readon
     assert.equal(set.card.questionId, currentId);
     assert.equal(set.section.state.cards[currentId].value, '.5');
     set.finishQuestion();
-    assert.equal(set.action.label, 'Continue');
+    assert.equal(set.action.label, 'Start Check');
     assert.equal(set.section.state.finished, true);
     set = await setFixture(set.section.state);
     assert.equal(set.picks, 0);
@@ -700,7 +702,7 @@ test('repeat sessions pick fresh seeds, retain earlier marks and never reset ano
     set.finishQuestion(false);
     set.finishQuestion();
     const first = JSON.parse(JSON.stringify(set.section.state));
-    const again = () => set.container.children.find(node => node.tagName === 'button').events.click();
+    const again = () => unitNodes(set.container, 'button').find(node => node.textContent === 'Practise again').events.click();
     again();
     assert.equal(set.section.state.session, 2);
     assert.equal(set.section.state.finished, false);
@@ -714,9 +716,10 @@ test('repeat sessions pick fresh seeds, retain earlier marks and never reset ano
     set.finishQuestion();
     set.finishQuestion();
     const details = set.container.children.filter(node => node.tagName === 'details');
-    assert.equal(details.length, 1);
-    assert.equal(details[0].children[0].textContent, 'Earlier practice 1');
-    assert.equal(details[0].open, undefined);
+    assert.equal(details.length, 2);
+    assert.equal(details[0].children[0].textContent, 'Show all answers');
+    assert.equal(details[1].children[0].textContent, 'Earlier practice 1');
+    assert.ok(details.every(group => group.open !== true));
 });
 
 test('Check uses fixed assessment ids and never offers Practise again', async () => {
@@ -744,7 +747,7 @@ test('finished question sets say All lessons only when no section follows', asyn
         const set = await setFixture(undefined, false, lastSection);
         set.finishQuestion();
         set.finishQuestion();
-        assert.equal(set.action.label, lastSection ? 'All lessons' : 'Continue');
+        assert.equal(set.action.label, lastSection ? 'All lessons' : 'Start Check');
     }
 });
 
@@ -1091,7 +1094,7 @@ test('fields work through question-set results, Back and Practise again with ret
         action.onClick(); action.onClick();
     }
     fill();
-    assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 1);
+    assert.equal(find(container, 'td').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 1);
     back.onClick();
     assert.equal(current.readOnly, true);
     assert.equal(find(container, 'input').length, 0);
@@ -1101,7 +1104,7 @@ test('fields work through question-set results, Back and Practise again with ret
     assert.equal(section.state.earlier.length, 1);
     assert.equal(action.disabled, true);
     fill();
-    assert.equal(find(container, 'span').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 2);
+    assert.equal(find(container, 'td').filter(node => node.textContent === 'Gradient −1, y-intercept 2/4').length, 2);
 });
 
 test('tolerance plain cards include both exact edges and reject just outside without float rounding', () => {
@@ -1274,12 +1277,12 @@ test('question-set results include units for one-box and field cards, including 
         }
     }
     finish();
-    for (const answer of expected) assert.equal(unitNodes(container, 'span').filter(node => node.textContent === answer).length, 1);
+    for (const answer of expected) assert.equal(unitNodes(container, 'td').filter(node => node.textContent === answer).length, 1);
     back.onClick();
     assert.equal(unitNodes(container, 'input').length, 0);
     assert.equal(unitNodes(container, 'p').filter(node => node.textContent === expected[1]).length, 0);
     action.onClick();
     unitNodes(container, 'button').find(button => button.textContent === 'Practise again').events.click();
     finish();
-    for (const answer of expected) assert.equal(unitNodes(container, 'span').filter(node => node.textContent === answer).length, 2);
+    for (const answer of expected) assert.equal(unitNodes(container, 'td').filter(node => node.textContent === answer).length, 2);
 });

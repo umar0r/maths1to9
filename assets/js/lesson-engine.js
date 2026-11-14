@@ -414,32 +414,69 @@
             const line = document.createElement('div');
             line.className = 'retained-result';
             line.append(resultText('strong', row.prompt));
-            const answer = document.createElement('div');
-            answer.className = 'retained-result__answer';
-            answer.append(resultText('span', row.answer));
-            let mark = null;
-            if (row.firstCorrect === true) {
-                mark = resultText('span', '✓');
-                mark.setAttribute('aria-hidden', 'true');
-            } else if (row.firstCorrect === false) {
-                const corrected = row.correct === true;
-                mark = resultText('span', corrected ? '2nd try' : 'Incorrect');
-                mark.setAttribute('aria-hidden', 'true');
+            const showExplanation = row.firstCorrect !== true && Boolean(row.explanation);
+            if (!(options.review && row.correct === true && showExplanation)) {
+                const answer = document.createElement('div');
+                answer.className = 'retained-result__answer';
+                if (options.review && row.correct === true) {
+                    answer.append(resultText('span', 'Correct answer', 'practice-summary__answer-label'));
+                }
+                answer.append(resultText('span', row.answer));
+                let mark = null;
+                if (row.firstCorrect === true) {
+                    mark = resultText('span', '✓');
+                    mark.setAttribute('aria-hidden', 'true');
+                } else if (row.firstCorrect === false && !(options.review && row.correct === true)) {
+                    const corrected = row.correct === true;
+                    mark = resultText('span', corrected ? '2nd try' : 'Incorrect');
+                    mark.setAttribute('aria-hidden', 'true');
+                }
+                if (mark) {
+                    const spokenMark = row.firstCorrect === true ? 'Right first time'
+                        : row.correct === true ? 'Corrected' : 'Incorrect';
+                    answer.append(mark, resultText('span', spokenMark, 'visually-hidden'));
+                }
+                line.append(answer);
             }
-            if (mark) {
-                const spokenMark = row.firstCorrect === true ? 'Right first time'
-                    : row.correct === true ? 'Corrected' : 'Incorrect';
-                answer.append(mark, resultText('span', spokenMark, 'visually-hidden'));
-            }
-            line.append(answer);
             item.append(line);
             if (row.visual) item.append(row.visual);
-            if (row.firstCorrect !== true && row.explanation) {
+            if (showExplanation) {
                 item.append(resultText('p', row.explanation, 'retained-result__explanation'));
             }
             list.append(item);
         }
         container.append(list);
+    }
+
+    function renderPracticeAnswerTable(container, rows) {
+        const table = document.createElement('table');
+        table.className = 'practice-summary__table';
+        const header = document.createElement('thead');
+        const headings = document.createElement('tr');
+        for (const label of ['Question', 'Answer', 'Result']) {
+            const cell = resultText('th', label);
+            cell.setAttribute('scope', 'col');
+            headings.append(cell);
+        }
+        header.append(headings);
+        const body = document.createElement('tbody');
+        for (const row of rows) {
+            const line = document.createElement('tr');
+            const question = document.createElement('td');
+            question.className = 'practice-summary__question';
+            question.append(resultText('strong', row.prompt));
+            if (row.visual) question.append(row.visual);
+            if (row.firstCorrect === false && row.explanation) {
+                question.append(resultText('p', row.explanation, 'retained-result__explanation'));
+            }
+            line.append(question, resultText('td', row.answer),
+                resultText('td', row.firstCorrect === true ? 'Right first time'
+                    : row.firstCorrect === false ? (row.correct === true ? 'Correct after a retry' : 'Incorrect') : '')
+            );
+            body.append(line);
+        }
+        table.append(header, body);
+        container.append(table);
     }
 
     function renderScorePanel(container, options) {
@@ -705,9 +742,13 @@
             const group = fields ? document.createElement('div') : article;
             if (fields) { group.className = 'question-answer-fields'; article.append(group); }
             for (const field of fields || [{ label: config.inputLabel || 'Your answer', unit: config.unit }]) {
-                const label = resultText('label', field.unit ? '' : field.label, 'question-answer-label');
+                const label = resultText('label', fields && !field.unit ? field.label : '', 'question-answer-label');
                 const box = document.createElement('input');
                 box.type = 'text';
+                if (!fields && !field.unit) {
+                    box.placeholder = /^(Your )?answer$/i.test(field.label) ? 'Type your answer' : field.label;
+                    box.setAttribute('aria-label', field.label);
+                }
                 box.inputMode = fractions ? 'text' : 'decimal';
                 if (fractions) {
                     box.setAttribute('autocorrect', 'off');
@@ -1006,34 +1047,65 @@
                 api.setSectionPosition?.(sectionId, null);
                 const score = document.createElement('div');
                 const results = document.createElement('div');
-                container.append(score, results);
+                container.append(score);
+                if (isPractice) score.className = 'practice-summary__score';
                 const currentRows = rows(saved);
                 renderScorePanel(score, {
                     correct: currentRows.filter(row => row.firstCorrect === true).length, total: config.count,
                     readyScore: isPractice ? api.getLesson().question_bank?.ready_score : undefined
                 });
-                renderResults(results, currentRows, { heading: config.heading });
+                if (isPractice) {
+                    const heading = resultText('h3', config.heading || 'Your practice results');
+                    heading.className = 'visually-hidden';
+                    score.prepend(heading);
+                    const retries = currentRows.filter(row => row.firstCorrect === false)
+                        .map(row => ({ ...row, visual: row.visual?.cloneNode(true) }));
+                    if (retries.length) {
+                        const review = document.createElement('div');
+                        review.className = 'practice-summary__review';
+                        renderResults(review, retries, { heading: 'Questions to review', review: true });
+                        container.append(review);
+                    }
+                    const allAnswers = document.createElement('details');
+                    allAnswers.className = 'practice-summary__answers';
+                    allAnswers.append(resultText('summary', 'Show all answers'), results);
+                    container.append(allAnswers);
+                    renderPracticeAnswerTable(results, currentRows);
+                } else {
+                    container.append(results);
+                    renderResults(results, currentRows, { heading: config.heading });
+                }
                 if (isPractice && config.practiseAgain) {
-                    const again = resultText('button', 'Practise again', 'lesson-secondary-action');
+                    const again = resultText('button', 'Practise again', 'button practice-summary__again');
                     again.type = 'button';
+                    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    icon.setAttribute('viewBox', '0 0 24 24');
+                    icon.setAttribute('aria-hidden', 'true');
+                    const arrow = document.createElementNS(icon.namespaceURI, 'path');
+                    arrow.setAttribute('d', 'M20 7v5h-5 M20 12a8 8 0 1 0-2.4 5.7');
+                    icon.append(arrow);
+                    again.prepend(icon);
                     again.addEventListener('click', () => {
                         section.update(state => { archivePractice(state, fresh([state, ...(state.earlier || [])])); });
                         render();
                         focus();
                     });
-                    container.append(again, resultText('p', "Practising again doesn't change your score."));
+                    const retry = document.createElement('div');
+                    retry.className = 'practice-summary__retry';
+                    retry.append(again);
+                    container.append(retry);
                 }
                 for (const earlier of saved.earlier || []) {
                     const details = document.createElement('details');
                     const results = document.createElement('div');
                     details.append(resultText('summary', `Earlier practice ${earlier.session}`), results);
-                    renderResults(results, rows(earlier));
+                    renderPracticeAnswerTable(results, rows(earlier));
                     container.append(details);
                 }
                 const sections = api.getSections();
                 const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
                 api.setSectionAction(sectionId, {
-                    label: next ? 'Continue' : 'All lessons', onClick: () => {
+                    label: next ? (isPractice && next.id === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons', onClick: () => {
                         if (config.onContinue) config.onContinue();
                         else {
                             if (next) api.continueSection();
@@ -1047,7 +1119,7 @@
                 return;
             }
             const item = saved.items[saved.screen];
-            api.setSectionPosition?.(sectionId, `Question ${saved.screen + 1} of ${config.count}`);
+            if (isPractice) api.setSectionPosition?.(sectionId, `Question ${saved.screen + 1} of ${config.count}`);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
             const definition = question(item);
@@ -2814,20 +2886,8 @@
     }
 
     function renderComparison(container, comparison) {
-        if (!comparison.hide_heading) {
-            appendSectionHeading(
-                container,
-                comparison,
-                'Try it',
-                'Compare the decimals',
-                'comparison'
-            );
-
-            appendIntro(
-                container,
-                comparison.intro
-            );
-        }
+        container.removeAttribute('aria-labelledby');
+        container.setAttribute('aria-label', 'Check');
 
         const comparisonRoot = createElement(
             'div',
