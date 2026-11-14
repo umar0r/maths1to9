@@ -799,7 +799,10 @@
         function setAction() {
             if (lockedCard) return;
             api.setSectionAction(sectionId, {
-                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
+                /* A custom card with nothing to work out (tap to look, try and watch) can say
+                   Continue instead of Check through widget.checkLabel. */
+                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue'
+                    : custom && widget.checkLabel ? widget.checkLabel : 'Check',
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
                     ? saved.selected === null : custom ? widget.isEmpty(saved.value) : empty()),
                 onClick: act
@@ -934,8 +937,9 @@
             else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
             if (isReplay) config.onReplayFeedback?.(outcome);
             else config.onFeedback?.(outcome);
-            // Try it: a right answer goes straight on, with no Continue press.
-            if (correct && sectionId === 'interactive' && config.onContinue) act();
+            // Try it: a right answer goes straight on, with no Continue press,
+            // unless the card keeps its feedback up (autoContinue: false).
+            if (correct && sectionId === 'interactive' && config.onContinue && config.autoContinue !== false) act();
         }
         update();
         return { result };

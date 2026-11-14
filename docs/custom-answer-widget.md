@@ -51,7 +51,10 @@ Maths1to9Lesson.createQuestion(container, {
         },
         isEmpty(value) {},     // true: nothing to check yet
         mark(value) {},        // { correct: boolean, feedback: string, hint?: string }
-        answerText(value) {}   // plain text for the results row and read-only card
+        answerText(value) {},  // plain text for the results row and read-only card
+        checkLabel: 'Continue' // optional: the button's words before marking.
+                               // Use it when there is nothing to work out
+                               // (tap to look, try and watch). Default 'Check'.
     },
     onFeedback, onContinue      // as for the other inputs
 });
