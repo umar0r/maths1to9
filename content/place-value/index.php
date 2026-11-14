@@ -33,7 +33,7 @@ $pageTitle = 'Place value';
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=20"
+    data-lesson-src="./lesson.json?v=21"
 >
     <header class="site-header">
         <div class="site-header__inner">

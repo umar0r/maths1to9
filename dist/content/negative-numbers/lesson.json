@@ -6,6 +6,7 @@
     "navigation": {
         "back_button": true
     },
+    "hide_saved_answer": true,
     "assessment": {
         "question_types": {
             "rewrite-positive": "calculate-negative-numbers",
