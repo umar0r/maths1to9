@@ -33,7 +33,7 @@ $pageTitle = 'Place value';
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=20"
+    data-lesson-src="./lesson.json?v=21"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -72,6 +72,6 @@ $pageTitle = 'Place value';
     <script src="./interactive.js?v=51"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=76"></script>
+    <script src="../../assets/js/lesson-engine.js?v=77"></script>
 </body>
 </html>
