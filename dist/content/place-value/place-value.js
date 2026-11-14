@@ -43,7 +43,7 @@
     };
     const digitWords = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
     const tensWords = ['', 'ten', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-    const placeNames = { 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones', '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths' };
+    const placeNames = { 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'units', '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths' };
     function digitValueWords(digit, exponent) {
         if (exponent === 0) return digitWords[digit];
         if (exponent === 1) return tensWords[digit];
@@ -327,7 +327,7 @@
                 [addCommas(noMillions), 'That leaves out the millions.']
             ],
             feedback: `${words.charAt(0).toUpperCase()}${words.slice(1)} is ${addCommas(number)}. Empty columns hold a 0.`,
-            fallback: 'Write each part in its own columns: millions, then thousands, then hundreds, tens and ones. Put a 0 in any empty column.' });
+            fallback: 'Write each part in its own columns: millions, then thousands, then hundreds, tens and units. Put a 0 in any empty column.' });
     }
     function arrangements(digits) {
         if (digits.length <= 1) return [digits.join('')];
@@ -540,12 +540,12 @@
             }
         };
     }
-    /* Pupils put the digits 6, 7 and 0 into the hundreds, tens and ones slots to make the biggest number.
+    /* Pupils put the digits 6, 7 and 0 into the hundreds, tens and units slots to make the biggest number.
        A tap sends a card to the next empty slot (or back again); on desktop the cards can also be dragged.
        Each placed digit shows what it is worth. */
     function biggestNumberWidget() {
         const digits = ['6', '7', '0'];
-        const columns = [{ name: 'hundreds', size: 100 }, { name: 'tens', size: 10 }, { name: 'ones', size: 1 }];
+        const columns = [{ name: 'hundreds', size: 100 }, { name: 'tens', size: 10 }, { name: 'units', size: 1 }];
         const normalise = value => Array.isArray(value) && value.length === columns.length ? [...value] : [null, null, null];
         const worth = (digit, column) => String(Number(digit) * columns[column].size);
         return {
@@ -685,10 +685,10 @@
     /* A row of place-value cards whose digits pupils move left or right, one column at a time.
        ← and → buttons sit beside the row (under it on phones); a mouse can also drag the digits,
        and the arrow keys work when the row has focus. A 0 fills any empty column between the
-       first digit and the ones column. moves > 0 means the digits moved left (× 10 each time). */
+       first digit and the units column. moves > 0 means the digits moved left (× 10 each time). */
     function shiftCards({ digits, minMoves, maxMoves, label, describe, onMove }) {
         const EMPTY_CARD = ' ';
-        const headings = ['thousands', 'hundreds', 'tens', 'ones', 'tenths'];
+        const headings = ['thousands', 'hundreds', 'tens', 'units', 'tenths'];
         const onesColumn = 3;
         let moves = 0, canEdit = false;
         const node = element('div', '', 'pv-shift');
@@ -811,7 +811,7 @@
             answerText(value) { return results[normalise(value)]; },
             mark(value) {
                 if (normalise(value) === 2) {
-                    return { correct: true, feedback: 'Every digit moved two columns to the left. The 0 fills the empty ones column. 38.4 × 100 = 3,840.' };
+                    return { correct: true, feedback: 'Every digit moved two columns to the left. The 0 fills the empty units column. 38.4 × 100 = 3,840.' };
                 }
                 return { correct: false, feedback: 'You moved the digits one column. That is × 10. To multiply by 100, move them two columns.' };
             },
@@ -842,7 +842,7 @@
             { name: 'bottom', digits: 23, places: 1 }
         ];
         const product = { digits: 1035, places: 2 };
-        const headings = ['ten-thousands', 'thousands', 'hundreds', 'tens', 'ones', 'tenths', 'hundredths', 'thousandths', 'ten-thousandths'];
+        const headings = ['ten-thousands', 'thousands', 'hundreds', 'tens', 'units', 'tenths', 'hundredths', 'thousandths', 'ten-thousandths'];
         const onesColumn = 4;
         const decimalColumns = headings.length - onesColumn - 1;
         const feedback = 'Multiply one number by 10 and the answer is 10 times bigger. Divide one by 10 and the answer is 10 times smaller. Do one of each and they cancel out.';
@@ -950,7 +950,7 @@
                         cell.animate([{ transform: `translateX(${change * step}px)` }, { transform: 'none' }], { duration: 250, easing: 'ease-out' });
                     });
                 }
-                /* Writes a number into the boxes, lined up on the ones column. */
+                /* Writes a number into the boxes, lined up on the units column. */
                 function fill(kind, text) {
                     const [whole, fraction = ''] = text.replace(/,/g, '').split('.');
                     const line = lines.find(item => item.kind === kind);
@@ -1006,7 +1006,7 @@
     function flipCardsWidget() {
         const cards = [
             { digit: '4', column: 'tens', worth: '40' },
-            { digit: '6', column: 'ones', worth: '6' },
+            { digit: '6', column: 'units', worth: '6' },
             { digit: '2', column: 'tenths', worth: '0.2' },
             { digit: '7', column: 'hundredths', worth: '0.07' },
             { digit: '5', column: 'thousandths', worth: '0.005' }
@@ -1069,7 +1069,7 @@
        for the column being filled light up like a highlighter pen; the hundreds and tens have no
        words, which is the clue that they hold 0. */
     function wordsToFiguresWidget() {
-        const columns = ['millions', 'hundred-thousands', 'ten-thousands', 'thousands', 'hundreds', 'tens', 'ones'];
+        const columns = ['millions', 'hundred-thousands', 'ten-thousands', 'thousands', 'hundreds', 'tens', 'units'];
         const answer = '6453009';
         /* Each piece of the words, with the column it belongs to (null for joining words). */
         const pieces = [
@@ -1091,7 +1091,7 @@
                 if (digits[4] !== '0' || digits[5] !== '0') {
                     return { correct: false, feedback: 'The words have no hundreds and no tens, so put a 0 in each of those columns.' };
                 }
-                if (digits[6] !== '9') return { correct: false, feedback: '"And nine" means a 9 in the ones column.' };
+                if (digits[6] !== '9') return { correct: false, feedback: '"And nine" means a 9 in the units column.' };
                 return { correct: true, feedback: 'Six million, four hundred and fifty-three thousand and nine is 6,453,009. There are no hundreds or tens, so they are 0.' };
             },
             render(host, { value, editable, onChange }) {
@@ -1404,7 +1404,7 @@
             prompt: 'Make the biggest number you can with 6, 7 and 0.',
             feedback: '7 is the biggest digit, so it goes in the hundreds column, where it is worth the most. 760 is the biggest number you can make.', widget: biggestNumberWidget() };
         const timesHundred = { questionType: 'powerOfTen', input: 'custom', kind: 'move', prompt: 'Work out 38.4 × 100.',
-            feedback: 'Every digit moved two columns to the left. The 0 fills the empty ones column. 38.4 × 100 = 3,840.', widget: timesHundredWidget() };
+            feedback: 'Every digit moved two columns to the left. The 0 fills the empty units column. 38.4 × 100 = 3,840.', widget: timesHundredWidget() };
         const playground = { questionType: 'scaledProduct', input: 'custom', kind: 'explore',
             prompt: '4.5 × 2.3 = 10.35.\nMultiply or divide either number by 10. Watch the answer.',
             feedback: 'Multiply one number by 10 and the answer is 10 times bigger. Divide one by 10 and the answer is 10 times smaller. Do one of each and they cancel out.',
@@ -1423,11 +1423,11 @@
     }
     function checks() {
         const number = makeQuestion({ type: 'digitValue', kind: 'compose', mode: 'choice',
-            prompt: 'A number has 3 hundreds, 6 ones, 8 tenths and 4 hundredths. What is the number?', answer: '306.84',
+            prompt: 'A number has 3 hundreds, 6 units, 8 tenths and 4 hundredths. What is the number?', answer: '306.84',
             wrong: [['36.84', 'There are 3 hundreds. Keep a zero in the empty tens column.'],
                 ['306.084', '8 tenths is 0.8. Put the 8 straight after the decimal point.'],
                 ['368.4', 'Keep each digit in its named column. There are no tens.']],
-            feedback: '3 hundreds + 6 ones + 8 tenths + 4 hundredths = 306.84' });
+            feedback: '3 hundreds + 6 units + 8 tenths + 4 hundredths = 306.84' });
         const reason = { input: 'choice', questionType: 'compare', kind: 'reason',
             prompt: 'Leila says: “0.67 is greater than 0.7 because 67 is greater than 7.” Is Leila correct?', options: [
                 option('No. 0.7 = 0.70, and 0.70 > 0.67.', 'Seven tenths is greater than six tenths.', true),
@@ -1446,11 +1446,11 @@
     }
 
     const explorerNumber = '107389.4828';
-    const explorerColumns = ['Hundred-thousands', 'Ten-thousands', 'Thousands', 'Hundreds', 'Tens', 'Ones', 'Tenths', 'Hundredths', 'Thousandths', 'Ten-thousandths'];
+    const explorerColumns = ['Hundred-thousands', 'Ten-thousands', 'Thousands', 'Hundreds', 'Tens', 'Units', 'Tenths', 'Hundredths', 'Thousandths', 'Ten-thousandths'];
     const learnScreens = [
         { title: 'Place value tells you what each digit is worth.', lines: [
             'A digit is one of the symbols 0 to 9.',
-            'In 670, the 6 is in the hundreds column. It is worth 6 × 100 = 600. The 7 is in the tens column. It is worth 7 × 10 = 70. The 0 is in the ones (units) column.'
+            'In 670, the 6 is in the hundreds column. It is worth 6 × 100 = 600. The 7 is in the tens column. It is worth 7 × 10 = 70. The 0 is in the units column.'
         ] },
         { title: 'A digit’s position decides its value.', lines: [] },
         { title: 'Digits after the decimal point are less than one.', lines: [] },
@@ -1502,7 +1502,7 @@
     /* A place-value table with two rows. With an arrow, the step label sits beside an arrow from the top row
        to the bottom row. Without one, the step label is a sign beside the bottom row, as in a written sum. */
     function placeTable(rows, step, sum, arrowed = true) {
-        const headings = ['hundreds', 'tens', 'ones', 'decimal point', 'tenths'];
+        const headings = ['hundreds', 'tens', 'units', 'decimal point', 'tenths'];
         const table = element('table', '', 'pv-times-table');
         table.setAttribute('aria-label', `${sum}, shown in place-value columns`);
         const head = element('tr');
@@ -1585,7 +1585,7 @@
         const cards = digits.map((digit, index) => {
             const card = element('button', '', 'pv-number-column pv-number-column--tap');
             card.type = 'button';
-            card.append(element('span', ['hundreds', 'tens', 'units'][index]), element('strong', digit));
+            card.append(element('span', placeNames[2 - index]), element('strong', digit));
             card.addEventListener('click', () => {
                 section.update(state => { state.firstCard = index; });
                 paint();

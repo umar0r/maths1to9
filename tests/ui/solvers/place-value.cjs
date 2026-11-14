@@ -39,7 +39,7 @@ function answerFor(prompt, choice) {
     if ((match = prompt.match(/Which is greater: ([−-]?[\d.]+) or ([−-]?[\d.]+)\?/))) {
         return num(match[1]) > num(match[2]) ? match[1] : match[2];
     }
-    if ((match = prompt.match(/In ([\d,.]+), which digit is in the (tens|ones) column/))) {
+    if ((match = prompt.match(/In ([\d,.]+), which digit is in the (tens|units) column/))) {
         const whole = match[1].replace(/,/g, '').split('.')[0];
         return whole.at(match[2] === 'tens' ? -2 : -1);
     }
@@ -65,7 +65,7 @@ function answerFor(prompt, choice) {
         const zeros = match[3].replace(/,/g, '').length - 1;
         return format(shift(exact(match[1]), match[2] === '×' ? zeros : -zeros));
     }
-    if ((match = prompt.match(/has (\d) hundreds, (\d) ones, (\d) tenths and (\d) hundredths/))) return `${match[1]}0${match[2]}.${match[3]}${match[4]}`;
+    if ((match = prompt.match(/has (\d) hundreds, (\d) units, (\d) tenths and (\d) hundredths/))) return `${match[1]}0${match[2]}.${match[3]}${match[4]}`;
     if (prompt.startsWith('Leila says')) return 'No. 0.7 = 0.70, and 0.70 > 0.67.';
     if ((match = prompt.match(/divides its input by 10\. The input is ([\d,]+)/))) return format(shift(exact(match[1]), -1));
     if ((match = prompt.match(/multiplied by 100\. The result is ([\d,]+)\. What was the original number/))) return format(shift(exact(match[1]), -2));
