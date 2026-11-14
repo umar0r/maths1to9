@@ -1374,9 +1374,10 @@
                         onChange(offset) { state.offsets[index] = offset; paint(); onChange(state); } });
                     board.append(row.node); return row;
                 });
-                const label = element('label', 'Product', 'pv-product-input');
+                const label = element('label', '', 'pv-product-input');
                 const input = element('input');
                 input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off'; input.setAttribute('aria-label', 'Product');
+                input.placeholder = 'Type your answer';
                 input.addEventListener('input', () => { state.answer = input.value; onChange(state); });
                 label.append(input); host.append(board, label);
                 function paint() {

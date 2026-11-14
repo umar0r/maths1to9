@@ -224,8 +224,11 @@
                     button.addEventListener('dragstart', event => { if (!canEdit) { event.preventDefault(); return; } event.dataTransfer.setData('text/plain', value); });
                     bank.append(button); return button;
                 });
-                const label = element('label', `Your answer${model.unit ? `, in ${model.unit}` : ''}`, 'su-answer');
+                const answerLabel = `Your answer${model.unit ? `, in ${model.unit}` : ''}`;
+                const label = element('label', '', 'su-answer');
                 const input = document.createElement('input'); input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off';
+                input.setAttribute('aria-label', answerLabel);
+                input.placeholder = model.unit ? `Type your answer in ${model.unit}` : 'Type your answer';
                 input.addEventListener('input', () => { state.answer = input.value; changed(); }); label.append(input);
                 host.append(element('p', 'Choose a value, then choose a letter space. You can also drag a value into a space.'), formula, bank, label);
                 function place(position, value) { state.placements[position] = value; state.selected = null; changed(); }
