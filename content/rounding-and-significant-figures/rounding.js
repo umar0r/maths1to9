@@ -367,6 +367,120 @@
             host.append(slider);
         }
     }
+    const roadMiles = [67, 342, 65, 2814];
+
+    function roadWidget(start) {
+        const base = Math.floor(start / 10) * 10;
+        const top = base + 10;
+        const halfway = base + 5;
+        const nearest = start < halfway ? base : top;
+        const format = spaced;
+        const x = mile => 30 + (mile - base) * 60;
+        const axis = 120;
+
+        return {
+            isEmpty: mile => mile !== base && mile !== top,
+            answerText: format,
+            mark(mile) {
+                const correct = mile === nearest;
+                let feedback;
+                if (start === halfway) {
+                    feedback = correct
+                        ? `Yes. ${format(start)} is exactly halfway, so we round up. ${format(start)} ≈ ${format(top)} to the nearest 10.`
+                        : `${format(start)} is exactly halfway. At halfway we round up, so it goes to ${format(top)}.`;
+                } else if (correct) {
+                    feedback = `Yes. ${format(start)} is closer to ${format(nearest)}, so ${format(start)} ≈ ${format(nearest)} to the nearest 10.`;
+                } else {
+                    feedback = `${format(start)} is ${Math.abs(start - mile)} miles from ${format(mile)} but only ${Math.abs(start - nearest)} miles from ${format(nearest)}. Try the other sign.`;
+                }
+                return { correct, feedback };
+            },
+            render(host, { onChange }) {
+                const line = text(host, 'div', '', 'rounding-line rounding-road');
+                let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+                for (let mile = base; mile <= top; mile++) {
+                    const landmark = (mile - base) % 5 === 0 ? ' is-landmark' : '';
+                    const reach = landmark ? 12 : 7;
+                    picture += `<path class="rounding-tick${landmark}" d="M ${x(mile)} ${axis - reach} V ${axis + reach}"/>
+                        <text class="rounding-value${landmark}" x="${x(mile)}" y="157">${format(mile)}</text>`;
+                }
+                for (const end of [base, top]) {
+                    picture += `<g class="rounding-road__sign" transform="translate(${x(end)} 12)">
+                        <path d="M 0 30 V ${axis - 24}"/>
+                        <rect x="-25" width="50" height="30" rx="4"/>
+                        <text class="rounding-value is-landmark" x="0" y="20">${format(end)}</text>
+                    </g>`;
+                }
+                line.innerHTML = `<svg viewBox="0 0 660 169" role="slider" aria-label="Car position"
+                        aria-valuemin="${base}" aria-valuemax="${top}">
+                    <g aria-hidden="true">${picture}</g>
+                    <g class="rounding-road__car" aria-hidden="true">
+                        <rect class="rounding-road__grip" x="-42" y="-58" width="84" height="70" fill="transparent"/>
+                        <path d="M -22 -9 V -22 Q -22 -26 -16 -27 L -8 -39 H 10 L 18 -27 Q 24 -26 24 -21 V -9 Z"
+                            fill="#287fd1" stroke="#173d67" stroke-width="2"/>
+                        <path d="M -12 -27 L -6 -36 H 8 L 14 -27 Z" fill="#dbeafe"/>
+                        <circle cx="-13" cy="-9" r="5" fill="#243041"/>
+                        <circle cx="15" cy="-9" r="5" fill="#243041"/>
+                    </g>
+                </svg>`;
+                const svg = line.querySelector('svg');
+                const car = svg.querySelector('.rounding-road__car');
+                let mile = start;
+                let editable = false;
+                let pointer = null;
+
+                function show(position) {
+                    mile = position;
+                    car.setAttribute('transform', `translate(${x(mile)} ${axis + 4})`);
+                    svg.setAttribute('aria-valuenow', mile);
+                    svg.setAttribute('aria-valuetext', `Mile ${format(mile)}`);
+                }
+
+                function move(position) {
+                    const next = Math.max(base, Math.min(top, position));
+                    if (next === mile) return;
+                    show(next);
+                    onChange(next);
+                }
+
+                car.addEventListener('pointerdown', event => {
+                    if (!editable || pointer !== null || event.button !== 0) return;
+                    event.preventDefault();
+                    pointer = event.pointerId;
+                    svg.focus({ preventScroll: true });
+                    svg.setPointerCapture(pointer);
+                });
+                svg.addEventListener('pointermove', event => {
+                    if (event.pointerId !== pointer) return;
+                    const bounds = svg.getBoundingClientRect();
+                    const svgX = (event.clientX - bounds.left) / bounds.width * 660;
+                    move(base + Math.round((svgX - 30) / 60));
+                });
+                svg.addEventListener('lostpointercapture', () => { pointer = null; });
+                svg.addEventListener('keydown', event => {
+                    if (!editable) return;
+                    if (['ArrowLeft', 'ArrowDown'].includes(event.key)) {
+                        event.preventDefault();
+                        move(mile - 1);
+                    } else if (['ArrowRight', 'ArrowUp'].includes(event.key)) {
+                        event.preventDefault();
+                        move(mile + 1);
+                    }
+                });
+
+                return {
+                    update({ value, editable: canMove }) {
+                        editable = canMove;
+                        svg.tabIndex = canMove ? 0 : -1;
+                        svg.setAttribute('aria-disabled', String(!canMove));
+                        show(value ?? start);
+                    },
+                    focus: () => svg.focus({ preventScroll: true })
+                };
+            }
+        };
+    }
+
     /* Hand-drawn arrows from each note to the thing it talks about, like the arrows
        in the place-value lesson. Each arrow leaves the right end of its note and comes
        in to its target from straight above or below. They are redrawn whenever the
@@ -449,5 +563,5 @@
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLine, drawExample };
+    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLine, drawExample, roadMiles, roadWidget };
 })();

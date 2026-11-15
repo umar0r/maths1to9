@@ -101,6 +101,10 @@
 
     async function mountTryIt(root) {
         const questions = examples();
+        const { roadMiles, roadWidget } = window.Rounding;
+        const exampleOffset = roadMiles.length + 1;
+        const roadCardId = index => `road-${index + 1}`;
+        const roadScoreId = index => `step:interactive:${questions.length + index}`;
         const millionStart = questions.findIndex(question => question.number === '3724900');
         const millionSteps = questions[millionStart].steps;
         // Keep the original card IDs, scores and seeded option orders after inserting the example.
@@ -113,22 +117,32 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
+        let upgraded = false;
         const section = await api.useSectionState('interactive', {
-            version: 3,
+            version: 4,
             initial: () => ({
                 // intro: the number line slider shown before the first example.
                 intro: true, lineValue: 67, explored: false,
+                roadScreen: null, roadReached: 0, roadSolved: {},
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
             upgrade(saved, version) {
-                if (version !== 2) return null;
-                // Resume at the first new step if the pupil had already passed it.
-                return {
-                    ...saved, index: Math.min(saved.index, millionStart),
-                    screen: Math.min(saved.screen, millionStart),
-                    furthestScreen: Math.min(saved.furthestScreen, millionStart), finished: false
+                if (version !== 2 && version !== 3) return null;
+                upgraded = true;
+                const migrated = {
+                    ...saved, roadScreen: null, roadSolved: {},
+                    // Pupils who already entered the examples can still open them.
+                    roadReached: !saved.intro || saved.furthestScreen > 0 ? roadMiles.length : 0
                 };
+                if (version === 2) {
+                    // Resume at the first new example step if the pupil had already passed it.
+                    migrated.index = Math.min(saved.index, millionStart);
+                    migrated.screen = Math.min(saved.screen, millionStart);
+                    migrated.furthestScreen = Math.min(saved.furthestScreen, millionStart);
+                    migrated.finished = false;
+                }
+                return migrated;
             }
         });
         const state = section.state;
@@ -136,16 +150,25 @@
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
-                api.setSlideHash(state.intro ? 'try-it-1' : `try-it-${state.screen + 2}`, { replace: true });
+                const screen = state.intro ? 0 : state.roadScreen !== null ? state.roadScreen + 1 : state.screen + exampleOffset;
+                api.setSlideHash(`try-it-${screen + 1}`, { replace: true });
             }
         }
 
-        function showScreen(screen) {
-            section.update(state => { state.screen = screen; state.intro = false; });
+        function showTryItScreen(screen) {
+            section.update(state => {
+                state.intro = screen === 0;
+                state.roadScreen = screen > 0 && screen < exampleOffset ? screen - 1 : null;
+                if (screen >= exampleOffset) state.screen = screen - exampleOffset;
+            });
             render();
             const heading = root.querySelector('h3');
             heading.tabIndex = -1;
             heading.focus();
+        }
+
+        function showScreen(screen) {
+            showTryItScreen(exampleOffset + screen);
         }
 
         function reportProgress() {
@@ -154,7 +177,12 @@
                     api.recordActivity({ id: `step:interactive:${exampleId(index)}`, kind: 'guided' });
                 }
             });
-            api.setSectionProgress('interactive', 0, questions.length);
+            roadMiles.forEach((mile, index) => {
+                if (state.roadSolved[index]) {
+                    api.recordActivity({ id: roadScoreId(index), kind: 'guided' });
+                }
+            });
+            api.setSectionProgress('interactive', 0, questions.length + roadMiles.length);
         }
 
         function continueExample() {
@@ -192,7 +220,34 @@
             });
         }
 
-        // Before the examples: move a number along the line and watch it round.
+        function renderRoad(index) {
+            const questionId = roadCardId(index);
+            const { createQuestion } = window.Maths1to9LessonEngine;
+            // Reset this card's saved position and feedback while retaining its earned points.
+            api.setSectionReset('interactive', () => {
+                section.update(state => { delete state.cards[questionId]; });
+                render();
+            });
+            api.setSectionBack('interactive', { onClick: () => showTryItScreen(index) });
+            createQuestion(root, {
+                sectionId: 'interactive', questionId,
+                prompt: 'Drive the car to the nearer sign.',
+                input: 'custom', widget: roadWidget(roadMiles[index]),
+                scored: false, autoContinue: false,
+                onFeedback({ correct }) {
+                    if (!correct) return;
+                    section.update(state => { state.roadSolved[index] = true; });
+                    reportProgress();
+                },
+                onContinue() {
+                    section.update(state => { state.roadReached = Math.max(state.roadReached, index + 1); });
+                    showTryItScreen(index + 2);
+                }
+            }, section, api);
+            syncHash();
+        }
+
+        // Before the road game: move a number along the line and watch it round.
         function renderIntro() {
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
@@ -202,7 +257,7 @@
             line.textContent = 'Move the number along the line. 65 is halfway, and at halfway we round up.';
             root.append(line);
             const next = () => api.setSectionAction('interactive', {
-                label: 'Next', disabled: !state.explored, onClick: () => showScreen(0)
+                label: 'Next', disabled: !state.explored, onClick: () => showTryItScreen(1)
             });
             window.Rounding.drawLine(root, state.lineValue, true, value => {
                 section.update(state => { state.lineValue = value; state.explored = true; });
@@ -227,6 +282,10 @@
                 renderIntro();
                 return;
             }
+            if (state.roadScreen !== null) {
+                renderRoad(state.roadScreen);
+                return;
+            }
             api.setSectionReset('interactive', null);
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
@@ -236,10 +295,7 @@
             api.setSectionBack('interactive', {
                 onClick: () => {
                     if (state.screen > 0) showScreen(state.screen - 1);
-                    else {
-                        section.update(state => { state.intro = true; });
-                        render();
-                    }
+                    else showTryItScreen(roadMiles.length);
                 }
             });
             if (state.finished) sectionEvent('interactive', 'complete');
@@ -260,31 +316,30 @@
             syncHash();
         }
 
-        for (let index = 0; index <= questions.length; index++) {
-            api.registerHashRoute(`try-it-${index + 2}`, () => {
-                if (!api.goToSection('interactive', { moveFocus: false })) {
-                    document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
-                    return;
-                }
-                showScreen(Math.min(index, state.furthestScreen));
-            });
-        }
-        api.registerHashRoute('try-it-1', () => {
+        function openHashScreen(screen) {
             if (!api.goToSection('interactive', { moveFocus: false })) {
                 document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                 return;
             }
-            section.update(state => { state.intro = true; });
-            render();
-        });
+            let furthest = 0;
+            if (state.roadReached === roadMiles.length) furthest = exampleOffset + state.furthestScreen;
+            else if (state.explored || state.roadReached > 0 || state.roadScreen !== null) furthest = state.roadReached + 1;
+            showTryItScreen(Math.min(screen, furthest));
+        }
+
+        const lastScreen = exampleOffset + questions.length;
+        for (let screen = 0; screen <= lastScreen; screen++) {
+            api.registerHashRoute(`try-it-${screen + 1}`, () => openHashScreen(screen));
+        }
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
-            .find(index => initialHash === `#try-it-${index + 2}`);
-        if (initialHash === '#try-it-1') api.goToSection('interactive', { moveFocus: false });
-        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
-            showScreen(Math.min(requested, state.furthestScreen));
+        const requested = /^#try-it-(\d+)$/.exec(initialHash);
+        if (requested && Number(requested[1]) <= lastScreen + 1) {
+            if (upgraded) {
+                api.goToSection('interactive', { moveFocus: false });
+                syncHash();
+            } else openHashScreen(Math.max(0, Number(requested[1]) - 1));
         }
     }
 

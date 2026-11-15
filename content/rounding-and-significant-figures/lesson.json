@@ -39,6 +39,7 @@
     "interactive": {
         "eyebrow": "Try it",
         "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Choose the digits, then round",
         "intro": ""
     },
@@ -192,6 +193,22 @@
         },
         {
             "id": "step:interactive:19",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:20",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:21",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:22",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:23",
             "kind": "guided"
         },
         {
