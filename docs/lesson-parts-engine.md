@@ -93,7 +93,9 @@ using the full section id, so two Try its never share anything.
 }
 ```
 
-- `parts` needs at least two parts. Part ids are lowercase letters,
+- The engine requires at least two parts. Author lessons with at most
+  five parts and short, one-word labels of about eight characters or
+  fewer so the stage bar fits on phones. Part ids are lowercase letters,
   digits and hyphens, unique, and never contain `--`.
 - Each part must have all three of `explanation`, `interactive` and
   `question_bank`. If one is missing, the engine shows the normal
@@ -131,8 +133,9 @@ in exactly the order, that the engine produces today.
 A part's sections are drawn by the lesson's `interactive.js` and
 `questions.js`, as now. They need to know which part they are drawing.
 
-- Section gate / complete events carry `{ sectionId, kind, part }`.
-  Today they carry `{ sectionId }`; the extra fields are additive.
+- Engine section gate and complete events carry
+  `{ sectionId, kind, part }`. Existing lesson scripts that dispatch
+  `{ sectionId }` still work.
 - `api.getSection(sectionId)` returns `{ id, kind, part, config }`, where
   `config` is that part's block from `lesson.json` (or the top-level block
   for the mixed Practice and the Check).
@@ -148,16 +151,20 @@ A part's sections are drawn by the lesson's `interactive.js` and
 - Hash routes: a part's screens use `<partId>-learn-<n>`,
   `<partId>-try-it-<n>` and `<partId>-practice-<n>`. The mixed Practice
   and the Check keep `practice-<n>`, `check-<n>` and `summary`.
-- Saved section state: the lesson passes its own key to
-  `useSectionState`. Use `learn:<partId>`, `interactive:<partId>` and so
-  on. Document this.
+- The Learn and Try it modules pass `learn:<partId>` and
+  `interactive:<partId>` to `useSectionState`. The question set uses the
+  full section id as its save key.
+- The engine awaits each part's `Maths1to9Interactives[slug]` mount and
+  then `Maths1to9QuestionSets[slug]` before opening the initial hash.
+  See [Parts lessons](shared-lesson-components.md#parts-lessons).
 
 ### 3.5 Navigation stages
 
 The engine builds the stages itself for a parts lesson: one stage per
 part (label = the part's `label`, sections = its three), then
 **Mix** (the mixed Practice) and **Check**. A stage is locked until the
-pupil reaches its first section, as now.
+pupil reaches its first section. Parts use the in-page stage bar so all
+stages stay visible on phones.
 
 At 375 px all the stage buttons must fit without overlapping or a
 sideways scroll. With five parts that is seven buttons. If they don't
@@ -172,9 +179,10 @@ invent a new layout.
 - Practice of every kind: no marking until Check (rule 22).
 - After a part's last Try it example, Continue goes straight to that
   part's Practice (rule 20).
-- Main button after a part's Practice: **Continue** (into the next part's
-  Learn). After the mixed Practice: **Start Check**. At the end:
-  **All lessons**.
+- Both part and mixed Practice end on the last answered card. There is
+  no Practice summary. The last part Practice card shows **Continue**
+  (into the next Learn or Mixed Practice). The last mixed Practice card
+  shows **Start Check**. The Check summary ends with **All lessons**.
 - Back works on every screen, including across a join: Back from Part 2
   Learn screen 1 shows Part 1's last Practice card exactly as the pupil
   left it. Reset resets only the card on screen.
@@ -219,9 +227,8 @@ Content (simple on purpose; it tests the engine, not maths teaching):
 - **Check**: 2 multiple choice questions (four options each) and a
   summary.
 
-Add a solver in `tests/ui/solvers/` so the full-run test can finish it.
-If `engine-runs.spec.cjs` only looks in `content/`, add a fixture list to
-it rather than copying the file.
+The solver lives in `tests/ui/solvers/fixtures/`. The fixture list in
+`engine-runs.spec.cjs` runs it at desktop and mobile widths.
 
 ## 5. Tests to build
 
@@ -291,9 +298,10 @@ desktop width and at 375 px with touch on:
 
 ### 5.3 Regression
 
-The full browser suite must give the same pass/fail list on the branch
-as on `origin/main`. Report both lists. If any existing test changes
-result, **stop and ask**.
+Run the full browser suite on the branch and on `origin/main`, and
+report both pass/fail lists. If an existing test passes on the baseline
+and fails on the branch, **stop and ask**. Record baseline-only failures
+in the comparison.
 
 ## 6. Stages
 
