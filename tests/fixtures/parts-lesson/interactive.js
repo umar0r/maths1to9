@@ -162,7 +162,7 @@
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[slug] = async (root, section) => {
         const api = window.Maths1to9Lesson;
-        const part = content[section.part];
+        const part = content[section.config.fruit ?? section.part];
         await mountLearn(api, section.part, part.learn);
         await mountTryIt(api, root, section, part.examples);
     };

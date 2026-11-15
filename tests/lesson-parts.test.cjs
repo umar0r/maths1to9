@@ -121,3 +121,19 @@ test('Practice generators are deterministic and keep each part separate across 2
         }
     }
 });
+
+test('parts navigation groups three sections per part followed by Mix and Check', () => {
+    const sections = planSections(partsFixture);
+    const groups = engine.planNavigationGroups(partsFixture, sections);
+    assert.deepEqual(Array.from(groups, group => ({
+        id: group.id,
+        label: group.label,
+        sections: Array.from(group.sectionIndexes, index => sections[index].id),
+        range: [group.firstIndex, group.lastIndex]
+    })), [
+        { id: 'part-apples', label: 'Apples', sections: ['explanation--apples', 'interactive--apples', 'question-bank--apples'], range: [0, 2] },
+        { id: 'part-pears', label: 'Pears', sections: ['explanation--pears', 'interactive--pears', 'question-bank--pears'], range: [3, 5] },
+        { id: 'mix', label: 'Mix', sections: ['question-bank'], range: [6, 6] },
+        { id: 'check', label: 'Check', sections: ['comparison'], range: [7, 7] }
+    ]);
+});

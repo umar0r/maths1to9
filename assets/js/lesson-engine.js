@@ -1302,6 +1302,88 @@
         return `${slug}-questions${part === null ? '' : `--${part}`}`;
     }
 
+    /*
+     * Lessons can group their existing sections into a simpler pupil-facing
+     * journey without changing section rendering, gates, or progress data.
+     * Lessons without navigation_stages retain one navigation item per section.
+     */
+    function planNavigationGroups(lesson, sections = planSections(lesson)) {
+        const configuredStages = Array.isArray(lesson.parts) ? [
+            ...lesson.parts.map(part => ({
+                id: `part-${part.id}`,
+                label: part.label,
+                sections: sections.filter(section => section.part === part.id).map(section => section.id)
+            })),
+            { id: 'mix', label: 'Mix', sections: ['question-bank'] },
+            { id: 'check', label: 'Check', sections: ['comparison'] }
+        ] : safeArray(lesson.navigation_stages).filter(isObject);
+
+        if (configuredStages.length === 0) {
+            return sections.map((section, index) => ({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index,
+                lastIndex: index
+            }));
+        }
+
+        const usedSectionIds = new Set();
+        const groups = [];
+
+        configuredStages.forEach((stage, stageIndex) => {
+            const id = normaliseText(stage.id) ||
+                `stage-${stageIndex + 1}`;
+            const sectionIds = safeArray(stage.sections)
+                .map(normaliseText)
+                .filter(Boolean);
+            const sectionIndexes = sectionIds
+                .map(findId => sections.findIndex(
+                    section => section.id === findId
+                ))
+                .filter(index => index !== -1)
+                .filter(index => {
+                    const sectionId = sections[index].id;
+
+                    if (usedSectionIds.has(sectionId)) {
+                        return false;
+                    }
+
+                    usedSectionIds.add(sectionId);
+                    return true;
+                })
+                .sort((a, b) => a - b);
+
+            if (sectionIndexes.length === 0) {
+                return;
+            }
+
+            groups.push({
+                id,
+                label: normaliseText(stage.label) || id,
+                sectionIndexes,
+                firstIndex: sectionIndexes[0],
+                lastIndex: sectionIndexes.at(-1)
+            });
+        });
+
+        sections.forEach((section, index) => {
+            if (usedSectionIds.has(section.id)) {
+                return;
+            }
+
+            groups.push({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index,
+                lastIndex: index
+            });
+        });
+
+        return groups;
+    }
+
     function planScoreActivities(lesson, sections = planSections(lesson)) {
         const activities = sections.map(section => ({ id: `section:${section.id}` }));
         const guidedTotals = {
@@ -1439,6 +1521,7 @@
         sectionPart,
         dispatchSectionEvent,
         planSections,
+        planNavigationGroups,
         planScoreActivities,
         sectionConfig,
         questionSetContainerId,
@@ -1477,7 +1560,7 @@
 
     const {
         sectionKind, sectionPart, dispatchSectionEvent, planSections,
-        planScoreActivities, sectionConfig, questionSetContainerId,
+        planNavigationGroups, planScoreActivities, sectionConfig, questionSetContainerId,
         hasItems, isObject, normaliseText, safeArray
     } = window.Maths1to9LessonEngine;
 
@@ -1589,7 +1672,7 @@
                 state.highestUnlockedIndex = state.finished ? state.sections.length - 1
                     : clamp(Math.max(savedUnlocked, completedIndex), 0, state.sections.length - 1);
             }
-            state.navigationGroups = createNavigationGroups(
+            state.navigationGroups = planNavigationGroups(
                 lesson,
                 state.sections
             );
@@ -1622,7 +1705,7 @@
                 registerLessonRoute(section.id, () => showSection(index, { unlock: !state.hasParts }));
             });
             state.navigationGroups.forEach(group => {
-                const aliases = [group.label.toLowerCase().replace(/\s+/g, '-')];
+                const aliases = state.hasParts ? [] : [group.label.toLowerCase().replace(/\s+/g, '-')];
                 if (group.id === 'practice') aliases.push('practise');
                 registerLessonRoute(group.id, () => showSection(group.firstIndex, { unlock: !state.hasParts }), aliases);
             });
@@ -1836,92 +1919,16 @@
         }
     }
 
-    /*
-     * Lessons can group their existing sections into a simpler pupil-facing
-     * journey without changing section rendering, gates, or progress data.
-     * Lessons without navigation_stages retain one navigation item per section.
-     */
-    function createNavigationGroups(lesson, sections) {
-        const configuredStages = safeArray(
-            lesson.navigation_stages
-        ).filter(isObject);
-
-        if (configuredStages.length === 0) {
-            return sections.map((section, index) => ({
-                id: section.id,
-                label: section.label,
-                sectionIndexes: [index],
-                firstIndex: index,
-                lastIndex: index
-            }));
-        }
-
-        const usedSectionIds = new Set();
-        const groups = [];
-
-        configuredStages.forEach((stage, stageIndex) => {
-            const id = normaliseText(stage.id) ||
-                `stage-${stageIndex + 1}`;
-            const sectionIds = safeArray(stage.sections)
-                .map(normaliseText)
-                .filter(Boolean);
-            const sectionIndexes = sectionIds
-                .map(findId => sections.findIndex(
-                    section => section.id === findId
-                ))
-                .filter(index => index !== -1)
-                .filter(index => {
-                    const sectionId = sections[index].id;
-
-                    if (usedSectionIds.has(sectionId)) {
-                        return false;
-                    }
-
-                    usedSectionIds.add(sectionId);
-                    return true;
-                })
-                .sort((a, b) => a - b);
-
-            if (sectionIndexes.length === 0) {
-                return;
-            }
-
-            groups.push({
-                id,
-                label: normaliseText(stage.label) || id,
-                sectionIndexes,
-                firstIndex: sectionIndexes[0],
-                lastIndex: sectionIndexes.at(-1)
-            });
-        });
-
-        sections.forEach((section, index) => {
-            if (usedSectionIds.has(section.id)) {
-                return;
-            }
-
-            groups.push({
-                id: section.id,
-                label: section.label,
-                sectionIndexes: [index],
-                firstIndex: index,
-                lastIndex: index
-            });
-        });
-
-        return groups;
-    }
-
     function renderLesson() {
         app.replaceChildren();
 
         const header = renderLessonHeader();
         const navigation = renderSectionNavigation();
 
-        // The stage dots sit in the site header. On a narrow screen only
-        // the current stage shows (see app.css).
+        // Parts use the existing in-page stage bar so every stage stays
+        // visible. The header's compact stage bar shows one stage on phones.
         const siteHeader = document.querySelector('.site-header__inner');
-        const stagesInSiteHeader = Boolean(siteHeader) &&
+        const stagesInSiteHeader = Boolean(siteHeader) && !state.hasParts &&
             navigation.classList.contains('lesson-navigation--stages');
 
         // The lesson title sits in the site header, next to the logo.
@@ -2302,12 +2309,12 @@
 
         navigation.setAttribute(
             'aria-label',
-            state.lesson.navigation_stages
+            state.hasParts || state.lesson.navigation_stages
                 ? 'Lesson stages'
                 : 'Lesson sections'
         );
 
-        if (safeArray(state.lesson.navigation_stages).length > 0) {
+        if (state.hasParts || safeArray(state.lesson.navigation_stages).length > 0) {
             navigation.classList.add('lesson-navigation--stages');
         }
 

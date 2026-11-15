@@ -2,10 +2,12 @@ const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
 const solve = require('./solvers/fixtures/parts-lesson.cjs');
+const fixture = require('../fixtures/parts-lesson/lesson.json');
 const { numericAnswer } = solve;
 
 const route = 'tests/fixtures/parts-lesson/';
 const errorsByPage = new WeakMap();
+const stageBar = page => page.getByRole('navigation', { name: 'Lesson stages' });
 const active = page => page.locator('.lesson-section:visible');
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const back = page => page.getByRole('button', { name: 'Previous screen' });
@@ -67,6 +69,43 @@ async function reachPears(page) {
     await finishTryIt(page, ['7', '5']);
     await finishPractice(page, 'apples-practice', 3, ['apples']);
     await onScreen(page, 'pears-learn-1');
+}
+
+async function checkStageBar(page, labels) {
+    const buttons = stageBar(page).getByRole('button', { includeHidden: true });
+    await expect(buttons).toHaveText(labels);
+    for (const button of await buttons.all()) await expect(button).toBeVisible();
+    const geometry = await buttons.evaluateAll(items => ({
+        pageWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+        buttons: items.map(button => {
+            const { left, right, top, bottom } = button.getBoundingClientRect();
+            const text = document.createRange();
+            text.selectNodeContents(button);
+            const label = text.getBoundingClientRect();
+            return { left, right, top, bottom, labelLeft: label.left, labelRight: label.right };
+        })
+    }));
+    expect(geometry.pageWidth).toBe(geometry.viewportWidth);
+    for (const [index, button] of geometry.buttons.entries()) {
+        expect(button.left).toBeGreaterThanOrEqual(0);
+        expect(button.right).toBeLessThanOrEqual(geometry.viewportWidth);
+        // The active label uses a slightly different font size at 375 px.
+        expect(Math.abs(button.top - geometry.buttons[0].top)).toBeLessThanOrEqual(2);
+        expect(Math.abs(button.bottom - geometry.buttons[0].bottom)).toBeLessThanOrEqual(2);
+        expect(button.labelLeft).toBeGreaterThanOrEqual(0);
+        expect(button.labelRight).toBeLessThanOrEqual(geometry.viewportWidth);
+        if (index > 0) {
+            const previous = geometry.buttons[index - 1];
+            expect(button.left).toBeGreaterThanOrEqual(previous.right - 0.5);
+            expect(button.labelLeft).toBeGreaterThan(previous.labelRight);
+        }
+    }
+}
+
+async function captureStageBar(page, name) {
+    const directory = process.env.PARTS_SCREENSHOT_DIR;
+    if (directory) await page.screenshot({ path: path.join(directory, name), animations: 'disabled' });
 }
 
 for (const width of [1280, 375]) {
@@ -171,7 +210,7 @@ for (const width of [1280, 375]) {
             await page.reload();
             await onScreen(page, 'pears-learn-2');
             await expect(active(page).getByRole('heading')).toHaveText('Count the pears that are left');
-            await expect(page.getByRole('button', { name: /Apples Learn/ })).toBeEnabled();
+            await expect(stageBar(page).getByRole('button', { name: /^Apples,/ })).toBeEnabled();
             await page.goto('about:blank');
             await page.goto(route);
             await onScreen(page, 'pears-learn-2');
@@ -226,6 +265,38 @@ for (const width of [1280, 375]) {
             await page.goto(`${route}#pears-try-it-1`);
             await onScreen(page, 'pears-try-it-1');
             await expect(active(page).getByRole('heading')).toHaveText('How many pears are left? 5 − 3');
+        });
+
+        test('the four navigation stages fit and unlock when reached', async ({ page }) => {
+            await page.goto(route);
+            await onScreen(page, 'apples-learn-1');
+            await checkStageBar(page, ['Apples', 'Pears', 'Mix', 'Check']);
+            const stage = label => stageBar(page).getByRole('button', { name: new RegExp(`^${label},`) });
+            await expect(stage('Apples')).toBeEnabled();
+            for (const label of ['Pears', 'Mix', 'Check']) {
+                const locked = stage(label);
+                await expect(locked).toBeDisabled();
+                const box = await locked.boundingBox();
+                await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+                await onScreen(page, 'apples-learn-1');
+            }
+
+            await finishLearn(page);
+            await finishTryIt(page, ['7', '5']);
+            await expect(stage('Pears')).toBeDisabled();
+            await finishPractice(page, 'apples-practice', 3, ['apples']);
+            await expect(stage('Pears')).toBeEnabled();
+            await finishLearn(page);
+            await onScreen(page, 'pears-try-it-1');
+            await expect(stage('Pears')).toHaveAttribute('aria-pressed', 'true');
+            await expect(stage('Mix')).toBeDisabled();
+            await expect(stage('Check')).toBeDisabled();
+            await checkStageBar(page, ['Apples', 'Pears', 'Mix', 'Check']);
+            await captureStageBar(page, `stage-bar-pears-try-it-${width}.png`);
+            await stage('Apples').tap();
+            await onScreen(page, 'apples-learn-2');
+            await stage('Pears').tap();
+            await onScreen(page, 'pears-learn-2');
         });
 
         test('Practice and Mix mark after Check and celebrate correctly through the final rocket', async ({ page, baseURL }) => {
@@ -284,3 +355,30 @@ for (const width of [1280, 375]) {
         });
     });
 }
+
+
+test.describe('five-part stage bar at 375px with touch', () => {
+    test.use({ viewport: { width: 375, height: 900 }, hasTouch: true, isMobile: true });
+
+    test('seven stages use one row without clipping or sideways scroll', async ({ page }) => {
+        const errors = watchForErrors(page);
+        const lesson = structuredClone(fixture);
+        for (const label of ['Plums', 'Figs', 'Grapes']) {
+            const part = structuredClone(lesson.parts[0]);
+            part.id = label.toLowerCase();
+            part.label = label;
+            part.interactive.fruit = 'apples';
+            lesson.parts.push(part);
+        }
+        await page.route('**/tests/fixtures/parts-lesson/lesson.json', route => route.fulfill({ json: lesson }));
+        await page.goto(route);
+        await onScreen(page, 'apples-learn-1');
+        // Leave evidence even if the existing style cannot fit all seven.
+        await captureStageBar(page, 'stage-bar-seven-375.png');
+        await checkStageBar(page, ['Apples', 'Pears', 'Plums', 'Figs', 'Grapes', 'Mix', 'Check']);
+        const buttons = stageBar(page).getByRole('button');
+        await expect(buttons.nth(0)).toBeEnabled();
+        for (const button of (await buttons.all()).slice(1)) await expect(button).toBeDisabled();
+        expect(errors).toEqual([]);
+    });
+});
