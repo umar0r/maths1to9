@@ -49,10 +49,12 @@ test('rounding-and-significant-figures: every rounding prompt is recognised and 
 
 test('rounding-and-significant-figures: all choices have four distinct forms, one correct answer and distinct feedback', () => {
     for (const q of questions.filter(q => q.options)) {
-        assert.equal(q.options.length, 4, q.prompt);
+        // Tapping a digit: one button per digit, up to four (345 only has three digits).
+        const size = q.stage === 'keep' || q.stage === 'decider' ? Math.min(4, q.number.replace(/\D/g, '').length) : 4;
+        assert.equal(q.options.length, size, q.prompt);
         assert.equal(q.options.filter(o => o.correct).length, 1, q.prompt);
-        assert.equal(new Set(q.options.map(o => o.label)).size, 4, q.prompt);
-        assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.label)).size, size, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.feedback)).size, size, q.prompt);
         assert.ok(q.options.every(o => o.feedback));
         if (q.stage === 'round') {
             const answer = expected(q.number, q.kind, q.accuracy);
@@ -82,9 +84,12 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
 });
 
 test('rounding-and-significant-figures: four guided examples and Learn pictures highlight the right digits', () => {
-    assert.equal(Q.guided.length, 4);
-    assert.equal(Q.examples().length, 12);
-    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 12);
+    assert.equal(Q.guided.length, 5);
+    assert.equal(Q.examples().length, 16);
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 16);
+    const decide = Q.examples().find(q => q.stage === 'decide');
+    assert.equal(decide.number, '345');
+    assert.equal(decide.answer, '5');
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);

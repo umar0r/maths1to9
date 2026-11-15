@@ -105,8 +105,11 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            // Version 2 added the number line slider before the examples.
+            version: 2,
             initial: () => ({
+                // intro: the number line slider shown before the first example.
+                intro: true, lineValue: 67, explored: false,
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
@@ -117,12 +120,12 @@
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
-                api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true });
+                api.setSlideHash(state.intro ? 'try-it-1' : `try-it-${state.screen + 2}`, { replace: true });
             }
         }
 
         function showScreen(screen) {
-            section.update(state => { state.screen = screen; });
+            section.update(state => { state.screen = screen; state.intro = false; });
             render();
             const heading = root.querySelector('h3');
             heading.tabIndex = -1;
@@ -170,16 +173,56 @@
             });
         }
 
+        // Before the examples: move a number along the line and watch it round.
+        function renderIntro() {
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = "Let's see what numbers round to.";
+            root.append(heading);
+            const line = document.createElement('p');
+            line.textContent = 'Move the number along the line. 65 is halfway, and at halfway we round up.';
+            root.append(line);
+            const next = () => api.setSectionAction('interactive', {
+                label: 'Next', disabled: !state.explored, onClick: () => showScreen(0)
+            });
+            window.Rounding.drawLine(root, state.lineValue, true, value => {
+                section.update(state => { state.lineValue = value; state.explored = true; });
+                api.recordActivity({ id: 'rounding-line:explored', kind: 'explore' });
+                next();
+                api.setSectionReset('interactive', resetIntro);
+            }, false);
+            api.setSectionBack('interactive', null);
+            api.setSectionReset('interactive', state.explored ? resetIntro : null);
+            next();
+            syncHash();
+        }
+
+        function resetIntro() {
+            section.update(state => { state.lineValue = 67; state.explored = false; });
+            render();
+        }
+
         function render() {
             root.replaceChildren();
+            if (state.intro) {
+                renderIntro();
+                return;
+            }
+            api.setSectionReset('interactive', null);
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
             heading.textContent = state.screen === questions.length ? 'Your completed examples'
-                : `Example ${Math.floor(state.screen / 3) + 1} of ${window.Rounding.guided.length} · Step ${state.screen % 3 + 1} of 3`;
+                : `Example ${questions[state.screen].example} of ${window.Rounding.guided.length} · Step ${questions[state.screen].step} of ${questions[state.screen].steps}`;
             root.append(heading);
-            api.setSectionBack('interactive', state.screen > 0 ? {
-                onClick: () => showScreen(state.screen - 1)
-            } : null);
+            api.setSectionBack('interactive', {
+                onClick: () => {
+                    if (state.screen > 0) showScreen(state.screen - 1);
+                    else {
+                        section.update(state => { state.intro = true; });
+                        render();
+                    }
+                }
+            });
             if (state.finished) sectionEvent('interactive', 'complete');
             if (state.screen === questions.length) {
                 questions.forEach((example, index) => {
@@ -199,7 +242,7 @@
         }
 
         for (let index = 0; index <= questions.length; index++) {
-            api.registerHashRoute(`try-it-${index + 1}`, () => {
+            api.registerHashRoute(`try-it-${index + 2}`, () => {
                 if (!api.goToSection('interactive', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
@@ -207,11 +250,20 @@
                 showScreen(Math.min(index, state.furthestScreen));
             });
         }
+        api.registerHashRoute('try-it-1', () => {
+            if (!api.goToSection('interactive', { moveFocus: false })) {
+                document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
+                return;
+            }
+            section.update(state => { state.intro = true; });
+            render();
+        });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
         const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
-            .find(index => initialHash === `#try-it-${index + 1}`);
+            .find(index => initialHash === `#try-it-${index + 2}`);
+        if (initialHash === '#try-it-1') api.goToSection('interactive', { moveFocus: false });
         if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
             showScreen(Math.min(requested, state.furthestScreen));
         }

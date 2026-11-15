@@ -21,15 +21,20 @@ module.exports = async function solve(page) {
         else if ((match = text.match(/(\d+) decimal places?/))) { kind = 'decimal'; accuracy = Number(match[1]); phrase = match[0]; }
         else if ((match = text.match(/(\d+) significant figures?/))) { kind = 'sig'; accuracy = Number(match[1]); phrase = match[0]; }
         else throw new Error(`Cannot read accuracy: ${text}`);
-        const values = text.replace(phrase, '').match(/\d[\d,]*(?:\.\d+)?/g) || [];
+        const named = text.match(/^Round (\d[\d,]*(?:\.\d+)?) to/);
+        const values = named ? [named[1]] : text.replace(phrase, '').match(/\d[\d,]*(?:\.\d+)?/g) || [];
         if (values.length !== 1) throw new Error(`Cannot read number: ${text}`);
         const number = values[0].replace(/,/g, '');
-        if (/Which/.test(text)) {
+        const becomes = text.match(/Type what the (\d) becomes/);
+        const next = text.match(/The next digit is (\d)/);
+        if (becomes) {
+            answer = String(Number(next[1]) >= 5 ? (Number(becomes[1]) + 1) % 10 : Number(becomes[1]));
+        } else if (/Which/.test(text)) {
             const indexes = [...number].map((digit, i) => /\d/.test(digit) ? i : -1).filter(i => i >= 0);
             const point = number.includes('.') ? number.indexOf('.') : number.length;
             const significant = indexes.slice(indexes.findIndex(i => number[i] !== '0'));
             let index = kind === 'sig' ? significant[accuracy - 1] : kind === 'decimal' ? point + accuracy : point - 1 - accuracy;
-            if (!text.includes('Which is the last digit')) index = indexes[indexes.indexOf(index) + 1];
+            if (!text.includes('Which is the last digit') && !text.includes('Which digit is in the')) index = indexes[indexes.indexOf(index) + 1];
             const power = point - index - Number(index < point);
             answer = `${number[index]} (${names[power]})`;
         } else answer = kind === 'sig' ? roundSig(number, accuracy) : roundToPower(number, kind === 'decimal' ? -accuracy : accuracy);

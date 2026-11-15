@@ -78,12 +78,6 @@
     font-weight: 800;
 }
 
-.rounding-tick.is-nearest > span {
-    color: var(--success-dark);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-}
-
 .rounding-marker {
     position: absolute;
     bottom: 14px;
@@ -104,4 +98,90 @@
     width: 100%;
     min-height: 44px;
     accent-color: var(--primary);
+}
+
+.rounding-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: .75rem;
+    margin: 1.5rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rounding-example {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: 1rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.rounding-example__label {
+    color: var(--text-muted);
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.rounding-example__sum {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    font-size: clamp(1.4rem, 5vw, 1.8rem);
+    font-weight: 800;
+}
+
+.rounding-example__arrow {
+    color: var(--primary);
+}
+
+.rounding-example__to {
+    color: var(--primary-dark);
+}
+
+/* The answer under the number line: a small box around the text, centred. */
+.significant-equation.rounding-line-answer {
+    width: fit-content;
+    margin-inline: auto;
+    padding: .5rem 1rem;
+    font-size: 1.15rem;
+}
+
+/* Short notes with arrows pointing at the number line (see drawArrows in rounding.js). */
+.rounding-notes {
+    position: relative;
+}
+
+.rounding-note {
+    width: fit-content;
+    max-width: 45%;
+    margin: 0;
+}
+
+.rounding-note--above {
+    margin-top: 1rem;
+}
+
+.rounding-notes .rounding-line {
+    margin-top: 5.5rem;
+}
+
+.rounding-note--below {
+    margin-left: 25%;
+    margin-top: 4.5rem;
+    margin-bottom: 1rem;
+}
+
+.rounding-notes__arrows {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke: #334155;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }

@@ -17,6 +17,7 @@
             "decimal-carry": "round-decimal-places",
             "keep-digit": "round-decimal-places",
             "deciding-digit": "round-decimal-places",
+            "decide-digit": "round-decimal-places",
             "nearest": "round-decimal-places",
             "decimal": "round-decimal-places",
             "error": "round-decimal-places",
@@ -159,6 +160,22 @@
         },
         {
             "id": "step:interactive:11",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:12",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:13",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:14",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:15",
             "kind": "guided"
         },
         {

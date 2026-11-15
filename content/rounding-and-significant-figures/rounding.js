@@ -130,12 +130,50 @@
                         : `The ${place(number, index)} digit is not straight after the digit to keep. Look one digit to the right.`, false, index))]
         };
     }
+    // Step 3 of the first example: decide what happens to your digit.
+    function decideQuestion(number, kind, accuracy) {
+        const d = keyDigits(number, kind, accuracy);
+        const digit = number[d.target];
+        const next = number[d.decider];
+        const up = Number(next) >= 5;
+        const changed = String((Number(digit) + 1) % 10);
+        const answer = up ? changed : digit;
+        const feedback = up ? `${next} is 5 or more, so the ${digit} goes up to ${changed}.` : `${next} is less than 5, so the ${digit} stays the same.`;
+        return {
+            number, kind, accuracy, ...d, stage: 'decide', input: 'number', questionType: 'decide-digit',
+            prompt: `Round ${spaced(number)} to ${accuracyText(kind, accuracy)}. The next digit is ${next}. Is it 5 or more? Type what the ${digit} becomes.`,
+            answer, feedback, fallback: feedback, exact: kind !== 'nearest',
+            rules: [
+                [up ? digit : changed, up ? `${next} counts as 5 or more, so the ${digit} has to go up.` : `${next} is less than 5, so the ${digit} stays the same.`],
+                [String((Number(digit) + 9) % 10), 'Your digit never goes down. It either stays the same or goes up by 1.'],
+                ['0', 'Your digit does not become 0. The digits after it do.']
+            ].filter(([value]) => value !== answer).map(([value, message]) => ({ value, feedback: message }))
+        };
+    }
+    // Each example: [number, kind, accuracy, last step input, extras].
+    // The first example walks through every step, including the decision.
     const guided = [
+        ['345', 'nearest', 1, 'number', { decide: true, prompts: {
+            keep: 'Round 345 to the nearest 10. First, find your digit. Which digit is in the tens place?',
+            decider: 'Round 345 to the nearest 10. Now look at the next digit. Which digit comes straight after the 4?'
+        } }],
         ['2748', 'nearest', 2, 'number'], ['4.276', 'decimal', 2, 'choice'],
         ['0.004782', 'sig', 2, 'choice'], ['9.964', 'decimal', 1, 'number']
     ];
     function examples() {
-        return guided.flatMap(([number, kind, accuracy, input]) => [digitQuestion(number, kind, accuracy, 'keep'), digitQuestion(number, kind, accuracy, 'decider'), roundingQuestion(number, kind, accuracy, input)]);
+        return guided.flatMap(([number, kind, accuracy, input, extras = {}], example) => {
+            const steps = [
+                digitQuestion(number, kind, accuracy, 'keep'),
+                digitQuestion(number, kind, accuracy, 'decider'),
+                ...(extras.decide ? [decideQuestion(number, kind, accuracy)] : []),
+                roundingQuestion(number, kind, accuracy, input)
+            ];
+            return steps.map((question, step) => ({
+                ...question,
+                ...(extras.prompts?.[question.stage] ? { prompt: extras.prompts[question.stage] } : {}),
+                example: example + 1, step: step + 1, steps: steps.length
+            }));
+        });
     }
     function checks() {
         return [
@@ -182,9 +220,16 @@
         return prepare(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt), random);
     }
     const learnScreens = [
-        { title: 'Rounding means finding the closest simpler number.', lines: [] },
-        { title: 'To round to the nearest 10, choose the closest ten.', lines: ['67 is closer to 70 than to 60.'], line: true, caption: 'The ≈ sign means about the same as.' },
-        { title: 'Which ten is nearest?', lines: ['Move the number along the line. Watch which ten is closest.', '65 is halfway between 60 and 70. At halfway, round up.'], line: true, explore: true },
+        { title: 'Rounding means changing a number to a simpler number that is close to it.', lines: ['You can round whole numbers or decimals.'], roundings: [
+            { label: 'To the nearest 10', from: '38', to: '40' },
+            { label: 'To the nearest 100', from: '461', to: '500' },
+            { label: 'To 2 decimal places', from: '3.147', to: '3.15' }
+        ] },
+        { title: "Let's start by rounding to the nearest 10.", lines: ['Say we want to round 67 to the nearest 10. Here it is on a number line.'], line: true, after: ['67 sits between 60 and 70, and it is closer to 70.', 'You can also tell from the ones digit. It is 7, and 7 is 5 or more, so 67 rounds up to 70.'], caption: 'The ≈ sign means "is about".' },
+        { title: 'Bigger numbers work the same way.', lines: ['Say we want to round 3,486 to the nearest 10. Here it is on a number line.'], line: true, base: 3480, value: 3486, notes: {
+            digit: 'The ones digit is 6. That is 5 or more, so round up.',
+            nearest: '3,486 is closer to 3,490.'
+        } },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
         { title: 'Round to the nearest 100', lines: ['To round 642 to the nearest 100, keep 6 in the hundreds place.', 'The next digit is 4, so keep the 6. Fill the tens and ones places with zeros.'], number: '642', kind: 'nearest', accuracy: 2, equations: ['642 ≈ 600'] },
         { title: 'Whole-number zeros keep the size', lines: ['The same rule works for hundreds and thousands.', 'To round 4,382 to the nearest 1,000, keep 4. The next digit is 3, so 4 stays. Fill the other places with zeros.'], number: '4382', kind: 'nearest', accuracy: 3, equations: ['4,382 ≈ 4,000'], caption: 'Writing just 4 would make the number much too small.' },
@@ -226,29 +271,54 @@
         }
         host.append(row);
     }
-    function drawLine(host, value, explore, onChange, readOnly) {
+    // A number line from one ten (base) to the next, with the halfway mark.
+    // With notes, a short note above the line points at the ones digit of the number,
+    // and one below points at the ten it rounds to.
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null) {
+        const format = number => number.toLocaleString('en-GB');
+        let lineHost = host;
+        let digitNote, nearestNote;
+        if (notes) {
+            lineHost = text(host, 'div', '', 'rounding-notes');
+            digitNote = text(lineHost, 'p', notes.digit, 'rounding-note rounding-note--above');
+        }
         const line = document.createElement('div');
         line.className = 'rounding-line';
         line.setAttribute('role', 'img');
-        const ticks = [60, 65, 70].map(number => {
+        const ticks = [base, base + 5, base + 10].map(number => {
             const tick = text(line, 'span', '', 'rounding-tick');
-            tick.style.left = `${(number - 60) * 10}%`;
-            text(tick, 'span', String(number));
+            tick.style.left = `${(number - base) * 10}%`;
+            text(tick, 'span', format(number));
             return tick;
         });
         const marker = text(line, 'span', '', 'rounding-marker');
-        host.append(line);
-        const output = text(host, 'p', '', 'significant-equation');
+        lineHost.append(line);
+        if (notes) nearestNote = text(lineHost, 'p', notes.nearest, 'rounding-note rounding-note--below');
+        const output = text(host, 'p', '', 'significant-equation rounding-line-answer');
         function update(number) {
-            marker.textContent = number;
-            marker.style.left = `${(number - 60) * 10}%`;
-            const answer = number < 65 ? 60 : 70;
-            ticks[0].classList.toggle('is-nearest', answer === 60);
-            ticks[2].classList.toggle('is-nearest', answer === 70);
-            output.textContent = `${number} ≈ ${answer}`;
-            line.setAttribute('aria-label', `${number} on a line from 60 to 70; nearest ten ${answer}`);
+            const shown = format(number);
+            if (notes) {
+                // The ones digit gets its own span so an arrow can point at it.
+                marker.textContent = shown.slice(0, -1);
+                text(marker, 'span', shown.slice(-1), 'rounding-marker__ones');
+            } else {
+                marker.textContent = shown;
+            }
+            marker.style.left = `${(number - base) * 10}%`;
+            const answer = number < base + 5 ? base : base + 10;
+            ticks[0].classList.toggle('is-nearest', answer === base);
+            ticks[2].classList.toggle('is-nearest', answer === base + 10);
+            output.textContent = `${format(number)} ≈ ${format(answer)}`;
+            line.setAttribute('aria-label', `${format(number)} on a line from ${format(base)} to ${format(base + 10)}; nearest ten ${format(answer)}`);
         }
         update(value);
+        if (notes) {
+            const nearest = () => ticks[value < base + 5 ? 0 : 2].querySelector('span');
+            drawArrows(lineHost, [
+                [digitNote, () => marker.querySelector('.rounding-marker__ones')],
+                [nearestNote, nearest]
+            ]);
+        }
         if (explore) {
             const label = text(host, 'label', 'Move the number from 60 to 70.');
             label.htmlFor = 'number-slider';
@@ -263,11 +333,68 @@
             host.append(slider);
         }
     }
+    /* Hand-drawn arrows from each note to the thing it talks about, like the arrows
+       in the place-value lesson. Each arrow leaves the right end of its note and comes
+       in to its target from straight above or below. They are redrawn whenever the
+       layout changes size. */
+    function drawArrows(block, pairs) {
+        const svgNs = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNs, 'svg');
+        svg.setAttribute('class', 'rounding-notes__arrows');
+        svg.setAttribute('aria-hidden', 'true');
+        block.append(svg);
+        function draw() {
+            if (!block.isConnected) { observer.disconnect(); return; }
+            const origin = block.getBoundingClientRect();
+            svg.setAttribute('width', origin.width);
+            svg.setAttribute('height', origin.height);
+            svg.replaceChildren();
+            for (const [note, findTarget] of pairs) {
+                const target = findTarget();
+                if (!target) continue;
+                const from = note.getBoundingClientRect();
+                const to = target.getBoundingClientRect();
+                const down = to.top > from.top;
+                const sx = from.right - origin.left + 8, sy = from.top + from.height / 2 - origin.top;
+                const tx = to.left + to.width / 2 - origin.left;
+                const ty = (down ? to.top - 4 : to.bottom + 4) - origin.top;
+                const tip = down ? -1 : 1;
+                const path = document.createElementNS(svgNs, 'path');
+                path.setAttribute('d', `M ${sx} ${sy} C ${sx + (tx - sx) * 0.55} ${sy + 3}, ${tx + 2} ${sy + (ty - sy) * 0.65}, ${tx} ${ty}`
+                    + ` M ${tx - 6} ${ty + 9 * tip} L ${tx} ${ty} L ${tx + 6} ${ty + 8 * tip}`);
+                svg.append(path);
+            }
+        }
+        const observer = new ResizeObserver(() => draw());
+        observer.observe(block);
+        requestAnimationFrame(draw);
+    }
+    function drawRoundings(host, roundings) {
+        const list = document.createElement('ul');
+        list.className = 'rounding-examples';
+        for (const item of roundings) {
+            const card = document.createElement('li');
+            card.className = 'rounding-example';
+            card.setAttribute('aria-label', `${item.from} rounded ${item.label.toLowerCase()} is ${item.to}`);
+            text(card, 'span', item.label, 'rounding-example__label');
+            const sum = document.createElement('span');
+            sum.className = 'rounding-example__sum';
+            sum.setAttribute('aria-hidden', 'true');
+            text(sum, 'span', item.from, 'rounding-example__from');
+            text(sum, 'span', '→', 'rounding-example__arrow');
+            text(sum, 'span', item.to, 'rounding-example__to');
+            card.append(sum);
+            list.append(card);
+        }
+        host.append(list);
+    }
     function drawLearn(host, index, lineValue, onChange, readOnly) {
         const screen = learnScreens[index];
-        if (screen.line) drawLine(host, screen.explore ? lineValue : 67, screen.explore, onChange, readOnly);
+        if (screen.roundings) drawRoundings(host, screen.roundings);
+        if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly, screen.base, screen.notes);
         else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) });
         for (const equation of screen.equations || []) text(host, 'p', equation, 'significant-equation');
+        for (const line of screen.after || []) text(host, 'p', line);
         if (screen.caption) text(host, 'p', screen.caption);
     }
     function drawExample(host, question, correct) {
@@ -275,5 +402,5 @@
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawExample };
+    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLine, drawExample };
 })();
