@@ -252,7 +252,7 @@
         return prepare(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt), random);
     }
     const learnScreens = [
-        { title: 'Rounding means changing a number to a simpler number that is close to it.', lines: ['You can round whole numbers or decimals.'], roundings: [
+        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".'], roundings: [
             { label: 'To the nearest 10', from: '38', to: '40' },
             { label: 'To the nearest 100', from: '461', to: '500' },
             { label: 'To 2 decimal places', from: '3.147', to: '3.15' }
@@ -260,7 +260,7 @@
         { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
             nearest: 'So 67 is closer to 70.'
-        }, caption: 'The ≈ sign means "is about".' },
+        } },
         { title: "Now let's round 342 to the nearest 10.", lines: ['342 sits between 340 and 350. Here it is on the number line.'], line: true, base: 340, value: 342, notes: {
             digit: 'The ones digit is 2. That is less than 5, so round down.',
             nearest: 'So 342 is closer to 340.'
@@ -458,7 +458,7 @@
             sum.className = 'rounding-example__sum';
             sum.setAttribute('aria-hidden', 'true');
             text(sum, 'span', item.from, 'rounding-example__from');
-            text(sum, 'span', '→', 'rounding-example__arrow');
+            text(sum, 'span', '≈', 'rounding-example__sign');
             text(sum, 'span', item.to, 'rounding-example__to');
             card.append(sum);
             list.append(card);
