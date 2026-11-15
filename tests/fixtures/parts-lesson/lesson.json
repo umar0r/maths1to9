@@ -1,0 +1,25 @@
+{
+  "slug": "parts-lesson",
+  "title": "Apples and pears",
+  "layout": "parts",
+  "navigation": { "back_button": true },
+  "parts": [
+    {
+      "id": "apples",
+      "label": "Apples",
+      "explanation": { "hide_eyebrow": true, "hide_heading": true },
+      "interactive": { "hide_eyebrow": true, "hide_heading": true }
+    },
+    {
+      "id": "pears",
+      "label": "Pears",
+      "explanation": { "hide_eyebrow": true, "hide_heading": true },
+      "interactive": { "hide_eyebrow": true, "hide_heading": true }
+    }
+  ],
+  "comparison": {
+    "hide_eyebrow": true,
+    "hide_heading": true,
+    "questions": [{ "prompt": "Check" }]
+  }
+}

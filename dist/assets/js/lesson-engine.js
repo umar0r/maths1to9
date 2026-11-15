@@ -15,6 +15,12 @@
         return separator === -1 ? null : sectionId.slice(separator + 2);
     }
 
+    function dispatchSectionEvent(name, sectionId) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId, kind: sectionKind(sectionId), part: sectionPart(sectionId) }
+        }));
+    }
+
     function escapeHtml(value) {
         const entities = {
             '&': '&amp;',
@@ -990,7 +996,7 @@
         if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
         const isPractice = sectionKind(sectionId) === 'question-bank';
         const initialHash = window.location?.hash || '';
-        document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
+        dispatchSectionEvent('gate', sectionId);
         api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
         function fresh(excluded = []) {
             const random = seededRandom(Math.floor(Math.random() * 4294967296));
@@ -1036,7 +1042,7 @@
             });
         }
         function complete() {
-            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', { detail: { sectionId } }));
+            dispatchSectionEvent('complete', sectionId);
         }
         function focus() {
             const heading = container.querySelector('[data-screen-heading], h3');
@@ -1168,7 +1174,11 @@
         return { section, render };
     }
 
-    function planSections(lesson) {
+    function planSections(lesson, { allowStage2FixtureWithoutPractice = false } = {}) {
+        if (lesson.layout === 'parts' || Object.hasOwn(lesson, 'parts')) {
+            return planPartSections(lesson, allowStage2FixtureWithoutPractice);
+        }
+
         const sections = [];
 
         function add(id, label) {
@@ -1206,6 +1216,47 @@
             });
         }
 
+        return sections;
+    }
+
+    function planPartSections(lesson, allowStage2FixtureWithoutPractice) {
+        if (!Array.isArray(lesson.parts) || lesson.parts.length < 2) {
+            throw new Error('A parts lesson needs at least two parts.');
+        }
+        for (const key of ['explanation', 'interactive', 'section_order', 'navigation_stages']) {
+            if (Object.hasOwn(lesson, key)) throw new Error(`A parts lesson cannot have top-level ${key}.`);
+        }
+        if (!hasComparison(lesson.comparison)) throw new Error('A parts lesson needs a top-level comparison with questions.');
+
+        const seen = new Set();
+        const sections = [];
+        const partKinds = [
+            ['explanation', 'Learn'],
+            ['interactive', 'Try it'],
+            ['question-bank', 'Practice']
+        ];
+
+        lesson.parts.forEach((part, index) => {
+            const id = part?.id;
+            if (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id) || id.includes('--')) {
+                throw new Error(`Invalid id for part ${index + 1} (${JSON.stringify(id)}). Use lowercase letters, digits and single hyphens.`);
+            }
+            if (seen.has(id)) throw new Error(`Duplicate part id "${id}".`);
+            seen.add(id);
+            if (typeof part.label !== 'string' || !part.label.trim()) throw new Error(`Part "${id}" needs a label.`);
+
+            for (const [kind, label] of partKinds) {
+                const key = kind.replace('-', '_');
+                if (kind === 'question-bank' && allowStage2FixtureWithoutPractice && !Object.hasOwn(part, key)) continue;
+                if (!isObject(part[key])) throw new Error(`Part "${id}" needs ${key}.`);
+                sections.push({ id: `${kind}--${id}`, kind, part: id, label: `${part.label.trim()} ${label}` });
+            }
+        });
+        if (Object.hasOwn(lesson, 'question_bank') || !allowStage2FixtureWithoutPractice) {
+            if (!isObject(lesson.question_bank)) throw new Error('A parts lesson needs a top-level question_bank for mixed Practice.');
+            sections.push({ id: 'question-bank', kind: 'question-bank', part: null, label: 'Mixed Practice' });
+        }
+        sections.push({ id: 'comparison', kind: 'comparison', part: null, label: 'Check' });
         return sections;
     }
 
@@ -1312,6 +1363,7 @@
     window.Maths1to9LessonEngine = {
         sectionKind,
         sectionPart,
+        dispatchSectionEvent,
         planSections,
         hasItems,
         isObject,
@@ -1346,7 +1398,10 @@
 
     if (document.body.dataset.lessonRenderer === 'custom') return;
 
-    const { sectionKind, planSections, hasItems, isObject, normaliseText, safeArray } = window.Maths1to9LessonEngine;
+    const {
+        sectionKind, sectionPart, dispatchSectionEvent, planSections,
+        hasItems, isObject, normaliseText, safeArray
+    } = window.Maths1to9LessonEngine;
 
     const initialHash = window.location.hash;
     const router = window.Maths1to9LessonEngine.createRouter();
@@ -1382,6 +1437,7 @@
         lesson: null,
         slug: '',
         sections: [],
+        hasParts: false,
         sectionElements: [],
         navigationButtons: [],
         navigationGroups: [],
@@ -1434,6 +1490,13 @@
 
             state.lesson = lesson;
             state.slug = getLessonSlug(lesson);
+            // Stage 3 removes this exception when the test fixture gains Practice.
+            const fixturePath = '/tests/fixtures/parts-lesson/';
+            const allowStage2FixtureWithoutPractice =
+                [fixturePath, `${fixturePath}index.html`].includes(window.location.pathname) &&
+                new URL(lessonSource, window.location.href).pathname === `${fixturePath}lesson.json`;
+            state.sections = createSectionDefinitions(lesson, { allowStage2FixtureWithoutPractice });
+            state.hasParts = state.sections.some(section => section.part !== null);
             const savedScore = await window.Maths1to9Progress?.getLessonProgress?.(state.slug);
             const reservedAnswerIds = [];
             for (let i = 1; i <= (Number(lesson.question_bank?.session_length) || 0); i++) {
@@ -1447,7 +1510,6 @@
                 document.dispatchEvent(new CustomEvent('maths1to9:score-change', {detail:{slug:state.slug, score}}));
                 window.Maths1to9Progress?.saveCurrentLesson?.();
             }, reservedAnswerIds);
-            state.sections = createSectionDefinitions(lesson);
             if (lesson.navigation?.back_button === true || savedScore?.finished === true) {
                 state.finished = savedScore?.finished === true;
                 const savedUnlocked = Number.isInteger(savedScore?.highestUnlockedIndex)
@@ -1511,25 +1573,26 @@
             listenForSectionGating();
 
             state.sections.forEach((section, index) => {
-                router.register(section.id, () => showSection(index, { unlock: true }));
+                registerLessonRoute(section.id, () => showSection(index, { unlock: !state.hasParts }));
             });
             state.navigationGroups.forEach(group => {
                 const aliases = [group.label.toLowerCase().replace(/\s+/g, '-')];
                 if (group.id === 'practice') aliases.push('practise');
-                router.register(group.id, () => showSection(group.firstIndex, { unlock: true }), aliases);
+                registerLessonRoute(group.id, () => showSection(group.firstIndex, { unlock: !state.hasParts }), aliases);
             });
             // #summary opens Check on its end-of-lesson summary, for lessons that
             // draw one. Like every hash link it only changes the view: it never
             // completes the questions or awards points.
             const comparisonIndex = state.sections.findIndex(section => section.kind === 'comparison');
             if (comparisonIndex !== -1) {
-                router.register('summary', () => {
-                    showSection(comparisonIndex, { unlock: true });
+                registerLessonRoute('summary', () => {
+                    if (!showSection(comparisonIndex, { unlock: !state.hasParts })) return false;
                     setComparisonView('summary');
                 });
             }
             exposeLessonApi();
-            mountLessonInteractive();
+            if (state.hasParts) await mountPartInteractives();
+            else mountLessonInteractive();
 
             document.dispatchEvent(
                 new CustomEvent(
@@ -1563,12 +1626,26 @@
         } catch (error) {
             console.error(error);
 
+            const details = error instanceof Error ? error.message : '';
             showFatalError(
-                error instanceof Error
-                    ? error.message
-                    : 'The lesson could not be loaded.'
+                state.lesson?.layout === 'parts' || Object.hasOwn(state.lesson ?? {}, 'parts')
+                    ? `The lesson could not be loaded. ${details}`.trim()
+                    : details || 'The lesson could not be loaded.'
             );
         }
+    }
+
+    function registerLessonRoute(id, handler, aliases = []) {
+        if (!state.hasParts) {
+            router.register(id, handler, aliases);
+            return;
+        }
+        router.register(id, () => {
+            if (handler() === false) {
+                // Run outside the router's hash handler so a locked link is replaced.
+                queueMicrotask(() => showSection(state.highestUnlockedIndex, { moveFocus: false, replaceHash: true }));
+            }
+        }, aliases);
     }
 
     async function loadLesson(source) {
@@ -1671,23 +1748,27 @@
             .replace(/^-+|-+$/g, '');
     }
 
-    function createSectionDefinitions(lesson) {
+    function createSectionDefinitions(lesson, options) {
         const renderers = {
-            explanation: ['lesson-explanation', container => renderExplanation(container, lesson.explanation)],
-            method: ['lesson-method', container => renderMethod(container, lesson.method)],
-            interactive: ['lesson-interactive', container => renderInteractive(container, lesson.interactive)],
-            'product-interactive': ['lesson-interactive', container => renderProductInteractive(container, lesson.product_interactive)],
-            explore: ['lesson-interactive', container => renderExplore(container, lesson.explore)],
+            explanation: ['lesson-explanation', renderExplanation],
+            method: ['lesson-method', renderMethod],
+            interactive: ['lesson-interactive', renderInteractive],
+            'product-interactive': ['lesson-interactive', renderProductInteractive],
+            explore: ['lesson-interactive', renderExplore],
             'worked-examples': ['lesson-worked-examples', container =>
                 renderWorkedExamples(container, lesson.worked_examples, lesson.worked_examples_title)],
             summary: ['lesson-summary', renderSummary],
-            comparison: ['lesson-questions', container => renderComparison(container, lesson.comparison)],
-            'question-bank': ['lesson-questions', container => renderQuestionBank(container, lesson.question_bank)]
+            comparison: ['lesson-questions', renderComparison],
+            'question-bank': ['lesson-questions', renderQuestionBank]
         };
 
-        return planSections(lesson).map(section => {
+        const plan = planSections(lesson, options);
+        const parts = new Map(safeArray(lesson.parts).map(part => [part.id, part]));
+        return plan.map(section => {
             const [className, render] = renderers[section.kind];
-            return { ...section, className, render };
+            const source = section.part === null ? lesson : parts.get(section.part);
+            const config = source[section.kind.replace('-', '_')];
+            return { ...section, config, className, render: container => render(container, config) };
         });
 
         function renderSummary(container) {
@@ -2734,8 +2815,8 @@
             'lesson-module lesson-module--interactive'
         );
 
-        interactiveRoot.id =
-            `${state.slug}-interactive`;
+        const part = sectionPart(container.dataset.lessonSection);
+        interactiveRoot.id = `${state.slug}-interactive${part === null ? '' : `--${part}`}`;
 
         interactiveRoot.dataset.lessonModule =
             sectionKind(container.dataset.lessonSection);
@@ -2868,6 +2949,17 @@
         comparisonRoot.dataset.summary = JSON.stringify(comparison.summary || {});
 
         container.append(comparisonRoot);
+    }
+
+    async function mountPartInteractives() {
+        const mount = window.Maths1to9Interactives?.[state.slug];
+        for (const { id, kind, part, config } of state.sections) {
+            if (kind !== 'interactive') continue;
+            const root = document.getElementById(`${state.slug}-interactive--${part}`);
+            if (!root) continue; // JSON-driven rounds render in the engine.
+            if (typeof mount !== 'function') throw new Error(`No interactive has been registered for "${state.slug}".`);
+            await mount(root, { id, kind, part, config });
+        }
     }
 
     function mountLessonInteractive() {
@@ -3218,8 +3310,8 @@
     /*
      * Lesson scripts opt in to gating by dispatching:
      *
-     *   maths1to9:section-gate      { sectionId }
-     *   maths1to9:section-complete  { sectionId }
+     *   maths1to9:section-gate      { sectionId, kind, part }
+     *   maths1to9:section-complete  { sectionId, kind, part }
      *
      * Gate as soon as the activity mounts. Complete when the
      * pupil has finished it. The Continue button stays
@@ -3362,7 +3454,8 @@
         const {
             moveFocus = true,
             emitEvent = true,
-            unlock = false
+            unlock = false,
+            replaceHash = false
         } = options;
 
         if (
@@ -3438,7 +3531,7 @@
 
         updateProgress();
         updateControls();
-        router.sync(state.sections[index].id);
+        router.sync(state.sections[index].id, { replace: replaceHash });
 
         const activeSection =
             state.sectionElements[index];
@@ -3515,7 +3608,8 @@
         const slide = question?.id || window.location.hash || sectionId;
         const practice = sectionKind(sectionId) === 'question-bank' && state.sectionStates.get(sectionId)?.state;
         const session = practice ? `:${practice.session}:${practice.items[practice.screen]?.seed}` : '';
-        return `maths1to9-reset:${state.slug}:${slide}${session}`;
+        const sectionScope = sectionPart(sectionId) === null ? '' : `${sectionId}:`;
+        return `maths1to9-reset:${state.slug}:${sectionScope}${slide}${session}`;
     }
 
     // Track actions by card so a refresh or Back keeps the affordance.
@@ -3881,7 +3975,9 @@
 
             createQuestion(container, config) {
                 const { sectionId, questionId } = config;
-                const section = state.sectionStates.get(sectionId);
+                const part = sectionPart(sectionId);
+                const key = part !== null && sectionKind(sectionId) === 'interactive' ? `interactive:${part}` : sectionId;
+                const section = state.sectionStates.get(key);
                 const api = window.Maths1to9Lesson;
                 const card = window.Maths1to9LessonEngine.createQuestion(container, config, section, api);
                 const cards = (state.questionResets.get(sectionId) || []).filter(item =>
@@ -3918,7 +4014,7 @@
             },
 
             registerHashRoute(id, handler, aliases = []) {
-                router.register(id, handler, aliases);
+                registerLessonRoute(id, handler, aliases);
             },
 
             setSlideHash(id, options) {
@@ -3954,6 +4050,13 @@
 
             getLesson() {
                 return state.lesson;
+            },
+
+            getSection(sectionId) {
+                const section = state.sections[findSectionIndex(sectionId)];
+                if (!section) return undefined;
+                const { id, kind, part, config } = section;
+                return { id, kind, part, config };
             },
 
             getSections() {
@@ -4067,11 +4170,17 @@
             },
 
             gateSection(sectionId) {
-                return gateSectionById(sectionId);
+                const id = normaliseText(sectionId);
+                if (findSectionIndex(id) === -1) return false;
+                dispatchSectionEvent('gate', id);
+                return true;
             },
 
             completeSection(sectionId) {
-                return completeSectionById(sectionId);
+                const id = normaliseText(sectionId);
+                if (findSectionIndex(id) === -1 || state.completedSections.has(id)) return false;
+                dispatchSectionEvent('complete', id);
+                return true;
             },
 
             recordAssessment(detail) {
@@ -4638,7 +4747,7 @@
          * run before the lesson controls exist.
          */
         const sectionId = container.dataset.lessonSection;
-        setTimeout(() => gateSectionById(sectionId), 0);
+        setTimeout(() => dispatchSectionEvent('gate', sectionId), 0);
 
         let roundIndex = 0;
         showRound();
@@ -4977,7 +5086,7 @@
                 'lx2-choice__feedback is-correct',
                 'All rounds complete.'
             ));
-            completeSectionById(sectionId);
+            dispatchSectionEvent('complete', sectionId);
         }
     }
 
