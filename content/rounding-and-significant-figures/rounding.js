@@ -73,6 +73,7 @@
     function accuracyText(kind, accuracy) {
         if (kind === 'sig') return figures(accuracy);
         if (kind === 'decimal') return `${accuracy} decimal ${accuracy === 1 ? 'place' : 'places'}`;
+        if (accuracy === 6) return 'the nearest million';
         return `the nearest ${spaced(String(10 ** accuracy))}`;
     }
     function keyDigits(number, kind, accuracy) {
@@ -157,7 +158,12 @@
             keep: 'Round 345 to the nearest 10. First, find your digit. Which digit is in the tens place?',
             decider: 'Round 345 to the nearest 10. Now look at the next digit. Which digit comes straight after the 4?'
         } }],
-        ['2748', 'nearest', 2, 'number'], ['4.276', 'decimal', 2, 'choice'],
+        ['2748', 'nearest', 2, 'number'],
+        ['3724900', 'nearest', 6, 'number', { decide: true, prompts: {
+            keep: 'Round 3,724,900 to the nearest million. First, find your digit. Which digit is in the millions place?',
+            decider: 'Round 3,724,900 to the nearest million. Now look at the next digit. Which digit comes straight after the 3?'
+        } }],
+        ['4.276', 'decimal', 2, 'choice'],
         ['0.004782', 'sig', 2, 'choice'], ['9.964', 'decimal', 1, 'number']
     ];
     function examples() {

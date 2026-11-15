@@ -101,19 +101,35 @@
 
     async function mountTryIt(root) {
         const questions = examples();
+        const millionStart = questions.findIndex(question => question.number === '3724900');
+        const millionSteps = questions[millionStart].steps;
+        // Keep the original card IDs, scores and seeded option orders after inserting the example.
+        const exampleId = index => {
+            if (index < millionStart) return index;
+            if (index < millionStart + millionSteps) return questions.length - millionSteps + index - millionStart;
+            return index - millionSteps;
+        };
+        const cardId = index => `example-${exampleId(index) + 1}`;
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            // Version 2 added the number line slider before the examples.
-            version: 2,
+            version: 3,
             initial: () => ({
                 // intro: the number line slider shown before the first example.
                 intro: true, lineValue: 67, explored: false,
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
-            upgrade: () => null
+            upgrade(saved, version) {
+                if (version !== 2) return null;
+                // Resume at the first new step if the pupil had already passed it.
+                return {
+                    ...saved, index: Math.min(saved.index, millionStart),
+                    screen: Math.min(saved.screen, millionStart),
+                    furthestScreen: Math.min(saved.furthestScreen, millionStart), finished: false
+                };
+            }
         });
         const state = section.state;
         section.save();
@@ -133,9 +149,12 @@
         }
 
         function reportProgress() {
-            const card = state.cards[`example-${state.index + 1}`];
-            const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
-            api.setSectionProgress('interactive', completed, questions.length);
+            questions.forEach((question, index) => {
+                if (state.cards[cardId(index)]?.correct) {
+                    api.recordActivity({ id: `step:interactive:${exampleId(index)}`, kind: 'guided' });
+                }
+            });
+            api.setSectionProgress('interactive', 0, questions.length);
         }
 
         function continueExample() {
@@ -151,7 +170,7 @@
         function drawExample(container, index, readOnly) {
             const example = questions[index];
             const visual = document.createElement('div');
-            window.Rounding.drawExample(visual, example, state.cards[`example-${index + 1}`]?.correct);
+            window.Rounding.drawExample(visual, example, state.cards[cardId(index)]?.correct);
             container.append(visual);
             const cardRoot = document.createElement('div');
             container.append(cardRoot);
@@ -160,7 +179,7 @@
                 window.Rounding.drawExample(visual, example, correct);
             }
             api.createQuestion(cardRoot, {
-                ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
+                ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + exampleId(index))), sectionId: 'interactive', questionId: cardId(index),
                 scored: false, readOnly,
                 onReset: () => drawAnswer(false),
                 onReplayReset: () => drawAnswer(false),
