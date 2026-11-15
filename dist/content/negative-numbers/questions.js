@@ -120,7 +120,6 @@
             if (state.screen === count) {
                 const heading = document.createElement('h3');
                 heading.dataset.screenHeading = '';
-                heading.className = 'lesson-section__title';
                 heading.textContent = lesson.comparison.summary.title;
                 root.append(heading);
             }
