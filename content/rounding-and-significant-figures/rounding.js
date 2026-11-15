@@ -217,6 +217,143 @@
         ]]);
     }
 
+    function situationExamples() {
+        return [
+            ['budget', [
+                ['A craft club has £23. Each brush costs £2.80. On a calculator, 23 ÷ 2.80 = 8.214… How much do 9 brushes cost? Give your answer in pounds.',
+                    '25.20', '9 × £2.80 = £25.20.', [
+                        ['2.80', 'That is one brush. Times it by 9.']
+                    ]],
+                ['What is the greatest number of brushes the club can buy?',
+                    '8', '8 brushes cost £22.40. 9 cost £25.20, too much. So round down to 8.', [
+                        ['9', '9 brushes cost £25.20. That is more than £23.'],
+                        ['8.214', "You can't buy part of a brush. Give a whole number."]
+                    ]]
+            ]],
+            ['stock-first', [
+                ['A workshop needs 38 litres of coolant. It already has 9 litres. How many more litres does it need?',
+                    '29', '38 − 9 = 29 litres.', [
+                        ['47', "Take the 9 litres away. Don't add them."]
+                    ]],
+                ['Coolant comes in 4-litre cans. 29 ÷ 4 = 7.25. What is the smallest number of cans needed?',
+                    '8', '7 cans give 28 litres. 8 cans give 32 litres, so round up to 8.', [
+                        ['7', '7 cans give 28 litres. That is 1 litre short.'],
+                        ['10', 'That uses 38 litres. The workshop already has 9.']
+                    ]]
+            ]],
+            ['spend-first', [
+                ['A gardener has £30. They buy a watering can for £8.40 and a trowel for £4.75. How much money is left?',
+                    '16.85', '£30 − £8.40 − £4.75 = £16.85.', [
+                        ['13.15', 'That is what the can and trowel cost. Take it away from £30.']
+                    ]],
+                ['Compost bags cost £3.20 each. 16.85 ÷ 3.20 = 5.265… How many bags can the gardener buy?',
+                    '5', '5 bags cost £16.00. 6 bags cost £19.20, so round down to 5.', [
+                        ['6', '6 bags cost £19.20. That is more than £16.85.'],
+                        ['9', 'That uses all £30. Some money has already been spent.']
+                    ]]
+            ]],
+            ['leftover', [
+                ['A roll holds 9.5 m of cord. How many centimetres is that?',
+                    '950', '9.5 × 100 = 950 cm.', [
+                        ['95', '1 m is 100 cm, so times by 100.']
+                    ]],
+                ['Each piece is 80 cm. 950 ÷ 80 = 11.875. How many full pieces can you cut?',
+                    '11', '11 × 80 = 880 cm. 12 pieces need 960 cm, so round down to 11.', [
+                        ['12', '12 pieces need 960 cm. There is only 950 cm.']
+                    ]],
+                ['11 pieces use 880 cm. How much cord is left, in centimetres?',
+                    '70', '950 − 880 = 70 cm.', [
+                        ['0.875', 'That is part of a piece. Work out 950 − 880.'],
+                        ['0.7', 'Give your answer in centimetres.']
+                    ]]
+            ]],
+            ['started-block', [
+                ['A shop charges £18 for each 3-hour block, and a block you start counts as a whole block. A tool is hired for 7 hours. 7 ÷ 3 = 2.333… How many blocks are charged?',
+                    '3', '2 blocks cover 6 hours. The 7th hour starts block 3, so round up to 3.', [
+                        ['2', '2 blocks only cover 6 hours. The 7th hour starts a new block.']
+                    ]],
+                ['What is the charge?', '54', '3 × £18 = £54.', [
+                    ['42', 'That charges for part of a block. Charge 3 whole blocks.'],
+                    ['36', 'That is only 2 blocks.']
+                ]]
+            ]],
+            ['more-than', [
+                ['A stall paid £216 for its stock. Each item sells for £6. 216 ÷ 6 = 36. How much money do 36 sales bring in?',
+                    '216', '36 × £6 = £216.'],
+                ['What is the least number of items it must sell to get more than £216?',
+                    '37', '36 sales bring in £216. One more sale brings the total to £222, so it takes 37 sales.', [
+                        ['36', '36 items bring in exactly £216. You need more than that.']
+                    ]]
+            ]],
+            ['change', [
+                ['A club has £12.50. Each trophy costs £1.85. 12.50 ÷ 1.85 = 6.756… How many trophies can it buy?',
+                    '6', '6 trophies cost £11.10. 7 trophies cost £12.95, so round down to 6.', [
+                        ['7', '7 trophies cost £12.95. That is more than £12.50.']
+                    ]],
+                ['6 trophies cost £11.10. How much change does the club get, in pence?',
+                    '140', '£12.50 − £11.10 = £1.40, which is 140p.', [
+                        ['1.4', 'That is in pounds. £1.40 is 140p.']
+                    ]]
+            ]],
+            ['doubling', [
+                ['Prints cost 85p each. £4 buys 4 prints, which cost £3.40. How many pence are left over?',
+                    '60', '400p − 340p = 60p.', [
+                        ['0.6', 'Give your answer in pence.']
+                    ]],
+                ['How many prints can £8 buy? 800 ÷ 85 = 9.411…',
+                    '9', '9 prints cost £7.65. 10 prints cost £8.50, so round down to 9.', [
+                        ['8', 'Doubling 4 gives 8, but the money left over adds up. 9 prints cost £7.65.']
+                    ]]
+            ]],
+            ['saving', [
+                ['Boots cost £64. A voucher takes £10 off. How much do the boots cost now?',
+                    '54', '£64 − £10 = £54.', [
+                        ['74', "Take the £10 off. Don't add it."]
+                    ]],
+                ['Lee saves £8 a week. 54 ÷ 8 = 6.75. How many weeks must Lee save?',
+                    '7', '6 weeks gives £48. 7 weeks gives £56, so round up to 7.', [
+                        ['6', '6 weeks gives £48. That is not enough.'],
+                        ['8', 'That forgets the voucher.']
+                    ]]
+            ]],
+            ['full-packets', [
+                ['A club has 86 stickers. It packs them in packets of 8. 86 ÷ 8 = 10.75. How many full packets can it make?',
+                    '10', '10 packets use 80 stickers. 11 packets need 88, so round down to 10.', [
+                        ['11', '11 packets need 88 stickers.']
+                    ]],
+                ['Each full packet sells for £2.50. How much money does the club get?',
+                    '25', '10 × £2.50 = £25.', [
+                        ['27.5', 'That sells 11 packets. Only 10 are full.'],
+                        ['26.875', "You can't sell part of a packet."]
+                    ]]
+            ]],
+            ['packs-days', [
+                ['A studio has £22. A 250 ml bottle of ink costs £4. 22 ÷ 4 = 5.5. How many bottles can it buy?',
+                    '5', '5 bottles cost £20. 6 bottles cost £24, so round down to 5.', [
+                        ['6', '6 bottles cost £24.']
+                    ]],
+                ['How many millilitres of ink is that?',
+                    '1250', '5 × 250 = 1,250 ml.', [
+                        ['1375', 'That counts half a bottle. You can only buy 5.']
+                    ]],
+                ['The printer uses 125 ml a day. For how many full days will the ink last?',
+                    '10', '1,250 ÷ 125 = 10 full days.', [
+                        ['11', 'That is 5.5 bottles of ink. Use the 5 bottles bought.']
+                    ]]
+            ]],
+            ['coverage', [
+                ['A floor is 62 m². One kit covers 16 m². 62 ÷ 16 = 3.875. How many kits are needed?',
+                    '4', '3 kits cover 48 m². 4 kits cover 64 m², so round up to 4.', [
+                        ['3', '3 kits cover 48 m². That is not enough.']
+                    ]],
+                ['The kit really covers only 14 m². 62 ÷ 14 = 4.428… How many kits are needed now?',
+                    '5', '4 kits cover 56 m². 5 kits cover 70 m², so round up to 5.', [
+                        ['4', '4 kits cover 56 m². That is 6 m² short.']
+                    ]]
+            ]]
+        ].map(([type, steps]) => steps.map(step => contextStep(type, ...step)));
+    }
+
     function exampleGroups() {
         const digitExamples = guided.map(([number, kind, accuracy, input, extras = {}]) => {
             const steps = [
@@ -230,7 +367,7 @@
                 ...(extras.prompts?.[question.stage] ? { prompt: extras.prompts[question.stage] } : {})
             }));
         });
-        return [...digitExamples, containerSteps(), ...singleStepExamples()];
+        return [...digitExamples, containerSteps(), ...singleStepExamples(), ...situationExamples()];
     }
     function examples() {
         return exampleGroups().flatMap((steps, example) => steps.map((question, step) => ({

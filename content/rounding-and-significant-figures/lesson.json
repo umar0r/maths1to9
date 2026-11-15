@@ -27,6 +27,18 @@
             "sig-keep": "round-significant-figures",
             "sig-decider": "round-significant-figures",
             "sig-count": "round-significant-figures",
+            "budget": "round-in-context",
+            "stock-first": "round-in-context",
+            "spend-first": "round-in-context",
+            "leftover": "round-in-context",
+            "started-block": "round-in-context",
+            "more-than": "round-in-context",
+            "change": "round-in-context",
+            "doubling": "round-in-context",
+            "saving": "round-in-context",
+            "full-packets": "round-in-context",
+            "packs-days": "round-in-context",
+            "coverage": "round-in-context",
             "path-context": "round-in-context",
             "containers": "round-in-context",
             "context": "round-in-context"
@@ -259,6 +271,110 @@
         },
         {
             "id": "step:interactive:35",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:36",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:37",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:38",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:39",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:40",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:41",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:42",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:43",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:44",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:45",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:46",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:47",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:48",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:49",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:50",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:51",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:52",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:53",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:54",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:55",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:56",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:57",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:58",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:59",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:60",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:61",
             "kind": "guided"
         },
         {
