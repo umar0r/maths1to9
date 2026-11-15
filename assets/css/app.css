@@ -557,6 +557,11 @@ a {
     letter-spacing: -0.01em;
 }
 
+/* Every lesson's screen headings share this one style. */
+[data-screen-heading] {
+    font-size: 1.56em;
+}
+
 .lesson-section__intro {
     max-width: var(--reading-width);
     margin: 0 0 24px;
