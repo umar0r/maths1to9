@@ -1,7 +1,7 @@
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
-const solve = require('./solvers/parts-lesson.cjs');
+const solve = require('./solvers/fixtures/parts-lesson.cjs');
 const { numericAnswer } = solve;
 
 const route = 'tests/fixtures/parts-lesson/';

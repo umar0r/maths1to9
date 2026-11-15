@@ -1,4 +1,4 @@
-const { MAIN_ACTION } = require('../helpers.cjs');
+const { MAIN_ACTION } = require('../../helpers.cjs');
 
 function numericAnswer(prompt) {
     const match = /(\d+) ([+−]) (\d+)$/.exec(prompt);

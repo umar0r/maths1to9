@@ -10,29 +10,29 @@ const { MAIN_ACTION, watchForErrors, screen, screenProblems } = require('./helpe
 
 const solversDir = path.join(__dirname, 'solvers');
 const fixtures = [
-    { lesson: 'parts-lesson', directory: 'tests/fixtures/parts-lesson', widths: [1280, 375] }
+    { lesson: 'parts-lesson', directory: 'tests/fixtures/parts-lesson', solver: 'fixtures/parts-lesson.cjs', widths: [1280, 375] }
 ];
 const lessons = fs.readdirSync(solversDir)
     .filter(file => file.endsWith('.cjs') && file !== 'common.cjs')
     .map(file => file.replace(/\.cjs$/, ''))
-    .filter(lesson => !fixtures.some(fixture => fixture.lesson === lesson))
     .map(lesson => ({ lesson, directory: `content/${lesson}` }));
 const targets = [...lessons, ...fixtures.flatMap(fixture =>
     fixture.widths.map(width => ({ ...fixture, width })))];
 const MAX_STEPS = 400;
 
-for (const { lesson, directory, width } of targets) {
+for (const target of targets) {
+    const { lesson, width } = target;
     test.describe(() => {
         if (width) test.use({ viewport: { width, height: 900 }, hasTouch: true, isMobile: width === 375 });
         const title = width ? `${lesson} ${width}px with touch` : lesson;
-        test(`${title}: a full correct run completes every activity with full marks`, run({ lesson, directory, width }));
+        test(`${title}: a full correct run completes every activity with full marks`, run(target));
     });
 }
 
-function run({ lesson, directory, width }) {
+function run({ lesson, directory, width, solver = `${lesson}.cjs` }) {
     return async ({ page }) => {
         test.setTimeout(240_000);
-        const solve = require(path.join(solversDir, `${lesson}.cjs`));
+        const solve = require(path.join(solversDir, solver));
         // Progress is saved under the lesson's slug, which is not always the folder name.
         const dataFile = path.join(__dirname, '..', '..', directory, 'lesson.json');
         const slug = (fs.existsSync(dataFile) && JSON.parse(fs.readFileSync(dataFile, 'utf8')).slug) || lesson;
