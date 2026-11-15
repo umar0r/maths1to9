@@ -28,7 +28,7 @@ $pageTitle = 'Rounding';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=62">
-    <link rel="stylesheet" href="./lesson.css?v=20">
+    <link rel="stylesheet" href="./lesson.css?v=21">
 </head>
 
 <body
@@ -65,11 +65,11 @@ $pageTitle = 'Rounding';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./rounding.js?v=28"></script>
+    <script src="./rounding.js?v=29"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=11"></script>
-    <script src="./interactive.js?v=18"></script>
+    <script src="./interactive.js?v=19"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=78"></script>

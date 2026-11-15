@@ -238,3 +238,33 @@
 .rounding-road svg[aria-disabled="false"] .rounding-road__car:active {
     cursor: grabbing;
 }
+
+/* Learn uses the digit boxes and the number-line ends as answer targets. */
+button.significant-digit {
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.rounding-end {
+    cursor: pointer;
+}
+
+.rounding-end rect {
+    fill: transparent;
+}
+
+.rounding-end:focus-visible {
+    outline: none;
+}
+
+.rounding-end:focus-visible rect {
+    stroke: var(--primary);
+    stroke-width: 3px;
+}
+
+@media (max-width: 600px) {
+    .rounding-line .rounding-value--minor {
+        display: none;
+    }
+}

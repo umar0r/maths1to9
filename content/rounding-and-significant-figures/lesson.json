@@ -26,7 +26,9 @@
             "sig": "round-significant-figures",
             "sig-keep": "round-significant-figures",
             "sig-decider": "round-significant-figures",
+            "sig-count": "round-significant-figures",
             "path-context": "round-in-context",
+            "containers": "round-in-context",
             "context": "round-in-context"
         }
     },
@@ -209,6 +211,54 @@
         },
         {
             "id": "step:interactive:23",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:24",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:25",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:26",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:27",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:28",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:29",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:30",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:31",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:32",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:33",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:34",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:35",
             "kind": "guided"
         },
         {

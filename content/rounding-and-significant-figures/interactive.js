@@ -21,10 +21,20 @@
         document.getElementById('lesson-section-explanation').append(root);
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
+        let upgraded = false;
         const section = await api.useSectionState('learn', {
-            version: 1,
-            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false }),
-            upgrade: () => null
+            version: 2,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
+            upgrade(saved, version) {
+                if (version !== 1) return null;
+                upgraded = true;
+                const oldScreens = screens.flatMap((screen, index) => screen.tap ? [] : [index]);
+                return {
+                    ...saved, taps: {},
+                    screen: oldScreens[saved.screen] ?? 0,
+                    furthestScreen: oldScreens[saved.furthestScreen] ?? 0
+                };
+            }
         });
         const state = section.state;
         section.save();
@@ -48,39 +58,66 @@
         }
 
         function render() {
-            api.setSectionReset('explanation', () => {
-                section.resetFields(screens[state.screen].explore ? ['lineValue', 'explored'] : []);
-                render();
-            });
             const screen = screens[state.screen];
-            const { escapeHtml } = window.Maths1to9LessonEngine;
-            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
-            for (const line of screen.lines) {
-                const paragraph = document.createElement('p');
-                paragraph.textContent = line;
-                root.append(paragraph);
+            const tap = screen.tap && state.taps[screen.title];
+            const awaitingTap = screen.tap && tap !== 'correct';
+            const resetFields = screen.tap ? [['taps', screen.title]]
+                : screen.explore ? ['lineValue', 'explored'] : [];
+            const reset = () => {
+                section.resetFields(resetFields);
+                render();
+            };
+            api.setSectionReset('explanation', tap || (screen.explore && state.explored) ? reset : null);
+
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = screen.title;
+            root.replaceChildren(heading);
+            function paragraph(line) {
+                const node = document.createElement('p');
+                node.textContent = line;
+                root.append(node);
             }
-            window.Rounding.drawLearn(root, state.screen, state.lineValue, value => {
-                section.update(state => { state.lineValue = value; state.explored = true; });
-                api.recordActivity({ id: 'rounding-line:explored', kind: 'explore' });
-                api.setSectionAction('explanation', {
-                    label: 'Next idea', onClick: () => showScreen(state.screen + 1)
+            const [intro, ...explanation] = screen.prompt ? [screen.prompt, ...screen.lines] : screen.lines;
+            if (intro) paragraph(intro);
+            if (awaitingTap) {
+                const { createFeedback, feedbackClassName } = window.Maths1to9LessonEngine;
+                const feedback = createFeedback('explanation', { correct: false, text: tap ?? '', visible: Boolean(tap) });
+                window.Rounding.drawLearnTap(root, screen, (correct, hint) => {
+                    section.update(saved => { saved.taps[screen.title] = correct ? 'correct' : hint; });
+                    if (correct) {
+                        render();
+                        const revealed = root.querySelector('h3');
+                        revealed.tabIndex = -1;
+                        revealed.focus();
+                    } else {
+                        feedback.textContent = hint;
+                        feedback.className = feedbackClassName('explanation', { correct: false, visible: true });
+                        api.setSectionReset('explanation', reset);
+                    }
                 });
-            }, state.screen < state.furthestScreen && state.explored);
+                root.append(feedback);
+            } else {
+                explanation.forEach(paragraph);
+                window.Rounding.drawLearn(root, state.screen, state.lineValue, value => {
+                    section.update(saved => { saved.lineValue = value; saved.explored = true; });
+                    api.recordActivity({ id: 'rounding-line:explored', kind: 'explore' });
+                    api.setSectionAction('explanation', {
+                        label: 'Next idea', onClick: () => showScreen(state.screen + 1)
+                    });
+                }, state.screen < state.furthestScreen && state.explored);
+            }
             if (state.explored) api.recordActivity({ id: 'rounding-line:explored', kind: 'explore' });
             api.setSectionBack('explanation', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
-            if (state.screen < state.furthestScreen) {
-                api.setSectionAction('explanation', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
-                });
-            } else if (state.finished) {
+            if (state.screen === screens.length - 1 && state.finished) {
                 api.clearSectionAction('explanation');
             } else {
                 api.setSectionAction('explanation', {
-                    label: 'Next idea', disabled: Boolean(screen.explore && !state.explored),
+                    label: awaitingTap || state.screen === state.furthestScreen ? 'Next idea' : 'Next',
+                    disabled: Boolean(awaitingTap || (screen.explore && !state.explored)),
                     onClick: () => showScreen(state.screen + 1)
                 });
             }
@@ -95,7 +132,7 @@
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
-        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
+        if (requested >= 0 && !upgraded) showScreen(Math.min(requested, state.furthestScreen));
         else render();
     }
 
@@ -104,13 +141,15 @@
         const { roadMiles, roadWidget } = window.Rounding;
         const exampleOffset = roadMiles.length + 1;
         const roadCardId = index => `road-${index + 1}`;
-        const roadScoreId = index => `step:interactive:${questions.length + index}`;
         const millionStart = questions.findIndex(question => question.number === '3724900');
         const millionSteps = questions[millionStart].steps;
-        // Keep the original card IDs, scores and seeded option orders after inserting the example.
+        // The original 20 steps and four road challenges already have saved scores.
+        const earlierStepCount = window.Rounding.guided.reduce((count, example) => count + (example[4]?.decide ? 4 : 3), 0);
+        const roadScoreId = index => `step:interactive:${earlierStepCount + index}`;
         const exampleId = index => {
+            if (index >= earlierStepCount) return index + roadMiles.length;
             if (index < millionStart) return index;
-            if (index < millionStart + millionSteps) return questions.length - millionSteps + index - millionStart;
+            if (index < millionStart + millionSteps) return earlierStepCount - millionSteps + index - millionStart;
             return index - millionSteps;
         };
         const cardId = index => `example-${exampleId(index) + 1}`;
@@ -146,7 +185,14 @@
             }
         });
         const state = section.state;
-        section.save();
+        if (state.finished && state.index < questions.length) {
+            section.update(saved => {
+                saved.finished = false;
+                saved.furthestScreen = saved.index;
+            });
+        } else {
+            section.save();
+        }
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
@@ -188,11 +234,12 @@
         function continueExample() {
             section.update(state => {
                 state.index++;
-                state.screen = state.index;
-                state.furthestScreen = state.screen;
+                state.furthestScreen = Math.min(state.index, questions.length - 1);
+                state.screen = state.furthestScreen;
                 state.finished = state.index === questions.length;
             });
             render();
+            if (state.finished) api.continueSection();
         }
 
         function drawExample(container, index, readOnly) {
@@ -208,7 +255,7 @@
             }
             api.createQuestion(cardRoot, {
                 ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + exampleId(index))), sectionId: 'interactive', questionId: cardId(index),
-                scored: false, readOnly,
+                scored: false, readOnly, autoContinue: index < earlierStepCount,
                 onReset: () => drawAnswer(false),
                 onReplayReset: () => drawAnswer(false),
                 onReplayFeedback: result => drawAnswer(result.correct),
@@ -289,8 +336,8 @@
             api.setSectionReset('interactive', null);
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === questions.length ? 'Your completed examples'
-                : `Example ${questions[state.screen].example} of ${window.Rounding.guided.length} · Step ${questions[state.screen].step} of ${questions[state.screen].steps}`;
+            const question = questions[state.screen];
+            heading.textContent = `Example ${question.example} of ${window.Rounding.exampleCount} · Step ${question.step} of ${question.steps}`;
             root.append(heading);
             api.setSectionBack('interactive', {
                 onClick: () => {
@@ -298,19 +345,14 @@
                     else showTryItScreen(roadMiles.length);
                 }
             });
-            if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === questions.length) {
-                questions.forEach((example, index) => {
-                    const completed = document.createElement('article');
-                    root.append(completed);
-                    drawExample(completed, index, true);
-                });
-                api.clearSectionAction('interactive');
-            } else {
-                const readOnly = state.screen < state.index;
-                drawExample(root, state.screen, readOnly);
-                if (readOnly) api.setSectionAction('interactive', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+            if (state.finished) api.completeSection('interactive');
+            const readOnly = state.screen < state.index;
+            drawExample(root, state.screen, readOnly);
+            if (readOnly) {
+                const last = state.screen === questions.length - 1;
+                api.setSectionAction('interactive', {
+                    label: last ? 'Continue' : 'Next',
+                    onClick: last ? () => api.continueSection() : () => showScreen(state.screen + 1)
                 });
             }
             syncHash();
@@ -327,7 +369,7 @@
             showTryItScreen(Math.min(screen, furthest));
         }
 
-        const lastScreen = exampleOffset + questions.length;
+        const lastScreen = exampleOffset + questions.length - 1;
         for (let screen = 0; screen <= lastScreen; screen++) {
             api.registerHashRoute(`try-it-${screen + 1}`, () => openHashScreen(screen));
         }
