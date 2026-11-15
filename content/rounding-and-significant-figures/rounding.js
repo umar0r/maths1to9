@@ -160,8 +160,35 @@
         ['2748', 'nearest', 2, 'number'], ['4.276', 'decimal', 2, 'choice'],
         ['0.004782', 'sig', 2, 'choice'], ['9.964', 'decimal', 1, 'number']
     ];
+    // The last example: a real situation where you must round up, even when
+    // the answer would normally round down. The pupil finds that out step by step.
+    function containerSteps() {
+        const step = (prompt, answer, feedback, rules) => ({
+            stage: 'context', questionType: 'containers', input: 'number', exact: false,
+            prompt, answer, feedback, fallback: feedback,
+            rules: rules.map(([value, message]) => ({ value, feedback: message }))
+        });
+        return [
+            step('There are 131 helmets to store. Each rack holds 18 helmets. On a calculator, 131 ÷ 18 = 7.277… Round 7.277… to the nearest whole number.',
+                '7', '7.277… is closer to 7 than to 8, so it rounds to 7.', [
+                    ['8', 'The tenths digit is 2. That is less than 5, so round down to 7.'],
+                    ['7.3', 'That has one decimal place. Round to the nearest whole number.']
+                ]),
+            step('7 racks hold 7 × 18 = 126 helmets. How many of the 131 helmets have no rack?',
+                '5', '131 − 126 = 5. So 5 helmets have no rack.', [
+                    ['126', '126 helmets fit in the racks. Take 126 away from 131.'],
+                    ['257', 'Take 126 away from 131. Don\'t add them.']
+                ]),
+            step('What is the smallest number of racks needed for all 131 helmets?',
+                '8', '8 racks hold 8 × 18 = 144 helmets, so all 131 fit. Here you round up to 8, even though 7.277… rounds to 7.', [
+                    ['7', '7 racks leave 5 helmets with no rack. You need one more rack.'],
+                    ['9', '8 racks hold 144 helmets. That is already enough.'],
+                    ['7.277', 'You can\'t have part of a rack. Give a whole number.']
+                ])
+        ];
+    }
     function examples() {
-        return guided.flatMap(([number, kind, accuracy, input, extras = {}], example) => {
+        const digitExamples = guided.flatMap(([number, kind, accuracy, input, extras = {}], example) => {
             const steps = [
                 digitQuestion(number, kind, accuracy, 'keep'),
                 digitQuestion(number, kind, accuracy, 'decider'),
@@ -174,7 +201,12 @@
                 example: example + 1, step: step + 1, steps: steps.length
             }));
         });
+        const steps = containerSteps();
+        return [...digitExamples, ...steps.map((question, step) => ({
+            ...question, example: guided.length + 1, step: step + 1, steps: steps.length
+        }))];
     }
+    const exampleCount = guided.length + 1;
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
@@ -241,6 +273,10 @@
         { title: "Now let's round 642 to the nearest 100.", lines: ['642 sits between 600 and 700. Here it is on the number line, counting in tens.'], line: true, base: 600, step: 10, value: 642, notes: {
             digit: 'The tens digit is 4. That is less than 5, so round down.',
             nearest: 'So 642 is closer to 600.'
+        } },
+        { title: "Now let's round 48,672 to the nearest 100.", lines: ['48,672 sits between 48,600 and 48,700. Here it is on the number line, counting in tens.'], line: true, base: 48600, step: 10, value: 48672, notes: {
+            digit: 'The tens digit is 7. That is 5 or more, so round up.',
+            nearest: 'So 48,672 is closer to 48,700.'
         } },
         { title: "Now let's round 4,682 to the nearest 1,000.", lines: ['4,682 sits between 4,000 and 5,000. Here it is on the number line, counting in hundreds.'], line: true, base: 4000, step: 100, value: 4682, notes: {
             digit: 'The hundreds digit is 6. That is 5 or more, so round up.',
@@ -439,9 +475,10 @@
         if (screen.caption) text(host, 'p', screen.caption);
     }
     function drawExample(host, question, correct) {
+        if (question.stage === 'context') return;
         const marks = question.stage === 'keep' ? (correct ? 'keep' : 'none') : question.stage === 'decider' ? (correct ? 'both' : 'keep') : 'both';
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLine, drawExample };
+    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLine, drawExample };
 })();

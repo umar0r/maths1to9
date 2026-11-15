@@ -212,7 +212,7 @@
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
             heading.textContent = state.screen === questions.length ? 'Your completed examples'
-                : `Example ${questions[state.screen].example} of ${window.Rounding.guided.length} · Step ${questions[state.screen].step} of ${questions[state.screen].steps}`;
+                : `Example ${questions[state.screen].example} of ${window.Rounding.exampleCount} · Step ${questions[state.screen].step} of ${questions[state.screen].steps}`;
             root.append(heading);
             api.setSectionBack('interactive', {
                 onClick: () => {
