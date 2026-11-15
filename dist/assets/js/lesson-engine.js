@@ -268,7 +268,7 @@
     function normaliseScoreId(id, reservedAnswerIds) {
         const legacyId = id.replace(/^answer:[^:]+:(question-bank:|final-check-)/, 'answer:$1');
         const fixedSlot = legacyId
-            .replace(/^answer:question-bank:[^:]+:(\d+)$/, 'answer:question-bank:$1')
+            .replace(/^(answer:question-bank(?:--[a-z0-9-]+)?):[^:]+:(\d+)$/, '$1:$2')
             .replace(/^answer:comparison:(?:[^:]+:)?(\d+)$/, 'answer:final-check-$1');
         // Three-part IDs can also mean question + step. Only fold them into
         // a fixed slot when the lesson explicitly reserves that destination.
@@ -707,6 +707,7 @@
         const heading = resultText('h3', config.prompt, 'question-prompt');
         heading.dataset.screenHeading = '';
         article.append(heading);
+        if (config.part) article.dataset.part = config.part;
         container.replaceChildren(article);
         if (typeof config.figure === 'function') {
             const host = document.createElement('div');
@@ -821,8 +822,9 @@
             api.setSectionAction(sectionId, {
                 /* A custom card with nothing to work out (tap to look, try and watch) can say
                    Continue instead of Check through widget.checkLabel. */
-                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue'
-                    : custom && widget.checkLabel ? widget.checkLabel : 'Check',
+                label: saved.phase === 'wrong' ? 'Try again'
+                    : saved.phase === 'correct' ? config.continueLabel ?? 'Continue'
+                    : config.checkLabel ?? (custom && widget.checkLabel ? widget.checkLabel : 'Check'),
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
                     ? saved.selected === null : custom ? widget.isEmpty(saved.value) : empty()),
                 onClick: act
@@ -995,6 +997,10 @@
     async function runQuestionSet(sectionId, config, api, container) {
         if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
         const isPractice = sectionKind(sectionId) === 'question-bank';
+        const partsLesson = Array.isArray(api.getLesson().parts);
+        const part = sectionPart(sectionId);
+        const practicePrefix = part === null ? 'practice' : `${part}-practice`;
+        const practiceEndsOnCard = partsLesson && isPractice;
         const initialHash = window.location?.hash || '';
         dispatchSectionEvent('gate', sectionId);
         api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
@@ -1016,16 +1022,26 @@
             version: config.version, initial: fresh, upgrade: config.upgrade
         });
         const saved = section.state;
-        const screenHash = screen => `${sectionId}-question-${screen + 1}`;
+        function screenHash(screen) {
+            if (!partsLesson) return `${sectionId}-question-${screen + 1}`;
+            if (isPractice) return `${practicePrefix}-${screen + 1}`;
+            return screen === config.count ? 'summary' : `check-${screen + 1}`;
+        }
         function syncHash() {
             if (api.getCurrentSection().id === sectionId) api.setSlideHash(screenHash(saved.screen), { replace: true });
         }
-        for (let screen = 0; screen <= config.count; screen++) {
+        const lastScreen = practiceEndsOnCard ? config.count - 1 : config.count;
+        for (let screen = 0; screen <= lastScreen; screen++) {
             api.registerHashRoute(screenHash(screen), () => {
-                if (api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) show(Math.min(screen, saved.index));
+                const unlock = !partsLesson && api.getLesson().navigation?.back_button !== true;
+                if (api.goToSection(sectionId, { moveFocus: false, unlock })) {
+                    show(Math.min(screen, saved.index));
+                } else {
+                    return false;
+                }
             });
         }
-        document.addEventListener('maths1to9:section-change', syncHash);
+        document.addEventListener('maths1to9:section-change', partsLesson ? () => queueMicrotask(syncHash) : syncHash);
         function question(item) { return config.question(item, seededRandom(item.seed)); }
         function rows(session) {
             return session.items.map((item, index) => {
@@ -1053,13 +1069,30 @@
             render();
             focus();
         }
+        function nextSection() {
+            const sections = api.getSections();
+            return sections[sections.findIndex(section => section.id === sectionId) + 1];
+        }
+        function leaveSet() {
+            if (config.onContinue) config.onContinue();
+            else if (nextSection()) api.continueSection();
+            else {
+                api.completeLesson();
+                window.location.assign(document.querySelector('.site-logo')?.href || '../../');
+            }
+        }
         function continueSet() {
             section.update(state => {
                 state.index++;
-                state.screen = state.index;
+                state.screen = Math.min(state.index, lastScreen);
                 state.finished = state.index === state.items.length;
             });
             if (saved.finished) complete();
+            if (saved.finished && practiceEndsOnCard) {
+                render();
+                leaveSet();
+                return;
+            }
             render();
             focus();
         }
@@ -1081,7 +1114,7 @@
                 const currentRows = rows(saved);
                 renderScorePanel(score, {
                     correct: currentRows.filter(row => row.firstCorrect === true).length, total: config.count,
-                    readyScore: isPractice ? api.getLesson().question_bank?.ready_score : undefined
+                    readyScore: isPractice ? (api.getSection?.(sectionId)?.config ?? api.getLesson().question_bank)?.ready_score : undefined
                 });
                 if (isPractice) {
                     const heading = resultText('h3', config.heading || 'Your practice results');
@@ -1131,19 +1164,10 @@
                     renderPracticeAnswerTable(results, rows(earlier));
                     container.append(details);
                 }
-                const sections = api.getSections();
-                const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
+                const next = nextSection();
                 api.setSectionAction(sectionId, {
-                    label: next ? (isPractice && sectionKind(next.id) === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons', onClick: () => {
-                        if (config.onContinue) config.onContinue();
-                        else {
-                            if (next) api.continueSection();
-                            else {
-                                api.completeLesson();
-                                window.location.assign(document.querySelector('.site-logo')?.href || '../../');
-                            }
-                        }
-                    }
+                    label: next ? (isPractice && sectionKind(next.id) === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons',
+                    onClick: leaveSet
                 });
                 return;
             }
@@ -1153,8 +1177,11 @@
             container.append(cardRoot);
             const definition = question(item);
             const readOnly = saved.screen < saved.index;
+            const lastPracticeCard = practiceEndsOnCard && saved.screen === lastScreen;
+            const continueLabel = lastPracticeCard && part === null ? 'Start Check' : 'Continue';
             api.createQuestion(cardRoot, {
                 ...definition, sectionId, questionId: questionSetId(sectionId, saved.session, saved.screen),
+                ...(practiceEndsOnCard ? { checkLabel: 'Check', continueLabel } : {}),
                 scored: true, readOnly,
                 onFeedback: outcome => {
                     definition.onFeedback?.(outcome);
@@ -1163,20 +1190,25 @@
                 },
                 onContinue: continueSet
             });
-            if (readOnly) api.setSectionAction(sectionId, { label: 'Next', onClick: () => show(saved.screen + 1) });
+            if (readOnly) {
+                api.setSectionAction(sectionId, lastPracticeCard
+                    ? { label: continueLabel, onClick: leaveSet }
+                    : { label: 'Next', onClick: () => show(saved.screen + 1) });
+            }
         }
         const requested = Array.from({ length: config.count + 1 }, (_, screen) => screen)
             .find(screen => initialHash === `#${screenHash(screen)}`);
-        if (requested !== undefined && api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
+        if (!partsLesson && requested !== undefined &&
+            api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
             section.update(state => { state.screen = Math.min(requested, state.index); });
         }
         render();
         return { section, render };
     }
 
-    function planSections(lesson, { allowStage2FixtureWithoutPractice = false } = {}) {
+    function planSections(lesson) {
         if (lesson.layout === 'parts' || Object.hasOwn(lesson, 'parts')) {
-            return planPartSections(lesson, allowStage2FixtureWithoutPractice);
+            return planPartSections(lesson);
         }
 
         const sections = [];
@@ -1219,7 +1251,7 @@
         return sections;
     }
 
-    function planPartSections(lesson, allowStage2FixtureWithoutPractice) {
+    function planPartSections(lesson) {
         if (!Array.isArray(lesson.parts) || lesson.parts.length < 2) {
             throw new Error('A parts lesson needs at least two parts.');
         }
@@ -1247,17 +1279,59 @@
 
             for (const [kind, label] of partKinds) {
                 const key = kind.replace('-', '_');
-                if (kind === 'question-bank' && allowStage2FixtureWithoutPractice && !Object.hasOwn(part, key)) continue;
                 if (!isObject(part[key])) throw new Error(`Part "${id}" needs ${key}.`);
                 sections.push({ id: `${kind}--${id}`, kind, part: id, label: `${part.label.trim()} ${label}` });
             }
         });
-        if (Object.hasOwn(lesson, 'question_bank') || !allowStage2FixtureWithoutPractice) {
-            if (!isObject(lesson.question_bank)) throw new Error('A parts lesson needs a top-level question_bank for mixed Practice.');
-            sections.push({ id: 'question-bank', kind: 'question-bank', part: null, label: 'Mixed Practice' });
-        }
+        if (!isObject(lesson.question_bank)) throw new Error('A parts lesson needs a top-level question_bank for mixed Practice.');
+        sections.push({ id: 'question-bank', kind: 'question-bank', part: null, label: 'Mixed Practice' });
         sections.push({ id: 'comparison', kind: 'comparison', part: null, label: 'Check' });
         return sections;
+    }
+
+    function sectionConfig(lesson, { kind, part }) {
+        const source = part === null ? lesson : lesson.parts.find(item => item.id === part);
+        return source[kind.replace('-', '_')];
+    }
+
+    function questionSetContainerId(slug, sectionId) {
+        const kind = sectionKind(sectionId);
+        if (kind === 'comparison') return `${slug}-comparison`;
+        if (kind !== 'question-bank') throw new Error(`"${sectionId}" is not a Practice or Check section.`);
+        const part = sectionPart(sectionId);
+        return `${slug}-questions${part === null ? '' : `--${part}`}`;
+    }
+
+    function planScoreActivities(lesson, sections = planSections(lesson)) {
+        const activities = sections.map(section => ({ id: `section:${section.id}` }));
+        const guidedTotals = {
+            method: safeArray(lesson.method?.guided_examples).length,
+            'product-interactive': safeArray(lesson.product_interactive?.examples).length
+        };
+        for (const [id, total] of Object.entries(guidedTotals)) {
+            for (let step = 0; step < total; step++) {
+                activities.push({ id: `step:${id}:${step}`, kind: 'guided' });
+            }
+        }
+        // The legacy top-level Practice reservation also applies to older
+        // lessons that do not render it via the standard section planner.
+        const practiceSections = sections.filter(section => section.kind === 'question-bank' && section.part !== null);
+        practiceSections.push({ id: 'question-bank', kind: 'question-bank', part: null });
+        for (const section of practiceSections) {
+            const total = Number(sectionConfig(lesson, section)?.session_length) || 0;
+            for (let index = 1; index <= total; index++) {
+                activities.push({ id: `answer:${section.id}:${index}`, kind: 'answer' });
+            }
+        }
+        safeArray(lesson.comparison?.questions).forEach((_, index) => {
+            activities.push({ id: `answer:final-check-${index + 1}`, kind: 'answer' });
+        });
+        const reservedAnswerIds = activities.filter(activity => activity.kind === 'answer').map(activity => activity.id);
+        activities.push(...safeArray(lesson.score_activities));
+        return {
+            activities: activities.map(activity => ({ ...activity, completed: false })),
+            reservedAnswerIds
+        };
     }
 
     function hasExplanation(explanation) {
@@ -1365,6 +1439,9 @@
         sectionPart,
         dispatchSectionEvent,
         planSections,
+        planScoreActivities,
+        sectionConfig,
+        questionSetContainerId,
         hasItems,
         isObject,
         normaliseText,
@@ -1400,6 +1477,7 @@
 
     const {
         sectionKind, sectionPart, dispatchSectionEvent, planSections,
+        planScoreActivities, sectionConfig, questionSetContainerId,
         hasItems, isObject, normaliseText, safeArray
     } = window.Maths1to9LessonEngine;
 
@@ -1490,21 +1568,10 @@
 
             state.lesson = lesson;
             state.slug = getLessonSlug(lesson);
-            // Stage 3 removes this exception when the test fixture gains Practice.
-            const fixturePath = '/tests/fixtures/parts-lesson/';
-            const allowStage2FixtureWithoutPractice =
-                [fixturePath, `${fixturePath}index.html`].includes(window.location.pathname) &&
-                new URL(lessonSource, window.location.href).pathname === `${fixturePath}lesson.json`;
-            state.sections = createSectionDefinitions(lesson, { allowStage2FixtureWithoutPractice });
+            state.sections = createSectionDefinitions(lesson);
             state.hasParts = state.sections.some(section => section.part !== null);
             const savedScore = await window.Maths1to9Progress?.getLessonProgress?.(state.slug);
-            const reservedAnswerIds = [];
-            for (let i = 1; i <= (Number(lesson.question_bank?.session_length) || 0); i++) {
-                reservedAnswerIds.push(`answer:question-bank:${i}`);
-            }
-            safeArray(lesson.comparison?.questions).forEach((_, i) => {
-                reservedAnswerIds.push(`answer:final-check-${i + 1}`);
-            });
+            const { activities, reservedAnswerIds } = planScoreActivities(lesson, state.sections);
             scoreTracker = window.Maths1to9LessonEngine.createScoreTracker(savedScore?.scoreActivities, score => {
                 updateScoreHeader();
                 document.dispatchEvent(new CustomEvent('maths1to9:score-change', {detail:{slug:state.slug, score}}));
@@ -1534,28 +1601,7 @@
             }
 
             // Reserve the full lesson before rendering: navigation never earns points.
-            state.sections.forEach(section => {
-                scoreTracker.record({id:`section:${section.id}`, completed:false});
-            });
-            const guidedTotals = {
-                method: safeArray(lesson.method?.guided_examples).length,
-                'product-interactive': safeArray(lesson.product_interactive?.examples).length
-            };
-            for (const [id, total] of Object.entries(guidedTotals)) {
-                for (let step = 0; step < total; step++) {
-                    scoreTracker.record({id:`step:${id}:${step}`, kind:'guided', completed:false});
-                }
-            }
-            const practiceTotal = Number(lesson.question_bank?.session_length) || 0;
-            for (let i = 1; i <= practiceTotal; i++) {
-                scoreTracker.record({id:`answer:question-bank:${i}`, kind:'answer', completed:false});
-            }
-            safeArray(lesson.comparison?.questions).forEach((_, i) => {
-                scoreTracker.record({id:`answer:final-check-${i + 1}`, kind:'answer', completed:false});
-            });
-            safeArray(lesson.score_activities).forEach(activity => {
-                scoreTracker.record({...activity, completed:false});
-            });
+            activities.forEach(activity => scoreTracker.record(activity));
             scoreTracker.export().forEach(activity => {
                 if (activity.completed && activity.id.startsWith('section:')) {
                     state.completedSections.add(activity.id.slice(8));
@@ -1591,8 +1637,13 @@
                 });
             }
             exposeLessonApi();
-            if (state.hasParts) await mountPartInteractives();
-            else mountLessonInteractive();
+            if (state.hasParts) {
+                await mountPartInteractives();
+                const mountQuestionSets = window.Maths1to9QuestionSets?.[state.slug];
+                if (typeof mountQuestionSets === 'function') await mountQuestionSets(window.Maths1to9Lesson);
+            } else {
+                mountLessonInteractive();
+            }
 
             document.dispatchEvent(
                 new CustomEvent(
@@ -1618,7 +1669,9 @@
                 )
             );
 
-            showSection(0, {
+            const resumeIndex = state.hasParts && !router.hasHash()
+                ? findSectionIndex(savedScore?.currentSectionId ?? savedScore?.currentSectionIndex) : -1;
+            showSection(resumeIndex >= 0 && resumeIndex <= state.highestUnlockedIndex ? resumeIndex : 0, {
                 moveFocus: false,
                 emitEvent: true
             });
@@ -1748,7 +1801,7 @@
             .replace(/^-+|-+$/g, '');
     }
 
-    function createSectionDefinitions(lesson, options) {
+    function createSectionDefinitions(lesson) {
         const renderers = {
             explanation: ['lesson-explanation', renderExplanation],
             method: ['lesson-method', renderMethod],
@@ -1762,12 +1815,9 @@
             'question-bank': ['lesson-questions', renderQuestionBank]
         };
 
-        const plan = planSections(lesson, options);
-        const parts = new Map(safeArray(lesson.parts).map(part => [part.id, part]));
-        return plan.map(section => {
+        return planSections(lesson).map(section => {
             const [className, render] = renderers[section.kind];
-            const source = section.part === null ? lesson : parts.get(section.part);
-            const config = source[section.kind.replace('-', '_')];
+            const config = sectionConfig(lesson, section);
             return { ...section, config, className, render: container => render(container, config) };
         });
 
@@ -3228,8 +3278,7 @@
             'lesson-module lesson-module--questions'
         );
 
-        questionsRoot.id =
-            `${state.slug}-questions`;
+        questionsRoot.id = questionSetContainerId(state.slug, container.dataset.lessonSection);
 
         questionsRoot.dataset.lessonModule =
             'questions';
@@ -3958,8 +4007,7 @@
             },
 
             async runQuestionSet(sectionId, config) {
-                const module = sectionKind(sectionId) === 'question-bank' ? 'questions' : 'comparison';
-                const container = document.getElementById(`${state.slug}-${module}`);
+                const container = document.getElementById(questionSetContainerId(state.slug, sectionId));
                 if (!container) throw new Error(`No question set container for ${sectionId}.`);
                 state.questionSets.add(sectionId);
                 return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);

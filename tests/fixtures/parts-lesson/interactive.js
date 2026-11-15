@@ -66,18 +66,15 @@
         function render() {
             const index = state.screen;
             const screen = screens[index];
-            const tapped = state.tapped[index];
             const heading = document.createElement('h2');
             heading.id = `lesson-section-title-${id}`;
             heading.dataset.screenHeading = '';
             heading.textContent = screen.title;
             const fruit = document.createElement('p');
-            fruit.textContent = Array(tapped ? screen.result : screen.start).fill(screen.fruit).join(' ');
             const action = document.createElement('button');
             action.className = 'button';
             action.type = 'button';
             action.textContent = screen.action;
-            action.setAttribute('aria-pressed', String(tapped));
             action.addEventListener('click', () => {
                 if (state.tapped[index]) return;
                 section.update(saved => { saved.tapped[index] = true; });
