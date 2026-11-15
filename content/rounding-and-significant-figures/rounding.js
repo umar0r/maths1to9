@@ -225,17 +225,27 @@
             { label: 'To the nearest 100', from: '461', to: '500' },
             { label: 'To 2 decimal places', from: '3.147', to: '3.15' }
         ] },
-        { title: "Let's start by rounding to the nearest 10.", lines: ['Say we want to round 67 to the nearest 10. Here it is on a number line.'], line: true, notes: {
+        { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
             nearest: 'So 67 is closer to 70.'
         }, caption: 'The ≈ sign means "is about".' },
+        { title: "Now let's round 342 to the nearest 10.", lines: ['342 sits between 340 and 350. Here it is on the number line.'], line: true, base: 340, value: 342, notes: {
+            digit: 'The ones digit is 2. That is less than 5, so round down.',
+            nearest: 'So 342 is closer to 340.'
+        } },
         { title: 'Bigger numbers work the same way.', lines: ['Say we want to round 3,486 to the nearest 10. Here it is on a number line.'], line: true, base: 3480, value: 3486, notes: {
             digit: 'The ones digit is 6. That is 5 or more, so round up.',
             nearest: 'So 3,486 is closer to 3,490.'
         } },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
-        { title: 'Round to the nearest 100', lines: ['To round 642 to the nearest 100, keep 6 in the hundreds place.', 'The next digit is 4, so keep the 6. Fill the tens and ones places with zeros.'], number: '642', kind: 'nearest', accuracy: 2, equations: ['642 ≈ 600'] },
-        { title: 'Whole-number zeros keep the size', lines: ['The same rule works for hundreds and thousands.', 'To round 4,382 to the nearest 1,000, keep 4. The next digit is 3, so 4 stays. Fill the other places with zeros.'], number: '4382', kind: 'nearest', accuracy: 3, equations: ['4,382 ≈ 4,000'], caption: 'Writing just 4 would make the number much too small.' },
+        { title: "Now let's round 642 to the nearest 100.", lines: ['642 sits between 600 and 700. Here it is on the number line, counting in tens.'], line: true, base: 600, step: 10, value: 642, notes: {
+            digit: 'The tens digit is 4. That is less than 5, so round down.',
+            nearest: 'So 642 is closer to 600.'
+        } },
+        { title: "Now let's round 4,682 to the nearest 1,000.", lines: ['4,682 sits between 4,000 and 5,000. Here it is on the number line, counting in hundreds.'], line: true, base: 4000, step: 100, value: 4682, notes: {
+            digit: 'The hundreds digit is 6. That is 5 or more, so round up.',
+            nearest: 'So 4,682 is closer to 5,000.'
+        }, caption: 'Keep the zeros. Writing just 5 would make the number much too small.' },
         { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
         { title: 'Keep a final decimal zero', lines: ['To round 3.04 to 1 decimal place, keep the tenths digit, 0.', 'The next digit is 4, so the 0 stays. Write 3.0 to show one digit after the point.'], number: '3.04', kind: 'decimal', accuracy: 1, equations: ['3.04 ≈ 3.0'] },
         { title: 'Significant figures', lines: ['Significant figures are the digits that show how accurate a number is. Start at the first digit that is not zero.', 'In 0.004782, keep 4 and 7 for 2 significant figures. The next digit is 8, so round up. Keep the starting zeros.'], number: '0.004782', kind: 'sig', accuracy: 2, equations: ['0.004782 ≈ 0.0048'] },
@@ -274,49 +284,67 @@
         }
         host.append(row);
     }
-    // A number line from one ten (base) to the next, drawn like the negative
-    // numbers line: a grey line, a tick and a number at every whole number, and
-    // a blue dot on the number. With notes, two short notes sit under the numbers:
-    // one points at the ones digit of the number, one at the ten it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null) {
+    // A number line from one round number (base) to the next, drawn like the
+    // negative numbers line: a grey line, ten equal steps with a tick and a
+    // number at each, and a blue dot on the number. step is 1 for the nearest
+    // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
+    // note points at the digit that decides, one at the number it rounds to.
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1) {
         const format = number => number.toLocaleString('en-GB');
+        // Wrap the digit that decides (the ones for step 1, the tens for step 10
+        // and so on) so a note's arrow can point at it.
+        const marked = number => {
+            const shown = format(number);
+            let fromEnd = Math.round(Math.log10(step));
+            for (let i = shown.length - 1; i >= 0; i--) {
+                if (!/\d/.test(shown[i])) continue;
+                if (fromEnd-- === 0) return `${shown.slice(0, i)}<tspan class="rounding-decider">${shown[i]}</tspan>${shown.slice(i + 1)}`;
+            }
+            return shown;
+        };
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const x = number => 30 + (number - base) * 60;
-        const axis = 26;
+        const top = base + 10 * step;
+        const x = number => 30 + (number - base) / step * 60;
+        // A number between two ticks has no label in the row, so its label sits
+        // above the dot, and the line moves down to make room.
+        const onTick = (value - base) % step === 0;
+        const axis = onTick ? 26 : (phone ? 58 : 50);
         const lineHost = notes ? text(host, 'div', '', 'rounding-notes') : host;
+        const digitNote = notes && !onTick ? text(lineHost, 'p', notes.digit, 'rounding-note rounding-note--above') : null;
         const line = document.createElement('div');
         line.className = 'rounding-line';
         line.setAttribute('role', 'img');
         let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
-        for (let number = base; number <= base + 10; number++) {
-            // The ones digit has its own tspan so a note's arrow can point at it.
-            // The two tens and the halfway number between them stand out.
-            const shown = format(number);
-            const landmark = (number - base) % 5 === 0;
+        for (let mark = 0; mark <= 10; mark++) {
+            // The two round numbers and the halfway number between them stand out.
+            const number = base + mark * step;
+            const landmark = mark % 5 === 0;
             const reach = landmark ? 12 : 7;
             picture += `<path class="rounding-tick${landmark ? ' is-landmark' : ''}" d="M ${x(number)} ${axis - reach} V ${axis + reach}"/>
-                <text class="rounding-value${landmark ? ' is-landmark' : ''}" data-value="${number}" x="${x(number)}" y="${axis + (phone ? 44 : 40)}">${shown.slice(0, -1)}<tspan class="rounding-ones">${shown.slice(-1)}</tspan></text>`;
+                <text class="rounding-value${landmark ? ' is-landmark' : ''}" data-value="${number}" x="${x(number)}" y="${axis + (phone ? 44 : 40)}">${marked(number)}</text>`;
         }
+        if (!onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${marked(value)}</text>`;
         picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
-        line.innerHTML = `<svg viewBox="0 0 660 ${phone ? 80 : 72}" aria-hidden="true">${picture}</svg>`;
+        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="true">${picture}</svg>`;
         const dot = line.querySelector('.rounding-dot');
         const label = number => line.querySelector(`.rounding-value[data-value="${number}"]`);
+        const nearest = number => number < base + 5 * step ? base : top;
         lineHost.append(line);
         const output = text(host, 'p', '', 'significant-equation rounding-line-answer');
         function update(number) {
             dot.setAttribute('cx', x(number));
-            line.querySelectorAll('.rounding-value').forEach(item => item.classList.toggle('is-key', Number(item.dataset.value) === number));
-            const answer = number < base + 5 ? base : base + 10;
-            output.textContent = `${format(number)} ≈ ${format(answer)}`;
-            line.setAttribute('aria-label', `${format(number)} on a line from ${format(base)} to ${format(base + 10)}; nearest ten ${format(answer)}`);
+            line.querySelectorAll('.rounding-value[data-value]').forEach(item => item.classList.toggle('is-key', Number(item.dataset.value) === number));
+            output.textContent = `${format(number)} ≈ ${format(nearest(number))}`;
+            line.setAttribute('aria-label', `${format(number)} on a line from ${format(base)} to ${format(top)}; to the nearest ${format(10 * step)} it is ${format(nearest(number))}`);
         }
         update(value);
         if (notes) {
-            const digitNote = text(lineHost, 'p', notes.digit, 'rounding-note rounding-note--digit');
+            const digit = digitNote || text(lineHost, 'p', notes.digit, 'rounding-note rounding-note--digit');
             const nearestNote = text(lineHost, 'p', notes.nearest, 'rounding-note rounding-note--nearest');
+            const valueLabel = onTick ? () => label(value) : () => line.querySelector('.rounding-value--above');
             drawArrows(lineHost, [
-                [digitNote, () => label(value).querySelector('.rounding-ones')],
-                [nearestNote, () => label(value < base + 5 ? base : base + 10)]
+                [digit, () => valueLabel().querySelector('.rounding-decider')],
+                [nearestNote, () => label(nearest(value))]
             ]);
         }
         if (explore) {
@@ -355,13 +383,20 @@
                 // Keep each note just left of what it points at, so its arrow
                 // curves down onto the target instead of running in flat from
                 // far away on a wide screen.
-                const targetX = target.getBoundingClientRect().left - origin.left;
-                const lead = Math.max(0, Math.min(targetX - note.offsetWidth - 48, origin.width - note.offsetWidth));
+                // When there is no room on the left (a number near the start of
+                // the line), the note sits to the right and its arrow leaves
+                // from the note's left end instead.
+                const targetBox = target.getBoundingClientRect();
+                const targetX = targetBox.left + targetBox.width / 2 - origin.left;
+                const left = targetX - note.offsetWidth - 48 >= 0;
+                const lead = left
+                    ? Math.min(targetX - note.offsetWidth - 48, origin.width - note.offsetWidth)
+                    : Math.max(0, Math.min(targetX + 48, origin.width - note.offsetWidth));
                 if (note.style.marginLeft !== `${lead}px`) note.style.marginLeft = `${lead}px`;
                 const from = note.getBoundingClientRect();
                 const to = target.getBoundingClientRect();
                 const down = to.top > from.top;
-                const sx = from.right - origin.left + 8, sy = from.top + from.height / 2 - origin.top;
+                const sx = (left ? from.right - origin.left + 8 : from.left - origin.left - 8), sy = from.top + from.height / 2 - origin.top;
                 const tx = to.left + to.width / 2 - origin.left;
                 const ty = (down ? to.top - 4 : to.bottom + 4) - origin.top;
                 const tip = down ? -1 : 1;
@@ -397,7 +432,7 @@
     function drawLearn(host, index, lineValue, onChange, readOnly) {
         const screen = learnScreens[index];
         if (screen.roundings) drawRoundings(host, screen.roundings);
-        if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly, screen.base, screen.notes);
+        if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly, screen.base, screen.notes, screen.step);
         else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) });
         for (const equation of screen.equations || []) text(host, 'p', equation, 'significant-equation');
         for (const line of screen.after || []) text(host, 'p', line);

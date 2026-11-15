@@ -178,6 +178,9 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('67');
         await expect(page.locator('.significant-equation:visible')).toHaveText('67 ≈ 70');
         await mainAction(page).click();
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('342');
+        await expect(page.locator('.significant-equation:visible')).toHaveText('342 ≈ 340');
+        await mainAction(page).click();
         await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('3,486');
         await expect(page.locator('.significant-equation:visible')).toHaveText('3,486 ≈ 3,490');
         await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
@@ -219,7 +222,7 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-        for (let index = 1; index < 12; index++) {
+        for (let index = 1; index < 13; index++) {
             await mainAction(page).click();
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             if ([6, 8, 10].includes(index)) await page.screenshot({ path: `/private/tmp/rounding-learn-${index + 1}-${width}.png`, fullPage: true });

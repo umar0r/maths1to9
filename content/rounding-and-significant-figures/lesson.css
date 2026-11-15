@@ -191,6 +191,10 @@
     margin-top: 2rem;
 }
 
+.rounding-note--above {
+    margin-bottom: .25rem;
+}
+
 .rounding-note--nearest {
     margin-top: .5rem;
     margin-bottom: 1rem;
