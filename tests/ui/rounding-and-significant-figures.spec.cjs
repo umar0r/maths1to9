@@ -175,10 +175,10 @@ for (const width of [1280, 375]) {
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
         await expect(prompt(page)).toHaveCount(0);
         await mainAction(page).click();
-        await expect(page.locator('.rounding-marker:visible')).toHaveText('67');
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('67');
         await expect(page.locator('.significant-equation:visible')).toHaveText('67 ≈ 70');
         await mainAction(page).click();
-        await expect(page.locator('.rounding-marker:visible')).toHaveText('3,486');
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('3,486');
         await expect(page.locator('.significant-equation:visible')).toHaveText('3,486 ≈ 3,490');
         await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
         // The slider is the first Try it screen, after the rest of Learn.
@@ -192,7 +192,7 @@ for (const width of [1280, 375]) {
             await slider.press(number === 60 ? 'Home' : 'ArrowRight');
             await expect(slider).toBeFocused();
             await expect(slider).toHaveValue(String(number));
-            await expect(page.locator('.rounding-marker:visible')).toHaveText(String(number));
+            await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText(String(number));
             await expect(page.locator('.significant-equation:visible')).toHaveText(`${number} ≈ ${number < 65 ? 60 : 70}`);
             expect(await score(page)).toBe(before + 5);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -200,7 +200,7 @@ for (const width of [1280, 375]) {
                 await page.screenshot({ path: `/private/tmp/rounding-halfway-${width}.png`, fullPage: true });
                 await reload(page);
                 await expect(slider).toHaveValue('65');
-                await expect(page.locator('.rounding-marker:visible')).toHaveText('65');
+                await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('65');
                 await slider.focus();
             }
         }
