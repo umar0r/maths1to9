@@ -557,10 +557,6 @@
             digit: 'The ones digit is 2. That is less than 5, so round down.',
             nearest: 'So 342 is closer to 340.'
         } },
-        { title: 'Bigger numbers work the same way.', lines: ['Say we want to round 3,486 to the nearest 10. Here it is on a number line.'], line: true, base: 3480, value: 3486, labels: 'landmarks', notes: {
-            digit: 'The ones digit is 6. That is 5 or more, so round up.',
-            nearest: 'So 3,486 is closer to 3,490.'
-        } },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
         { title: "Now let's round 642 to the nearest 100.", lines: ['642 sits between 600 and 700. Here it is on the number line, counting in tens.'], line: true, base: 600, step: 10, value: 642, labels: 'landmarks', notes: {
             digit: 'The tens digit is 4. That is less than 5, so round down.',
