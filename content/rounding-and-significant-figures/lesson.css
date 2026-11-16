@@ -200,6 +200,12 @@
     margin-bottom: 1rem;
 }
 
+/* Leave a gutter on each side for the arrows back to the line ends. */
+.rounding-context__step {
+    width: fit-content;
+    margin: 1rem clamp(2.5rem, 8vw, 5.5rem);
+}
+
 .rounding-notes__arrows {
     position: absolute;
     inset: 0;

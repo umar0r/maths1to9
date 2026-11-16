@@ -694,7 +694,54 @@
             ],
             number: '18.497', kind: 'nearest', accuracy: 0, tap: 'decider', equations: ['18.497 ≈ 18']
         },
-        { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] }
+        { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] },
+        {
+            title: 'When you need enough of something, round up.',
+            lines: [], base: 7, step: 0.1, value: 131 / 18, labels: 'landmarks', tap: 'end', answer: 8,
+            context: {
+                setup: 'Step 1: There are 131 helmets. Each rack holds 18. On a calculator, 131 ÷ 18 = 7.277…',
+                valueLabel: '7.277…',
+                question: 'How many racks do you need?',
+                hint: '7 racks hold 7 × 18 = 126 helmets. That leaves 5 helmets with no rack.',
+                steps: [
+                    ['Step 2: 7 racks hold 126 helmets. 5 helmets have no rack.', 7],
+                    ['Step 3: So you need 8 racks. 8 racks hold 144, so all 131 fit.', 8]
+                ]
+            },
+            equations: ['8 racks'],
+            caption: '7.277… would normally round to 7. Here you round up, because 7 racks are not enough.'
+        },
+        {
+            title: 'When you can only pay for whole ones, round down.',
+            lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
+            context: {
+                setup: 'Step 1: A club has £12.50. Each trophy costs £1.85. On a calculator, 12.50 ÷ 1.85 = 6.756…',
+                valueLabel: '6.756…',
+                question: 'How many trophies can they buy?',
+                hint: '7 trophies cost £12.95. That is more than £12.50.',
+                steps: [
+                    ['Step 2: 7 trophies cost £12.95. That is too much.', 7],
+                    ['Step 3: So they can buy 6. 6 trophies cost £11.10.', 6]
+                ]
+            },
+            equations: ['6 trophies'],
+            caption: "6.756… would normally round to 7. Here you round down, because you can't pay for the 7th."
+        },
+        {
+            title: "To find what's left, take away the full groups.",
+            lines: [], base: 11, step: 0.1, value: 950 / 80, labels: 'landmarks', tap: 'end', answer: 11,
+            context: {
+                setup: 'Step 1: A roll has 9.5 m of cord, which is 950 cm. Cut it into 80 cm pieces. On a calculator, 950 ÷ 80 = 11.875',
+                valueLabel: '11.875',
+                question: 'How many full pieces can you cut?',
+                hint: '12 pieces need 960 cm. There is only 950 cm.',
+                steps: [
+                    ['Step 2: 11 full pieces use 11 × 80 = 880 cm.', 11],
+                    ['Step 3: 950 − 880 = 70 cm is left.']
+                ]
+            },
+            equations: ['70 cm left']
+        }
     ];
     function text(host, tag, value, className) {
         const node = document.createElement(tag);
@@ -773,7 +820,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, wideLabels = false, labels = 'all' } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, wideLabels = false, labels = 'all', valueLabel, showNearest = true } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -816,7 +863,7 @@
                 </g>`
                 : label;
         }
-        if (!onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${marked(value)}</text>`;
+        if (!onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
         picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
         line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!onPick}">${picture}</svg>`;
         if (onPick) {
@@ -834,12 +881,12 @@
         const label = number => line.querySelector(`.rounding-value[data-value="${number}"]`);
         const nearest = number => number < base + 5 * step ? base : top;
         lineHost.append(line);
-        const output = onPick ? null : text(host, 'p', '', 'significant-equation rounding-line-answer');
+        const output = showNearest && !onPick ? text(host, 'p', '', 'significant-equation rounding-line-answer') : null;
         function update(number) {
             dot.setAttribute('cx', x(number));
             line.querySelectorAll('.rounding-value[data-value]').forEach(item => item.classList.toggle('is-key', Number(item.dataset.value) === number));
             if (output) output.textContent = `${format(number)} ≈ ${format(nearest(number))}`;
-            const description = `${format(number)} on a line from ${format(base)} to ${format(top)}`;
+            const description = `${valueLabel ?? format(number)} on a line from ${format(base)} to ${format(top)}`;
             line.setAttribute('aria-label', output
                 ? `${description}; to the nearest ${format(10 * step)} it is ${format(nearest(number))}` : description);
         }
@@ -866,6 +913,7 @@
             });
             host.append(slider);
         }
+        return line;
     }
     const roadMiles = [67, 342, 65, 2814];
 
@@ -1002,7 +1050,7 @@
             svg.setAttribute('width', origin.width);
             svg.setAttribute('height', origin.height);
             svg.replaceChildren();
-            for (const [note, findTarget] of pairs) {
+            for (const [note, findTarget, arrowSide] of pairs) {
                 const target = findTarget();
                 if (!target) continue;
                 // Keep each note just left of what it points at, so its arrow
@@ -1013,11 +1061,11 @@
                 // from the note's left end instead.
                 const targetBox = target.getBoundingClientRect();
                 const targetX = targetBox.left + targetBox.width / 2 - origin.left;
-                const left = targetX - note.offsetWidth - 48 >= 0;
+                const left = arrowSide ? arrowSide === 'right' : targetX - note.offsetWidth - 48 >= 0;
                 const lead = left
                     ? Math.min(targetX - note.offsetWidth - 48, origin.width - note.offsetWidth)
                     : Math.max(0, Math.min(targetX + 48, origin.width - note.offsetWidth));
-                if (note.style.marginLeft !== `${lead}px`) note.style.marginLeft = `${lead}px`;
+                if (!arrowSide && note.style.marginLeft !== `${lead}px`) note.style.marginLeft = `${lead}px`;
                 const from = note.getBoundingClientRect();
                 const to = target.getBoundingClientRect();
                 const down = to.top > from.top;
@@ -1054,14 +1102,36 @@
         }
         host.append(list);
     }
+    function drawContextLine(host, screen, onPick) {
+        const { context, value, base, step, labels } = screen;
+        stepText(host, 'p', context.setup);
+        if (onPick) text(host, 'p', context.question);
+        const block = text(host, 'div', '', 'rounding-notes rounding-context');
+        const line = drawLine(block, value, false, null, false, base, null, step, {
+            onPick, wideLabels: true, labels, valueLabel: context.valueLabel, showNearest: false
+        });
+        if (onPick) return;
+        const arrows = [];
+        for (const [message, target] of context.steps) {
+            const note = stepText(block, 'p', message, 'rounding-context__step');
+            if (target !== undefined) {
+                arrows.push([note, () => line.querySelector(`.rounding-value[data-value="${target}"]`), target === base ? 'left' : 'right']);
+            }
+        }
+        drawArrows(block, arrows);
+    }
     function drawLearnTap(host, screen, onResult) {
         if (screen.tap === 'end') {
-            text(host, 'p', 'Which is it closer to?');
-            const answer = Number(rounded(String(screen.value), 'nearest', Math.log10(10 * screen.step)));
-            drawLine(host, screen.value, false, null, false, screen.base, null, screen.step, {
-                wideLabels: true, labels: screen.labels,
-                onPick: value => onResult(value === answer, "Look at the digit after the one you're rounding to. Is it 5 or more?")
-            });
+            const answer = screen.answer ?? Number(rounded(String(screen.value), 'nearest', Math.log10(10 * screen.step)));
+            const hint = screen.context?.hint ?? "Look at the digit after the one you're rounding to. Is it 5 or more?";
+            const onPick = value => onResult(value === answer, hint);
+            if (screen.context) drawContextLine(host, screen, onPick);
+            else {
+                text(host, 'p', 'Which is it closer to?');
+                drawLine(host, screen.value, false, null, false, screen.base, null, screen.step, {
+                    wideLabels: true, labels: screen.labels, onPick
+                });
+            }
             return;
         }
         const last = screen.tap === 'last';
@@ -1078,10 +1148,12 @@
         const screen = learnScreens[index];
         if (screen.roundings) drawRoundings(host, screen.roundings);
         if (screen.steps) drawFindDigit(host, screen.value, screen.step, screen.steps);
-        if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly,
+        if (screen.context) drawContextLine(host, screen);
+        else if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly,
             screen.base, screen.notes, screen.step, { wideLabels: screen.tap === 'end', labels: screen.labels });
         else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) }, screen.marks);
-        for (const equation of screen.equations || []) text(host, 'p', equation, 'significant-equation');
+        // A real-life answer sits in the small centred box, like the number-line answers.
+        for (const equation of screen.equations || []) text(host, 'p', equation, screen.context ? 'significant-equation rounding-line-answer' : 'significant-equation');
         for (const line of screen.after || []) text(host, 'p', line);
         if (screen.caption) text(host, 'p', screen.caption);
     }

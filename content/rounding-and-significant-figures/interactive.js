@@ -22,7 +22,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 2,
+            version: 3,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
             upgrade: () => null
         });
@@ -39,7 +39,6 @@
             section.update(state => {
                 state.screen = screen;
                 state.furthestScreen = Math.max(state.furthestScreen, screen);
-                if (screen === screens.length - 1) state.finished = true;
             });
             render();
             const heading = root.querySelector('h3');
@@ -51,6 +50,10 @@
             const screen = screens[state.screen];
             const tap = screen.tap && state.taps[screen.title];
             const awaitingTap = screen.tap && tap !== 'correct';
+            const lastScreen = state.screen === screens.length - 1;
+            if (lastScreen && !awaitingTap && !state.finished) {
+                section.update(saved => { saved.finished = true; });
+            }
             const resetFields = screen.tap ? [['taps', screen.title]]
                 : screen.explore ? ['lineValue', 'explored'] : [];
             const reset = () => {
@@ -102,7 +105,7 @@
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
-            if (state.screen === screens.length - 1 && state.finished) {
+            if (lastScreen && !awaitingTap) {
                 api.clearSectionAction('explanation');
             } else {
                 api.setSectionAction('explanation', {
