@@ -11,7 +11,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const { seededRandom, tidyNumber } = window.Maths1to9LessonEngine;
 const folder = path.join(contentDir, 'rounding-and-significant-figures');
 const data = JSON.parse(fs.readFileSync(path.join(folder, 'lesson.json')));
-const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
+const Q = loadScript(path.join(folder, 'rounding.js'), ['roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
 const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode => Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0)))));
 const questions = [...Q.examples(), ...Q.checks(), ...generated];
 const answerOf = q => q.answer ?? q.options.find(o => o.correct).label;
@@ -90,9 +90,9 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
 });
 
 test('rounding-and-significant-figures: Try it examples and Learn pictures highlight the right digits', () => {
-    assert.equal(Q.examples().length, 38);
+    assert.equal(Q.examples().length, 32);
     // Each example step and each of the four road cars is one guided step.
-    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 38 + 4);
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 32 + 4);
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);
@@ -116,8 +116,7 @@ test('rounding-and-significant-figures: Try it examples and Learn pictures highl
 test('rounding-and-significant-figures: halfway cases, carrying and direct rounding follow exact half-up rules', () => {
     for (const [number, kind, accuracy, answer] of [
         ['650', 'nearest', 2, '700'], ['5.465', 'decimal', 2, '5.47'], ['9.96', 'decimal', 1, '10.0'],
-        ['2.449', 'decimal', 1, '2.4'], ['1.049', 'decimal', 1, '1.0'], ['2748', 'nearest', 2, '2700'],
-        ['0.00726', 'sig', 2, '0.0073'], ['0.0045', 'sig', 1, '0.005']
+        ['2.449', 'decimal', 1, '2.4'], ['1.049', 'decimal', 1, '1.0'], ['2748', 'nearest', 2, '2700']
     ]) assert.equal(Q.rounded(number, kind, accuracy), answer);
     assert.equal(Q.roundToPower('18', 2), '0');
     assert.equal(Q.roundToPower('0.004', -2), '0.00');
@@ -134,7 +133,7 @@ test("rounding-and-significant-figures: Amir's claim is wrong and the explanatio
 test('rounding-and-significant-figures: 200 seeds per type and input mode are deterministic and mapped to the three existing skills', () => {
     for (const type of Q.practiceTypes) {
         const context = ['path-context', 'round-up', 'round-down', 'full-groups'];
-        const skill = /significant|^sig-/.test(type) ? 'round-significant-figures' : context.includes(type) ? 'round-in-context' : 'round-decimal-places';
+        const skill = context.includes(type) ? 'round-in-context' : 'round-decimal-places';
         assert.equal(data.assessment.question_types[type], skill);
         const positions = new Set();
         for (const mode of ['choice', 'number']) for (let seed = 0; seed < 200; seed++) {
@@ -151,7 +150,7 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
         const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
         // Practice mixes multiple choice and typed answers.
         assert.ok(qs.some(q => q.input === 'choice') && qs.some(q => q.input === 'number'), `seed ${seed}`);
-        assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-significant-figures', 'round-in-context']));
+        assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-in-context']));
     }
     // Try it is hands-on, so it has no multiple choice. Check mixes both.
     assert.ok(Q.examples().every(q => q.input !== 'choice'));
@@ -166,8 +165,10 @@ test('rounding-and-significant-figures: wording and input numbers are tidy and s
         assert.doesNotMatch(text, /\b1 decimal places\b|\b1 significant figures\b|AQA|Edexcel|OCR/);
         assert.doesNotMatch(text, /\d+\.\d{12,}|\b(?:color|center|recognize|organize)\b/);
     }
+    // The digit boxes and the equation box are still shared, word for word.
+    const sharedBlock = text => text.slice(0, text.indexOf('}\n', text.indexOf('.significant-equation')) + 2);
     const sigCss = fs.readFileSync(path.join(contentDir, 'significant-figures/lesson.css'), 'utf8');
-    assert.ok(fs.readFileSync(path.join(folder, 'lesson.css'), 'utf8').startsWith(sigCss));
+    assert.equal(sharedBlock(fs.readFileSync(path.join(folder, 'lesson.css'), 'utf8')), sharedBlock(sigCss));
     assert.equal(data.navigation.back_button, true);
     assert.deepEqual(data.navigation_stages.map(s => s.label), ['Learn', 'Try it', 'Practice', 'Check']);
     const reference = path.join(__dirname, '../dist/content/rounding-and-significant-figures');
