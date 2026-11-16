@@ -132,41 +132,6 @@
                         : `The ${place(number, index)} digit is not straight after the digit to keep. Look one digit to the right.`, false, index))]
         };
     }
-    // Step 3 of the first example: decide what happens to your digit.
-    function decideQuestion(number, kind, accuracy) {
-        const d = keyDigits(number, kind, accuracy);
-        const digit = number[d.target];
-        const next = number[d.decider];
-        const up = Number(next) >= 5;
-        const changed = String((Number(digit) + 1) % 10);
-        const answer = up ? changed : digit;
-        const feedback = up ? `${next} is 5 or more, so the ${digit} goes up to ${changed}.` : `${next} is less than 5, so the ${digit} stays the same.`;
-        return {
-            number, kind, accuracy, ...d, stage: 'decide', input: 'number', questionType: 'decide-digit',
-            prompt: `Round ${spaced(number)} to ${accuracyText(kind, accuracy)}. The next digit is ${next}. Is it 5 or more? Type what the ${digit} becomes.`,
-            answer, feedback, fallback: feedback, exact: kind !== 'nearest',
-            rules: [
-                [up ? digit : changed, up ? `${next} counts as 5 or more, so the ${digit} has to go up.` : `${next} is less than 5, so the ${digit} stays the same.`],
-                [String((Number(digit) + 9) % 10), 'Your digit never goes down. It either stays the same or goes up by 1.'],
-                ['0', 'Your digit does not become 0. The digits after it do.']
-            ].filter(([value]) => value !== answer).map(([value, message]) => ({ value, feedback: message }))
-        };
-    }
-    // Each example: [number, kind, accuracy, last step input, extras].
-    // The first example walks through every step, including the decision.
-    const guided = [
-        ['345', 'nearest', 1, 'number', { decide: true, prompts: {
-            keep: 'Round 345 to the nearest 10. First, find your digit. Which digit is in the tens place?',
-            decider: 'Round 345 to the nearest 10. Now look at the next digit. Which digit comes straight after the 4?'
-        } }],
-        ['2748', 'nearest', 2, 'number'],
-        ['3724900', 'nearest', 6, 'number', { decide: true, prompts: {
-            keep: 'Round 3,724,900 to the nearest million. First, find your digit. Which digit is in the millions place?',
-            decider: 'Round 3,724,900 to the nearest million. Now look at the next digit. Which digit comes straight after the 3?'
-        } }],
-        ['4.276', 'decimal', 2, 'choice'],
-        ['0.004782', 'sig', 2, 'choice'], ['9.964', 'decimal', 1, 'number']
-    ];
     function contextStep(questionType, prompt, answer, feedback, rules = []) {
         return {
             stage: 'context', questionType, input: 'number', exact: false,
@@ -355,19 +320,7 @@
     }
 
     function exampleGroups() {
-        const digitExamples = guided.map(([number, kind, accuracy, input, extras = {}]) => {
-            const steps = [
-                digitQuestion(number, kind, accuracy, 'keep'),
-                digitQuestion(number, kind, accuracy, 'decider'),
-                ...(extras.decide ? [decideQuestion(number, kind, accuracy)] : []),
-                roundingQuestion(number, kind, accuracy, input)
-            ];
-            return steps.map(question => ({
-                ...question,
-                ...(extras.prompts?.[question.stage] ? { prompt: extras.prompts[question.stage] } : {})
-            }));
-        });
-        return [...digitExamples, containerSteps(), ...singleStepExamples(), ...situationExamples()];
+        return [containerSteps(), ...singleStepExamples(), ...situationExamples()];
     }
     function examples() {
         return exampleGroups().flatMap((steps, example) => steps.map((question, step) => ({
@@ -1091,5 +1044,5 @@
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, guided, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample, roadMiles, roadWidget };
+    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample, roadMiles, roadWidget };
 })();

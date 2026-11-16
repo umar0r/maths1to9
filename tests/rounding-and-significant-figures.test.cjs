@@ -11,7 +11,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const { seededRandom, tidyNumber } = window.Maths1to9LessonEngine;
 const folder = path.join(contentDir, 'rounding-and-significant-figures');
 const data = JSON.parse(fs.readFileSync(path.join(folder, 'lesson.json')));
-const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'guided', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
+const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
 const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode => Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0)))));
 const questions = [...Q.examples(), ...Q.checks(), ...generated];
 const answerOf = q => q.answer ?? q.options.find(o => o.correct).label;
@@ -79,7 +79,6 @@ test('rounding-and-significant-figures: typed answers keep exact zeros, with rul
         if (q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
     }
     assert.equal(Q.checks().at(-1).answer, '1.0');
-    assert.equal(Q.examples().find(q => q.number === '9.964' && q.stage === 'round').answer, '10.0');
 });
 
 test('rounding-and-significant-figures: explanations name the right deciding digit and state the answer', () => {
@@ -90,18 +89,10 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
     }
 });
 
-test('rounding-and-significant-figures: four guided examples and Learn pictures highlight the right digits', () => {
-    assert.equal(Q.guided.length, 6);
-    assert.equal(Q.examples().length, 58);
+test('rounding-and-significant-figures: Try it examples and Learn pictures highlight the right digits', () => {
+    assert.equal(Q.examples().length, 38);
     // Each example step and each of the four road cars is one guided step.
-    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 58 + 4);
-    const million = Q.examples().filter(q => q.number === '3724900');
-    assert.deepEqual(million.map(q => q.stage), ['keep', 'decider', 'decide', 'round']);
-    assert.ok(million.every(q => q.prompt.includes('the nearest million')));
-    assert.equal(million.at(-1).answer, '4000000');
-    const decide = Q.examples().find(q => q.stage === 'decide');
-    assert.equal(decide.number, '345');
-    assert.equal(decide.answer, '5');
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 38 + 4);
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);
