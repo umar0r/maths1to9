@@ -6,6 +6,7 @@ const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().poin
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
 const back = page => page.getByRole('button', { name: 'Previous screen', exact: true });
 const prompt = page => page.locator('.question-prompt:visible');
+const tapRow = page => page.locator('.significant-digits[role=group]:visible');
 
 async function reload(page) {
     await page.reload({ waitUntil: 'networkidle' });
@@ -54,6 +55,11 @@ for (const width of [1280, 375]) {
                 expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
                 const button = mainAction(page);
                 if (await button.innerText() === 'All lessons') break;
+                if (await tapRow(page).count()) {
+                    await solve(page);
+                    if (await button.isEnabled()) await button.click();
+                    continue;
+                }
                 if (await prompt(page).count() && await button.innerText() === 'Check') {
                     const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
                     const options = page.locator('.question-card-options:visible button');
@@ -116,8 +122,8 @@ for (const width of [1280, 375]) {
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
-            expect(penalty).toBe(35);
-            expect(earned).toBe(190 - penalty);
+            expect(penalty).toBe(45);
+            expect(earned).toBe(250 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
@@ -169,13 +175,14 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.significant-digit.is-first:visible')).toContainText('2');
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await page.screenshot({ path: `/private/tmp/significant-learn-${width}.png`, fullPage: true });
-        for (let index = 1; index < 9; index++) {
-            await mainAction(page).click();
+        // 9 screens of its own, then the 6 moved from the Rounding lesson, which ask for a tap.
+        for (let screen = 0; screen < 15; screen++) {
+            if (await tapRow(page).count()) await solve(page);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-            if (index === 5 || index === 6 || index === 8) await page.screenshot({ path: `/private/tmp/significant-learn-${index + 1}-${width}.png`, fullPage: true });
+            if (screen === 5 || screen === 6 || screen === 8) await page.screenshot({ path: `/private/tmp/significant-learn-${screen + 1}-${width}.png`, fullPage: true });
+            await mainAction(page).click();
         }
-        await mainAction(page).click();
-        await expect(page.getByRole('heading', { name: 'Example 1 of 4 · Step 1 of 3', exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Example 1 of 10 · Step 1 of 3', exact: true })).toBeVisible();
         await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(0);
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
@@ -191,13 +198,14 @@ for (const width of [1280, 375]) {
         await page.screenshot({ path: `/private/tmp/significant-try-${width}.png`, fullPage: true });
         await solve(page);
         await checkThenMoveOn(page, () => expect(page.locator('.significant-equation:visible')).toHaveText('0.0283 ≈ 0.03'));
+        // The rest of the four guided examples: three steps each.
         for (let card = 0; card < 9; card++) {
             await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
             await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(card % 3 === 0 ? 0 : 1);
             await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(card % 3 === 2 ? 1 : 0);
             if (card === 5 || card === 8) await page.screenshot({ path: `/private/tmp/significant-guided-${card}-${width}.png`, fullPage: true });
             if (card === 8) {
-                await expect(page.getByRole('heading', { name: 'Example 4 of 4 · Step 3 of 3', exact: true })).toBeVisible();
+                await expect(page.getByRole('heading', { name: 'Example 4 of 10 · Step 3 of 3', exact: true })).toBeVisible();
                 await expect(prompt(page)).toContainText('Keep the zero at the end after the decimal point.');
                 await page.locator('.question-card:visible input[type=text]').fill('15');
                 await mainAction(page).click();
@@ -207,7 +215,21 @@ for (const width of [1280, 375]) {
             await solve(page);
             await checkThenMoveOn(page);
         }
-        await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
+        // Then the one-step examples moved from the Rounding lesson: the digits appear
+        // only after the answer, and the counting question has no digit picture at all.
+        for (let example = 5; example <= 10; example++) {
+            await expect(page.getByRole('heading', { name: `Example ${example} of 10 · Step 1 of 1`, exact: true })).toBeVisible();
+            await expect(page.locator('.significant-digit:visible')).toHaveCount(0);
+            if (example === 6) await page.screenshot({ path: `/private/tmp/significant-moved-${width}.png`, fullPage: true });
+            await solve(page);
+            if (example === 10) {
+                await checkThenMoveOn(page);
+                continue;
+            }
+            await checkThenMoveOn(page, () => expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(1));
+        }
+        // No completed-examples page: the last example goes straight on to Practice.
+        await expect.poll(() => page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id)).toBe('question-bank');
         await context.close();
     });
 
@@ -238,7 +260,7 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('15.0');
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
-        expect(await score(page)).toBe(185);
+        expect(await score(page)).toBe(245);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await page.screenshot({ path: `/private/tmp/significant-summary-${width}.png`, fullPage: true });
         await context.close();
