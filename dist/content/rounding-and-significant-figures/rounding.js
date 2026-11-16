@@ -558,10 +558,6 @@
             nearest: 'So 342 is closer to 340.'
         } },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
-        { title: "Now let's round 642 to the nearest 100.", lines: ['642 sits between 600 and 700. Here it is on the number line, counting in tens.'], line: true, base: 600, step: 10, value: 642, labels: 'landmarks', notes: {
-            digit: 'The tens digit is 4. That is less than 5, so round down.',
-            nearest: 'So 642 is closer to 600.'
-        } },
         // Worked step by step: find the digit, put it on a line, look at the next digit, round.
         { title: "Now let's round 48,672 to the nearest 100.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
             find: 'Step 1: We are rounding to the nearest 100, so find the hundreds digit.',
