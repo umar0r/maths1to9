@@ -17,7 +17,8 @@ assert.notEqual(engine.tidyNumber('1'), '1.0');
 assert.equal(engine.tidyNumber('1.0'), '1.0');
 assert.notEqual(engine.tidyNumber('1.00'), '1.0');
 for (const q of [...Q.examples(), ...Q.checks()]) {
-    if (q.input === 'number') { assert.equal(q.exact, q.kind !== 'nearest'); assert.notEqual(engine.tidyNumber(q.answer), null); }
+    if (q.input === 'number') { // Rounding to decimal places or significant figures keeps exact zeros; nearest-10s and real-life answers do not.
+        assert.equal(q.exact, Boolean(q.kind) && q.kind !== 'nearest', q.prompt); assert.notEqual(engine.tidyNumber(q.answer), null); }
     if (q.options) assert.equal(q.options.filter(o => o.correct).length, 1);
 }
 const planned = [
@@ -27,7 +28,7 @@ const planned = [
     ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 195);
+assert.equal(tracker.getScore().maximumPoints, 345);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);

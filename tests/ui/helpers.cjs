@@ -28,9 +28,9 @@ async function screen(page) {
         const scores = [...document.querySelectorAll(SCORE)].filter(visible);
         const buttons = [...document.querySelectorAll('button, a.button')].filter(visible).filter(b => !b.closest('nav'));
         return {
-            where: `${location.hash || '(no hash)'} "${text([...document.querySelectorAll('h2')].find(visible) ?? document.body).slice(0, 60)}"`,
+            where: `${location.hash || '(no hash)'} "${text([...document.querySelectorAll('h2, [data-screen-heading]')].find(visible) ?? document.body).slice(0, 60)}"`,
             hash: location.hash,
-            heading: text([...document.querySelectorAll('h2')].find(visible) ?? document.body).slice(0, 80),
+            heading: text([...document.querySelectorAll('h2, [data-screen-heading]')].find(visible) ?? document.body).slice(0, 80),
             // The marks pill holds the number, then a "marks" tag.
             scores: scores.map(el => ({ text: text(el.querySelector('.lesson-header__stage-progress-points') ?? el), label: el.getAttribute('aria-label') ?? '', inHeader: !!el.closest('header') })),
             mainActions: [...document.querySelectorAll(MAIN_ACTION)].filter(visible).map(b => ({ text: text(b), disabled: b.disabled })),

@@ -37,15 +37,15 @@ for (const width of [1280, 375]) {
     test.describe(`rounding-and-significant-figures ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
         test('new work survives retries, reloads, Back and two more Practice sessions', async ({ page }) => {
-            test.setTimeout(180_000);
+            test.setTimeout(420_000);
             const errors = watchForErrors(page);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
             await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByText('Rounding replaces a number with a nearby, simpler number.', { exact: true })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Rounding means changing a number to a simpler number that is close to it.', exact: true })).toBeVisible();
             const tested = new Set();
             let penalty = 0;
             const visited = new Set();
-            for (let step = 0; step < 160; step++) {
+            for (let step = 0; step < 400; step++) {
                 const url = page.url();
                 if (!visited.has(url)) {
                     await goBackAndForward(page);
@@ -61,6 +61,12 @@ for (const width of [1280, 375]) {
                     await reload(page);
                     await expect(slider).toHaveValue('70');
                 }
+                // Learn tap screens and the road game: the solver taps or drives, then the button moves on.
+                if (await page.locator('.rounding-end:visible, .significant-digits[role=group]:visible, .rounding-road svg[aria-disabled="false"]:visible').count()) {
+                    await solve(page);
+                    if (await button.isEnabled()) await button.click();
+                    continue;
+                }
                 if (await prompt(page).count() && await button.innerText() === 'Check') {
                     const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
                     const options = page.locator('.question-card-options:visible button');
@@ -71,7 +77,8 @@ for (const width of [1280, 375]) {
                         tested.add(key);
                         await solve(page);
                         if (kind === 'choice') {
-                            await expect(options).toHaveCount(4);
+                            // Four choices, except tapping a digit of 345, which has three digits.
+                            expect([3, 4]).toContain(await options.count());
                             const rightLabel = await page.locator('.question-card-options:visible button.is-selected').innerText();
                             const labels = await options.allTextContents();
                             const feedbacks = new Set();
@@ -86,7 +93,7 @@ for (const width of [1280, 375]) {
                                 await expect(page.locator('.question-feedback:visible')).toHaveText(feedback);
                                 await button.click();
                             }
-                            expect(feedbacks.size).toBe(3);
+                            expect(feedbacks.size).toBe(labels.length - 1);
                         } else {
                             await page.locator('.question-card:visible input[type=text]').fill('999');
                             await reload(page); // answering, with typed input
@@ -124,7 +131,7 @@ for (const width of [1280, 375]) {
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
             expect(penalty).toBe(35);
-            expect(earned).toBe(195 - penalty);
+            expect(earned).toBe(445 - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('2nd try');
@@ -155,7 +162,7 @@ for (const width of [1280, 375]) {
 test('rounding-and-significant-figures: built static lesson finishes and All lessons reaches its homepage', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('dist/content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-    for (let step = 0; step < 100; step++) {
+    for (let step = 0; step < 400; step++) {
         if (await mainAction(page).innerText() === 'All lessons') break;
         if (await solve(page)) continue;
         await mainAction(page).click();
@@ -173,33 +180,51 @@ for (const width of [1280, 375]) {
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
         await expect(prompt(page)).toHaveCount(0);
-        await expect(page.locator('.rounding-marker:visible')).toHaveText('67');
-        await expect(page.locator('.significant-equation:visible')).toHaveText('67 ≈ 70');
-        await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
         await mainAction(page).click();
-        await expect(mainAction(page)).toBeDisabled();
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('67');
+        await expect(page.locator('.significant-equation:visible')).toHaveText('67 ≈ 70');
+        await mainAction(page).click();
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('342');
+        await expect(page.locator('.significant-equation:visible')).toHaveText('342 ≈ 340');
+        await mainAction(page).click();
+        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('3,486');
+        await expect(page.locator('.significant-equation:visible')).toHaveText('3,486 ≈ 3,490');
+        await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
+        // The slider is the first Try it screen, after the rest of Learn.
         const slider = page.getByRole('slider', { name: 'Number on the line' });
+        for (let click = 0; click < 40 && !await slider.count(); click++) {
+            if (!await solve(page)) await mainAction(page).click();
+        }
+        await expect(page.getByRole('heading', { name: "Let's see what numbers round to.", exact: true })).toBeVisible();
+        await expect(mainAction(page)).toBeDisabled();
+        const before = await score(page);
         await slider.focus();
         for (let number = 60; number <= 70; number++) {
             await slider.press(number === 60 ? 'Home' : 'ArrowRight');
             await expect(slider).toBeFocused();
             await expect(slider).toHaveValue(String(number));
-            await expect(page.locator('.rounding-marker:visible')).toHaveText(String(number));
+            await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText(String(number));
             await expect(page.locator('.significant-equation:visible')).toHaveText(`${number} ≈ ${number < 65 ? 60 : 70}`);
-            expect(await score(page)).toBe(5);
+            expect(await score(page)).toBe(before + 5);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             if (number === 65) {
                 await page.screenshot({ path: `/private/tmp/rounding-halfway-${width}.png`, fullPage: true });
                 await reload(page);
                 await expect(slider).toHaveValue('65');
-                await expect(page.locator('.rounding-marker:visible')).toHaveText('65');
+                await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('65');
                 await slider.focus();
             }
         }
         await reload(page);
         await expect(slider).toHaveValue('70');
-        expect(await score(page)).toBe(5);
+        expect(await score(page)).toBe(before + 5);
         await expect(mainAction(page)).toBeEnabled();
+        await mainAction(page).click();
+        // The road game follows the slider.
+        await expect(page.getByText('Drive the car to the nearer sign.', { exact: true })).toBeVisible();
+        await expect(page).toHaveURL(/#try-it-2$/);
+        await page.getByRole('button', { name: 'Previous screen' }).click();
+        await expect(slider).toHaveValue('70');
         await context.close();
     });
 
@@ -207,19 +232,35 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-        for (let index = 1; index < 11; index++) {
-            await mainAction(page).click();
-            if (index === 1) await solve(page);
+        // Through Learn (tapping where a screen asks), the slider and the four road cars.
+        for (let step = 0; step < 80; step++) {
+            if (await page.getByRole('heading', { name: /^Example 1 of \d+ · Step 1 of 4$/ }).isVisible()) break;
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-            if ([5, 7, 9].includes(index)) await page.screenshot({ path: `/private/tmp/rounding-learn-${index + 1}-${width}.png`, fullPage: true });
+            if (await solve(page)) continue;
+            await mainAction(page).click();
         }
-        await mainAction(page).click();
-        await expect(page.getByRole('heading', { name: 'Example 1 of 4 · Step 1 of 3', exact: true })).toBeVisible();
-        for (let card = 0; card < 12; card++) {
+        const count = await page.evaluate(() => window.Rounding.exampleCount);
+        await expect(page.getByRole('heading', { name: `Example 1 of ${count} · Step 1 of 4`, exact: true })).toBeVisible();
+        await expect(page).toHaveURL(/#try-it-6$/);
+        const cards = await page.evaluate(() => window.Rounding.examples().map(q => ({
+            stage: q.stage, number: q.number, hidden: Boolean(q.showDigitsAfterAnswer),
+            // The step-by-step examples move on by themselves; the later ones wait for Continue.
+            auto: q.example <= window.Rounding.guided.length
+        })));
+        const stages = cards.map(card => card.stage);
+        expect(stages[6]).toBe('round');
+        const zeroCard = cards.findIndex(card => card.number === '9.964' && card.stage === 'round');
+        for (let card = 0; card < stages.length; card++) {
+            const stage = stages[card];
             await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
-            await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(card % 3 === 0 ? 0 : 1);
-            await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(card % 3 === 2 ? 1 : 0);
-            if (card === 11) {
+            if (stage === 'context' || cards[card].hidden) {
+                // Real-life steps have no digit picture; one-step examples show it only after the answer.
+                await expect(page.locator('.significant-digit:visible')).toHaveCount(0);
+            } else {
+                await expect(page.locator('.significant-digit.is-keep:visible')).toHaveCount(stage === 'keep' ? 0 : 1);
+                await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(stage === 'decide' || stage === 'round' ? 1 : 0);
+            }
+            if (card === zeroCard) {
                 await expect(prompt(page)).toContainText('Keep the zero at the end after the decimal point.');
                 await page.screenshot({ path: `/private/tmp/rounding-guided-zero-${width}.png`, fullPage: true });
                 await page.locator('.question-card:visible input[type=text]').fill('10');
@@ -227,12 +268,19 @@ for (const width of [1280, 375]) {
                 await expect(mainAction(page)).toHaveText('Try again');
                 await mainAction(page).click();
             }
-            if (card === 2) await page.locator('.question-card:visible input[type=text]').fill('2,700.0');
+            if (card === 6) await page.locator('.question-card:visible input[type=text]').fill('2,700.0');
             else await solve(page);
-            await checkThenMoveOn(page, card % 3 === 2 ? () => expect(page.locator('.significant-equation:visible')).toHaveCount(1) : undefined);
+            if (cards[card].auto) {
+                await checkThenMoveOn(page, stage === 'round' ? () => expect(page.locator('.significant-equation:visible')).toHaveCount(1) : undefined);
+            } else {
+                await mainAction(page).click();
+                await expect(mainAction(page)).toHaveText('Continue');
+                if (stage === 'round') await expect(page.locator('.significant-equation:visible')).toHaveCount(1);
+                await mainAction(page).click();
+            }
         }
-        await expect(page.getByRole('heading', { name: 'Your completed examples', exact: true })).toBeVisible();
-        await expect(page.locator('.significant-digits:visible')).toHaveCount(12);
+        // No completed-examples page: the last example goes straight on to Practice.
+        await expect.poll(() => page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id)).toBe('question-bank');
         await context.close();
     });
 
@@ -241,7 +289,7 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-        for (let step = 0; step < 150; step++) {
+        for (let step = 0; step < 400; step++) {
             const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
             if (section === 'comparison' && await prompt(page).count() && (await prompt(page).innerText()).includes('1.049')) break;
             if (await solve(page)) continue;
@@ -263,7 +311,7 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('1.0');
         await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('2nd try');
-        expect(await score(page)).toBe(190);
+        expect(await score(page)).toBe(440);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await context.close();
     });

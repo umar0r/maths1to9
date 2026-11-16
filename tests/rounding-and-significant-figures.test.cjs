@@ -11,13 +11,15 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const { seededRandom, tidyNumber } = window.Maths1to9LessonEngine;
 const folder = path.join(contentDir, 'rounding-and-significant-figures');
 const data = JSON.parse(fs.readFileSync(path.join(folder, 'lesson.json')));
-const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'guided', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
+const Q = loadScript(path.join(folder, 'rounding.js'), ['roundSig', 'roundToPower', 'rounded', 'keyDigits', 'accuracyText', 'examples', 'checks', 'practiceTypes', 'pick', 'generate', 'prepare', 'learnScreens'], { window });
 const generated = Q.practiceTypes.flatMap(type => ['choice', 'number'].flatMap(mode => Array.from({ length: 200 }, (_, seed) => Q.generate({ type, mode }, seededRandom(Math.imul(seed, 2654435761) >>> 0)))));
 const questions = [...Q.examples(), ...Q.checks(), ...generated];
 const answerOf = q => q.answer ?? q.options.find(o => o.correct).label;
 const clean = text => text.replace(/,/g, '');
 function accuracyIn(text) {
     let m;
+    if ((m = text.match(/nearest million/))) return { kind: 'nearest', accuracy: 6, phrase: m[0] };
+    if ((m = text.match(/nearest whole number/))) return { kind: 'nearest', accuracy: 0, phrase: m[0] };
     if ((m = text.match(/nearest (\d[\d,]*)/))) return { kind: 'nearest', accuracy: clean(m[1]).length - 1, phrase: m[0] };
     if ((m = text.match(/(\d+) decimal places?/))) return { kind: 'decimal', accuracy: Number(m[1]), phrase: m[0] };
     if ((m = text.match(/(\d+) significant figures?/))) return { kind: 'sig', accuracy: Number(m[1]), phrase: m[0] };
@@ -49,10 +51,12 @@ test('rounding-and-significant-figures: every rounding prompt is recognised and 
 
 test('rounding-and-significant-figures: all choices have four distinct forms, one correct answer and distinct feedback', () => {
     for (const q of questions.filter(q => q.options)) {
-        assert.equal(q.options.length, 4, q.prompt);
+        // Tapping a digit: one button per digit, up to four (345 only has three digits).
+        const size = q.stage === 'keep' || q.stage === 'decider' ? Math.min(4, q.number.replace(/\D/g, '').length) : 4;
+        assert.equal(q.options.length, size, q.prompt);
         assert.equal(q.options.filter(o => o.correct).length, 1, q.prompt);
-        assert.equal(new Set(q.options.map(o => o.label)).size, 4, q.prompt);
-        assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.label)).size, size, q.prompt);
+        assert.equal(new Set(q.options.map(o => o.feedback)).size, size, q.prompt);
         assert.ok(q.options.every(o => o.feedback));
         if (q.stage === 'round') {
             const answer = expected(q.number, q.kind, q.accuracy);
@@ -63,14 +67,18 @@ test('rounding-and-significant-figures: all choices have four distinct forms, on
 });
 
 test('rounding-and-significant-figures: typed answers keep exact zeros, with rules and a fallback', () => {
-    for (const q of questions.filter(q => q.input === 'number')) {
+    // Real-life steps have no rounding kind: their answers are plain numbers.
+    for (const q of questions.filter(q => q.input === 'number' && q.stage === 'context')) {
+        assert.equal(q.exact, false, q.prompt);
+        assert.ok(q.feedback && q.fallback, q.prompt);
+    }
+    for (const q of questions.filter(q => q.input === 'number' && q.stage !== 'context')) {
         assert.equal(q.exact, q.kind !== 'nearest');
         assert.ok(q.rules.length && q.fallback && q.feedback);
         for (const rule of q.rules) assert.notEqual(tidyNumber(rule.value), tidyNumber(q.answer), q.prompt);
         if (q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
     }
     assert.equal(Q.checks().at(-1).answer, '1.0');
-    assert.equal(Q.examples().at(-1).answer, '10.0');
 });
 
 test('rounding-and-significant-figures: explanations name the right deciding digit and state the answer', () => {
@@ -81,10 +89,10 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
     }
 });
 
-test('rounding-and-significant-figures: four guided examples and Learn pictures highlight the right digits', () => {
-    assert.equal(Q.guided.length, 4);
-    assert.equal(Q.examples().length, 12);
-    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 12);
+test('rounding-and-significant-figures: Try it examples and Learn pictures highlight the right digits', () => {
+    assert.equal(Q.examples().length, 38);
+    // Each example step and each of the four road cars is one guided step.
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 38 + 4);
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);
@@ -96,7 +104,8 @@ test('rounding-and-significant-figures: four guided examples and Learn pictures 
         const target = keyDigits(screen.number, screen.kind, screen.accuracy);
         assert.equal(positions.target, target.target);
         assert.equal(positions.decider, target.decider);
-        for (const equation of screen.equations || []) {
+        // '0.730 → 3 significant figures' counts figures; it isn't a rounding.
+        for (const equation of (screen.equations || []).filter(equation => equation.includes('≈'))) {
             const match = equation.replace(/ metres/g, '').match(/^([\d,.]+) ≈ ([\d,.]+)$/);
             assert.ok(match, equation);
             assert.equal(clean(match[2]), expected(clean(match[1]), screen.kind, screen.accuracy), equation);
@@ -124,7 +133,8 @@ test("rounding-and-significant-figures: Amir's claim is wrong and the explanatio
 
 test('rounding-and-significant-figures: 200 seeds per type and input mode are deterministic and mapped to the three existing skills', () => {
     for (const type of Q.practiceTypes) {
-        const skill = /significant/.test(type) ? 'round-significant-figures' : type === 'path-context' ? 'round-in-context' : 'round-decimal-places';
+        const context = ['path-context', 'round-up', 'round-down', 'full-groups'];
+        const skill = /significant|^sig-/.test(type) ? 'round-significant-figures' : context.includes(type) ? 'round-in-context' : 'round-decimal-places';
         assert.equal(data.assessment.question_types[type], skill);
         const positions = new Set();
         for (const mode of ['choice', 'number']) for (let seed = 0; seed < 200; seed++) {
@@ -136,19 +146,22 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
     }
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
-        assert.equal(items.length, 6);
+        assert.equal(items.length, 10);
         assert.equal(items.length, data.question_bank.session_length);
         const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
-        assert.equal(qs.filter(q => q.input === 'choice').length, 3);
-        assert.equal(qs.filter(q => q.input === 'number').length, 3);
+        // Practice mixes multiple choice and typed answers.
+        assert.ok(qs.some(q => q.input === 'choice') && qs.some(q => q.input === 'number'), `seed ${seed}`);
         assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-significant-figures', 'round-in-context']));
     }
-    for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number']));
+    // Try it is hands-on, so it has no multiple choice. Check mixes both.
+    assert.ok(Q.examples().every(q => q.input !== 'choice'));
+    assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice', 'number']));
     assert.equal(Q.checks().length, 5);
 });
 
 test('rounding-and-significant-figures: wording and input numbers are tidy and style matches significant figures', () => {
-    for (const q of generated) assert.doesNotMatch(q.number, /\.\d*0$/);
+    // Real-life questions have no number to round; the rest never start with a trailing decimal zero.
+    for (const q of generated.filter(q => q.number)) assert.doesNotMatch(q.number, /\.\d*0$/);
     for (const text of allStrings([questions, Q.learnScreens])) {
         assert.doesNotMatch(text, /\b1 decimal places\b|\b1 significant figures\b|AQA|Edexcel|OCR/);
         assert.doesNotMatch(text, /\d+\.\d{12,}|\b(?:color|center|recognize|organize)\b/);
