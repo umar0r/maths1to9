@@ -575,14 +575,10 @@
             digit: 'Step 3: Look at the next digit. The tens digit is 7. That is 5 or more, so round up.',
             nearest: 'Step 4: So 48,672 rounds up to 48,700.'
         } },
-        { title: "Now let's round 4,682 to the nearest 1,000.", lines: ['4,682 sits between 4,000 and 5,000. Here it is on the number line, counting in hundreds.'], line: true, base: 4000, step: 100, value: 4682, notes: {
+        { title: "Now let's round 4,682 to the nearest 1,000.", lines: ['4,682 sits between 4,000 and 5,000. Here it is on the number line, counting in hundreds.'], line: true, base: 4000, step: 100, value: 4682, tap: 'end', notes: {
             digit: 'The hundreds digit is 6. That is 5 or more, so round up.',
             nearest: 'So 4,682 is closer to 5,000.'
         }, labels: 'landmarks', caption: 'Keep the zeros. Writing just 5 would make the number much too small.' },
-        { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', labels: 'landmarks', notes: {
-            digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
-            nearest: 'So 46,728 is closer to 47,000.'
-        } },
         { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
         { title: 'Keep a final decimal zero', lines: ['To round 3.04 to 1 decimal place, keep the tenths digit, 0.', 'The next digit is 4, so the 0 stays. Write 3.0 to show one digit after the point.'], number: '3.04', kind: 'decimal', accuracy: 1, equations: ['3.04 ≈ 3.0'] },
         { title: 'Significant figures', lines: ['Significant figures are the digits that show how accurate a number is. Start at the first digit that is not zero.', 'In 0.004782, keep 4 and 7 for 2 significant figures. The next digit is 8, so round up. Keep the starting zeros.'], number: '0.004782', kind: 'sig', accuracy: 2, equations: ['0.004782 ≈ 0.0048'] },
@@ -1080,7 +1076,7 @@
             const onPick = value => onResult(value === answer, hint);
             if (screen.context) drawContextLine(host, screen, onPick);
             else {
-                text(host, 'p', 'Which is it closer to?');
+                text(host, 'p', `Tap the number ${screen.value.toLocaleString('en-GB')} is closer to.`);
                 drawLine(host, screen.value, false, null, false, screen.base, null, screen.step, {
                     wideLabels: true, labels: screen.labels, onPick
                 });
