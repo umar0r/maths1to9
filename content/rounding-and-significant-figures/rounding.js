@@ -95,7 +95,7 @@
         const otherAccuracy = kind === 'sig' ? Math.max(1, accuracy - 1) : kind === 'decimal' ? Math.max(0, accuracy - 1) : accuracy + 1;
         const wrongKind = kind === 'decimal' && otherAccuracy === 0 ? 'nearest' : kind;
         const mistakes = [
-            ...(answer.includes('.') && answer.endsWith('0') ? [[answer.slice(0, -1), 'Keep the final zero after the decimal point. It shows the accuracy asked for.']] : []),
+            ...(answer.includes('.') && answer.endsWith('0') ? [[answer.slice(0, -1).replace(/\.$/, ''), 'Keep the final zero after the decimal point. It shows the accuracy asked for.']] : []),
             [rounded(number, kind, accuracy, 'down'), 'That drops the later digits without rounding up. The next digit is 5 or more.'],
             [rounded(number, kind, accuracy, 'up'), 'That rounds up. The next digit is less than 5, so keep the last digit as it is.'],
             ...(!answer.includes('.') && answer.endsWith('0') ? [[answer.replace(/0+$/, ''), 'That drops the zeros that keep the number the right size. Keep those whole-number places.']] : []),
@@ -403,10 +403,14 @@
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        const groups = [...practiceGroups, practiceGroups[randomInt(0, 4, random)]];
-        const candidates = shuffle(groups.map(group => ({
+        const extraGroup = randomInt(0, 4, random);
+        const picks = practiceGroups.map(group => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
-        })), random);
+        }));
+        const { group, type } = picks[extraGroup];
+        const unused = group.types.filter(candidate => candidate !== type);
+        picks.push({ group, type: unused[randomInt(0, unused.length - 1, random)] });
+        const candidates = shuffle(picks, random);
 
         // Backtrack if a legal next card would leave no way to place the remaining cards.
         function order(remaining, ordered) {
