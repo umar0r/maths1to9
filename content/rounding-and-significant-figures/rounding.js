@@ -451,25 +451,23 @@
             rules.map(([value, message]) => [String(value), message]));
     }
 
-    function countSignificantFigures(integer) {
+    function countSignificantFigures(item, integer, random) {
         const a = integer(1, 9);
         const b = integer(1, 9);
-        const patterns = [[`0.${a}${b}0`, 3], [`0.${a}0`, 2], [`${a}.${b}0`, 3], [`0.0${a}${b}`, 2], [`${a}0${b}`, 3]];
-        const [number, answer] = patterns[integer(0, patterns.length - 1)];
-        const rules = [];
-        if (number.startsWith('0.')) {
-            rules.push([answer + 1, "The 0 before the point doesn't count. Start at the first digit that isn't zero."]);
-        }
-        if (number.includes('.') && number.endsWith('0')) {
-            rules.push([answer - 1, 'A zero at the end of a decimal counts. It shows the accuracy.']);
-        }
-        const digitCount = number.replace('.', '').length;
-        if (digitCount !== answer && !rules.some(([value]) => value === digitCount)) {
-            rules.push([digitCount, "Zeros at the start don't count."]);
-        }
-        return contextStep('sig-count', `How many significant figures does ${number} show?`, String(answer),
-            `Start at the first digit that isn't zero. ${number} shows ${figures(answer)}.`,
-            rules.map(([value, message]) => [String(value), message]));
+        const firstOnly = 'You have counted only the first significant figure. Count every digit after it as well.';
+        const middleZero = 'A zero between significant figures counts too.';
+        const point = 'The decimal point is not a digit. Do not count it.';
+        const leadingZeros = "Zeros before the first non-zero digit don't count.";
+        const patterns = [
+            [`0.${a}${b}`, 2, [[1, firstOnly], [3, leadingZeros], [4, point]]],
+            [`0.${a}0${b}`, 3, [[1, firstOnly], [2, middleZero], [4, leadingZeros]]],
+            [`${a}.0${b}`, 3, [[1, 'Count the digits after the point as well as the ones digit.'], [2, middleZero], [4, point]]],
+            [`0.0${a}${b}`, 2, [[1, firstOnly], [3, 'Start at the first non-zero digit, not the first decimal place.'], [4, leadingZeros]]],
+            [`${a}0${b}`, 3, [[0, 'Whole numbers have significant figures too.'], [1, firstOnly], [2, middleZero]]]
+        ];
+        const [number, answer, rules] = patterns[integer(0, patterns.length - 1)];
+        return practiceContext(item, `How many significant figures does ${number} show?`, answer,
+            `Start at the first digit that isn't zero. ${number} shows ${figures(answer)}.`, rules, random);
     }
 
     function divisionText(total, size) {
@@ -569,13 +567,13 @@
             number = `0.${'0'.repeat(integer(1, 2))}${integer(1, 9)}${integer(1, 9)}`;
             kind = 'sig'; accuracy = 1; break;
         case 'sig-three-small':
-            number = `0.00${integer(10000, 99999)}`;
+            number = `0.00${nonZeroEnd(integer(10000, 99999))}`;
             kind = 'sig'; accuracy = 3; break;
         case 'sig-no-lead':
-            number = `0.${integer(10000, 99999)}`;
+            number = `0.${nonZeroEnd(integer(10000, 99999))}`;
             kind = 'sig'; accuracy = 2; break;
         case 'sig-count':
-            return countSignificantFigures(integer);
+            return countSignificantFigures(item, integer, random);
         case 'round-up':
         case 'round-down':
         case 'full-groups':
@@ -866,11 +864,16 @@
                     picture += `<path class="rounding-tick${landmark}" d="M ${x(mile)} ${axis - reach} V ${axis + reach}"/>
                         <text class="rounding-value${landmark}" x="${x(mile)}" y="157">${format(mile)}</text>`;
                 }
+                picture += `<circle class="rounding-road__start" cx="${x(start)}" cy="${axis}" r="6" fill="#64748b"/>`;
                 for (const end of [base, top]) {
-                    picture += `<g class="rounding-road__sign" transform="translate(${x(end)} 12)">
-                        <path d="M 0 30 V ${axis - 24}"/>
-                        <rect x="-25" width="50" height="30" rx="4"/>
-                        <text class="rounding-value is-landmark" x="0" y="20">${format(end)}</text>
+                    const label = format(end);
+                    const position = x(end);
+                    const width = Math.max(50, label.length * 12 + 18);
+                    const left = Math.max(2, Math.min(658 - width, position - width / 2));
+                    picture += `<g class="rounding-road__sign" transform="translate(0 12)">
+                        <path d="M ${position} 30 V ${axis - 24}"/>
+                        <rect x="${left}" width="${width}" height="30" rx="4"/>
+                        <text class="rounding-value is-landmark" x="${left + width / 2}" y="20">${label}</text>
                     </g>`;
                 }
                 line.innerHTML = `<svg viewBox="0 0 660 169" role="slider" aria-label="Car position"

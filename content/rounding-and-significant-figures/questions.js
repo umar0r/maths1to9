@@ -13,7 +13,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 3, count: api.getLesson().question_bank.session_length,
+            version: 4, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Rounding.pick,
             question: window.Rounding.generate,

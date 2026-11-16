@@ -21,20 +21,10 @@
         document.getElementById('lesson-section-explanation').append(root);
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
-        let upgraded = false;
         const section = await api.useSectionState('learn', {
             version: 2,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
-            upgrade(saved, version) {
-                if (version !== 1) return null;
-                upgraded = true;
-                const oldScreens = screens.flatMap((screen, index) => screen.tap ? [] : [index]);
-                return {
-                    ...saved, taps: {},
-                    screen: oldScreens[saved.screen] ?? 0,
-                    furthestScreen: oldScreens[saved.furthestScreen] ?? 0
-                };
-            }
+            upgrade: () => null
         });
         const state = section.state;
         section.save();
@@ -132,7 +122,7 @@
         });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         const requested = screens.findIndex((screen, index) => initialHash === `#learn-${index + 1}`);
-        if (requested >= 0 && !upgraded) showScreen(Math.min(requested, state.furthestScreen));
+        if (requested >= 0) showScreen(Math.min(requested, state.furthestScreen));
         else render();
     }
 
@@ -141,24 +131,12 @@
         const { roadMiles, roadWidget } = window.Rounding;
         const exampleOffset = roadMiles.length + 1;
         const roadCardId = index => `road-${index + 1}`;
-        const millionStart = questions.findIndex(question => question.number === '3724900');
-        const millionSteps = questions[millionStart].steps;
-        // The original 20 steps and four road challenges already have saved scores.
-        const earlierStepCount = window.Rounding.guided.reduce((count, example) => count + (example[4]?.decide ? 4 : 3), 0);
-        const roadScoreId = index => `step:interactive:${earlierStepCount + index}`;
-        const exampleId = index => {
-            if (index >= earlierStepCount) return index + roadMiles.length;
-            if (index < millionStart) return index;
-            if (index < millionStart + millionSteps) return earlierStepCount - millionSteps + index - millionStart;
-            return index - millionSteps;
-        };
-        const cardId = index => `example-${exampleId(index) + 1}`;
+        const cardId = index => `example-${index + 1}`;
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
-        let upgraded = false;
         const section = await api.useSectionState('interactive', {
-            version: 4,
+            version: 5,
             initial: () => ({
                 // intro: the number line slider shown before the first example.
                 intro: true, lineValue: 67, explored: false,
@@ -166,33 +144,10 @@
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
-            upgrade(saved, version) {
-                if (version !== 2 && version !== 3) return null;
-                upgraded = true;
-                const migrated = {
-                    ...saved, roadScreen: null, roadSolved: {},
-                    // Pupils who already entered the examples can still open them.
-                    roadReached: !saved.intro || saved.furthestScreen > 0 ? roadMiles.length : 0
-                };
-                if (version === 2) {
-                    // Resume at the first new example step if the pupil had already passed it.
-                    migrated.index = Math.min(saved.index, millionStart);
-                    migrated.screen = Math.min(saved.screen, millionStart);
-                    migrated.furthestScreen = Math.min(saved.furthestScreen, millionStart);
-                    migrated.finished = false;
-                }
-                return migrated;
-            }
+            upgrade: () => null
         });
         const state = section.state;
-        if (state.finished && state.index < questions.length) {
-            section.update(saved => {
-                saved.finished = false;
-                saved.furthestScreen = saved.index;
-            });
-        } else {
-            section.save();
-        }
+        section.save();
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
@@ -218,17 +173,9 @@
         }
 
         function reportProgress() {
-            questions.forEach((question, index) => {
-                if (state.cards[cardId(index)]?.correct) {
-                    api.recordActivity({ id: `step:interactive:${exampleId(index)}`, kind: 'guided' });
-                }
-            });
-            roadMiles.forEach((mile, index) => {
-                if (state.roadSolved[index]) {
-                    api.recordActivity({ id: roadScoreId(index), kind: 'guided' });
-                }
-            });
-            api.setSectionProgress('interactive', 0, questions.length + roadMiles.length);
+            const roads = Object.values(state.roadSolved).filter(Boolean).length;
+            const examples = state.index + Number(state.cards[cardId(state.index)]?.correct === true);
+            api.setSectionProgress('interactive', roads + examples, questions.length + roadMiles.length);
         }
 
         function continueExample() {
@@ -254,8 +201,8 @@
                 window.Rounding.drawExample(visual, example, correct);
             }
             api.createQuestion(cardRoot, {
-                ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + exampleId(index))), sectionId: 'interactive', questionId: cardId(index),
-                scored: false, readOnly, autoContinue: index < earlierStepCount,
+                ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: cardId(index),
+                scored: false, readOnly,
                 onReset: () => drawAnswer(false),
                 onReplayReset: () => drawAnswer(false),
                 onReplayFeedback: result => drawAnswer(result.correct),
@@ -378,10 +325,7 @@
         render();
         const requested = /^#try-it-(\d+)$/.exec(initialHash);
         if (requested && Number(requested[1]) <= lastScreen + 1) {
-            if (upgraded) {
-                api.goToSection('interactive', { moveFocus: false });
-                syncHash();
-            } else openHashScreen(Math.max(0, Number(requested[1]) - 1));
+            openHashScreen(Math.max(0, Number(requested[1]) - 1));
         }
     }
 
