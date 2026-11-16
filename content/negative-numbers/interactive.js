@@ -275,7 +275,7 @@
             const screen = screens[state.screen];
             // Each screen's main idea is its only heading; the Learn section
             // title is hidden in lesson.json.
-            root.innerHTML = `<h2 class="lesson-section__title" data-screen-heading tabindex="-1">${screen.heading}</h2>`;
+            root.innerHTML = `<h3 data-screen-heading tabindex="-1">${screen.heading}</h3>`;
             screen.lines.forEach(text => paragraph(text));
             if (screen.kind === 'thermometer') exploreThermometer();
             else if (screen.kind === 'sideways') showSidewaysThermometer();
@@ -678,7 +678,6 @@
             if (page.kind !== 'question') {
                 const heading = document.createElement('h3');
                 heading.dataset.screenHeading = '';
-                heading.className = 'lesson-section__title';
                 heading.textContent = 'When you multiply, the two signs tell you the sign of the answer.';
                 root.append(heading);
             }

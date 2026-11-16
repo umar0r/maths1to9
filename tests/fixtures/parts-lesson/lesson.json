@@ -1,0 +1,137 @@
+{
+  "slug": "parts-lesson",
+  "title": "Apples and pears",
+  "layout": "parts",
+  "navigation": {
+    "back_button": true
+  },
+  "parts": [
+    {
+      "id": "apples",
+      "label": "Apples",
+      "explanation": {
+        "hide_eyebrow": true,
+        "hide_heading": true
+      },
+      "interactive": {
+        "hide_eyebrow": true,
+        "hide_heading": true
+      },
+      "question_bank": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "session_length": 3
+      }
+    },
+    {
+      "id": "pears",
+      "label": "Pears",
+      "explanation": {
+        "hide_eyebrow": true,
+        "hide_heading": true
+      },
+      "interactive": {
+        "hide_eyebrow": true,
+        "hide_heading": true
+      },
+      "question_bank": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "session_length": 3
+      }
+    }
+  ],
+  "comparison": {
+    "hide_eyebrow": true,
+    "hide_heading": true,
+    "questions": [
+      {
+        "prompt": "How do you find the total when you join two groups of apples?",
+        "correct": "Add both groups.",
+        "wrong": [
+          {
+            "label": "Count the first group only.",
+            "feedback": "Count the second group too."
+          },
+          {
+            "label": "Count the second group only.",
+            "feedback": "Count the first group too."
+          },
+          {
+            "label": "Take one group away.",
+            "feedback": "The apples are all still there."
+          }
+        ],
+        "feedback": "Adding puts the two groups together."
+      },
+      {
+        "prompt": "Some pears are taken away. How do you find how many are left?",
+        "correct": "Count the pears that are left.",
+        "wrong": [
+          {
+            "label": "Count the pears taken away.",
+            "feedback": "Those pears are gone. Count the ones still there."
+          },
+          {
+            "label": "Count all the pears you started with.",
+            "feedback": "Some have gone, so there are fewer now."
+          },
+          {
+            "label": "Add the pears you started with and the pears taken away.",
+            "feedback": "Taking pears away makes the group smaller."
+          }
+        ],
+        "feedback": "Subtracting gives the number that are left."
+      }
+    ]
+  },
+  "question_bank": {
+    "hide_eyebrow": true,
+    "hide_heading": true,
+    "session_length": 4
+  },
+  "assessment": {
+    "question_types": {
+      "fruit-practice": [
+        "count-fruit"
+      ],
+      "fruit-check": [
+        "count-fruit"
+      ]
+    }
+  },
+  "score_activities": [
+    {
+      "id": "step:explanation--apples:0",
+      "kind": "guided"
+    },
+    {
+      "id": "step:explanation--apples:1",
+      "kind": "guided"
+    },
+    {
+      "id": "step:interactive--apples:0",
+      "kind": "guided"
+    },
+    {
+      "id": "step:interactive--apples:1",
+      "kind": "guided"
+    },
+    {
+      "id": "step:explanation--pears:0",
+      "kind": "guided"
+    },
+    {
+      "id": "step:explanation--pears:1",
+      "kind": "guided"
+    },
+    {
+      "id": "step:interactive--pears:0",
+      "kind": "guided"
+    },
+    {
+      "id": "step:interactive--pears:1",
+      "kind": "guided"
+    }
+  ]
+}
