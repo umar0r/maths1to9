@@ -388,15 +388,147 @@
             roundingQuestion('1.049', 'decimal', 1, 'number', 'context', 'A bottle holds 1.049 litres. Round this directly to 1 decimal place.')
         ];
     }
-    const practiceTypes = ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'one-decimal', 'two-decimals', 'decimal-zero', 'whole-significant', 'small-significant', 'decimal-carry', 'path-context'];
+    const practiceGroups = [
+        { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
+        { kind: 'place', types: ['one-decimal', 'two-decimals', 'whole-number'] },
+        { kind: 'place', types: ['decimal-zero', 'decimal-carry', 'carry-two'] },
+        { kind: 'sig', types: ['whole-significant', 'sig-three-zero'] },
+        { kind: 'sig', types: ['small-significant', 'sig-one-small', 'sig-three-small', 'sig-no-lead'] },
+        { kind: 'sig', types: ['sig-count'] },
+        { kind: 'context', types: ['round-up'] },
+        { kind: 'context', types: ['round-down'] },
+        { kind: 'context', types: ['full-groups', 'path-context'] }
+    ];
+    const practiceTypes = practiceGroups.flatMap(group => group.types);
+
     function pick(random) {
-        const { randomInt } = window.Maths1to9LessonEngine;
-        const groups = [['nearest-ten', 'halfway-hundred', 'nearest-thousand'], ['one-decimal', 'two-decimals'], ['decimal-zero', 'decimal-carry'], ['whole-significant', 'small-significant'], ['path-context'], practiceTypes];
-        return groups.map((group, index) => ({ type: group[randomInt(0, group.length - 1, random)], mode: [0, 2, 5].includes(index) ? 'choice' : 'number', seed: randomInt(0, 4294967295, random) }));
+        const { randomInt, shuffle } = window.Maths1to9LessonEngine;
+        const groups = [...practiceGroups, practiceGroups[randomInt(0, 4, random)]];
+        const candidates = shuffle(groups.map(group => ({
+            group, type: group.types[randomInt(0, group.types.length - 1, random)]
+        })), random);
+
+        // Backtrack if a legal next card would leave no way to place the remaining cards.
+        function order(remaining, ordered) {
+            if (!remaining.length) return ordered;
+            const last = ordered.at(-1)?.group;
+            const previous = ordered.at(-2)?.group;
+            for (const candidate of remaining) {
+                const { group } = candidate;
+                if (group === last || (group.kind === last?.kind && group.kind === previous?.kind)) continue;
+                const result = order(remaining.filter(item => item !== candidate), [...ordered, candidate]);
+                if (result) return result;
+            }
+            return null;
+        }
+
+        return order(candidates, []).map(({ type }, index) => ({
+            type, mode: index % 2 === 0 ? 'choice' : 'number', seed: randomInt(0, 4294967295, random)
+        }));
     }
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
     }
+    function practiceContext(item, prompt, answer, feedback, mistakes, random) {
+        const seen = new Set([answer]);
+        const rules = mistakes.filter(([value]) => {
+            if (seen.has(value)) return false;
+            seen.add(value);
+            return true;
+        });
+        if (item.mode === 'choice' && rules.length === 3) {
+            return prepare({
+                questionType: item.type, input: 'choice', prompt,
+                options: [option(spaced(answer), feedback, true),
+                    ...rules.map(([value, message]) => option(spaced(value), message))]
+            }, random);
+        }
+        return contextStep(item.type, prompt, String(answer), feedback,
+            rules.map(([value, message]) => [String(value), message]));
+    }
+
+    function countSignificantFigures(integer) {
+        const a = integer(1, 9);
+        const b = integer(1, 9);
+        const patterns = [[`0.${a}${b}0`, 3], [`0.${a}0`, 2], [`${a}.${b}0`, 3], [`0.0${a}${b}`, 2], [`${a}0${b}`, 3]];
+        const [number, answer] = patterns[integer(0, patterns.length - 1)];
+        const rules = [];
+        if (number.startsWith('0.')) {
+            rules.push([answer + 1, "The 0 before the point doesn't count. Start at the first digit that isn't zero."]);
+        }
+        if (number.includes('.') && number.endsWith('0')) {
+            rules.push([answer - 1, 'A zero at the end of a decimal counts. It shows the accuracy.']);
+        }
+        const digitCount = number.replace('.', '').length;
+        if (digitCount !== answer && !rules.some(([value]) => value === digitCount)) {
+            rules.push([digitCount, "Zeros at the start don't count."]);
+        }
+        return contextStep('sig-count', `How many significant figures does ${number} show?`, String(answer),
+            `Start at the first digit that isn't zero. ${number} shows ${figures(answer)}.`,
+            rules.map(([value, message]) => [String(value), message]));
+    }
+
+    function divisionText(total, size) {
+        const scaled = total * 1000;
+        const truncated = Math.floor(scaled / size) / 1000;
+        return `${truncated}${scaled % size ? '…' : '.'}`;
+    }
+
+    function generateSituation(item, integer, random) {
+        if (item.type === 'round-down') {
+            const pounds = integer(10, 40);
+            const budget = pounds * 100;
+            const prices = Array.from({ length: 77 }, (_, index) => 115 + index * 5)
+                .filter(price => budget % price !== 0);
+            const price = prices[integer(0, prices.length - 1)];
+            const money = pence => `£${(pence / 100).toFixed(2)}`;
+            const product = ['pen', 'ticket', 'notebook'][integer(0, 2)];
+            const quotient = budget / price;
+            const answer = Math.floor(quotient);
+            const next = answer + 1;
+            return practiceContext(item,
+                `You have £${pounds}. Each ${product} costs ${money(price)}. ${pounds} ÷ ${(price / 100).toFixed(2)} = ${divisionText(budget, price)} What is the greatest number you can buy?`,
+                answer, `${answer} × ${money(price)} = ${money(answer * price)}. ${next} cost ${money(next * price)}, which is more than £${pounds}.`, [
+                    [next, `That many cost more than £${pounds}. Round down.`],
+                    [Math.round(quotient) === answer ? next + 1 : Math.round(quotient), 'Here you always round down, even if the decimal is big.'],
+                    [Math.round(quotient * 10) / 10, "You can't buy part of one. Give a whole number."]
+                ], random);
+        }
+
+        const roundUp = item.type === 'round-up';
+        const size = roundUp ? integer(12, 30) : integer(6, 12);
+        const max = roundUp ? 300 : 200;
+        let total = integer(roundUp ? 100 : 40, max);
+        if (total % size === 0) total += total === max ? -1 : 1;
+        const quotient = total / size;
+        const lower = Math.floor(quotient);
+        const upper = lower + 1;
+        const roundedQuotient = Math.round(quotient * 10) / 10;
+        const working = `${total} ÷ ${size} = ${divisionText(total, size)}`;
+        if (roundUp) {
+            const books = integer(0, 1) === 0;
+            const [unit, units, contents] = books ? ['box', 'boxes', 'books'] : ['minibus', 'minibuses', 'people'];
+            const setup = books
+                ? `There are ${total} books to pack. Each box holds ${size} books.`
+                : `A trip needs seats for ${total} people. Each minibus seats ${size}.`;
+            return practiceContext(item,
+                `${setup} ${working} What is the smallest number of ${units} needed?`, upper,
+                `${upper} ${units} hold ${upper} × ${size} = ${upper * size} ${contents}, so all ${total} fit. ${lower} ${units} only hold ${lower * size}.`, [
+                    [lower, 'That leaves some with no space. You need one more.'],
+                    [Math.round(quotient) === upper ? lower - 1 : Math.round(quotient), 'Here you always round up, even if the decimal is small.'],
+                    [roundedQuotient, `You can't have part of a ${unit}. Give a whole number.`]
+                ], random);
+        }
+
+        return practiceContext(item,
+            `A club has ${total} stickers. It packs them in packets of ${size}. ${working} How many full packets can it make?`,
+            lower, `${lower} × ${size} = ${lower * size} stickers. That fills ${lower} packets and leaves ${total % size} over.`, [
+                [upper, "The last packet wouldn't be full."],
+                [total % size, 'That is how many are left over, not the number of packets.'],
+                [roundedQuotient, 'Only full packets count. Give a whole number.']
+            ], random);
+    }
+
     function generate(item, random) {
         const integer = (a, b) => window.Maths1to9LessonEngine.randomInt(a, b, random);
         const nonZeroEnd = value => value % 10 === 0 ? value + 1 : value;
@@ -411,13 +543,50 @@
         case 'whole-significant': number = String(nonZeroEnd(integer(1001, 8999))); kind = 'sig'; accuracy = 2; break;
         case 'small-significant': number = '0.' + '0'.repeat(integer(1, 3)) + nonZeroEnd(integer(1001, 8999)); kind = 'sig'; accuracy = 2; break;
         case 'decimal-carry': number = `9.9${integer(5, 9)}`; kind = 'decimal'; accuracy = 1; break;
+        case 'big-hundred':
+        case 'big-thousand': {
+            accuracy = item.type === 'big-hundred' ? 2 : 3;
+            const value = integer(10001, 98999);
+            const unit = 10 ** accuracy;
+            number = String(value % unit === 0 ? value + 1 : value);
+            kind = 'nearest';
+            break;
+        }
+        case 'whole-number':
+            number = `${integer(10, 98)}.${integer(1, 9)}${integer(1, 9)}`;
+            kind = 'nearest'; accuracy = 0; break;
+        case 'carry-two':
+            number = `${integer(1, 8)}.99${integer(5, 9)}`;
+            kind = 'decimal'; accuracy = 2; break;
+        case 'sig-three-zero':
+            number = `${integer(1, 9)}0${integer(0, 9)}${integer(1, 9)}${String(integer(0, 99)).padStart(2, '0')}`;
+            kind = 'sig'; accuracy = 3; break;
+        case 'sig-one-small':
+            number = `0.${'0'.repeat(integer(1, 2))}${integer(1, 9)}${integer(1, 9)}`;
+            kind = 'sig'; accuracy = 1; break;
+        case 'sig-three-small':
+            number = `0.00${integer(10000, 99999)}`;
+            kind = 'sig'; accuracy = 3; break;
+        case 'sig-no-lead':
+            number = `0.${integer(10000, 99999)}`;
+            kind = 'sig'; accuracy = 2; break;
+        case 'sig-count':
+            return countSignificantFigures(integer);
+        case 'round-up':
+        case 'round-down':
+        case 'full-groups':
+            return generateSituation(item, integer, random);
         case 'path-context':
             number = String(nonZeroEnd(integer(111, 989))); kind = 'nearest'; accuracy = 1;
             customPrompt = `A path is ${number} metres long. Round its length to the nearest 10 metres.${item.mode === 'choice' ? '' : ' Type the number of metres.'}`;
             break;
         default: throw new Error(`Unknown rounding type: ${item.type}`);
         }
-        return prepare(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt), random);
+        const question = roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt);
+        if (question.input === 'choice' && question.options.length < 4) {
+            return roundingQuestion(number, kind, accuracy, 'number', item.type, customPrompt);
+        }
+        return prepare(question, random);
     }
     const learnScreens = [
         { title: 'Rounding means changing a number to a simpler number that is close to it.', lines: ['You can round whole numbers or decimals.'], roundings: [

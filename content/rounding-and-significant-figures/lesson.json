@@ -15,6 +15,10 @@
             "two-decimals": "round-decimal-places",
             "decimal-zero": "round-decimal-places",
             "decimal-carry": "round-decimal-places",
+            "big-hundred": "round-decimal-places",
+            "big-thousand": "round-decimal-places",
+            "whole-number": "round-decimal-places",
+            "carry-two": "round-decimal-places",
             "keep-digit": "round-decimal-places",
             "deciding-digit": "round-decimal-places",
             "decide-digit": "round-decimal-places",
@@ -23,6 +27,10 @@
             "error": "round-decimal-places",
             "whole-significant": "round-significant-figures",
             "small-significant": "round-significant-figures",
+            "sig-three-zero": "round-significant-figures",
+            "sig-one-small": "round-significant-figures",
+            "sig-three-small": "round-significant-figures",
+            "sig-no-lead": "round-significant-figures",
             "sig": "round-significant-figures",
             "sig-keep": "round-significant-figures",
             "sig-decider": "round-significant-figures",
@@ -40,6 +48,9 @@
             "packs-days": "round-in-context",
             "coverage": "round-in-context",
             "path-context": "round-in-context",
+            "round-up": "round-in-context",
+            "round-down": "round-in-context",
+            "full-groups": "round-in-context",
             "containers": "round-in-context",
             "context": "round-in-context"
         }
@@ -63,7 +74,7 @@
         "hide_eyebrow": true,
         "title": "Practise rounding",
         "intro": "",
-        "session_length": 6
+        "session_length": 10
     },
     "section_order": [
         "explanation",
