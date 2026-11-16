@@ -158,7 +158,7 @@
     font-weight: 800;
 }
 
-.rounding-example__arrow {
+.rounding-example__sign {
     color: var(--primary);
 }
 
@@ -267,4 +267,25 @@ button.significant-digit {
     .rounding-line .rounding-value--minor {
         display: none;
     }
+}
+
+/* Step 1 of a worked example: the number, big, with the digit you round to
+   in blue. The note under it points up at that digit. */
+.rounding-find {
+    margin-bottom: 1.5rem;
+}
+
+.rounding-big-number {
+    margin: .5rem 0 0;
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.rounding-big-number .rounding-keep {
+    color: var(--primary-dark);
+}
+
+.rounding-note--found {
+    margin-top: 1.75rem;
 }
