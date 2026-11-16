@@ -23,3 +23,6 @@ node_modules/
 GCSE_mathematics_subject_content_and_assessment_objectives.pdf
 docs/factors-review/
 docs/indices-basics-review-notes.md
+
+# Lesson slide pictures from scripts/lesson-slides.cjs (local only; build.sh does not publish them)
+slides/*/
