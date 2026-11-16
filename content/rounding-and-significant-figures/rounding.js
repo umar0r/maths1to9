@@ -626,7 +626,7 @@
             digit: 'The hundreds digit is 6. That is 5 or more, so round up.',
             nearest: 'So 4,682 is closer to 5,000.'
         }, labels: 'landmarks', caption: 'Keep the zeros. Writing just 5 would make the number much too small.' },
-        { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', notes: {
+        { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', labels: 'landmarks', notes: {
             digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
             nearest: 'So 46,728 is closer to 47,000.'
         } },
@@ -1059,7 +1059,7 @@
             text(host, 'p', 'Which is it closer to?');
             const answer = Number(rounded(String(screen.value), 'nearest', Math.log10(10 * screen.step)));
             drawLine(host, screen.value, false, null, false, screen.base, null, screen.step, {
-                wideLabels: true,
+                wideLabels: true, labels: screen.labels,
                 onPick: value => onResult(value === answer, "Look at the digit after the one you're rounding to. Is it 5 or more?")
             });
             return;
