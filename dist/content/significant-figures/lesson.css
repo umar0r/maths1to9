@@ -55,3 +55,10 @@
     font-size: clamp(1.05rem, 4vw, 1.4rem);
     overflow-wrap: anywhere;
 }
+
+/* Learn uses the digit boxes as answer targets (copied from the rounding lesson). */
+button.significant-digit {
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+}

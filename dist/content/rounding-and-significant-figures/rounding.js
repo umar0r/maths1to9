@@ -3,7 +3,6 @@
 
     const option = (label, feedback, correct = false, index) => ({ label, feedback, correct, ...(index !== undefined ? { index } : {}) });
     const clean = text => String(text).replace(/,/g, '');
-    const figures = n => `${n} significant ${n === 1 ? 'figure' : 'figures'}`;
     const spaced = text => {
         const [whole, fraction] = String(text).split('.');
         return whole.replace(/\B(?=(\d{3})+$)/g, ',') + (fraction !== undefined ? '.' + fraction : '');
@@ -15,28 +14,6 @@
         const start = indexes.findIndex(index => text[index] !== '0');
         const significant = indexes.slice(start);
         return { first: significant[0], target: significant[n - 1], decider: significant[n], significant, indexes };
-    }
-
-    // Round from the original digits. Keep decimal zeros that show the accuracy.
-    function roundSig(number, n, mode = 'nearest') {
-        const [whole, fraction = ''] = clean(number).split('.');
-        const all = whole + fraction;
-        const first = all.search(/[1-9]/);
-        if (first < 0) throw new Error('Use a positive, non-zero number.');
-        const significant = all.slice(first);
-        let kept = significant.slice(0, n).padEnd(n, '0');
-        let power = whole.length - first - n;
-        const next = Number(significant[n] || '0');
-        if (mode === 'up' || (mode === 'nearest' && next >= 5)) {
-            kept = String(Number(kept) + 1);
-            if (kept.length > n) {
-                kept = kept.slice(0, n);
-                power++;
-            }
-        }
-        if (power >= 0) return kept + '0'.repeat(power);
-        const point = kept.length + power;
-        return point <= 0 ? '0.' + '0'.repeat(-point) + kept : kept.slice(0, point) + '.' + kept.slice(point);
     }
 
     function place(number, index) {
@@ -68,17 +45,15 @@
         return result.slice(0, -places) + '.' + result.slice(-places);
     }
     function rounded(number, kind, accuracy, mode = 'nearest') {
-        return kind === 'sig' ? roundSig(number, accuracy, mode) : roundToPower(number, kind === 'decimal' ? -accuracy : accuracy, mode);
+        return roundToPower(number, kind === 'decimal' ? -accuracy : accuracy, mode);
     }
     function accuracyText(kind, accuracy) {
-        if (kind === 'sig') return figures(accuracy);
         if (kind === 'decimal') return `${accuracy} decimal ${accuracy === 1 ? 'place' : 'places'}`;
         if (accuracy === 0) return 'the nearest whole number';
         if (accuracy === 6) return 'the nearest million';
         return `the nearest ${spaced(String(10 ** accuracy))}`;
     }
     function keyDigits(number, kind, accuracy) {
-        if (kind === 'sig') return digits(number, accuracy);
         const d = digits(number, 1);
         const point = number.includes('.') ? number.indexOf('.') : number.length;
         const power = kind === 'decimal' ? -accuracy : accuracy;
@@ -91,8 +66,8 @@
         const answer = rounded(number, kind, accuracy);
         const next = number[d.decider];
         const feedback = `The next digit is ${next}, so ${Number(next) >= 5 ? 'round up' : 'keep the last digit as it is'}. ${spaced(number)} ≈ ${spaced(answer)}`;
-        const wrongAccuracy = kind === 'sig' ? accuracy + 1 : kind === 'decimal' ? accuracy + 1 : Math.max(0, accuracy - 1);
-        const otherAccuracy = kind === 'sig' ? Math.max(1, accuracy - 1) : kind === 'decimal' ? Math.max(0, accuracy - 1) : accuracy + 1;
+        const wrongAccuracy = kind === 'decimal' ? accuracy + 1 : Math.max(0, accuracy - 1);
+        const otherAccuracy = kind === 'decimal' ? Math.max(0, accuracy - 1) : accuracy + 1;
         const wrongKind = kind === 'decimal' && otherAccuracy === 0 ? 'nearest' : kind;
         const mistakes = [
             ...(answer.includes('.') && answer.endsWith('0') ? [[answer.slice(0, -1).replace(/\.$/, ''), 'Keep the final zero after the decimal point. It shows the accuracy asked for.']] : []),
@@ -101,8 +76,7 @@
             ...(!answer.includes('.') && answer.endsWith('0') ? [[answer.replace(/0+$/, ''), 'That drops the zeros that keep the number the right size. Keep those whole-number places.']] : []),
             [rounded(number, kind, wrongAccuracy), `That rounds to a different place. The question asks for ${accuracyText(kind, accuracy)}.`],
             [rounded(number, wrongKind, otherAccuracy), `That uses a different accuracy. Use ${accuracyText(kind, accuracy)}.`],
-            [number, 'That leaves the original number unchanged. Round it to the place asked for.'],
-            ...(kind === 'sig' ? [[Number(number).toFixed(accuracy), 'That counts decimal places from the point. Start counting at the first digit that is not zero.']] : [])
+            [number, 'That leaves the original number unchanged. Round it to the place asked for.']
         ].filter(([value], index, list) => value !== answer && list.findIndex(([other]) => other === value) === index);
         let prompt = customPrompt || `Round ${spaced(number)} to ${accuracyText(kind, accuracy)}.`;
         if (input === 'number' && answer.includes('.') && answer.endsWith('0')) {
@@ -124,7 +98,7 @@
         const wrong = [d.target, d.decider, d.first, ...d.indexes].filter((index, i, list) => index !== correct && list.indexOf(index) === i).slice(0, 3);
         return {
             number, kind, accuracy, ...d, stage, input: 'choice',
-            questionType: kind === 'sig' ? `sig-${stage}` : stage === 'keep' ? 'keep-digit' : 'deciding-digit',
+            questionType: stage === 'keep' ? 'keep-digit' : 'deciding-digit',
             prompt: `Round ${spaced(number)} to ${accuracyText(kind, accuracy)}. ${stage === 'keep' ? 'Which is the last digit to keep?' : 'Which digit comes straight after the digit to keep?'}`,
             options: [option(digitLabel(number, correct), `The ${stage === 'keep' ? 'last digit to keep' : 'next digit'} is ${number[correct]} in the ${place(number, correct)}.`, true, correct),
                 ...wrong.map(index => option(digitLabel(number, index),
@@ -165,21 +139,10 @@
         return [
             ['53481', 'nearest', 3],
             ['26.48', 'nearest', 0],
-            ['3.997', 'decimal', 2],
-            ['6742', 'sig', 2],
-            ['0.0583', 'sig', 1],
-            ['304519', 'sig', 3],
-            ['0.0038264', 'sig', 3],
-            ['0.61749', 'sig', 2]
+            ['3.997', 'decimal', 2]
         ].map(([number, kind, accuracy]) => [{
             ...roundingQuestion(number, kind, accuracy, 'number'), showDigitsAfterAnswer: true
-        }]).concat([[
-            contextStep('sig-count', 'How many significant figures does 0.250 show?', '3',
-                'Start at the 2. The figures are 2, 5 and the final 0, so 3 significant figures.', [
-                    ['2', 'The final 0 counts. It shows the number is accurate to 3 figures.'],
-                    ['4', "The 0 before the point doesn't count. Start at the first digit that isn't zero."]
-                ])
-        ]]);
+        }]);
     }
 
     function situationExamples() {
@@ -331,7 +294,7 @@
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
-            roundingQuestion('5.465', 'decimal', 2), roundingQuestion('0.00726', 'sig', 2),
+            roundingQuestion('5.465', 'decimal', 2), roundingQuestion('18.497', 'nearest', 0, 'choice'),
             { questionType: 'error', input: 'choice', prompt: 'Amir says 4.95 rounds to 4.9 at 1 decimal place. Which explanation corrects him?', options: [
                 option('The 5 rounds the tenths up, giving 5.0', 'The hundredths digit is 5. Round up and keep one decimal place.', true),
                 option('Keep 4.9 because the tenths digit is already 9', 'A 9 can still round up. The extra 1 carries to the next column.'),
@@ -345,9 +308,6 @@
         { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
         { kind: 'place', types: ['one-decimal', 'two-decimals', 'whole-number'] },
         { kind: 'place', types: ['decimal-zero', 'decimal-carry', 'carry-two'] },
-        { kind: 'sig', types: ['whole-significant', 'sig-three-zero'] },
-        { kind: 'sig', types: ['small-significant', 'sig-one-small', 'sig-three-small', 'sig-no-lead'] },
-        { kind: 'sig', types: ['sig-count'] },
         { kind: 'context', types: ['round-up'] },
         { kind: 'context', types: ['round-down'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
@@ -356,13 +316,15 @@
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        const extraGroup = randomInt(0, 4, random);
         const picks = practiceGroups.map(group => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
         }));
-        const { group, type } = picks[extraGroup];
-        const unused = group.types.filter(candidate => candidate !== type);
-        picks.push({ group, type: unused[randomInt(0, unused.length - 1, random)] });
+        // Fill the rest of the session from the same groups, so it still covers
+        // whole numbers, decimals and real life.
+        for (let extra = picks.length; extra < 10; extra++) {
+            const group = practiceGroups[randomInt(0, practiceGroups.length - 1, random)];
+            picks.push({ group, type: group.types[randomInt(0, group.types.length - 1, random)] });
+        }
         const candidates = shuffle(picks, random);
 
         // Backtrack if a legal next card would leave no way to place the remaining cards.
@@ -404,24 +366,6 @@
             rules.map(([value, message]) => [String(value), message]));
     }
 
-    function countSignificantFigures(item, integer, random) {
-        const a = integer(1, 9);
-        const b = integer(1, 9);
-        const firstOnly = 'You have counted only the first significant figure. Count every digit after it as well.';
-        const middleZero = 'A zero between significant figures counts too.';
-        const point = 'The decimal point is not a digit. Do not count it.';
-        const leadingZeros = "Zeros before the first non-zero digit don't count.";
-        const patterns = [
-            [`0.${a}${b}`, 2, [[1, firstOnly], [3, leadingZeros], [4, point]]],
-            [`0.${a}0${b}`, 3, [[1, firstOnly], [2, middleZero], [4, leadingZeros]]],
-            [`${a}.0${b}`, 3, [[1, 'Count the digits after the point as well as the ones digit.'], [2, middleZero], [4, point]]],
-            [`0.0${a}${b}`, 2, [[1, firstOnly], [3, 'Start at the first non-zero digit, not the first decimal place.'], [4, leadingZeros]]],
-            [`${a}0${b}`, 3, [[0, 'Whole numbers have significant figures too.'], [1, firstOnly], [2, middleZero]]]
-        ];
-        const [number, answer, rules] = patterns[integer(0, patterns.length - 1)];
-        return practiceContext(item, `How many significant figures does ${number} show?`, answer,
-            `Start at the first digit that isn't zero. ${number} shows ${figures(answer)}.`, rules, random);
-    }
 
     function divisionText(total, size) {
         const scaled = total * 1000;
@@ -495,8 +439,6 @@
         case 'one-decimal': number = `${integer(1, 8)}.${integer(1, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'two-decimals': number = `${integer(1, 8)}.${integer(1, 9)}${integer(0, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 2; break;
         case 'decimal-zero': number = `${integer(1, 8)}.0${integer(1, 4)}`; kind = 'decimal'; accuracy = 1; break;
-        case 'whole-significant': number = String(nonZeroEnd(integer(1001, 8999))); kind = 'sig'; accuracy = 2; break;
-        case 'small-significant': number = '0.' + '0'.repeat(integer(1, 3)) + nonZeroEnd(integer(1001, 8999)); kind = 'sig'; accuracy = 2; break;
         case 'decimal-carry': number = `9.9${integer(5, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'big-hundred':
         case 'big-thousand': {
@@ -513,20 +455,6 @@
         case 'carry-two':
             number = `${integer(1, 8)}.99${integer(5, 9)}`;
             kind = 'decimal'; accuracy = 2; break;
-        case 'sig-three-zero':
-            number = `${integer(1, 9)}0${integer(0, 9)}${integer(1, 9)}${String(integer(0, 99)).padStart(2, '0')}`;
-            kind = 'sig'; accuracy = 3; break;
-        case 'sig-one-small':
-            number = `0.${'0'.repeat(integer(1, 2))}${integer(1, 9)}${integer(1, 9)}`;
-            kind = 'sig'; accuracy = 1; break;
-        case 'sig-three-small':
-            number = `0.00${nonZeroEnd(integer(10000, 99999))}`;
-            kind = 'sig'; accuracy = 3; break;
-        case 'sig-no-lead':
-            number = `0.${nonZeroEnd(integer(10000, 99999))}`;
-            kind = 'sig'; accuracy = 2; break;
-        case 'sig-count':
-            return countSignificantFigures(item, integer, random);
         case 'round-up':
         case 'round-down':
         case 'full-groups':
@@ -572,48 +500,6 @@
             nearest: 'So 46,728 is closer to 47,000.'
         } },
         { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
-        { title: 'Significant figures', lines: ['Significant figures are the digits that show how accurate a number is. Start at the first digit that is not zero.', 'In 0.004782, keep 4 and 7 for 2 significant figures. The next digit is 8, so round up. Keep the starting zeros.'], number: '0.004782', kind: 'sig', accuracy: 2, equations: ['0.004782 ≈ 0.0048'] },
-        {
-            title: 'Rounding to significant figures is rounding to a place.',
-            prompt: 'Round 48,672 to 2 significant figures.',
-            lines: [
-                'Start at the 4. The 2nd significant figure is the 8, in the thousands place.',
-                'So this is the same as rounding to the nearest 1,000. The next digit is 6, so round up.',
-                'Fill the places after it with zeros so the number stays the right size.'
-            ],
-            number: '48672', kind: 'sig', accuracy: 2, tap: 'decider', equations: ['48,672 ≈ 49,000']
-        },
-        {
-            title: 'Zeros at the start of a decimal are not significant.',
-            prompt: 'Round 0.0467 to 1 significant figure.',
-            lines: [
-                'Skip the zeros at the start: the first significant figure is the 4.',
-                'The next digit is 6, so the 4 goes up to 5. Keep the zeros at the start.'
-            ],
-            number: '0.0467', kind: 'sig', accuracy: 1, tap: 'decider', equations: ['0.0467 ≈ 0.05']
-        },
-        {
-            title: 'A zero between other digits is significant.',
-            prompt: 'Round 507,684 to 3 significant figures.',
-            lines: [
-                'The figures are 5, 0, 7. The 0 counts because it sits between the 5 and the 7.',
-                'The next digit is 6, so the 7 goes up to 8. Fill the rest with zeros.'
-            ],
-            number: '507684', kind: 'sig', accuracy: 3, tap: 'decider', equations: ['507,684 ≈ 508,000']
-        },
-        {
-            title: 'The 0 before the decimal point is not significant.',
-            prompt: 'A calculator shows 0.384726. Round it to 2 significant figures.',
-            lines: ["The 0 before the point doesn't count. The figures are 3 and 8. The next digit is 4, so the 8 stays."],
-            number: '0.384726', kind: 'sig', accuracy: 2, tap: 'decider', equations: ['0.384726 ≈ 0.38']
-        },
-        {
-            title: 'A zero at the end of a decimal shows how accurate it is.',
-            prompt: "0.73 and 0.730 are the same number, but they don't show the same accuracy.",
-            lines: ['0.73 has 2 significant figures. 0.730 has 3: the final 0 counts.'],
-            number: '0.730', kind: 'sig', accuracy: 3, tap: 'last', marks: 'first',
-            equations: ['0.730 → 3 significant figures']
-        },
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         {
             title: 'A carry can run through more than one 9.',
@@ -1074,14 +960,10 @@
             }
             return;
         }
-        const last = screen.tap === 'last';
         const d = keyDigits(screen.number, screen.kind, screen.accuracy);
-        const answer = last ? d.target : d.decider;
-        const digitHint = 'Find the last digit you keep, then look one digit to the right.';
-        const hint = last ? 'A zero at the end of a decimal counts.'
-            : screen.kind === 'sig' ? "Start counting at the first digit that isn't zero. " + digitHint : digitHint;
-        text(host, 'p', last ? 'Tap the last significant figure.' : 'Tap the digit that decides.');
-        drawDigits(host, { ...screen, ...d }, 'none', index => onResult(index === answer, hint));
+        const answer = d.decider;
+        text(host, 'p', 'Tap the digit that decides.');
+        drawDigits(host, { ...screen, ...d }, 'none', index => onResult(index === answer, 'Find the last digit you keep, then look one digit to the right.'));
     }
 
     function drawLearn(host, index, lineValue, onChange, readOnly) {
@@ -1103,5 +985,5 @@
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundSig, roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample, roadMiles, roadWidget };
+    window.Rounding = { roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample, roadMiles, roadWidget };
 })();
