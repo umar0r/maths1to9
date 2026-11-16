@@ -146,19 +146,22 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
     }
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
-        assert.equal(items.length, 6);
+        assert.equal(items.length, 10);
         assert.equal(items.length, data.question_bank.session_length);
         const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
-        assert.equal(qs.filter(q => q.input === 'choice').length, 3);
-        assert.equal(qs.filter(q => q.input === 'number').length, 3);
+        // Practice mixes multiple choice and typed answers.
+        assert.ok(qs.some(q => q.input === 'choice') && qs.some(q => q.input === 'number'), `seed ${seed}`);
         assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-significant-figures', 'round-in-context']));
     }
-    for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number']));
+    // Try it is hands-on, so it has no multiple choice. Check mixes both.
+    assert.ok(Q.examples().every(q => q.input !== 'choice'));
+    assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice', 'number']));
     assert.equal(Q.checks().length, 5);
 });
 
 test('rounding-and-significant-figures: wording and input numbers are tidy and style matches significant figures', () => {
-    for (const q of generated) assert.doesNotMatch(q.number, /\.\d*0$/);
+    // Real-life questions have no number to round; the rest never start with a trailing decimal zero.
+    for (const q of generated.filter(q => q.number)) assert.doesNotMatch(q.number, /\.\d*0$/);
     for (const text of allStrings([questions, Q.learnScreens])) {
         assert.doesNotMatch(text, /\b1 decimal places\b|\b1 significant figures\b|AQA|Edexcel|OCR/);
         assert.doesNotMatch(text, /\d+\.\d{12,}|\b(?:color|center|recognize|organize)\b/);
