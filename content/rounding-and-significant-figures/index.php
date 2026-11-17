@@ -65,11 +65,11 @@ $pageTitle = 'Rounding';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./rounding.js?v=38"></script>
+    <script src="./rounding.js?v=41"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=14"></script>
-    <script src="./interactive.js?v=22"></script>
+    <script src="./interactive.js?v=25"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=79"></script>

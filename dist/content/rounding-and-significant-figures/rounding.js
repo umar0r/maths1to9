@@ -557,15 +557,7 @@
             digit: 'The ones digit is 2. That is less than 5, so round down.',
             nearest: 'So 342 is closer to 340.'
         } },
-        { title: 'Bigger numbers work the same way.', lines: ['Say we want to round 3,486 to the nearest 10. Here it is on a number line.'], line: true, base: 3480, value: 3486, labels: 'landmarks', notes: {
-            digit: 'The ones digit is 6. That is 5 or more, so round up.',
-            nearest: 'So 3,486 is closer to 3,490.'
-        } },
         { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
-        { title: "Now let's round 642 to the nearest 100.", lines: ['642 sits between 600 and 700. Here it is on the number line, counting in tens.'], line: true, base: 600, step: 10, value: 642, labels: 'landmarks', notes: {
-            digit: 'The tens digit is 4. That is less than 5, so round down.',
-            nearest: 'So 642 is closer to 600.'
-        } },
         // Worked step by step: find the digit, put it on a line, look at the next digit, round.
         { title: "Now let's round 48,672 to the nearest 100.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
             find: 'Step 1: We are rounding to the nearest 100, so find the hundreds digit.',
@@ -575,12 +567,11 @@
             digit: 'Step 3: Look at the next digit. The tens digit is 7. That is 5 or more, so round up.',
             nearest: 'Step 4: So 48,672 rounds up to 48,700.'
         } },
-        { title: "Now let's round 4,682 to the nearest 1,000.", lines: ['4,682 sits between 4,000 and 5,000. Here it is on the number line, counting in hundreds.'], line: true, base: 4000, step: 100, value: 4682, tap: 'end', notes: {
-            digit: 'The hundreds digit is 6. That is 5 or more, so round up.',
-            nearest: 'So 4,682 is closer to 5,000.'
-        }, labels: 'landmarks', caption: 'Keep the zeros. Writing just 5 would make the number much too small.' },
+        { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', labels: 'landmarks', notes: {
+            digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
+            nearest: 'So 46,728 is closer to 47,000.'
+        } },
         { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
-        { title: 'Keep a final decimal zero', lines: ['To round 3.04 to 1 decimal place, keep the tenths digit, 0.', 'The next digit is 4, so the 0 stays. Write 3.0 to show one digit after the point.'], number: '3.04', kind: 'decimal', accuracy: 1, equations: ['3.04 ≈ 3.0'] },
         { title: 'Significant figures', lines: ['Significant figures are the digits that show how accurate a number is. Start at the first digit that is not zero.', 'In 0.004782, keep 4 and 7 for 2 significant figures. The next digit is 8, so round up. Keep the starting zeros.'], number: '0.004782', kind: 'sig', accuracy: 2, equations: ['0.004782 ≈ 0.0048'] },
         {
             title: 'Rounding to significant figures is rounding to a place.',

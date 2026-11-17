@@ -186,9 +186,6 @@ for (const width of [1280, 375]) {
         await mainAction(page).click();
         await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('342');
         await expect(page.locator('.significant-equation:visible')).toHaveText('342 ≈ 340');
-        await mainAction(page).click();
-        await expect(page.locator('.rounding-line:visible .rounding-value.is-key')).toHaveText('3,486');
-        await expect(page.locator('.significant-equation:visible')).toHaveText('3,486 ≈ 3,490');
         await page.screenshot({ path: `/private/tmp/rounding-learn-${width}.png`, fullPage: true });
         // The slider is the first Try it screen, after the rest of Learn.
         const slider = page.getByRole('slider', { name: 'Number on the line' });
