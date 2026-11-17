@@ -295,3 +295,29 @@ button.significant-digit {
 .rounding-note--found {
     margin-top: 1.75rem;
 }
+
+/* Learn 4: the thousands comma between the digit boxes, and the two notes
+   that point up at the boxes (see drawArrows in rounding.js). */
+.significant-comma {
+    align-self: center;
+    font-size: clamp(1.3rem, 5vw, 2rem);
+    font-weight: 800;
+}
+
+.rounding-digit .significant-digits {
+    margin-bottom: 1.25rem;
+}
+
+.rounding-digit .rounding-note {
+    max-width: min(260px, 45%);
+}
+
+.rounding-digit .rounding-note--keep {
+    margin-top: 0;
+    margin-left: 0;
+}
+
+.rounding-digit .rounding-note--look {
+    margin-top: .75rem;
+    margin-left: 0;
+}

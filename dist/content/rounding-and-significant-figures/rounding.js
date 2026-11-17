@@ -485,9 +485,12 @@
             digit: 'The ones digit is 2. That is less than 5, so round down.',
             nearest: 'So 342 is closer to 340.'
         } },
-        { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
+        { title: "Let's round 48,672 to the nearest 100.", lines: ["We've been asked to round to the nearest 100, so first we find the digit that stands for hundreds. In 48,672 that's the 6, because it's worth 600."], number: '48672', kind: 'nearest', accuracy: 2, after: ["If that digit is 0, 1, 2, 3 or 4, we round down. If it's 5, 6, 7, 8 or 9, we round up. It's 7, so we round up."], digitNotes: {
+            keep: "This 6 is worth 600. It's the hundreds digit.",
+            look: "Now look at the digit just to its right. It's a 7."
+        } },
         // Worked step by step: find the digit, put it on a line, look at the next digit, round.
-        { title: "Now let's round 48,672 to the nearest 100.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
+        { title: "Let's put 48,672 on a number line to see why it rounds up.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
             find: 'Step 1: We are rounding to the nearest 100, so find the hundreds digit.',
             found: 'The hundreds digit is 6. So 48,672 is between 48,600 and 48,700.',
             place: 'Step 2: Put 48,672 on a number line from 48,600 to 48,700.'
@@ -499,7 +502,10 @@
             digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
             nearest: 'So 46,728 is closer to 47,000.'
         } },
-        { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
+        { title: "Now let's round 4.276 to 2 decimal places.", lines: ['2 decimal places means 2 digits after the decimal point. So 4.276 sits between 4.27 and 4.28. Here it is on the number line, counting in steps of 0.001.'], line: true, base: 4.27, step: 0.001, value: 4.276, tap: 'end', labels: 'landmarks', notes: {
+            digit: 'The next digit is 6. That is 5 or more, so round up.',
+            nearest: 'So 4.276 is closer to 4.28.'
+        } },
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         {
             title: 'A carry can run through more than one 9.',
@@ -617,29 +623,40 @@
         row.className = 'significant-digits';
         row.setAttribute('role', onPick ? 'group' : 'img');
         row.setAttribute('aria-label', `Digits of ${spaced(number)}${marks === 'first' ? `; start at ${number[d.first]}` : marks === 'none' ? '' : `; keep ${digitLabel(number, d.target)}${marks === 'both' ? `; next digit ${digitLabel(number, d.decider)}` : ''}`}`);
-        for (const [index, digit] of [...number].entries()) {
+        // Show the thousands commas (48,672) as the number lines do. A comma is
+        // a separator, not a box, and it does not shift the digit positions.
+        const shown = spaced(number);
+        let commas = 0;
+        for (const [index, digit] of [...shown].entries()) {
+            if (digit === ',') {
+                commas++;
+                text(row, 'span', ',', 'significant-comma');
+                continue;
+            }
+            const key = index - commas;
             const isButton = onPick && digit !== '.';
             const cell = text(row, isButton ? 'button' : 'span', '', digit === '.' ? 'significant-point' : 'significant-digit');
             if (isButton) {
                 cell.type = 'button';
-                cell.setAttribute('aria-label', digitLabel(number, index));
-                cell.addEventListener('click', () => onPick(index));
+                cell.setAttribute('aria-label', digitLabel(number, key));
+                cell.addEventListener('click', () => onPick(key));
             } else {
                 cell.setAttribute('aria-hidden', 'true');
             }
             text(cell, 'span', digit);
-            if (marks === 'first' && index === d.first) {
+            if (marks === 'first' && key === d.first) {
                 cell.classList.add('is-first');
                 text(cell, 'small', 'Start');
-            } else if (marks !== 'none' && marks !== 'first' && index === d.target) {
+            } else if (marks !== 'none' && marks !== 'first' && key === d.target) {
                 cell.classList.add('is-keep');
                 text(cell, 'small', 'Keep');
-            } else if (marks === 'both' && index === d.decider) {
+            } else if (marks === 'both' && key === d.decider) {
                 cell.classList.add('is-look');
                 text(cell, 'small', 'Look');
             }
         }
         host.append(row);
+        return row;
     }
     // A number line from one round number (base) to the next, drawn like the
     // negative numbers line: a grey line, ten equal steps with a tick and a
@@ -652,7 +669,9 @@
         // and so on) so a note's arrow can point at it.
         const marked = number => {
             const shown = format(number);
-            let fromEnd = Math.round(Math.log10(step));
+            // With a step smaller than 1 (0.001), the digit that decides is the
+            // last one shown, not a digit above the point.
+            let fromEnd = Math.max(0, Math.round(Math.log10(step)));
             for (let i = shown.length - 1; i >= 0; i--) {
                 if (!/\d/.test(shown[i])) continue;
                 if (fromEnd-- === 0) return `${shown.slice(0, i)}<tspan class="rounding-decider">${shown[i]}</tspan>${shown.slice(i + 1)}`;
@@ -660,7 +679,10 @@
             return shown;
         };
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const top = base + 10 * step;
+        // A step of 0.001 leaves float noise (4.2749999999999995), so every tick
+        // is snapped before it is labelled or used as a tap target.
+        const tick = mark => Number((base + mark * step).toFixed(6));
+        const top = tick(10);
         const edge = wideLabels ? 50 : 30;
         const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
         // A number between two ticks, or on a tick left unlabelled, has no label in the row, so its label sits
@@ -675,7 +697,7 @@
         let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
-            const number = base + mark * step;
+            const number = tick(mark);
             const landmark = mark % 5 === 0;
             const reach = landmark ? 12 : 7;
             const y = axis + (phone ? 44 : 40);
@@ -973,7 +995,22 @@
         if (screen.context) drawContextLine(host, screen);
         else if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly,
             screen.base, screen.notes, screen.step, { wideLabels: screen.tap === 'end', labels: screen.labels });
-        else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) }, screen.marks);
+        else if (screen.number) {
+            // A screen with notes gets a block, so the arrows can point from each
+            // note up at the digit box it talks about.
+            const block = screen.digitNotes ? text(host, 'div', '', 'rounding-notes rounding-digit') : host;
+            const row = drawDigits(block, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) }, screen.marks);
+            if (screen.digitNotes) {
+                const keep = text(block, 'p', screen.digitNotes.keep, 'rounding-note rounding-note--keep');
+                const look = text(block, 'p', screen.digitNotes.look, 'rounding-note rounding-note--look');
+                // Both notes sit at the left under the boxes and each arrow leaves
+                // from the note's right end, so no arrow runs through text.
+                drawArrows(block, [
+                    [keep, () => row.querySelector('.significant-digit.is-keep'), 'right'],
+                    [look, () => row.querySelector('.significant-digit.is-look'), 'right']
+                ]);
+            }
+        }
         // A real-life answer sits in the small centred box, like the number-line answers.
         for (const equation of screen.equations || []) text(host, 'p', equation, screen.context ? 'significant-equation rounding-line-answer' : 'significant-equation');
         for (const line of screen.after || []) text(host, 'p', line);
