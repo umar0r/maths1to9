@@ -12,13 +12,10 @@
             "halfway-hundred": "round-decimal-places",
             "nearest-thousand": "round-decimal-places",
             "one-decimal": "round-decimal-places",
-            "two-decimals": "round-decimal-places",
             "decimal-zero": "round-decimal-places",
             "decimal-carry": "round-decimal-places",
             "big-hundred": "round-decimal-places",
             "big-thousand": "round-decimal-places",
-            "whole-number": "round-decimal-places",
-            "carry-two": "round-decimal-places",
             "keep-digit": "round-decimal-places",
             "deciding-digit": "round-decimal-places",
             "decide-digit": "round-decimal-places",
@@ -268,10 +265,6 @@
         },
         {
             "id": "step:interactive:34",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:35",
             "kind": "guided"
         },
         {

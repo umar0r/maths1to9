@@ -56,6 +56,138 @@
     overflow-wrap: anywhere;
 }
 
+/* Drawn like the negative numbers line: grey line, every number labelled,
+   a blue dot. No boxes or highlights behind the numbers.
+   (Copied from the rounding lesson with the number-line screens.) */
+.rounding-line {
+    width: 100%;
+    margin-block: 1.5rem;
+}
+
+.rounding-line svg {
+    display: block;
+    width: 100%;
+    overflow: visible;
+}
+
+.rounding-line .rounding-axis {
+    stroke: #898981;
+    stroke-width: 1.5;
+}
+
+.rounding-line .rounding-tick {
+    stroke: currentColor;
+    stroke-width: 1;
+}
+
+.rounding-line .rounding-value {
+    text-anchor: middle;
+    font-family: inherit;
+    font-size: 12px;
+    fill: currentColor;
+}
+
+.rounding-line .rounding-tick.is-landmark {
+    stroke-width: 2.5;
+}
+
+.rounding-line .rounding-value.is-landmark {
+    font-weight: 900;
+    fill: #7c46c4;
+}
+
+.rounding-line .rounding-value.is-key {
+    fill: #287fd1;
+    font-weight: 800;
+}
+
+.rounding-line .rounding-dot {
+    fill: #287fd1;
+    stroke: white;
+    stroke-width: 2;
+}
+
+@media (max-width: 600px) {
+    /* Reach across the card's 20 px padding, as the negative numbers line does. */
+    .rounding-line {
+        width: calc(100% + 40px);
+        margin-inline: -20px;
+    }
+
+    .rounding-line .rounding-value {
+        font-size: 17px;
+    }
+}
+
+/* The answer under the number line: a small box around the text, centred. */
+.significant-equation.rounding-line-answer {
+    width: fit-content;
+    margin-inline: auto;
+    padding: .5rem 1rem;
+    font-size: 1.15rem;
+}
+
+/* Short notes with arrows pointing at the number line (see drawArrows). */
+.rounding-notes {
+    position: relative;
+}
+
+.rounding-note {
+    width: fit-content;
+    max-width: 45%;
+    margin: 0;
+}
+
+/* Both notes sit under the numbers; the second sits lower and further right,
+   so the first note's arrow passes above it. */
+.rounding-note--digit {
+    margin-top: 2rem;
+}
+
+.rounding-note--above {
+    margin-bottom: .25rem;
+}
+
+.rounding-note--nearest {
+    margin-top: .5rem;
+    margin-bottom: 1rem;
+}
+
+.rounding-notes__arrows {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke: #334155;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.rounding-end {
+    cursor: pointer;
+}
+
+.rounding-end rect {
+    fill: transparent;
+}
+
+.rounding-end:focus-visible {
+    outline: none;
+}
+
+.rounding-end:focus-visible rect {
+    stroke: var(--primary);
+    stroke-width: 3px;
+}
+
+@media (max-width: 600px) {
+    .rounding-line .rounding-value--minor {
+        display: none;
+    }
+}
+
 /* Learn uses the digit boxes as answer targets (copied from the rounding lesson). */
 button.significant-digit {
     color: inherit;
