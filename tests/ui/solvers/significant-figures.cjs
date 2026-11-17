@@ -24,6 +24,18 @@ function roundSig(text, n) {
     return digits.slice(0, place) + '.' + digits.slice(place);
 }
 module.exports = async function solve(page) {
+    // Learn tap screens: tap the digit that decides, or the last significant figure.
+    const tapDigits = page.locator('.significant-digits[role=group]:visible button');
+    if (await tapDigits.count()) {
+        const title = await page.locator('[data-screen-heading]:visible').innerText();
+        const index = await page.evaluate(title => {
+            const screen = window.SignificantFigures.learnScreens.find(screen => screen.title === title);
+            const digits = window.SignificantFigures.digits(screen.number, screen.n);
+            return screen.tap === 'last' ? digits.target : digits.decider;
+        }, title);
+        await page.locator('.significant-digits[role=group]:visible').locator(':scope > *').nth(index).click();
+        return true;
+    }
     const main = page.locator('.lesson-controls button.button--primary:visible');
     if (await main.isEnabled()) return false;
     const prompt = page.locator('.question-prompt:visible');
@@ -31,7 +43,11 @@ module.exports = async function solve(page) {
     const text = await prompt.innerText();
     let answer;
     if (text.startsWith('Amir says')) answer = 'Start at 2. Keep 2 and 8. The next digit is 3, so the answer is 0.028';
-    else {
+    else if (text.startsWith('How many significant figures does')) {
+        // Start at the first digit that is not zero and count every digit after it.
+        const shown = [...text.match(/does ([\d.]+) show/)[1].replace('.', '')];
+        answer = String(shown.slice(shown.findIndex(digit => digit !== '0')).length);
+    } else {
         const match = text.match(/^Round ([\d,.]+) to (\d+) significant figures?/);
         if (!match) throw new Error(`Cannot solve significant figures question: ${text}`);
         const number = match[1].replace(/,/g, '');

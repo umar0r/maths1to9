@@ -15,7 +15,8 @@ module.exports = async function solve(page) {
         const title = await page.locator('[data-screen-heading]:visible').innerText();
         const pick = await page.evaluate(title => {
             const screen = window.Rounding.learnScreens.find(screen => screen.title === title);
-            if (screen.tap === 'end') return { end: Number(window.Rounding.rounded(String(screen.value), 'nearest', Math.log10(10 * screen.step))) };
+            // Real-life screens say which end they round to (here you round up, not to the nearest).
+            if (screen.tap === 'end') return { end: screen.answer ?? Number(window.Rounding.rounded(String(screen.value), 'nearest', Math.log10(10 * screen.step))) };
             const digits = window.Rounding.keyDigits(screen.number, screen.kind, screen.accuracy);
             return { index: screen.tap === 'last' ? digits.target : digits.decider };
         }, title);

@@ -25,16 +25,6 @@
             "nearest": "round-decimal-places",
             "decimal": "round-decimal-places",
             "error": "round-decimal-places",
-            "whole-significant": "round-significant-figures",
-            "small-significant": "round-significant-figures",
-            "sig-three-zero": "round-significant-figures",
-            "sig-one-small": "round-significant-figures",
-            "sig-three-small": "round-significant-figures",
-            "sig-no-lead": "round-significant-figures",
-            "sig": "round-significant-figures",
-            "sig-keep": "round-significant-figures",
-            "sig-decider": "round-significant-figures",
-            "sig-count": "round-significant-figures",
             "budget": "round-in-context",
             "stock-first": "round-in-context",
             "spend-first": "round-in-context",
@@ -125,7 +115,7 @@
                 "type": "decimal"
             },
             {
-                "type": "sig"
+                "type": "nearest"
             },
             {
                 "type": "error"
@@ -282,30 +272,6 @@
         },
         {
             "id": "step:interactive:35",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:36",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:37",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:38",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:39",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:40",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:41",
             "kind": "guided"
         },
         {

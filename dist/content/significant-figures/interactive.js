@@ -22,8 +22,8 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 2,
-            initial: () => ({ screen: 0, furthestScreen: 0, finished: false }),
+            version: 3,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, taps: {} }),
             upgrade: () => null
         });
         const state = section.state;
@@ -39,7 +39,6 @@
             section.update(state => {
                 state.screen = screen;
                 state.furthestScreen = Math.max(state.furthestScreen, screen);
-                if (screen === screens.length - 1) state.finished = true;
             });
             render();
             const heading = root.querySelector('h3');
@@ -48,29 +47,62 @@
         }
 
         function render() {
-            api.setSectionReset('explanation', () => render());
             const screen = screens[state.screen];
-            const { escapeHtml } = window.Maths1to9LessonEngine;
-            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
-            for (const line of screen.lines) {
-                const paragraph = document.createElement('p');
-                paragraph.textContent = line;
-                root.append(paragraph);
+            const tap = screen.tap && state.taps[screen.title];
+            const awaitingTap = screen.tap && tap !== 'correct';
+            const lastScreen = state.screen === screens.length - 1;
+            if (lastScreen && !awaitingTap && !state.finished) {
+                section.update(saved => { saved.finished = true; });
             }
-            window.SignificantFigures.drawLearn(root, state.screen);
+            const reset = () => {
+                section.resetFields([['taps', screen.title]]);
+                render();
+            };
+            api.setSectionReset('explanation', tap ? reset : null);
+
+            const heading = document.createElement('h3');
+            heading.dataset.screenHeading = '';
+            heading.textContent = screen.title;
+            root.replaceChildren(heading);
+            function paragraph(line) {
+                const node = document.createElement('p');
+                node.textContent = line;
+                root.append(node);
+            }
+            const [intro, ...explanation] = screen.prompt ? [screen.prompt, ...screen.lines] : screen.lines;
+            if (intro) paragraph(intro);
+            if (awaitingTap) {
+                const { createFeedback, feedbackClassName } = window.Maths1to9LessonEngine;
+                const feedback = createFeedback('explanation', { correct: false, text: tap ?? '', visible: Boolean(tap) });
+                window.SignificantFigures.drawLearnTap(root, screen, (correct, hint) => {
+                    section.update(saved => { saved.taps[screen.title] = correct ? 'correct' : hint; });
+                    if (correct) {
+                        render();
+                        const revealed = root.querySelector('h3');
+                        revealed.tabIndex = -1;
+                        revealed.focus();
+                    } else {
+                        feedback.textContent = hint;
+                        feedback.className = feedbackClassName('explanation', { correct: false, visible: true });
+                        api.setSectionReset('explanation', reset);
+                    }
+                });
+                root.append(feedback);
+            } else {
+                explanation.forEach(paragraph);
+                window.SignificantFigures.drawLearn(root, state.screen);
+            }
             api.setSectionBack('explanation', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
-            if (state.screen < state.furthestScreen) {
-                api.setSectionAction('explanation', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
-                });
-            } else if (state.finished) {
+            if (lastScreen && !awaitingTap) {
                 api.clearSectionAction('explanation');
             } else {
                 api.setSectionAction('explanation', {
-                    label: 'Next idea', onClick: () => showScreen(state.screen + 1)
+                    label: awaitingTap || state.screen === state.furthestScreen ? 'Next idea' : 'Next',
+                    disabled: Boolean(awaitingTap),
+                    onClick: () => showScreen(state.screen + 1)
                 });
             }
             syncHash();
@@ -94,7 +126,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 2,
+            version: 3,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -124,14 +156,16 @@
             api.setSectionProgress('interactive', completed, questions.length);
         }
 
+        // The last example carries straight on to Practice.
         function continueExample() {
             section.update(state => {
                 state.index++;
-                state.screen = state.index;
-                state.furthestScreen = state.screen;
+                state.furthestScreen = Math.min(state.index, questions.length - 1);
+                state.screen = state.furthestScreen;
                 state.finished = state.index === questions.length;
             });
             render();
+            if (state.finished) api.continueSection();
         }
 
         function drawExample(container, index, readOnly) {
@@ -161,33 +195,28 @@
 
         function render() {
             root.replaceChildren();
+            const question = questions[state.screen];
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === questions.length ? 'Your completed examples'
-                : `Example ${Math.floor(state.screen / 3) + 1} of ${window.SignificantFigures.guided.length} · Step ${state.screen % 3 + 1} of 3`;
+            heading.textContent = `Example ${question.example} of ${window.SignificantFigures.exampleCount} · Step ${question.step} of ${question.steps}`;
             root.append(heading);
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
-            if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === questions.length) {
-                questions.forEach((example, index) => {
-                    const completed = document.createElement('article');
-                    root.append(completed);
-                    drawExample(completed, index, true);
-                });
-                api.clearSectionAction('interactive');
-            } else {
-                const readOnly = state.screen < state.index;
-                drawExample(root, state.screen, readOnly);
-                if (readOnly) api.setSectionAction('interactive', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
+            if (state.finished) api.completeSection('interactive');
+            const readOnly = state.screen < state.index;
+            drawExample(root, state.screen, readOnly);
+            if (readOnly) {
+                const last = state.screen === questions.length - 1;
+                api.setSectionAction('interactive', {
+                    label: last ? 'Continue' : 'Next',
+                    onClick: last ? () => api.continueSection() : () => showScreen(state.screen + 1)
                 });
             }
             syncHash();
         }
 
-        for (let index = 0; index <= questions.length; index++) {
+        for (let index = 0; index < questions.length; index++) {
             api.registerHashRoute(`try-it-${index + 1}`, () => {
                 if (!api.goToSection('interactive', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
@@ -199,9 +228,8 @@
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
-            .find(index => initialHash === `#try-it-${index + 1}`);
-        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
+        const requested = questions.findIndex((question, index) => initialHash === `#try-it-${index + 1}`);
+        if (requested >= 0 && api.goToSection('interactive', { moveFocus: false })) {
             showScreen(Math.min(requested, state.furthestScreen));
         }
     }

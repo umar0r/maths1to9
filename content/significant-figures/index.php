@@ -28,7 +28,7 @@ $pageTitle = 'Significant figures';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=62">
-    <link rel="stylesheet" href="./lesson.css?v=5">
+    <link rel="stylesheet" href="./lesson.css?v=6">
 </head>
 
 <body
@@ -65,11 +65,11 @@ $pageTitle = 'Significant figures';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./significant-figures.js?v=2"></script>
+    <script src="./significant-figures.js?v=4"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=12"></script>
-    <script src="./interactive.js?v=13"></script>
+    <script src="./interactive.js?v=14"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=79"></script>
