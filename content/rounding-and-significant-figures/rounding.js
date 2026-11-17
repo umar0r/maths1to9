@@ -485,9 +485,12 @@
             digit: 'The ones digit is 2. That is less than 5, so round down.',
             nearest: 'So 342 is closer to 340.'
         } },
-        { title: 'Look one digit to the right', lines: ['Find the place you are rounding to. Keep that digit, then look at the next digit.', 'For 0, 1, 2, 3 or 4, keep the last digit as it is. For 5, 6, 7, 8 or 9, round up.'], number: '367', kind: 'nearest', accuracy: 1, equations: ['367 ≈ 370'] },
+        { title: "Let's round 48,672 to the nearest 100.", lines: ["We've been asked to round to the nearest 100, so first we find the digit that stands for hundreds. In 48,672 that's the 6, because it's worth 600."], number: '48672', kind: 'nearest', accuracy: 2, after: ["If that digit is 0, 1, 2, 3 or 4, we round down. If it's 5, 6, 7, 8 or 9, we round up. It's 7, so we round up."], digitNotes: {
+            keep: "This 6 is worth 600. It's the hundreds digit.",
+            look: "Now look at the digit just to its right. It's a 7."
+        } },
         // Worked step by step: find the digit, put it on a line, look at the next digit, round.
-        { title: "Now let's round 48,672 to the nearest 100.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
+        { title: "Let's put 48,672 on a number line to see why it rounds up.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
             find: 'Step 1: We are rounding to the nearest 100, so find the hundreds digit.',
             found: 'The hundreds digit is 6. So 48,672 is between 48,600 and 48,700.',
             place: 'Step 2: Put 48,672 on a number line from 48,600 to 48,700.'
@@ -620,29 +623,40 @@
         row.className = 'significant-digits';
         row.setAttribute('role', onPick ? 'group' : 'img');
         row.setAttribute('aria-label', `Digits of ${spaced(number)}${marks === 'first' ? `; start at ${number[d.first]}` : marks === 'none' ? '' : `; keep ${digitLabel(number, d.target)}${marks === 'both' ? `; next digit ${digitLabel(number, d.decider)}` : ''}`}`);
-        for (const [index, digit] of [...number].entries()) {
+        // Show the thousands commas (48,672) as the number lines do. A comma is
+        // a separator, not a box, and it does not shift the digit positions.
+        const shown = spaced(number);
+        let commas = 0;
+        for (const [index, digit] of [...shown].entries()) {
+            if (digit === ',') {
+                commas++;
+                text(row, 'span', ',', 'significant-comma');
+                continue;
+            }
+            const key = index - commas;
             const isButton = onPick && digit !== '.';
             const cell = text(row, isButton ? 'button' : 'span', '', digit === '.' ? 'significant-point' : 'significant-digit');
             if (isButton) {
                 cell.type = 'button';
-                cell.setAttribute('aria-label', digitLabel(number, index));
-                cell.addEventListener('click', () => onPick(index));
+                cell.setAttribute('aria-label', digitLabel(number, key));
+                cell.addEventListener('click', () => onPick(key));
             } else {
                 cell.setAttribute('aria-hidden', 'true');
             }
             text(cell, 'span', digit);
-            if (marks === 'first' && index === d.first) {
+            if (marks === 'first' && key === d.first) {
                 cell.classList.add('is-first');
                 text(cell, 'small', 'Start');
-            } else if (marks !== 'none' && marks !== 'first' && index === d.target) {
+            } else if (marks !== 'none' && marks !== 'first' && key === d.target) {
                 cell.classList.add('is-keep');
                 text(cell, 'small', 'Keep');
-            } else if (marks === 'both' && index === d.decider) {
+            } else if (marks === 'both' && key === d.decider) {
                 cell.classList.add('is-look');
                 text(cell, 'small', 'Look');
             }
         }
         host.append(row);
+        return row;
     }
     // A number line from one round number (base) to the next, drawn like the
     // negative numbers line: a grey line, ten equal steps with a tick and a
@@ -981,7 +995,22 @@
         if (screen.context) drawContextLine(host, screen);
         else if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly,
             screen.base, screen.notes, screen.step, { wideLabels: screen.tap === 'end', labels: screen.labels });
-        else if (screen.number) drawDigits(host, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) }, screen.marks);
+        else if (screen.number) {
+            // A screen with notes gets a block, so the arrows can point from each
+            // note up at the digit box it talks about.
+            const block = screen.digitNotes ? text(host, 'div', '', 'rounding-notes rounding-digit') : host;
+            const row = drawDigits(block, { ...screen, ...keyDigits(screen.number, screen.kind, screen.accuracy) }, screen.marks);
+            if (screen.digitNotes) {
+                const keep = text(block, 'p', screen.digitNotes.keep, 'rounding-note rounding-note--keep');
+                const look = text(block, 'p', screen.digitNotes.look, 'rounding-note rounding-note--look');
+                // Both notes sit at the left under the boxes and each arrow leaves
+                // from the note's right end, so no arrow runs through text.
+                drawArrows(block, [
+                    [keep, () => row.querySelector('.significant-digit.is-keep'), 'right'],
+                    [look, () => row.querySelector('.significant-digit.is-look'), 'right']
+                ]);
+            }
+        }
         // A real-life answer sits in the small centred box, like the number-line answers.
         for (const equation of screen.equations || []) text(host, 'p', equation, screen.context ? 'significant-equation rounding-line-answer' : 'significant-equation');
         for (const line of screen.after || []) text(host, 'p', line);
