@@ -499,7 +499,10 @@
             digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
             nearest: 'So 46,728 is closer to 47,000.'
         } },
-        { title: 'Decimal places', lines: ['Decimal places count digits after the decimal point.', 'The first digit after the point is the tenths digit. The second is the hundredths digit.', 'For 2 decimal places, keep 7 in 4.276. The next digit is 6, so round up to 8.'], number: '4.276', kind: 'decimal', accuracy: 2, equations: ['4.276 ≈ 4.28'] },
+        { title: "Now let's round 4.276 to 2 decimal places.", lines: ['2 decimal places means 2 digits after the decimal point. So 4.276 sits between 4.27 and 4.28. Here it is on the number line, counting in steps of 0.001.'], line: true, base: 4.27, step: 0.001, value: 4.276, tap: 'end', labels: 'landmarks', notes: {
+            digit: 'The next digit is 6. That is 5 or more, so round up.',
+            nearest: 'So 4.276 is closer to 4.28.'
+        } },
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         {
             title: 'A carry can run through more than one 9.',
@@ -652,7 +655,9 @@
         // and so on) so a note's arrow can point at it.
         const marked = number => {
             const shown = format(number);
-            let fromEnd = Math.round(Math.log10(step));
+            // With a step smaller than 1 (0.001), the digit that decides is the
+            // last one shown, not a digit above the point.
+            let fromEnd = Math.max(0, Math.round(Math.log10(step)));
             for (let i = shown.length - 1; i >= 0; i--) {
                 if (!/\d/.test(shown[i])) continue;
                 if (fromEnd-- === 0) return `${shown.slice(0, i)}<tspan class="rounding-decider">${shown[i]}</tspan>${shown.slice(i + 1)}`;
@@ -660,7 +665,10 @@
             return shown;
         };
         const phone = window.matchMedia('(max-width: 600px)').matches;
-        const top = base + 10 * step;
+        // A step of 0.001 leaves float noise (4.2749999999999995), so every tick
+        // is snapped before it is labelled or used as a tap target.
+        const tick = mark => Number((base + mark * step).toFixed(6));
+        const top = tick(10);
         const edge = wideLabels ? 50 : 30;
         const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
         // A number between two ticks, or on a tick left unlabelled, has no label in the row, so its label sits
@@ -675,7 +683,7 @@
         let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
-            const number = base + mark * step;
+            const number = tick(mark);
             const landmark = mark % 5 === 0;
             const reach = landmark ? 12 : 7;
             const y = axis + (phone ? 44 : 40);
