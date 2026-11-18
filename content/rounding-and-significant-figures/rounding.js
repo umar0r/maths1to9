@@ -125,7 +125,7 @@
                 placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
                 line: { base: 53400, step: 10, value: 53481 },
                 notes: {
-                    digit: 'The digit next to the 4 is 8. 8 is 5 or more, so round up.',
+                    digit: '53,481 is past the halfway mark, 53,450, so it rounds up.',
                     nearest: 'So 53,481 is closer to 53,500.'
                 },
                 answer: '53,481 ≈ 53,500',

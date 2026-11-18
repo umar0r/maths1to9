@@ -103,7 +103,7 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .rounding-half-button')).toHaveCount(0);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
             await expect(page.locator('.rounding-tryit .rounding-value--above')).toHaveText('53,481');
-            await expect(page.getByText('The digit next to the 4 is 8. 8 is 5 or more, so round up.', { exact: true })).toBeVisible();
+            await expect(page.getByText('53,481 is past the halfway mark, 53,450, so it rounds up.', { exact: true })).toBeVisible();
             await expect(page.getByText('So 53,481 is closer to 53,500.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
             // The instruction goes once there is nothing left to do, so no
