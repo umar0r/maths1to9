@@ -92,20 +92,6 @@
         }
         return question;
     }
-    function digitQuestion(number, kind, accuracy, stage) {
-        const d = keyDigits(number, kind, accuracy);
-        const correct = stage === 'keep' ? d.target : d.decider;
-        const wrong = [d.target, d.decider, d.first, ...d.indexes].filter((index, i, list) => index !== correct && list.indexOf(index) === i).slice(0, 3);
-        return {
-            number, kind, accuracy, ...d, stage, input: 'choice',
-            questionType: stage === 'keep' ? 'keep-digit' : 'deciding-digit',
-            prompt: `Round ${spaced(number)} to ${accuracyText(kind, accuracy)}. ${stage === 'keep' ? 'Which is the last digit to keep?' : 'Which digit comes straight after the digit to keep?'}`,
-            options: [option(digitLabel(number, correct), `The ${stage === 'keep' ? 'last digit to keep' : 'next digit'} is ${number[correct]} in the ${place(number, correct)}.`, true, correct),
-                ...wrong.map(index => option(digitLabel(number, index),
-                    stage === 'keep' ? `The ${place(number, index)} digit is not the last digit to keep. Find the place asked for.`
-                        : `The ${place(number, index)} digit is not straight after the digit to keep. Look one digit to the right.`, false, index))]
-        };
-    }
     function contextStep(questionType, prompt, answer, feedback, rules = []) {
         return {
             stage: 'context', questionType, input: 'number', exact: false,
@@ -114,182 +100,290 @@
         };
     }
 
-    function containerSteps() {
-        const step = (...details) => contextStep('containers', ...details);
-        return [
-            step('There are 131 helmets to store. Each rack holds 18 helmets. On a calculator, 131 ÷ 18 = 7.277… Round 7.277… to the nearest whole number.',
-                '7', '7.277… is closer to 7 than to 8, so it rounds to 7.', [
-                    ['8', 'The tenths digit is 2. That is less than 5, so round down to 7.'],
-                    ['7.3', 'That has one decimal place. Round to the nearest whole number.']
-                ]),
-            step('7 racks hold 7 × 18 = 126 helmets. How many of the 131 helmets have no rack?',
-                '5', '131 − 126 = 5. So 5 helmets have no rack.', [
-                    ['126', '126 helmets fit in the racks. Take 126 away from 131.'],
-                    ['257', 'Take 126 away from 131. Don\'t add them.']
-                ]),
-            step('What is the smallest number of racks needed for all 131 helmets?',
-                '8', '8 racks hold 8 × 18 = 144 helmets, so all 131 fit. Here you round up to 8, even though 7.277… rounds to 7.', [
-                    ['7', '7 racks leave 5 helmets with no rack. You need one more rack.'],
-                    ['9', '8 racks hold 144 helmets. That is already enough.'],
-                    ['7.277', 'You can\'t have part of a rack. Give a whole number.']
-                ])
-        ];
-    }
-    function singleStepExamples() {
-        return [
-            ['53481', 'nearest', 3],
-            ['2681450', 'nearest', 6]
-        ].map(([number, kind, accuracy]) => [{
-            ...roundingQuestion(number, kind, accuracy, 'number'), showDigitsAfterAnswer: true
-        }]);
+    // Try it: hands-on slides. On the first two the pupil taps the digit that
+    // decides, then puts the number on a number line with their hands. The
+    // third (the minibuses) is added after learnScreens: tap how many you need. The
+    // words below are the words on screen; the tests and the slides tool read
+    // them from here.
+    const tryIt = {
+        slides: [
+            {
+                title: 'Round 53,481 to the nearest 100.',
+                digits: '53481', accuracy: 2,
+                tap: 'Tap the hundreds digit.',
+                tapHint: 'The hundreds digit is the third from the right.',
+                place: 'Tap where 53,481 goes on the line.',
+                line: { base: 53400, step: 10, value: 53481, tolerance: 5 },
+                notes: {
+                    digit: 'The next digit is 8. That is 5 or more, so round up.',
+                    nearest: 'So 53,481 is closer to 53,500.'
+                },
+                answer: '53,481 ≈ 53,500',
+                button: 'Next'
+            },
+            {
+                title: 'Round 2,681,450 to the nearest million.',
+                digits: '2681450', accuracy: 6,
+                tap: 'Tap the millions digit.',
+                tapHint: 'The millions digit is the seventh from the right.',
+                place: 'Drag each number to its place on the line.',
+                move: 'Drag 2,681,450 to where it goes on the line.',
+                labels: ['2,000,000', '2,500,000', '3,000,000'],
+                line: { base: 2000000, step: 100000, value: 2681450, tolerance: 50000 },
+                notes: {
+                    digit: 'The next digit is 6. That is 5 or more, so round up.',
+                    nearest: 'So 2,681,450 is closer to 3,000,000.'
+                },
+                answer: '2,681,450 ≈ 3,000,000',
+                button: 'Next'
+            }
+        ]
+    };
+
+    /* Which number a point across a number line stands for. The lines are
+       drawn in a 660-wide box with a margin at each end, so the pointer is
+       measured against those same numbers. */
+    function valueOnLine(line, clientX) {
+        const rect = line.querySelector('svg').getBoundingClientRect();
+        const edge = Number(line.dataset.edge);
+        const base = Number(line.dataset.base);
+        const step = Number(line.dataset.step);
+        const point = (clientX - rect.left) / rect.width * 660;
+        return base + (point - edge) / (660 - 2 * edge) * 10 * step;
     }
 
-    function situationExamples() {
-        return [
-            ['budget', [
-                ['A craft club has £23. Each brush costs £2.80. On a calculator, 23 ÷ 2.80 = 8.214… How much do 9 brushes cost? Give your answer in pounds.',
-                    '25.20', '9 × £2.80 = £25.20.', [
-                        ['2.80', 'That is one brush. Times it by 9.']
-                    ]],
-                ['What is the greatest number of brushes the club can buy?',
-                    '8', '8 brushes cost £22.40. 9 cost £25.20, too much. So round down to 8.', [
-                        ['9', '9 brushes cost £25.20. That is more than £23.'],
-                        ['8.214', "You can't buy part of a brush. Give a whole number."]
-                    ]]
-            ]],
-            ['stock-first', [
-                ['A workshop needs 38 litres of coolant. It already has 9 litres. How many more litres does it need?',
-                    '29', '38 − 9 = 29 litres.', [
-                        ['47', "Take the 9 litres away. Don't add them."]
-                    ]],
-                ['Coolant comes in 4-litre cans. 29 ÷ 4 = 7.25. What is the smallest number of cans needed?',
-                    '8', '7 cans give 28 litres. 8 cans give 32 litres, so round up to 8.', [
-                        ['7', '7 cans give 28 litres. That is 1 litre short.'],
-                        ['10', 'That uses 38 litres. The workshop already has 9.']
-                    ]]
-            ]],
-            ['spend-first', [
-                ['A gardener has £30. They buy a watering can for £8.40 and a trowel for £4.75. How much money is left?',
-                    '16.85', '£30 − £8.40 − £4.75 = £16.85.', [
-                        ['13.15', 'That is what the can and trowel cost. Take it away from £30.']
-                    ]],
-                ['Compost bags cost £3.20 each. 16.85 ÷ 3.20 = 5.265… How many bags can the gardener buy?',
-                    '5', '5 bags cost £16.00. 6 bags cost £19.20, so round down to 5.', [
-                        ['6', '6 bags cost £19.20. That is more than £16.85.'],
-                        ['9', 'That uses all £30. Some money has already been spent.']
-                    ]]
-            ]],
-            ['leftover', [
-                ['A roll holds 9.5 m of cord. How many centimetres is that?',
-                    '950', '9.5 × 100 = 950 cm.', [
-                        ['95', '1 m is 100 cm, so times by 100.']
-                    ]],
-                ['Each piece is 80 cm. 950 ÷ 80 = 11.875. How many full pieces can you cut?',
-                    '11', '11 × 80 = 880 cm. 12 pieces need 960 cm, so round down to 11.', [
-                        ['12', '12 pieces need 960 cm. There is only 950 cm.']
-                    ]],
-                ['11 pieces use 880 cm. How much cord is left, in centimetres?',
-                    '70', '950 − 880 = 70 cm.', [
-                        ['0.875', 'That is part of a piece. Work out 950 − 880.'],
-                        ['0.7', 'Give your answer in centimetres.']
-                    ]]
-            ]],
-            ['started-block', [
-                ['A shop charges £18 for each 3-hour block, and a block you start counts as a whole block. A tool is hired for 7 hours. 7 ÷ 3 = 2.333… How many blocks are charged?',
-                    '3', '2 blocks cover 6 hours. The 7th hour starts block 3, so round up to 3.', [
-                        ['2', '2 blocks only cover 6 hours. The 7th hour starts a new block.']
-                    ]],
-                ['What is the charge?', '54', '3 × £18 = £54.', [
-                    ['42', 'That charges for part of a block. Charge 3 whole blocks.'],
-                    ['36', 'That is only 2 blocks.']
-                ]]
-            ]],
-            ['more-than', [
-                ['A stall paid £216 for its stock. Each item sells for £6. 216 ÷ 6 = 36. How much money do 36 sales bring in?',
-                    '216', '36 × £6 = £216.'],
-                ['What is the least number of items it must sell to get more than £216?',
-                    '37', '36 sales bring in £216. One more sale brings the total to £222, so it takes 37 sales.', [
-                        ['36', '36 items bring in exactly £216. You need more than that.']
-                    ]]
-            ]],
-            ['change', [
-                ['A club has £12.50. Each trophy costs £1.85. 12.50 ÷ 1.85 = 6.756… How many trophies can it buy?',
-                    '6', '6 trophies cost £11.10. 7 trophies cost £12.95, so round down to 6.', [
-                        ['7', '7 trophies cost £12.95. That is more than £12.50.']
-                    ]],
-                ['6 trophies cost £11.10. How much change does the club get, in pence?',
-                    '140', '£12.50 − £11.10 = £1.40, which is 140p.', [
-                        ['1.4', 'That is in pounds. £1.40 is 140p.']
-                    ]]
-            ]],
-            ['doubling', [
-                ['Prints cost 85p each. £4 buys 4 prints, which cost £3.40. How many pence are left over?',
-                    '60', '400p − 340p = 60p.', [
-                        ['0.6', 'Give your answer in pence.']
-                    ]],
-                ['How many prints can £8 buy? 800 ÷ 85 = 9.411…',
-                    '9', '9 prints cost £7.65. 10 prints cost £8.50, so round down to 9.', [
-                        ['8', 'Doubling 4 gives 8, but the money left over adds up. 9 prints cost £7.65.']
-                    ]]
-            ]],
-            ['saving', [
-                ['Boots cost £64. A voucher takes £10 off. How much do the boots cost now?',
-                    '54', '£64 − £10 = £54.', [
-                        ['74', "Take the £10 off. Don't add it."]
-                    ]],
-                ['Lee saves £8 a week. 54 ÷ 8 = 6.75. How many weeks must Lee save?',
-                    '7', '6 weeks gives £48. 7 weeks gives £56, so round up to 7.', [
-                        ['6', '6 weeks gives £48. That is not enough.'],
-                        ['8', 'That forgets the voucher.']
-                    ]]
-            ]],
-            ['full-packets', [
-                ['A club has 86 stickers. It packs them in packets of 8. 86 ÷ 8 = 10.75. How many full packets can it make?',
-                    '10', '10 packets use 80 stickers. 11 packets need 88, so round down to 10.', [
-                        ['11', '11 packets need 88 stickers.']
-                    ]],
-                ['Each full packet sells for £2.50. How much money does the club get?',
-                    '25', '10 × £2.50 = £25.', [
-                        ['27.5', 'That sells 11 packets. Only 10 are full.'],
-                        ['26.875', "You can't sell part of a packet."]
-                    ]]
-            ]],
-            ['packs-days', [
-                ['A studio has £22. A 250 ml bottle of ink costs £4. 22 ÷ 4 = 5.5. How many bottles can it buy?',
-                    '5', '5 bottles cost £20. 6 bottles cost £24, so round down to 5.', [
-                        ['6', '6 bottles cost £24.']
-                    ]],
-                ['How many millilitres of ink is that?',
-                    '1250', '5 × 250 = 1,250 ml.', [
-                        ['1375', 'That counts half a bottle. You can only buy 5.']
-                    ]],
-                ['The printer uses 125 ml a day. For how many full days will the ink last?',
-                    '10', '1,250 ÷ 125 = 10 full days.', [
-                        ['11', 'That is 5.5 bottles of ink. Use the 5 bottles bought.']
-                    ]]
-            ]],
-            ['coverage', [
-                ['A floor is 62 m². One kit covers 16 m². 62 ÷ 16 = 3.875. How many kits are needed?',
-                    '4', '3 kits cover 48 m². 4 kits cover 64 m², so round up to 4.', [
-                        ['3', '3 kits cover 48 m². That is not enough.']
-                    ]],
-                ['The kit really covers only 14 m². 62 ÷ 14 = 4.428… How many kits are needed now?',
-                    '5', '4 kits cover 56 m². 5 kits cover 70 m², so round up to 5.', [
-                        ['4', '4 kits cover 56 m². That is 6 m² short.']
-                    ]]
-            ]]
-        ].map(([type, steps]) => steps.map(step => contextStep(type, ...step)));
+    /* A card that follows the pointer, or a finger, and glides back if it is
+       dropped somewhere it does not belong. A plain tap is reported instead,
+       so tapping a card and then its place works too. */
+    function dragCard(card, { onDrop, onTap }) {
+        let drag = null;
+        let dragged = false;
+        let offset = { dx: 0, dy: 0 };
+        card.addEventListener('pointerdown', event => {
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+            dragged = false;
+            card.setPointerCapture(event.pointerId);
+        });
+        card.addEventListener('pointermove', event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            offset = { dx: event.clientX - drag.x, dy: event.clientY - drag.y };
+            if (!dragged && Math.hypot(offset.dx, offset.dy) < 6) return;
+            dragged = true;
+            card.classList.add('is-dragging');
+            card.style.transform = `translate(${offset.dx}px, ${offset.dy}px)`;
+        });
+        const end = event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            drag = null;
+            if (!dragged) return;
+            card.classList.remove('is-dragging');
+            card.style.transform = '';
+            const taken = event.type !== 'pointercancel' && onDrop(event.clientX, event.clientY);
+            // Nothing is said: the card just slides back to where it started.
+            if (!taken) {
+                card.animate([
+                    { transform: `translate(${offset.dx}px, ${offset.dy}px)` },
+                    { transform: 'none' }
+                ], { duration: 220, easing: 'ease-out' });
+            }
+            setTimeout(() => { dragged = false; }, 0);
+        };
+        card.addEventListener('pointerup', end);
+        card.addEventListener('pointercancel', end);
+        card.addEventListener('click', () => {
+            if (dragged) return;
+            onTap();
+        });
     }
 
-    function exampleGroups() {
-        return [containerSteps(), ...singleStepExamples(), ...situationExamples()];
+    /* The five or seven digit cards, in one row, with no comma card between
+       them. Taps only count while the pupil is still choosing. */
+    function drawSlideDigits(host, slide, answered, onPick) {
+        const digits = keyDigits(slide.digits, 'nearest', slide.accuracy);
+        return drawDigits(host, { number: slide.digits, ...digits }, answered ? 'both' : 'none',
+            answered ? null : index => onPick(index === digits.target), { commas: false });
     }
-    function examples() {
-        return exampleGroups().flatMap((steps, example) => steps.map((question, step) => ({
-            ...question, example: example + 1, step: step + 1, steps: steps.length
-        })));
+
+    /* Slide one: tap the digit, tap where the number goes on the line, then it
+       rounds by itself. */
+    function drawSlideOne(host, slide, saved, handlers) {
+        const { base, step, value } = slide.line;
+        text(host, 'p', slide.tap);
+        const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
+        const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
+        if (!saved.tapped) return;
+        const place = text(block, 'p', slide.place);
+        const line = drawLine(block, value, false, null, false, base, null, step, {
+            wideLabels: true, labels: 'landmarks', showNearest: false,
+            showDot: saved.dot, onTap: saved.dot ? null : number => handlers.onTap(number)
+        });
+        line.dataset.base = base;
+        line.dataset.step = step;
+        line.dataset.edge = 50;
+        line.dataset.tapValue = value;
+        if (!saved.dot) return;
+        // Nothing is left to do, so the instruction goes: the notes take over,
+        // and no arrow then runs through a line of words at phone width.
+        place.remove();
+        // Two short notes, each with an arrow to the exact thing it is about:
+        // the 8 card, and the round number the answer lands on.
+        const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
+        const nearestNote = text(block, 'p', slide.notes.nearest, 'rounding-note rounding-note--nearest');
+        drawArrows(block, [
+            [digitNote, () => row.querySelector('.significant-digit.is-look')],
+            [nearestNote, () => line.querySelector(`.rounding-value[data-value="${base + 10 * step}"]`)]
+        ]);
+        text(host, 'p', slide.answer, 'significant-equation');
     }
-    const exampleCount = exampleGroups().length;
+
+    /* Slide two's line: a tick every 100,000, then three empty slots under the
+       left end, the middle and the right end for the pupil to fill. */
+    function drawBuildLine(host, slide, saved, handlers, labelsPlaced) {
+        const { base, step, value, tolerance } = slide.line;
+        const targets = slide.labels.map(label => Number(clean(label)));
+        const edge = 30;
+        const axis = 30;
+        const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
+        let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+        for (let mark = 0; mark <= 10; mark++) {
+            const number = base + mark * step;
+            const landmark = mark % 5 === 0;
+            const reach = landmark ? 12 : 7;
+            picture += `<path class="rounding-tick${landmark ? ' is-landmark' : ''}" d="M ${x(number)} ${axis - reach} V ${axis + reach}"/>`;
+        }
+        // The number itself, once it has been put where it goes: a round dot
+        // on the line with its value written above it.
+        if (saved.dot) {
+            picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="9"/>`;
+            picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - 12}">${spaced(String(value))}</text>`;
+        }
+        const line = document.createElement('div');
+        line.className = 'rounding-line';
+        line.dataset.base = base;
+        line.dataset.step = step;
+        line.dataset.edge = edge;
+        line.dataset.tapValue = value;
+        line.innerHTML = `<svg viewBox="0 0 660 ${axis + 28}" aria-hidden="true">${picture}</svg>`;
+        host.append(line);
+
+        const row = document.createElement('div');
+        row.className = 'tryit-slots';
+        const slots = slide.labels.map((label, index) => {
+            const slot = document.createElement('button');
+            slot.type = 'button';
+            slot.className = 'tryit-slot';
+            slot.dataset.slot = index;
+            const placed = saved.slots[index];
+            if (placed === null) slot.setAttribute('aria-label', `Empty place for ${label}`);
+            else {
+                slot.classList.add('is-filled');
+                slot.textContent = spaced(String(placed));
+                slot.setAttribute('aria-label', `${spaced(String(placed))} in place`);
+                slot.disabled = true;
+            }
+            row.append(slot);
+            return slot;
+        });
+        host.append(row);
+
+        const tray = document.createElement('div');
+        tray.className = 'tryit-cards';
+        host.append(tray);
+
+        if (!labelsPlaced) {
+            const slotAt = (pointerX, pointerY) => slots.findIndex(slot => {
+                const box = slot.getBoundingClientRect();
+                return pointerX >= box.left && pointerX <= box.right
+                    && pointerY >= box.top && pointerY <= box.bottom;
+            });
+            let picked = null;
+            // Cards already on the line have left the tray.
+            const cards = handlers.order.filter(number => !saved.slots.includes(number)).map(number => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'tryit-card';
+                card.dataset.value = number;
+                card.textContent = spaced(String(number));
+                card.setAttribute('aria-label', `Drag ${spaced(String(number))} to its place on the line, or tap it and tap its place`);
+                dragCard(card, {
+                    // Only the right slot keeps a card. Anywhere else it slides back.
+                    onDrop: (pointerX, pointerY) => {
+                        const slot = slotAt(pointerX, pointerY);
+                        if (targets[slot] !== number) return false;
+                        handlers.onLabel(number, slot);
+                        return true;
+                    },
+                    onTap() {
+                        picked = picked === number ? null : number;
+                        cards.forEach(other => other.classList.toggle('is-picked', Number(other.dataset.value) === picked));
+                    }
+                });
+                tray.append(card);
+                return card;
+            });
+            slots.forEach((slot, index) => slot.addEventListener('click', () => {
+                if (picked === null || targets[index] !== picked) return;
+                handlers.onLabel(picked, index);
+            }));
+        }
+
+        if (labelsPlaced && !saved.dot) {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'tryit-card';
+            card.dataset.value = value;
+            card.textContent = spaced(String(value));
+            card.setAttribute('aria-label', `Drag ${spaced(String(value))} to where it goes on the line`);
+            dragCard(card, {
+                onDrop(pointerX) {
+                    if (Math.abs(valueOnLine(line, pointerX) - value) > tolerance) return false;
+                    handlers.onNumber();
+                    return true;
+                },
+                onTap() {}
+            });
+            tray.append(card);
+        }
+        return { line, slots };
+    }
+
+    /* Slide two: build the three labels first, then drag the number on. */
+    function drawSlideTwo(host, slide, saved, handlers) {
+        text(host, 'p', slide.tap);
+        const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
+        const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
+        if (!saved.tapped) return;
+        const labelsPlaced = saved.slots.every(placed => placed !== null);
+        const prompt = text(block, 'p', labelsPlaced ? slide.move : slide.place);
+        const { line, slots } = drawBuildLine(block, slide, saved, handlers, labelsPlaced);
+        if (!saved.dot) return;
+        // Done: the instruction makes way for the notes, so no arrow crosses it.
+        prompt.remove();
+        // The 6 card decides, and the answer lands on 3,000,000 at the right end.
+        const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
+        const nearestNote = text(block, 'p', slide.notes.nearest, 'rounding-note rounding-note--nearest');
+        drawArrows(block, [
+            [digitNote, () => row.querySelector('.significant-digit.is-look')],
+            [nearestNote, () => slots[slots.length - 1]]
+        ]);
+        text(host, 'p', slide.answer, 'significant-equation');
+        void line;
+    }
+
+    // The minibus slide: tap how many you need, then the working shows.
+    function drawContextSlide(host, slide, answered, onResult) {
+        if (!answered) return drawLearnTap(host, slide, onResult);
+        drawContextLine(host, slide);
+        for (const equation of slide.equations || []) text(host, 'p', equation, 'significant-equation rounding-line-answer');
+        if (slide.caption) text(host, 'p', slide.caption);
+    }
+
+    function drawSlide(host, slide, saved, handlers) {
+        if (slide.context) return drawContextSlide(host, slide, saved.dot, handlers.onContext);
+        return slide.labels ? drawSlideTwo(host, slide, saved, handlers) : drawSlideOne(host, slide, saved, handlers);
+    }
+
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
@@ -510,22 +604,6 @@
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] },
         {
-            title: 'When you need enough of something, round up.',
-            lines: [], base: 7, step: 0.1, value: 131 / 18, labels: 'landmarks', tap: 'end', answer: 8,
-            context: {
-                setup: 'Step 1: There are 131 helmets. Each rack holds 18. On a calculator, 131 ÷ 18 = 7.277…',
-                valueLabel: '7.277…',
-                question: 'How many racks do you need?',
-                hint: '7 racks hold 7 × 18 = 126 helmets. That leaves 5 helmets with no rack.',
-                steps: [
-                    ['Step 2: 7 racks hold 126 helmets. 5 helmets have no rack.', 7],
-                    ['Step 3: So you need 8 racks. 8 racks hold 144, so all 131 fit.', 8]
-                ]
-            },
-            equations: ['8 racks'],
-            caption: '7.277… would normally round to 7. Here you round up, because 7 racks are not enough.'
-        },
-        {
             title: 'When you can only pay for whole ones, round down.',
             lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
             context: {
@@ -557,6 +635,26 @@
             equations: ['70 cm left']
         }
     ];
+    // The minibus slide was a Learn screen; it is now Try it's third slide.
+    tryIt.slides.push({
+        ...{
+            title: 'When you need enough of something, round up.',
+            lines: [], base: 8, step: 0.1, value: 131 / 16, labels: 'landmarks', tap: 'end', answer: 9,
+            context: {
+                setup: 'Step 1: 131 pupils are going on a trip. Each minibus seats 16. On a calculator, 131 ÷ 16 = 8.1875',
+                valueLabel: '8.1875',
+                question: 'How many minibuses do you need?',
+                hint: '8 minibuses seat 8 × 16 = 128 pupils. That leaves 3 pupils with no seat.',
+                steps: [
+                    ['Step 2: 8 minibuses seat 128 pupils. 3 pupils have no seat.', 8],
+                    ['Step 3: So you need 9 minibuses. 9 minibuses seat 144, so all 131 fit.', 9]
+                ]
+            },
+            equations: ['9 minibuses'],
+            caption: '8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.'
+        },
+        button: 'Continue'
+    });
     function text(host, tag, value, className) {
         const node = document.createElement(tag);
         node.textContent = value;
@@ -598,7 +696,7 @@
         drawArrows(block, [[note, () => number.querySelector('.rounding-keep')]]);
         stepText(host, 'p', steps.place);
     }
-    function drawDigits(host, question, marks = 'both', onPick) {
+    function drawDigits(host, question, marks = 'both', onPick, { commas = true } = {}) {
         const { number } = question;
         const d = question;
         const row = document.createElement('div');
@@ -607,15 +705,15 @@
         row.setAttribute('aria-label', `Digits of ${spaced(number)}${marks === 'first' ? `; start at ${number[d.first]}` : marks === 'none' ? '' : `; keep ${digitLabel(number, d.target)}${marks === 'both' ? `; next digit ${digitLabel(number, d.decider)}` : ''}`}`);
         // Show the thousands commas (48,672) as the number lines do. A comma is
         // a separator, not a box, and it does not shift the digit positions.
-        const shown = spaced(number);
-        let commas = 0;
+        const shown = commas ? spaced(number) : String(number);
+        let separators = 0;
         for (const [index, digit] of [...shown].entries()) {
             if (digit === ',') {
-                commas++;
+                separators++;
                 text(row, 'span', ',', 'significant-comma');
                 continue;
             }
-            const key = index - commas;
+            const key = index - separators;
             const isButton = onPick && digit !== '.';
             const cell = text(row, isButton ? 'button' : 'span', '', digit === '.' ? 'significant-point' : 'significant-digit');
             if (isButton) {
@@ -645,7 +743,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, wideLabels = false, labels = 'all', valueLabel, showNearest = true } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, onTap = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -675,7 +773,7 @@
         const digitNote = notes && !onTick ? stepText(lineHost, 'p', notes.digit, 'rounding-note rounding-note--above') : null;
         const line = document.createElement('div');
         line.className = 'rounding-line';
-        line.setAttribute('role', onPick ? 'group' : 'img');
+        line.setAttribute('role', onPick || onTap ? 'group' : 'img');
         let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
@@ -693,9 +791,9 @@
                 </g>`
                 : label;
         }
-        if (!onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
-        picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
-        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!onPick}">${picture}</svg>`;
+        if (showDot && !onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
+        if (showDot) picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
+        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onTap)}">${picture}</svg>`;
         if (onPick) {
             for (const end of line.querySelectorAll('.rounding-end')) {
                 const pick = () => onPick(Number(end.dataset.end));
@@ -707,13 +805,21 @@
                 });
             }
         }
+        if (onTap) {
+            // A tap anywhere along the line: where it lands decides the number.
+            line.querySelector('svg').addEventListener('click', event => {
+                const box = event.currentTarget.getBoundingClientRect();
+                const point = (event.clientX - box.left) / box.width * 660;
+                onTap(base + (point - edge) / (660 - 2 * edge) * 10 * step);
+            });
+        }
         const dot = line.querySelector('.rounding-dot');
         const label = number => line.querySelector(`.rounding-value[data-value="${number}"]`);
         const nearest = number => number < base + 5 * step ? base : top;
         lineHost.append(line);
         const output = showNearest && !onPick ? text(host, 'p', '', 'significant-equation rounding-line-answer') : null;
         function update(number) {
-            dot.setAttribute('cx', x(number));
+            if (dot) dot.setAttribute('cx', x(number));
             line.querySelectorAll('.rounding-value[data-value]').forEach(item => item.classList.toggle('is-key', Number(item.dataset.value) === number));
             if (output) output.textContent = `${format(number)} ≈ ${format(nearest(number))}`;
             const description = `${valueLabel ?? format(number)} on a line from ${format(base)} to ${format(top)}`;
@@ -879,11 +985,5 @@
         for (const line of screen.after || []) text(host, 'p', line);
         if (screen.caption) text(host, 'p', screen.caption);
     }
-    function drawExample(host, question, correct) {
-        if (question.stage === 'context' || (question.showDigitsAfterAnswer && !correct)) return;
-        const marks = question.stage === 'keep' ? (correct ? 'keep' : 'none') : question.stage === 'decider' ? (correct ? 'both' : 'keep') : 'both';
-        drawDigits(host, question, marks);
-        if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
-    }
-    window.Rounding = { roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample };
+    window.Rounding = { roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, checks, practiceTypes, pick, prepare, generate, tryIt, learnScreens, drawLearn, drawLearnTap, drawLine, drawSlide };
 })();
