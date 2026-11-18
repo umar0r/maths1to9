@@ -102,6 +102,23 @@ module.exports = async function solve(page) {
 
     if (await page.locator('.rounding-tryit:visible').count()) return solveTryIt(page);
 
+    // Practice number-line questions: tap the end the number is closest to.
+    const linePrompt = page.locator('.question-prompt:visible');
+    if (await linePrompt.count()) {
+        const match = (await linePrompt.innerText()).match(/^Tap the number (\d[\d,]*) is closest to\.$/);
+        if (match) {
+            const number = Number(clean(match[1]));
+            const ends = await page.locator('.rounding-end:visible')
+                .evaluateAll(nodes => nodes.map(node => ({ end: Number(node.dataset.end), selected: node.classList.contains('is-selected') })));
+            // Already tapped: let the run press Check rather than tapping again.
+            if (ends.some(item => item.selected)) return false;
+            const nearest = ends.map(item => item.end)
+                .reduce((best, end) => Math.abs(end - number) < Math.abs(best - number) ? end : best, ends[0].end);
+            await page.locator(`.rounding-end[data-end="${nearest}"]:visible`).click();
+            return true;
+        }
+    }
+
     // Learn tap screens: tap the end of the line the number rounds to, or the digit asked for.
     const ends = page.locator('.rounding-end:visible');
     const tapDigits = page.locator('.significant-digits[role=group]:visible button');

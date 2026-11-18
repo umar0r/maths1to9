@@ -111,46 +111,78 @@
         if (!cardFigures.has(key)) cardFigures.set(key, build());
         return cardFigures.get(key);
     }
+    // A phone draws each picture for a narrow box, the same test drawLine uses,
+    // instead of shrinking the wide one, so the picture fills the card.
+    const narrowPicture = () => window.matchMedia('(max-width: 600px)').matches;
+
     function drawPathFigure(host, metres) {
         const label = `${Number(metres).toLocaleString('en-GB')} m`;
-        // Small darker green tufts, kept off the path itself.
-        const tufts = [[58, 30], [132, 104], [204, 26], [318, 110], [402, 24], [468, 106], [552, 28], [614, 102]];
-        const path = 'M 16 92 C 118 64, 192 120, 300 92 S 468 60, 644 92';
-        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 660 150" role="img" aria-label="A path ${label} long">
-            <rect class="rounding-picture__grass" x="0" y="8" width="660" height="108" rx="14"/>
+        const narrow = narrowPicture();
+        const width = narrow ? 360 : 660;
+        const from = narrow ? 12 : 16;
+        const to = width - from;
+        const middle = width / 2;
+        const curve = narrow
+            ? 'M 12 88 C 70 60, 116 116, 180 88 S 292 58, 348 88'
+            : 'M 16 92 C 118 64, 192 120, 300 92 S 468 60, 644 92';
+        // Small darker green tufts on the grass.
+        const tufts = narrow
+            ? [[26, 26], [70, 104], [128, 24], [222, 108], [286, 26], [332, 100]]
+            : [[58, 30], [132, 104], [204, 26], [318, 110], [402, 24], [468, 106], [552, 28], [614, 102]];
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 ${width} 150" role="img" aria-label="A path ${label} long">
+            <rect class="rounding-picture__grass" x="0" y="8" width="${width}" height="108" rx="14"/>
             ${tufts.map(([cx, cy]) => `<circle class="rounding-picture__tuft" cx="${cx}" cy="${cy}" r="4"/>`).join('')}
-            <path class="rounding-picture__path-edge" d="${path}"/>
-            <path class="rounding-picture__path-paving" d="${path}"/>
-            <path class="rounding-picture__measure" d="M 16 30 H 644 M 16 22 V 38 M 644 22 V 38"/>
-            <path class="rounding-picture__measure" d="M 28 24 L 16 30 L 28 36 M 632 24 L 644 30 L 632 36"/>
-            <text class="rounding-picture__label rounding-picture__label--gap" x="330" y="30" text-anchor="middle" dominant-baseline="middle">${label}</text>
+            <path class="rounding-picture__path-edge" d="${curve}"/>
+            <path class="rounding-picture__path-paving" d="${curve}"/>
+            <path class="rounding-picture__measure" d="M ${from} 30 H ${to} M ${from} 22 V 38 M ${to} 22 V 38"/>
+            <path class="rounding-picture__measure" d="M ${from + 14} 24 L ${from} 30 L ${from + 14} 36 M ${to - 14} 24 L ${to} 30 L ${to - 14} 36"/>
+            <text class="rounding-picture__label rounding-picture__label--gap" x="${middle}" y="30" text-anchor="middle" dominant-baseline="middle">${label}</text>
         </svg>`;
     }
 
-    function drawBooksFigure(host, total, size) {        const books = total.toLocaleString('en-GB');
+        function drawBooksFigure(host, total, size) {
+        const books = total.toLocaleString('en-GB');
         const holds = `${size} books`;
+        const narrow = narrowPicture();
+        const width = narrow ? 360 : 660;
         // Seven books, flat and slightly offset, in soft colours with a darker edge.
         const colours = [
             ['#d9e7f7', '#7f9dc0'], ['#f7e0c8', '#c49b72'], ['#d9ecdc', '#82a88e'],
             ['#f2d8e2', '#b98ba6'], ['#e6ddf6', '#9a8ac0'], ['#fae8b6', '#c2a257'],
             ['#d7e8f0', '#85a6b7']
         ];
+        const stackWidth = narrow ? 92 : 128;
+        const stackX = narrow ? 12 : 46;
         const stack = colours.map(([fill, edge], index) => {
-            const x = 46 + (index % 2 === 0 ? -5 : 5);
+            const x = stackX + (index % 2 === 0 ? -5 : 5);
             const y = 125 - (index + 1) * 17;
-            return `<rect class="rounding-picture__book" x="${x}" y="${y}" width="128" height="15" rx="5" fill="${fill}" stroke="${edge}"/>`;
+            return `<rect class="rounding-picture__book" x="${x}" y="${y}" width="${stackWidth}" height="15" rx="5" fill="${fill}" stroke="${edge}"/>`;
         }).join('');
-        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 660 150" role="img" aria-label="A pile of ${books} books and one box that holds ${holds}">
+        // One open box, drawn in 3D: inside back, three flaps, front, right side, tape.
+        const box = narrow
+            ? {
+                inside: '186,68 202,54 312,54 296,68', back: '202,54 312,54 324,36 214,36',
+                left: '186,68 202,54 182,46 166,60', right: '296,68 312,54 332,48 316,62',
+                front: [186, 68, 110, 54], side: '296,68 312,54 312,106 296,122', tape: [236, 74, 10, 34],
+                booksLabel: 56, boxLabel: 241
+            }
+            : {
+                inside: '418,68 440,52 580,52 558,68', back: '440,52 580,52 594,32 454,32',
+                left: '418,68 440,52 416,42 394,58', right: '558,68 580,52 604,44 582,60',
+                front: [418, 68, 140, 54], side: '558,68 580,52 580,106 558,122', tape: [482, 74, 12, 34],
+                booksLabel: 105, boxLabel: 500
+            };
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 ${width} 150" role="img" aria-label="A pile of ${books} books and one box that holds ${holds}">
             ${stack}
-            <polygon class="rounding-picture__box" fill="#92400e" points="418,68 440,52 580,52 558,68"/>
-            <polygon class="rounding-picture__box" fill="#e4b77e" points="440,52 580,52 594,32 454,32"/>
-            <polygon class="rounding-picture__box" fill="#d6a565" points="418,68 440,52 416,42 394,58"/>
-            <polygon class="rounding-picture__box" fill="#e4b77e" points="558,68 580,52 604,44 582,60"/>
-            <rect class="rounding-picture__box" fill="#d6a565" x="418" y="68" width="140" height="54" rx="2"/>
-            <polygon class="rounding-picture__box" fill="#b8844a" points="558,68 580,52 580,106 558,122"/>
-            <rect class="rounding-picture__tape" x="482" y="74" width="12" height="34"/>
-            <text class="rounding-picture__label" x="105" y="144" text-anchor="middle">${books} books</text>
-            <text class="rounding-picture__label" x="500" y="144" text-anchor="middle">Holds ${holds}</text>
+            <polygon class="rounding-picture__box" fill="#92400e" points="${box.inside}"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="${box.back}"/>
+            <polygon class="rounding-picture__box" fill="#d6a565" points="${box.left}"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="${box.right}"/>
+            <rect class="rounding-picture__box" fill="#d6a565" x="${box.front[0]}" y="${box.front[1]}" width="${box.front[2]}" height="${box.front[3]}" rx="2"/>
+            <polygon class="rounding-picture__box" fill="#b8844a" points="${box.side}"/>
+            <rect class="rounding-picture__tape" x="${box.tape[0]}" y="${box.tape[1]}" width="${box.tape[2]}" height="${box.tape[3]}"/>
+            <text class="rounding-picture__label" x="${box.booksLabel}" y="144" text-anchor="middle">${books} books</text>
+            <text class="rounding-picture__label" x="${box.boxLabel}" y="144" text-anchor="middle">Holds ${holds}</text>
         </svg>`;
     }
 
@@ -246,16 +278,97 @@
             roundingQuestion('2681450', 'nearest', 6, 'choice')
         ];
     }
+    /* Practice starts with two number-line questions: tap the end of the line
+       the number is closest to, once for the nearest 10 and once for the
+       nearest 100. The engine's custom card draws, saves and marks it. */
+    function linePickWidget(base, step, value, answer, feedback) {
+        const format = number => number.toLocaleString('en-GB');
+        return {
+            render(host, { value: saved, editable, onChange }) {
+                let chosen = saved;
+                function draw() {
+                    host.replaceChildren();
+                    const line = drawLine(host, value, false, null, !editable, base, null, step, {
+                        onPick: pick, wideLabels: true, showNearest: false
+                    });
+                    // Make each end a little taller, so it is easy to tap on a phone.
+                    for (const rect of line.querySelectorAll('.rounding-end rect')) {
+                        const y = Number(rect.getAttribute('y'));
+                        rect.setAttribute('y', String(y - 4));
+                        rect.setAttribute('height', String(Number(rect.getAttribute('height')) + 8));
+                    }
+                    for (const end of line.querySelectorAll('.rounding-end')) {
+                        if (Number(end.dataset.end) === chosen) end.classList.add('is-selected');
+                        if (editable) continue;
+                        // Once it is marked the ends still show the choice, but
+                        // nothing on the line is tappable any more.
+                        end.removeAttribute('tabindex');
+                        end.removeAttribute('role');
+                        line.classList.add('is-fixed');
+                    }
+                }
+                function pick(number) {
+                    if (!editable) return;
+                    chosen = number;
+                    onChange(number);
+                    draw();
+                }
+                draw();
+                return {
+                    update({ value: next, editable: editableNow }) {
+                        chosen = next;
+                        editable = editableNow;
+                        draw();
+                    }
+                };
+            },
+            isEmpty(chosen) { return chosen === null || chosen === undefined; },
+            mark(chosen) { return { correct: Number(chosen) === answer, feedback }; },
+            answerText(chosen) { return chosen === null || chosen === undefined ? '' : format(Number(chosen)); }
+        };
+    }
+
+    function linePickQuestion(place, integer) {
+        const step = place === 1 ? 1 : 10;
+        const span = 10 * step;
+        const base = place === 1 ? integer(1, 9) * 10 : integer(1, 9) * 100;
+        // Never on an end, never the halfway number, and for the nearest 100
+        // never on a tick either: its ones digit is 1 to 9.
+        let offset = integer(1, span - 1);
+        if (place === 1) {
+            while (offset === 5) offset = integer(1, 9);
+        } else {
+            while (offset === 50 || offset % 10 === 0) offset = integer(1, span - 1);
+        }
+        const format = number => number.toLocaleString('en-GB');
+        const value = base + offset;
+        const halfway = base + 5 * step;
+        const answer = value < halfway ? base : base + span;
+        const side = value > halfway ? 'past' : 'before';
+        const feedback = `${format(value)} is ${side} the halfway mark, ${format(halfway)}, so it is closer to ${format(answer)}.`;
+        return {
+            questionType: 'line-pick', input: 'custom', base, step, value, answer,
+            prompt: `Tap the number ${format(value)} is closest to.`,
+            feedback,
+            widget: cardFigure(`line-pick:${base}:${value}`, () => linePickWidget(base, step, value, answer, feedback))
+        };
+    }
+
     const practiceGroups = [
         { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'big-hundred'] },
         { kind: 'place', types: ['nearest-thousand', 'big-thousand'] },
         { kind: 'context', types: ['round-up'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
     ];
-    const practiceTypes = practiceGroups.flatMap(group => group.types);
+    const practiceTypes = [...practiceGroups.flatMap(group => group.types), 'line-pick'];
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
+        // The session opens with the two number-line questions: nearest 10,
+        // then nearest 100.
+        const linePicks = [1, 2].map(place => ({
+            type: 'line-pick', place, mode: 'custom', seed: randomInt(0, 4294967295, random)
+        }));
         // Three cards from each whole-number group and two from each real-life
         // group keeps it at 10 questions, so both come up in every session.
         const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2] : [0, 1]).map(() => ({
@@ -285,11 +398,11 @@
             // always can) the multiple-choice slot.
             const placeChoice = ordered.some(({ group }, index) => group.kind === 'place' && modes[index] === 'choice');
             // The minibus and box questions (round up) are always multiple choice.
-            return ordered.map(({ type }, index) => ({
+            return [...linePicks, ...ordered.map(({ type }, index) => ({
                 type,
                 mode: type === 'round-up' || placeChoice === (modes[index] === 'choice') ? 'choice' : 'number',
                 seed: randomInt(0, 4294967295, random)
-            }));
+            }))];
         }
         throw new Error('Could not lay out a practice session.');
     }
@@ -395,6 +508,8 @@
         case 'round-up':
         case 'full-groups':
             return generateSituation(item, integer, random);
+        case 'line-pick':
+            return linePickQuestion(item.place === 2 ? 2 : 1, integer);
         case 'path-context':
             number = String(nonZeroEnd(integer(111, 989))); kind = 'nearest'; accuracy = 1;
             customPrompt = `A path is ${number} metres long. Round its length to the nearest 10 metres.${item.mode === 'choice' ? '' : ' Type the number of metres.'}`;

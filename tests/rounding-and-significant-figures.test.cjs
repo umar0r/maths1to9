@@ -136,6 +136,57 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
     }
 });
 
+test('rounding-and-significant-figures: every Practice session opens with the two number-line questions', () => {
+    const realSeed = n => {
+        const random = seededRandom(n);
+        random();
+        return window.Maths1to9LessonEngine.randomInt(0, 4294967295, random);
+    };
+    for (let n = 0; n < 501; n++) {
+        const items = Q.pick(seededRandom(realSeed(n)));
+        assert.equal(items.length, 12, `seed ${n}`);
+        assert.equal(items.length, data.question_bank.session_length);
+        assert.deepEqual(items.slice(0, 2).map(item => item.type), ['line-pick', 'line-pick'], `seed ${n}`);
+        assert.deepEqual(items.slice(0, 2).map(item => item.place), [1, 2], `seed ${n}`);
+        // Questions 3 to 12 are the ten the lesson picks now, never a line question.
+        assert.equal(items.slice(2).length, 10, `seed ${n}`);
+        assert.ok(items.slice(2).every(item => item.type !== 'line-pick'), `seed ${n}`);
+        const [tens, hundreds] = items.slice(0, 2).map(item => Q.generate(item, seededRandom(item.seed)));
+        // Nearest 10: one round number to the next ten, with the number on a tick.
+        assert.equal(tens.step, 1);
+        assert.equal(tens.base % 10, 0, tens.base);
+        assert.ok(tens.base >= 10 && tens.base <= 90, tens.base);
+        assert.ok(tens.value > tens.base && tens.value < tens.base + 10, tens.value);
+        assert.notEqual(tens.value, tens.base + 5, tens.value);
+        assert.equal(tens.answer, tens.value < tens.base + 5 ? tens.base : tens.base + 10);
+        // Nearest 100: one round number to the next hundred, with the number between ticks.
+        assert.equal(hundreds.step, 10);
+        assert.equal(hundreds.base % 100, 0, hundreds.base);
+        assert.ok(hundreds.base >= 100 && hundreds.base <= 900, hundreds.base);
+        assert.ok(hundreds.value > hundreds.base && hundreds.value < hundreds.base + 100, hundreds.value);
+        assert.ok(hundreds.value % 10 >= 1 && hundreds.value % 10 <= 9, hundreds.value);
+        assert.notEqual(hundreds.value, hundreds.base + 50, hundreds.value);
+        assert.equal(hundreds.answer, hundreds.value < hundreds.base + 50 ? hundreds.base : hundreds.base + 100);
+        for (const card of [tens, hundreds]) {
+            const text = number => number.toLocaleString('en-GB');
+            assert.equal(card.input, 'custom', card.prompt);
+            assert.equal(card.prompt, `Tap the number ${text(card.value)} is closest to.`);
+            // The nearer end is right, the other end is wrong.
+            assert.equal(card.widget.mark(card.answer).correct, true, card.prompt);
+            const other = card.answer === card.base ? card.base + 10 * card.step : card.base;
+            assert.equal(card.widget.mark(other).correct, false, card.prompt);
+            assert.equal(card.widget.answerText(card.answer), text(card.answer));
+            assert.equal(card.widget.isEmpty(null), true);
+            assert.equal(card.widget.isEmpty(card.answer), false);
+            // The feedback names the halfway mark and the end it is closer to.
+            const halfway = card.base + 5 * card.step;
+            const side = card.value > halfway ? 'past' : 'before';
+            assert.equal(card.widget.mark(card.answer).feedback,
+                `${text(card.value)} is ${side} the halfway mark, ${text(halfway)}, so it is closer to ${text(card.answer)}.`);
+        }
+    }
+});
+
 test('rounding-and-significant-figures: only the path and books questions carry a picture', () => {
     // Seeds are made the way a real Practice session makes them: 32-bit, not 0 to 499.
     const realSeed = n => {
@@ -200,12 +251,14 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
             const q = Q.generate({ type, mode }, seededRandom(seed));
             assert.deepEqual(q, Q.generate({ type, mode }, seededRandom(seed)));
             if (q.options) positions.add(q.options.findIndex(o => o.correct));
+            // The number-line card has no options: its answer is the end it points at.
+            else if (q.answer !== undefined) positions.add(String(q.answer));
         }
         assert.ok(positions.size > 1, type);
     }
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
-        assert.equal(items.length, 10);
+        assert.equal(items.length, 12);
         assert.equal(items.length, data.question_bank.session_length);
         const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
         // Practice mixes multiple choice and typed answers.

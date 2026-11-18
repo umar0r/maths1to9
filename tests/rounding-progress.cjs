@@ -24,11 +24,12 @@ for (const q of Q.checks()) {
 const planned = [
     ...lesson.section_order.map(id => ({ id: `section:${id}`, kind: 'learn', completed: false })),
     ...lesson.score_activities.map(activity => ({ ...activity, completed: false })),
-    ...Array.from({ length: 6 }, (_, i) => ({ id: `answer:question-bank:${i + 1}`, kind: 'answer', completed: false })),
-    ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
+    ...Array.from({ length: lesson.question_bank.session_length }, (_, i) => ({ id: `answer:question-bank:${i + 1}`, kind: 'answer', completed: false })),
+    ...Array.from({ length: lesson.comparison.questions.length }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 145);
+// 4 sections (5 each) + 2 guided + 1 explore (5 each) + 12 Practice and 3 Check answers (10 each).
+assert.equal(tracker.getScore().maximumPoints, 185);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);
