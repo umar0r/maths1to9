@@ -364,7 +364,7 @@
         return prepare(question, random);
     }
     const learnScreens = [
-        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".'], roundings: [
+        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
             { label: 'To the nearest 10', from: '38', to: '40' },
             { label: 'To the nearest 100', from: '461', to: '500' },
             { label: 'To 2 decimal places', from: '3.147', to: '3.15' }
