@@ -114,7 +114,7 @@
                 tapHint: 'The hundreds digit is the third from the right.',
                 // After the right tap, two notes with arrows explain Round and Decides.
                 digitNotes: {
-                    keep: 'Round: the 4 is the hundreds digit. This is the digit we round.',
+                    keep: 'Round: the 4 is the hundreds digit. This is the digit we round (up or down).',
                     look: 'Decides: the 8 is 5 or more, so the 4 rounds up to 5.'
                 },
                 button: 'Next'

@@ -78,7 +78,7 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .significant-digit.is-look')).toContainText('Decides');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look > span').first()).toHaveText('8');
             // One thing per slide: two notes explain Round and Decides, and there is no line yet.
-            await expect(page.getByText('Round: the 4 is the hundreds digit. This is the digit we round.', { exact: true })).toBeVisible();
+            await expect(page.getByText('Round: the 4 is the hundreds digit. This is the digit we round (up or down).', { exact: true })).toBeVisible();
             await expect(page.getByText('Decides: the 8 is 5 or more, so the 4 rounds up to 5.', { exact: true })).toBeVisible();
             await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
