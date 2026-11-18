@@ -112,10 +112,10 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
-                // After the right tap, two notes with arrows explain Keep and Look.
+                // After the right tap, two notes with arrows explain Round and Decides.
                 digitNotes: {
-                    keep: 'Keep: the 4 is the hundreds digit, the last digit we keep. The digits after it become 0.',
-                    look: 'Look: the 8 decides. It is 5 or more, so round up. The 4 becomes 5.'
+                    keep: 'Round: the 4 is the hundreds digit. This is the digit we round.',
+                    look: 'Decides: the 8 is 5 or more, so the 4 rounds up to 5.'
                 },
                 button: 'Next'
             },
@@ -446,10 +446,10 @@
                 text(cell, 'small', 'Start');
             } else if (marks !== 'none' && marks !== 'first' && key === d.target) {
                 cell.classList.add('is-keep');
-                text(cell, 'small', 'Keep');
+                text(cell, 'small', 'Round');
             } else if (marks === 'both' && key === d.decider) {
                 cell.classList.add('is-look');
-                text(cell, 'small', 'Look');
+                text(cell, 'small', 'Decides');
             }
         }
         host.append(row);
