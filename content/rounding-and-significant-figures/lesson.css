@@ -301,6 +301,19 @@ button.significant-digit {
     font-weight: 900;
 }
 
+/* Practice line-pick: each end is an outlined box round its number, like an
+   option button, so it looks like something to tap. The chosen one fills. */
+.rounding-line--pick .rounding-end rect {
+    fill: #fff;
+    stroke: var(--border-dark);
+    stroke-width: 2px;
+}
+
+.rounding-line--pick .rounding-end.is-selected rect {
+    fill: var(--primary-light);
+    stroke: var(--primary);
+}
+
 /* After Check the line still shows the choice, but it cannot be tapped. */
 .rounding-line.is-fixed .rounding-end {
     cursor: default;
