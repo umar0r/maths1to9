@@ -73,6 +73,8 @@
                 ...window.PlaceValue.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
                 sectionId: 'comparison', questionId: `final-check-${index + 1}`,
                 scored: true, readOnly,
+                // Back to an answered question shows its options or box, locked.
+                lockedReview: true,
                 onFeedback: reportProgress, onContinue: continueQuestion
             };
         }

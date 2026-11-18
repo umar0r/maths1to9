@@ -77,6 +77,6 @@ $pageTitle = 'Recognising graph types';
     <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=79"></script>
+    <script src="../../assets/js/lesson-engine.js?v=80"></script>
 </body>
 </html>

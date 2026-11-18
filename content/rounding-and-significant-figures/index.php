@@ -68,10 +68,10 @@ $pageTitle = 'Rounding whole numbers';
     <script src="./rounding.js?v=69"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=17"></script>
+    <script src="./questions.js?v=18"></script>
     <script src="./interactive.js?v=39"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=79"></script>
+    <script src="../../assets/js/lesson-engine.js?v=80"></script>
 </body>
 </html>
