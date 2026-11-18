@@ -6,10 +6,6 @@
 
     const screens = window.Rounding.learnScreens;
 
-    function examples() {
-        return window.Rounding.examples();
-    }
-
     function sectionEvent(sectionId, name) {
         document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
             detail: { sectionId }
@@ -130,89 +126,63 @@
     }
 
     async function mountTryIt(root) {
-        const questions = examples();
-        const exampleOffset = 1;
-        const cardId = index => `example-${index + 1}`;
         const api = window.Maths1to9Lesson;
+        const engine = window.Maths1to9LessonEngine;
+        const slides = window.Rounding.tryIt.slides;
+        // Each slide keeps its own work. Reset (↺) starts that slide again.
+        const blankSlide = () => ({ tapped: false, slots: [null, null, null], dot: false });
+        let ready = false;
+        let requested = /^#try-it-(\d+)$/.exec(initialHash);
+        // Registered before the saved work has loaded, so a #try-it-N link (a
+        // reload, or a link a pupil kept) reaches its slide instead of falling
+        // back to the first section.
+        for (let screen = 0; screen < slides.length; screen++) {
+            api.registerHashRoute(`try-it-${screen + 1}`, () => {
+                if (ready) openHashScreen(screen);
+                else requested = [null, String(screen + 1)];
+            });
+        }
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 8,
+            version: 9,
             initial: () => ({
-                // intro: the number line slider shown before the first example.
-                intro: true, lineValue: 67, explored: false,
-                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
+                // The intro screen is the number line slider shown before the slides.
+                lineValue: 67, explored: false,
+                screen: 0, furthestScreen: 0, finished: false,
+                slides: slides.map(blankSlide),
+                seed: engine.randomInt(0, 4294967295)
             }),
             upgrade: () => null
         });
         const state = section.state;
         section.save();
 
+        function isComplete(index) {
+            const saved = state.slides[index];
+            if (!saved.tapped || !saved.dot) return false;
+            return !slides[index].labels || saved.slots.every(placed => placed !== null);
+        }
+
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
-                const screen = state.intro ? 0 : state.screen + exampleOffset;
-                api.setSlideHash(`try-it-${screen + 1}`, { replace: true });
+                api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true });
             }
         }
 
-        function showTryItScreen(screen) {
-            section.update(state => {
-                state.intro = screen === 0;
-                if (screen >= exampleOffset) state.screen = screen - exampleOffset;
+        function showScreen(screen) {
+            section.update(saved => {
+                saved.screen = screen;
+                saved.furthestScreen = Math.max(saved.furthestScreen, screen);
             });
             render();
             const heading = root.querySelector('h3');
+            if (!heading) return;
             heading.tabIndex = -1;
             heading.focus();
         }
 
-        function showScreen(screen) {
-            showTryItScreen(exampleOffset + screen);
-        }
-
-        function reportProgress() {
-            const examples = state.index + Number(state.cards[cardId(state.index)]?.correct === true);
-            api.setSectionProgress('interactive', examples, questions.length);
-        }
-
-        function continueExample() {
-            section.update(state => {
-                state.index++;
-                state.furthestScreen = Math.min(state.index, questions.length - 1);
-                state.screen = state.furthestScreen;
-                state.finished = state.index === questions.length;
-            });
-            render();
-            if (state.finished) api.continueSection();
-        }
-
-        function drawExample(container, index, readOnly) {
-            const example = questions[index];
-            const visual = document.createElement('div');
-            window.Rounding.drawExample(visual, example, state.cards[cardId(index)]?.correct);
-            container.append(visual);
-            const cardRoot = document.createElement('div');
-            container.append(cardRoot);
-            function drawAnswer(correct) {
-                visual.replaceChildren();
-                window.Rounding.drawExample(visual, example, correct);
-            }
-            api.createQuestion(cardRoot, {
-                ...window.Rounding.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: cardId(index),
-                scored: false, readOnly,
-                onReset: () => drawAnswer(false),
-                onReplayReset: () => drawAnswer(false),
-                onReplayFeedback: result => drawAnswer(result.correct),
-                onFeedback(result) {
-                    reportProgress();
-                    drawAnswer(result.correct);
-                },
-                onContinue: continueExample
-            });
-        }
-
-        // Before the examples: move a number along the line and watch it round.
+        // Before the slides: move a number along the line and watch it round.
         function renderIntro() {
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
@@ -222,7 +192,7 @@
             line.textContent = 'Move the number along the line. 65 is halfway, and at halfway we round up.';
             root.append(line);
             const next = () => api.setSectionAction('interactive', {
-                label: 'Next', disabled: !state.explored, onClick: () => showTryItScreen(1)
+                label: 'Next', disabled: !state.explored, onClick: () => showScreen(1)
             });
             window.Rounding.drawLine(root, state.lineValue, true, value => {
                 section.update(state => { state.lineValue = value; state.explored = true; });
@@ -241,55 +211,99 @@
             render();
         }
 
+        function finish() {
+            section.update(saved => { saved.finished = true; });
+            api.completeSection('interactive');
+            // The last slide goes straight on to Practice, with no summary page.
+            api.continueSection();
+        }
+
         function render() {
             root.replaceChildren();
-            if (state.intro) {
+            if (state.screen === 0) {
                 renderIntro();
                 return;
             }
-            api.setSectionReset('interactive', null);
+            const index = state.screen - 1;
+            const slide = slides[index];
+            const saved = state.slides[index];
+            if (state.finished) api.completeSection('interactive');
+
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
-            const question = questions[state.screen];
-            heading.textContent = `Example ${question.example} of ${window.Rounding.exampleCount} · Step ${question.step} of ${question.steps}`;
+            heading.textContent = slide.title;
             root.append(heading);
-            api.setSectionBack('interactive', {
-                onClick: () => {
-                    if (state.screen > 0) showScreen(state.screen - 1);
-                    else showTryItScreen(0);
+
+            api.setSectionBack('interactive', { onClick: () => showScreen(state.screen - 1) });
+            const started = saved.tapped || saved.dot || saved.slots.some(placed => placed !== null);
+            api.setSectionReset('interactive', started ? () => {
+                section.update(now => { now.slides[index] = blankSlide(); });
+                render();
+            } : null);
+
+            // The engine's feedback box, used for the wrong-digit hint only.
+            const feedback = engine.createFeedback('interactive', { correct: false, text: '', visible: false });
+            window.Rounding.drawSlide(root, slide, saved, {
+                // A fixed, saved seed keeps the shuffled cards in the same order on every reload.
+                order: slide.labels
+                    ? engine.shuffle(slide.labels.map(label => Number(label.replace(/,/g, ''))), engine.seededRandom(state.seed + index))
+                    : [],
+                onDigit(correct) {
+                    if (correct) {
+                        section.update(now => { now.slides[index].tapped = true; });
+                        render();
+                        const revealed = root.querySelector('h3');
+                        revealed.tabIndex = -1;
+                        revealed.focus();
+                        return;
+                    }
+                    feedback.textContent = slide.tapHint;
+                    feedback.className = engine.feedbackClassName('interactive', { correct: false, visible: true });
+                },
+                onTap(number) {
+                    // Only a tap within reach of the number counts. Any other tap does nothing at all.
+                    if (Math.abs(number - slide.line.value) > slide.line.tolerance) return;
+                    section.update(now => { now.slides[index].dot = true; });
+                    render();
+                },
+                onLabel(number, slot) {
+                    section.update(now => { now.slides[index].slots[slot] = number; });
+                    render();
+                },
+                onNumber() {
+                    section.update(now => { now.slides[index].dot = true; });
+                    render();
                 }
             });
-            if (state.finished) api.completeSection('interactive');
-            const readOnly = state.screen < state.index;
-            drawExample(root, state.screen, readOnly);
-            if (readOnly) {
-                const last = state.screen === questions.length - 1;
-                api.setSectionAction('interactive', {
-                    label: last ? 'Continue' : 'Next',
-                    onClick: last ? () => api.continueSection() : () => showScreen(state.screen + 1)
-                });
+            root.append(feedback);
+
+            const done = isComplete(index);
+            api.setSectionProgress('interactive', slides.filter((unused, i) => isComplete(i)).length, slides.length);
+            if (!done) {
+                api.setSectionAction('interactive', { label: slide.button, disabled: true, onClick() {} });
+            } else if (index < slides.length - 1) {
+                api.setSectionAction('interactive', { label: slide.button, onClick: () => showScreen(state.screen + 1) });
+            } else {
+                api.setSectionAction('interactive', { label: slide.button, onClick: finish });
             }
             syncHash();
         }
 
         function openHashScreen(screen) {
-            if (!api.goToSection('interactive', { moveFocus: false })) {
+            // A #try-it-3 link opens Try it the way the engine's own section
+            // links do: it is a link, so it does not need Try it unlocked first.
+            if (!api.goToSection('interactive', { moveFocus: false, unlock: true })) {
                 document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                 return;
             }
-            const furthest = state.explored ? exampleOffset + state.furthestScreen : 0;
-            showTryItScreen(Math.min(screen, furthest));
+            const furthest = state.explored ? state.furthestScreen : 0;
+            showScreen(Math.min(screen, furthest));
         }
 
-        const lastScreen = exampleOffset + questions.length - 1;
-        for (let screen = 0; screen <= lastScreen; screen++) {
-            api.registerHashRoute(`try-it-${screen + 1}`, () => openHashScreen(screen));
-        }
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
-        reportProgress();
+        ready = true;
         render();
-        const requested = /^#try-it-(\d+)$/.exec(initialHash);
-        if (requested && Number(requested[1]) <= lastScreen + 1) {
+        if (requested && Number(requested[1]) <= slides.length) {
             openHashScreen(Math.max(0, Number(requested[1]) - 1));
         }
     }

@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/js/lesson-engine.js'), 'utf8'), { window, document: { body: { dataset: { lessonRenderer: 'custom' } } } });
 const engine = window.Maths1to9LessonEngine;
-const Q = loadScript(path.join(root, 'content/rounding-and-significant-figures/rounding.js'), ['examples', 'checks'], { window });
+const Q = loadScript(path.join(root, 'content/rounding-and-significant-figures/rounding.js'), ['checks'], { window });
 const lesson = JSON.parse(fs.readFileSync(path.join(root, 'content/rounding-and-significant-figures/lesson.json')));
 for (const [value, expected] of [['2,700', '2700'], ['.0073', '0.0073'], ['1.0', '1.0']]) assert.equal(engine.tidyNumber(value), expected);
 for (const value of ['27,00', '', '1abc', '1e3', 'Infinity']) assert.equal(engine.tidyNumber(value), null, value);
@@ -16,7 +16,7 @@ assert.notEqual(engine.tidyNumber('0.0073000000000000001'), engine.tidyNumber('0
 assert.notEqual(engine.tidyNumber('1'), '1.0');
 assert.equal(engine.tidyNumber('1.0'), '1.0');
 assert.notEqual(engine.tidyNumber('1.00'), '1.0');
-for (const q of [...Q.examples(), ...Q.checks()]) {
+for (const q of Q.checks()) {
     if (q.input === 'number') { // Rounding to decimal places or significant figures keeps exact zeros; nearest-10s and real-life answers do not.
         assert.equal(q.exact, Boolean(q.kind) && q.kind !== 'nearest', q.prompt); assert.notEqual(engine.tidyNumber(q.answer), null); }
     if (q.options) assert.equal(q.options.filter(o => o.correct).length, 1);
@@ -28,7 +28,7 @@ const planned = [
     ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 290);
+assert.equal(tracker.getScore().maximumPoints, 145);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);
@@ -38,13 +38,14 @@ tracker.record({ id: 'rounding-line:explored', kind: 'explore', completed: true 
 assert.equal(tracker.getScore().points, 10);
 tracker.record({ id: 'rounding-line:explored', kind: 'explore', completed: true });
 assert.equal(tracker.getScore().points, 10, 'Repeated slider input earns no more points');
-for (let i = 0; i < 3; i++) tracker.record({ id: `step:interactive:${i}`, kind: 'guided', completed: true });
-assert.equal(tracker.getScore().points, 25);
+// Try it is two hands-on slides, so there are two guided steps.
+for (let i = 0; i < 2; i++) tracker.record({ id: `step:interactive:${i}`, kind: 'guided', completed: true });
+assert.equal(tracker.getScore().points, 20);
 tracker.record({ id: 'answer:question-bank:1', kind: 'answer', completed: true, firstCorrect: true, correct: true });
-assert.equal(tracker.getScore().points, 35);
+assert.equal(tracker.getScore().points, 30);
 tracker.record({ id: 'answer:question-bank:1', kind: 'answer', completed: true, firstCorrect: true, correct: true });
-assert.equal(tracker.getScore().points, 35);
-assert.equal(engine.createScoreTracker(tracker.export()).getScore().points, 35, 'Restoring keeps points');
+assert.equal(tracker.getScore().points, 30);
+assert.equal(engine.createScoreTracker(tracker.export()).getScore().points, 30, 'Restoring keeps points');
 const storage = new Map();
 const localStorage = { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k), key: i => [...storage.keys()][i], get length() { return storage.size; } };
 const sandbox = vm.createContext({ window: { localStorage, crypto: { randomUUID: () => 'test-id' } }, document: { addEventListener() {}, dispatchEvent() {} }, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail; } }, console });
