@@ -112,16 +112,16 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
-                // After the right tap, two notes with arrows explain Keep and Look.
+                // After the right tap, two notes with arrows explain Round and Decides.
                 digitNotes: {
-                    keep: 'Keep: the 4 is the hundreds digit. It stays 4 or goes up to 5.',
-                    look: 'Look: the 8 next to it decides. 8 is 5 or more, so the 4 goes up to 5.'
+                    keep: 'Round: the 4 is the hundreds digit. This is the digit we round.',
+                    look: 'Decides: the 8 is 5 or more, so the 4 rounds up to 5.'
                 },
                 button: 'Next'
             },
             {
                 title: "Let's put 53,481 on a number line.",
-                place: 'Which half of the line does 53,481 go in? Tap that half.',
+                place: 'Tap which half of the line 53,481 goes on?',
                 placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
                 line: { base: 53400, step: 10, value: 53481 },
                 notes: {
@@ -446,10 +446,10 @@
                 text(cell, 'small', 'Start');
             } else if (marks !== 'none' && marks !== 'first' && key === d.target) {
                 cell.classList.add('is-keep');
-                text(cell, 'small', 'Keep');
+                text(cell, 'small', 'Round');
             } else if (marks === 'both' && key === d.decider) {
                 cell.classList.add('is-look');
-                text(cell, 'small', 'Look');
+                text(cell, 'small', 'Decides');
             }
         }
         host.append(row);
