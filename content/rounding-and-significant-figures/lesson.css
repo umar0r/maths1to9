@@ -274,6 +274,41 @@ button.significant-digit {
     margin-left: 0;
 }
 
+/* Try it: the two halves of the line, each in its own coloured box. */
+.rounding-line .rounding-half {
+    stroke-width: 2;
+}
+
+.rounding-line .rounding-half--lower {
+    fill: #e0ecff;
+    stroke: #93b4f5;
+}
+
+.rounding-line .rounding-half--upper {
+    fill: #fdf0d5;
+    stroke: #e6b960;
+}
+
+.rounding-line .rounding-half-button {
+    cursor: pointer;
+}
+
+/* The axis, ticks and numbers sit on top of the boxes; let taps through them
+   so a tap anywhere on a half counts. */
+.rounding-tryit .rounding-line path,
+.rounding-tryit .rounding-line text {
+    pointer-events: none;
+}
+
+.rounding-line .rounding-half-button:hover .rounding-half,
+.rounding-line .rounding-half-button:focus-visible .rounding-half {
+    stroke-width: 4;
+}
+
+.rounding-line .rounding-half-button:focus {
+    outline: none;
+}
+
 /* Try it: the digit cards, the line and its notes are one block, so each
    note's arrow can point up at a card or a label. */
 .rounding-tryit {

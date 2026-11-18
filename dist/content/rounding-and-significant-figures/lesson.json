@@ -1,8 +1,8 @@
 {
     "id": "rounding-01",
     "slug": "rounding-and-significant-figures",
-    "title": "Rounding",
-    "subtitle": "Round whole numbers and decimals, one step at a time.",
+    "title": "Rounding whole numbers",
+    "subtitle": "Round whole numbers, one step at a time.",
     "navigation": {
         "back_button": true
     },
@@ -11,17 +11,12 @@
             "nearest-ten": "round-decimal-places",
             "halfway-hundred": "round-decimal-places",
             "nearest-thousand": "round-decimal-places",
-            "one-decimal": "round-decimal-places",
-            "decimal-zero": "round-decimal-places",
-            "decimal-carry": "round-decimal-places",
             "big-hundred": "round-decimal-places",
             "big-thousand": "round-decimal-places",
             "keep-digit": "round-decimal-places",
             "deciding-digit": "round-decimal-places",
             "decide-digit": "round-decimal-places",
             "nearest": "round-decimal-places",
-            "decimal": "round-decimal-places",
-            "error": "round-decimal-places",
             "budget": "round-in-context",
             "stock-first": "round-in-context",
             "spend-first": "round-in-context",
@@ -36,17 +31,17 @@
             "coverage": "round-in-context",
             "path-context": "round-in-context",
             "round-up": "round-in-context",
-            "round-down": "round-in-context",
             "full-groups": "round-in-context",
             "containers": "round-in-context",
-            "context": "round-in-context"
+            "context": "round-in-context",
+            "method": "round-decimal-places"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
         "hide_eyebrow": true,
         "hide_heading": true,
-        "title": "Round whole numbers and decimals"
+        "title": "Round whole numbers"
     },
     "interactive": {
         "eyebrow": "Try it",
@@ -109,16 +104,10 @@
                 "type": "context"
             },
             {
-                "type": "decimal"
+                "type": "method"
             },
             {
                 "type": "nearest"
-            },
-            {
-                "type": "error"
-            },
-            {
-                "type": "context"
             }
         ],
         "summary": {

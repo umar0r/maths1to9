@@ -3,6 +3,7 @@ const solve = require('./solvers/significant-figures.cjs');
 const { MAIN_ACTION, watchForErrors, checkThenMoveOn, goToStage } = require('./helpers.cjs');
 
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
+const maximum = page => page.evaluate(() => window.Maths1to9Lesson.getScore().maximumPoints);
 const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
 const back = page => page.getByRole('button', { name: 'Previous screen', exact: true });
 const prompt = page => page.locator('.question-prompt:visible');
@@ -122,8 +123,8 @@ for (const width of [1280, 375]) {
             }
             await expect(mainAction(page)).toHaveText('All lessons');
             const earned = await score(page);
-            expect(penalty).toBe(45);
-            expect(earned).toBe(270 - penalty);
+            expect(penalty).toBe(55);
+            expect(earned).toBe(await maximum(page) - penalty);
             await reload(page); // finished
             expect(await score(page)).toBe(earned);
             await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
@@ -175,8 +176,8 @@ for (const width of [1280, 375]) {
         await expect(page.locator('.significant-digit.is-first:visible')).toContainText('2');
         await expect(page.locator('.significant-digit.is-look:visible')).toHaveCount(0);
         await page.screenshot({ path: `/private/tmp/significant-learn-${width}.png`, fullPage: true });
-        // 15 screens of its own, then the 5 moved from the Rounding lesson, which ask for a tap.
-        for (let screen = 0; screen < 20; screen++) {
+        // 15 screens of its own, then the 7 moved from the Rounding lesson, which ask for a tap.
+        for (let screen = 0; screen < 22; screen++) {
             if (await tapTarget(page).count()) await solve(page);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             if (screen === 5 || screen === 6 || screen === 8) await page.screenshot({ path: `/private/tmp/significant-learn-${screen + 1}-${width}.png`, fullPage: true });
@@ -258,9 +259,14 @@ for (const width of [1280, 375]) {
         await expect(mainAction(page)).toHaveText('Continue');
         await reload(page);
         await mainAction(page).click();
+        // The three checks moved from Rounding come after 15.03.
+        for (let step = 0; step < 20 && !await page.locator('#significant-figures-comparison .retained-results:visible').count(); step++) {
+            if (await solve(page)) continue;
+            await mainAction(page).click();
+        }
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('15.0');
         await expect(page.locator('#significant-figures-comparison .retained-results')).toContainText('2nd try');
-        expect(await score(page)).toBe(265);
+        expect(await score(page)).toBe(await maximum(page) - 5);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await page.screenshot({ path: `/private/tmp/significant-summary-${width}.png`, fullPage: true });
         await context.close();

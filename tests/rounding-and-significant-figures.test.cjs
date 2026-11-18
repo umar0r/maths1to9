@@ -78,7 +78,6 @@ test('rounding-and-significant-figures: typed answers keep exact zeros, with rul
         for (const rule of q.rules) assert.notEqual(tidyNumber(rule.value), tidyNumber(q.answer), q.prompt);
         if (q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
     }
-    assert.equal(Q.checks().at(-1).answer, '1.0');
 });
 
 test('rounding-and-significant-figures: explanations name the right deciding digit and state the answer', () => {
@@ -110,7 +109,8 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
         assert.equal(slide.digits[positions.decider], look, slide.title);
     }
     // The line runs from one round number to the next, and the slide rounds itself.
-    assert.deepEqual([slideA.line.base, slideA.line.step, slideA.line.value, slideA.line.tolerance], [53400, 10, 53481, 5]);
+    assert.deepEqual([slideA.line.base, slideA.line.step, slideA.line.value], [53400, 10, 53481]);
+    assert.equal(slideA.placeHint, 'The halfway point is 53,450. 53,481 is more than that.');
     assert.equal(Q.rounded(String(slideA.line.value), 'nearest', 2), '53500');
     assert.equal(slideA.answer, '53,481 ≈ 53,500');
     // The wrong-tap hints and the arrow notes say what they must.
@@ -146,12 +146,12 @@ test('rounding-and-significant-figures: halfway cases, carrying and direct round
     assert.equal(Q.roundToPower('0.004', -2), '0.00');
 });
 
-test("rounding-and-significant-figures: Amir's claim is wrong and the explanation corrects it", () => {
-    const q = Q.checks().find(q => q.questionType === 'error');
-    assert.equal(expected('4.95', 'decimal', 1), '5.0');
-    assert.equal(answerOf(q), 'The 5 rounds the tenths up, giving 5.0');
+test('rounding-and-significant-figures: the method question puts the steps in the right order', () => {
+    const q = Q.checks().find(q => q.questionType === 'method');
+    assert.match(answerOf(q), /^1\. Find the hundreds digit\. 2\. Look at the digit to its right\./);
     assert.equal(q.options.length, 4);
-    assert.ok(q.options.some(o => o.label.startsWith('Write 5 because') && !o.correct));
+    assert.equal(q.options.filter(o => o.correct).length, 1);
+    assert.equal(new Set(q.options.map(o => o.feedback)).size, 4);
 });
 
 test('rounding-and-significant-figures: 200 seeds per type and input mode are deterministic and mapped to the three existing skills', () => {
@@ -176,11 +176,11 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
         assert.ok(qs.some(q => q.input === 'choice') && qs.some(q => q.input === 'number'), `seed ${seed}`);
         assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-in-context']));
     }
-    // Try it is hands-on, so it has no answer cards at all. Check mixes both.
+    // Try it is hands-on, so it has no answer cards at all. Check is multiple choice.
     assert.equal(Q.tryIt.slides.length, 2);
     assert.ok(Q.tryIt.slides.every(slide => (slide.digits && slide.line) || (slide.context && slide.tap === 'end')));
-    assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice', 'number']));
-    assert.equal(Q.checks().length, 5);
+    assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice']));
+    assert.equal(Q.checks().length, data.comparison.questions.length);
 });
 
 test('rounding-and-significant-figures: wording and input numbers are tidy and style matches significant figures', () => {

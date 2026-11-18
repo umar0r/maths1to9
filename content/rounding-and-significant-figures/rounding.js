@@ -112,8 +112,9 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
-                place: 'Tap where 53,481 goes on the line.',
-                line: { base: 53400, step: 10, value: 53481, tolerance: 5 },
+                place: 'Which half of the line does 53,481 go in? Tap that half.',
+                placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
+                line: { base: 53400, step: 10, value: 53481 },
                 notes: {
                     digit: 'The next digit is 8. That is 5 or more, so round up.',
                     nearest: 'So 53,481 is closer to 53,500.'
@@ -132,8 +133,8 @@
             answered ? null : index => onPick(index === digits.target), { commas: false });
     }
 
-    /* A number slide: tap the digit, tap where the number goes on the line, then it
-       rounds by itself. */
+    /* A number slide: tap the digit, tap the half of the line the number goes in,
+       then it rounds by itself. */
     function drawSlideOne(host, slide, saved, handlers) {
         const { base, step, value } = slide.line;
         text(host, 'p', slide.tap);
@@ -143,12 +144,8 @@
         const place = text(block, 'p', slide.place);
         const line = drawLine(block, value, false, null, false, base, null, step, {
             wideLabels: true, labels: 'landmarks', showNearest: false,
-            showDot: saved.dot, onTap: saved.dot ? null : number => handlers.onTap(number)
+            showDot: saved.dot, halves: true, onHalf: saved.dot ? null : upper => handlers.onHalf(upper === (value >= base + 5 * step))
         });
-        line.dataset.base = base;
-        line.dataset.step = step;
-        line.dataset.edge = 50;
-        line.dataset.tapValue = value;
         if (!saved.dot) return;
         // Nothing is left to do, so the instruction goes: the notes take over,
         // and no arrow then runs through a line of words at phone width.
@@ -180,30 +177,28 @@
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
-            roundingQuestion('12.64', 'decimal', 1, 'choice'), roundingQuestion('2681450', 'nearest', 6, 'choice'),
-            { questionType: 'error', input: 'choice', prompt: 'Amir says 4.95 rounds to 4.9 at 1 decimal place. Which explanation corrects him?', options: [
-                option('The 5 rounds the tenths up, giving 5.0', 'The hundredths digit is 5. Round up and keep one decimal place.', true),
-                option('Keep 4.9 because the tenths digit is already 9', 'A 9 can still round up. The extra 1 carries to the next column.'),
-                option('Round to 4 because only whole numbers can be rounded', 'Decimals can be rounded too. Keep the tenths place.'),
-                option('Write 5 because the zero after the point does not matter', 'Write 5.0 to show the one decimal place asked for.')
+            { questionType: 'method', input: 'choice', prompt: 'Which steps, in the right order, round a number to the nearest 100?', options: [
+                option('1. Find the hundreds digit. 2. Look at the digit to its right. 3. If that digit is 5 or more, round up. If not, round down.', 'Find the digit you are rounding to. The digit to its right decides.', true),
+                option('1. Look at the last digit. 2. If it is 5 or more, round up. If not, round down.', 'The last digit is the ones. For the nearest 100, look at the digit just right of the hundreds digit.'),
+                option('1. Find the hundreds digit. 2. If the hundreds digit is 5 or more, round up. If not, round down.', 'The hundreds digit does not decide. The digit to its right does.'),
+                option('1. Round to the nearest 10. 2. Round that answer to the nearest 100.', 'Round the original number in one go. Rounding twice can give the wrong answer.')
             ] },
-            roundingQuestion('1.049', 'decimal', 1, 'number', 'context', 'A bottle holds 1.049 litres. Round this directly to 1 decimal place.')
+            roundingQuestion('2681450', 'nearest', 6, 'choice')
         ];
     }
     const practiceGroups = [
-        { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
-        { kind: 'place', types: ['one-decimal', 'decimal-zero', 'decimal-carry'] },
+        { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'big-hundred'] },
+        { kind: 'place', types: ['nearest-thousand', 'big-thousand'] },
         { kind: 'context', types: ['round-up'] },
-        { kind: 'context', types: ['round-down'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
     ];
     const practiceTypes = practiceGroups.flatMap(group => group.types);
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        // Two cards from each group keeps it at 10 questions, so whole numbers,
-        // 1 decimal place and real life all come up in every session.
-        const picks = practiceGroups.flatMap(group => [0, 1].map(() => ({
+        // Three cards from each whole-number group and two from each real-life
+        // group keeps it at 10 questions, so both come up in every session.
+        const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2] : [0, 1]).map(() => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
         })));
 
@@ -266,26 +261,6 @@
     }
 
     function generateSituation(item, integer, random) {
-        if (item.type === 'round-down') {
-            const pounds = integer(10, 40);
-            const budget = pounds * 100;
-            const prices = Array.from({ length: 77 }, (_, index) => 115 + index * 5)
-                .filter(price => budget % price !== 0);
-            const price = prices[integer(0, prices.length - 1)];
-            const money = pence => `£${(pence / 100).toFixed(2)}`;
-            const product = ['pen', 'ticket', 'notebook'][integer(0, 2)];
-            const quotient = budget / price;
-            const answer = Math.floor(quotient);
-            const next = answer + 1;
-            return practiceContext(item,
-                `You have £${pounds}. Each ${product} costs ${money(price)}. ${pounds} ÷ ${(price / 100).toFixed(2)} = ${divisionText(budget, price)} What is the greatest number you can buy?`,
-                answer, `${answer} × ${money(price)} = ${money(answer * price)}. ${next} cost ${money(next * price)}, which is more than £${pounds}.`, [
-                    [next, `That many cost more than £${pounds}. Round down.`],
-                    [Math.round(quotient) === answer ? next + 1 : Math.round(quotient), 'Here you always round down, even if the decimal is big.'],
-                    [Math.round(quotient * 10) / 10, "You can't buy part of one. Give a whole number."]
-                ], random);
-        }
-
         const roundUp = item.type === 'round-up';
         const size = roundUp ? integer(12, 30) : integer(6, 12);
         const max = roundUp ? 300 : 200;
@@ -328,10 +303,7 @@
         case 'nearest-ten': number = String(nonZeroEnd(integer(12, 98))); kind = 'nearest'; accuracy = 1; break;
         case 'halfway-hundred': number = String(integer(2, 8) * 100 + 50); kind = 'nearest'; accuracy = 2; break;
         case 'nearest-thousand': number = String(nonZeroEnd(integer(1001, 9899))); kind = 'nearest'; accuracy = 3; break;
-        case 'one-decimal': number = `${integer(1, 8)}.${integer(1, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'two-decimals': number = `${integer(1, 8)}.${integer(1, 9)}${integer(0, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 2; break;
-        case 'decimal-zero': number = `${integer(1, 8)}.0${integer(1, 4)}`; kind = 'decimal'; accuracy = 1; break;
-        case 'decimal-carry': number = `9.9${integer(5, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'big-hundred':
         case 'big-thousand': {
             accuracy = item.type === 'big-hundred' ? 2 : 3;
@@ -348,7 +320,6 @@
             number = `${integer(1, 8)}.99${integer(5, 9)}`;
             kind = 'decimal'; accuracy = 2; break;
         case 'round-up':
-        case 'round-down':
         case 'full-groups':
             return generateSituation(item, integer, random);
         case 'path-context':
@@ -364,10 +335,9 @@
         return prepare(question, random);
     }
     const learnScreens = [
-        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
+        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
             { label: 'To the nearest 10', from: '38', to: '40' },
-            { label: 'To the nearest 100', from: '461', to: '500' },
-            { label: 'To 1 decimal place', from: '3.147', to: '3.1' }
+            { label: 'To the nearest 100', from: '461', to: '500' }
         ] },
         { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
@@ -380,28 +350,7 @@
         { title: "Let's round 48,672 to the nearest 100.", lines: ["We've been asked to round to the nearest 100, so first we find the digit that stands for hundreds. In 48,672 that's the 6, because it's worth 600."], number: '48672', kind: 'nearest', accuracy: 2, after: ["If that digit is 0, 1, 2, 3 or 4, we round down. If it's 5, 6, 7, 8 or 9, we round up. It's 7, so we round up."], digitNotes: {
             keep: "This 6 is worth 600. It's the hundreds digit.",
             look: "Now look at the digit just to its right. It's a 7."
-        } },
-        { title: "Now let's round 3.47 to 1 decimal place.", lines: ['1 decimal place means 1 digit after the decimal point. So 3.47 sits between 3.4 and 3.5. Here it is on the number line, counting in steps of 0.01.'], line: true, base: 3.4, step: 0.01, value: 3.47, tap: 'end', labels: 'landmarks', notes: {
-            digit: 'The next digit is 7. That is 5 or more, so round up.',
-            nearest: 'So 3.47 is closer to 3.5.'
-        } },
-        { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
-        {
-            title: 'When you can only pay for whole ones, round down.',
-            lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
-            context: {
-                setup: 'Step 1: A club has £12.50. Each trophy costs £1.85. On a calculator, 12.50 ÷ 1.85 = 6.756…',
-                valueLabel: '6.756…',
-                question: 'How many trophies can they buy?',
-                hint: '7 trophies cost £12.95. That is more than £12.50.',
-                steps: [
-                    ['Step 2: 7 trophies cost £12.95. That is too much.', 7],
-                    ['Step 3: So they can buy 6. 6 trophies cost £11.10.', 6]
-                ]
-            },
-            equations: ['6 trophies'],
-            caption: "6.756… would normally round to 7. Here you round down, because you can't pay for the 7th."
-        }
+        } }
     ];
     // The minibus slide was a Learn screen; it is now Try it's second slide.
     tryIt.slides.push({
@@ -488,7 +437,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, onTap = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -518,8 +467,22 @@
         const digitNote = notes && !onTick ? stepText(lineHost, 'p', notes.digit, 'rounding-note rounding-note--above') : null;
         const line = document.createElement('div');
         line.className = 'rounding-line';
-        line.setAttribute('role', onPick || onTap ? 'group' : 'img');
-        let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+        line.setAttribute('role', onPick || onHalf ? 'group' : 'img');
+        let picture = '';
+        if (halves) {
+            // Two coloured boxes, one round each half of the line, meeting at halfway.
+            // While the pupil is choosing, each box is a button.
+            const middle = x(tick(5));
+            const box = (from, to, side, name) => {
+                const shape = `<rect class="rounding-half rounding-half--${side}" x="${from}" y="${axis - 24}" width="${to - from}" height="48" rx="8"/>`;
+                return onHalf
+                    ? `<g role="button" tabindex="0" aria-label="${name}" class="rounding-half-button" data-half="${side}">${shape}</g>`
+                    : shape;
+            };
+            picture += box(x(base) - 18, middle - 3, 'lower', `The half from ${format(base)} to ${format(tick(5))}`);
+            picture += box(middle + 3, x(top) + 18, 'upper', `The half from ${format(tick(5))} to ${format(top)}`);
+        }
+        picture += `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
             const number = tick(mark);
@@ -538,7 +501,7 @@
         }
         if (showDot && !onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
         if (showDot) picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
-        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onTap)}">${picture}</svg>`;
+        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onHalf)}">${picture}</svg>`;
         if (onPick) {
             for (const end of line.querySelectorAll('.rounding-end')) {
                 const pick = () => onPick(Number(end.dataset.end));
@@ -550,13 +513,16 @@
                 });
             }
         }
-        if (onTap) {
-            // A tap anywhere along the line: where it lands decides the number.
-            line.querySelector('svg').addEventListener('click', event => {
-                const box = event.currentTarget.getBoundingClientRect();
-                const point = (event.clientX - box.left) / box.width * 660;
-                onTap(base + (point - edge) / (660 - 2 * edge) * 10 * step);
-            });
+        if (onHalf) {
+            for (const half of line.querySelectorAll('.rounding-half-button')) {
+                const pick = () => onHalf(half.dataset.half === 'upper');
+                half.addEventListener('click', pick);
+                half.addEventListener('keydown', event => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    pick();
+                });
+            }
         }
         const dot = line.querySelector('.rounding-dot');
         const label = number => line.querySelector(`.rounding-value[data-value="${number}"]`);
