@@ -114,8 +114,8 @@
                 tapHint: 'The hundreds digit is the third from the right.',
                 // After the right tap, two notes with arrows explain Keep and Look.
                 digitNotes: {
-                    keep: 'Keep: the 4 is the hundreds digit. It stays 4 or goes up to 5.',
-                    look: 'Look: the 8 next to it decides. 8 is 5 or more, so the 4 goes up to 5.'
+                    keep: 'Keep: the 4 is the hundreds digit, the last digit we keep. The digits after it become 0.',
+                    look: 'Look: the 8 decides. It is 5 or more, so round up. The 4 becomes 5.'
                 },
                 button: 'Next'
             },
