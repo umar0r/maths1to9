@@ -360,3 +360,87 @@ button.significant-digit {
 .rounding-tryit {
     margin-block: .5rem 1rem;
 }
+
+/* Practice pictures: a footpath with a measuring arrow, and a pile of books
+   beside one open box (see drawPathFigure and drawBooksFigure in rounding.js).
+   Each is a small picture between the question and the answer. */
+.rounding-picture {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 150px;
+    margin: 0 0 1rem;
+}
+
+.rounding-picture__grass {
+    fill: #e7f2e1;
+}
+
+.rounding-picture__tuft {
+    fill: #93bd85;
+}
+
+.rounding-picture__path-edge,
+.rounding-picture__path-paving {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.rounding-picture__path-edge {
+    stroke: #a8a29e;
+    stroke-width: 30;
+}
+
+.rounding-picture__path-paving {
+    stroke: #d6d3d1;
+    stroke-width: 24;
+    stroke-dasharray: 22 3;
+}
+
+.rounding-picture__measure {
+    fill: none;
+    stroke: #475569;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.rounding-picture__box {
+    stroke: #78350f;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.rounding-picture__book {
+    stroke-width: 1.5;
+}
+
+.rounding-picture__tape {
+    fill: #f5e8cc;
+    stroke: #78350f;
+    stroke-width: 1;
+}
+
+/* Labels use the lesson's font and dark text colour, about the size of the
+   number line's labels. The path label sits in a white gap of its own. */
+.rounding-picture__label {
+    fill: var(--text, #1c2b4a);
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.rounding-picture__label--gap {
+    paint-order: stroke;
+    stroke: #fff;
+    stroke-width: 8px;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 600px) {
+    /* The picture is half its drawn size at 375 px, so its labels are bigger. */
+    .rounding-picture__label {
+        font-size: 26px;
+    }
+}

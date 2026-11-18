@@ -136,6 +136,43 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
     }
 });
 
+test('rounding-and-significant-figures: only the path and books questions carry a picture', () => {
+    // Seeds are made the way a real Practice session makes them: 32-bit, not 0 to 499.
+    const realSeed = n => {
+        const random = seededRandom(n);
+        random();
+        return window.Maths1to9LessonEngine.randomInt(0, 4294967295, random);
+    };
+    let paths = 0, books = 0, minibuses = 0;
+    for (let n = 0; n < 501; n++) {
+        for (const mode of ['choice', 'number']) {
+            const path = Q.generate({ type: 'path-context', mode }, seededRandom(realSeed(n)));
+            assert.equal(typeof path.figure, 'function', `path seed ${n} ${mode}`);
+            paths++;
+        }
+        const card = Q.generate({ type: 'round-up', mode: 'choice' }, seededRandom(realSeed(n)));
+        if (/\bbooks\b/.test(card.prompt)) {
+            assert.equal(typeof card.figure, 'function', `books seed ${n}`);
+            books++;
+        } else {
+            assert.match(card.prompt, /minibus/, `seed ${n}`);
+            assert.equal(card.figure, undefined, `minibus seed ${n}`);
+            minibuses++;
+        }
+    }
+    // Both books and minibuses must actually come up in those seeds.
+    assert.ok(books > 0 && minibuses > 0, `${books} books, ${minibuses} minibuses`);
+    assert.equal(paths, 1002);
+    // Everything else, in either answer mode, has no picture at all.
+    for (const type of ['nearest-ten', 'halfway-hundred', 'big-hundred', 'nearest-thousand', 'big-thousand', 'full-groups']) {
+        for (const mode of ['choice', 'number']) {
+            for (let n = 0; n < 50; n++) {
+                assert.equal(Q.generate({ type, mode }, seededRandom(realSeed(n))).figure, undefined, `${type} seed ${n}`);
+            }
+        }
+    }
+});
+
 test('rounding-and-significant-figures: halfway cases, carrying and direct rounding follow exact half-up rules', () => {
     for (const [number, kind, accuracy, answer] of [
         ['650', 'nearest', 2, '700'], ['5.465', 'decimal', 2, '5.47'], ['9.96', 'decimal', 1, '10.0'],
