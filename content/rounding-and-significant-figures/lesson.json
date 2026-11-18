@@ -31,6 +31,7 @@
             "coverage": "round-in-context",
             "path-context": "round-in-context",
             "round-up": "round-in-context",
+            "line-pick": "round-decimal-places",
             "full-groups": "round-in-context",
             "containers": "round-in-context",
             "context": "round-in-context",
@@ -56,7 +57,7 @@
         "hide_eyebrow": true,
         "title": "Practise rounding",
         "intro": "",
-        "session_length": 10
+        "session_length": 12
     },
     "section_order": [
         "explanation",

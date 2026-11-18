@@ -92,12 +92,98 @@
         }
         return question;
     }
-    function contextStep(questionType, prompt, answer, feedback, rules = []) {
+    function contextStep(questionType, prompt, answer, feedback, rules = [], figure) {
         return {
             stage: 'context', questionType, input: 'number', exact: false,
             prompt, answer, feedback, fallback: feedback,
-            rules: rules.map(([value, message]) => ({ value, feedback: message }))
+            rules: rules.map(([value, message]) => ({ value, feedback: message })),
+            ...(figure ? { figure } : {})
         };
+    }
+
+    /* Practice pictures. Each one is a small inline SVG in the question card:
+       a footpath with a measuring arrow over it, and a pile of books beside one
+       open box. Nothing in either picture gives the answer away. */
+    /* The same card keeps the same picture function, so generating a question
+       twice gives the same card. */
+    const cardFigures = new Map();
+    function cardFigure(key, build) {
+        if (!cardFigures.has(key)) cardFigures.set(key, build());
+        return cardFigures.get(key);
+    }
+    // A phone draws each picture for a narrow box, the same test drawLine uses,
+    // instead of shrinking the wide one, so the picture fills the card.
+    const narrowPicture = () => window.matchMedia('(max-width: 600px)').matches;
+
+    function drawPathFigure(host, metres) {
+        const label = `${Number(metres).toLocaleString('en-GB')} m`;
+        const narrow = narrowPicture();
+        const width = narrow ? 360 : 660;
+        const from = narrow ? 12 : 16;
+        const to = width - from;
+        const middle = width / 2;
+        const curve = narrow
+            ? 'M 12 88 C 70 60, 116 116, 180 88 S 292 58, 348 88'
+            : 'M 16 92 C 118 64, 192 120, 300 92 S 468 60, 644 92';
+        // Small darker green tufts on the grass.
+        const tufts = narrow
+            ? [[26, 26], [70, 104], [128, 24], [222, 108], [286, 26], [332, 100]]
+            : [[58, 30], [132, 104], [204, 26], [318, 110], [402, 24], [468, 106], [552, 28], [614, 102]];
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 ${width} 150" role="img" aria-label="A path ${label} long">
+            <rect class="rounding-picture__grass" x="0" y="8" width="${width}" height="108" rx="14"/>
+            ${tufts.map(([cx, cy]) => `<circle class="rounding-picture__tuft" cx="${cx}" cy="${cy}" r="4"/>`).join('')}
+            <path class="rounding-picture__path-edge" d="${curve}"/>
+            <path class="rounding-picture__path-paving" d="${curve}"/>
+            <path class="rounding-picture__measure" d="M ${from} 30 H ${to} M ${from} 22 V 38 M ${to} 22 V 38"/>
+            <path class="rounding-picture__measure" d="M ${from + 14} 24 L ${from} 30 L ${from + 14} 36 M ${to - 14} 24 L ${to} 30 L ${to - 14} 36"/>
+            <text class="rounding-picture__label rounding-picture__label--gap" x="${middle}" y="30" text-anchor="middle" dominant-baseline="middle">${label}</text>
+        </svg>`;
+    }
+
+        function drawBooksFigure(host, total, size) {
+        const books = total.toLocaleString('en-GB');
+        const holds = `${size} books`;
+        const narrow = narrowPicture();
+        const width = narrow ? 360 : 660;
+        // Seven books, flat and slightly offset, in soft colours with a darker edge.
+        const colours = [
+            ['#d9e7f7', '#7f9dc0'], ['#f7e0c8', '#c49b72'], ['#d9ecdc', '#82a88e'],
+            ['#f2d8e2', '#b98ba6'], ['#e6ddf6', '#9a8ac0'], ['#fae8b6', '#c2a257'],
+            ['#d7e8f0', '#85a6b7']
+        ];
+        const stackWidth = narrow ? 92 : 128;
+        const stackX = narrow ? 12 : 46;
+        const stack = colours.map(([fill, edge], index) => {
+            const x = stackX + (index % 2 === 0 ? -5 : 5);
+            const y = 125 - (index + 1) * 17;
+            return `<rect class="rounding-picture__book" x="${x}" y="${y}" width="${stackWidth}" height="15" rx="5" fill="${fill}" stroke="${edge}"/>`;
+        }).join('');
+        // One open box, drawn in 3D: inside back, three flaps, front, right side, tape.
+        const box = narrow
+            ? {
+                inside: '186,68 202,54 312,54 296,68', back: '202,54 312,54 324,36 214,36',
+                left: '186,68 202,54 182,46 166,60', right: '296,68 312,54 332,48 316,62',
+                front: [186, 68, 110, 54], side: '296,68 312,54 312,106 296,122', tape: [236, 74, 10, 34],
+                booksLabel: 56, boxLabel: 241
+            }
+            : {
+                inside: '418,68 440,52 580,52 558,68', back: '440,52 580,52 594,32 454,32',
+                left: '418,68 440,52 416,42 394,58', right: '558,68 580,52 604,44 582,60',
+                front: [418, 68, 140, 54], side: '558,68 580,52 580,106 558,122', tape: [482, 74, 12, 34],
+                booksLabel: 105, boxLabel: 500
+            };
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 ${width} 150" role="img" aria-label="A pile of ${books} books and one box that holds ${holds}">
+            ${stack}
+            <polygon class="rounding-picture__box" fill="#92400e" points="${box.inside}"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="${box.back}"/>
+            <polygon class="rounding-picture__box" fill="#d6a565" points="${box.left}"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="${box.right}"/>
+            <rect class="rounding-picture__box" fill="#d6a565" x="${box.front[0]}" y="${box.front[1]}" width="${box.front[2]}" height="${box.front[3]}" rx="2"/>
+            <polygon class="rounding-picture__box" fill="#b8844a" points="${box.side}"/>
+            <rect class="rounding-picture__tape" x="${box.tape[0]}" y="${box.tape[1]}" width="${box.tape[2]}" height="${box.tape[3]}"/>
+            <text class="rounding-picture__label" x="${box.booksLabel}" y="144" text-anchor="middle">${books} books</text>
+            <text class="rounding-picture__label" x="${box.boxLabel}" y="144" text-anchor="middle">Holds ${holds}</text>
+        </svg>`;
     }
 
     // Try it: hands-on slides. On the first the pupil taps the hundreds digit;
@@ -192,16 +278,129 @@
             roundingQuestion('2681450', 'nearest', 6, 'choice')
         ];
     }
+    /* Practice starts with two number-line questions: tap the end of the line
+       the number is closest to, once for the nearest 10 and once for the
+       nearest 100. The engine's custom card draws, saves and marks it. */
+    function linePickWidget(base, step, value, answer, feedback) {
+        const format = number => number.toLocaleString('en-GB');
+        return {
+            render(host, { value: saved, editable, onChange }) {
+                let chosen = saved;
+                function draw() {
+                    host.replaceChildren();
+                    // The line is drawn in its own 660-wide units, so sizes are
+                    // given in screen pixels and turned into those units.
+                    const narrow = narrowPicture();
+                    const scale = (host.clientWidth || 660) / 660;
+                    // Sizes are given in screen pixels and turned into the line's
+                    // drawing units: each end is about 64 x 52 on a computer and
+                    // at least 44 x 44 on a phone.
+                    const px = size => size / scale;
+                    const boxWidth = px(narrow ? 46 : 64);
+                    const boxHeight = px(narrow ? 46 : 52);
+                    const labelSize = px(narrow ? 15 : 18);
+                    // Keep each end fully inside the card, with its own margin.
+                    const endMargin = px(narrow ? 26 : 10) + boxWidth / 2;
+                    const line = drawLine(host, value, false, null, !editable, base, null, step, {
+                        onPick: pick, wideLabels: true, showNearest: false,
+                        valueLabel: format(value), numberAbove: true, edgeMargin: endMargin, axisToEnds: true
+                    });
+                    line.classList.add('rounding-line--pick');
+                    // The number above the dot reads at least 14 px on a phone too.
+                    const above = line.querySelector('.rounding-value--above');
+                    if (above) above.style.fontSize = `${labelSize.toFixed(1)}px`;
+                    // Each box hangs under its own tick, round the end number, so
+                    // the line and both end ticks stay in view. The picture is made
+                    // taller so the boxes are not cut off.
+                    const svg = line.querySelector('svg');
+                    const dot = line.querySelector('.rounding-dot');
+                    const axis = dot ? Number(dot.getAttribute('cy')) : 0;
+                    const boxTop = axis + px(14);
+                    for (const end of line.querySelectorAll('.rounding-end')) {
+                        const rect = end.querySelector('rect');
+                        const label = end.querySelector('.rounding-value');
+                        const centre = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2;
+                        rect.setAttribute('x', String(centre - boxWidth / 2));
+                        rect.setAttribute('y', String(boxTop));
+                        rect.setAttribute('width', String(boxWidth));
+                        rect.setAttribute('height', String(boxHeight));
+                        rect.setAttribute('rx', String(px(10)));
+                        label.style.fontSize = `${labelSize.toFixed(1)}px`;
+                        label.setAttribute('y', String(boxTop + boxHeight / 2 + labelSize * 0.35));
+                        if (Number(end.dataset.end) === chosen) end.classList.add('is-selected');
+                        if (editable) continue;
+                        // Once it is marked the ends still show the choice, but
+                        // nothing on the line is tappable any more.
+                        end.removeAttribute('tabindex');
+                        end.removeAttribute('role');
+                        line.classList.add('is-fixed');
+                    }
+                    const [,, width, height] = svg.getAttribute('viewBox').split(' ').map(Number);
+                    const bottom = boxTop + boxHeight + px(8);
+                    if (bottom > height) svg.setAttribute('viewBox', `0 0 ${width} ${Math.round(bottom)}`);
+                }
+                function pick(number) {
+                    if (!editable) return;
+                    chosen = number;
+                    onChange(number);
+                    draw();
+                }
+                draw();
+                return {
+                    update({ value: next, editable: editableNow }) {
+                        chosen = next;
+                        editable = editableNow;
+                        draw();
+                    }
+                };
+            },
+            isEmpty(chosen) { return chosen === null || chosen === undefined; },
+            mark(chosen) { return { correct: Number(chosen) === answer, feedback }; },
+            answerText(chosen) { return chosen === null || chosen === undefined ? '' : format(Number(chosen)); }
+        };
+    }
+
+    function linePickQuestion(place, integer) {
+        const step = place === 1 ? 1 : 10;
+        const span = 10 * step;
+        const base = place === 1 ? integer(1, 9) * 10 : integer(1, 9) * 100;
+        // Never on an end, never the halfway number, and for the nearest 100
+        // never on a tick either: its ones digit is 1 to 9.
+        let offset = integer(1, span - 1);
+        if (place === 1) {
+            while (offset === 5) offset = integer(1, 9);
+        } else {
+            while (offset === 50 || offset % 10 === 0) offset = integer(1, span - 1);
+        }
+        const format = number => number.toLocaleString('en-GB');
+        const value = base + offset;
+        const halfway = base + 5 * step;
+        const answer = value < halfway ? base : base + span;
+        const side = value > halfway ? 'past' : 'before';
+        const feedback = `${format(value)} is ${side} the halfway mark, ${format(halfway)}, so it is closer to ${format(answer)}.`;
+        return {
+            questionType: 'line-pick', input: 'custom', base, step, value, answer,
+            prompt: `Tap the number ${format(value)} is closest to.`,
+            feedback,
+            widget: cardFigure(`line-pick:${base}:${value}`, () => linePickWidget(base, step, value, answer, feedback))
+        };
+    }
+
     const practiceGroups = [
         { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'big-hundred'] },
         { kind: 'place', types: ['nearest-thousand', 'big-thousand'] },
         { kind: 'context', types: ['round-up'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
     ];
-    const practiceTypes = practiceGroups.flatMap(group => group.types);
+    const practiceTypes = [...practiceGroups.flatMap(group => group.types), 'line-pick'];
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
+        // The session opens with the two number-line questions: nearest 10,
+        // then nearest 100.
+        const linePicks = [1, 2].map(place => ({
+            type: 'line-pick', place, mode: 'custom', seed: randomInt(0, 4294967295, random)
+        }));
         // Three cards from each whole-number group and two from each real-life
         // group keeps it at 10 questions, so both come up in every session.
         const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2] : [0, 1]).map(() => ({
@@ -231,18 +430,18 @@
             // always can) the multiple-choice slot.
             const placeChoice = ordered.some(({ group }, index) => group.kind === 'place' && modes[index] === 'choice');
             // The minibus and box questions (round up) are always multiple choice.
-            return ordered.map(({ type }, index) => ({
+            return [...linePicks, ...ordered.map(({ type }, index) => ({
                 type,
                 mode: type === 'round-up' || placeChoice === (modes[index] === 'choice') ? 'choice' : 'number',
                 seed: randomInt(0, 4294967295, random)
-            }));
+            }))];
         }
         throw new Error('Could not lay out a practice session.');
     }
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
     }
-    function practiceContext(item, prompt, answer, feedback, mistakes, random) {
+    function practiceContext(item, prompt, answer, feedback, mistakes, random, figure) {
         const seen = new Set([answer]);
         const rules = mistakes.filter(([value]) => {
             if (seen.has(value)) return false;
@@ -253,11 +452,12 @@
             return prepare({
                 questionType: item.type, input: 'choice', prompt,
                 options: [option(spaced(answer), feedback, true),
-                    ...rules.slice(0, 3).map(([value, message]) => option(spaced(value), message))]
+                    ...rules.slice(0, 3).map(([value, message]) => option(spaced(value), message))],
+                ...(figure ? { figure } : {})
             }, random);
         }
         return contextStep(item.type, prompt, String(answer), feedback,
-            rules.map(([value, message]) => [String(value), message]));
+            rules.map(([value, message]) => [String(value), message]), figure);
     }
 
 
@@ -301,7 +501,7 @@
                     [roundedQuotient, `You can't have part of a ${unit}. Give a whole number.`],
                     // Used when rounding to the nearest gives the same wrong answer as one too few.
                     [total % size, `That is how many ${contents} are left over, not the number of ${units}.`]
-                ], random);
+                ], random, books ? cardFigure(`books:${total}:${size}`, () => host => drawBooksFigure(host, total, size)) : undefined);
         }
 
         return practiceContext(item,
@@ -340,15 +540,21 @@
         case 'round-up':
         case 'full-groups':
             return generateSituation(item, integer, random);
+        case 'line-pick':
+            return linePickQuestion(item.place === 2 ? 2 : 1, integer);
         case 'path-context':
             number = String(nonZeroEnd(integer(111, 989))); kind = 'nearest'; accuracy = 1;
             customPrompt = `A path is ${number} metres long. Round its length to the nearest 10 metres.${item.mode === 'choice' ? '' : ' Type the number of metres.'}`;
             break;
         default: throw new Error(`Unknown rounding type: ${item.type}`);
         }
-        const question = roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt);
+        // The path question gets the footpath picture, for both its answers.
+        const pictured = question => item.type === 'path-context'
+            ? { ...question, figure: cardFigure(`path:${number}`, () => host => drawPathFigure(host, number)) }
+            : question;
+        const question = pictured(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt));
         if (question.input === 'choice' && question.options.length < 4) {
-            return roundingQuestion(number, kind, accuracy, 'number', item.type, customPrompt);
+            return pictured(roundingQuestion(number, kind, accuracy, 'number', item.type, customPrompt));
         }
         return prepare(question, random);
     }
@@ -442,7 +648,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true, edgeMargin = null, numberAbove = false, axisToEnds = false } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -462,7 +668,9 @@
         // is snapped before it is labelled or used as a tap target.
         const tick = mark => Number((base + mark * step).toFixed(6));
         const top = tick(10);
-        const edge = wideLabels ? 50 : 30;
+        // edgeMargin is only for the Practice line-pick, which needs its tapped
+        // ends fully inside the card; Learn and Try it keep the usual margin.
+        const edge = edgeMargin ?? (wideLabels ? 50 : 30);
         const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
         // A number between two ticks, or on a tick left unlabelled, has no label in the row, so its label sits
         // above the dot, and the line moves down to make room.
@@ -487,7 +695,11 @@
             picture += box(x(base) - 18, middle - 3, 'lower', `The half from ${format(base)} to ${format(tick(5))}`);
             picture += box(middle + 3, x(top) + 18, 'upper', `The half from ${format(tick(5))} to ${format(top)}`);
         }
-        picture += `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+        // axisToEnds is only for the Practice line-pick: its line starts at the
+        // first end tick and stops at the last, so it never runs on past the ends.
+        const axisFrom = axisToEnds ? x(base) : 15;
+        const axisTo = axisToEnds ? x(top) : 645;
+        picture += `<path class="rounding-axis" d="M ${axisFrom} ${axis} H ${axisTo}"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
             const number = tick(mark);
@@ -497,6 +709,9 @@
             const end = number === base || number === top;
             const label = `<text class="rounding-value${landmark ? ' is-landmark' : ''}${wideLabels && !landmark ? ' rounding-value--minor' : ''}" data-value="${number}" x="${x(number)}" y="${y}">${marked(number)}</text>`;
             picture += `<path class="rounding-tick${landmark ? ' is-landmark' : ''}" d="M ${x(number)} ${axis - reach} V ${axis + reach}"/>`;
+            // The Practice line-pick names the number above its dot, so it is not
+            // repeated in the row of numbers under the line.
+            if (numberAbove && number === value) continue;
             if (!landmark && labels !== 'all') continue;
             picture += onPick && end
                 ? `<g role="button" tabindex="0" aria-label="${format(number)}" class="rounding-end" data-end="${number}">
@@ -504,7 +719,9 @@
                 </g>`
                 : label;
         }
-        if (showDot && !onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
+        // A number on a tick is labelled in the row, so it is only labelled
+        // above the dot when the caller asks for it (the Practice line-pick).
+        if (showDot && (!onTick || numberAbove)) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
         if (showDot) picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
         line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onHalf)}">${picture}</svg>`;
         if (onPick) {
