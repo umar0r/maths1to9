@@ -8,15 +8,15 @@
     },
     "assessment": {
         "question_types": {
-            "nearest-ten": "round-decimal-places",
-            "halfway-hundred": "round-decimal-places",
-            "nearest-thousand": "round-decimal-places",
-            "big-hundred": "round-decimal-places",
-            "big-thousand": "round-decimal-places",
-            "keep-digit": "round-decimal-places",
-            "deciding-digit": "round-decimal-places",
-            "decide-digit": "round-decimal-places",
-            "nearest": "round-decimal-places",
+            "nearest-ten": "round-whole-numbers",
+            "halfway-hundred": "round-whole-numbers",
+            "nearest-thousand": "round-whole-numbers",
+            "big-hundred": "round-whole-numbers",
+            "big-thousand": "round-whole-numbers",
+            "keep-digit": "round-whole-numbers",
+            "deciding-digit": "round-whole-numbers",
+            "decide-digit": "round-whole-numbers",
+            "nearest": "round-whole-numbers",
             "budget": "round-in-context",
             "stock-first": "round-in-context",
             "spend-first": "round-in-context",
@@ -31,11 +31,11 @@
             "coverage": "round-in-context",
             "path-context": "round-in-context",
             "round-up": "round-in-context",
-            "line-pick": "round-decimal-places",
+            "line-pick": "round-whole-numbers",
             "full-groups": "round-in-context",
             "containers": "round-in-context",
             "context": "round-in-context",
-            "method": "round-decimal-places"
+            "method": "round-whole-numbers"
         }
     },
     "explanation": {
