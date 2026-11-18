@@ -252,22 +252,6 @@
             "kind": "guided"
         },
         {
-            "id": "step:interactive:31",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:32",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:33",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:34",
-            "kind": "guided"
-        },
-        {
             "id": "rounding-line:explored",
             "kind": "explore"
         }

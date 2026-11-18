@@ -91,8 +91,8 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
 
 test('rounding-and-significant-figures: Try it examples and Learn pictures highlight the right digits', () => {
     assert.equal(Q.examples().length, 31);
-    // Each example step and each of the four road cars is one guided step.
-    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 31 + 4);
+    // Each example step is one guided step.
+    assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, 31);
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);

@@ -24,18 +24,6 @@ module.exports = async function solve(page) {
         else await page.locator('.significant-digits[role=group]:visible').locator(':scope > *').nth(pick.index).click();
         return true;
     }
-    // Road game: drive the car to the nearer sign with the arrow keys (halfway rounds up).
-    const road = page.locator('.rounding-road svg[aria-disabled="false"]:visible');
-    if (await road.count()) {
-        const mile = Number(await road.getAttribute('aria-valuenow'));
-        const low = Number(await road.getAttribute('aria-valuemin'));
-        const target = mile - low >= 5 ? low + 10 : low;
-        if (mile !== target && mile !== low && mile !== low + 10) {
-            await road.focus();
-            for (let i = 0; i < Math.abs(target - mile); i++) await road.press(target > mile ? 'ArrowRight' : 'ArrowLeft');
-            return true;
-        }
-    }
     const main = page.locator('.lesson-controls button.button--primary:visible');
     if (await main.isEnabled()) return false;
     const prompt = page.locator('.question-prompt:visible');

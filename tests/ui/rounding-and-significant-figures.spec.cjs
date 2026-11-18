@@ -61,8 +61,8 @@ for (const width of [1280, 375]) {
                     await reload(page);
                     await expect(slider).toHaveValue('70');
                 }
-                // Learn tap screens and the road game: the solver taps or drives, then the button moves on.
-                if (await page.locator('.rounding-end:visible, .significant-digits[role=group]:visible, .rounding-road svg[aria-disabled="false"]:visible').count()) {
+                // Learn tap screens: the solver taps, then the button moves on.
+                if (await page.locator('.rounding-end:visible, .significant-digits[role=group]:visible').count()) {
                     await solve(page);
                     if (await button.isEnabled()) await button.click();
                     continue;
@@ -217,8 +217,8 @@ for (const width of [1280, 375]) {
         expect(await score(page)).toBe(before + 5);
         await expect(mainAction(page)).toBeEnabled();
         await mainAction(page).click();
-        // The road game follows the slider.
-        await expect(page.getByText('Drive the car to the nearer sign.', { exact: true })).toBeVisible();
+        // The first example follows the slider.
+        await expect(page.getByRole('heading', { name: /^Example 1 of \d+ · Step 1 of \d+$/ })).toBeVisible();
         await expect(page).toHaveURL(/#try-it-2$/);
         await page.getByRole('button', { name: 'Previous screen' }).click();
         await expect(slider).toHaveValue('70');
@@ -229,7 +229,7 @@ for (const width of [1280, 375]) {
         const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true });
         const page = await context.newPage();
         await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-        // Through Learn (tapping where a screen asks), the slider and the four road cars.
+        // Through Learn (tapping where a screen asks) and the slider.
         for (let step = 0; step < 80; step++) {
             if (await page.getByRole('heading', { name: /^Example 1 of \d+ · Step 1 of 4$/ }).isVisible()) break;
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -238,7 +238,7 @@ for (const width of [1280, 375]) {
         }
         const count = await page.evaluate(() => window.Rounding.exampleCount);
         await expect(page.getByRole('heading', { name: `Example 1 of ${count} · Step 1 of 4`, exact: true })).toBeVisible();
-        await expect(page).toHaveURL(/#try-it-6$/);
+        await expect(page).toHaveURL(/#try-it-2$/);
         const cards = await page.evaluate(() => window.Rounding.examples().map(q => ({
             stage: q.stage, number: q.number, hidden: Boolean(q.showDigitsAfterAnswer),
             // The step-by-step examples move on by themselves; the later ones wait for Continue.

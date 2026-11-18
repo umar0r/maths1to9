@@ -218,33 +218,6 @@
     stroke-linejoin: round;
 }
 
-.rounding-road svg {
-    overflow: hidden;
-}
-
-.rounding-road__sign path,
-.rounding-road__sign rect {
-    stroke: #7c46c4;
-    stroke-width: 2;
-}
-
-.rounding-road__sign rect {
-    fill: #f5edff;
-}
-
-.rounding-road svg[aria-disabled="false"] {
-    touch-action: none;
-}
-
-.rounding-road svg[aria-disabled="false"] .rounding-road__car {
-    cursor: grab;
-    user-select: none;
-}
-
-.rounding-road svg[aria-disabled="false"] .rounding-road__car:active {
-    cursor: grabbing;
-}
-
 /* Learn uses the digit boxes and the number-line ends as answer targets. */
 button.significant-digit {
     color: inherit;
