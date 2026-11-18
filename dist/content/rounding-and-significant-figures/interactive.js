@@ -18,7 +18,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 12,
+            version: 13,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
             upgrade: () => null
         });
@@ -145,7 +145,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 12,
+            version: 13,
             initial: () => ({
                 // The intro screen is the number line slider shown before the slides.
                 lineValue: 67, explored: false,

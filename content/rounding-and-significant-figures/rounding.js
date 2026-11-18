@@ -374,23 +374,7 @@
         { title: "Let's round 48,672 to the nearest 100.", lines: ["We've been asked to round to the nearest 100, so first we find the digit that stands for hundreds. In 48,672 that's the 6, because it's worth 600."], number: '48672', kind: 'nearest', accuracy: 2, after: ["If that digit is 0, 1, 2, 3 or 4, we round down. If it's 5, 6, 7, 8 or 9, we round up. It's 7, so we round up."], digitNotes: {
             keep: "This 6 is worth 600. It's the hundreds digit.",
             look: "Now look at the digit just to its right. It's a 7."
-        } },
-        {
-            title: 'When you can only pay for whole ones, round down.',
-            lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
-            context: {
-                setup: 'Step 1: A club has £12.50. Each trophy costs £1.85. On a calculator, 12.50 ÷ 1.85 = 6.756…',
-                valueLabel: '6.756…',
-                question: 'How many trophies can they buy?',
-                hint: '7 trophies cost £12.95. That is more than £12.50.',
-                steps: [
-                    ['Step 2: 7 trophies cost £12.95. That is too much.', 7],
-                    ['Step 3: So they can buy 6. 6 trophies cost £11.10.', 6]
-                ]
-            },
-            equations: ['6 trophies'],
-            caption: "6.756… would normally round to 7. Here you round down, because you can't pay for the 7th."
-        }
+        } }
     ];
     // The minibus slide was a Learn screen; it is now Try it's second slide.
     tryIt.slides.push({
