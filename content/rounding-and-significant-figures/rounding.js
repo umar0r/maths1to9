@@ -519,7 +519,7 @@
         }
 
         return practiceContext(item,
-            `A club has ${total} stickers. It packs them in packets of ${size}. ${working} How many full packets can it make?`,
+            `${total} stickers are packed into packets of ${size}. ${working} How many full packets can be made?`,
             lower, `${lower} × ${size} = ${lower * size} stickers. That fills ${lower} packets and leaves ${total % size} over.`, [
                 [upper, "The last packet wouldn't be full."],
                 [total % size, 'That is how many are left over, not the number of packets.'],
