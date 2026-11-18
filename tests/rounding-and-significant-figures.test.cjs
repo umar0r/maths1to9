@@ -89,41 +89,34 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
     }
 });
 
-test('rounding-and-significant-figures: Try it is three hands-on slides and Learn pictures highlight the right digits', () => {
-    const [slideA, slideB, slideC] = Q.tryIt.slides;
-    assert.equal(Q.tryIt.slides.length, 3);
+test('rounding-and-significant-figures: Try it is two hands-on slides and Learn pictures highlight the right digits', () => {
+    const [slideA, slideC] = Q.tryIt.slides;
+    assert.equal(Q.tryIt.slides.length, 2);
     // Each slide is one guided activity.
     assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, Q.tryIt.slides.length);
-    // The two slides, the numbers they use and the digit each one asks about.
+    // The two slides, and the digit the number slide asks about.
     assert.deepEqual(Q.tryIt.slides.map(slide => slide.title), [
         'Round 53,481 to the nearest 100.',
-        'Round 2,681,450 to the nearest million.',
         'When you need enough of something, round up.'
     ]);
     // The minibus slide: 131 ÷ 16 = 8.1875, and the pupil taps 9.
     assert.deepEqual([slideC.base, slideC.step, slideC.value, slideC.answer], [8, 0.1, 131 / 16, 9]);
     assert.equal(slideC.button, 'Continue');
     assert.ok(!Q.learnScreens.some(screen => screen.title === slideC.title), 'the minibus screen left Learn');
-    assert.deepEqual([slideA.digits, slideB.digits], ['53481', '2681450']);
-    for (const [slide, keep, look] of [[slideA, '4', '8'], [slideB, '2', '6']]) {
+    assert.equal(slideA.digits, '53481');
+    for (const [slide, keep, look] of [[slideA, '4', '8']]) {
         const positions = Q.keyDigits(slide.digits, 'nearest', slide.accuracy);
         assert.equal(slide.digits[positions.target], keep, slide.title);
         assert.equal(slide.digits[positions.decider], look, slide.title);
     }
     // The line runs from one round number to the next, and the slide rounds itself.
     assert.deepEqual([slideA.line.base, slideA.line.step, slideA.line.value, slideA.line.tolerance], [53400, 10, 53481, 5]);
-    assert.deepEqual([slideB.line.base, slideB.line.step, slideB.line.value, slideB.line.tolerance], [2000000, 100000, 2681450, 50000]);
-    assert.deepEqual([Q.rounded(String(slideA.line.value), 'nearest', 2), Q.rounded(String(slideB.line.value), 'nearest', 6)], ['53500', '3000000']);
+    assert.equal(Q.rounded(String(slideA.line.value), 'nearest', 2), '53500');
     assert.equal(slideA.answer, '53,481 ≈ 53,500');
-    assert.equal(slideB.answer, '2,681,450 ≈ 3,000,000');
-    assert.deepEqual(slideB.labels, ['2,000,000', '2,500,000', '3,000,000']);
     // The wrong-tap hints and the arrow notes say what they must.
     assert.equal(slideA.tapHint, 'The hundreds digit is the third from the right.');
-    assert.equal(slideB.tapHint, 'The millions digit is the seventh from the right.');
     assert.equal(slideA.notes.digit, 'The next digit is 8. That is 5 or more, so round up.');
     assert.equal(slideA.notes.nearest, 'So 53,481 is closer to 53,500.');
-    assert.equal(slideB.notes.digit, 'The next digit is 6. That is 5 or more, so round up.');
-    assert.equal(slideB.notes.nearest, 'So 2,681,450 is closer to 3,000,000.');
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
         assert.equal(q.target, expected.target, q.prompt);
@@ -184,7 +177,7 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
         assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-in-context']));
     }
     // Try it is hands-on, so it has no answer cards at all. Check mixes both.
-    assert.equal(Q.tryIt.slides.length, 3);
+    assert.equal(Q.tryIt.slides.length, 2);
     assert.ok(Q.tryIt.slides.every(slide => (slide.digits && slide.line) || (slide.context && slide.tap === 'end')));
     assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice', 'number']));
     assert.equal(Q.checks().length, 5);

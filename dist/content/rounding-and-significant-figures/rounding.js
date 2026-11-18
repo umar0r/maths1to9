@@ -100,9 +100,9 @@
         };
     }
 
-    // Try it: hands-on slides. On the first two the pupil taps the digit that
-    // decides, then puts the number on a number line with their hands. The
-    // third (the minibuses) is added after learnScreens: tap how many you need. The
+    // Try it: hands-on slides. On the first the pupil taps the digit that
+    // decides, then taps where the number goes on a number line. The second
+    // (the minibuses) is added after learnScreens: tap how many you need. The
     // words below are the words on screen; the tests and the slides tool read
     // them from here.
     const tryIt = {
@@ -120,84 +120,11 @@
                 },
                 answer: '53,481 ≈ 53,500',
                 button: 'Next'
-            },
-            {
-                title: 'Round 2,681,450 to the nearest million.',
-                digits: '2681450', accuracy: 6,
-                tap: 'Tap the millions digit.',
-                tapHint: 'The millions digit is the seventh from the right.',
-                place: 'Drag each number to its place on the line.',
-                move: 'Drag 2,681,450 to where it goes on the line.',
-                labels: ['2,000,000', '2,500,000', '3,000,000'],
-                line: { base: 2000000, step: 100000, value: 2681450, tolerance: 50000 },
-                notes: {
-                    digit: 'The next digit is 6. That is 5 or more, so round up.',
-                    nearest: 'So 2,681,450 is closer to 3,000,000.'
-                },
-                answer: '2,681,450 ≈ 3,000,000',
-                button: 'Next'
             }
         ]
     };
 
-    /* Which number a point across a number line stands for. The lines are
-       drawn in a 660-wide box with a margin at each end, so the pointer is
-       measured against those same numbers. */
-    function valueOnLine(line, clientX) {
-        const rect = line.querySelector('svg').getBoundingClientRect();
-        const edge = Number(line.dataset.edge);
-        const base = Number(line.dataset.base);
-        const step = Number(line.dataset.step);
-        const point = (clientX - rect.left) / rect.width * 660;
-        return base + (point - edge) / (660 - 2 * edge) * 10 * step;
-    }
-
-    /* A card that follows the pointer, or a finger, and glides back if it is
-       dropped somewhere it does not belong. A plain tap is reported instead,
-       so tapping a card and then its place works too. */
-    function dragCard(card, { onDrop, onTap }) {
-        let drag = null;
-        let dragged = false;
-        let offset = { dx: 0, dy: 0 };
-        card.addEventListener('pointerdown', event => {
-            if (event.pointerType === 'mouse' && event.button !== 0) return;
-            drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
-            dragged = false;
-            card.setPointerCapture(event.pointerId);
-        });
-        card.addEventListener('pointermove', event => {
-            if (!drag || event.pointerId !== drag.id) return;
-            offset = { dx: event.clientX - drag.x, dy: event.clientY - drag.y };
-            if (!dragged && Math.hypot(offset.dx, offset.dy) < 6) return;
-            dragged = true;
-            card.classList.add('is-dragging');
-            card.style.transform = `translate(${offset.dx}px, ${offset.dy}px)`;
-        });
-        const end = event => {
-            if (!drag || event.pointerId !== drag.id) return;
-            drag = null;
-            if (!dragged) return;
-            card.classList.remove('is-dragging');
-            card.style.transform = '';
-            const taken = event.type !== 'pointercancel' && onDrop(event.clientX, event.clientY);
-            // Nothing is said: the card just slides back to where it started.
-            if (!taken) {
-                card.animate([
-                    { transform: `translate(${offset.dx}px, ${offset.dy}px)` },
-                    { transform: 'none' }
-                ], { duration: 220, easing: 'ease-out' });
-            }
-            setTimeout(() => { dragged = false; }, 0);
-        };
-        card.addEventListener('pointerup', end);
-        card.addEventListener('pointercancel', end);
-        card.addEventListener('click', () => {
-            if (dragged) return;
-            onTap();
-        });
-    }
-
-    /* The five or seven digit cards, in one row, with no comma card between
+    /* The five digit cards, in one row, with no comma card between
        them. Taps only count while the pupil is still choosing. */
     function drawSlideDigits(host, slide, answered, onPick) {
         const digits = keyDigits(slide.digits, 'nearest', slide.accuracy);
@@ -205,7 +132,7 @@
             answered ? null : index => onPick(index === digits.target), { commas: false });
     }
 
-    /* Slide one: tap the digit, tap where the number goes on the line, then it
+    /* A number slide: tap the digit, tap where the number goes on the line, then it
        rounds by itself. */
     function drawSlideOne(host, slide, saved, handlers) {
         const { base, step, value } = slide.line;
@@ -237,140 +164,6 @@
         text(host, 'p', slide.answer, 'significant-equation');
     }
 
-    /* Slide two's line: a tick every 100,000, then three empty slots under the
-       left end, the middle and the right end for the pupil to fill. */
-    function drawBuildLine(host, slide, saved, handlers, labelsPlaced) {
-        const { base, step, value, tolerance } = slide.line;
-        const targets = slide.labels.map(label => Number(clean(label)));
-        const edge = 30;
-        const axis = 30;
-        const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
-        let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
-        for (let mark = 0; mark <= 10; mark++) {
-            const number = base + mark * step;
-            const landmark = mark % 5 === 0;
-            const reach = landmark ? 12 : 7;
-            picture += `<path class="rounding-tick${landmark ? ' is-landmark' : ''}" d="M ${x(number)} ${axis - reach} V ${axis + reach}"/>`;
-        }
-        // The number itself, once it has been put where it goes: a round dot
-        // on the line with its value written above it.
-        if (saved.dot) {
-            picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="9"/>`;
-            picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - 12}">${spaced(String(value))}</text>`;
-        }
-        const line = document.createElement('div');
-        line.className = 'rounding-line';
-        line.dataset.base = base;
-        line.dataset.step = step;
-        line.dataset.edge = edge;
-        line.dataset.tapValue = value;
-        line.innerHTML = `<svg viewBox="0 0 660 ${axis + 28}" aria-hidden="true">${picture}</svg>`;
-        host.append(line);
-
-        const row = document.createElement('div');
-        row.className = 'tryit-slots';
-        const slots = slide.labels.map((label, index) => {
-            const slot = document.createElement('button');
-            slot.type = 'button';
-            slot.className = 'tryit-slot';
-            slot.dataset.slot = index;
-            const placed = saved.slots[index];
-            if (placed === null) slot.setAttribute('aria-label', `Empty place for ${label}`);
-            else {
-                slot.classList.add('is-filled');
-                slot.textContent = spaced(String(placed));
-                slot.setAttribute('aria-label', `${spaced(String(placed))} in place`);
-                slot.disabled = true;
-            }
-            row.append(slot);
-            return slot;
-        });
-        host.append(row);
-
-        const tray = document.createElement('div');
-        tray.className = 'tryit-cards';
-        host.append(tray);
-
-        if (!labelsPlaced) {
-            const slotAt = (pointerX, pointerY) => slots.findIndex(slot => {
-                const box = slot.getBoundingClientRect();
-                return pointerX >= box.left && pointerX <= box.right
-                    && pointerY >= box.top && pointerY <= box.bottom;
-            });
-            let picked = null;
-            // Cards already on the line have left the tray.
-            const cards = handlers.order.filter(number => !saved.slots.includes(number)).map(number => {
-                const card = document.createElement('button');
-                card.type = 'button';
-                card.className = 'tryit-card';
-                card.dataset.value = number;
-                card.textContent = spaced(String(number));
-                card.setAttribute('aria-label', `Drag ${spaced(String(number))} to its place on the line, or tap it and tap its place`);
-                dragCard(card, {
-                    // Only the right slot keeps a card. Anywhere else it slides back.
-                    onDrop: (pointerX, pointerY) => {
-                        const slot = slotAt(pointerX, pointerY);
-                        if (targets[slot] !== number) return false;
-                        handlers.onLabel(number, slot);
-                        return true;
-                    },
-                    onTap() {
-                        picked = picked === number ? null : number;
-                        cards.forEach(other => other.classList.toggle('is-picked', Number(other.dataset.value) === picked));
-                    }
-                });
-                tray.append(card);
-                return card;
-            });
-            slots.forEach((slot, index) => slot.addEventListener('click', () => {
-                if (picked === null || targets[index] !== picked) return;
-                handlers.onLabel(picked, index);
-            }));
-        }
-
-        if (labelsPlaced && !saved.dot) {
-            const card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'tryit-card';
-            card.dataset.value = value;
-            card.textContent = spaced(String(value));
-            card.setAttribute('aria-label', `Drag ${spaced(String(value))} to where it goes on the line`);
-            dragCard(card, {
-                onDrop(pointerX) {
-                    if (Math.abs(valueOnLine(line, pointerX) - value) > tolerance) return false;
-                    handlers.onNumber();
-                    return true;
-                },
-                onTap() {}
-            });
-            tray.append(card);
-        }
-        return { line, slots };
-    }
-
-    /* Slide two: build the three labels first, then drag the number on. */
-    function drawSlideTwo(host, slide, saved, handlers) {
-        text(host, 'p', slide.tap);
-        const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
-        const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
-        if (!saved.tapped) return;
-        const labelsPlaced = saved.slots.every(placed => placed !== null);
-        const prompt = text(block, 'p', labelsPlaced ? slide.move : slide.place);
-        const { line, slots } = drawBuildLine(block, slide, saved, handlers, labelsPlaced);
-        if (!saved.dot) return;
-        // Done: the instruction makes way for the notes, so no arrow crosses it.
-        prompt.remove();
-        // The 6 card decides, and the answer lands on 3,000,000 at the right end.
-        const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
-        const nearestNote = text(block, 'p', slide.notes.nearest, 'rounding-note rounding-note--nearest');
-        drawArrows(block, [
-            [digitNote, () => row.querySelector('.significant-digit.is-look')],
-            [nearestNote, () => slots[slots.length - 1]]
-        ]);
-        text(host, 'p', slide.answer, 'significant-equation');
-        void line;
-    }
-
     // The minibus slide: tap how many you need, then the working shows.
     function drawContextSlide(host, slide, answered, onResult) {
         if (!answered) return drawLearnTap(host, slide, onResult);
@@ -381,7 +174,7 @@
 
     function drawSlide(host, slide, saved, handlers) {
         if (slide.context) return drawContextSlide(host, slide, saved.dot, handlers.onContext);
-        return slide.labels ? drawSlideTwo(host, slide, saved, handlers) : drawSlideOne(host, slide, saved, handlers);
+        return drawSlideOne(host, slide, saved, handlers);
     }
 
     function checks() {
@@ -588,21 +381,11 @@
             keep: "This 6 is worth 600. It's the hundreds digit.",
             look: "Now look at the digit just to its right. It's a 7."
         } },
-        // Worked step by step: find the digit, put it on a line, look at the next digit, round.
-        { title: "Let's put 48,672 on a number line to see why it rounds up.", lines: [], line: true, base: 48600, step: 10, value: 48672, labels: 'landmarks', steps: {
-            find: 'Step 1: We are rounding to the nearest 100, so find the hundreds digit.',
-            found: 'The hundreds digit is 6. So 48,672 is between 48,600 and 48,700.',
-            place: 'Step 2: Put 48,672 on a number line from 48,600 to 48,700.'
-        }, notes: {
-            digit: 'Step 3: Look at the next digit. The tens digit is 7. That is 5 or more, so round up.',
-            nearest: 'Step 4: So 48,672 rounds up to 48,700.'
-        } },
         { title: "Now let's round 3.47 to 1 decimal place.", lines: ['1 decimal place means 1 digit after the decimal point. So 3.47 sits between 3.4 and 3.5. Here it is on the number line, counting in steps of 0.01.'], line: true, base: 3.4, step: 0.01, value: 3.47, tap: 'end', labels: 'landmarks', notes: {
             digit: 'The next digit is 7. That is 5 or more, so round up.',
             nearest: 'So 3.47 is closer to 3.5.'
         } },
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
-        { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] },
         {
             title: 'When you can only pay for whole ones, round down.',
             lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
@@ -618,24 +401,9 @@
             },
             equations: ['6 trophies'],
             caption: "6.756… would normally round to 7. Here you round down, because you can't pay for the 7th."
-        },
-        {
-            title: "To find what's left, take away the full groups.",
-            lines: [], base: 11, step: 0.1, value: 950 / 80, labels: 'landmarks', tap: 'end', answer: 11,
-            context: {
-                setup: 'Step 1: A roll has 9.5 m of cord, which is 950 cm. Cut it into 80 cm pieces. On a calculator, 950 ÷ 80 = 11.875',
-                valueLabel: '11.875',
-                question: 'How many full pieces can you cut?',
-                hint: '12 pieces need 960 cm. There is only 950 cm.',
-                steps: [
-                    ['Step 2: 11 full pieces use 11 × 80 = 880 cm.', 11],
-                    ['Step 3: 950 − 880 = 70 cm is left.']
-                ]
-            },
-            equations: ['70 cm left']
         }
     ];
-    // The minibus slide was a Learn screen; it is now Try it's third slide.
+    // The minibus slide was a Learn screen; it is now Try it's second slide.
     tryIt.slides.push({
         ...{
             title: 'When you need enough of something, round up.',
@@ -672,29 +440,6 @@
             node.append(` ${match[2]}`);
         }
         return node;
-    }
-    // Step 1 of a worked example: the number, with the digit you round to
-    // picked out and a note pointing at it.
-    function drawFindDigit(host, value, step, steps) {
-        stepText(host, 'p', steps.find);
-        const block = text(host, 'div', '', 'rounding-notes rounding-find');
-        const shown = value.toLocaleString('en-GB');
-        const number = text(block, 'p', '', 'rounding-big-number');
-        number.setAttribute('aria-label', shown);
-        // The digit you round to is one place left of the digit that decides.
-        let fromEnd = Math.round(Math.log10(step)) + 1;
-        let target = null;
-        for (let i = shown.length - 1; i >= 0; i--) {
-            if (!/\d/.test(shown[i])) continue;
-            if (fromEnd-- === 0) { target = i; break; }
-        }
-        [...shown].forEach((character, i) => {
-            const span = text(number, 'span', character, i === target ? 'rounding-keep' : '');
-            span.setAttribute('aria-hidden', 'true');
-        });
-        const note = text(block, 'p', steps.found, 'rounding-note rounding-note--found');
-        drawArrows(block, [[note, () => number.querySelector('.rounding-keep')]]);
-        stepText(host, 'p', steps.place);
     }
     function drawDigits(host, question, marks = 'both', onPick, { commas = true } = {}) {
         const { number } = question;
@@ -960,7 +705,6 @@
     function drawLearn(host, index, lineValue, onChange, readOnly) {
         const screen = learnScreens[index];
         if (screen.roundings) drawRoundings(host, screen.roundings);
-        if (screen.steps) drawFindDigit(host, screen.value, screen.step, screen.steps);
         if (screen.context) drawContextLine(host, screen);
         else if (screen.line) drawLine(host, screen.explore ? lineValue : screen.value ?? 67, screen.explore, onChange, readOnly,
             screen.base, screen.notes, screen.step, { wideLabels: screen.tap === 'end', labels: screen.labels });

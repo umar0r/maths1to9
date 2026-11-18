@@ -10,7 +10,7 @@ const heading = page => page.locator('[data-screen-heading]:visible');
 const prompt = page => page.locator('.question-prompt:visible');
 
 const SLIDE_A = 'Round 53,481 to the nearest 100.';
-const SLIDE_B = 'Round 2,681,450 to the nearest million.';
+const SLIDE_B = 'When you need enough of something, round up.';
 
 async function reload(page) {
     await page.waitForTimeout(250); // let the saved state write itself
@@ -61,26 +61,11 @@ async function tapLine(page, value) {
     await page.waitForTimeout(150);
 }
 
-async function centre(locator) {
-    const box = await locator.boundingBox();
-    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-}
-
-async function dragTo(page, from, to) {
-    const start = await centre(from);
-    await page.mouse.move(start.x, start.y);
-    await page.mouse.down();
-    await page.mouse.move(start.x + 10, start.y + 10, { steps: 4 });
-    await page.mouse.move(to.x, to.y, { steps: 10 });
-    await page.mouse.up();
-    await page.waitForTimeout(300);
-}
-
 for (const width of [1280, 375]) {
     test.describe(`rounding-and-significant-figures Try it ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
 
-        test('two hands-on slides: tap the digit, then tap or drag the number into place', async ({ page }) => {
+        test('two hands-on slides: tap the digit and the line, then the minibuses', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
@@ -150,82 +135,8 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
             await mainAction(page).click();
 
-            // Slide B, step 1: seven cards, no commas, and its own hint.
+            // Slide B: the minibuses. A wrong tap gives the hint; 9 is right.
             await expect(heading(page)).toHaveText(SLIDE_B);
-            await expect(page.locator('.rounding-tryit .significant-digit')).toHaveCount(7);
-            await expect(page.locator('.rounding-tryit .significant-comma')).toHaveCount(0);
-            await expect(page.getByText('Tap the millions digit.', { exact: true })).toBeVisible();
-            await expect(mainAction(page)).toHaveText('Next');
-            await expect(mainAction(page)).toBeDisabled();
-            await page.locator('.rounding-tryit .significant-digit').nth(1).click();
-            await expect(page.locator('.question-feedback:visible')).toHaveText('The millions digit is the seventh from the right.');
-            await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(0);
-            await page.locator('.rounding-tryit .significant-digit').nth(0).click();
-            await expect(page.locator('.rounding-tryit .significant-digit.is-keep > span').first()).toHaveText('2');
-            await expect(page.locator('.rounding-tryit .significant-digit.is-look > span').first()).toHaveText('6');
-
-            // Step 2: an empty line with three places and three shuffled cards.
-            await expect(page.getByText('Drag each number to its place on the line.', { exact: true })).toBeVisible();
-            await expect(page.locator('.tryit-slot')).toHaveCount(3);
-            await expect(page.locator('.tryit-slot.is-filled')).toHaveCount(0);
-            await expect(page.locator('.tryit-card')).toHaveCount(3);
-            const order = await page.locator('.tryit-card').evaluateAll(nodes => nodes.map(node => node.textContent.trim()));
-            expect(order.slice().sort()).toEqual(['2,000,000', '2,500,000', '3,000,000']);
-            await noSidewaysScroll(page);
-
-            // A card dropped on the wrong place slides back, saying nothing.
-            await dragTo(page, page.locator('.tryit-card').filter({ hasText: '2,000,000' }),
-                await centre(page.locator('.tryit-slot[data-slot="2"]')));
-            await expect(page.locator('.tryit-slot.is-filled')).toHaveCount(0);
-            await expect(page.locator('.tryit-card')).toHaveCount(3);
-            await expect(page.locator('.question-feedback:visible')).toHaveCount(0);
-
-            // Tapping a card and then its place works too.
-            await page.locator('.tryit-card').filter({ hasText: '2,000,000' }).click();
-            await expect(page.locator('.tryit-card.is-picked')).toHaveText('2,000,000');
-            await page.locator('.tryit-slot[data-slot="0"]').click();
-            await expect(page.locator('.tryit-slot[data-slot="0"]')).toHaveText('2,000,000');
-            await expect(page.locator('.tryit-card')).toHaveCount(2);
-
-            // The other two are dragged in.
-            await dragTo(page, page.locator('.tryit-card').filter({ hasText: '2,500,000' }),
-                await centre(page.locator('.tryit-slot[data-slot="1"]')));
-            await expect(page.locator('.tryit-slot.is-filled')).toHaveCount(2);
-            await dragTo(page, page.locator('.tryit-card').filter({ hasText: '3,000,000' }),
-                await centre(page.locator('.tryit-slot[data-slot="2"]')));
-            await expect(page.locator('.tryit-slot.is-filled')).toHaveCount(3);
-
-            // Step 3: the number itself appears under the line.
-            await expect(page.getByText('Drag 2,681,450 to where it goes on the line.', { exact: true })).toBeVisible();
-            await expect(page.locator('.tryit-card[data-value="2681450"]')).toHaveText('2,681,450');
-            await noSidewaysScroll(page);
-
-            // Dropped far from 2,681,450 it slides back.
-            await dragTo(page, page.locator('.tryit-card[data-value="2681450"]'), await pointOnLine(page, 2100000));
-            await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
-            await expect(mainAction(page)).toBeDisabled();
-            await reloadToSlide(page, SLIDE_B);
-            await expect(page.locator('.tryit-slot.is-filled')).toHaveCount(3);
-            await expect(page.locator('.tryit-card[data-value="2681450"]')).toHaveCount(1);
-
-            // Dropped where it goes it snaps onto the line, and the slide rounds.
-            await dragTo(page, page.locator('.tryit-card[data-value="2681450"]'), await pointOnLine(page, 2681450));
-            await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
-            await expect(page.getByText('The next digit is 6. That is 5 or more, so round up.', { exact: true })).toBeVisible();
-            await expect(page.getByText('So 2,681,450 is closer to 3,000,000.', { exact: true })).toBeVisible();
-            await expect(page.locator('.significant-equation:visible')).toHaveText('2,681,450 ≈ 3,000,000');
-            await expect(page.getByText('Drag 2,681,450 to where it goes on the line.', { exact: true })).toHaveCount(0);
-            await expect(mainAction(page)).toHaveText('Next');
-            await expect(mainAction(page)).toBeEnabled();
-            await noSidewaysScroll(page);
-
-            await reloadToSlide(page, SLIDE_B);
-            await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
-            await expect(mainAction(page)).toBeEnabled();
-            await mainAction(page).click();
-
-            // Slide C: the minibuses. A wrong tap gives the hint; 9 is right.
-            await expect(heading(page)).toHaveText('When you need enough of something, round up.');
             await expect(page.getByText('How many minibuses do you need?', { exact: true })).toBeVisible();
             await expect(mainAction(page)).toHaveText('Continue');
             await expect(mainAction(page)).toBeDisabled();
@@ -236,7 +147,7 @@ for (const width of [1280, 375]) {
             await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
             await expect(page.getByText('8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.', { exact: true })).toBeVisible();
             await noSidewaysScroll(page);
-            await reloadToSlide(page, 'When you need enough of something, round up.');
+            await reloadToSlide(page, SLIDE_B);
             await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
             await expect(mainAction(page)).toBeEnabled();
             await mainAction(page).click();
