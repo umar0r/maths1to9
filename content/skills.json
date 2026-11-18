@@ -19,6 +19,7 @@
     {"id":"order-of-operations","title":"Use the conventional order of operations","content_references":["N3"]},
     {"id":"inverse-operations","title":"Recognise and use inverse operations","content_references":["N3"]},
     {"id":"round-decimal-places","title":"Round to decimal places","content_references":["N15"],"recommended_prerequisites":["place-value"]},
+    {"id":"round-whole-numbers","title":"Round whole numbers","content_references":["N15"],"recommended_prerequisites":["place-value"]},
     {"id":"round-significant-figures","title":"Round to significant figures","content_references":["N15"],"recommended_prerequisites":["place-value"]},
     {"id":"round-in-context","title":"Choose suitable accuracy in context","content_references":["N15"]},
     {"id":"estimate-calculations","title":"Estimate calculations using rounded values","content_references":["N14"],"recommended_prerequisites":["round-significant-figures"]},

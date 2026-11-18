@@ -244,7 +244,7 @@ test('rounding-and-significant-figures: the method question puts the steps in th
 test('rounding-and-significant-figures: 200 seeds per type and input mode are deterministic and mapped to the three existing skills', () => {
     for (const type of Q.practiceTypes) {
         const context = ['path-context', 'round-up', 'round-down', 'full-groups'];
-        const skill = context.includes(type) ? 'round-in-context' : 'round-decimal-places';
+        const skill = context.includes(type) ? 'round-in-context' : 'round-whole-numbers';
         assert.equal(data.assessment.question_types[type], skill);
         const positions = new Set();
         for (const mode of ['choice', 'number']) for (let seed = 0; seed < 200; seed++) {
@@ -263,7 +263,7 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
         const qs = items.map(item => Q.generate(item, seededRandom(item.seed)));
         // Practice mixes multiple choice and typed answers.
         assert.ok(qs.some(q => q.input === 'choice') && qs.some(q => q.input === 'number'), `seed ${seed}`);
-        assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-in-context']));
+        assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-whole-numbers', 'round-in-context']));
     }
     // Try it is hands-on, so it has no answer cards at all. Check is multiple choice.
     assert.equal(Q.tryIt.slides.length, 2);
