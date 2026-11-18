@@ -92,12 +92,66 @@
         }
         return question;
     }
-    function contextStep(questionType, prompt, answer, feedback, rules = []) {
+    function contextStep(questionType, prompt, answer, feedback, rules = [], figure) {
         return {
             stage: 'context', questionType, input: 'number', exact: false,
             prompt, answer, feedback, fallback: feedback,
-            rules: rules.map(([value, message]) => ({ value, feedback: message }))
+            rules: rules.map(([value, message]) => ({ value, feedback: message })),
+            ...(figure ? { figure } : {})
         };
+    }
+
+    /* Practice pictures. Each one is a small inline SVG in the question card:
+       a footpath with a measuring arrow over it, and a pile of books beside one
+       open box. Nothing in either picture gives the answer away. */
+    /* The same card keeps the same picture function, so generating a question
+       twice gives the same card. */
+    const cardFigures = new Map();
+    function cardFigure(key, build) {
+        if (!cardFigures.has(key)) cardFigures.set(key, build());
+        return cardFigures.get(key);
+    }
+    function drawPathFigure(host, metres) {
+        const label = `${Number(metres).toLocaleString('en-GB')} m`;
+        // Small darker green tufts, kept off the path itself.
+        const tufts = [[58, 30], [132, 104], [204, 26], [318, 110], [402, 24], [468, 106], [552, 28], [614, 102]];
+        const path = 'M 16 92 C 118 64, 192 120, 300 92 S 468 60, 644 92';
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 660 150" role="img" aria-label="A path ${label} long">
+            <rect class="rounding-picture__grass" x="0" y="8" width="660" height="108" rx="14"/>
+            ${tufts.map(([cx, cy]) => `<circle class="rounding-picture__tuft" cx="${cx}" cy="${cy}" r="4"/>`).join('')}
+            <path class="rounding-picture__path-edge" d="${path}"/>
+            <path class="rounding-picture__path-paving" d="${path}"/>
+            <path class="rounding-picture__measure" d="M 16 30 H 644 M 16 22 V 38 M 644 22 V 38"/>
+            <path class="rounding-picture__measure" d="M 28 24 L 16 30 L 28 36 M 632 24 L 644 30 L 632 36"/>
+            <text class="rounding-picture__label rounding-picture__label--gap" x="330" y="30" text-anchor="middle" dominant-baseline="middle">${label}</text>
+        </svg>`;
+    }
+
+    function drawBooksFigure(host, total, size) {        const books = total.toLocaleString('en-GB');
+        const holds = `${size} books`;
+        // Seven books, flat and slightly offset, in soft colours with a darker edge.
+        const colours = [
+            ['#d9e7f7', '#7f9dc0'], ['#f7e0c8', '#c49b72'], ['#d9ecdc', '#82a88e'],
+            ['#f2d8e2', '#b98ba6'], ['#e6ddf6', '#9a8ac0'], ['#fae8b6', '#c2a257'],
+            ['#d7e8f0', '#85a6b7']
+        ];
+        const stack = colours.map(([fill, edge], index) => {
+            const x = 46 + (index % 2 === 0 ? -5 : 5);
+            const y = 125 - (index + 1) * 17;
+            return `<rect class="rounding-picture__book" x="${x}" y="${y}" width="128" height="15" rx="5" fill="${fill}" stroke="${edge}"/>`;
+        }).join('');
+        host.innerHTML = `<svg class="rounding-picture" viewBox="0 0 660 150" role="img" aria-label="A pile of ${books} books and one box that holds ${holds}">
+            ${stack}
+            <polygon class="rounding-picture__box" fill="#92400e" points="418,68 440,52 580,52 558,68"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="440,52 580,52 594,32 454,32"/>
+            <polygon class="rounding-picture__box" fill="#d6a565" points="418,68 440,52 416,42 394,58"/>
+            <polygon class="rounding-picture__box" fill="#e4b77e" points="558,68 580,52 604,44 582,60"/>
+            <rect class="rounding-picture__box" fill="#d6a565" x="418" y="68" width="140" height="54" rx="2"/>
+            <polygon class="rounding-picture__box" fill="#b8844a" points="558,68 580,52 580,106 558,122"/>
+            <rect class="rounding-picture__tape" x="482" y="74" width="12" height="34"/>
+            <text class="rounding-picture__label" x="105" y="144" text-anchor="middle">${books} books</text>
+            <text class="rounding-picture__label" x="500" y="144" text-anchor="middle">Holds ${holds}</text>
+        </svg>`;
     }
 
     // Try it: hands-on slides. On the first the pupil taps the hundreds digit;
@@ -242,7 +296,7 @@
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
     }
-    function practiceContext(item, prompt, answer, feedback, mistakes, random) {
+    function practiceContext(item, prompt, answer, feedback, mistakes, random, figure) {
         const seen = new Set([answer]);
         const rules = mistakes.filter(([value]) => {
             if (seen.has(value)) return false;
@@ -253,11 +307,12 @@
             return prepare({
                 questionType: item.type, input: 'choice', prompt,
                 options: [option(spaced(answer), feedback, true),
-                    ...rules.slice(0, 3).map(([value, message]) => option(spaced(value), message))]
+                    ...rules.slice(0, 3).map(([value, message]) => option(spaced(value), message))],
+                ...(figure ? { figure } : {})
             }, random);
         }
         return contextStep(item.type, prompt, String(answer), feedback,
-            rules.map(([value, message]) => [String(value), message]));
+            rules.map(([value, message]) => [String(value), message]), figure);
     }
 
 
@@ -301,7 +356,7 @@
                     [roundedQuotient, `You can't have part of a ${unit}. Give a whole number.`],
                     // Used when rounding to the nearest gives the same wrong answer as one too few.
                     [total % size, `That is how many ${contents} are left over, not the number of ${units}.`]
-                ], random);
+                ], random, books ? cardFigure(`books:${total}:${size}`, () => host => drawBooksFigure(host, total, size)) : undefined);
         }
 
         return practiceContext(item,
@@ -346,9 +401,13 @@
             break;
         default: throw new Error(`Unknown rounding type: ${item.type}`);
         }
-        const question = roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt);
+        // The path question gets the footpath picture, for both its answers.
+        const pictured = question => item.type === 'path-context'
+            ? { ...question, figure: cardFigure(`path:${number}`, () => host => drawPathFigure(host, number)) }
+            : question;
+        const question = pictured(roundingQuestion(number, kind, accuracy, item.mode || 'number', item.type, customPrompt));
         if (question.input === 'choice' && question.options.length < 4) {
-            return roundingQuestion(number, kind, accuracy, 'number', item.type, customPrompt);
+            return pictured(roundingQuestion(number, kind, accuracy, 'number', item.type, customPrompt));
         }
         return prepare(question, random);
     }
