@@ -18,7 +18,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 10,
+            version: 11,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
             upgrade: () => null
         });
@@ -130,7 +130,7 @@
         const engine = window.Maths1to9LessonEngine;
         const slides = window.Rounding.tryIt.slides;
         // Each slide keeps its own work. Reset (↺) starts that slide again.
-        const blankSlide = () => ({ tapped: false, slots: [null, null, null], dot: false });
+        const blankSlide = () => ({ tapped: false, dot: false });
         let ready = false;
         let requested = /^#try-it-(\d+)$/.exec(initialHash);
         // Registered before the saved work has loaded, so a #try-it-N link (a
@@ -145,13 +145,12 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 10,
+            version: 11,
             initial: () => ({
                 // The intro screen is the number line slider shown before the slides.
                 lineValue: 67, explored: false,
                 screen: 0, furthestScreen: 0, finished: false,
-                slides: slides.map(blankSlide),
-                seed: engine.randomInt(0, 4294967295)
+                slides: slides.map(blankSlide)
             }),
             upgrade: () => null
         });
@@ -161,8 +160,7 @@
         function isComplete(index) {
             const saved = state.slides[index];
             if (slides[index].context) return saved.dot;
-            if (!saved.tapped || !saved.dot) return false;
-            return !slides[index].labels || saved.slots.every(placed => placed !== null);
+            return saved.tapped && saved.dot;
         }
 
         function syncHash() {
@@ -236,7 +234,7 @@
             root.append(heading);
 
             api.setSectionBack('interactive', { onClick: () => showScreen(state.screen - 1) });
-            const started = saved.tapped || saved.dot || saved.slots.some(placed => placed !== null);
+            const started = saved.tapped || saved.dot;
             api.setSectionReset('interactive', started ? () => {
                 section.update(now => { now.slides[index] = blankSlide(); });
                 render();
@@ -245,10 +243,6 @@
             // The engine's feedback box, used for the wrong-digit hint only.
             const feedback = engine.createFeedback('interactive', { correct: false, text: '', visible: false });
             window.Rounding.drawSlide(root, slide, saved, {
-                // A fixed, saved seed keeps the shuffled cards in the same order on every reload.
-                order: Array.isArray(slide.labels)
-                    ? engine.shuffle(slide.labels.map(label => Number(label.replace(/,/g, ''))), engine.seededRandom(state.seed + index))
-                    : [],
                 onDigit(correct) {
                     if (correct) {
                         section.update(now => { now.slides[index].tapped = true; });
@@ -264,14 +258,6 @@
                 onTap(number) {
                     // Only a tap within reach of the number counts. Any other tap does nothing at all.
                     if (Math.abs(number - slide.line.value) > slide.line.tolerance) return;
-                    section.update(now => { now.slides[index].dot = true; });
-                    render();
-                },
-                onLabel(number, slot) {
-                    section.update(now => { now.slides[index].slots[slot] = number; });
-                    render();
-                },
-                onNumber() {
                     section.update(now => { now.slides[index].dot = true; });
                     render();
                 },

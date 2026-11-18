@@ -28,7 +28,7 @@ const planned = [
     ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 150);
+assert.equal(tracker.getScore().maximumPoints, 145);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);
@@ -38,14 +38,14 @@ tracker.record({ id: 'rounding-line:explored', kind: 'explore', completed: true 
 assert.equal(tracker.getScore().points, 10);
 tracker.record({ id: 'rounding-line:explored', kind: 'explore', completed: true });
 assert.equal(tracker.getScore().points, 10, 'Repeated slider input earns no more points');
-// Try it is three hands-on slides, so there are three guided steps.
-for (let i = 0; i < 3; i++) tracker.record({ id: `step:interactive:${i}`, kind: 'guided', completed: true });
-assert.equal(tracker.getScore().points, 25);
+// Try it is two hands-on slides, so there are two guided steps.
+for (let i = 0; i < 2; i++) tracker.record({ id: `step:interactive:${i}`, kind: 'guided', completed: true });
+assert.equal(tracker.getScore().points, 20);
 tracker.record({ id: 'answer:question-bank:1', kind: 'answer', completed: true, firstCorrect: true, correct: true });
-assert.equal(tracker.getScore().points, 35);
+assert.equal(tracker.getScore().points, 30);
 tracker.record({ id: 'answer:question-bank:1', kind: 'answer', completed: true, firstCorrect: true, correct: true });
-assert.equal(tracker.getScore().points, 35);
-assert.equal(engine.createScoreTracker(tracker.export()).getScore().points, 35, 'Restoring keeps points');
+assert.equal(tracker.getScore().points, 30);
+assert.equal(engine.createScoreTracker(tracker.export()).getScore().points, 30, 'Restoring keeps points');
 const storage = new Map();
 const localStorage = { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k), key: i => [...storage.keys()][i], get length() { return storage.size; } };
 const sandbox = vm.createContext({ window: { localStorage, crypto: { randomUUID: () => 'test-id' } }, document: { addEventListener() {}, dispatchEvent() {} }, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail; } }, console });
