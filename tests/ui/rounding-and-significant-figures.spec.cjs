@@ -77,8 +77,9 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .significant-digit.is-keep > span').first()).toHaveText('4');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look')).toContainText('Look');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look > span').first()).toHaveText('8');
-            // One thing per slide: the next slide is named, and there is no line yet.
-            await expect(page.getByText("Next, let's put 53,481 on a number line.", { exact: true })).toBeVisible();
+            // One thing per slide: two notes explain Keep and Look, and there is no line yet.
+            await expect(page.getByText('Keep: the 4 is the hundreds digit. It stays 4 or goes up to 5.', { exact: true })).toBeVisible();
+            await expect(page.getByText('Look: the 8 next to it decides. 8 is 5 or more, so the 4 goes up to 5.', { exact: true })).toBeVisible();
             await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
             await reloadToSlide(page, SLIDE_A);
