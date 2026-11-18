@@ -345,6 +345,13 @@
             { label: 'To the nearest 10', from: '38', to: '40' },
             { label: 'To the nearest 100', from: '461', to: '500' }
         ] },
+        { title: 'We round to make numbers easier to use.', lines: [
+            'A rounded number is easier to say and remember. A news report might say about 53,500 fans, not 53,481.',
+            'Rounding also helps you estimate. Round each number first, and the sum is easy to do in your head. It is a quick way to check a calculator answer.'
+        ], roundings: [
+            { label: 'Easier to say', from: '53,481', to: '53,500' },
+            { label: 'Easier to estimate', from: '48 × 21', to: '50 × 20 = 1,000' }
+        ] },
         { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
             nearest: 'So 67 is closer to 70.'
