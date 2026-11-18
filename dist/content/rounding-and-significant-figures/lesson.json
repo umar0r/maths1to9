@@ -125,10 +125,6 @@
             "kind": "guided"
         },
         {
-            "id": "step:interactive:2",
-            "kind": "guided"
-        },
-        {
             "id": "rounding-line:explored",
             "kind": "explore"
         }
