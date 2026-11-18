@@ -50,14 +50,14 @@ for (const width of [1280, 375]) {
         const errors = watchForErrors(page);
         // Any Learn screen opens from its address, and Next moves on freely.
         await page.goto('content/negative-numbers/#learn-4', { waitUntil: 'networkidle' });
-        await expect(page.locator('.lesson-section__title:visible')).toHaveText('When you add a positive number, you move right along the number line.');
+        await expect(page.locator('[data-screen-heading]:visible')).toHaveText('When you add a positive number, you move right along the number line.');
         await expect(main(page)).toBeEnabled();
         await page.goto('content/negative-numbers/#learn-1', { waitUntil: 'networkidle' });
         await page.reload({ waitUntil: 'networkidle' });
         await expect(page).toHaveURL(/#learn-1$/);
         await expect(main(page)).toHaveText('Next');
         await expect(main(page)).toBeEnabled();
-        await expect(page.locator('.lesson-section__title:visible')).toHaveText('Negative numbers are numbers below zero.');
+        await expect(page.locator('[data-screen-heading]:visible')).toHaveText('Negative numbers are numbers below zero.');
         await expect(page.locator('.lesson-eyebrow:visible')).toHaveCount(0);
         // Screen 1: drag the thermometer's level, then use the arrow keys.
         const caption = root(page).locator('.nn-caption');
