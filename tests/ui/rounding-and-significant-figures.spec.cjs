@@ -88,7 +88,7 @@ for (const width of [1280, 375]) {
 
             // The line slide: the wrong half gives a hint and no dot.
             await expect(heading(page)).toHaveText(SLIDE_LINE);
-            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toBeVisible();
+            await expect(page.getByText('Tap which half of the line 53,481 goes on?', { exact: true })).toBeVisible();
             await expect(mainAction(page)).toBeDisabled();
             await page.locator('.rounding-tryit .rounding-half-button[data-half="lower"]').click();
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
@@ -108,7 +108,7 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
             // The instruction goes once there is nothing left to do, so no
             // arrow has a line of words to cross at phone width.
-            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toHaveCount(0);
+            await expect(page.getByText('Tap which half of the line 53,481 goes on?', { exact: true })).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);
             const afterLine = await score(page);

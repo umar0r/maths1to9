@@ -121,7 +121,7 @@
             },
             {
                 title: "Let's put 53,481 on a number line.",
-                place: 'Which half of the line does 53,481 go in? Tap that half.',
+                place: 'Tap which half of the line 53,481 goes on?',
                 placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
                 line: { base: 53400, step: 10, value: 53481 },
                 notes: {
