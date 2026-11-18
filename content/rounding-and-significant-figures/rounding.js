@@ -112,6 +112,11 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
+                after: "Next, let's put 53,481 on a number line.",
+                button: 'Next'
+            },
+            {
+                title: "Let's put 53,481 on a number line.",
                 place: 'Which half of the line does 53,481 go in? Tap that half.',
                 placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
                 line: { base: 53400, step: 10, value: 53481 },
@@ -133,31 +138,31 @@
             answered ? null : index => onPick(index === digits.target), { commas: false });
     }
 
-    /* A number slide: tap the digit, tap the half of the line the number goes in,
-       then it rounds by itself. */
-    function drawSlideOne(host, slide, saved, handlers) {
-        const { base, step, value } = slide.line;
+    /* The digit slide: tap the hundreds digit. Then the cards show which digit
+       to keep and which to look at, and the next slide is named. */
+    function drawDigitSlide(host, slide, saved, handlers) {
         text(host, 'p', slide.tap);
         const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
-        const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
-        if (!saved.tapped) return;
-        const place = text(block, 'p', slide.place);
-        const line = drawLine(block, value, false, null, false, base, null, step, {
-            wideLabels: true, labels: 'landmarks', showNearest: false,
-            showDot: saved.dot, halves: true, onHalf: saved.dot ? null : upper => handlers.onHalf(upper === (value >= base + 5 * step))
+        drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
+        if (saved.tapped) text(host, 'p', slide.after);
+    }
+
+    /* The line slide: tap the half of the line the number goes in. Then the dot
+       goes on the line, and two notes say why it rounds the way it does. */
+    function drawLineSlide(host, slide, saved, handlers) {
+        const { base, step, value } = slide.line;
+        const block = text(host, 'div', '', 'rounding-tryit');
+        if (!saved.dot) {
+            text(block, 'p', slide.place);
+            drawLine(block, value, false, null, false, base, null, step, {
+                wideLabels: true, labels: 'landmarks', showNearest: false, showDot: false,
+                halves: true, onHalf: upper => handlers.onHalf(upper === (value >= base + 5 * step))
+            });
+            return;
+        }
+        drawLine(block, value, false, null, false, base, slide.notes, step, {
+            wideLabels: true, labels: 'landmarks', showNearest: false, halves: true
         });
-        if (!saved.dot) return;
-        // Nothing is left to do, so the instruction goes: the notes take over,
-        // and no arrow then runs through a line of words at phone width.
-        place.remove();
-        // Two short notes, each with an arrow to the exact thing it is about:
-        // the 8 card, and the round number the answer lands on.
-        const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
-        const nearestNote = text(block, 'p', slide.notes.nearest, 'rounding-note rounding-note--nearest');
-        drawArrows(block, [
-            [digitNote, () => row.querySelector('.significant-digit.is-look')],
-            [nearestNote, () => line.querySelector(`.rounding-value[data-value="${base + 10 * step}"]`)]
-        ]);
         text(host, 'p', slide.answer, 'significant-equation');
     }
 
@@ -171,7 +176,8 @@
 
     function drawSlide(host, slide, saved, handlers) {
         if (slide.context) return drawContextSlide(host, slide, saved.dot, handlers.onContext);
-        return drawSlideOne(host, slide, saved, handlers);
+        if (slide.digits) return drawDigitSlide(host, slide, saved, handlers);
+        return drawLineSlide(host, slide, saved, handlers);
     }
 
     function checks() {
@@ -352,7 +358,7 @@
             look: "Now look at the digit just to its right. It's a 7."
         } }
     ];
-    // The minibus slide was a Learn screen; it is now Try it's second slide.
+    // The minibus slide was a Learn screen; it is now Try it's third slide.
     tryIt.slides.push({
         ...{
             title: 'When you need enough of something, round up.',

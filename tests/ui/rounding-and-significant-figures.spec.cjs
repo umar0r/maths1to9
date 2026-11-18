@@ -10,6 +10,7 @@ const heading = page => page.locator('[data-screen-heading]:visible');
 const prompt = page => page.locator('.question-prompt:visible');
 
 const SLIDE_A = 'Round 53,481 to the nearest 100.';
+const SLIDE_LINE = "Let's put 53,481 on a number line.";
 const SLIDE_B = 'When you need enough of something, round up.';
 
 async function reload(page) {
@@ -45,7 +46,7 @@ for (const width of [1280, 375]) {
     test.describe(`rounding-and-significant-figures Try it ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
 
-        test('two hands-on slides: tap the digit and the line, then the minibuses', async ({ page }) => {
+        test('three hands-on slides: tap the digit, then the half of the line, then the minibuses', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
@@ -76,19 +77,24 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .significant-digit.is-keep > span').first()).toHaveText('4');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look')).toContainText('Look');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look > span').first()).toHaveText('8');
-            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toBeVisible();
+            // One thing per slide: the next slide is named, and there is no line yet.
+            await expect(page.getByText("Next, let's put 53,481 on a number line.", { exact: true })).toBeVisible();
+            await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(0);
+            await expect(mainAction(page)).toBeEnabled();
+            await reloadToSlide(page, SLIDE_A);
+            await expect(page.locator('.rounding-tryit .significant-digit.is-keep')).toHaveCount(1);
+            await mainAction(page).click();
 
-            // Step 2: the wrong half gives a hint and no dot.
+            // The line slide: the wrong half gives a hint and no dot.
+            await expect(heading(page)).toHaveText(SLIDE_LINE);
+            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toBeVisible();
+            await expect(mainAction(page)).toBeDisabled();
             await page.locator('.rounding-tryit .rounding-half-button[data-half="lower"]').click();
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
             await expect(page.getByText('The halfway point is 53,450. 53,481 is more than that.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
             await expect(mainAction(page)).toBeDisabled();
-
-            // Reload keeps the step exactly as it was left.
-            await reloadToSlide(page, SLIDE_A);
-            await expect(page.locator('.rounding-tryit .significant-digit.is-keep')).toHaveCount(1);
-            await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(1);
+            await reloadToSlide(page, SLIDE_LINE);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
 
             // The right half puts the dot on the line, and it rounds.
@@ -99,21 +105,21 @@ for (const width of [1280, 375]) {
             await expect(page.getByText('The next digit is 8. That is 5 or more, so round up.', { exact: true })).toBeVisible();
             await expect(page.getByText('So 53,481 is closer to 53,500.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
-            // The step's instruction goes once there is nothing left to do, so no
+            // The instruction goes once there is nothing left to do, so no
             // arrow has a line of words to cross at phone width.
             await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);
-            const afterSlideA = await score(page);
-            await reloadToSlide(page, SLIDE_A);
+            const afterLine = await score(page);
+            await reloadToSlide(page, SLIDE_LINE);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
-            expect(await score(page)).toBe(afterSlideA);
+            expect(await score(page)).toBe(afterLine);
 
             // Back then forward keeps the finished slide.
             await mainAction(page).click();
             await expect(heading(page)).toHaveText(SLIDE_B);
             await back(page).click();
-            await expect(heading(page)).toHaveText(SLIDE_A);
+            await expect(heading(page)).toHaveText(SLIDE_LINE);
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
             await mainAction(page).click();
 

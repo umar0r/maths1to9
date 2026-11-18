@@ -29,7 +29,7 @@ async function solveTryIt(page) {
         const heading = [...document.querySelectorAll('[data-screen-heading]')]
             .find(node => node.getClientRects().length)?.textContent.trim() ?? '';
         const data = window.Rounding.tryIt.slides.find(item => item.title === heading);
-        const digits = data ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy) : null;
+        const digits = data?.digits ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy) : null;
         const line = slide.querySelector('.rounding-line');
         return {
             keep: digits ? digits.target : null,
