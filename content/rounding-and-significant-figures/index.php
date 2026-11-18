@@ -65,7 +65,7 @@ $pageTitle = 'Rounding whole numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./rounding.js?v=72"></script>
+    <script src="./rounding.js?v=73"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=18"></script>

@@ -292,32 +292,41 @@
                     // given in screen pixels and turned into those units.
                     const narrow = narrowPicture();
                     const scale = (host.clientWidth || 660) / 660;
-                    // Each end is an outlined box round its number: about 64 x 52
-                    // on a computer, and at least 44 x 44 on a phone.
-                    const boxWidth = (narrow ? 46 : 64) / scale;
-                    const boxHeight = (narrow ? 46 : 52) / scale;
-                    const labelSize = (narrow ? 15 : 18) / scale;
+                    // Sizes are given in screen pixels and turned into the line's
+                    // drawing units: each end is about 64 x 52 on a computer and
+                    // at least 44 x 44 on a phone.
+                    const px = size => size / scale;
+                    const boxWidth = px(narrow ? 46 : 64);
+                    const boxHeight = px(narrow ? 46 : 52);
+                    const labelSize = px(narrow ? 15 : 18);
                     // Keep each end fully inside the card, with its own margin.
-                    const endMargin = (narrow ? 26 : 10) / scale + boxWidth / 2;
+                    const endMargin = px(narrow ? 26 : 10) + boxWidth / 2;
                     const line = drawLine(host, value, false, null, !editable, base, null, step, {
                         onPick: pick, wideLabels: true, showNearest: false,
-                        valueLabel: format(value), numberAbove: true, edgeMargin: endMargin
+                        valueLabel: format(value), numberAbove: true, edgeMargin: endMargin, axisToEnds: true
                     });
                     line.classList.add('rounding-line--pick');
                     // The number above the dot reads at least 14 px on a phone too.
                     const above = line.querySelector('.rounding-value--above');
                     if (above) above.style.fontSize = `${labelSize.toFixed(1)}px`;
+                    // Each box hangs under its own tick, round the end number, so
+                    // the line and both end ticks stay in view. The picture is made
+                    // taller so the boxes are not cut off.
+                    const svg = line.querySelector('svg');
+                    const dot = line.querySelector('.rounding-dot');
+                    const axis = dot ? Number(dot.getAttribute('cy')) : 0;
+                    const boxTop = axis + px(14);
                     for (const end of line.querySelectorAll('.rounding-end')) {
                         const rect = end.querySelector('rect');
                         const label = end.querySelector('.rounding-value');
                         const centre = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2;
-                        const baseline = Number(label.getAttribute('y'));
                         rect.setAttribute('x', String(centre - boxWidth / 2));
-                        rect.setAttribute('y', String(baseline + 4 / scale - boxHeight));
+                        rect.setAttribute('y', String(boxTop));
                         rect.setAttribute('width', String(boxWidth));
                         rect.setAttribute('height', String(boxHeight));
-                        rect.setAttribute('rx', String(10 / scale));
+                        rect.setAttribute('rx', String(px(10)));
                         label.style.fontSize = `${labelSize.toFixed(1)}px`;
+                        label.setAttribute('y', String(boxTop + boxHeight / 2 + labelSize * 0.35));
                         if (Number(end.dataset.end) === chosen) end.classList.add('is-selected');
                         if (editable) continue;
                         // Once it is marked the ends still show the choice, but
@@ -326,6 +335,9 @@
                         end.removeAttribute('role');
                         line.classList.add('is-fixed');
                     }
+                    const [,, width, height] = svg.getAttribute('viewBox').split(' ').map(Number);
+                    const bottom = boxTop + boxHeight + px(8);
+                    if (bottom > height) svg.setAttribute('viewBox', `0 0 ${width} ${Math.round(bottom)}`);
                 }
                 function pick(number) {
                     if (!editable) return;
@@ -636,7 +648,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true, edgeMargin = null, numberAbove = false } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true, edgeMargin = null, numberAbove = false, axisToEnds = false } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -683,7 +695,11 @@
             picture += box(x(base) - 18, middle - 3, 'lower', `The half from ${format(base)} to ${format(tick(5))}`);
             picture += box(middle + 3, x(top) + 18, 'upper', `The half from ${format(tick(5))} to ${format(top)}`);
         }
-        picture += `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+        // axisToEnds is only for the Practice line-pick: its line starts at the
+        // first end tick and stops at the last, so it never runs on past the ends.
+        const axisFrom = axisToEnds ? x(base) : 15;
+        const axisTo = axisToEnds ? x(top) : 645;
+        picture += `<path class="rounding-axis" d="M ${axisFrom} ${axis} H ${axisTo}"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
             const number = tick(mark);
@@ -693,6 +709,9 @@
             const end = number === base || number === top;
             const label = `<text class="rounding-value${landmark ? ' is-landmark' : ''}${wideLabels && !landmark ? ' rounding-value--minor' : ''}" data-value="${number}" x="${x(number)}" y="${y}">${marked(number)}</text>`;
             picture += `<path class="rounding-tick${landmark ? ' is-landmark' : ''}" d="M ${x(number)} ${axis - reach} V ${axis + reach}"/>`;
+            // The Practice line-pick names the number above its dot, so it is not
+            // repeated in the row of numbers under the line.
+            if (numberAbove && number === value) continue;
             if (!landmark && labels !== 'all') continue;
             picture += onPick && end
                 ? `<g role="button" tabindex="0" aria-label="${format(number)}" class="rounding-end" data-end="${number}">
