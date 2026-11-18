@@ -310,7 +310,28 @@ async function readScreen(page) {
             ends: [...document.querySelectorAll('.rounding-end')].filter(visible).length,
             road: Boolean([...document.querySelectorAll('.rounding-road svg')].find(element => visible(element) && element.getAttribute('aria-disabled') === 'false')),
             options: [...document.querySelectorAll('.question-card-options button')].filter(visible).length,
-            input: Boolean([...document.querySelectorAll('.question-card input[type=text]')].find(visible))
+            input: Boolean([...document.querySelectorAll('.question-card input[type=text]')].find(visible)),
+            // Try it's hands-on slides: the digit it asks for, its line and its cards.
+            slide: (() => {
+                const block = [...document.querySelectorAll('.rounding-tryit')].find(visible);
+                if (!block) return null;
+                const data = window.Rounding?.tryIt?.slides.find(item => item.title === text(heading));
+                const line = block.querySelector('.rounding-line');
+                return {
+                    keep: data ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy).target : null,
+                    labels: data?.labels ?? null,
+                    buttons: block.querySelectorAll('.significant-digits[role=group] button').length,
+                    line: line ? {
+                        base: Number(line.dataset.base), step: Number(line.dataset.step),
+                        edge: Number(line.dataset.edge), value: Number(line.dataset.tapValue)
+                    } : null,
+                    dot: Boolean(block.querySelector('.rounding-dot')),
+                    slots: [...block.querySelectorAll('.tryit-slot')].map(slot => ({
+                        index: Number(slot.dataset.slot), filled: slot.classList.contains('is-filled')
+                    })),
+                    cards: [...block.querySelectorAll('.tryit-card')].map(card => Number(card.dataset.value))
+                };
+            })()
         };
     });
 }
@@ -404,6 +425,87 @@ async function moveSlider(page) {
     await slider.focus();
     await slider.press('End');
     return slider.inputValue();
+}
+
+/* Try it's two hands-on slides: tap the digit, then tap or drag the number
+   into place. Each step gets its own "before" and "after" picture. */
+const slideDone = slide => Boolean(slide.dot) && (!slide.labels || slide.slots.every(slot => slot.filled));
+
+function slideStepName(slide) {
+    if (slide.buttons) return 'tap the digit';
+    if (!slide.line) return 'nothing to do';
+    if (!slide.labels && !slide.dot) return 'tap the line';
+    if (slide.labels && slide.slots.some(slot => !slot.filled)) return 'drag the labels';
+    if (!slide.dot) return 'drag the number';
+    return 'nothing to do';
+}
+
+// Where a value sits across a 660-wide line, as a fraction of its width.
+const acrossLine = (line, value) =>
+    (line.edge + (value - line.base) / (10 * line.step) * (660 - 2 * line.edge)) / 660;
+
+// A real mouse drag, the same pointer events a finger uses.
+async function dragCardTo(page, from, to) {
+    const box = await from.boundingBox();
+    const startX = box.x + box.width / 2, startY = box.y + box.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 12, startY + 12, { steps: 4 });
+    await page.mouse.move(to.x, to.y, { steps: 10 });
+    await page.mouse.up();
+    await settle(page, 300);
+}
+
+// Do the next thing the slide asks for. Returns what was done, or null.
+async function slideAction(page, slide) {
+    if (slide.buttons) {
+        await page.locator('.rounding-tryit .significant-digits[role=group] button').nth(slide.keep).click();
+        await settle(page, 250);
+        return 'tapped the digit';
+    }
+    if (!slide.line) return null;
+    if (!slide.labels && !slide.dot) {
+        const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
+        await page.mouse.click(box.x + acrossLine(slide.line, slide.line.value) * box.width, box.y + box.height / 2);
+        await settle(page, 300);
+        return 'tapped the line';
+    }
+    const empty = slide.slots.find(slot => !slot.filled);
+    if (slide.labels && empty) {
+        const value = Number(slide.labels[empty.index].replace(/,/g, ''));
+        const target = await page.locator(`.rounding-tryit .tryit-slot[data-slot="${empty.index}"]`).boundingBox();
+        await dragCardTo(page, page.locator(`.rounding-tryit .tryit-card[data-value="${value}"]`),
+            { x: target.x + target.width / 2, y: target.y + target.height / 2 });
+        return `dragged ${slide.labels[empty.index]} into place`;
+    }
+    if (!slide.dot && slide.cards.includes(slide.line.value)) {
+        const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
+        await dragCardTo(page, page.locator(`.rounding-tryit .tryit-card[data-value="${slide.line.value}"]`),
+            { x: box.x + acrossLine(slide.line, slide.line.value) * box.width, y: box.y + box.height / 2 });
+        return 'dragged the number onto the line';
+    }
+    return null;
+}
+
+// One step of a hands-on slide: the "before" picture, the tap or drag, then
+// the "after" picture.
+async function captureSlideStep(page, width, index, section, number, info, step) {
+    const name = side => `${width}/${String(index).padStart(2, '0')}-${section}-${number}-${step.replace(/\s+/g, '-')}-${side}.png`;
+    const record = {
+        section, label: LABELS[section], number, step,
+        heading: info.heading, prompt: info.prompt,
+        before: name('before'), after: null, answered: false, skipped: null, given: null
+    };
+    if (!fast) await page.screenshot({ path: path.join(out, record.before), fullPage: true });
+    record.given = await slideAction(page, info.slide);
+    if (!record.given) {
+        record.skipped = 'the slide did not offer another step';
+        return record;
+    }
+    record.answered = true;
+    record.after = name('after');
+    if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
+    return record;
 }
 
 // Try it: drive the car to the nearer sign with a real mouse drag.
@@ -575,6 +677,25 @@ async function walk(page, width, records) {
             Object.assign(memory, newMemory());
         }
 
+        // Try it's hands-on slides have several steps on one screen: picture
+        // each step before and after the tap or drag.
+        if (info.slide) {
+            for (let sub = 0; sub < 6; sub++) {
+                const before = await readScreen(page);
+                if (!before.slide || slideDone(before.slide)) break;
+                const record = await captureSlideStep(page, width, records.length + 1, section, number,
+                    before, `${slideStepName(before.slide)} ${sub + 1}`);
+                records.push(record);
+                if (!record.answered) break;
+            }
+            const left = await readScreen(page);
+            if (!await advance(page, left)) {
+                console.log(`${width}: could not move on from ${left.heading}`);
+                break;
+            }
+            continue;
+        }
+
         const record = await captureScreen(page, width, records.length + 1, section, number, info, memory);
         records.push(record);
         if (!await advance(page, info)) {
@@ -592,10 +713,11 @@ function buildSlides(records) {
     const screens = [];
     const byKey = new Map();
     for (const record of records) {
-        const key = `${record.section}:${record.number}`;
+        // Each step of a hands-on slide is its own screen of pictures.
+        const key = `${record.section}:${record.number}${record.step ? `:${record.step}` : ''}`;
         if (!byKey.has(key)) {
             const screen = {
-                section: record.section, label: record.label, number: record.number,
+                section: record.section, label: record.label, number: record.number, step: record.step ?? null,
                 heading: record.heading, prompt: record.prompt,
                 answered: record.answered, skipped: record.skipped, shots: {}
             };
