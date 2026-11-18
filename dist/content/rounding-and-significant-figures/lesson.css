@@ -288,6 +288,24 @@ button.significant-digit {
     stroke-width: 3px;
 }
 
+/* Practice line-pick: the end the pupil has tapped is highlighted like a
+   chosen option, and tapping the other end moves the highlight. */
+.rounding-end.is-selected rect {
+    fill: var(--primary-light);
+    stroke: var(--primary);
+    stroke-width: 2px;
+}
+
+.rounding-end.is-selected text {
+    fill: var(--primary-dark);
+    font-weight: 900;
+}
+
+/* After Check the line still shows the choice, but it cannot be tapped. */
+.rounding-line.is-fixed .rounding-end {
+    cursor: default;
+}
+
 @media (max-width: 600px) {
     .rounding-line .rounding-value--minor {
         display: none;
@@ -439,8 +457,16 @@ button.significant-digit {
 }
 
 @media (max-width: 600px) {
-    /* The picture is half its drawn size at 375 px, so its labels are bigger. */
+    /* Reach across the card's 20 px padding, as the number lines do, so the
+       picture fills the card and stays big. */
+    .rounding-picture {
+        width: calc(100% + 40px);
+        margin-inline: -20px;
+    }
+
+    /* On a phone the picture is drawn for a 360-wide box (see
+       narrowPicture in rounding.js), so its labels stay readable. */
     .rounding-picture__label {
-        font-size: 26px;
+        font-size: 16px;
     }
 }
