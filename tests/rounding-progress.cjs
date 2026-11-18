@@ -28,7 +28,7 @@ const planned = [
     ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 145);
+assert.equal(tracker.getScore().maximumPoints, 150);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);
@@ -58,12 +58,12 @@ vm.runInContext(fs.readFileSync(path.join(root, 'assets/js/progress.js'), 'utf8'
     assert.equal((await api.getLessonProgress(lesson.slug)).activityStates.learn.data.lineValue, 67, 'Saved snapshot is isolated');
     await api.saveLessonProgress(lesson.slug, await api.getLessonProgress(lesson.slug));
     assert.equal((await api.getScoreSummary()).points, 95, 'Repeated save adds no points');
-    await api.saveLessonProgress(lesson.slug, { score: { points: 145 }, finished: true });
+    await api.saveLessonProgress(lesson.slug, { score: { points: 150 }, finished: true });
     assert.equal((await api.getScoreSummary()).completedLessons, 1);
-    assert.equal((await api.getScoreSummary()).points, 145);
+    assert.equal((await api.getScoreSummary()).points, 150);
     api.setUserId('second-pupil');
     assert.equal((await api.getScoreSummary()).points, 0);
     api.setUserId('anon-test-id');
-    assert.equal((await api.getScoreSummary()).points, 145);
+    assert.equal((await api.getScoreSummary()).points, 150);
     console.log('Rounding: exact form, snapshots, score deduplication, shared activities and user isolation passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
