@@ -132,6 +132,9 @@ for (const width of [1280, 375]) {
             await expect(page.getByText('The next digit is 8. That is 5 or more, so round up.', { exact: true })).toBeVisible();
             await expect(page.getByText('So 53,481 is closer to 53,500.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
+            // The step's instruction goes once there is nothing left to do, so no
+            // arrow has a line of words to cross at phone width.
+            await expect(page.getByText('Tap where 53,481 goes on the line.', { exact: true })).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);
             const afterSlideA = await score(page);
@@ -211,6 +214,7 @@ for (const width of [1280, 375]) {
             await expect(page.getByText('The next digit is 6. That is 5 or more, so round up.', { exact: true })).toBeVisible();
             await expect(page.getByText('So 2,681,450 is closer to 3,000,000.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveText('2,681,450 ≈ 3,000,000');
+            await expect(page.getByText('Drag 2,681,450 to where it goes on the line.', { exact: true })).toHaveCount(0);
             await expect(mainAction(page)).toHaveText('Continue');
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);

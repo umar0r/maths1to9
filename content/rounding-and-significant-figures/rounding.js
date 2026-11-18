@@ -212,7 +212,7 @@
         const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
         const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
         if (!saved.tapped) return;
-        text(block, 'p', slide.place);
+        const place = text(block, 'p', slide.place);
         const line = drawLine(block, value, false, null, false, base, null, step, {
             wideLabels: true, labels: 'landmarks', showNearest: false,
             showDot: saved.dot, onTap: saved.dot ? null : number => handlers.onTap(number)
@@ -222,6 +222,9 @@
         line.dataset.edge = 50;
         line.dataset.tapValue = value;
         if (!saved.dot) return;
+        // Nothing is left to do, so the instruction goes: the notes take over,
+        // and no arrow then runs through a line of words at phone width.
+        place.remove();
         // Two short notes, each with an arrow to the exact thing it is about:
         // the 8 card, and the round number the answer lands on.
         const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
@@ -351,9 +354,11 @@
         const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
         if (!saved.tapped) return;
         const labelsPlaced = saved.slots.every(placed => placed !== null);
-        text(block, 'p', labelsPlaced ? slide.move : slide.place);
+        const prompt = text(block, 'p', labelsPlaced ? slide.move : slide.place);
         const { line, slots } = drawBuildLine(block, slide, saved, handlers, labelsPlaced);
         if (!saved.dot) return;
+        // Done: the instruction makes way for the notes, so no arrow crosses it.
+        prompt.remove();
         // The 6 card decides, and the answer lands on 3,000,000 at the right end.
         const digitNote = text(block, 'p', slide.notes.digit, 'rounding-note rounding-note--digit');
         const nearestNote = text(block, 'p', slide.notes.nearest, 'rounding-note rounding-note--nearest');
