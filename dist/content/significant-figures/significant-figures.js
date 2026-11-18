@@ -256,7 +256,16 @@
                     option('Keep 2 and 8, then round up to 0.029', 'The next digit is 3. It is less than 5, so do not round up.')
                 ] },
             roundingQuestion('0.00726', 2), roundingQuestion('147921', 2),
-            roundingQuestion('30560', 3, 'choice'), roundingQuestion('15.03', 3, 'number', 'trailing-zero')
+            roundingQuestion('30560', 3, 'choice'), roundingQuestion('15.03', 3, 'number', 'trailing-zero'),
+            // The three decimal-place checks moved here from the Rounding lesson.
+            placeQuestion('12.64', 'decimal', 1, 'choice'),
+            { questionType: 'error', input: 'choice', prompt: 'Amir says 4.95 rounds to 4.9 at 1 decimal place. Which explanation corrects him?', options: [
+                option('The 5 rounds the tenths up, giving 5.0', 'The hundredths digit is 5. Round up and keep one decimal place.', true),
+                option('Keep 4.9 because the tenths digit is already 9', 'A 9 can still round up. The extra 1 carries to the next column.'),
+                option('Round to 4 because only whole numbers can be rounded', 'Decimals can be rounded too. Keep the tenths place.'),
+                option('Write 5 because the zero after the point does not matter', 'Write 5.0 to show the one decimal place asked for.')
+            ] },
+            placeQuestion('1.049', 'decimal', 1, 'number', 'context', 'A bottle holds 1.049 litres. Round this directly to 1 decimal place.')
         ];
     }
     const practiceGroups = [
@@ -270,8 +279,8 @@
         { kind: 'whole-significant', types: ['whole-significant', 'sig-three-zero'] },
         { kind: 'small-significant', types: ['small-significant', 'sig-one-small', 'sig-three-small', 'sig-no-lead'] },
         { kind: 'sig-count', types: ['sig-count'] },
-        // The three place-rounding types moved here from the Rounding lesson.
-        { kind: 'place-rounding', types: ['two-decimals', 'whole-number', 'carry-two'] }
+        // The six place-rounding types moved here from the Rounding lesson.
+        { kind: 'place-rounding', types: ['one-decimal', 'decimal-zero', 'decimal-carry', 'two-decimals', 'whole-number', 'carry-two'] }
     ];
     const practiceTypes = practiceGroups.flatMap(group => group.types);
 
@@ -376,6 +385,9 @@
         case 'sig-three-small': return moved(`0.00${nonZeroEnd(integer(10000, 99999))}`, 3);
         case 'sig-no-lead': return moved(`0.${nonZeroEnd(integer(10000, 99999))}`, 2);
         case 'sig-count': return countSignificantFigures(item, integer, random);
+        case 'one-decimal': return place(`${integer(1, 8)}.${integer(1, 9)}${integer(1, 9)}`, 'decimal', 1);
+        case 'decimal-zero': return place(`${integer(1, 8)}.0${integer(1, 4)}`, 'decimal', 1);
+        case 'decimal-carry': return place(`9.9${integer(5, 9)}`, 'decimal', 1);
         case 'two-decimals': return place(`${integer(1, 8)}.${integer(1, 9)}${integer(0, 9)}${integer(1, 9)}`, 'decimal', 2);
         case 'whole-number': return place(`${integer(10, 98)}.${integer(1, 9)}${integer(1, 9)}`, 'nearest', 0);
         case 'carry-two': return place(`${integer(1, 8)}.99${integer(5, 9)}`, 'decimal', 2);
@@ -437,11 +449,16 @@
             number: '0.730', n: 3, tap: 'last', mark: 'first',
             equations: ['0.730 → 3 significant figures']
         },
-        // The five place-rounding screens moved here from the Rounding lesson.
+        // The seven place-rounding screens moved here from the Rounding lesson.
         { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', labels: 'landmarks', notes: {
             digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
             nearest: 'So 46,728 is closer to 47,000.'
         } },
+        { title: "Now let's round 3.47 to 1 decimal place.", lines: ['1 decimal place means 1 digit after the decimal point. So 3.47 sits between 3.4 and 3.5. Here it is on the number line, counting in steps of 0.01.'], line: true, base: 3.4, step: 0.01, value: 3.47, tap: 'end', labels: 'landmarks', notes: {
+            digit: 'The next digit is 7. That is 5 or more, so round up.',
+            nearest: 'So 3.47 is closer to 3.5.'
+        } },
+        { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         { title: "Now let's round 4.276 to 2 decimal places.", lines: ['2 decimal places means 2 digits after the decimal point. So 4.276 sits between 4.27 and 4.28. Here it is on the number line, counting in steps of 0.001.'], line: true, base: 4.27, step: 0.001, value: 4.276, tap: 'end', labels: 'landmarks', notes: {
             digit: 'The next digit is 6. That is 5 or more, so round up.',
             nearest: 'So 4.276 is closer to 4.28.'

@@ -183,25 +183,26 @@ test('rounding-and-significant-figures: the whole lesson can be finished with a 
 test('rounding-and-significant-figures: a retried Check answer is kept and marked as a second try', async ({ page }) => {
     test.setTimeout(420_000);
     await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
-    // The bottle question is typed, so its answer is known exactly.
+    // The nearest-million question is the last Check card: get it wrong first.
     for (let step = 0; step < 400; step++) {
-        if (await prompt(page).count() && (await prompt(page).innerText()).includes('1.049')) break;
+        if (await prompt(page).count() && (await prompt(page).innerText()).includes('2,681,450')) break;
         if (await solve(page)) continue;
         await mainAction(page).click();
     }
-    await expect(prompt(page)).toContainText('1.049');
-    await page.locator('.question-card:visible input[type=text]').fill('1');
+    await expect(prompt(page)).toContainText('2,681,450');
+    const options = page.locator('.question-card-options:visible button');
+    await options.filter({ hasNotText: /^3,000,000$/ }).first().click();
     await mainAction(page).click();
     await expect(mainAction(page)).toHaveText('Try again');
     await reload(page);
     await goToStage(page, 'Check');
     await expect(mainAction(page)).toHaveText('Try again');
     await mainAction(page).click();
-    await page.locator('.question-card:visible input[type=text]').fill('1.0');
+    await page.getByRole('button', { name: '3,000,000', exact: true }).click();
     await mainAction(page).click();
     await expect(mainAction(page)).toHaveText('Continue');
     await mainAction(page).click();
-    await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('1.0');
+    await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('3,000,000');
     await expect(page.locator('#rounding-and-significant-figures-comparison .retained-results')).toContainText('2nd try');
     expect(await score(page)).toBe(await maximum(page) - 5);
 });

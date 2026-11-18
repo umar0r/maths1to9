@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $lessonId = 'rounding-and-significant-figures';
-$pageTitle = 'Rounding';
+$pageTitle = 'Rounding whole numbers';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,11 +65,11 @@ $pageTitle = 'Rounding';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./rounding.js?v=53"></script>
+    <script src="./rounding.js?v=54"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=15"></script>
-    <script src="./interactive.js?v=32"></script>
+    <script src="./questions.js?v=16"></script>
+    <script src="./interactive.js?v=33"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=79"></script>

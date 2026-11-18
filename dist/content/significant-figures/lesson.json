@@ -31,7 +31,12 @@
             "keep-digit": "round-significant-figures",
             "deciding-digit": "round-significant-figures",
             "round": "round-significant-figures",
-            "error": "round-significant-figures"
+            "error": "round-significant-figures",
+            "one-decimal": "round-significant-figures",
+            "decimal-zero": "round-significant-figures",
+            "decimal-carry": "round-significant-figures",
+            "decimal": "round-significant-figures",
+            "context": "round-significant-figures"
         }
     },
     "explanation": {
@@ -105,6 +110,15 @@
             },
             {
                 "type": "trailing-zero"
+            },
+            {
+                "type": "decimal"
+            },
+            {
+                "type": "error"
+            },
+            {
+                "type": "context"
             }
         ],
         "summary": {

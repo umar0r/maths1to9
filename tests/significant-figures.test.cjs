@@ -71,9 +71,10 @@ test('significant-figures: every fixed and generated rounding answer is right in
     // The place-rounding questions moved from the Rounding lesson keep their own
     // accuracy: decimal places, or the nearest whole number.
     for (const q of questions.filter(q => q.stage === 'round' && q.kind)) {
-        const match = q.prompt.match(/^Round ([\d,.]+) to (?:(\d+) decimal places?|the nearest whole number)\./);
+        const match = q.prompt.match(/^(?:A bottle holds ([\d.]+) litres\. )?Round (?:([\d,.]+)|this directly) to (?:(\d+) decimal places?|the nearest whole number)\./);
         assert.ok(match, q.prompt);
-        const answer = match[2] ? roundToPower(match[1], -Number(match[2])) : roundToPower(match[1], 0);
+        const number = match[1] || match[2];
+        const answer = match[3] ? roundToPower(number, -Number(match[3])) : roundToPower(number, 0);
         assert.equal(clean(answerOf(q)), answer, q.prompt);
         assert.equal(q.exact, q.kind !== 'nearest', q.prompt);
         assert.notEqual(tidyNumber(answerOf(q)), null);
@@ -172,7 +173,7 @@ test('significant-figures: typed answers use exact form, meaningful rules and a 
 });
 
 test('significant-figures: generators cover every old type for 200 seeds in both answer modes', () => {
-    assert.equal(Q.practiceTypes.length, 20);
+    assert.equal(Q.practiceTypes.length, 23);
     for (const type of Q.practiceTypes) {
         assert.equal(data.assessment.question_types[type], 'round-significant-figures');
         // A choice card falls back to a typed answer when it has too few wrong choices.
@@ -196,7 +197,16 @@ test('significant-figures: generators cover every old type for 200 seeds in both
         assert.ok(choices < modes.length, `seed ${seed}`);
     }
     for (const group of [Q.examples(), Q.checks()]) assert.deepEqual(new Set(group.map(q => q.input)), new Set(['choice', 'number']));
-    assert.equal(Q.checks().length, 5);
+    // Five Check questions, then the three decimal-place checks moved from Rounding.
+    assert.equal(Q.checks().length, 8);
+});
+
+test("significant-figures: Amir's claim is wrong and the explanation corrects it", () => {
+    const q = Q.checks().find(q => q.prompt.startsWith('Amir says 4.95'));
+    assert.equal(roundToPower('4.95', -1), '5.0');
+    assert.equal(answerOf(q), 'The 5 rounds the tenths up, giving 5.0');
+    assert.equal(q.options.length, 4);
+    assert.ok(q.options.some(o => o.label.startsWith('Write 5 because') && !o.correct));
 });
 
 test('significant-figures: wording has correct plurals, British spelling and no padded question decimals', () => {

@@ -180,19 +180,17 @@
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
-            roundingQuestion('12.64', 'decimal', 1, 'choice'), roundingQuestion('2681450', 'nearest', 6, 'choice'),
-            { questionType: 'error', input: 'choice', prompt: 'Amir says 4.95 rounds to 4.9 at 1 decimal place. Which explanation corrects him?', options: [
-                option('The 5 rounds the tenths up, giving 5.0', 'The hundredths digit is 5. Round up and keep one decimal place.', true),
-                option('Keep 4.9 because the tenths digit is already 9', 'A 9 can still round up. The extra 1 carries to the next column.'),
-                option('Round to 4 because only whole numbers can be rounded', 'Decimals can be rounded too. Keep the tenths place.'),
-                option('Write 5 because the zero after the point does not matter', 'Write 5.0 to show the one decimal place asked for.')
+            { questionType: 'method', input: 'choice', prompt: 'Which steps, in the right order, round a number to the nearest 100?', options: [
+                option('1. Find the hundreds digit. 2. Look at the digit to its right. 3. If that digit is 5 or more, round up. If not, round down.', 'Find the digit you are rounding to. The digit to its right decides.', true),
+                option('1. Look at the last digit. 2. If it is 5 or more, round up. If not, round down.', 'The last digit is the ones. For the nearest 100, look at the digit just right of the hundreds digit.'),
+                option('1. Find the hundreds digit. 2. If the hundreds digit is 5 or more, round up. If not, round down.', 'The hundreds digit does not decide. The digit to its right does.'),
+                option('1. Round to the nearest 10. 2. Round that answer to the nearest 100.', 'Round the original number in one go. Rounding twice can give the wrong answer.')
             ] },
-            roundingQuestion('1.049', 'decimal', 1, 'number', 'context', 'A bottle holds 1.049 litres. Round this directly to 1 decimal place.')
+            roundingQuestion('2681450', 'nearest', 6, 'choice')
         ];
     }
     const practiceGroups = [
         { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
-        { kind: 'place', types: ['one-decimal', 'decimal-zero', 'decimal-carry'] },
         { kind: 'context', types: ['round-up'] },
         { kind: 'context', types: ['round-down'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
@@ -201,9 +199,9 @@
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        // Two cards from each group keeps it at 10 questions, so whole numbers,
-        // 1 decimal place and real life all come up in every session.
-        const picks = practiceGroups.flatMap(group => [0, 1].map(() => ({
+        // Four whole-number cards and two from each real-life group keeps it at
+        // 10 questions, so both come up in every session.
+        const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2, 3] : [0, 1]).map(() => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
         })));
 
@@ -328,10 +326,7 @@
         case 'nearest-ten': number = String(nonZeroEnd(integer(12, 98))); kind = 'nearest'; accuracy = 1; break;
         case 'halfway-hundred': number = String(integer(2, 8) * 100 + 50); kind = 'nearest'; accuracy = 2; break;
         case 'nearest-thousand': number = String(nonZeroEnd(integer(1001, 9899))); kind = 'nearest'; accuracy = 3; break;
-        case 'one-decimal': number = `${integer(1, 8)}.${integer(1, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'two-decimals': number = `${integer(1, 8)}.${integer(1, 9)}${integer(0, 9)}${integer(1, 9)}`; kind = 'decimal'; accuracy = 2; break;
-        case 'decimal-zero': number = `${integer(1, 8)}.0${integer(1, 4)}`; kind = 'decimal'; accuracy = 1; break;
-        case 'decimal-carry': number = `9.9${integer(5, 9)}`; kind = 'decimal'; accuracy = 1; break;
         case 'big-hundred':
         case 'big-thousand': {
             accuracy = item.type === 'big-hundred' ? 2 : 3;
@@ -364,10 +359,9 @@
         return prepare(question, random);
     }
     const learnScreens = [
-        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
+        { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
             { label: 'To the nearest 10', from: '38', to: '40' },
-            { label: 'To the nearest 100', from: '461', to: '500' },
-            { label: 'To 1 decimal place', from: '3.147', to: '3.1' }
+            { label: 'To the nearest 100', from: '461', to: '500' }
         ] },
         { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
@@ -381,11 +375,6 @@
             keep: "This 6 is worth 600. It's the hundreds digit.",
             look: "Now look at the digit just to its right. It's a 7."
         } },
-        { title: "Now let's round 3.47 to 1 decimal place.", lines: ['1 decimal place means 1 digit after the decimal point. So 3.47 sits between 3.4 and 3.5. Here it is on the number line, counting in steps of 0.01.'], line: true, base: 3.4, step: 0.01, value: 3.47, tap: 'end', labels: 'landmarks', notes: {
-            digit: 'The next digit is 7. That is 5 or more, so round up.',
-            nearest: 'So 3.47 is closer to 3.5.'
-        } },
-        { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         {
             title: 'When you can only pay for whole ones, round down.',
             lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,

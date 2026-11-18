@@ -130,6 +130,8 @@ module.exports = async function solve(page) {
     const text = await prompt.innerText();
     let answer;
     if (text.startsWith('Amir says')) answer = 'The 5 rounds the tenths up, giving 5.0';
+    else if (text.startsWith('Which steps')) answer = await page.evaluate(() => window.Rounding.checks()
+        .find(q => q.questionType === 'method').options.find(o => o.correct).label);
     else {
         let match, kind, accuracy, phrase;
         if ((match = text.match(/nearest million/))) { kind = 'nearest'; accuracy = 6; phrase = match[0]; }
@@ -152,7 +154,7 @@ module.exports = async function solve(page) {
     }
     const options = page.locator('.question-card-options:visible button');
     if (await options.count()) {
-        if (!/Amir/.test(text)) answer = withCommas(answer);
+        if (!/Amir|Which steps/.test(text)) answer = withCommas(answer);
         await page.getByRole('button', { name: answer, exact: true }).click();
     } else await page.locator('.question-card:visible input[type=text]').fill(answer);
     return true;
