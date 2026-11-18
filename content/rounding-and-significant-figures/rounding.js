@@ -367,7 +367,7 @@
         { title: 'Rounding means finding a simpler number that is close to the one you have.', lines: ['You can round whole numbers or decimals. The ≈ sign means "is about".', "For example, if your friend lives 38 miles away, you might just say it's about 40 miles."], roundings: [
             { label: 'To the nearest 10', from: '38', to: '40' },
             { label: 'To the nearest 100', from: '461', to: '500' },
-            { label: 'To 2 decimal places', from: '3.147', to: '3.15' }
+            { label: 'To 1 decimal place', from: '3.147', to: '3.1' }
         ] },
         { title: "Let's start by rounding 67 to the nearest 10.", lines: ['67 sits between 60 and 70. Here it is on the number line.'], line: true, notes: {
             digit: 'The ones digit is 7. That is 5 or more, so round up.',
