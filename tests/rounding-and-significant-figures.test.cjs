@@ -109,7 +109,8 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
         assert.equal(slide.digits[positions.target], keep, slide.title);
         assert.equal(slide.digits[positions.decider], look, slide.title);
     }
-    assert.equal(slideA.after, "Next, let's put 53,481 on a number line.");
+    assert.equal(slideA.digitNotes.keep, 'Keep: the 4 is the hundreds digit. It stays 4 or goes up to 5.');
+    assert.equal(slideA.digitNotes.look, 'Look: the 8 next to it decides. 8 is 5 or more, so the 4 goes up to 5.');
     // The line runs from one round number to the next, and the slide rounds itself.
     assert.deepEqual([slideB.line.base, slideB.line.step, slideB.line.value], [53400, 10, 53481]);
     assert.equal(slideB.placeHint, 'The halfway point is 53,450. 53,481 is more than that.');

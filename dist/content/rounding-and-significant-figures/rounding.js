@@ -112,7 +112,11 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
-                after: "Next, let's put 53,481 on a number line.",
+                // After the right tap, two notes with arrows explain Keep and Look.
+                digitNotes: {
+                    keep: 'Keep: the 4 is the hundreds digit. It stays 4 or goes up to 5.',
+                    look: 'Look: the 8 next to it decides. 8 is 5 or more, so the 4 goes up to 5.'
+                },
                 button: 'Next'
             },
             {
@@ -139,12 +143,18 @@
     }
 
     /* The digit slide: tap the hundreds digit. Then the cards show which digit
-       to keep and which to look at, and the next slide is named. */
+       to keep and which to look at, and a note with an arrow explains each. */
     function drawDigitSlide(host, slide, saved, handlers) {
         text(host, 'p', slide.tap);
-        const block = text(host, 'div', '', 'rounding-notes rounding-tryit');
-        drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
-        if (saved.tapped) text(host, 'p', slide.after);
+        const block = text(host, 'div', '', 'rounding-notes rounding-tryit rounding-digit');
+        const row = drawSlideDigits(block, slide, saved.tapped, handlers.onDigit);
+        if (!saved.tapped) return;
+        const keep = text(block, 'p', slide.digitNotes.keep, 'rounding-note rounding-note--keep');
+        const look = text(block, 'p', slide.digitNotes.look, 'rounding-note rounding-note--look');
+        drawArrows(block, [
+            [keep, () => row.querySelector('.significant-digit.is-keep'), 'right'],
+            [look, () => row.querySelector('.significant-digit.is-look'), 'right']
+        ]);
     }
 
     /* The line slide: tap the half of the line the number goes in. Then the dot
