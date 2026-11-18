@@ -100,8 +100,9 @@
         };
     }
 
-    // Try it: two hands-on slides. On each one the pupil taps the digit that
+    // Try it: hands-on slides. On the first two the pupil taps the digit that
     // decides, then puts the number on a number line with their hands. The
+    // third (the minibuses) is added after learnScreens: tap how many you need. The
     // words below are the words on screen; the tests and the slides tool read
     // them from here.
     const tryIt = {
@@ -134,7 +135,7 @@
                     nearest: 'So 2,681,450 is closer to 3,000,000.'
                 },
                 answer: '2,681,450 ≈ 3,000,000',
-                button: 'Continue'
+                button: 'Next'
             }
         ]
     };
@@ -370,7 +371,16 @@
         void line;
     }
 
+    // The minibus slide: tap how many you need, then the working shows.
+    function drawContextSlide(host, slide, answered, onResult) {
+        if (!answered) return drawLearnTap(host, slide, onResult);
+        drawContextLine(host, slide);
+        for (const equation of slide.equations || []) text(host, 'p', equation, 'significant-equation rounding-line-answer');
+        if (slide.caption) text(host, 'p', slide.caption);
+    }
+
     function drawSlide(host, slide, saved, handlers) {
+        if (slide.context) return drawContextSlide(host, slide, saved.dot, handlers.onContext);
         return slide.labels ? drawSlideTwo(host, slide, saved, handlers) : drawSlideOne(host, slide, saved, handlers);
     }
 
@@ -594,22 +604,6 @@
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
         { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] },
         {
-            title: 'When you need enough of something, round up.',
-            lines: [], base: 7, step: 0.1, value: 131 / 18, labels: 'landmarks', tap: 'end', answer: 8,
-            context: {
-                setup: 'Step 1: There are 131 helmets. Each rack holds 18. On a calculator, 131 ÷ 18 = 7.277…',
-                valueLabel: '7.277…',
-                question: 'How many racks do you need?',
-                hint: '7 racks hold 7 × 18 = 126 helmets. That leaves 5 helmets with no rack.',
-                steps: [
-                    ['Step 2: 7 racks hold 126 helmets. 5 helmets have no rack.', 7],
-                    ['Step 3: So you need 8 racks. 8 racks hold 144, so all 131 fit.', 8]
-                ]
-            },
-            equations: ['8 racks'],
-            caption: '7.277… would normally round to 7. Here you round up, because 7 racks are not enough.'
-        },
-        {
             title: 'When you can only pay for whole ones, round down.',
             lines: [], base: 6, step: 0.1, value: 12.50 / 1.85, labels: 'landmarks', tap: 'end', answer: 6,
             context: {
@@ -641,6 +635,26 @@
             equations: ['70 cm left']
         }
     ];
+    // The minibus slide was a Learn screen; it is now Try it's third slide.
+    tryIt.slides.push({
+        ...{
+            title: 'When you need enough of something, round up.',
+            lines: [], base: 8, step: 0.1, value: 131 / 16, labels: 'landmarks', tap: 'end', answer: 9,
+            context: {
+                setup: 'Step 1: 131 pupils are going on a trip. Each minibus seats 16. On a calculator, 131 ÷ 16 = 8.1875',
+                valueLabel: '8.1875',
+                question: 'How many minibuses do you need?',
+                hint: '8 minibuses seat 8 × 16 = 128 pupils. That leaves 3 pupils with no seat.',
+                steps: [
+                    ['Step 2: 8 minibuses seat 128 pupils. 3 pupils have no seat.', 8],
+                    ['Step 3: So you need 9 minibuses. 9 minibuses seat 144, so all 131 fit.', 9]
+                ]
+            },
+            equations: ['9 minibuses'],
+            caption: '8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.'
+        },
+        button: 'Continue'
+    });
     function text(host, tag, value, className) {
         const node = document.createElement(tag);
         node.textContent = value;

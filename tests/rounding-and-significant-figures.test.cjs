@@ -89,16 +89,21 @@ test('rounding-and-significant-figures: explanations name the right deciding dig
     }
 });
 
-test('rounding-and-significant-figures: Try it is two hands-on slides and Learn pictures highlight the right digits', () => {
-    const [slideA, slideB] = Q.tryIt.slides;
-    assert.equal(Q.tryIt.slides.length, 2);
+test('rounding-and-significant-figures: Try it is three hands-on slides and Learn pictures highlight the right digits', () => {
+    const [slideA, slideB, slideC] = Q.tryIt.slides;
+    assert.equal(Q.tryIt.slides.length, 3);
     // Each slide is one guided activity.
     assert.equal(data.score_activities.filter(a => a.kind === 'guided').length, Q.tryIt.slides.length);
     // The two slides, the numbers they use and the digit each one asks about.
     assert.deepEqual(Q.tryIt.slides.map(slide => slide.title), [
         'Round 53,481 to the nearest 100.',
-        'Round 2,681,450 to the nearest million.'
+        'Round 2,681,450 to the nearest million.',
+        'When you need enough of something, round up.'
     ]);
+    // The minibus slide: 131 ÷ 16 = 8.1875, and the pupil taps 9.
+    assert.deepEqual([slideC.base, slideC.step, slideC.value, slideC.answer], [8, 0.1, 131 / 16, 9]);
+    assert.equal(slideC.button, 'Continue');
+    assert.ok(!Q.learnScreens.some(screen => screen.title === slideC.title), 'the minibus screen left Learn');
     assert.deepEqual([slideA.digits, slideB.digits], ['53481', '2681450']);
     for (const [slide, keep, look] of [[slideA, '4', '8'], [slideB, '2', '6']]) {
         const positions = Q.keyDigits(slide.digits, 'nearest', slide.accuracy);
@@ -179,8 +184,8 @@ test('rounding-and-significant-figures: 200 seeds per type and input mode are de
         assert.deepEqual(new Set(qs.map(q => data.assessment.question_types[q.questionType])), new Set(['round-decimal-places', 'round-in-context']));
     }
     // Try it is hands-on, so it has no answer cards at all. Check mixes both.
-    assert.equal(Q.tryIt.slides.length, 2);
-    assert.ok(Q.tryIt.slides.every(slide => slide.digits && slide.line));
+    assert.equal(Q.tryIt.slides.length, 3);
+    assert.ok(Q.tryIt.slides.every(slide => (slide.digits && slide.line) || (slide.context && slide.tap === 'end')));
     assert.deepEqual(new Set(Q.checks().map(q => q.input)), new Set(['choice', 'number']));
     assert.equal(Q.checks().length, 5);
 });

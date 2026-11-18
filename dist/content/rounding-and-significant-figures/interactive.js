@@ -18,7 +18,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 9,
+            version: 10,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
             upgrade: () => null
         });
@@ -145,7 +145,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 9,
+            version: 10,
             initial: () => ({
                 // The intro screen is the number line slider shown before the slides.
                 lineValue: 67, explored: false,
@@ -160,6 +160,7 @@
 
         function isComplete(index) {
             const saved = state.slides[index];
+            if (slides[index].context) return saved.dot;
             if (!saved.tapped || !saved.dot) return false;
             return !slides[index].labels || saved.slots.every(placed => placed !== null);
         }
@@ -245,7 +246,7 @@
             const feedback = engine.createFeedback('interactive', { correct: false, text: '', visible: false });
             window.Rounding.drawSlide(root, slide, saved, {
                 // A fixed, saved seed keeps the shuffled cards in the same order on every reload.
-                order: slide.labels
+                order: Array.isArray(slide.labels)
                     ? engine.shuffle(slide.labels.map(label => Number(label.replace(/,/g, ''))), engine.seededRandom(state.seed + index))
                     : [],
                 onDigit(correct) {
@@ -273,6 +274,15 @@
                 onNumber() {
                     section.update(now => { now.slides[index].dot = true; });
                     render();
+                },
+                onContext(correct, hint) {
+                    if (correct) {
+                        section.update(now => { now.slides[index].dot = true; });
+                        render();
+                        return;
+                    }
+                    feedback.textContent = hint;
+                    feedback.className = engine.feedbackClassName('interactive', { correct: false, visible: true });
                 }
             });
             root.append(feedback);

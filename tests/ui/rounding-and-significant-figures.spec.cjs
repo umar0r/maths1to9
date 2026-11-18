@@ -155,7 +155,7 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .significant-digit')).toHaveCount(7);
             await expect(page.locator('.rounding-tryit .significant-comma')).toHaveCount(0);
             await expect(page.getByText('Tap the millions digit.', { exact: true })).toBeVisible();
-            await expect(mainAction(page)).toHaveText('Continue');
+            await expect(mainAction(page)).toHaveText('Next');
             await expect(mainAction(page)).toBeDisabled();
             await page.locator('.rounding-tryit .significant-digit').nth(1).click();
             await expect(page.locator('.question-feedback:visible')).toHaveText('The millions digit is the seventh from the right.');
@@ -215,12 +215,29 @@ for (const width of [1280, 375]) {
             await expect(page.getByText('So 2,681,450 is closer to 3,000,000.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveText('2,681,450 ≈ 3,000,000');
             await expect(page.getByText('Drag 2,681,450 to where it goes on the line.', { exact: true })).toHaveCount(0);
-            await expect(mainAction(page)).toHaveText('Continue');
+            await expect(mainAction(page)).toHaveText('Next');
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);
 
             await reloadToSlide(page, SLIDE_B);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
+            await expect(mainAction(page)).toBeEnabled();
+            await mainAction(page).click();
+
+            // Slide C: the minibuses. A wrong tap gives the hint; 9 is right.
+            await expect(heading(page)).toHaveText('When you need enough of something, round up.');
+            await expect(page.getByText('How many minibuses do you need?', { exact: true })).toBeVisible();
+            await expect(mainAction(page)).toHaveText('Continue');
+            await expect(mainAction(page)).toBeDisabled();
+            await page.locator('.rounding-end[data-end="8"]:visible').click();
+            await expect(page.locator('.question-feedback:visible')).toHaveText('8 minibuses seat 8 × 16 = 128 pupils. That leaves 3 pupils with no seat.');
+            await expect(mainAction(page)).toBeDisabled();
+            await page.locator('.rounding-end[data-end="9"]:visible').click();
+            await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
+            await expect(page.getByText('8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.', { exact: true })).toBeVisible();
+            await noSidewaysScroll(page);
+            await reloadToSlide(page, 'When you need enough of something, round up.');
+            await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
             await expect(mainAction(page)).toBeEnabled();
             await mainAction(page).click();
 
