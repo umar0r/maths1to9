@@ -25,6 +25,9 @@
             "sig-three-small": "round-significant-figures",
             "sig-no-lead": "round-significant-figures",
             "sig-count": "round-significant-figures",
+            "two-decimals": "round-significant-figures",
+            "whole-number": "round-significant-figures",
+            "carry-two": "round-significant-figures",
             "keep-digit": "round-significant-figures",
             "deciding-digit": "round-significant-figures",
             "round": "round-significant-figures",
@@ -45,7 +48,7 @@
         "eyebrow": "Practice",
         "title": "Practise significant figures",
         "intro": "",
-        "session_length": 9
+        "session_length": 10
     },
     "section_order": [
         "explanation",
@@ -180,6 +183,14 @@
         },
         {
             "id": "step:interactive:17",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:18",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:19",
             "kind": "guided"
         }
     ]

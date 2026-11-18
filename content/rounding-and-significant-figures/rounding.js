@@ -138,8 +138,7 @@
     function singleStepExamples() {
         return [
             ['53481', 'nearest', 3],
-            ['26.48', 'nearest', 0],
-            ['3.997', 'decimal', 2]
+            ['2681450', 'nearest', 6]
         ].map(([number, kind, accuracy]) => [{
             ...roundingQuestion(number, kind, accuracy, 'number'), showDigitsAfterAnswer: true
         }]);
@@ -294,7 +293,7 @@
     function checks() {
         return [
             roundingQuestion('2748', 'nearest', 2, 'choice', 'context', 'A stadium has 2,748 spectators. Round this to the nearest 100.'),
-            roundingQuestion('5.465', 'decimal', 2), roundingQuestion('18.497', 'nearest', 0, 'choice'),
+            roundingQuestion('12.64', 'decimal', 1, 'choice'), roundingQuestion('2681450', 'nearest', 6, 'choice'),
             { questionType: 'error', input: 'choice', prompt: 'Amir says 4.95 rounds to 4.9 at 1 decimal place. Which explanation corrects him?', options: [
                 option('The 5 rounds the tenths up, giving 5.0', 'The hundredths digit is 5. Round up and keep one decimal place.', true),
                 option('Keep 4.9 because the tenths digit is already 9', 'A 9 can still round up. The extra 1 carries to the next column.'),
@@ -306,8 +305,7 @@
     }
     const practiceGroups = [
         { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
-        { kind: 'place', types: ['one-decimal', 'two-decimals', 'whole-number'] },
-        { kind: 'place', types: ['decimal-zero', 'decimal-carry', 'carry-two'] },
+        { kind: 'place', types: ['one-decimal', 'decimal-zero', 'decimal-carry'] },
         { kind: 'context', types: ['round-up'] },
         { kind: 'context', types: ['round-down'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
@@ -316,19 +314,14 @@
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        const picks = practiceGroups.map(group => ({
+        // Two cards from each group keeps it at 10 questions, so whole numbers,
+        // 1 decimal place and real life all come up in every session.
+        const picks = practiceGroups.flatMap(group => [0, 1].map(() => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
-        }));
-        // Fill the rest of the session from the same groups, so it still covers
-        // whole numbers, decimals and real life.
-        for (let extra = picks.length; extra < 10; extra++) {
-            const group = practiceGroups[randomInt(0, practiceGroups.length - 1, random)];
-            picks.push({ group, type: group.types[randomInt(0, group.types.length - 1, random)] });
-        }
-        const candidates = shuffle(picks, random);
+        })));
 
         // Backtrack if a legal next card would leave no way to place the remaining cards.
-        function order(remaining, ordered) {
+        function order(remaining, ordered = []) {
             if (!remaining.length) return ordered;
             const last = ordered.at(-1)?.group;
             const previous = ordered.at(-2)?.group;
@@ -341,9 +334,21 @@
             return null;
         }
 
-        return order(candidates, []).map(({ type }, index) => ({
-            type, mode: index % 2 === 0 ? 'choice' : 'number', seed: randomInt(0, 4294967295, random)
-        }));
+        for (let attempt = 0; attempt < 20; attempt++) {
+            const ordered = order(shuffle(picks, random));
+            if (!ordered) continue;
+            const modes = ordered.map((_, index) => index % 2 === 0 ? 'choice' : 'number');
+            // A real-life card drops back to a typed answer when it cannot make
+            // four different choices, so give at least one place card (which
+            // always can) the multiple-choice slot.
+            const placeChoice = ordered.some(({ group }, index) => group.kind === 'place' && modes[index] === 'choice');
+            return ordered.map(({ type }, index) => ({
+                type,
+                mode: placeChoice === (modes[index] === 'choice') ? 'choice' : 'number',
+                seed: randomInt(0, 4294967295, random)
+            }));
+        }
+        throw new Error('Could not lay out a practice session.');
     }
     function prepare(question, random) {
         return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
@@ -498,34 +503,11 @@
             digit: 'Step 3: Look at the next digit. The tens digit is 7. That is 5 or more, so round up.',
             nearest: 'Step 4: So 48,672 rounds up to 48,700.'
         } },
-        { title: "Now let's round 46,728 to the nearest 1,000.", lines: ['46,728 sits between 46,000 and 47,000. Here it is on the number line, counting in hundreds.'], line: true, base: 46000, step: 100, value: 46728, tap: 'end', labels: 'landmarks', notes: {
-            digit: 'The hundreds digit is 7. That is 5 or more, so round up.',
-            nearest: 'So 46,728 is closer to 47,000.'
-        } },
-        { title: "Now let's round 4.276 to 2 decimal places.", lines: ['2 decimal places means 2 digits after the decimal point. So 4.276 sits between 4.27 and 4.28. Here it is on the number line, counting in steps of 0.001.'], line: true, base: 4.27, step: 0.001, value: 4.276, tap: 'end', labels: 'landmarks', notes: {
-            digit: 'The next digit is 6. That is 5 or more, so round up.',
-            nearest: 'So 4.276 is closer to 4.28.'
+        { title: "Now let's round 3.47 to 1 decimal place.", lines: ['1 decimal place means 1 digit after the decimal point. So 3.47 sits between 3.4 and 3.5. Here it is on the number line, counting in steps of 0.01.'], line: true, base: 3.4, step: 0.01, value: 3.47, tap: 'end', labels: 'landmarks', notes: {
+            digit: 'The next digit is 7. That is 5 or more, so round up.',
+            nearest: 'So 3.47 is closer to 3.5.'
         } },
         { title: 'When rounding carries', lines: ['To round 9.96 to 1 decimal place, keep the tenths digit, 9. The next digit is 6, so round up.', 'The extra 1 carries to the next column. Keep one digit after the point in the answer.'], number: '9.96', kind: 'decimal', accuracy: 1, equations: ['9.96 ≈ 10.0'] },
-        {
-            title: 'A carry can run through more than one 9.',
-            prompt: 'To round 9.996 to 2 decimal places, keep 9.99.',
-            lines: [
-                'The next digit is 6, so round up.',
-                'The last 9 becomes 10, so the carry moves left through each 9. Keep two digits after the point.'
-            ],
-            number: '9.996', kind: 'decimal', accuracy: 2, tap: 'decider', equations: ['9.996 ≈ 10.00']
-        },
-        { title: 'Use the original number', lines: ['Round the original number each time.', "To round 2.449 to 1 decimal place, keep 2.4. Don't round to 2.45 first. That would then round up to 2.5, which is wrong."], number: '2.449', kind: 'decimal', accuracy: 1, equations: ['2.449 ≈ 2.4'] },
-        {
-            title: 'To round to the nearest whole number, look at the tenths digit.',
-            prompt: 'To round 18.497 to the nearest whole number, keep the 8 in the ones place.',
-            lines: [
-                'The next digit is the tenths digit, 4. That is less than 5, so the 8 stays the same.',
-                "Don't round to 18.5 first. That would round up to 19, which is wrong."
-            ],
-            number: '18.497', kind: 'nearest', accuracy: 0, tap: 'decider', equations: ['18.497 ≈ 18']
-        },
         { title: 'Rounding in a real situation', lines: ['A path is 248 metres long. Round its length to the nearest 10 metres.', 'The next digit is 8, so round up. Rounding does not change the unit: the length is still in metres.'], number: '248', kind: 'nearest', accuracy: 1, equations: ['248 metres ≈ 250 metres'] },
         {
             title: 'When you need enough of something, round up.',
@@ -763,125 +745,6 @@
         }
         return line;
     }
-    const roadMiles = [67, 342, 65, 2814];
-
-    function roadWidget(start) {
-        const base = Math.floor(start / 10) * 10;
-        const top = base + 10;
-        const halfway = base + 5;
-        const nearest = start < halfway ? base : top;
-        const format = spaced;
-        const x = mile => 30 + (mile - base) * 60;
-        const axis = 120;
-
-        return {
-            isEmpty: mile => mile !== base && mile !== top,
-            answerText: format,
-            mark(mile) {
-                const correct = mile === nearest;
-                let feedback;
-                if (start === halfway) {
-                    feedback = correct
-                        ? `Yes. ${format(start)} is exactly halfway, so we round up. ${format(start)} ≈ ${format(top)} to the nearest 10.`
-                        : `${format(start)} is exactly halfway. At halfway we round up, so it goes to ${format(top)}.`;
-                } else if (correct) {
-                    feedback = `Yes. ${format(start)} is closer to ${format(nearest)}, so ${format(start)} ≈ ${format(nearest)} to the nearest 10.`;
-                } else {
-                    feedback = `${format(start)} is ${Math.abs(start - mile)} miles from ${format(mile)} but only ${Math.abs(start - nearest)} miles from ${format(nearest)}. Try the other sign.`;
-                }
-                return { correct, feedback };
-            },
-            render(host, { onChange }) {
-                const line = text(host, 'div', '', 'rounding-line rounding-road');
-                let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
-                for (let mile = base; mile <= top; mile++) {
-                    const landmark = (mile - base) % 5 === 0 ? ' is-landmark' : '';
-                    const reach = landmark ? 12 : 7;
-                    picture += `<path class="rounding-tick${landmark}" d="M ${x(mile)} ${axis - reach} V ${axis + reach}"/>
-                        <text class="rounding-value${landmark}" x="${x(mile)}" y="157">${format(mile)}</text>`;
-                }
-                picture += `<circle class="rounding-road__start" cx="${x(start)}" cy="${axis}" r="6" fill="#64748b"/>`;
-                for (const end of [base, top]) {
-                    const label = format(end);
-                    const position = x(end);
-                    const width = Math.max(50, label.length * 12 + 18);
-                    const left = Math.max(2, Math.min(658 - width, position - width / 2));
-                    picture += `<g class="rounding-road__sign" transform="translate(0 12)">
-                        <path d="M ${position} 30 V ${axis - 24}"/>
-                        <rect x="${left}" width="${width}" height="30" rx="4"/>
-                        <text class="rounding-value is-landmark" x="${left + width / 2}" y="20">${label}</text>
-                    </g>`;
-                }
-                line.innerHTML = `<svg viewBox="0 0 660 169" role="slider" aria-label="Car position"
-                        aria-valuemin="${base}" aria-valuemax="${top}">
-                    <g aria-hidden="true">${picture}</g>
-                    <g class="rounding-road__car" aria-hidden="true">
-                        <rect class="rounding-road__grip" x="-42" y="-58" width="84" height="70" fill="transparent"/>
-                        <path d="M -22 -9 V -22 Q -22 -26 -16 -27 L -8 -39 H 10 L 18 -27 Q 24 -26 24 -21 V -9 Z"
-                            fill="#287fd1" stroke="#173d67" stroke-width="2"/>
-                        <path d="M -12 -27 L -6 -36 H 8 L 14 -27 Z" fill="#dbeafe"/>
-                        <circle cx="-13" cy="-9" r="5" fill="#243041"/>
-                        <circle cx="15" cy="-9" r="5" fill="#243041"/>
-                    </g>
-                </svg>`;
-                const svg = line.querySelector('svg');
-                const car = svg.querySelector('.rounding-road__car');
-                let mile = start;
-                let editable = false;
-                let pointer = null;
-
-                function show(position) {
-                    mile = position;
-                    car.setAttribute('transform', `translate(${x(mile)} ${axis + 4})`);
-                    svg.setAttribute('aria-valuenow', mile);
-                    svg.setAttribute('aria-valuetext', `Mile ${format(mile)}`);
-                }
-
-                function move(position) {
-                    const next = Math.max(base, Math.min(top, position));
-                    if (next === mile) return;
-                    show(next);
-                    onChange(next);
-                }
-
-                car.addEventListener('pointerdown', event => {
-                    if (!editable || pointer !== null || event.button !== 0) return;
-                    event.preventDefault();
-                    pointer = event.pointerId;
-                    svg.focus({ preventScroll: true });
-                    svg.setPointerCapture(pointer);
-                });
-                svg.addEventListener('pointermove', event => {
-                    if (event.pointerId !== pointer) return;
-                    const bounds = svg.getBoundingClientRect();
-                    const svgX = (event.clientX - bounds.left) / bounds.width * 660;
-                    move(base + Math.round((svgX - 30) / 60));
-                });
-                svg.addEventListener('lostpointercapture', () => { pointer = null; });
-                svg.addEventListener('keydown', event => {
-                    if (!editable) return;
-                    if (['ArrowLeft', 'ArrowDown'].includes(event.key)) {
-                        event.preventDefault();
-                        move(mile - 1);
-                    } else if (['ArrowRight', 'ArrowUp'].includes(event.key)) {
-                        event.preventDefault();
-                        move(mile + 1);
-                    }
-                });
-
-                return {
-                    update({ value, editable: canMove }) {
-                        editable = canMove;
-                        svg.tabIndex = canMove ? 0 : -1;
-                        svg.setAttribute('aria-disabled', String(!canMove));
-                        show(value ?? start);
-                    },
-                    focus: () => svg.focus({ preventScroll: true })
-                };
-            }
-        };
-    }
-
     /* Hand-drawn arrows from each note to the thing it talks about, like the arrows
        in the place-value lesson. Each arrow leaves the right end of its note and comes
        in to its target from straight above or below. They are redrawn whenever the
@@ -1022,5 +885,5 @@
         drawDigits(host, question, marks);
         if (correct && question.stage === 'round') text(host, 'p', `${spaced(question.number)} ≈ ${spaced(rounded(question.number, question.kind, question.accuracy))}`, 'significant-equation');
     }
-    window.Rounding = { roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample, roadMiles, roadWidget };
+    window.Rounding = { roundToPower, rounded, accuracyText, keyDigits, place, digitLabel, roundingQuestion, digitQuestion, exampleCount, examples, checks, practiceTypes, pick, prepare, generate, learnScreens, drawLearn, drawLearnTap, drawLine, drawExample };
 })();

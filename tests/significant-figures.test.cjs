@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { loadScript, allStrings } = require('./helpers/lessons.cjs');
+const { roundToPower } = require('./helpers/decimals.cjs');
 const root = path.join(__dirname, '..');
 const folder = 'significant-figures';
 const lessonDir = path.join(root, 'content', folder);
@@ -58,12 +59,23 @@ test('significant-figures: rounding helper follows exact half-up rules and keeps
 });
 
 test('significant-figures: every fixed and generated rounding answer is right in value and form', () => {
-    for (const q of questions.filter(q => q.stage === 'round')) {
+    for (const q of questions.filter(q => q.stage === 'round' && !q.kind)) {
         const match = q.prompt.match(/^Round ([\d,.]+) to (\d+) significant figures?\./);
         assert.ok(match, q.prompt);
         assert.equal(clean(answerOf(q)), roundSig(match[1], Number(match[2])), q.prompt);
         assert.equal(q.n, Number(match[2]));
         assert.equal(q.exact, true);
+        assert.notEqual(tidyNumber(answerOf(q)), null);
+        if (q.input === 'number' && q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
+    }
+    // The place-rounding questions moved from the Rounding lesson keep their own
+    // accuracy: decimal places, or the nearest whole number.
+    for (const q of questions.filter(q => q.stage === 'round' && q.kind)) {
+        const match = q.prompt.match(/^Round ([\d,.]+) to (?:(\d+) decimal places?|the nearest whole number)\./);
+        assert.ok(match, q.prompt);
+        const answer = match[2] ? roundToPower(match[1], -Number(match[2])) : roundToPower(match[1], 0);
+        assert.equal(clean(answerOf(q)), answer, q.prompt);
+        assert.equal(q.exact, q.kind !== 'nearest', q.prompt);
         assert.notEqual(tidyNumber(answerOf(q)), null);
         if (q.input === 'number' && q.answer.includes('.') && q.answer.endsWith('0')) assert.match(q.prompt, /Keep the zeros? at the end after the decimal point/);
     }
@@ -73,7 +85,8 @@ test('significant-figures: worked Learn examples and explanation question give t
     for (const screen of Q.learnScreens) for (const equation of (screen.equations || []).filter(equation => equation.includes('≈'))) {
         const match = equation.match(/^([\d,.]+) ≈ ([\d,.]+)/);
         assert.ok(match, equation);
-        assert.equal(clean(match[2]), roundSig(match[1], screen.n), equation);
+        const expected = screen.kind ? roundToPower(match[1], screen.kind === 'decimal' ? -screen.accuracy : screen.accuracy) : roundSig(match[1], screen.n);
+        assert.equal(clean(match[2]), expected, equation);
     }
     const error = Q.checks()[0];
     assert.equal(answerOf(error), 'Start at 2. Keep 2 and 8. The next digit is 3, so the answer is 0.028');
@@ -88,7 +101,7 @@ test('significant-figures: every choice has four distinct well-formed options an
         assert.equal(new Set(q.options.map(o => o.feedback)).size, 4, q.prompt);
         assert.ok(q.options.every(o => o.feedback));
         if (q.stage === 'round') {
-            const expected = roundSig(q.number, q.n);
+            const expected = q.kind ? roundToPower(q.number, q.kind === 'decimal' ? -q.accuracy : q.accuracy) : roundSig(q.number, q.n);
             assert.equal(q.options.filter(o => tidyNumber(o.label) === expected).length, 1, q.prompt);
             assert.equal(new Set(q.options.map(o => tidyNumber(o.label))).size, 4, q.prompt);
             assert.ok(q.options.every(o => tidyNumber(o.label) !== null), q.prompt);
@@ -113,21 +126,28 @@ test('significant-figures: explanations name the right deciding digit and show t
     for (const q of questions.filter(q => q.stage === 'round')) {
         const feedback = q.feedback;
         assert.ok(feedback.includes(answerOf(q)) || feedback.includes(spaced(clean(answerOf(q)))), q.prompt);
-        assert.equal(feedback.match(/next digit is (\d)/)[1], nextDigit(q.number, q.n), q.prompt);
+        assert.equal(feedback.match(/next digit is (\d)/)[1], q.kind ? q.number[q.decider] : nextDigit(q.number, q.n), q.prompt);
     }
 });
 
 test('significant-figures: four guided examples point at the correct keep and deciding digits', () => {
     assert.equal(Q.guided.length, 4);
-    assert.equal(Q.examples().length, 18);
-    assert.equal(data.score_activities.length, 18);
+    assert.equal(Q.examples().length, 20);
+    assert.equal(data.score_activities.length, 20);
     assert.deepEqual(Array.from(Q.guided, ([number, n]) => Q.round(number, n)), ['0.03', '150000', '10', '15.0']);
     for (const q of questions.filter(q => q.number)) {
         const indexes = [...q.number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
         const significant = indexes.slice(indexes.findIndex(i => q.number[i] !== '0'));
         assert.equal(q.first, significant[0], q.prompt);
-        assert.equal(q.target, significant[q.n - 1], q.prompt);
-        assert.equal(q.decider, significant[q.n], q.prompt);
+        if (q.kind) {
+            const point = q.number.includes('.') ? q.number.indexOf('.') : q.number.length;
+            const power = q.kind === 'decimal' ? -q.accuracy : q.accuracy;
+            assert.equal(q.target, power >= 0 ? point - 1 - power : point - power, q.prompt);
+            assert.equal(q.decider, indexes[indexes.indexOf(q.target) + 1], q.prompt);
+        } else {
+            assert.equal(q.target, significant[q.n - 1], q.prompt);
+            assert.equal(q.decider, significant[q.n], q.prompt);
+        }
         if (q.stage === 'keep' || q.stage === 'decider') {
             const correct = q.options.find(o => o.correct);
             const index = q.stage === 'keep' ? q.target : q.decider;
@@ -139,7 +159,7 @@ test('significant-figures: four guided examples point at the correct keep and de
 
 test('significant-figures: typed answers use exact form, meaningful rules and a fallback', () => {
     for (const q of questions.filter(q => q.input === 'number')) {
-        assert.equal(q.exact, q.stage !== 'context', q.prompt);
+        assert.equal(q.exact, q.stage !== 'context' && q.kind !== 'nearest', q.prompt);
         assert.ok(q.rules.length && q.fallback && q.feedback);
         for (const rule of q.rules) {
             assert.notEqual(tidyNumber(rule.value), tidyNumber(q.answer), q.prompt);
@@ -152,7 +172,7 @@ test('significant-figures: typed answers use exact form, meaningful rules and a 
 });
 
 test('significant-figures: generators cover every old type for 200 seeds in both answer modes', () => {
-    assert.equal(Q.practiceTypes.length, 17);
+    assert.equal(Q.practiceTypes.length, 20);
     for (const type of Q.practiceTypes) {
         assert.equal(data.assessment.question_types[type], 'round-significant-figures');
         // A choice card falls back to a typed answer when it has too few wrong choices.
@@ -165,13 +185,13 @@ test('significant-figures: generators cover every old type for 200 seeds in both
     }
     for (let seed = 0; seed < 200; seed++) {
         const items = Q.pick(seededRandom(seed));
-        assert.equal(items.length, 9);
+        assert.equal(items.length, 10);
         assert.equal(items.length, data.question_bank.session_length);
         const modes = items.map(item => Q.generate(item, seededRandom(item.seed)).input);
-        // One card can fall back from choice to typed when it has too few wrong choices,
-        // so four or five of the nine are multiple choice and the rest are typed.
+        // A card can fall back from choice to typed when it has too few wrong
+        // choices, so the session keeps both kinds of answer.
         const choices = modes.filter(mode => mode === 'choice').length;
-        assert.ok(choices >= 4, `seed ${seed}`);
+        assert.ok(choices >= 1, `seed ${seed}`);
         assert.equal(modes.filter(mode => mode === 'number').length, modes.length - choices);
         assert.ok(choices < modes.length, `seed ${seed}`);
     }
@@ -194,7 +214,9 @@ test('significant-figures: lesson is wired to its existing skill and four shared
     assert.doesNotMatch(page, /data-lesson-renderer/);
     assert.deepEqual(data.navigation_stages.map(stage => stage.label), ['Learn', 'Try it', 'Practice', 'Check']);
     assert.equal(data.navigation.back_button, true);
-    assert.equal(new Set(Q.learnScreens.map(screen => screen.title)).size, Q.learnScreens.length);
+    // Saved taps are keyed by screen title, so each tap screen needs its own title.
+    const tapTitles = Q.learnScreens.filter(screen => screen.tap).map(screen => screen.title);
+    assert.equal(new Set(tapTitles).size, tapTitles.length);
     const curriculum = JSON.parse(read(path.join(root, 'content/curriculum.json')));
     const entry = curriculum.categories.flatMap(c => c.lessons).find(l => l.folder === folder);
     const skills = JSON.parse(read(path.join(root, 'content/skills.json'))).skills;

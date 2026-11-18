@@ -22,7 +22,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 8,
+            version: 9,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, lineValue: 67, explored: false, taps: {} }),
             upgrade: () => null
         });
@@ -131,19 +131,16 @@
 
     async function mountTryIt(root) {
         const questions = examples();
-        const { roadMiles, roadWidget } = window.Rounding;
-        const exampleOffset = roadMiles.length + 1;
-        const roadCardId = index => `road-${index + 1}`;
+        const exampleOffset = 1;
         const cardId = index => `example-${index + 1}`;
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 6,
+            version: 8,
             initial: () => ({
                 // intro: the number line slider shown before the first example.
                 intro: true, lineValue: 67, explored: false,
-                roadScreen: null, roadReached: 0, roadSolved: {},
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
             }),
@@ -154,7 +151,7 @@
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
-                const screen = state.intro ? 0 : state.roadScreen !== null ? state.roadScreen + 1 : state.screen + exampleOffset;
+                const screen = state.intro ? 0 : state.screen + exampleOffset;
                 api.setSlideHash(`try-it-${screen + 1}`, { replace: true });
             }
         }
@@ -162,7 +159,6 @@
         function showTryItScreen(screen) {
             section.update(state => {
                 state.intro = screen === 0;
-                state.roadScreen = screen > 0 && screen < exampleOffset ? screen - 1 : null;
                 if (screen >= exampleOffset) state.screen = screen - exampleOffset;
             });
             render();
@@ -176,9 +172,8 @@
         }
 
         function reportProgress() {
-            const roads = Object.values(state.roadSolved).filter(Boolean).length;
             const examples = state.index + Number(state.cards[cardId(state.index)]?.correct === true);
-            api.setSectionProgress('interactive', roads + examples, questions.length + roadMiles.length);
+            api.setSectionProgress('interactive', examples, questions.length);
         }
 
         function continueExample() {
@@ -217,34 +212,7 @@
             });
         }
 
-        function renderRoad(index) {
-            const questionId = roadCardId(index);
-            const { createQuestion } = window.Maths1to9LessonEngine;
-            // Reset this card's saved position and feedback while retaining its earned points.
-            api.setSectionReset('interactive', () => {
-                section.update(state => { delete state.cards[questionId]; });
-                render();
-            });
-            api.setSectionBack('interactive', { onClick: () => showTryItScreen(index) });
-            createQuestion(root, {
-                sectionId: 'interactive', questionId,
-                prompt: 'Drive the car to the nearer sign.',
-                input: 'custom', widget: roadWidget(roadMiles[index]),
-                scored: false, autoContinue: false,
-                onFeedback({ correct }) {
-                    if (!correct) return;
-                    section.update(state => { state.roadSolved[index] = true; });
-                    reportProgress();
-                },
-                onContinue() {
-                    section.update(state => { state.roadReached = Math.max(state.roadReached, index + 1); });
-                    showTryItScreen(index + 2);
-                }
-            }, section, api);
-            syncHash();
-        }
-
-        // Before the road game: move a number along the line and watch it round.
+        // Before the examples: move a number along the line and watch it round.
         function renderIntro() {
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
@@ -279,10 +247,6 @@
                 renderIntro();
                 return;
             }
-            if (state.roadScreen !== null) {
-                renderRoad(state.roadScreen);
-                return;
-            }
             api.setSectionReset('interactive', null);
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
@@ -292,7 +256,7 @@
             api.setSectionBack('interactive', {
                 onClick: () => {
                     if (state.screen > 0) showScreen(state.screen - 1);
-                    else showTryItScreen(roadMiles.length);
+                    else showTryItScreen(0);
                 }
             });
             if (state.finished) api.completeSection('interactive');
@@ -313,9 +277,7 @@
                 document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                 return;
             }
-            let furthest = 0;
-            if (state.roadReached === roadMiles.length) furthest = exampleOffset + state.furthestScreen;
-            else if (state.explored || state.roadReached > 0 || state.roadScreen !== null) furthest = state.roadReached + 1;
+            const furthest = state.explored ? exampleOffset + state.furthestScreen : 0;
             showTryItScreen(Math.min(screen, furthest));
         }
 

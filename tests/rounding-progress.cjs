@@ -28,7 +28,7 @@ const planned = [
     ...Array.from({ length: 5 }, (_, i) => ({ id: `answer:final-check-${i + 1}`, kind: 'answer', completed: false }))
 ];
 const tracker = engine.createScoreTracker(planned);
-assert.equal(tracker.getScore().maximumPoints, 315);
+assert.equal(tracker.getScore().maximumPoints, 290);
 assert.equal(tracker.getScore().points, 0);
 tracker.record({ id: 'section:explanation', kind: 'learn', completed: true });
 assert.equal(tracker.getScore().points, 5);
