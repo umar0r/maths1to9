@@ -118,7 +118,7 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
     assert.equal(slideB.answer, '53,481 ≈ 53,500');
     // The wrong-tap hints and the arrow notes say what they must.
     assert.equal(slideA.tapHint, 'The hundreds digit is the third from the right.');
-    assert.equal(slideB.notes.digit, 'The next digit is 8. That is 5 or more, so round up.');
+    assert.equal(slideB.notes.digit, 'The digit next to the 4 is 8. 8 is 5 or more, so round up.');
     assert.equal(slideB.notes.nearest, 'So 53,481 is closer to 53,500.');
     for (const q of questions.filter(q => q.number)) {
         const expected = keyDigits(q.number, q.kind, q.accuracy);
