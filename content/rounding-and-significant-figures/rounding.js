@@ -561,17 +561,69 @@
             ]);
         }
         if (explore) {
-            const sliderLabel = text(host, 'label', 'Move the number from 60 to 70.');
-            sliderLabel.htmlFor = 'number-slider';
-            const slider = document.createElement('input');
-            Object.assign(slider, { id: 'number-slider', type: 'range', min: '60', max: '70', step: '1', value: String(value), disabled: readOnly });
-            slider.setAttribute('aria-label', 'Number on the line');
-            slider.addEventListener('input', () => {
-                const number = Number(slider.value);
+            // Drag the dot along the line (mouse or finger), or use the ← and →
+            // buttons under it, or the arrow keys. It snaps to whole steps.
+            let current = value;
+            const svg = line.querySelector('svg');
+            const move = number => {
+                number = Math.max(base, Math.min(top, number));
+                if (readOnly || number === current) return;
+                current = number;
                 onChange(number);
                 update(number);
+                paintControls();
+            };
+            const numberAt = clientX => {
+                const box = svg.getBoundingClientRect();
+                const point = (clientX - box.left) / box.width * 660;
+                return tick(Math.round((point - edge) / (660 - 2 * edge) * 10));
+            };
+            line.classList.add('rounding-line--drag');
+            line.setAttribute('role', 'slider');
+            line.tabIndex = readOnly ? -1 : 0;
+            line.setAttribute('aria-valuemin', String(base));
+            line.setAttribute('aria-valuemax', String(top));
+            svg.addEventListener('pointerdown', event => {
+                if (readOnly || event.button !== 0) return;
+                svg.setPointerCapture(event.pointerId);
+                line.classList.add('is-dragging');
+                move(numberAt(event.clientX));
+                const drag = moveEvent => move(numberAt(moveEvent.clientX));
+                const end = () => {
+                    line.classList.remove('is-dragging');
+                    svg.removeEventListener('pointermove', drag);
+                    svg.removeEventListener('pointerup', end);
+                    svg.removeEventListener('pointercancel', end);
+                };
+                svg.addEventListener('pointermove', drag);
+                svg.addEventListener('pointerup', end);
+                svg.addEventListener('pointercancel', end);
             });
-            host.append(slider);
+            line.addEventListener('keydown', event => {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') move(tick((current - base) / step - 1));
+                else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') move(tick((current - base) / step + 1));
+                else return;
+                event.preventDefault();
+            });
+            // The buttons sit straight under the line, above the rounded answer.
+            const controls = document.createElement('div');
+            controls.className = 'rounding-line-controls';
+            line.after(controls);
+            const moveButton = (arrow, name, change) => {
+                const button = text(controls, 'button', arrow, 'rounding-line-move');
+                button.type = 'button';
+                button.setAttribute('aria-label', name);
+                button.addEventListener('click', () => move(tick((current - base) / step + change)));
+                return button;
+            };
+            const down = moveButton('←', 'Move the number down', -1);
+            const up = moveButton('→', 'Move the number up', 1);
+            function paintControls() {
+                line.setAttribute('aria-valuenow', String(current));
+                down.disabled = readOnly || current <= base;
+                up.disabled = readOnly || current >= top;
+            }
+            paintControls();
         }
         return line;
     }

@@ -118,11 +118,49 @@
     }
 }
 
-#number-slider {
-    display: block;
-    width: 100%;
-    min-height: 44px;
-    accent-color: var(--primary);
+/* The line you drag the dot along, with ← and → buttons under it. A sideways
+   drag moves the dot; an up-and-down swipe still scrolls the page. */
+.rounding-line--drag svg {
+    cursor: grab;
+    touch-action: pan-y;
+}
+
+.rounding-line--drag.is-dragging svg {
+    cursor: grabbing;
+}
+
+.rounding-line--drag:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.rounding-line-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: .75rem;
+}
+
+.rounding-line-move {
+    width: 3.4rem;
+    height: 3.4rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    background: var(--surface-soft);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.rounding-line-move:hover:not(:disabled) {
+    border-color: var(--primary);
+}
+
+.rounding-line-move:disabled {
+    opacity: .4;
+    cursor: default;
 }
 
 .rounding-examples {
