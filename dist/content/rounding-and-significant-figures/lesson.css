@@ -56,52 +56,307 @@
     overflow-wrap: anywhere;
 }
 
+/* Drawn like the negative numbers line: grey line, every number labelled,
+   a blue dot. No boxes or highlights behind the numbers. */
 .rounding-line {
-    position: relative;
-    height: 4px;
-    margin: 4rem 1.25rem 3rem;
-    background: var(--primary);
+    width: 100%;
+    margin-block: 1.5rem;
 }
 
-.rounding-tick {
-    position: absolute;
-    top: -8px;
-    height: 20px;
-    border-left: 2px solid var(--primary);
-}
-
-.rounding-tick > span {
-    position: absolute;
-    top: 25px;
-    left: 0;
-    transform: translateX(-50%);
-    font-weight: 800;
-}
-
-.rounding-tick.is-nearest > span {
-    color: var(--success-dark);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-}
-
-.rounding-marker {
-    position: absolute;
-    bottom: 14px;
-    transform: translateX(-50%);
-    color: var(--primary-dark);
-    font-weight: 800;
-}
-
-.rounding-marker::after {
-    content: '▼';
-    display: block;
-    text-align: center;
-    font-size: .75rem;
-}
-
-#number-slider {
+.rounding-line svg {
     display: block;
     width: 100%;
-    min-height: 44px;
-    accent-color: var(--primary);
+    overflow: visible;
+}
+
+.rounding-line .rounding-axis {
+    stroke: #898981;
+    stroke-width: 1.5;
+}
+
+.rounding-line .rounding-tick {
+    stroke: currentColor;
+    stroke-width: 1;
+}
+
+.rounding-line .rounding-value {
+    text-anchor: middle;
+    font-family: inherit;
+    font-size: 12px;
+    fill: currentColor;
+}
+
+.rounding-line .rounding-tick.is-landmark {
+    stroke-width: 2.5;
+}
+
+.rounding-line .rounding-value.is-landmark {
+    font-weight: 900;
+    fill: #7c46c4;
+}
+
+.rounding-line .rounding-value.is-key {
+    fill: #287fd1;
+    font-weight: 800;
+}
+
+.rounding-line .rounding-dot {
+    fill: #287fd1;
+    stroke: white;
+    stroke-width: 2;
+}
+
+@media (max-width: 600px) {
+    /* Reach across the card's 20 px padding, as the negative numbers line does. */
+    .rounding-line {
+        width: calc(100% + 40px);
+        margin-inline: -20px;
+    }
+
+    .rounding-line .rounding-value {
+        font-size: 17px;
+    }
+}
+
+/* The line you drag the dot along, with ← and → buttons under it. A sideways
+   drag moves the dot; an up-and-down swipe still scrolls the page. */
+.rounding-line--drag svg {
+    cursor: grab;
+    touch-action: pan-y;
+}
+
+.rounding-line--drag.is-dragging svg {
+    cursor: grabbing;
+}
+
+.rounding-line--drag:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.rounding-line-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: .75rem;
+}
+
+.rounding-line-move {
+    width: 3.4rem;
+    height: 3.4rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    background: var(--surface-soft);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.rounding-line-move:hover:not(:disabled) {
+    border-color: var(--primary);
+}
+
+.rounding-line-move:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.rounding-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: .75rem;
+    margin: 1.5rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rounding-example {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: 1rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.rounding-example__label {
+    color: var(--text-muted);
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.rounding-example__sum {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .2rem .6rem;
+    font-size: clamp(1.4rem, 5vw, 1.8rem);
+    font-weight: 800;
+}
+
+.rounding-example__sign {
+    color: var(--primary);
+}
+
+.rounding-example__to {
+    color: var(--primary-dark);
+}
+
+/* A longer sum (48 × 21 ≈ 50 × 20 = 1,000) wraps between its two sides,
+   never inside one. */
+.rounding-example__from,
+.rounding-example__to {
+    white-space: nowrap;
+}
+
+/* The answer under the number line: a small box around the text, centred. */
+.significant-equation.rounding-line-answer {
+    width: fit-content;
+    margin-inline: auto;
+    padding: .5rem 1rem;
+    font-size: 1.15rem;
+}
+
+/* Short notes with arrows pointing at the number line (see drawArrows in rounding.js). */
+.rounding-notes {
+    position: relative;
+}
+
+.rounding-note {
+    width: fit-content;
+    max-width: 45%;
+    margin: 0;
+}
+
+/* Both notes sit under the numbers; the second sits lower and further right,
+   so the first note's arrow passes above it. */
+.rounding-note--digit {
+    margin-top: 2rem;
+}
+
+.rounding-note--above {
+    margin-bottom: .25rem;
+}
+
+.rounding-note--nearest {
+    margin-top: .5rem;
+    margin-bottom: 1rem;
+}
+
+/* Leave a gutter on each side for the arrows back to the line ends. */
+.rounding-context__step {
+    width: fit-content;
+    margin: 1rem clamp(2.5rem, 8vw, 5.5rem);
+}
+
+.rounding-notes__arrows {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke: #334155;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Learn uses the digit boxes and the number-line ends as answer targets. */
+button.significant-digit {
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.rounding-end {
+    cursor: pointer;
+}
+
+.rounding-end rect {
+    fill: transparent;
+}
+
+.rounding-end:focus-visible {
+    outline: none;
+}
+
+.rounding-end:focus-visible rect {
+    stroke: var(--primary);
+    stroke-width: 3px;
+}
+
+@media (max-width: 600px) {
+    .rounding-line .rounding-value--minor {
+        display: none;
+    }
+}
+
+/* Learn 4: the thousands comma between the digit boxes, and the two notes
+   that point up at the boxes (see drawArrows in rounding.js). */
+.significant-comma {
+    align-self: center;
+    font-size: clamp(1.3rem, 5vw, 2rem);
+    font-weight: 800;
+}
+
+.rounding-digit .significant-digits {
+    margin-bottom: 1.25rem;
+}
+
+.rounding-digit .rounding-note {
+    max-width: min(260px, 45%);
+}
+
+.rounding-digit .rounding-note--keep {
+    margin-top: 0;
+    margin-left: 0;
+}
+
+.rounding-digit .rounding-note--look {
+    margin-top: .75rem;
+    margin-left: 0;
+}
+
+/* Try it: the two halves of the line, each in its own coloured box. */
+.rounding-line .rounding-half {
+    stroke-width: 2;
+}
+
+.rounding-line .rounding-half--lower {
+    fill: #e0ecff;
+    stroke: #93b4f5;
+}
+
+.rounding-line .rounding-half--upper {
+    fill: #fdf0d5;
+    stroke: #e6b960;
+}
+
+.rounding-line .rounding-half-button {
+    cursor: pointer;
+}
+
+/* The axis, ticks and numbers sit on top of the boxes; let taps through them
+   so a tap anywhere on a half counts. */
+.rounding-tryit .rounding-line path,
+.rounding-tryit .rounding-line text {
+    pointer-events: none;
+}
+
+.rounding-line .rounding-half-button:hover .rounding-half,
+.rounding-line .rounding-half-button:focus-visible .rounding-half {
+    stroke-width: 4;
+}
+
+.rounding-line .rounding-half-button:focus {
+    outline: none;
+}
+
+/* Try it: the digit cards, the line and its notes are one block, so each
+   note's arrow can point up at a card or a label. */
+.rounding-tryit {
+    margin-block: .5rem 1rem;
 }

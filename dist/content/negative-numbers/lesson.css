@@ -1099,3 +1099,5 @@
     color: var(--nn-blue);
     font-weight: 800;
 }
+
+.negative-learned { display: grid; gap: .9rem; margin: 1.25rem 0 0; padding-left: 1.25rem; line-height: 1.5; }

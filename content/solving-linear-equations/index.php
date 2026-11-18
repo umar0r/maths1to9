@@ -28,7 +28,7 @@ $pageTitle = 'Solving linear equations';
         crossorigin
     >
 
-    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=62">
     <link rel="stylesheet" href="./lesson.css?v=1">
 </head>
 
@@ -67,6 +67,6 @@ $pageTitle = 'Solving linear equations';
     <script src="./equations.js?v=2"></script>
     <script src="./questions.js?v=2"></script>
     <script src="./interactive.js?v=13"></script>
-    <script src="../../assets/js/lesson-engine.js?v=77"></script>
+    <script src="../../assets/js/lesson-engine.js?v=80"></script>
 </body>
 </html>

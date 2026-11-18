@@ -164,6 +164,10 @@
                 badge.textContent = 'Continue';
             }
 
+            if (record || assessedSkills.length > 0) {
+                addResetButton(card, record);
+            }
+
             const meta = card.querySelector('.lesson-card__meta');
 
             if (meta) {
@@ -179,6 +183,190 @@
 
         renderDailyReview(bySkill);
     }
+
+    /* ------------------------------------------------------------------ *
+     * Reset a lesson
+     *
+     * A ↺ button beside the → arrow on any card with saved work.
+     * It clears everything the lesson saved: its progress record
+     * (position, answers, score), the evidence for its skills,
+     * the engine's card-reset flags and any keys the lesson keeps
+     * itself (e.g. "negative-numbers-dot:…"). It asks first in a
+     * notification, then reloads so every badge and Daily Review
+     * card is redrawn.
+     * ------------------------------------------------------------------ */
+
+    const RESET_ICON = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.25"
+            stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
+            <path d="M4 10a8 8 0 1 1 1 7 M4 4v6h6"/>
+        </svg>`;
+
+    function lessonSlugFor(card, record) {
+        if (typeof record?.slug === 'string' && record.slug !== '') {
+            return record.slug;
+        }
+
+        const parts = normalisePath(new URL(card.href).pathname)
+            .split('/')
+            .filter(Boolean);
+
+        return parts[parts.length - 1] ?? '';
+    }
+
+    function addResetButton(card, record) {
+        const arrow = card.querySelector('.lesson-card__arrow');
+        const title = card
+            .querySelector('.lesson-card__title')
+            ?.textContent.trim() ?? 'this lesson';
+
+        if (!arrow) {
+            return;
+        }
+
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = 'lesson-card__reset';
+        button.title = 'Reset lesson';
+        button.setAttribute('aria-label', `Reset ${title}`);
+        button.dataset.slug = lessonSlugFor(card, record);
+        button.dataset.title = title;
+        button.innerHTML = RESET_ICON;
+        arrow.before(button);
+    }
+
+    function removeKeys(storage, matches) {
+        try {
+            const keys = [];
+
+            for (let i = 0; i < storage.length; i += 1) {
+                const key = storage.key(i);
+
+                if (key && matches(key)) {
+                    keys.push(key);
+                }
+            }
+
+            keys.forEach((key) => storage.removeItem(key));
+        } catch {
+            /* Storage unavailable: nothing to clear. */
+        }
+    }
+
+    async function resetLesson(slug, skillIds) {
+        await progressApi.clearLessonProgress(slug);
+        await Promise.all(
+            skillIds.map(
+                (skillId) => progressApi.clearSkillProgress(skillId)
+            )
+        );
+
+        /* Keys a lesson saves for itself start "<slug>-word:". */
+        removeKeys(
+            window.localStorage,
+            (key) => key.startsWith(`${slug}-`) &&
+                /^[a-z]+:/.test(key.slice(slug.length + 1))
+        );
+        removeKeys(
+            window.sessionStorage,
+            (key) => key.startsWith(`maths1to9-reset:${slug}:`)
+        );
+
+        window.location.reload();
+    }
+
+    /* Asks first in the same notification bubble lessons use for
+     * feedback: top right on a computer, along the bottom on a
+     * phone. Clicking it, clicking elsewhere or Escape closes it. */
+    let openNotice = null;
+
+    function closeNotice() {
+        openNotice?.remove();
+        openNotice = null;
+    }
+
+    function showResetNotice(button) {
+        const card = button.closest('.lesson-card');
+        const slug = button.dataset.slug ?? '';
+
+        if (!card || slug === '') {
+            return;
+        }
+
+        closeNotice();
+
+        const skillIds = (card.dataset.skills ?? '')
+            .split(',')
+            .map((skillId) => skillId.trim())
+            .filter(Boolean);
+        const notice = document.createElement('div');
+        const text = document.createElement('p');
+        const confirm = document.createElement('button');
+
+        notice.className =
+            'question-feedback question-feedback--bubble ' +
+            'question-feedback--calm is-visible is-correct home-notice';
+        notice.setAttribute('role', 'alertdialog');
+        notice.setAttribute('aria-label', 'Reset lesson');
+        notice.style.setProperty(
+            '--notice-top',
+            `${(document.querySelector('.home-header')
+                ?.getBoundingClientRect().bottom ?? 0) + 16}px`
+        );
+
+        text.textContent =
+            `Start ${button.dataset.title} again from the beginning? ` +
+            'Your answers and score for this lesson will be cleared.';
+
+        confirm.type = 'button';
+        confirm.className = 'cta-button home-notice__button';
+        confirm.textContent = 'Start again';
+        confirm.addEventListener('click', (event) => {
+            event.stopPropagation();
+            confirm.disabled = true;
+            resetLesson(slug, skillIds);
+        });
+
+        notice.addEventListener('click', closeNotice);
+        notice.append(text, confirm);
+        document.body.append(notice);
+        openNotice = notice;
+        confirm.focus();
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeNotice();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (
+            openNotice &&
+            !openNotice.contains(event.target) &&
+            !event.target.closest?.('.lesson-card__reset')
+        ) {
+            closeNotice();
+        }
+    });
+
+    /* One listener covers catalogue cards and their Daily Review
+     * copies. The button sits inside the card link, so stop the
+     * click from opening the lesson. */
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest?.('.lesson-card__reset');
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        showResetNotice(button);
+    });
 
     /* ------------------------------------------------------------------ *
      * Daily Review

@@ -195,6 +195,20 @@ On load, look at what is saved under the key:
 Pilot: the LCM Try it, with an `upgrade` from its current saved format. Test
 with a save made before the change: it must come back as it was.
 
+
+## Hiding the answer line on finished cards
+
+When a pupil goes back to a card they have answered, the engine shows their
+answer and a mark (for example "760 ✓") under the card, above the feedback.
+The feedback box already gives the answer, so a lesson can turn the line off
+in `lesson.json`:
+
+```json
+"hide_saved_answer": true
+```
+
+Place value and Negative numbers turn it off. Practice cards never show it.
+
 ## 3. Back button
 
 A subtle way to go back one screen: a small "‹ Back" at
@@ -378,7 +392,9 @@ const card = Maths1to9Lesson.createQuestion(container, {
     readOnly: false,              // true: show the finished card, no input
     lockedReview: false,          // true: a read-only card keeps its choices or box, locked
     onFeedback: (result) => {},   // optional: lesson flashes its own visual
-    onContinue: () => {}          // lesson moves on (next question, next step)
+    onContinue: () => {},         // lesson moves on (next question, next step)
+    autoContinue: true            // Try it only: false keeps the right-answer
+                                  // feedback up until the pupil presses Continue
 });
 
 card.result();   // a row for renderResults
@@ -492,7 +508,7 @@ Plain cards without `tolerance` are unchanged.
 ### Saving, going back and finished cards
 
 - `hint` is the hint text itself, shown under the feedback (clarified 2026-10-11).
-- Cards save into the section state opened with `useSectionState(sectionId, …)`, so for a section with cards the storage key must be the section id. `upgrade` only sees saves under that key, so if a lesson's old saves use a different key, stop and ask before moving that section onto cards.
+- Cards usually save into `useSectionState(sectionId, …)`. In a parts lesson, Try it cards use `interactive:<partId>`. `upgrade` sees saves under the selected key, so if an existing lesson uses a different key, stop and ask before moving that section onto cards.
 - Saves its own state (selection, rejected options, typed value, phase,
   `firstCorrect`, `correct`) inside the section state from step 2, under its
   `questionId`. A reload restores the exact phase, feedback and main button.
@@ -501,7 +517,7 @@ Plain cards without `tolerance` are unchanged.
   A Practice card, or any card with `lockedReview: true`, instead redraws the
   choices or answer box, locked, with the pupil's answer marked. Check cards
   pass `lockedReview: true` so going Back shows the real question
-  (AGENTS.md rule 24).
+  (AGENTS.md rule 25).
 - `onFeedback(result)` receives `{ correct, firstCorrect, option or value,
   hint }`, so a lesson can flash tiles or move part of its own picture. The
   card doesn't wait for the lesson; any pause before Continue is the
@@ -714,6 +730,152 @@ follow the same Practise again rules.
 Pilot: the HCF Practice, with an `upgrade` from its current saved format,
 then algebraic-expressions Practice (generated multiple choice that already
 keeps pupils' work, so the behaviour to match is known).
+
+## Parts lessons
+
+Use parts when a topic needs a separate Learn, Try it and Practice for each
+small idea. The engine shows those three sections for each part in order,
+then Mixed Practice and Check for the whole lesson. The stage bar shows one
+button per part, then **Mix** and **Check**. A stage unlocks when the pupil
+reaches its first section.
+
+### Lesson JSON
+
+Use two to five parts. Give each part a short, one-word label of about eight
+characters or fewer so up to seven stage buttons fit at 375 px. Use distinct
+ids made of lowercase letters, digits and hyphens. The sequence `--` is
+reserved for section ids.
+
+```json
+{
+  "slug": "apples-and-pears",
+  "title": "Apples and pears",
+  "layout": "parts",
+  "navigation": { "back_button": true },
+  "parts": [
+    {
+      "id": "apples",
+      "label": "Apples",
+      "explanation": { "hide_eyebrow": true, "hide_heading": true },
+      "interactive": { "hide_eyebrow": true, "hide_heading": true },
+      "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+    },
+    {
+      "id": "pears",
+      "label": "Pears",
+      "explanation": { "hide_eyebrow": true, "hide_heading": true },
+      "interactive": { "hide_eyebrow": true, "hide_heading": true },
+      "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+    }
+  ],
+  "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 4 },
+  "comparison": {
+    "hide_eyebrow": true,
+    "hide_heading": true,
+    "questions": [{ "prompt": "How do you find the total when you join two groups?" }]
+  }
+}
+```
+
+This example shows the configuration shape. Supply your full Check question
+definitions and use the lesson's usual assessment mapping for its one skill.
+Each part needs all three config blocks. The top-level `question_bank` is
+Mixed Practice and `comparison` is Check. The engine builds the order and
+stage bar, so leave out top-level `explanation`, `interactive`,
+`section_order` and `navigation_stages`.
+
+The engine shows a lesson-load error for a missing or malformed `parts`
+array, fewer than two parts, invalid or repeated ids, missing labels or
+section blocks, missing Mixed Practice, or a missing or empty Check. The
+error names the bad part or top-level field where applicable. A supplied
+top-level field that the parts layout forbids also triggers an error.
+
+### Section ids, routes and saves
+
+| Section | Section id | Slide hashes | State key |
+| --- | --- | --- | --- |
+| Part Learn | `explanation--apples` | `apples-learn-1`, `apples-learn-2`, … | `learn:apples` |
+| Part Try it | `interactive--apples` | `apples-try-it-1`, `apples-try-it-2`, … | `interactive:apples` |
+| Part Practice | `question-bank--apples` | `apples-practice-1`, `apples-practice-2`, … | `question-bank--apples` |
+| Mixed Practice | `question-bank` | `practice-1`, `practice-2`, … | `question-bank` |
+| Check | `comparison` | `check-1`, `check-2`, …, `summary` | `comparison` |
+
+Use the full section id for gating, actions, progress, Back and Reset. A call
+to `api.gateSection(id)` or `api.completeSection(id)` emits the corresponding
+`maths1to9:section-gate` or `maths1to9:section-complete` event with
+`{ sectionId, kind, part }`. For example, `interactive--apples` has kind
+`interactive` and part `apples`. Mixed Practice and Check have `part: null`.
+
+`api.getSection(id)` returns `{ id, kind, part, config }`. The `config` is the
+authored JSON block for that section. Each part has a Learn section
+`#lesson-section-explanation--<partId>`, a Try it root
+`<slug>-interactive--<partId>`, and a Practice root
+`<slug>-questions--<partId>`. Mixed Practice and Check retain
+`<slug>-questions` and `<slug>-comparison`.
+
+### Writing the part modules
+
+Register the lesson's Try it mount function under its slug. The engine calls
+it once for each part, passing that part's root and section descriptor. Mount
+the matching Learn module there too. The Apples and Pears fixture uses this
+pattern in [interactive.js](../tests/fixtures/parts-lesson/interactive.js).
+
+```js
+window.Maths1to9Interactives ??= {};
+window.Maths1to9Interactives[slug] = async (root, section) => {
+    const api = window.Maths1to9Lesson;
+    const part = content[section.config.fruit ?? section.part];
+    await mountLearn(api, section.part, part.learn);
+    await mountTryIt(api, root, section, part.examples);
+};
+```
+
+Inside each mount function, open its own state with
+``api.useSectionState(`learn:${part}`, options)`` or
+``api.useSectionState(`interactive:${part}`, options)``. Register the numbered
+slide hashes with `api.registerHashRoute`. Call `api.goToSection(id)` in the
+route handler and return `false` if the section is locked. Clamp the requested
+slide to the saved furthest slide. Register each slide's Back and Reset
+handlers using the full id, and use `api.setSlideHash` to sync the visible
+slide. On the last Try it card, complete the section and let the footer
+continue straight to that part's Practice.
+
+Register the question-set mount function in
+`window.Maths1to9QuestionSets[slug]`. The engine waits for the part mounts
+and question sets before dispatching `maths1to9:lesson-rendered` and opening
+the hash. Call `api.runQuestionSet` for each Practice block and for Check. It
+mounts into the correct container and provides the Practice and Check
+hashes and save keys. For each Practice block, use its own seeded generator
+and read the count from its config. The fixture uses this call in
+[questions.js](../tests/fixtures/parts-lesson/questions.js).
+
+```js
+await api.runQuestionSet(id, {
+    version: 1, count: config.session_length,
+    pick: random => pickPractice(part, config.session_length, random, helpers),
+    question: (item, random) => practiceQuestion(item, random, helpers)
+});
+```
+
+Practice marks answers after **Check**. A correct Practice answer gets
+confetti, a correct Check answer gets the rocket, and Try it uses the cream
+feedback bubble. Part Practice ends on its last card with **Continue**.
+Mixed Practice shows **Start Check** on its last card. Check ends with a
+summary and **All lessons**. Back from the next part opens the previous
+part's last Practice card with the saved answer.
+
+### Scoring
+
+The engine reserves completion activities by full section id. Reserve any
+guided Learn and Try it activities through the usual score activity config
+or `api.setSectionProgress(id, completed, total)`. Each Practice block
+reserves `session_length` answers, and Check reserves one per question.
+A part Practice answer uses
+`question-bank--<partId>:<session>:<n>`. This maps to a score slot for that
+part and question number, so another session, Back or reload cannot earn
+the same slot twice. Keep all Practice and Check question types mapped to
+the lesson's single skill. The maximum is the sum of the reserved
+activities across all sections.
 
 ## Tests
 

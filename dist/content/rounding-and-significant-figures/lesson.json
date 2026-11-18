@@ -1,8 +1,8 @@
 {
     "id": "rounding-01",
     "slug": "rounding-and-significant-figures",
-    "title": "Rounding",
-    "subtitle": "Round whole numbers and decimals, one step at a time.",
+    "title": "Rounding whole numbers",
+    "subtitle": "Make numbers simpler, so they're easier to use in estimates.",
     "navigation": {
         "back_button": true
     },
@@ -11,39 +11,52 @@
             "nearest-ten": "round-decimal-places",
             "halfway-hundred": "round-decimal-places",
             "nearest-thousand": "round-decimal-places",
-            "one-decimal": "round-decimal-places",
-            "two-decimals": "round-decimal-places",
-            "decimal-zero": "round-decimal-places",
-            "decimal-carry": "round-decimal-places",
+            "big-hundred": "round-decimal-places",
+            "big-thousand": "round-decimal-places",
             "keep-digit": "round-decimal-places",
             "deciding-digit": "round-decimal-places",
+            "decide-digit": "round-decimal-places",
             "nearest": "round-decimal-places",
-            "decimal": "round-decimal-places",
-            "error": "round-decimal-places",
-            "whole-significant": "round-significant-figures",
-            "small-significant": "round-significant-figures",
-            "sig": "round-significant-figures",
-            "sig-keep": "round-significant-figures",
-            "sig-decider": "round-significant-figures",
+            "budget": "round-in-context",
+            "stock-first": "round-in-context",
+            "spend-first": "round-in-context",
+            "leftover": "round-in-context",
+            "started-block": "round-in-context",
+            "more-than": "round-in-context",
+            "change": "round-in-context",
+            "doubling": "round-in-context",
+            "saving": "round-in-context",
+            "full-packets": "round-in-context",
+            "packs-days": "round-in-context",
+            "coverage": "round-in-context",
             "path-context": "round-in-context",
-            "context": "round-in-context"
+            "round-up": "round-in-context",
+            "full-groups": "round-in-context",
+            "containers": "round-in-context",
+            "context": "round-in-context",
+            "method": "round-decimal-places"
         }
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Round whole numbers and decimals"
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "title": "Round whole numbers"
     },
     "interactive": {
         "eyebrow": "Try it",
+        "hide_eyebrow": true,
+        "hide_heading": true,
         "title": "Choose the digits, then round",
         "intro": ""
     },
     "question_bank": {
         "hide_heading": true,
         "eyebrow": "Practice",
+        "hide_eyebrow": true,
         "title": "Practise rounding",
         "intro": "",
-        "session_length": 6
+        "session_length": 10
     },
     "section_order": [
         "explanation",
@@ -83,6 +96,7 @@
     ],
     "comparison": {
         "eyebrow": "Check",
+        "hide_eyebrow": true,
         "title": "Check what you have learnt",
         "intro": "",
         "questions": [
@@ -90,16 +104,10 @@
                 "type": "context"
             },
             {
-                "type": "decimal"
+                "type": "method"
             },
             {
-                "type": "sig"
-            },
-            {
-                "type": "error"
-            },
-            {
-                "type": "context"
+                "type": "nearest"
             }
         ],
         "summary": {
@@ -114,46 +122,6 @@
         },
         {
             "id": "step:interactive:1",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:2",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:3",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:4",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:5",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:6",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:7",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:8",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:9",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:10",
-            "kind": "guided"
-        },
-        {
-            "id": "step:interactive:11",
             "kind": "guided"
         },
         {

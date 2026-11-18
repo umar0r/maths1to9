@@ -27,13 +27,13 @@ $pageTitle = 'Negative numbers';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
-    <link rel="stylesheet" href="./lesson.css?v=78">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=62">
+    <link rel="stylesheet" href="./lesson.css?v=79">
 </head>
 
 <body
     data-lesson-id="<?= htmlspecialchars($lessonId, ENT_QUOTES, 'UTF-8') ?>"
-    data-lesson-src="./lesson.json?v=11"
+    data-lesson-src="./lesson.json?v=13"
 >
     <header class="site-header">
         <div class="site-header__inner">
@@ -68,10 +68,10 @@ $pageTitle = 'Negative numbers';
     <script src="./negative-numbers.js?v=46"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=28"></script>
-    <script src="./interactive.js?v=103"></script>
+    <script src="./questions.js?v=30"></script>
+    <script src="./interactive.js?v=104"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=77"></script>
+    <script src="../../assets/js/lesson-engine.js?v=80"></script>
 </body>
 </html>

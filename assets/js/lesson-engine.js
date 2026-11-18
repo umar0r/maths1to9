@@ -3,6 +3,24 @@
  */
 (() => {
     'use strict';
+    function sectionKind(sectionId) {
+        if (typeof sectionId !== 'string') return sectionId;
+        const separator = sectionId.indexOf('--');
+        return separator === -1 ? sectionId : sectionId.slice(0, separator);
+    }
+
+    function sectionPart(sectionId) {
+        if (typeof sectionId !== 'string') return null;
+        const separator = sectionId.indexOf('--');
+        return separator === -1 ? null : sectionId.slice(separator + 2);
+    }
+
+    function dispatchSectionEvent(name, sectionId) {
+        document.dispatchEvent(new CustomEvent(`maths1to9:section-${name}`, {
+            detail: { sectionId, kind: sectionKind(sectionId), part: sectionPart(sectionId) }
+        }));
+    }
+
     function escapeHtml(value) {
         const entities = {
             '&': '&amp;',
@@ -250,7 +268,7 @@
     function normaliseScoreId(id, reservedAnswerIds) {
         const legacyId = id.replace(/^answer:[^:]+:(question-bank:|final-check-)/, 'answer:$1');
         const fixedSlot = legacyId
-            .replace(/^answer:question-bank:[^:]+:(\d+)$/, 'answer:question-bank:$1')
+            .replace(/^(answer:question-bank(?:--[a-z0-9-]+)?):[^:]+:(\d+)$/, '$1:$2')
             .replace(/^answer:comparison:(?:[^:]+:)?(\d+)$/, 'answer:final-check-$1');
         // Three-part IDs can also mean question + step. Only fold them into
         // a fixed slot when the lesson explicitly reserves that destination.
@@ -365,8 +383,9 @@
     // The one place that decides how feedback looks. Learn keeps the plain
     // box; Try it gets a calm cream bubble; Practice and Check a bright one.
     function feedbackLook(sectionId) {
-        if (sectionId === 'interactive') return ' question-feedback--bubble question-feedback--calm';
-        if (sectionId === 'question-bank' || sectionId === 'comparison') return ' question-feedback--bubble';
+        const kind = sectionKind(sectionId);
+        if (kind === 'interactive') return ' question-feedback--bubble question-feedback--calm';
+        if (kind === 'question-bank' || kind === 'comparison') return ' question-feedback--bubble';
         return '';
     }
 
@@ -581,6 +600,7 @@
     // Dependencies are explicit so the cycle can also be tested without the engine UI.
     function createQuestion(container, config, section, api) {
         const { sectionId, questionId } = config;
+        const kind = sectionKind(sectionId);
         const isReplay = config.replay === true;
         if (!section?.state || !sectionId || !questionId) {
             throw new TypeError('createQuestion requires an opened section state and stable ids.');
@@ -682,13 +702,14 @@
         // answer marked. A custom widget already draws the answer itself.
         // A Check card does the same when the lesson asks with lockedReview.
         const lockedCard = config.readOnly && !custom &&
-            (sectionId === 'question-bank' || config.lockedReview === true);
+            (kind === 'question-bank' || config.lockedReview === true);
         const article = document.createElement('article');
         article.className = config.readOnly ? 'question-card question-card--bare question-card--read-only'
             : 'question-card question-card--bare';
         const heading = resultText('h3', config.prompt, 'question-prompt');
         heading.dataset.screenHeading = '';
         article.append(heading);
+        if (config.part) article.dataset.part = config.part;
         container.replaceChildren(article);
         if (typeof config.figure === 'function') {
             const host = document.createElement('div');
@@ -712,7 +733,9 @@
         }
         if (config.readOnly && !lockedCard) {
             api.clearSectionAction(sectionId);
-            if (sectionId !== 'question-bank') {
+            // A lesson can turn off the "answer ✓" line under a finished
+            // card: its feedback box already says the answer.
+            if (kind !== 'question-bank' && api.getLesson?.().hide_saved_answer !== true) {
                 const row = result();
                 const answer = resultText('p', row.answer, 'retained-result__answer');
                 appendResultMark(answer, row);
@@ -799,7 +822,11 @@
         function setAction() {
             if (lockedCard) return;
             api.setSectionAction(sectionId, {
-                label: saved.phase === 'wrong' ? 'Try again' : saved.phase === 'correct' ? 'Continue' : 'Check',
+                /* A custom card with nothing to work out (tap to look, try and watch) can say
+                   Continue instead of Check through widget.checkLabel. */
+                label: saved.phase === 'wrong' ? 'Try again'
+                    : saved.phase === 'correct' ? config.continueLabel ?? 'Continue'
+                    : config.checkLabel ?? (custom && widget.checkLabel ? widget.checkLabel : 'Check'),
                 disabled: saved.phase === 'answer' && (config.input === 'choice'
                     ? saved.selected === null : custom ? widget.isEmpty(saved.value) : empty()),
                 onClick: act
@@ -926,16 +953,17 @@
                 api.recordAssessment({ questionType: config.questionType, questionId, correct });
             }
             update();
-            if (correct && sectionId === 'question-bank') celebrate(feedback, 'confetti');
-            if (correct && sectionId === 'comparison') celebrate(feedback, 'rocket');
+            if (correct && kind === 'question-bank') celebrate(feedback, 'confetti');
+            if (correct && kind === 'comparison') celebrate(feedback, 'rocket');
             if (custom) handle.update({ value: saved.value, editable: false, phase: saved.phase });
             const outcome = { correct, firstCorrect: saved.firstCorrect, hint: saved.hint };
             if (config.input === 'choice') outcome.option = saved.selected;
             else outcome.value = custom || fields ? JSON.parse(JSON.stringify(value)) : value;
             if (isReplay) config.onReplayFeedback?.(outcome);
             else config.onFeedback?.(outcome);
-            // Try it: a right answer goes straight on, with no Continue press.
-            if (correct && sectionId === 'interactive' && config.onContinue) act();
+            // Try it: a right answer goes straight on, with no Continue press,
+            // unless the card keeps its feedback up (autoContinue: false).
+            if (correct && kind === 'interactive' && config.onContinue && config.autoContinue !== false) act();
         }
         update();
         return { result };
@@ -943,16 +971,16 @@
 
 
     function assessmentEvidenceId(slug, pageSession, questionId, practice) {
-        const match = questionId.match(/^question-bank:(\d+):(\d+)$/);
-        if (match && practice?.session === Number(match[1])) {
-            const seed = practice.seed ?? practice.items?.[Number(match[2]) - 1]?.seed;
+        const match = questionId.match(/^([^:]+):(\d+):(\d+)$/);
+        if (match && sectionKind(match[1]) === 'question-bank' && practice?.session === Number(match[2])) {
+            const seed = practice.seed ?? practice.items?.[Number(match[3]) - 1]?.seed;
             if (Number.isInteger(seed)) return `${slug}:practice:${seed}:${questionId}`;
         }
         return `${slug}:${pageSession}:${questionId}`;
     }
 
     function questionSetId(sectionId, session, index) {
-        return sectionId === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
+        return sectionKind(sectionId) === 'question-bank' ? `${sectionId}:${session}:${index + 1}` : `final-check-${index + 1}`;
     }
 
     // Archiving is shared with activities which need their own question renderer.
@@ -970,9 +998,13 @@
 
     async function runQuestionSet(sectionId, config, api, container) {
         if (!Number.isInteger(config.count) || config.count < 1) throw new TypeError('A question set needs a positive count.');
-        const isPractice = sectionId === 'question-bank';
+        const isPractice = sectionKind(sectionId) === 'question-bank';
+        const partsLesson = Array.isArray(api.getLesson().parts);
+        const part = sectionPart(sectionId);
+        const practicePrefix = part === null ? 'practice' : `${part}-practice`;
+        const practiceEndsOnCard = partsLesson && isPractice;
         const initialHash = window.location?.hash || '';
-        document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
+        dispatchSectionEvent('gate', sectionId);
         api.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
         function fresh(excluded = []) {
             const random = seededRandom(Math.floor(Math.random() * 4294967296));
@@ -992,16 +1024,26 @@
             version: config.version, initial: fresh, upgrade: config.upgrade
         });
         const saved = section.state;
-        const screenHash = screen => `${sectionId}-question-${screen + 1}`;
+        function screenHash(screen) {
+            if (!partsLesson) return `${sectionId}-question-${screen + 1}`;
+            if (isPractice) return `${practicePrefix}-${screen + 1}`;
+            return screen === config.count ? 'summary' : `check-${screen + 1}`;
+        }
         function syncHash() {
             if (api.getCurrentSection().id === sectionId) api.setSlideHash(screenHash(saved.screen), { replace: true });
         }
-        for (let screen = 0; screen <= config.count; screen++) {
+        const lastScreen = practiceEndsOnCard ? config.count - 1 : config.count;
+        for (let screen = 0; screen <= lastScreen; screen++) {
             api.registerHashRoute(screenHash(screen), () => {
-                if (api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) show(Math.min(screen, saved.index));
+                const unlock = !partsLesson && api.getLesson().navigation?.back_button !== true;
+                if (api.goToSection(sectionId, { moveFocus: false, unlock })) {
+                    show(Math.min(screen, saved.index));
+                } else {
+                    return false;
+                }
             });
         }
-        document.addEventListener('maths1to9:section-change', syncHash);
+        document.addEventListener('maths1to9:section-change', partsLesson ? () => queueMicrotask(syncHash) : syncHash);
         function question(item) { return config.question(item, seededRandom(item.seed)); }
         function rows(session) {
             return session.items.map((item, index) => {
@@ -1018,7 +1060,7 @@
             });
         }
         function complete() {
-            document.dispatchEvent(new CustomEvent('maths1to9:section-complete', { detail: { sectionId } }));
+            dispatchSectionEvent('complete', sectionId);
         }
         function focus() {
             const heading = container.querySelector('[data-screen-heading], h3');
@@ -1029,13 +1071,30 @@
             render();
             focus();
         }
+        function nextSection() {
+            const sections = api.getSections();
+            return sections[sections.findIndex(section => section.id === sectionId) + 1];
+        }
+        function leaveSet() {
+            if (config.onContinue) config.onContinue();
+            else if (nextSection()) api.continueSection();
+            else {
+                api.completeLesson();
+                window.location.assign(document.querySelector('.site-logo')?.href || '../../');
+            }
+        }
         function continueSet() {
             section.update(state => {
                 state.index++;
-                state.screen = state.index;
+                state.screen = Math.min(state.index, lastScreen);
                 state.finished = state.index === state.items.length;
             });
             if (saved.finished) complete();
+            if (saved.finished && practiceEndsOnCard) {
+                render();
+                leaveSet();
+                return;
+            }
             render();
             focus();
         }
@@ -1057,7 +1116,7 @@
                 const currentRows = rows(saved);
                 renderScorePanel(score, {
                     correct: currentRows.filter(row => row.firstCorrect === true).length, total: config.count,
-                    readyScore: isPractice ? api.getLesson().question_bank?.ready_score : undefined
+                    readyScore: isPractice ? (api.getSection?.(sectionId)?.config ?? api.getLesson().question_bank)?.ready_score : undefined
                 });
                 if (isPractice) {
                     const heading = resultText('h3', config.heading || 'Your practice results');
@@ -1107,19 +1166,10 @@
                     renderPracticeAnswerTable(results, rows(earlier));
                     container.append(details);
                 }
-                const sections = api.getSections();
-                const next = sections[sections.findIndex(section => section.id === sectionId) + 1];
+                const next = nextSection();
                 api.setSectionAction(sectionId, {
-                    label: next ? (isPractice && next.id === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons', onClick: () => {
-                        if (config.onContinue) config.onContinue();
-                        else {
-                            if (next) api.continueSection();
-                            else {
-                                api.completeLesson();
-                                window.location.assign(document.querySelector('.site-logo')?.href || '../../');
-                            }
-                        }
-                    }
+                    label: next ? (isPractice && sectionKind(next.id) === 'comparison' ? 'Start Check' : 'Continue') : 'All lessons',
+                    onClick: leaveSet
                 });
                 return;
             }
@@ -1129,8 +1179,11 @@
             container.append(cardRoot);
             const definition = question(item);
             const readOnly = saved.screen < saved.index;
+            const lastPracticeCard = practiceEndsOnCard && saved.screen === lastScreen;
+            const continueLabel = lastPracticeCard && part === null ? 'Start Check' : 'Continue';
             api.createQuestion(cardRoot, {
                 ...definition, sectionId, questionId: questionSetId(sectionId, saved.session, saved.screen),
+                ...(practiceEndsOnCard ? { checkLabel: 'Check', continueLabel } : {}),
                 scored: true, readOnly,
                 onFeedback: outcome => {
                     definition.onFeedback?.(outcome);
@@ -1139,18 +1192,345 @@
                 },
                 onContinue: continueSet
             });
-            if (readOnly) api.setSectionAction(sectionId, { label: 'Next', onClick: () => show(saved.screen + 1) });
+            if (readOnly) {
+                api.setSectionAction(sectionId, lastPracticeCard
+                    ? { label: continueLabel, onClick: leaveSet }
+                    : { label: 'Next', onClick: () => show(saved.screen + 1) });
+            }
         }
         const requested = Array.from({ length: config.count + 1 }, (_, screen) => screen)
             .find(screen => initialHash === `#${screenHash(screen)}`);
-        if (requested !== undefined && api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
+        if (!partsLesson && requested !== undefined &&
+            api.goToSection(sectionId, { moveFocus: false, unlock: api.getLesson().navigation?.back_button !== true })) {
             section.update(state => { state.screen = Math.min(requested, state.index); });
         }
         render();
         return { section, render };
     }
 
+    function planSections(lesson) {
+        if (lesson.layout === 'parts' || Object.hasOwn(lesson, 'parts')) {
+            return planPartSections(lesson);
+        }
+
+        const sections = [];
+
+        function add(id, label) {
+            sections.push({ id, kind: sectionKind(id), part: sectionPart(id), label });
+        }
+
+        if (hasExplanation(lesson.explanation)) add('explanation', 'Learn');
+        if (hasMethod(lesson.method)) add('method', 'Method');
+        if (hasInteractive(lesson.interactive)) add('interactive', 'Try it');
+        if (hasProductInteractive(lesson.product_interactive)) add('product-interactive', 'Explore');
+        if (hasExplore(lesson.explore)) add('explore', 'Explore');
+        if (hasItems(lesson.worked_examples)) add('worked-examples', 'Worked examples');
+        if (isObject(lesson.summary) && hasItems(lesson.summary.points)) add('summary', 'Summary');
+        if (hasComparison(lesson.comparison)) add('comparison', 'Compare');
+        if (hasQuestionBank(lesson.question_bank)) add('question-bank', 'Practice');
+
+        /*
+         * Optional authored ordering. Sections whose ids are not
+         * listed keep their default position at the end. Lessons
+         * without section_order are untouched.
+         */
+        const order = safeArray(lesson.section_order)
+            .map(normaliseText)
+            .filter(Boolean);
+
+        if (order.length > 0) {
+            sections.sort((a, b) => {
+                const aIndex = order.indexOf(a.id);
+                const bIndex = order.indexOf(b.id);
+
+                return (
+                    (aIndex === -1 ? order.length : aIndex) -
+                    (bIndex === -1 ? order.length : bIndex)
+                );
+            });
+        }
+
+        return sections;
+    }
+
+    function planPartSections(lesson) {
+        if (!Array.isArray(lesson.parts) || lesson.parts.length < 2) {
+            throw new Error('A parts lesson needs at least two parts.');
+        }
+        for (const key of ['explanation', 'interactive', 'section_order', 'navigation_stages']) {
+            if (Object.hasOwn(lesson, key)) throw new Error(`A parts lesson cannot have top-level ${key}.`);
+        }
+        if (!hasComparison(lesson.comparison)) throw new Error('A parts lesson needs a top-level comparison with questions.');
+
+        const seen = new Set();
+        const sections = [];
+        const partKinds = [
+            ['explanation', 'Learn'],
+            ['interactive', 'Try it'],
+            ['question-bank', 'Practice']
+        ];
+
+        lesson.parts.forEach((part, index) => {
+            const id = part?.id;
+            if (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id) || id.includes('--')) {
+                throw new Error(`Invalid id for part ${index + 1} (${JSON.stringify(id)}). Use lowercase letters, digits and single hyphens.`);
+            }
+            if (seen.has(id)) throw new Error(`Duplicate part id "${id}".`);
+            seen.add(id);
+            if (typeof part.label !== 'string' || !part.label.trim()) throw new Error(`Part "${id}" needs a label.`);
+
+            for (const [kind, label] of partKinds) {
+                const key = kind.replace('-', '_');
+                if (!isObject(part[key])) throw new Error(`Part "${id}" needs ${key}.`);
+                sections.push({ id: `${kind}--${id}`, kind, part: id, label: `${part.label.trim()} ${label}` });
+            }
+        });
+        if (!isObject(lesson.question_bank)) throw new Error('A parts lesson needs a top-level question_bank for mixed Practice.');
+        sections.push({ id: 'question-bank', kind: 'question-bank', part: null, label: 'Mixed Practice' });
+        sections.push({ id: 'comparison', kind: 'comparison', part: null, label: 'Check' });
+        return sections;
+    }
+
+    function sectionConfig(lesson, { kind, part }) {
+        const source = part === null ? lesson : lesson.parts.find(item => item.id === part);
+        return source[kind.replace('-', '_')];
+    }
+
+    function questionSetContainerId(slug, sectionId) {
+        const kind = sectionKind(sectionId);
+        if (kind === 'comparison') return `${slug}-comparison`;
+        if (kind !== 'question-bank') throw new Error(`"${sectionId}" is not a Practice or Check section.`);
+        const part = sectionPart(sectionId);
+        return `${slug}-questions${part === null ? '' : `--${part}`}`;
+    }
+
+    /*
+     * Lessons can group their existing sections into a simpler pupil-facing
+     * journey without changing section rendering, gates, or progress data.
+     * Lessons without navigation_stages retain one navigation item per section.
+     */
+    function planNavigationGroups(lesson, sections = planSections(lesson)) {
+        const configuredStages = Array.isArray(lesson.parts) ? [
+            ...lesson.parts.map(part => ({
+                id: `part-${part.id}`,
+                label: part.label,
+                sections: sections.filter(section => section.part === part.id).map(section => section.id)
+            })),
+            { id: 'mix', label: 'Mix', sections: ['question-bank'] },
+            { id: 'check', label: 'Check', sections: ['comparison'] }
+        ] : safeArray(lesson.navigation_stages).filter(isObject);
+
+        if (configuredStages.length === 0) {
+            return sections.map((section, index) => ({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index,
+                lastIndex: index
+            }));
+        }
+
+        const usedSectionIds = new Set();
+        const groups = [];
+
+        configuredStages.forEach((stage, stageIndex) => {
+            const id = normaliseText(stage.id) ||
+                `stage-${stageIndex + 1}`;
+            const sectionIds = safeArray(stage.sections)
+                .map(normaliseText)
+                .filter(Boolean);
+            const sectionIndexes = sectionIds
+                .map(findId => sections.findIndex(
+                    section => section.id === findId
+                ))
+                .filter(index => index !== -1)
+                .filter(index => {
+                    const sectionId = sections[index].id;
+
+                    if (usedSectionIds.has(sectionId)) {
+                        return false;
+                    }
+
+                    usedSectionIds.add(sectionId);
+                    return true;
+                })
+                .sort((a, b) => a - b);
+
+            if (sectionIndexes.length === 0) {
+                return;
+            }
+
+            groups.push({
+                id,
+                label: normaliseText(stage.label) || id,
+                sectionIndexes,
+                firstIndex: sectionIndexes[0],
+                lastIndex: sectionIndexes.at(-1)
+            });
+        });
+
+        sections.forEach((section, index) => {
+            if (usedSectionIds.has(section.id)) {
+                return;
+            }
+
+            groups.push({
+                id: section.id,
+                label: section.label,
+                sectionIndexes: [index],
+                firstIndex: index,
+                lastIndex: index
+            });
+        });
+
+        return groups;
+    }
+
+    function planScoreActivities(lesson, sections = planSections(lesson)) {
+        const activities = sections.map(section => ({ id: `section:${section.id}` }));
+        const guidedTotals = {
+            method: safeArray(lesson.method?.guided_examples).length,
+            'product-interactive': safeArray(lesson.product_interactive?.examples).length
+        };
+        for (const [id, total] of Object.entries(guidedTotals)) {
+            for (let step = 0; step < total; step++) {
+                activities.push({ id: `step:${id}:${step}`, kind: 'guided' });
+            }
+        }
+        // The legacy top-level Practice reservation also applies to older
+        // lessons that do not render it via the standard section planner.
+        const practiceSections = sections.filter(section => section.kind === 'question-bank' && section.part !== null);
+        practiceSections.push({ id: 'question-bank', kind: 'question-bank', part: null });
+        for (const section of practiceSections) {
+            const total = Number(sectionConfig(lesson, section)?.session_length) || 0;
+            for (let index = 1; index <= total; index++) {
+                activities.push({ id: `answer:${section.id}:${index}`, kind: 'answer' });
+            }
+        }
+        safeArray(lesson.comparison?.questions).forEach((_, index) => {
+            activities.push({ id: `answer:final-check-${index + 1}`, kind: 'answer' });
+        });
+        const reservedAnswerIds = activities.filter(activity => activity.kind === 'answer').map(activity => activity.id);
+        activities.push(...safeArray(lesson.score_activities));
+        return {
+            activities: activities.map(activity => ({ ...activity, completed: false })),
+            reservedAnswerIds
+        };
+    }
+
+    function hasExplanation(explanation) {
+        if (!isObject(explanation)) {
+            return false;
+        }
+
+        return Boolean(
+            normaliseText(explanation.title) ||
+            normaliseText(explanation.eyebrow) ||
+            hasItems(explanation.paragraphs) ||
+            hasItems(explanation.key_points) ||
+            hasItems(explanation.cards) ||
+            isObject(explanation.hook)
+        );
+    }
+
+    function hasMethod(method) {
+        return (
+            isObject(method) &&
+            (
+                normaliseText(method.title) !== '' ||
+                hasItems(method.steps)
+            )
+        );
+    }
+
+    function hasInteractive(interactive) {
+        return (
+            isObject(interactive) &&
+            (
+                normaliseText(interactive.title) !== '' ||
+                normaliseText(interactive.intro) !== ''
+            )
+        );
+    }
+
+    function hasQuestionBank(questionBank) {
+        return (
+            isObject(questionBank) &&
+            (
+                normaliseText(questionBank.title) !== '' ||
+                normaliseText(questionBank.intro) !== ''
+            )
+        );
+    }
+
+    function hasProductInteractive(productInteractive) {
+        return (
+            isObject(productInteractive) &&
+            (
+                (
+                    hasItems(productInteractive.factors) &&
+                    normaliseText(productInteractive.product) !== ''
+                ) || hasItems(productInteractive.examples)
+            )
+        );
+    }
+
+    function hasComparison(comparison) {
+        return (
+            isObject(comparison) &&
+            hasItems(comparison.questions)
+        );
+    }
+
+    function hasExplore(explore) {
+        return (
+            isObject(explore) &&
+            hasItems(explore.playgrounds)
+        );
+    }
+
+    function hasItems(value) {
+        return Array.isArray(value) && value.length > 0;
+    }
+
+    function isObject(value) {
+        return (
+            value !== null &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+        );
+    }
+
+    function normaliseText(value) {
+        if (
+            typeof value !== 'string' &&
+            typeof value !== 'number'
+        ) {
+            return '';
+        }
+
+        return String(value).trim();
+    }
+
+    function safeArray(value) {
+        return Array.isArray(value)
+            ? value
+            : [];
+    }
+
     window.Maths1to9LessonEngine = {
+        sectionKind,
+        sectionPart,
+        dispatchSectionEvent,
+        planSections,
+        planNavigationGroups,
+        planScoreActivities,
+        sectionConfig,
+        questionSetContainerId,
+        hasItems,
+        isObject,
+        normaliseText,
+        safeArray,
         createRouter,
         updateStageProgress,
         calculateScore,
@@ -1179,6 +1559,12 @@
     'use strict';
 
     if (document.body.dataset.lessonRenderer === 'custom') return;
+
+    const {
+        sectionKind, sectionPart, dispatchSectionEvent, planSections,
+        planNavigationGroups, planScoreActivities, sectionConfig, questionSetContainerId,
+        hasItems, isObject, normaliseText, safeArray
+    } = window.Maths1to9LessonEngine;
 
     const initialHash = window.location.hash;
     const router = window.Maths1to9LessonEngine.createRouter();
@@ -1214,6 +1600,7 @@
         lesson: null,
         slug: '',
         sections: [],
+        hasParts: false,
         sectionElements: [],
         navigationButtons: [],
         navigationGroups: [],
@@ -1266,20 +1653,15 @@
 
             state.lesson = lesson;
             state.slug = getLessonSlug(lesson);
+            state.sections = createSectionDefinitions(lesson);
+            state.hasParts = state.sections.some(section => section.part !== null);
             const savedScore = await window.Maths1to9Progress?.getLessonProgress?.(state.slug);
-            const reservedAnswerIds = [];
-            for (let i = 1; i <= (Number(lesson.question_bank?.session_length) || 0); i++) {
-                reservedAnswerIds.push(`answer:question-bank:${i}`);
-            }
-            safeArray(lesson.comparison?.questions).forEach((_, i) => {
-                reservedAnswerIds.push(`answer:final-check-${i + 1}`);
-            });
+            const { activities, reservedAnswerIds } = planScoreActivities(lesson, state.sections);
             scoreTracker = window.Maths1to9LessonEngine.createScoreTracker(savedScore?.scoreActivities, score => {
                 updateScoreHeader();
                 document.dispatchEvent(new CustomEvent('maths1to9:score-change', {detail:{slug:state.slug, score}}));
                 window.Maths1to9Progress?.saveCurrentLesson?.();
             }, reservedAnswerIds);
-            state.sections = createSectionDefinitions(lesson);
             if (lesson.navigation?.back_button === true || savedScore?.finished === true) {
                 state.finished = savedScore?.finished === true;
                 const savedUnlocked = Number.isInteger(savedScore?.highestUnlockedIndex)
@@ -1292,7 +1674,7 @@
                 state.highestUnlockedIndex = state.finished ? state.sections.length - 1
                     : clamp(Math.max(savedUnlocked, completedIndex), 0, state.sections.length - 1);
             }
-            state.navigationGroups = createNavigationGroups(
+            state.navigationGroups = planNavigationGroups(
                 lesson,
                 state.sections
             );
@@ -1304,28 +1686,7 @@
             }
 
             // Reserve the full lesson before rendering: navigation never earns points.
-            state.sections.forEach(section => {
-                scoreTracker.record({id:`section:${section.id}`, completed:false});
-            });
-            const guidedTotals = {
-                method: safeArray(lesson.method?.guided_examples).length,
-                'product-interactive': safeArray(lesson.product_interactive?.examples).length
-            };
-            for (const [id, total] of Object.entries(guidedTotals)) {
-                for (let step = 0; step < total; step++) {
-                    scoreTracker.record({id:`step:${id}:${step}`, kind:'guided', completed:false});
-                }
-            }
-            const practiceTotal = Number(lesson.question_bank?.session_length) || 0;
-            for (let i = 1; i <= practiceTotal; i++) {
-                scoreTracker.record({id:`answer:question-bank:${i}`, kind:'answer', completed:false});
-            }
-            safeArray(lesson.comparison?.questions).forEach((_, i) => {
-                scoreTracker.record({id:`answer:final-check-${i + 1}`, kind:'answer', completed:false});
-            });
-            safeArray(lesson.score_activities).forEach(activity => {
-                scoreTracker.record({...activity, completed:false});
-            });
+            activities.forEach(activity => scoreTracker.record(activity));
             scoreTracker.export().forEach(activity => {
                 if (activity.completed && activity.id.startsWith('section:')) {
                     state.completedSections.add(activity.id.slice(8));
@@ -1343,25 +1704,31 @@
             listenForSectionGating();
 
             state.sections.forEach((section, index) => {
-                router.register(section.id, () => showSection(index, { unlock: true }));
+                registerLessonRoute(section.id, () => showSection(index, { unlock: !state.hasParts }));
             });
             state.navigationGroups.forEach(group => {
-                const aliases = [group.label.toLowerCase().replace(/\s+/g, '-')];
+                const aliases = state.hasParts ? [] : [group.label.toLowerCase().replace(/\s+/g, '-')];
                 if (group.id === 'practice') aliases.push('practise');
-                router.register(group.id, () => showSection(group.firstIndex, { unlock: true }), aliases);
+                registerLessonRoute(group.id, () => showSection(group.firstIndex, { unlock: !state.hasParts }), aliases);
             });
             // #summary opens Check on its end-of-lesson summary, for lessons that
             // draw one. Like every hash link it only changes the view: it never
             // completes the questions or awards points.
-            const comparisonIndex = findSectionIndex('comparison');
+            const comparisonIndex = state.sections.findIndex(section => section.kind === 'comparison');
             if (comparisonIndex !== -1) {
-                router.register('summary', () => {
-                    showSection(comparisonIndex, { unlock: true });
+                registerLessonRoute('summary', () => {
+                    if (!showSection(comparisonIndex, { unlock: !state.hasParts })) return false;
                     setComparisonView('summary');
                 });
             }
             exposeLessonApi();
-            mountLessonInteractive();
+            if (state.hasParts) {
+                await mountPartInteractives();
+                const mountQuestionSets = window.Maths1to9QuestionSets?.[state.slug];
+                if (typeof mountQuestionSets === 'function') await mountQuestionSets(window.Maths1to9Lesson);
+            } else {
+                mountLessonInteractive();
+            }
 
             document.dispatchEvent(
                 new CustomEvent(
@@ -1387,7 +1754,9 @@
                 )
             );
 
-            showSection(0, {
+            const resumeIndex = state.hasParts && !router.hasHash()
+                ? findSectionIndex(savedScore?.currentSectionId ?? savedScore?.currentSectionIndex) : -1;
+            showSection(resumeIndex >= 0 && resumeIndex <= state.highestUnlockedIndex ? resumeIndex : 0, {
                 moveFocus: false,
                 emitEvent: true
             });
@@ -1395,12 +1764,26 @@
         } catch (error) {
             console.error(error);
 
+            const details = error instanceof Error ? error.message : '';
             showFatalError(
-                error instanceof Error
-                    ? error.message
-                    : 'The lesson could not be loaded.'
+                state.lesson?.layout === 'parts' || Object.hasOwn(state.lesson ?? {}, 'parts')
+                    ? `The lesson could not be loaded. ${details}`.trim()
+                    : details || 'The lesson could not be loaded.'
             );
         }
+    }
+
+    function registerLessonRoute(id, handler, aliases = []) {
+        if (!state.hasParts) {
+            router.register(id, handler, aliases);
+            return;
+        }
+        router.register(id, () => {
+            if (handler() === false) {
+                // Run outside the router's hash handler so a locked link is replaced.
+                queueMicrotask(() => showSection(state.highestUnlockedIndex, { moveFocus: false, replaceHash: true }));
+            }
+        }, aliases);
     }
 
     async function loadLesson(source) {
@@ -1504,330 +1887,38 @@
     }
 
     function createSectionDefinitions(lesson) {
-        const sections = [];
+        const renderers = {
+            explanation: ['lesson-explanation', renderExplanation],
+            method: ['lesson-method', renderMethod],
+            interactive: ['lesson-interactive', renderInteractive],
+            'product-interactive': ['lesson-interactive', renderProductInteractive],
+            explore: ['lesson-interactive', renderExplore],
+            'worked-examples': ['lesson-worked-examples', container =>
+                renderWorkedExamples(container, lesson.worked_examples, lesson.worked_examples_title)],
+            summary: ['lesson-summary', renderSummary],
+            comparison: ['lesson-questions', renderComparison],
+            'question-bank': ['lesson-questions', renderQuestionBank]
+        };
 
-        if (hasExplanation(lesson.explanation)) {
-            sections.push({
-                id: 'explanation',
-                label: 'Learn',
-                className: 'lesson-explanation',
-                render(container) {
-                    renderExplanation(
-                        container,
-                        lesson.explanation
-                    );
-                }
-            });
-        }
+        return planSections(lesson).map(section => {
+            const [className, render] = renderers[section.kind];
+            const config = sectionConfig(lesson, section);
+            return { ...section, config, className, render: container => render(container, config) };
+        });
 
-        if (hasMethod(lesson.method)) {
-            sections.push({
-                id: 'method',
-                label: 'Method',
-                className: 'lesson-method',
-                render(container) {
-                    renderMethod(
-                        container,
-                        lesson.method
-                    );
-                }
-            });
-        }
-
-        if (hasInteractive(lesson.interactive)) {
-            sections.push({
-                id: 'interactive',
-                label: 'Try it',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderInteractive(
-                        container,
-                        lesson.interactive
-                    );
-                }
-            });
-        }
-
-        if (hasProductInteractive(lesson.product_interactive)) {
-            sections.push({
-                id: 'product-interactive',
-                label: 'Explore',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderProductInteractive(
-                        container,
-                        lesson.product_interactive
-                    );
-                }
-            });
-        }
-
-        if (hasExplore(lesson.explore)) {
-            sections.push({
-                id: 'explore',
-                label: 'Explore',
-                className: 'lesson-interactive',
-                render(container) {
-                    renderExplore(
-                        container,
-                        lesson.explore
-                    );
-                }
-            });
-        }
-
-        if (
-            Array.isArray(lesson.worked_examples) &&
-            lesson.worked_examples.length > 0
-        ) {
-            sections.push({
-                id: 'worked-examples',
-                label: 'Worked examples',
-                className: 'lesson-worked-examples',
-                render(container) {
-                    renderWorkedExamples(
-                        container,
-                        lesson.worked_examples,
-                        lesson.worked_examples_title
-                    );
-                }
-            });
-        }
-
-        if (isObject(lesson.summary) && hasItems(lesson.summary.points)) {
-            sections.push({
-                id: 'summary',
-                label: 'Summary',
-                className: 'lesson-summary',
-                render(container) {
-                    appendSectionHeading(container, lesson.summary, 'Summary', 'Key reminders', 'summary');
-                    const list = createElement('ol', 'lesson-steps');
-                    for (const point of safeArray(lesson.summary.points).filter(isObject)) {
-                        const item = createElement('li', 'lesson-step');
-                        item.append(
-                            createElement('h3', 'lesson-step__title', normaliseText(point.title)),
-                            createElement('p', 'lesson-step__text', normaliseText(point.text))
-                        );
-                        list.append(item);
-                    }
-                    container.append(list);
-                }
-            });
-        }
-
-        if (hasComparison(lesson.comparison)) {
-            sections.push({
-                id: 'comparison',
-                label: 'Compare',
-                className: 'lesson-questions',
-                render(container) {
-                    renderComparison(
-                        container,
-                        lesson.comparison
-                    );
-                }
-            });
-        }
-
-        if (hasQuestionBank(lesson.question_bank)) {
-            sections.push({
-                id: 'question-bank',
-                label: 'Practice',
-                className: 'lesson-questions',
-                render(container) {
-                    renderQuestionBank(
-                        container,
-                        lesson.question_bank
-                    );
-                }
-            });
-        }
-
-        /*
-         * Optional authored ordering. Sections whose ids are not
-         * listed keep their default position at the end. Lessons
-         * without section_order are untouched.
-         */
-        const order = safeArray(lesson.section_order)
-            .map(normaliseText)
-            .filter(Boolean);
-
-        if (order.length > 0) {
-            sections.sort((a, b) => {
-                const aIndex = order.indexOf(a.id);
-                const bIndex = order.indexOf(b.id);
-
-                return (
-                    (aIndex === -1 ? order.length : aIndex) -
-                    (bIndex === -1 ? order.length : bIndex)
+        function renderSummary(container) {
+            appendSectionHeading(container, lesson.summary, 'Summary', 'Key reminders', 'summary');
+            const list = createElement('ol', 'lesson-steps');
+            for (const point of safeArray(lesson.summary.points).filter(isObject)) {
+                const item = createElement('li', 'lesson-step');
+                item.append(
+                    createElement('h3', 'lesson-step__title', normaliseText(point.title)),
+                    createElement('p', 'lesson-step__text', normaliseText(point.text))
                 );
-            });
-        }
-
-        return sections;
-    }
-
-    /*
-     * Lessons can group their existing sections into a simpler pupil-facing
-     * journey without changing section rendering, gates, or progress data.
-     * Lessons without navigation_stages retain one navigation item per section.
-     */
-    function createNavigationGroups(lesson, sections) {
-        const configuredStages = safeArray(
-            lesson.navigation_stages
-        ).filter(isObject);
-
-        if (configuredStages.length === 0) {
-            return sections.map((section, index) => ({
-                id: section.id,
-                label: section.label,
-                sectionIndexes: [index],
-                firstIndex: index,
-                lastIndex: index
-            }));
-        }
-
-        const usedSectionIds = new Set();
-        const groups = [];
-
-        configuredStages.forEach((stage, stageIndex) => {
-            const id = normaliseText(stage.id) ||
-                `stage-${stageIndex + 1}`;
-            const sectionIds = safeArray(stage.sections)
-                .map(normaliseText)
-                .filter(Boolean);
-            const sectionIndexes = sectionIds
-                .map(findId => sections.findIndex(
-                    section => section.id === findId
-                ))
-                .filter(index => index !== -1)
-                .filter(index => {
-                    const sectionId = sections[index].id;
-
-                    if (usedSectionIds.has(sectionId)) {
-                        return false;
-                    }
-
-                    usedSectionIds.add(sectionId);
-                    return true;
-                })
-                .sort((a, b) => a - b);
-
-            if (sectionIndexes.length === 0) {
-                return;
+                list.append(item);
             }
-
-            groups.push({
-                id,
-                label: normaliseText(stage.label) || id,
-                sectionIndexes,
-                firstIndex: sectionIndexes[0],
-                lastIndex: sectionIndexes.at(-1)
-            });
-        });
-
-        sections.forEach((section, index) => {
-            if (usedSectionIds.has(section.id)) {
-                return;
-            }
-
-            groups.push({
-                id: section.id,
-                label: section.label,
-                sectionIndexes: [index],
-                firstIndex: index,
-                lastIndex: index
-            });
-        });
-
-        return groups;
-    }
-
-    function hasExplanation(explanation) {
-        if (!isObject(explanation)) {
-            return false;
+            container.append(list);
         }
-
-        return Boolean(
-            normaliseText(explanation.title) ||
-            normaliseText(explanation.eyebrow) ||
-            hasItems(explanation.paragraphs) ||
-            hasItems(explanation.key_points) ||
-            hasItems(explanation.cards) ||
-            isObject(explanation.hook)
-        );
-    }
-
-    function hasMethod(method) {
-        return (
-            isObject(method) &&
-            (
-                normaliseText(method.title) !== '' ||
-                hasItems(method.steps)
-            )
-        );
-    }
-
-    function hasInteractive(interactive) {
-        return (
-            isObject(interactive) &&
-            (
-                normaliseText(interactive.title) !== '' ||
-                normaliseText(interactive.intro) !== ''
-            )
-        );
-    }
-
-    function hasQuestionBank(questionBank) {
-        return (
-            isObject(questionBank) &&
-            (
-                normaliseText(questionBank.title) !== '' ||
-                normaliseText(questionBank.intro) !== ''
-            )
-        );
-    }
-
-    function hasProductInteractive(productInteractive) {
-        return (
-            isObject(productInteractive) &&
-            (
-                (
-                    hasItems(productInteractive.factors) &&
-                    normaliseText(productInteractive.product) !== ''
-                ) || hasItems(productInteractive.examples)
-            )
-        );
-    }
-
-    function hasComparison(comparison) {
-        return (
-            isObject(comparison) &&
-            hasItems(comparison.questions)
-        );
-    }
-
-    function hasItems(value) {
-        return Array.isArray(value) && value.length > 0;
-    }
-
-    function isObject(value) {
-        return (
-            value !== null &&
-            typeof value === 'object' &&
-            !Array.isArray(value)
-        );
-    }
-
-    function normaliseText(value) {
-        if (
-            typeof value !== 'string' &&
-            typeof value !== 'number'
-        ) {
-            return '';
-        }
-
-        return String(value).trim();
     }
 
     function renderLesson() {
@@ -1836,10 +1927,10 @@
         const header = renderLessonHeader();
         const navigation = renderSectionNavigation();
 
-        // The stage dots sit in the site header. On a narrow screen only
-        // the current stage shows (see app.css).
+        // Parts use the existing in-page stage bar so every stage stays
+        // visible. The header's compact stage bar shows one stage on phones.
         const siteHeader = document.querySelector('.site-header__inner');
-        const stagesInSiteHeader = Boolean(siteHeader) &&
+        const stagesInSiteHeader = Boolean(siteHeader) && !state.hasParts &&
             navigation.classList.contains('lesson-navigation--stages');
 
         // The lesson title sits in the site header, next to the logo.
@@ -2220,12 +2311,12 @@
 
         navigation.setAttribute(
             'aria-label',
-            state.lesson.navigation_stages
+            state.hasParts || state.lesson.navigation_stages
                 ? 'Lesson stages'
                 : 'Lesson sections'
         );
 
-        if (safeArray(state.lesson.navigation_stages).length > 0) {
+        if (state.hasParts || safeArray(state.lesson.navigation_stages).length > 0) {
             navigation.classList.add('lesson-navigation--stages');
         }
 
@@ -2381,7 +2472,7 @@
                 explanation,
                 'Explanation',
                 'What you need to know',
-                'explanation'
+                container.dataset.lessonSection
             );
         }
 
@@ -2759,7 +2850,7 @@
                 interactive,
                 'Try it',
                 'Try it yourself',
-                'interactive'
+                container.dataset.lessonSection
             );
         }
 
@@ -2783,11 +2874,11 @@
             'lesson-module lesson-module--interactive'
         );
 
-        interactiveRoot.id =
-            `${state.slug}-interactive`;
+        const part = sectionPart(container.dataset.lessonSection);
+        interactiveRoot.id = `${state.slug}-interactive${part === null ? '' : `--${part}`}`;
 
         interactiveRoot.dataset.lessonModule =
-            'interactive';
+            sectionKind(container.dataset.lessonSection);
 
         interactiveRoot.dataset.interactive =
             state.slug;
@@ -2907,7 +2998,7 @@
             `${state.slug}-comparison`;
 
         comparisonRoot.dataset.lessonModule =
-            'comparison';
+            sectionKind(container.dataset.lessonSection);
 
         comparisonRoot.dataset.questions =
             JSON.stringify(
@@ -2917,6 +3008,17 @@
         comparisonRoot.dataset.summary = JSON.stringify(comparison.summary || {});
 
         container.append(comparisonRoot);
+    }
+
+    async function mountPartInteractives() {
+        const mount = window.Maths1to9Interactives?.[state.slug];
+        for (const { id, kind, part, config } of state.sections) {
+            if (kind !== 'interactive') continue;
+            const root = document.getElementById(`${state.slug}-interactive--${part}`);
+            if (!root) continue; // JSON-driven rounds render in the engine.
+            if (typeof mount !== 'function') throw new Error(`No interactive has been registered for "${state.slug}".`);
+            await mount(root, { id, kind, part, config });
+        }
     }
 
     function mountLessonInteractive() {
@@ -3138,7 +3240,7 @@
                 questionBank,
                 'Question bank',
                 'Practise',
-                'question-bank'
+                container.dataset.lessonSection
             );
 
             appendIntro(
@@ -3185,8 +3287,7 @@
             'lesson-module lesson-module--questions'
         );
 
-        questionsRoot.id =
-            `${state.slug}-questions`;
+        questionsRoot.id = questionSetContainerId(state.slug, container.dataset.lessonSection);
 
         questionsRoot.dataset.lessonModule =
             'questions';
@@ -3267,8 +3368,8 @@
     /*
      * Lesson scripts opt in to gating by dispatching:
      *
-     *   maths1to9:section-gate      { sectionId }
-     *   maths1to9:section-complete  { sectionId }
+     *   maths1to9:section-gate      { sectionId, kind, part }
+     *   maths1to9:section-complete  { sectionId, kind, part }
      *
      * Gate as soon as the activity mounts. Complete when the
      * pupil has finished it. The Continue button stays
@@ -3411,7 +3512,8 @@
         const {
             moveFocus = true,
             emitEvent = true,
-            unlock = false
+            unlock = false,
+            replaceHash = false
         } = options;
 
         if (
@@ -3487,7 +3589,7 @@
 
         updateProgress();
         updateControls();
-        router.sync(state.sections[index].id);
+        router.sync(state.sections[index].id, { replace: replaceHash });
 
         const activeSection =
             state.sectionElements[index];
@@ -3519,10 +3621,10 @@
         state.navigationButtons.forEach((button, index) => {
             const group = state.navigationGroups[index];
             const completed = group.sectionIndexes.reduce((sum, sectionIndex) => {
-                const id = state.sections[sectionIndex].id;
+                const { id, kind } = state.sections[sectionIndex];
                 if (state.completedSections.has(id)) return sum + 1;
                 if (activityProgress.has(id)) return sum + activityProgress.get(id);
-                if (id === 'explanation') return sum + learnScreenProgress();
+                if (kind === 'explanation') return sum + learnScreenProgress();
                 return sum;
             }, 0);
             window.Maths1to9LessonEngine.updateStageProgress(button, completed, group.sectionIndexes.length);
@@ -3562,9 +3664,10 @@
 
     function resetInteractionKey(sectionId, question) {
         const slide = question?.id || window.location.hash || sectionId;
-        const practice = sectionId === 'question-bank' && state.sectionStates.get(sectionId)?.state;
+        const practice = sectionKind(sectionId) === 'question-bank' && state.sectionStates.get(sectionId)?.state;
         const session = practice ? `:${practice.session}:${practice.items[practice.screen]?.seed}` : '';
-        return `maths1to9-reset:${state.slug}:${slide}${session}`;
+        const sectionScope = sectionPart(sectionId) === null ? '' : `${sectionId}:`;
+        return `maths1to9-reset:${state.slug}:${sectionScope}${slide}${session}`;
     }
 
     // Track actions by card so a refresh or Back keeps the affordance.
@@ -3778,7 +3881,8 @@
 
         // Seeded Practice keeps one skill-evidence identity across page reloads.
         // Other lesson banks retain their existing per-page assessment identities.
-        const practice = state.sectionStates?.get('question-bank')?.state;
+        const [sectionId] = questionId.split(':', 1);
+        const practice = state.sectionStates?.get(sectionId)?.state;
         const stableQuestionId = practice
             ? window.Maths1to9LessonEngine.assessmentEvidenceId(state.slug, assessmentSessionId, questionId, practice)
             : `${state.slug}:${assessmentSessionId}:${questionId}`;
@@ -3912,7 +4016,7 @@
             },
 
             async runQuestionSet(sectionId, config) {
-                const container = document.getElementById(`${state.slug}-${sectionId === 'question-bank' ? 'questions' : 'comparison'}`);
+                const container = document.getElementById(questionSetContainerId(state.slug, sectionId));
                 if (!container) throw new Error(`No question set container for ${sectionId}.`);
                 state.questionSets.add(sectionId);
                 return window.Maths1to9LessonEngine.runQuestionSet(sectionId, config, { ...window.Maths1to9Lesson, continueSection: handleNext }, container);
@@ -3928,7 +4032,9 @@
 
             createQuestion(container, config) {
                 const { sectionId, questionId } = config;
-                const section = state.sectionStates.get(sectionId);
+                const part = sectionPart(sectionId);
+                const key = part !== null && sectionKind(sectionId) === 'interactive' ? `interactive:${part}` : sectionId;
+                const section = state.sectionStates.get(key);
                 const api = window.Maths1to9Lesson;
                 const card = window.Maths1to9LessonEngine.createQuestion(container, config, section, api);
                 const cards = (state.questionResets.get(sectionId) || []).filter(item =>
@@ -3965,7 +4071,7 @@
             },
 
             registerHashRoute(id, handler, aliases = []) {
-                router.register(id, handler, aliases);
+                registerLessonRoute(id, handler, aliases);
             },
 
             setSlideHash(id, options) {
@@ -3980,16 +4086,17 @@
 
             setSectionProgress(sectionId, completed, total) {
                 if (findSectionIndex(sectionId) === -1 || !Number.isFinite(total) || !Number.isFinite(completed)) return;
+                const kind = sectionKind(sectionId);
                 // Assessed questions earn answer points, not a second guided-step award.
-                if (!['question-bank', 'comparison'].includes(sectionId)) {
+                if (kind !== 'question-bank' && kind !== 'comparison') {
                     for (let step = 0; step < total; step++) {
                         scoreTracker.record({id:`step:${sectionId}:${step}`, kind:'guided', completed:step < Math.floor(completed)});
                     }
                 }
                 const savedCompleted = scoreTracker.export().filter(activity => activity.completed && (
                     activity.id.startsWith(`step:${sectionId}:`) ||
-                    (sectionId === 'question-bank' && activity.id.startsWith('answer:question-bank:')) ||
-                    (sectionId === 'comparison' && activity.id.startsWith('answer:final-check-'))
+                    (kind === 'question-bank' && activity.id.startsWith(`answer:${sectionId}:`)) ||
+                    (kind === 'comparison' && activity.id.startsWith('answer:final-check-'))
                 )).length;
                 activityProgress.set(sectionId, total > 0 ? Math.max(0, Math.min(1, Math.max(completed, savedCompleted) / total)) : 0);
                 updateProgress();
@@ -4000,6 +4107,13 @@
 
             getLesson() {
                 return state.lesson;
+            },
+
+            getSection(sectionId) {
+                const section = state.sections[findSectionIndex(sectionId)];
+                if (!section) return undefined;
+                const { id, kind, part, config } = section;
+                return { id, kind, part, config };
             },
 
             getSections() {
@@ -4113,11 +4227,17 @@
             },
 
             gateSection(sectionId) {
-                return gateSectionById(sectionId);
+                const id = normaliseText(sectionId);
+                if (findSectionIndex(id) === -1) return false;
+                dispatchSectionEvent('gate', id);
+                return true;
             },
 
             completeSection(sectionId) {
-                return completeSectionById(sectionId);
+                const id = normaliseText(sectionId);
+                if (findSectionIndex(id) === -1 || state.completedSections.has(id)) return false;
+                dispatchSectionEvent('complete', id);
+                return true;
             },
 
             recordAssessment(detail) {
@@ -4171,12 +4291,6 @@
         return window.matchMedia?.(
             '(prefers-reduced-motion: reduce)'
         ).matches ?? false;
-    }
-
-    function safeArray(value) {
-        return Array.isArray(value)
-            ? value
-            : [];
     }
 
     function clamp(value, minimum, maximum) {
@@ -4266,20 +4380,13 @@
         );
     }
 
-    function hasExplore(explore) {
-        return (
-            isObject(explore) &&
-            hasItems(explore.playgrounds)
-        );
-    }
-
     function renderCardExplanation(container, explanation) {
         appendSectionHeading(
             container,
             explanation,
             'Learn',
             'What you need to know',
-            'explanation'
+            container.dataset.lessonSection
         );
 
         renderLessonVideo(
@@ -4668,7 +4775,7 @@
             interactive,
             'Try it',
             'Try it yourself',
-            'interactive'
+            container.dataset.lessonSection
         );
 
         appendIntro(container, interactive.intro);
@@ -4696,7 +4803,8 @@
          * round is complete. Deferred because section renderers
          * run before the lesson controls exist.
          */
-        setTimeout(() => gateSectionById('interactive'), 0);
+        const sectionId = container.dataset.lessonSection;
+        setTimeout(() => dispatchSectionEvent('gate', sectionId), 0);
 
         let roundIndex = 0;
         showRound();
@@ -5035,7 +5143,7 @@
                 'lx2-choice__feedback is-correct',
                 'All rounds complete.'
             ));
-            completeSectionById('interactive');
+            dispatchSectionEvent('complete', sectionId);
         }
     }
 

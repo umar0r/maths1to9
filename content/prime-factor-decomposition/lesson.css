@@ -2,10 +2,6 @@
     max-width: 58rem;
     margin-inline: auto;
 }
-.prime-learn h3 {
-    margin: 0 0 1rem;
-    font-size: clamp(1.4rem, 3vw, 1.9rem);
-}
 .prime-learn p { line-height: 1.6; }
 .prime-tree {
     display: block;
@@ -51,7 +47,6 @@
     .prime-learn *, .prime-learn *::before { animation: none !important; transition: none !important; }
 }
 
-.prime-learn h3 { margin-bottom: .5rem; }
 .prime-learn p { margin-block: .5rem; }
 .prime-tree { margin-block: .5rem; }
 .prime-tree-note rect { fill: #fff; stroke: #cbd5e1; stroke-width: 1; }

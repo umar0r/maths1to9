@@ -20,7 +20,12 @@ for (const q of [...Q.examples(), ...Q.checks()]) {
     if (!q.number) continue;
     const indexes = [...q.number].map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
     const significant = indexes.slice(indexes.findIndex(i => q.number[i] !== '0'));
-    assert.equal(q.target, significant[q.n - 1], q.prompt);
+    // The place-rounding questions moved from the Rounding lesson point at the
+    // digit in the place asked for; significant figures count from the start.
+    const point = q.number.includes('.') ? q.number.indexOf('.') : q.number.length;
+    const power = q.kind === 'decimal' ? -q.accuracy : q.accuracy;
+    const target = q.kind ? (power >= 0 ? point - 1 - power : point - power) : significant[q.n - 1];
+    assert.equal(q.target, target, q.prompt);
     assert.equal(q.decider, indexes[indexes.indexOf(q.target) + 1], q.prompt);
 }
 const accuracy = Q.checks().find(q => q.answer === '15.0');
@@ -28,6 +33,8 @@ assert.equal(accuracy.exact, true);
 assert.equal(tidyNumber('15.0'), accuracy.answer);
 assert.notEqual(tidyNumber('15'), accuracy.answer);
 assert.notEqual(tidyNumber('15.00'), accuracy.answer);
-assert.equal(new Set(Q.learnScreens.map(q => q.title)).size, Q.learnScreens.length);
+// Saved taps are keyed by screen title, so each tap screen needs its own title.
+const tapTitles = Q.learnScreens.filter(screen => screen.tap).map(screen => screen.title);
+assert.equal(new Set(tapTitles).size, tapTitles.length);
 assert.equal(Q.guided.length, 4);
 console.log('Significant figures: answers, distractors, digit targets, exact accuracy and unique Learn screens passed.');

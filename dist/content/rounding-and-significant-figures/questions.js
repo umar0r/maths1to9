@@ -13,7 +13,7 @@
     function mountPractice() {
         const api = window.Maths1to9Lesson;
         return api.runQuestionSet('question-bank', {
-            version: 1, count: api.getLesson().question_bank.session_length,
+            version: 7, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.Rounding.pick,
             question: window.Rounding.generate,
@@ -74,6 +74,8 @@
                 ...window.Rounding.prepare(question, window.Maths1to9LessonEngine.seededRandom(state.seed + index)),
                 sectionId: 'comparison', questionId: `final-check-${index + 1}`,
                 scored: true, readOnly,
+                // Back to an answered question shows its options or box, locked.
+                lockedReview: true,
                 onFeedback: reportProgress, onContinue: continueQuestion
             };
         }
