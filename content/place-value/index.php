@@ -27,7 +27,7 @@ $pageTitle = 'Place value';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=61">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=62">
     <link rel="stylesheet" href="./lesson.css?v=87">
 </head>
 
@@ -69,9 +69,9 @@ $pageTitle = 'Place value';
     <!-- Data and behaviour specific to this lesson -->
     <script src="./place-value.js?v=104"></script>
     <script src="./questions.js?v=55"></script>
-    <script src="./interactive.js?v=52"></script>
+    <script src="./interactive.js?v=53"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=78"></script>
+    <script src="../../assets/js/lesson-engine.js?v=79"></script>
 </body>
 </html>

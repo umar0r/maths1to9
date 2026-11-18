@@ -9,25 +9,43 @@ const path = require('node:path');
 const { MAIN_ACTION, watchForErrors, screen, screenProblems } = require('./helpers.cjs');
 
 const solversDir = path.join(__dirname, 'solvers');
-const lessons = fs.readdirSync(solversDir).filter(f => f.endsWith('.cjs') && f !== 'common.cjs').map(f => f.replace(/\.cjs$/, ''));
+const fixtures = [
+    { lesson: 'parts-lesson', directory: 'tests/fixtures/parts-lesson', solver: 'fixtures/parts-lesson.cjs', widths: [1280, 375] }
+];
+const lessons = fs.readdirSync(solversDir)
+    .filter(file => file.endsWith('.cjs') && file !== 'common.cjs')
+    .map(file => file.replace(/\.cjs$/, ''))
+    .map(lesson => ({ lesson, directory: `content/${lesson}` }));
+const targets = [...lessons, ...fixtures.flatMap(fixture =>
+    fixture.widths.map(width => ({ ...fixture, width })))];
 const MAX_STEPS = 400;
 
-for (const lesson of lessons) {
-    test(`${lesson}: a full correct run completes every activity with full marks`, async ({ page }) => {
+for (const target of targets) {
+    const { lesson, width } = target;
+    test.describe(() => {
+        if (width) test.use({ viewport: { width, height: 900 }, hasTouch: true, isMobile: width === 375 });
+        const title = width ? `${lesson} ${width}px with touch` : lesson;
+        test(`${title}: a full correct run completes every activity with full marks`, run(target));
+    });
+}
+
+function run({ lesson, directory, width, solver = `${lesson}.cjs` }) {
+    return async ({ page }) => {
         test.setTimeout(240_000);
-        const solve = require(path.join(solversDir, `${lesson}.cjs`));
+        const solve = require(path.join(solversDir, solver));
         // Progress is saved under the lesson's slug, which is not always the folder name.
-        const dataFile = path.join(__dirname, '..', '..', 'content', lesson, 'lesson.json');
+        const dataFile = path.join(__dirname, '..', '..', directory, 'lesson.json');
         const slug = (fs.existsSync(dataFile) && JSON.parse(fs.readFileSync(dataFile, 'utf8')).slug) || lesson;
         const errors = watchForErrors(page);
         const memory = {}; // lets a solver remember what it has already done
-        await page.goto(`content/${lesson}/`, { waitUntil: 'networkidle' });
+        await page.goto(`${directory}/`, { waitUntil: 'networkidle' });
         const main = page.locator(`${MAIN_ACTION}:visible`).first();
         const broken = new Map();
         let points = 0, stuck = 0, last = '', progress = null;
         const seen = new Map();
 
-        for (let step = 0; step < MAX_STEPS && /\/content\//.test(page.url()); step++) {
+        const onLesson = () => width ? new URL(page.url()).pathname.endsWith(`/${directory}/`) : /\/content\//.test(page.url());
+        for (let step = 0; step < MAX_STEPS && onLesson(); step++) {
             const state = await screen(page);
             const check = screenProblems(state, points);
             points = check.points;
@@ -99,5 +117,5 @@ for (const lesson of lessons) {
         expect.soft([...broken.values()], 'screen rules broken during the run').toEqual([]);
         expect.soft(errors, 'no errors during the run').toEqual([]);
         expect.soft([...new Set(memory.problems ?? [])], 'problems the solver noticed on the way').toEqual([]);
-    });
+    };
 }
