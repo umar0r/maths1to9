@@ -288,16 +288,36 @@
                 let chosen = saved;
                 function draw() {
                     host.replaceChildren();
+                    // The line is drawn in its own 660-wide units, so sizes are
+                    // given in screen pixels and turned into those units.
+                    const narrow = narrowPicture();
+                    const scale = (host.clientWidth || 660) / 660;
+                    // Each end is an outlined box round its number: about 64 x 52
+                    // on a computer, and at least 44 x 44 on a phone.
+                    const boxWidth = (narrow ? 46 : 64) / scale;
+                    const boxHeight = (narrow ? 46 : 52) / scale;
+                    const labelSize = (narrow ? 15 : 18) / scale;
+                    // Keep each end fully inside the card, with its own margin.
+                    const endMargin = (narrow ? 26 : 10) / scale + boxWidth / 2;
                     const line = drawLine(host, value, false, null, !editable, base, null, step, {
-                        onPick: pick, wideLabels: true, showNearest: false
+                        onPick: pick, wideLabels: true, showNearest: false,
+                        valueLabel: format(value), numberAbove: true, edgeMargin: endMargin
                     });
-                    // Make each end a little taller, so it is easy to tap on a phone.
-                    for (const rect of line.querySelectorAll('.rounding-end rect')) {
-                        const y = Number(rect.getAttribute('y'));
-                        rect.setAttribute('y', String(y - 4));
-                        rect.setAttribute('height', String(Number(rect.getAttribute('height')) + 8));
-                    }
+                    line.classList.add('rounding-line--pick');
+                    // The number above the dot reads at least 14 px on a phone too.
+                    const above = line.querySelector('.rounding-value--above');
+                    if (above) above.style.fontSize = `${labelSize.toFixed(1)}px`;
                     for (const end of line.querySelectorAll('.rounding-end')) {
+                        const rect = end.querySelector('rect');
+                        const label = end.querySelector('.rounding-value');
+                        const centre = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2;
+                        const baseline = Number(label.getAttribute('y'));
+                        rect.setAttribute('x', String(centre - boxWidth / 2));
+                        rect.setAttribute('y', String(baseline + 4 / scale - boxHeight));
+                        rect.setAttribute('width', String(boxWidth));
+                        rect.setAttribute('height', String(boxHeight));
+                        rect.setAttribute('rx', String(10 / scale));
+                        label.style.fontSize = `${labelSize.toFixed(1)}px`;
                         if (Number(end.dataset.end) === chosen) end.classList.add('is-selected');
                         if (editable) continue;
                         // Once it is marked the ends still show the choice, but
@@ -616,7 +636,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true, edgeMargin = null, numberAbove = false } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -636,7 +656,9 @@
         // is snapped before it is labelled or used as a tap target.
         const tick = mark => Number((base + mark * step).toFixed(6));
         const top = tick(10);
-        const edge = wideLabels ? 50 : 30;
+        // edgeMargin is only for the Practice line-pick, which needs its tapped
+        // ends fully inside the card; Learn and Try it keep the usual margin.
+        const edge = edgeMargin ?? (wideLabels ? 50 : 30);
         const x = number => edge + (number - base) / (10 * step) * (660 - 2 * edge);
         // A number between two ticks, or on a tick left unlabelled, has no label in the row, so its label sits
         // above the dot, and the line moves down to make room.
@@ -678,7 +700,9 @@
                 </g>`
                 : label;
         }
-        if (showDot && !onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
+        // A number on a tick is labelled in the row, so it is only labelled
+        // above the dot when the caller asks for it (the Practice line-pick).
+        if (showDot && (!onTick || numberAbove)) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
         if (showDot) picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
         line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onHalf)}">${picture}</svg>`;
         if (onPick) {
