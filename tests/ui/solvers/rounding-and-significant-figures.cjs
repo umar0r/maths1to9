@@ -93,11 +93,10 @@ function situationAnswer(text) {
 }
 
 module.exports = async function solve(page) {
-    // Try it's intro: move the number along the line.
-    const slider = page.locator('input[type=range]:visible');
-    if (await slider.count() && await slider.isEnabled() && await slider.inputValue() !== '70') {
-        await slider.focus();
-        await slider.press('End');
+    // The Try it intro: drag the dot to 70 with the → button.
+    const up = page.locator('.rounding-line-move[aria-label="Move the number up"]:visible');
+    if (await up.count() && await up.isEnabled()) {
+        await up.click();
         return true;
     }
 

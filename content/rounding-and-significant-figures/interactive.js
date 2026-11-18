@@ -147,7 +147,7 @@
         const section = await api.useSectionState('interactive', {
             version: 15,
             initial: () => ({
-                // The intro screen is the number line slider shown before the slides.
+                // The intro screen is the number line you drag the dot along, before the slides.
                 lineValue: 67, explored: false,
                 screen: 0, furthestScreen: 0, finished: false,
                 slides: slides.map(blankSlide)
@@ -188,7 +188,7 @@
             heading.textContent = "Let's see what numbers round to.";
             root.append(heading);
             const line = document.createElement('p');
-            line.textContent = 'Move the number along the line. 65 is halfway, and at halfway we round up.';
+            line.textContent = 'Drag the dot along the line. 65 is halfway, and at halfway we round up.';
             root.append(line);
             const next = () => api.setSectionAction('interactive', {
                 label: 'Next', disabled: !state.explored, onClick: () => showScreen(1)
