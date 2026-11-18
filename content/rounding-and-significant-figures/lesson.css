@@ -152,8 +152,9 @@
 
 .rounding-example__sum {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: .6rem;
+    gap: .2rem .6rem;
     font-size: clamp(1.4rem, 5vw, 1.8rem);
     font-weight: 800;
 }
@@ -164,6 +165,13 @@
 
 .rounding-example__to {
     color: var(--primary-dark);
+}
+
+/* A longer sum (48 × 21 ≈ 50 × 20 = 1,000) wraps between its two sides,
+   never inside one. */
+.rounding-example__from,
+.rounding-example__to {
+    white-space: nowrap;
 }
 
 /* The answer under the number line: a small box around the text, centred. */
