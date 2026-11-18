@@ -35,10 +35,8 @@ async function solveTryIt(page) {
             keep: digits ? digits.target : null,
             labels: data?.labels ?? null,
             digitButtons: slide.querySelectorAll('.significant-digits[role=group] button').length,
-            line: line ? {
-                base: Number(line.dataset.base), step: Number(line.dataset.step),
-                edge: Number(line.dataset.edge), value: Number(line.dataset.tapValue)
-            } : null,
+            line: line ? data?.line ?? null : null,
+            half: data?.line ? (data.line.value >= data.line.base + 5 * data.line.step ? 'upper' : 'lower') : null,
             dot: Boolean(slide.querySelector('.rounding-dot')),
             slots: [...slide.querySelectorAll('.tryit-slot')].map(slot => ({
                 index: Number(slot.dataset.slot), filled: slot.classList.contains('is-filled')
@@ -55,10 +53,9 @@ async function solveTryIt(page) {
     }
     if (!info.line || info.dot) return false;
 
-    // Slide one: tap where the number goes on the line.
+    // Slide one: tap the half of the line the number goes in.
     if (!info.labels) {
-        const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
-        await page.mouse.click(box.x + acrossLine(info.line, info.line.value) * box.width, box.y + box.height / 2);
+        await page.locator(`.rounding-tryit .rounding-half-button[data-half="${info.half}"]`).click();
         return true;
     }
 

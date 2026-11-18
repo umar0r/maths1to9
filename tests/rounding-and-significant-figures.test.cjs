@@ -109,7 +109,8 @@ test('rounding-and-significant-figures: Try it is two hands-on slides and Learn 
         assert.equal(slide.digits[positions.decider], look, slide.title);
     }
     // The line runs from one round number to the next, and the slide rounds itself.
-    assert.deepEqual([slideA.line.base, slideA.line.step, slideA.line.value, slideA.line.tolerance], [53400, 10, 53481, 5]);
+    assert.deepEqual([slideA.line.base, slideA.line.step, slideA.line.value], [53400, 10, 53481]);
+    assert.equal(slideA.placeHint, 'The halfway point is 53,450. 53,481 is more than that.');
     assert.equal(Q.rounded(String(slideA.line.value), 'nearest', 2), '53500');
     assert.equal(slideA.answer, '53,481 ≈ 53,500');
     // The wrong-tap hints and the arrow notes say what they must.

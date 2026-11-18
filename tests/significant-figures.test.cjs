@@ -173,7 +173,7 @@ test('significant-figures: typed answers use exact form, meaningful rules and a 
 });
 
 test('significant-figures: generators cover every old type for 200 seeds in both answer modes', () => {
-    assert.equal(Q.practiceTypes.length, 23);
+    assert.equal(Q.practiceTypes.length, 24);
     for (const type of Q.practiceTypes) {
         assert.equal(data.assessment.question_types[type], 'round-significant-figures');
         // A choice card falls back to a typed answer when it has too few wrong choices.

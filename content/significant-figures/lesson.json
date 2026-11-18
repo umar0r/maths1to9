@@ -36,7 +36,8 @@
             "decimal-zero": "round-significant-figures",
             "decimal-carry": "round-significant-figures",
             "decimal": "round-significant-figures",
-            "context": "round-significant-figures"
+            "context": "round-significant-figures",
+            "round-down": "round-significant-figures"
         }
     },
     "explanation": {

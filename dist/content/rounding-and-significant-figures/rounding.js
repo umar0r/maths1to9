@@ -112,8 +112,9 @@
                 digits: '53481', accuracy: 2,
                 tap: 'Tap the hundreds digit.',
                 tapHint: 'The hundreds digit is the third from the right.',
-                place: 'Tap where 53,481 goes on the line.',
-                line: { base: 53400, step: 10, value: 53481, tolerance: 5 },
+                place: 'Which half of the line does 53,481 go in? Tap that half.',
+                placeHint: 'The halfway point is 53,450. 53,481 is more than that.',
+                line: { base: 53400, step: 10, value: 53481 },
                 notes: {
                     digit: 'The next digit is 8. That is 5 or more, so round up.',
                     nearest: 'So 53,481 is closer to 53,500.'
@@ -132,8 +133,8 @@
             answered ? null : index => onPick(index === digits.target), { commas: false });
     }
 
-    /* A number slide: tap the digit, tap where the number goes on the line, then it
-       rounds by itself. */
+    /* A number slide: tap the digit, tap the half of the line the number goes in,
+       then it rounds by itself. */
     function drawSlideOne(host, slide, saved, handlers) {
         const { base, step, value } = slide.line;
         text(host, 'p', slide.tap);
@@ -143,12 +144,8 @@
         const place = text(block, 'p', slide.place);
         const line = drawLine(block, value, false, null, false, base, null, step, {
             wideLabels: true, labels: 'landmarks', showNearest: false,
-            showDot: saved.dot, onTap: saved.dot ? null : number => handlers.onTap(number)
+            showDot: saved.dot, halves: true, onHalf: saved.dot ? null : upper => handlers.onHalf(upper === (value >= base + 5 * step))
         });
-        line.dataset.base = base;
-        line.dataset.step = step;
-        line.dataset.edge = 50;
-        line.dataset.tapValue = value;
         if (!saved.dot) return;
         // Nothing is left to do, so the instruction goes: the notes take over,
         // and no arrow then runs through a line of words at phone width.
@@ -190,18 +187,18 @@
         ];
     }
     const practiceGroups = [
-        { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'nearest-thousand', 'big-hundred', 'big-thousand'] },
+        { kind: 'place', types: ['nearest-ten', 'halfway-hundred', 'big-hundred'] },
+        { kind: 'place', types: ['nearest-thousand', 'big-thousand'] },
         { kind: 'context', types: ['round-up'] },
-        { kind: 'context', types: ['round-down'] },
         { kind: 'context', types: ['full-groups', 'path-context'] }
     ];
     const practiceTypes = practiceGroups.flatMap(group => group.types);
 
     function pick(random) {
         const { randomInt, shuffle } = window.Maths1to9LessonEngine;
-        // Four whole-number cards and two from each real-life group keeps it at
-        // 10 questions, so both come up in every session.
-        const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2, 3] : [0, 1]).map(() => ({
+        // Three cards from each whole-number group and two from each real-life
+        // group keeps it at 10 questions, so both come up in every session.
+        const picks = practiceGroups.flatMap(group => (group.kind === 'place' ? [0, 1, 2] : [0, 1]).map(() => ({
             group, type: group.types[randomInt(0, group.types.length - 1, random)]
         })));
 
@@ -264,26 +261,6 @@
     }
 
     function generateSituation(item, integer, random) {
-        if (item.type === 'round-down') {
-            const pounds = integer(10, 40);
-            const budget = pounds * 100;
-            const prices = Array.from({ length: 77 }, (_, index) => 115 + index * 5)
-                .filter(price => budget % price !== 0);
-            const price = prices[integer(0, prices.length - 1)];
-            const money = pence => `£${(pence / 100).toFixed(2)}`;
-            const product = ['pen', 'ticket', 'notebook'][integer(0, 2)];
-            const quotient = budget / price;
-            const answer = Math.floor(quotient);
-            const next = answer + 1;
-            return practiceContext(item,
-                `You have £${pounds}. Each ${product} costs ${money(price)}. ${pounds} ÷ ${(price / 100).toFixed(2)} = ${divisionText(budget, price)} What is the greatest number you can buy?`,
-                answer, `${answer} × ${money(price)} = ${money(answer * price)}. ${next} cost ${money(next * price)}, which is more than £${pounds}.`, [
-                    [next, `That many cost more than £${pounds}. Round down.`],
-                    [Math.round(quotient) === answer ? next + 1 : Math.round(quotient), 'Here you always round down, even if the decimal is big.'],
-                    [Math.round(quotient * 10) / 10, "You can't buy part of one. Give a whole number."]
-                ], random);
-        }
-
         const roundUp = item.type === 'round-up';
         const size = roundUp ? integer(12, 30) : integer(6, 12);
         const max = roundUp ? 300 : 200;
@@ -343,7 +320,6 @@
             number = `${integer(1, 8)}.99${integer(5, 9)}`;
             kind = 'decimal'; accuracy = 2; break;
         case 'round-up':
-        case 'round-down':
         case 'full-groups':
             return generateSituation(item, integer, random);
         case 'path-context':
@@ -461,7 +437,7 @@
     // number at each, and a blue dot on the number. step is 1 for the nearest
     // 10, 10 for the nearest 100 and 100 for the nearest 1000. With notes, one
     // note points at the digit that decides, one at the number it rounds to.
-    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, onTap = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
+    function drawLine(host, value, explore, onChange, readOnly, base = 60, notes = null, step = 1, { onPick, halves = false, onHalf = null, wideLabels = false, labels = 'all', valueLabel, showNearest = true, showDot = true } = {}) {
         const format = number => number.toLocaleString('en-GB');
         // Wrap the digit that decides (the ones for step 1, the tens for step 10
         // and so on) so a note's arrow can point at it.
@@ -491,8 +467,22 @@
         const digitNote = notes && !onTick ? stepText(lineHost, 'p', notes.digit, 'rounding-note rounding-note--above') : null;
         const line = document.createElement('div');
         line.className = 'rounding-line';
-        line.setAttribute('role', onPick || onTap ? 'group' : 'img');
-        let picture = `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
+        line.setAttribute('role', onPick || onHalf ? 'group' : 'img');
+        let picture = '';
+        if (halves) {
+            // Two coloured boxes, one round each half of the line, meeting at halfway.
+            // While the pupil is choosing, each box is a button.
+            const middle = x(tick(5));
+            const box = (from, to, side, name) => {
+                const shape = `<rect class="rounding-half rounding-half--${side}" x="${from}" y="${axis - 24}" width="${to - from}" height="48" rx="8"/>`;
+                return onHalf
+                    ? `<g role="button" tabindex="0" aria-label="${name}" class="rounding-half-button" data-half="${side}">${shape}</g>`
+                    : shape;
+            };
+            picture += box(x(base) - 18, middle - 3, 'lower', `The half from ${format(base)} to ${format(tick(5))}`);
+            picture += box(middle + 3, x(top) + 18, 'upper', `The half from ${format(tick(5))} to ${format(top)}`);
+        }
+        picture += `<path class="rounding-axis" d="M 15 ${axis} H 645"/>`;
         for (let mark = 0; mark <= 10; mark++) {
             // The two round numbers and the halfway number between them stand out.
             const number = tick(mark);
@@ -511,7 +501,7 @@
         }
         if (showDot && !onTick) picture += `<text class="rounding-value is-key rounding-value--above" x="${x(value)}" y="${axis - (phone ? 24 : 20)}">${valueLabel ?? marked(value)}</text>`;
         if (showDot) picture += `<circle class="rounding-dot" cx="${x(value)}" cy="${axis}" r="${phone ? 12 : 9}"/>`;
-        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onTap)}">${picture}</svg>`;
+        line.innerHTML = `<svg viewBox="0 0 660 ${axis + (phone ? 54 : 46)}" aria-hidden="${!(onPick || onHalf)}">${picture}</svg>`;
         if (onPick) {
             for (const end of line.querySelectorAll('.rounding-end')) {
                 const pick = () => onPick(Number(end.dataset.end));
@@ -523,13 +513,16 @@
                 });
             }
         }
-        if (onTap) {
-            // A tap anywhere along the line: where it lands decides the number.
-            line.querySelector('svg').addEventListener('click', event => {
-                const box = event.currentTarget.getBoundingClientRect();
-                const point = (event.clientX - box.left) / box.width * 660;
-                onTap(base + (point - edge) / (660 - 2 * edge) * 10 * step);
-            });
+        if (onHalf) {
+            for (const half of line.querySelectorAll('.rounding-half-button')) {
+                const pick = () => onHalf(half.dataset.half === 'upper');
+                half.addEventListener('click', pick);
+                half.addEventListener('keydown', event => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    pick();
+                });
+            }
         }
         const dot = line.querySelector('.rounding-dot');
         const label = number => line.querySelector(`.rounding-value[data-value="${number}"]`);

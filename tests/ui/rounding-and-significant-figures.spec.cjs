@@ -41,26 +41,6 @@ async function reachSlide(page, title) {
     throw new Error(`never reached "${title}"`);
 }
 
-async function lineGeometry(page) {
-    return page.evaluate(() => {
-        const line = [...document.querySelectorAll('.rounding-tryit .rounding-line')].find(node => node.getClientRects().length);
-        return { base: Number(line.dataset.base), step: Number(line.dataset.step), edge: Number(line.dataset.edge) };
-    });
-}
-
-// Where a value sits across a 660-wide line, as a point on the page.
-async function pointOnLine(page, value) {
-    const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
-    const { base, step, edge } = await lineGeometry(page);
-    return { x: box.x + (edge + (value - base) / (10 * step) * (660 - 2 * edge)) / 660 * box.width, y: box.y + box.height / 2 };
-}
-
-async function tapLine(page, value) {
-    const point = await pointOnLine(page, value);
-    await page.mouse.click(point.x, point.y);
-    await page.waitForTimeout(150);
-}
-
 for (const width of [1280, 375]) {
     test.describe(`rounding-and-significant-figures Try it ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
@@ -96,11 +76,12 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .significant-digit.is-keep > span').first()).toHaveText('4');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look')).toContainText('Look');
             await expect(page.locator('.rounding-tryit .significant-digit.is-look > span').first()).toHaveText('8');
-            await expect(page.getByText('Tap where 53,481 goes on the line.', { exact: true })).toBeVisible();
+            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toBeVisible();
 
-            // Step 2: any tap away from 53,481 does nothing at all.
-            await tapLine(page, 53405);
+            // Step 2: the wrong half gives a hint and no dot.
+            await page.locator('.rounding-tryit .rounding-half-button[data-half="lower"]').click();
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
+            await expect(page.getByText('The halfway point is 53,450. 53,481 is more than that.', { exact: true })).toBeVisible();
             await expect(page.locator('.significant-equation:visible')).toHaveCount(0);
             await expect(mainAction(page)).toBeDisabled();
 
@@ -110,8 +91,9 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .rounding-line')).toHaveCount(1);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(0);
 
-            // A tap within reach of the number puts the dot on the line, and it rounds.
-            await tapLine(page, 53481);
+            // The right half puts the dot on the line, and it rounds.
+            await page.locator('.rounding-tryit .rounding-half-button[data-half="upper"]').click();
+            await expect(page.locator('.rounding-tryit .rounding-half-button')).toHaveCount(0);
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
             await expect(page.locator('.rounding-tryit .rounding-value--above')).toHaveText('53,481');
             await expect(page.getByText('The next digit is 8. That is 5 or more, so round up.', { exact: true })).toBeVisible();
@@ -119,7 +101,7 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
             // The step's instruction goes once there is nothing left to do, so no
             // arrow has a line of words to cross at phone width.
-            await expect(page.getByText('Tap where 53,481 goes on the line.', { exact: true })).toHaveCount(0);
+            await expect(page.getByText('Which half of the line does 53,481 go in? Tap that half.', { exact: true })).toHaveCount(0);
             await expect(mainAction(page)).toBeEnabled();
             await noSidewaysScroll(page);
             const afterSlideA = await score(page);

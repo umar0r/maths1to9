@@ -279,8 +279,8 @@
         { kind: 'whole-significant', types: ['whole-significant', 'sig-three-zero'] },
         { kind: 'small-significant', types: ['small-significant', 'sig-one-small', 'sig-three-small', 'sig-no-lead'] },
         { kind: 'sig-count', types: ['sig-count'] },
-        // The six place-rounding types moved here from the Rounding lesson.
-        { kind: 'place-rounding', types: ['one-decimal', 'decimal-zero', 'decimal-carry', 'two-decimals', 'whole-number', 'carry-two'] }
+        // The seven types moved here from the Rounding lesson.
+        { kind: 'place-rounding', types: ['one-decimal', 'decimal-zero', 'decimal-carry', 'two-decimals', 'whole-number', 'carry-two', 'round-down'] }
     ];
     const practiceTypes = practiceGroups.flatMap(group => group.types);
 
@@ -349,6 +349,34 @@
             `Start at the first digit that isn't zero. ${number} shows ${figures(answer)}.`, rules, random);
     }
 
+    // The round-down question moved here from the Rounding lesson: its prices
+    // are decimals.
+    function divisionText(total, size) {
+        const scaled = total * 1000;
+        const truncated = Math.floor(scaled / size) / 1000;
+        return `${truncated}${scaled % size ? '…' : '.'}`;
+    }
+
+    function roundDownQuestion(item, integer, random) {
+        const pounds = integer(10, 40);
+        const budget = pounds * 100;
+        const prices = Array.from({ length: 77 }, (_, index) => 115 + index * 5)
+            .filter(price => budget % price !== 0);
+        const price = prices[integer(0, prices.length - 1)];
+        const money = pence => `£${(pence / 100).toFixed(2)}`;
+        const product = ['pen', 'ticket', 'notebook'][integer(0, 2)];
+        const quotient = budget / price;
+        const answer = Math.floor(quotient);
+        const next = answer + 1;
+        return practiceContext(item,
+            `You have £${pounds}. Each ${product} costs ${money(price)}. ${pounds} ÷ ${(price / 100).toFixed(2)} = ${divisionText(budget, price)} What is the greatest number you can buy?`,
+            answer, `${answer} × ${money(price)} = ${money(answer * price)}. ${next} cost ${money(next * price)}, which is more than £${pounds}.`, [
+                [next, `That many cost more than £${pounds}. Round down.`],
+                [Math.round(quotient) === answer ? next + 1 : Math.round(quotient), 'Here you always round down, even if the decimal is big.'],
+                [Math.round(quotient * 10) / 10, "You can't buy part of one. Give a whole number."]
+            ], random);
+    }
+
     function generate(item, random) {
         const { randomInt } = window.Maths1to9LessonEngine;
         const integer = (min, max) => randomInt(min, max, random);
@@ -385,6 +413,7 @@
         case 'sig-three-small': return moved(`0.00${nonZeroEnd(integer(10000, 99999))}`, 3);
         case 'sig-no-lead': return moved(`0.${nonZeroEnd(integer(10000, 99999))}`, 2);
         case 'sig-count': return countSignificantFigures(item, integer, random);
+        case 'round-down': return roundDownQuestion(item, integer, random);
         case 'one-decimal': return place(`${integer(1, 8)}.${integer(1, 9)}${integer(1, 9)}`, 'decimal', 1);
         case 'decimal-zero': return place(`${integer(1, 8)}.0${integer(1, 4)}`, 'decimal', 1);
         case 'decimal-carry': return place(`9.9${integer(5, 9)}`, 'decimal', 1);

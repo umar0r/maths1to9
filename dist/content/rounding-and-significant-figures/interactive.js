@@ -255,11 +255,14 @@
                     feedback.textContent = slide.tapHint;
                     feedback.className = engine.feedbackClassName('interactive', { correct: false, visible: true });
                 },
-                onTap(number) {
-                    // Only a tap within reach of the number counts. Any other tap does nothing at all.
-                    if (Math.abs(number - slide.line.value) > slide.line.tolerance) return;
-                    section.update(now => { now.slides[index].dot = true; });
-                    render();
+                onHalf(correct) {
+                    if (correct) {
+                        section.update(now => { now.slides[index].dot = true; });
+                        render();
+                        return;
+                    }
+                    feedback.textContent = slide.placeHint;
+                    feedback.className = engine.feedbackClassName('interactive', { correct: false, visible: true });
                 },
                 onContext(correct, hint) {
                     if (correct) {

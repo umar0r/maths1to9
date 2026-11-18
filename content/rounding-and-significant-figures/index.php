@@ -28,7 +28,7 @@ $pageTitle = 'Rounding whole numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=62">
-    <link rel="stylesheet" href="./lesson.css?v=29">
+    <link rel="stylesheet" href="./lesson.css?v=31">
 </head>
 
 <body
@@ -65,11 +65,11 @@ $pageTitle = 'Rounding whole numbers';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./rounding.js?v=55"></script>
+    <script src="./rounding.js?v=56"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=16"></script>
-    <script src="./interactive.js?v=34"></script>
+    <script src="./questions.js?v=17"></script>
+    <script src="./interactive.js?v=35"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=79"></script>

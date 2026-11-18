@@ -31,7 +31,6 @@
             "coverage": "round-in-context",
             "path-context": "round-in-context",
             "round-up": "round-in-context",
-            "round-down": "round-in-context",
             "full-groups": "round-in-context",
             "containers": "round-in-context",
             "context": "round-in-context",

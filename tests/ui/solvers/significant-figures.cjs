@@ -58,7 +58,10 @@ module.exports = async function solve(page) {
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
     let answer;
-    if (text.startsWith('Amir says 4.95')) answer = 'The 5 rounds the tenths up, giving 5.0';
+    // The round-down question moved from Rounding: how many whole ones you can afford.
+    const budget = text.match(/You have £(\d+)\. Each \w+ costs £([\d.]+)\./);
+    if (budget) answer = String(Math.floor(Number(budget[1]) * 100 / Math.round(Number(budget[2]) * 100)));
+    else if (text.startsWith('Amir says 4.95')) answer = 'The 5 rounds the tenths up, giving 5.0';
     else if (text.startsWith('Amir says')) answer = 'Start at 2. Keep 2 and 8. The next digit is 3, so the answer is 0.028';
     else if (text.startsWith('How many significant figures does')) {
         // Start at the first digit that is not zero and count every digit after it.
