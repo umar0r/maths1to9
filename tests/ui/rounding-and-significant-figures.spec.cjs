@@ -11,7 +11,6 @@ const prompt = page => page.locator('.question-prompt:visible');
 
 const SLIDE_A = 'Round 53,481 to the nearest 100.';
 const SLIDE_LINE = "Let's put 53,481 on a number line.";
-const SLIDE_B = 'When you need enough of something, round up.';
 
 async function reload(page) {
     await page.waitForTimeout(250); // let the saved state write itself
@@ -46,7 +45,7 @@ for (const width of [1280, 375]) {
     test.describe(`rounding-and-significant-figures Try it ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
 
-        test('three hands-on slides: tap the digit, then the half of the line, then the minibuses', async ({ page }) => {
+        test('two hands-on slides: tap the digit, then the half of the line', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
             await page.goto('content/rounding-and-significant-figures/', { waitUntil: 'networkidle' });
@@ -116,29 +115,13 @@ for (const width of [1280, 375]) {
             await expect(page.locator('.rounding-tryit .rounding-dot')).toHaveCount(1);
             expect(await score(page)).toBe(afterLine);
 
-            // Back then forward keeps the finished slide.
-            await mainAction(page).click();
-            await expect(heading(page)).toHaveText(SLIDE_B);
+            // Back to the digit slide and forward again keeps the finished slide.
             await back(page).click();
+            await expect(heading(page)).toHaveText(SLIDE_A);
+            await mainAction(page).click();
             await expect(heading(page)).toHaveText(SLIDE_LINE);
             await expect(page.locator('.significant-equation:visible')).toHaveText('53,481 ≈ 53,500');
-            await mainAction(page).click();
-
-            // Slide B: the minibuses. A wrong tap gives the hint; 9 is right.
-            await expect(heading(page)).toHaveText(SLIDE_B);
-            await expect(page.getByText('How many minibuses do you need?', { exact: true })).toBeVisible();
             await expect(mainAction(page)).toHaveText('Continue');
-            await expect(mainAction(page)).toBeDisabled();
-            await page.locator('.rounding-end[data-end="8"]:visible').click();
-            await expect(page.locator('.question-feedback:visible')).toHaveText('8 minibuses seat 8 × 16 = 128 pupils. That leaves 3 pupils with no seat.');
-            await expect(mainAction(page)).toBeDisabled();
-            await page.locator('.rounding-end[data-end="9"]:visible').click();
-            await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
-            await expect(page.getByText('8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.', { exact: true })).toBeVisible();
-            await noSidewaysScroll(page);
-            await reloadToSlide(page, SLIDE_B);
-            await expect(page.getByText('9 minibuses', { exact: true })).toBeVisible();
-            await expect(mainAction(page)).toBeEnabled();
             await mainAction(page).click();
 
             // The last slide goes straight on to Practice, with no summary page.

@@ -100,9 +100,8 @@
         };
     }
 
-    // Try it: hands-on slides. On the first the pupil taps the digit that
-    // decides, then taps where the number goes on a number line. The second
-    // (the minibuses) is added after learnScreens: tap how many you need. The
+    // Try it: hands-on slides. On the first the pupil taps the hundreds digit;
+    // on the second, the half of the number line the number goes in. The
     // words below are the words on screen; the tests and the slides tool read
     // them from here.
     const tryIt = {
@@ -129,7 +128,7 @@
                     nearest: 'So 53,481 is closer to 53,500.'
                 },
                 answer: '53,481 ≈ 53,500',
-                button: 'Next'
+                button: 'Continue'
             }
         ]
     };
@@ -176,16 +175,7 @@
         text(host, 'p', slide.answer, 'significant-equation');
     }
 
-    // The minibus slide: tap how many you need, then the working shows.
-    function drawContextSlide(host, slide, answered, onResult) {
-        if (!answered) return drawLearnTap(host, slide, onResult);
-        drawContextLine(host, slide);
-        for (const equation of slide.equations || []) text(host, 'p', equation, 'significant-equation rounding-line-answer');
-        if (slide.caption) text(host, 'p', slide.caption);
-    }
-
     function drawSlide(host, slide, saved, handlers) {
-        if (slide.context) return drawContextSlide(host, slide, saved.dot, handlers.onContext);
         if (slide.digits) return drawDigitSlide(host, slide, saved, handlers);
         return drawLineSlide(host, slide, saved, handlers);
     }
@@ -240,9 +230,10 @@
             // four different choices, so give at least one place card (which
             // always can) the multiple-choice slot.
             const placeChoice = ordered.some(({ group }, index) => group.kind === 'place' && modes[index] === 'choice');
+            // The minibus and box questions (round up) are always multiple choice.
             return ordered.map(({ type }, index) => ({
                 type,
-                mode: placeChoice === (modes[index] === 'choice') ? 'choice' : 'number',
+                mode: type === 'round-up' || placeChoice === (modes[index] === 'choice') ? 'choice' : 'number',
                 seed: randomInt(0, 4294967295, random)
             }));
         }
@@ -258,11 +249,11 @@
             seen.add(value);
             return true;
         });
-        if (item.mode === 'choice' && rules.length === 3) {
+        if (item.mode === 'choice' && rules.length >= 3) {
             return prepare({
                 questionType: item.type, input: 'choice', prompt,
                 options: [option(spaced(answer), feedback, true),
-                    ...rules.map(([value, message]) => option(spaced(value), message))]
+                    ...rules.slice(0, 3).map(([value, message]) => option(spaced(value), message))]
             }, random);
         }
         return contextStep(item.type, prompt, String(answer), feedback,
@@ -282,6 +273,15 @@
         const max = roundUp ? 300 : 200;
         let total = integer(roundUp ? 100 : 40, max);
         if (total % size === 0) total += total === max ? -1 : 1;
+        // A round-up question is always multiple choice, so pick numbers whose
+        // real mistakes give at least three different wrong answers.
+        const wrongAnswers = count => {
+            const low = Math.floor(count / size);
+            const nearest = Math.round(count / size);
+            return new Set([low, nearest === low + 1 ? low - 1 : nearest, Math.round(count / size * 10) / 10, count % size]
+                .filter(value => value !== low + 1)).size;
+        };
+        while (roundUp && (total % size === 0 || wrongAnswers(total) < 3)) total = integer(100, max);
         const quotient = total / size;
         const lower = Math.floor(quotient);
         const upper = lower + 1;
@@ -298,7 +298,9 @@
                 `${upper} ${units} hold ${upper} × ${size} = ${upper * size} ${contents}, so all ${total} fit. ${lower} ${units} only hold ${lower * size}.`, [
                     [lower, 'That leaves some with no space. You need one more.'],
                     [Math.round(quotient) === upper ? lower - 1 : Math.round(quotient), 'Here you always round up, even if the decimal is small.'],
-                    [roundedQuotient, `You can't have part of a ${unit}. Give a whole number.`]
+                    [roundedQuotient, `You can't have part of a ${unit}. Give a whole number.`],
+                    // Used when rounding to the nearest gives the same wrong answer as one too few.
+                    [total % size, `That is how many ${contents} are left over, not the number of ${units}.`]
                 ], random);
         }
 
@@ -375,26 +377,6 @@
             look: "Now look at the digit just to its right. It's a 7."
         } }
     ];
-    // The minibus slide was a Learn screen; it is now Try it's third slide.
-    tryIt.slides.push({
-        ...{
-            title: 'When you need enough of something, round up.',
-            lines: [], base: 8, step: 0.1, value: 131 / 16, labels: 'landmarks', tap: 'end', answer: 9,
-            context: {
-                setup: 'Step 1: 131 pupils are going on a trip. Each minibus seats 16. On a calculator, 131 ÷ 16 = 8.1875',
-                valueLabel: '8.1875',
-                question: 'How many minibuses do you need?',
-                hint: '8 minibuses seat 8 × 16 = 128 pupils. That leaves 3 pupils with no seat.',
-                steps: [
-                    ['Step 2: 8 minibuses seat 128 pupils. 3 pupils have no seat.', 8],
-                    ['Step 3: So you need 9 minibuses. 9 minibuses seat 144, so all 131 fit.', 9]
-                ]
-            },
-            equations: ['9 minibuses'],
-            caption: '8.1875 would normally round to 8. Here you round up, because 8 minibuses are not enough.'
-        },
-        button: 'Continue'
-    });
     function text(host, tag, value, className) {
         const node = document.createElement(tag);
         node.textContent = value;
