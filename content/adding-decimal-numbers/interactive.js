@@ -16,13 +16,6 @@
             line: "Let's add 7.6 and 0.48 by lining the numbers up in columns."
         },
         {
-            kind: 'align',
-            title: 'To add decimals, line up the decimal points.',
-            line: 'Then digits that are worth the same sit in the same column: ones under ones, tenths under tenths.',
-            instruction: 'Move 0.48 so its decimal point sits under the one in 7.6.',
-            feedback: 'The points line up, so the 6 tenths and the 4 tenths are in the same column.'
-        },
-        {
             kind: 'zero',
             title: 'You can fill a gap with a zero.',
             line: '7.6 has no hundredths, so 7.6 and 7.60 are the same number.',
@@ -280,7 +273,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 10,
+            version: 11,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
