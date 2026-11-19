@@ -7,8 +7,7 @@
     const screens = [
         {
             kind: 'intro',
-            title: 'Adding decimals works just like adding whole numbers, as long as each digit sits under a digit worth the same.',
-            line: "In 7.6 + 0.48, the 6 is worth 6 tenths and the 8 is worth 8 hundredths, so they don't go in the same column."
+            title: 'When you add or take away decimals, line the numbers up in columns.'
         },
         {
             kind: 'align',
@@ -34,66 +33,21 @@
     }
 
     function drawIntroChart(host) {
-        const block = element('div', '', 'decimal-intro-figure');
         const chart = element('div', '', 'decimal-place-chart');
         chart.setAttribute('role', 'img');
-        chart.setAttribute('aria-label', '7.6 over 0.48 with a plus sign and the decimal points lined up. The 6 is 6 tenths; the 8 is 8 hundredths.');
+        chart.setAttribute('aria-label', '7.6 over 0.48, with a plus sign and the decimal points lined up.');
         const labels = element('div', '', 'decimal-place-chart__labels');
         ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
         chart.append(labels);
-        const targets = [];
-        [['', '7', '.', '6', ''], ['+', '0', '.', '4', '8']].forEach((digits, rowIndex) => {
+        [['', '7', '.', '6', ''], ['+', '0', '.', '4', '8']].forEach(digits => {
             const row = element('div', '', 'decimal-place-chart__top');
             digits.forEach((digit, index) => {
-                const cell = element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
-                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
-                if ((rowIndex === 0 && index === 3) || (rowIndex === 1 && index === 4)) {
-                    const target = element('span', digit);
-                    cell.replaceChildren(target);
-                    targets.push(target);
-                }
-                row.append(cell);
+                row.append(element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
+                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell'));
             });
             chart.append(row);
         });
-        const notes = ['6 tenths', '8 hundredths'].map((text, index) =>
-            element('span', text, `decimal-intro-note decimal-intro-note--${index + 1}`));
-        const svgNs = 'http://www.w3.org/2000/svg';
-        const arrows = document.createElementNS(svgNs, 'svg');
-        arrows.setAttribute('class', 'decimal-intro-arrows');
-        arrows.setAttribute('aria-hidden', 'true');
-        block.append(chart, ...notes, arrows);
-        host.append(block);
-
-        // Route each arrow round the right edge of the chart, clear of the
-        // column headings and the other digits. The open head ends at its digit.
-        function draw() {
-            if (!block.isConnected) { observer.disconnect(); return; }
-            const origin = block.getBoundingClientRect();
-            const chartBox = chart.getBoundingClientRect();
-            arrows.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
-            arrows.replaceChildren();
-            notes.forEach((note, index) => {
-                const label = note.getBoundingClientRect();
-                const digit = targets[index].getBoundingClientRect();
-                const sx = label.right - origin.left + 4;
-                const sy = label.top + label.height / 2 - origin.top;
-                const tx = digit.right - origin.left + 3;
-                const ty = digit.top + digit.height / 2 - origin.top;
-                const outside = chartBox.right - origin.left + 8;
-                const direction = index === 0 ? 1 : -1;
-                const path = document.createElementNS(svgNs, 'path');
-                path.setAttribute('d', `M ${sx} ${sy} Q ${outside} ${sy}, ${outside} ${sy + direction * 16}`
-                    + ` L ${outside} ${ty - direction * 18} Q ${outside} ${ty}, ${tx} ${ty}`
-                    + ` M ${tx + 8} ${ty - 5} L ${tx} ${ty} L ${tx + 8} ${ty + 5}`);
-                arrows.append(path);
-            });
-        }
-        const observer = new ResizeObserver(draw);
-        observer.observe(block);
-        requestAnimationFrame(draw);
-        document.fonts.ready.then(draw);
-        return () => observer.disconnect();
+        host.append(chart);
     }
 
     // A leading space lets the wrongly aligned row sit one place to the left.
@@ -217,7 +171,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 4,
+            version: 5,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -257,11 +211,15 @@
             root.replaceChildren();
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';
-            root.append(heading, element('p', screen.line));
+            root.append(heading);
+            if (screen.line) root.append(element('p', screen.line));
             const picture = element('div');
             root.append(picture);
             if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
-            if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
+            if (screen.kind === 'intro') {
+                drawIntroChart(picture);
+                disposeChart = () => {};
+            }
             else disposeChart = drawLearnChart(picture, {
                 aligned: screen.kind === 'zero' || state.aligned,
                 zero: screen.kind === 'zero' && state.zero,
