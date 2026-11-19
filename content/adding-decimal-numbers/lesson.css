@@ -115,3 +115,97 @@
     overflow-wrap: anywhere;
     hyphens: auto;
 }
+
+
+/* Learn's place-value chart: each digit has a box; the point has a narrow space. */
+.decimal-place-chart {
+    --decimal-point-width: 20px;
+    width: min(100%, 430px);
+    margin: 1.75rem auto 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.decimal-place-chart__labels,
+.decimal-place-chart__top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) var(--decimal-point-width) repeat(2, minmax(0, 1fr));
+    text-align: center;
+}
+
+.decimal-place-chart__labels {
+    margin-bottom: .4rem;
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+
+.decimal-place-chart__top,
+.decimal-place-chart__moving {
+    height: 58px;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 800;
+}
+
+.decimal-place-chart__cell,
+.decimal-place-chart__point {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 58px;
+}
+
+.decimal-place-chart__cell {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
+}
+
+.decimal-place-chart__point {
+    color: var(--primary-dark);
+}
+
+.decimal-place-chart__moving {
+    position: relative;
+    margin-top: .4rem;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+}
+
+.decimal-place-chart__moving > span {
+    position: absolute;
+    top: 0;
+}
+
+.decimal-place-chart__moving.is-dragging { cursor: grabbing; }
+.decimal-place-chart__moving.is-locked { cursor: default; }
+.decimal-place-chart__gap { cursor: pointer; }
+
+.decimal-place-chart__gap:focus-visible,
+.decimal-place-chart__moving:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.decimal-row-controls {
+    display: flex;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: .9rem;
+}
+
+.decimal-row-move {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: white;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.decimal-row-move:disabled { opacity: .35; cursor: default; }
+.decimal-learn-instruction { text-align: center; }

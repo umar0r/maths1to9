@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $lessonId = 'adding-decimal-numbers';
-$pageTitle = 'Adding decimal numbers';
+$pageTitle = 'Adding and subtracting decimals';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +28,7 @@ $pageTitle = 'Adding decimal numbers';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=62">
-    <link rel="stylesheet" href="./lesson.css?v=9">
+    <link rel="stylesheet" href="./lesson.css?v=10">
 </head>
 
 <body
@@ -69,7 +69,7 @@ $pageTitle = 'Adding decimal numbers';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=17"></script>
-    <script src="./interactive.js?v=17"></script>
+    <script src="./interactive.js?v=18"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=80"></script>

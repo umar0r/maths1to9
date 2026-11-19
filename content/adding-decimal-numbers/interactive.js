@@ -5,34 +5,131 @@
     const initialHash = window.location.hash;
 
     const screens = [
-        { title: 'Line up the decimal points', lines: [
-            'Write 14.7 and 6.82 underneath each other.',
-            'Ones go under ones. One tenth is 0.1. One hundredth is 0.01.'
-        ] },
-        { title: 'A zero can help', lines: [
-            '14.7 = 14.70',
-            'A zero at the end after the decimal point does not change the value.'
-        ] },
-        { title: 'Start at the right', lines: [
-            'Hundredths: 0 + 2 = 2',
-            'Write 2 in the hundredths column.'
-        ] },
-        { title: 'Carry into the next column', lines: [
-            'Tenths: 7 + 8 = 15',
-            'Ten tenths make one whole. Write 5 tenths and put 1 above the ones column.',
-            'This is called carrying: move a group of ten into the next column.'
-        ] },
-        { title: 'Add the ones, including the carry', lines: [
-            'Ones: 4 + 6 + 1 = 11',
-            'Write 1 in the ones column. Carry 1 ten into the tens column.'
-        ] },
-        { title: 'Finish the tens and check the size', lines: [
-            'Tens: 1 + 1 = 2',
-            '14.70 + 6.82 = 21.52',
-            'Keep the answer’s decimal point directly below the others.',
-            '14.7 is about 15 and 6.82 is about 7. An answer near 22 makes sense.'
-        ] }
+        {
+            title: 'To add decimals, line up the decimal points.',
+            line: 'Then digits that are worth the same sit in the same column: ones under ones, tenths under tenths.',
+            instruction: 'Move 0.48 so its decimal point sits under the one in 7.6.',
+            feedback: 'The points line up, so the 6 tenths and the 4 tenths are in the same column.'
+        },
+        {
+            title: 'You can fill a gap with a zero.',
+            line: '7.6 has no hundredths, so 7.6 and 7.60 are the same number.',
+            instruction: 'Tap the gap after 7.6.',
+            feedback: 'Now both numbers have two digits after the point, so every column has a digit to add.'
+        }
     ];
+
+    function element(tag, text = '', className = '') {
+        const node = document.createElement(tag);
+        node.textContent = text;
+        node.className = className;
+        return node;
+    }
+
+    // A leading space lets the wrongly aligned row sit one place to the left.
+    // It is not a tens column: neither number needs one.
+    function drawLearnChart(host, { aligned, zero, fillGap, alignRow }) {
+        const chart = element('div', '', 'decimal-place-chart');
+        const labels = element('div', '', 'decimal-place-chart__labels');
+        ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
+        chart.append(labels);
+        const top = element('div', '', 'decimal-place-chart__top');
+        ['', '7', '.', '6', zero ? '0' : ''].forEach((digit, index) => {
+            const gap = index === 4 && fillGap && !zero;
+            const cell = element(gap ? 'button' : 'span', digit, index === 0 ? 'decimal-place-chart__space'
+                : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+            if (gap) {
+                cell.type = 'button';
+                cell.classList.add('decimal-place-chart__gap');
+                cell.setAttribute('aria-label', 'Gap after 7.6');
+                cell.addEventListener('click', fillGap);
+            }
+            top.append(cell);
+        });
+        chart.append(top);
+        const row = element('div', '', 'decimal-place-chart__moving');
+        row.setAttribute('aria-label', '0.48');
+        const digits = ['0', '.', '4', '8'].map(digit => {
+            const cell = element('span', digit, digit === '.' ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+            cell.setAttribute('aria-hidden', 'true');
+            row.append(cell);
+            return cell;
+        });
+        chart.append(row);
+        host.append(chart);
+        let position = aligned ? 1 : 0;
+        function paint() {
+            const pointWidth = parseFloat(getComputedStyle(chart).getPropertyValue('--decimal-point-width'));
+            const width = (row.clientWidth - pointWidth) / 4;
+            const places = [width * position, width * (1 + position),
+                width * (1 + position) + pointWidth, width * (2 + position) + pointWidth];
+            digits.forEach((cell, index) => {
+                cell.style.left = `${places[index]}px`;
+                cell.style.width = `${index === 1 ? pointWidth : width}px`;
+            });
+        }
+        const observer = new ResizeObserver(paint);
+        observer.observe(chart);
+        paint();
+        if (alignRow) {
+            row.tabIndex = aligned ? -1 : 0;
+            row.setAttribute('role', 'slider');
+            row.setAttribute('aria-label', 'Move 0.48');
+            row.setAttribute('aria-valuemin', '0');
+            row.setAttribute('aria-valuemax', '1');
+            row.setAttribute('aria-valuenow', aligned ? '1' : '0');
+            row.setAttribute('aria-valuetext', aligned ? 'Decimal points lined up' : 'Last digits lined up');
+            row.setAttribute('aria-disabled', String(aligned));
+            row.classList.toggle('is-locked', aligned);
+            function move(next) {
+                if (aligned) return;
+                position = Math.max(0, Math.min(1, Math.round(next)));
+                paint();
+                if (position === 1) alignRow();
+            }
+            row.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+                event.preventDefault();
+                move(position + (event.key === 'ArrowRight' ? 1 : -1));
+            });
+            row.addEventListener('pointerdown', event => {
+                if (aligned || event.button !== 0) return;
+                event.preventDefault();
+                row.focus({ preventScroll: true });
+                row.setPointerCapture(event.pointerId);
+                const startX = event.clientX;
+                const startPosition = position;
+                const columnWidth = (row.clientWidth - 20) / 4;
+                row.classList.add('is-dragging');
+                function drag(moveEvent) {
+                    position = Math.max(0, Math.min(1, startPosition + (moveEvent.clientX - startX) / columnWidth));
+                    paint();
+                }
+                function end() {
+                    row.classList.remove('is-dragging');
+                    row.removeEventListener('pointermove', drag);
+                    row.removeEventListener('pointerup', end);
+                    row.removeEventListener('pointercancel', cancel);
+                    move(position);
+                }
+                function cancel() { position = startPosition; end(); }
+                row.addEventListener('pointermove', drag);
+                row.addEventListener('pointerup', end);
+                row.addEventListener('pointercancel', cancel);
+            });
+            const controls = element('div', '', 'decimal-row-controls');
+            [['←', 'Move 0.48 left', -1], ['→', 'Move 0.48 right', 1]].forEach(([arrow, label, change]) => {
+                const button = element('button', arrow, 'decimal-row-move');
+                button.type = 'button';
+                button.setAttribute('aria-label', label);
+                button.disabled = aligned || change < 0;
+                button.addEventListener('click', () => move(position + change));
+                controls.append(button);
+            });
+            chart.append(controls);
+        }
+        return () => observer.disconnect();
+    }
 
     function examples() {
         return window.DecimalAddition.examples();
@@ -45,16 +142,17 @@
     }
 
     async function mountLearn() {
-        const root = document.createElement('article');
+        const root = element('article');
         document.getElementById('lesson-section-explanation').append(root);
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 1,
-            initial: () => ({ screen: 0, furthestScreen: 0, finished: false }),
+            version: 2,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
         const state = section.state;
+        let disposeChart = () => {};
         section.save();
 
         function syncHash() {
@@ -67,7 +165,6 @@
             section.update(state => {
                 state.screen = screen;
                 state.furthestScreen = Math.max(state.furthestScreen, screen);
-                if (screen === screens.length - 1) state.finished = true;
             });
             render();
             const heading = root.querySelector('h3');
@@ -76,39 +173,46 @@
         }
 
         function render() {
-            api.setSectionReset('explanation', () => render());
+            disposeChart();
+            api.setSectionReset('explanation', () => {
+                section.update(state => {
+                    if (state.screen === 0) state.aligned = false;
+                    else state.zero = false;
+                    state.finished = false;
+                });
+                render();
+            });
             const screen = screens[state.screen];
-            const { escapeHtml } = window.Maths1to9LessonEngine;
-            root.innerHTML = `<h3 data-screen-heading>${escapeHtml(screen.title)}</h3>`;
-            for (const line of screen.lines) {
-                const paragraph = document.createElement('p');
-                paragraph.textContent = line;
-                if (/^(?:[0-9]|Hundredths:|Tenths:|Ones:|Tens:)/.test(line) && line.includes('=')) paragraph.className = 'decimal-equation';
-                root.append(paragraph);
-            }
-            const frames = [
-                {}, {},
-                { result: ['', '', '.', '', '2'], highlight: 'hundredths' },
-                { result: ['', '', '.', '5', '2'], carries: { ones: '1' }, highlight: 'tenths' },
-                { result: ['', '1', '.', '5', '2'], carries: { ones: '1', tens: '1' }, highlight: 'ones' },
-                { result: '21.52', carries: { ones: '1', tens: '1' }, highlight: 'tens' }
-            ];
-            window.DecimalAddition.drawGrid(root, state.screen === 0 ? '14.7' : '14.70', '6.82', frames[state.screen]);
+            const done = state.screen === 0 ? state.aligned : state.zero;
+            root.replaceChildren();
+            const heading = element('h3', screen.title);
+            heading.dataset.screenHeading = '';
+            root.append(heading, element('p', screen.line));
+            const picture = element('div');
+            root.append(picture, element('p', screen.instruction, 'decimal-learn-instruction'));
+            disposeChart = drawLearnChart(picture, {
+                aligned: state.screen === 1 || state.aligned,
+                zero: state.screen === 1 && state.zero,
+                alignRow: state.screen === 0 ? () => {
+                    section.update(state => { state.aligned = true; });
+                    render();
+                } : null,
+                fillGap: state.screen === 1 ? () => {
+                    section.update(state => { state.zero = true; state.finished = true; });
+                    render();
+                } : null
+            });
+            if (done) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
+                correct: true, text: screen.feedback
+            }));
             api.setSectionBack('explanation', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
-            if (state.screen < state.furthestScreen) {
-                api.setSectionAction('explanation', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
-                });
-            } else if (state.finished) {
-                api.clearSectionAction('explanation');
-            } else {
-                api.setSectionAction('explanation', {
-                    label: 'Next idea', onClick: () => showScreen(state.screen + 1)
-                });
-            }
+            if (state.screen === screens.length - 1 && done) api.clearSectionAction('explanation');
+            else api.setSectionAction('explanation', {
+                label: 'Next', disabled: !done, onClick: () => showScreen(state.screen + 1)
+            });
             syncHash();
         }
 

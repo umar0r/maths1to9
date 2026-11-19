@@ -1,8 +1,8 @@
 {
     "id": "adding-decimal-numbers-01",
     "slug": "adding-decimal-numbers",
-    "title": "Adding decimal numbers",
-    "subtitle": "Line up the decimal points, then add column by column.",
+    "title": "Adding and subtracting decimals",
+    "subtitle": "Line up the decimal points, then work one column at a time.",
     "navigation": {
         "back_button": true
     },
@@ -24,19 +24,24 @@
     },
     "explanation": {
         "eyebrow": "Learn",
-        "title": "Add in columns"
+        "title": "Add in columns",
+        "hide_eyebrow": true,
+        "hide_heading": true
     },
     "interactive": {
         "eyebrow": "Try it",
         "title": "Add in columns",
-        "intro": ""
+        "intro": "",
+        "hide_eyebrow": true,
+        "hide_heading": true
     },
     "question_bank": {
         "hide_heading": true,
         "eyebrow": "Practice",
         "title": "Practise adding decimals",
         "intro": "",
-        "session_length": 6
+        "session_length": 6,
+        "hide_eyebrow": true
     },
     "section_order": [
         "explanation",
@@ -98,7 +103,9 @@
         "summary": {
             "title": "Your Check is complete",
             "points": []
-        }
+        },
+        "hide_eyebrow": true,
+        "hide_heading": true
     },
     "score_activities": [
         {
