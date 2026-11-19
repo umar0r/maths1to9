@@ -117,87 +117,121 @@
 }
 
 
-/* Learn's place-value chart: each digit has a box; the point has a narrow space. */
-.decimal-place-chart {
-    --decimal-point-width: 20px;
-    width: min(100%, 430px);
+/* Lesson-drawn pictures: all numbers stay readable in two phone columns. */
+.decimal-uses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 520px;
+    margin: 1.25rem auto 0;
+}
+
+.decimal-uses figure { margin: 0; text-align: center; }
+.decimal-use-picture svg { display: block; width: 100%; height: auto; }
+.decimal-uses figcaption { margin-top: .3rem; font-weight: 800; }
+
+.decimal-place-chart,
+.decimal-intro-figure {
+    position: relative;
+    width: min(100%, 520px);
     margin: 1.75rem auto 1rem;
     font-variant-numeric: tabular-nums;
 }
 
-.decimal-place-chart__top {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) var(--decimal-point-width) repeat(2, minmax(0, 1fr));
+/* Copied from Place value's table under this lesson's own class names. */
+.decimal-column-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
     text-align: center;
 }
 
-.decimal-place-chart__top,
-.decimal-place-chart__moving {
-    height: 96px;
-    font-size: clamp(1.5rem, 5vw, 2rem);
-    font-weight: 800;
+.decimal-column-table th,
+.decimal-column-table td {
+    padding: .65rem 1rem;
+    border: 0 solid #cbd5e1;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
 }
 
-/* Same cards as Place value, with narrow columns that still fit a phone. */
-.decimal-place-chart__cell {
-    display: grid;
-    grid-template-rows: 1fr auto;
-    gap: .5rem;
-    height: 96px;
-    min-width: 0;
-    margin-inline: 3px;
-    padding: .65rem;
-    text-align: center;
-    border: 2px solid #cbd5e1;
-    border-radius: .5rem;
-    background: #f8fafc;
-    color: var(--text);
-    font: inherit;
-    font-weight: 400;
-}
-
-.decimal-place-card__label {
+.decimal-column-table th {
+    border-top-width: 2px;
     font-size: .85rem;
     line-height: 1.2;
+    font-weight: 700;
+    background: #f1f5f9;
 }
 
-.decimal-place-card__digit {
-    min-height: 1.92rem;
+.decimal-column-table tr > :nth-child(2) { border-left-width: 2px; }
+.decimal-column-table th:first-of-type { border-top-left-radius: 6px; }
+.decimal-column-table th:last-child { border-top-right-radius: 6px; }
+.decimal-column-table tbody tr:last-child > :nth-child(2) { border-bottom-left-radius: 6px; }
+.decimal-column-table tbody tr:last-child > :last-child { border-bottom-right-radius: 6px; }
+
+.decimal-column-table td {
+    height: 72px;
+    vertical-align: middle;
     font-size: 1.6rem;
-    line-height: 1.2;
-    font-weight: 800;
+    font-weight: 700;
+    background: #f8fafc;
 }
 
-.decimal-place-chart__point {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 96px;
-    padding-top: 24px;
-    color: var(--primary-dark);
-}
-
-.decimal-place-chart__moving {
+.decimal-column-table .decimal-column-table__gutter {
     position: relative;
-    margin-top: .4rem;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.decimal-column-table__sign {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.decimal-column-table .decimal-column-table__tap { padding: 0; }
+
+.decimal-table-gap {
+    display: block;
+    width: 100%;
+    height: 72px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.decimal-table-moving {
+    position: absolute;
+    left: 0;
     touch-action: none;
     user-select: none;
     cursor: grab;
+    font-size: 1.6rem;
+    font-weight: 700;
 }
 
-.decimal-place-chart__moving > span {
+.decimal-table-moving__digit {
     position: absolute;
     top: 0;
+    display: grid;
+    place-items: center;
+    height: 100%;
 }
 
-.decimal-place-chart__moving.is-dragging { cursor: grabbing; }
-.decimal-place-chart__moving.is-locked { cursor: default; }
-.decimal-place-chart__gap { cursor: pointer; }
+.decimal-table-moving.is-dragging { cursor: grabbing; }
+.decimal-table-moving.is-locked { cursor: default; }
 
-.decimal-place-chart__gap:focus-visible,
-.decimal-place-chart__moving:focus-visible {
+.decimal-table-gap:focus-visible,
+.decimal-table-moving:focus-visible {
     outline: 3px solid var(--primary);
-    outline-offset: 3px;
+    outline-offset: -3px;
 }
 
 .decimal-row-controls {
@@ -222,31 +256,7 @@
 .decimal-row-move:disabled { opacity: .35; cursor: default; }
 .decimal-learn-instruction { text-align: center; }
 
-
-.decimal-place-chart__top + .decimal-place-chart__top {
-    margin-top: .4rem;
-}
-
-.decimal-place-chart__sign {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: .6rem;
-    padding-top: 24px;
-}
-
-
-.decimal-intro-figure {
-    position: relative;
-    width: min(100%, 430px);
-    margin: 1.75rem auto 1rem;
-    padding-top: 40px;
-}
-
-.decimal-intro-figure .decimal-place-chart {
-    width: 100%;
-    margin: 0;
-}
+.decimal-intro-figure { padding-top: 40px; }
 
 .decimal-intro-note {
     position: absolute;
@@ -273,13 +283,12 @@
     stroke-linejoin: round;
 }
 
-
 @media (max-width: 640px) {
-    .decimal-place-chart__top,
-    .decimal-place-chart__moving,
-    .decimal-place-chart__point,
-    .decimal-place-chart__cell { height: 88px; }
-
-    .decimal-place-chart__cell { padding: .5rem .2rem; }
-    .decimal-place-card__label { font-size: .66rem; }
+    .decimal-column-table th,
+    .decimal-column-table td { padding: .4rem .15rem; }
+    .decimal-column-table th { font-size: .68rem; }
+    .decimal-column-table td,
+    .decimal-table-gap { height: 60px; }
+    .decimal-uses { gap: .75rem; }
+    .decimal-uses figcaption { font-size: .9rem; }
 }
