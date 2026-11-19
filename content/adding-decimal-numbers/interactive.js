@@ -6,6 +6,15 @@
 
     const screens = [
         {
+            kind: 'why',
+            title: "We add and take away decimals when amounts aren't whole numbers.",
+            points: [
+                { label: 'Money', text: 'prices, change and bank balances.' },
+                { label: 'Measurements and data', text: 'lengths, weights and times.' },
+                { label: 'For example', text: 'a £1.85 drink and a £3.49 sandwich cost £5.34 together.' }
+            ]
+        },
+        {
             kind: 'intro',
             title: 'When you add or take away decimals, line the numbers up in columns.'
         },
@@ -209,7 +218,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 6,
+            version: 7,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -237,7 +246,8 @@
         function render() {
             disposeChart();
             const screen = screens[state.screen];
-            api.setSectionReset('explanation', screen.kind === 'intro' ? null : () => {
+            const information = screen.kind === 'why' || screen.kind === 'intro';
+            api.setSectionReset('explanation', information ? null : () => {
                 section.update(state => {
                     if (screen.kind === 'align') state.aligned = false;
                     else state.zero = false;
@@ -245,28 +255,39 @@
                 });
                 render();
             });
-            const done = screen.kind === 'intro' || (screen.kind === 'align' ? state.aligned : state.zero);
+            const done = information || (screen.kind === 'align' ? state.aligned : state.zero);
             root.replaceChildren();
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';
             root.append(heading);
             if (screen.line) root.append(element('p', screen.line));
-            const picture = element('div');
-            root.append(picture);
-            if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
-            if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
-            else disposeChart = drawLearnChart(picture, {
-                aligned: screen.kind === 'zero' || state.aligned,
-                zero: screen.kind === 'zero' && state.zero,
-                alignRow: screen.kind === 'align' ? () => {
-                    section.update(state => { state.aligned = true; });
-                    render();
-                } : null,
-                fillGap: screen.kind === 'zero' ? () => {
-                    section.update(state => { state.zero = true; state.finished = true; });
-                    render();
-                } : null
-            });
+            if (screen.points) {
+                const list = element('ul');
+                screen.points.forEach(point => {
+                    const item = element('li');
+                    item.append(element('strong', `${point.label}: `), document.createTextNode(point.text));
+                    list.append(item);
+                });
+                root.append(list);
+                disposeChart = () => {};
+            } else {
+                const picture = element('div');
+                root.append(picture);
+                if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
+                if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
+                else disposeChart = drawLearnChart(picture, {
+                    aligned: screen.kind === 'zero' || state.aligned,
+                    zero: screen.kind === 'zero' && state.zero,
+                    alignRow: screen.kind === 'align' ? () => {
+                        section.update(state => { state.aligned = true; });
+                        render();
+                    } : null,
+                    fillGap: screen.kind === 'zero' ? () => {
+                        section.update(state => { state.zero = true; state.finished = true; });
+                        render();
+                    } : null
+                });
+            }
             if (done && screen.feedback) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
                 correct: true, text: screen.feedback
             }));
