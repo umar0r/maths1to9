@@ -12,8 +12,8 @@
         },
         {
             kind: 'intro',
-            title: 'Adding and subtracting decimals works just like whole numbers: you line the numbers up in columns.',
-            line: "Let's add 7.6 and 0.48."
+            title: 'Adding and subtracting decimals works just like whole numbers.',
+            line: "Let's add 7.6 and 0.48 by lining the numbers up in columns."
         },
         {
             kind: 'align',
@@ -280,7 +280,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 9,
+            version: 10,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
