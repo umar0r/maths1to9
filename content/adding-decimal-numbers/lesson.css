@@ -122,11 +122,12 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    max-width: 520px;
+    max-width: 300px;
     margin: 1.25rem auto 0;
 }
 
 .decimal-uses figure { margin: 0; text-align: center; }
+.decimal-use-picture { width: min(100%, 135px); margin-inline: auto; }
 .decimal-use-picture svg { display: block; width: 100%; height: auto; }
 .decimal-uses figcaption { margin-top: .3rem; font-weight: 800; }
 
