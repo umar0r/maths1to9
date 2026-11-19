@@ -16,7 +16,7 @@
         },
         {
             kind: 'intro',
-            title: 'When you add or take away decimals, line the numbers up in columns.'
+            title: 'To add 7.6 and 0.48, line the numbers up in columns.'
         },
         {
             kind: 'align',
@@ -41,20 +41,25 @@
         return node;
     }
 
+    function numberCard(tag, digit, place) {
+        const card = element(tag, '', 'decimal-place-chart__cell');
+        card.append(element('span', place, 'decimal-place-card__label'),
+            element('strong', digit, 'decimal-place-card__digit'));
+        return card;
+    }
+
     function drawIntroChart(host) {
         const block = element('div', '', 'decimal-intro-figure');
         const chart = element('div', '', 'decimal-place-chart');
         chart.setAttribute('role', 'img');
         chart.setAttribute('aria-label', '7.6 over 0.48, with a plus sign and the decimal points lined up.');
-        const labels = element('div', '', 'decimal-place-chart__labels');
-        ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
-        chart.append(labels);
         let gap;
         [['', '7', '.', '6', ''], ['+', '0', '.', '4', '8']].forEach((digits, rowIndex) => {
             const row = element('div', '', 'decimal-place-chart__top');
             digits.forEach((digit, index) => {
-                const cell = element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
-                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+                const cell = index === 0 || index === 2
+                    ? element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign' : 'decimal-place-chart__point')
+                    : numberCard('span', digit, { 1: 'ones', 3: 'tenths', 4: 'hundredths' }[index]);
                 if (rowIndex === 0 && index === 4) {
                     gap = cell;
                     gap.dataset.introGap = '';
@@ -101,14 +106,12 @@
     // It is not a tens column: neither number needs one.
     function drawLearnChart(host, { aligned, zero, fillGap, alignRow }) {
         const chart = element('div', '', 'decimal-place-chart');
-        const labels = element('div', '', 'decimal-place-chart__labels');
-        ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
-        chart.append(labels);
         const top = element('div', '', 'decimal-place-chart__top');
         ['', '7', '.', '6', zero ? '0' : ''].forEach((digit, index) => {
             const gap = index === 4 && fillGap && !zero;
-            const cell = element(gap ? 'button' : 'span', digit, index === 0 ? 'decimal-place-chart__space'
-                : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+            const cell = index === 0 || index === 2
+                ? element('span', digit, index === 0 ? 'decimal-place-chart__space' : 'decimal-place-chart__point')
+                : numberCard(gap ? 'button' : 'span', digit, { 1: 'ones', 3: 'tenths', 4: 'hundredths' }[index]);
             if (gap) {
                 cell.type = 'button';
                 cell.classList.add('decimal-place-chart__gap');
@@ -120,8 +123,9 @@
         chart.append(top);
         const row = element('div', '', 'decimal-place-chart__moving');
         row.setAttribute('aria-label', '0.48');
-        const digits = ['0', '.', '4', '8'].map(digit => {
-            const cell = element('span', digit, digit === '.' ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+        const digits = ['0', '.', '4', '8'].map((digit, index) => {
+            const cell = digit === '.' ? element('span', digit, 'decimal-place-chart__point')
+                : numberCard('span', digit, ['ones', '', 'tenths', 'hundredths'][index]);
             cell.setAttribute('aria-hidden', 'true');
             row.append(cell);
             return cell;
@@ -136,7 +140,7 @@
                 width * (1 + position) + pointWidth, width * (2 + position) + pointWidth];
             digits.forEach((cell, index) => {
                 cell.style.left = `${places[index]}px`;
-                cell.style.width = `${index === 1 ? pointWidth : width}px`;
+                cell.style.width = `${index === 1 ? pointWidth : width - 6}px`;
             });
         }
         const observer = new ResizeObserver(paint);
@@ -218,7 +222,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 7,
+            version: 8,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
