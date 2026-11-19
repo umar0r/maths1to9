@@ -6,12 +6,19 @@
 
     const screens = [
         {
+            kind: 'intro',
+            title: 'We add and take away decimals all the time, with money and measurements.',
+            line: 'For example, a drink costs £1.85 and a sandwich costs £3.49. Together they cost £5.34.'
+        },
+        {
+            kind: 'align',
             title: 'To add decimals, line up the decimal points.',
             line: 'Then digits that are worth the same sit in the same column: ones under ones, tenths under tenths.',
             instruction: 'Move 0.48 so its decimal point sits under the one in 7.6.',
             feedback: 'The points line up, so the 6 tenths and the 4 tenths are in the same column.'
         },
         {
+            kind: 'zero',
             title: 'You can fill a gap with a zero.',
             line: '7.6 has no hundredths, so 7.6 and 7.60 are the same number.',
             instruction: 'Tap the gap after 7.6.',
@@ -24,6 +31,25 @@
         node.textContent = text;
         node.className = className;
         return node;
+    }
+
+    function drawIntroChart(host) {
+        const chart = element('div', '', 'decimal-place-chart');
+        chart.setAttribute('role', 'img');
+        chart.setAttribute('aria-label', '1.85 plus 3.49 equals 5.34, with the decimal points lined up.');
+        const labels = element('div', '', 'decimal-place-chart__labels');
+        ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
+        chart.append(labels);
+        [['', '1', '.', '8', '5'], ['+', '3', '.', '4', '9'], ['', '5', '.', '3', '4']].forEach((digits, rowIndex) => {
+            const row = element('div', '', 'decimal-place-chart__top');
+            if (rowIndex === 2) row.classList.add('decimal-place-chart__answer');
+            digits.forEach((digit, index) => {
+                row.append(element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
+                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell'));
+            });
+            chart.append(row);
+        });
+        host.append(chart);
     }
 
     // A leading space lets the wrongly aligned row sit one place to the left.
@@ -147,7 +173,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 2,
+            version: 3,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -174,35 +200,37 @@
 
         function render() {
             disposeChart();
-            api.setSectionReset('explanation', () => {
+            const screen = screens[state.screen];
+            api.setSectionReset('explanation', screen.kind === 'intro' ? null : () => {
                 section.update(state => {
-                    if (state.screen === 0) state.aligned = false;
+                    if (screen.kind === 'align') state.aligned = false;
                     else state.zero = false;
                     state.finished = false;
                 });
                 render();
             });
-            const screen = screens[state.screen];
-            const done = state.screen === 0 ? state.aligned : state.zero;
+            const done = screen.kind === 'intro' || (screen.kind === 'align' ? state.aligned : state.zero);
             root.replaceChildren();
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';
             root.append(heading, element('p', screen.line));
             const picture = element('div');
-            root.append(picture, element('p', screen.instruction, 'decimal-learn-instruction'));
-            disposeChart = drawLearnChart(picture, {
-                aligned: state.screen === 1 || state.aligned,
-                zero: state.screen === 1 && state.zero,
-                alignRow: state.screen === 0 ? () => {
+            root.append(picture);
+            if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
+            if (screen.kind === 'intro') drawIntroChart(picture);
+            else disposeChart = drawLearnChart(picture, {
+                aligned: screen.kind === 'zero' || state.aligned,
+                zero: screen.kind === 'zero' && state.zero,
+                alignRow: screen.kind === 'align' ? () => {
                     section.update(state => { state.aligned = true; });
                     render();
                 } : null,
-                fillGap: state.screen === 1 ? () => {
+                fillGap: screen.kind === 'zero' ? () => {
                     section.update(state => { state.zero = true; state.finished = true; });
                     render();
                 } : null
             });
-            if (done) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
+            if (done && screen.feedback) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
                 correct: true, text: screen.feedback
             }));
             api.setSectionBack('explanation', state.screen > 0 ? {

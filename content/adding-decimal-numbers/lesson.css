@@ -209,3 +209,22 @@
 
 .decimal-row-move:disabled { opacity: .35; cursor: default; }
 .decimal-learn-instruction { text-align: center; }
+
+
+.decimal-place-chart__top + .decimal-place-chart__top {
+    margin-top: .4rem;
+}
+
+.decimal-place-chart__answer {
+    margin-top: .6rem;
+    padding-top: .4rem;
+    border-top: 2px solid var(--text);
+    height: auto;
+}
+
+.decimal-place-chart__sign {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: .6rem;
+}
