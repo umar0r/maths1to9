@@ -33,21 +33,59 @@
     }
 
     function drawIntroChart(host) {
+        const block = element('div', '', 'decimal-intro-figure');
         const chart = element('div', '', 'decimal-place-chart');
         chart.setAttribute('role', 'img');
         chart.setAttribute('aria-label', '7.6 over 0.48, with a plus sign and the decimal points lined up.');
         const labels = element('div', '', 'decimal-place-chart__labels');
         ['', 'ones', '', 'tenths', 'hundredths'].forEach(label => labels.append(element('span', label)));
         chart.append(labels);
-        [['', '7', '.', '6', ''], ['+', '0', '.', '4', '8']].forEach(digits => {
+        let gap;
+        [['', '7', '.', '6', ''], ['+', '0', '.', '4', '8']].forEach((digits, rowIndex) => {
             const row = element('div', '', 'decimal-place-chart__top');
             digits.forEach((digit, index) => {
-                row.append(element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
-                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell'));
+                const cell = element('span', digit, index === 0 ? 'decimal-place-chart__space decimal-place-chart__sign'
+                    : index === 2 ? 'decimal-place-chart__point' : 'decimal-place-chart__cell');
+                if (rowIndex === 0 && index === 4) {
+                    gap = cell;
+                    gap.dataset.introGap = '';
+                }
+                row.append(cell);
             });
             chart.append(row);
         });
-        host.append(chart);
+        const note = element('span', '7.6 is the same as 7.60.', 'decimal-intro-note');
+        const svgNs = 'http://www.w3.org/2000/svg';
+        const arrow = document.createElementNS(svgNs, 'svg');
+        arrow.setAttribute('class', 'decimal-intro-arrow');
+        arrow.setAttribute('aria-hidden', 'true');
+        block.append(chart, note, arrow);
+        host.append(block);
+
+        // Go round the outside of the chart, then enter only the empty box.
+        function draw() {
+            if (!block.isConnected) { observer.disconnect(); return; }
+            const origin = block.getBoundingClientRect();
+            const chartBox = chart.getBoundingClientRect();
+            const label = note.getBoundingClientRect();
+            const box = gap.getBoundingClientRect();
+            const sx = label.right - origin.left + 4;
+            const sy = label.top + label.height / 2 - origin.top;
+            const tx = box.left + box.width / 2 - origin.left;
+            const ty = box.top + box.height / 2 - origin.top;
+            const outside = chartBox.right - origin.left + 8;
+            arrow.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
+            const path = document.createElementNS(svgNs, 'path');
+            path.setAttribute('d', `M ${sx} ${sy} Q ${outside} ${sy}, ${outside} ${sy + 16}`
+                + ` L ${outside} ${ty - 18} Q ${outside} ${ty}, ${tx} ${ty}`
+                + ` M ${tx + 8} ${ty - 5} L ${tx} ${ty} L ${tx + 8} ${ty + 5}`);
+            arrow.replaceChildren(path);
+        }
+        const observer = new ResizeObserver(draw);
+        observer.observe(block);
+        requestAnimationFrame(draw);
+        document.fonts.ready.then(draw);
+        return () => observer.disconnect();
     }
 
     // A leading space lets the wrongly aligned row sit one place to the left.
@@ -171,7 +209,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 5,
+            version: 6,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -216,10 +254,7 @@
             const picture = element('div');
             root.append(picture);
             if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
-            if (screen.kind === 'intro') {
-                drawIntroChart(picture);
-                disposeChart = () => {};
-            }
+            if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
             else disposeChart = drawLearnChart(picture, {
                 aligned: screen.kind === 'zero' || state.aligned,
                 zero: screen.kind === 'zero' && state.zero,
