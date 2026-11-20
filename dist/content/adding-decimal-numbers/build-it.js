@@ -53,16 +53,22 @@
         let view;
         const operandsReady = digits => problem.operands.every(operand =>
             problem.keys.filter(key => digits?.[`${operand.id}:${key}`] !== undefined).length >= operand.count);
+        // A blank answer cell counts as a 0 only in a leading place the answer
+        // does not use. Every other answer column needs a digit, even a 0.
+        const optionalAnswer = key => key === 'tens' && problem.answer < 1000;
+        const answerDigit = (digits, key) => digits?.[`answer:${key}`] ?? (optionalAnswer(key) ? '0' : undefined);
         return {
             reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
             replayFeedback(result) { view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' }); },
             isEmpty(value) {
-                return !operandsReady(value?.digits) || problem.keys.some(key => value?.digits?.[`answer:${key}`] === undefined);
+                const digits = value?.digits;
+                return !operandsReady(digits) || problem.keys.some(key =>
+                    digits?.[`answer:${key}`] === undefined && !optionalAnswer(key));
             },
             mark(value) {
                 const placement = problem.misplaced(value?.digits);
                 if (placement) return { correct: false, feedback: placement };
-                const digits = Object.fromEntries(problem.keys.map(key => [key, value?.digits?.[`answer:${key}`]]));
+                const digits = Object.fromEntries(problem.keys.map(key => [key, answerDigit(value?.digits, key)]));
                 const error = problem.row.mark(digits);
                 return { correct: !error, feedback: error || problem.feedback };
             },
