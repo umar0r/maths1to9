@@ -89,6 +89,8 @@ for (const width of [1280, 375]) {
                 await main(page).click();
                 if (section !== 'interactive') {
                     const next = page.url();
+                    const afterContinue = await score(page);
+                    expect(afterContinue).toBe(earned + (section === 'comparison' && /#summary$/.test(next) ? 5 : 0));
                     await back(page).click();
                     await expect(feedback(page)).toBeVisible();
                     if (kind === 'custom') {
@@ -99,7 +101,7 @@ for (const width of [1280, 375]) {
                     } else await expect(page.locator('.question-card:visible input[type=text]')).toBeDisabled();
                     await main(page).click();
                     await expect(page).toHaveURL(next);
-                    expect(await score(page)).toBe(earned);
+                    expect(await score(page)).toBe(afterContinue);
                 }
             }
             expect(practiceCount).toBe(10);
