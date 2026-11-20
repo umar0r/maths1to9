@@ -182,6 +182,7 @@
                         button.disabled = !editable;
                         const selected = editable && key === active;
                         button.classList.toggle('is-highlighted', selected);
+                        button.classList.toggle('is-filled', digits[key] !== undefined);
                         button.closest('td').classList.toggle('is-highlighted', selected);
                         button.setAttribute('aria-pressed', String(selected));
                     });
@@ -477,7 +478,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 3,
+            version: 4,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
