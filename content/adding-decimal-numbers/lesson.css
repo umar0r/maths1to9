@@ -284,10 +284,10 @@
     stroke-linejoin: round;
 }
 
-/* Try it 2 step 2: a note pointing at the voucher row, sized like Learn 2's note. */
+/* Try it 2 step 2: a note under the table pointing up at the voucher row, sized like Learn 2's note. */
 .decimal-voucher-note {
     display: block;
-    margin: 0 0 .6rem;
+    margin: .7rem 0 0;
     color: #334155;
     font-size: .9rem;
     line-height: 1.25;

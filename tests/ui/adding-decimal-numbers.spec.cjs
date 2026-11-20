@@ -195,7 +195,9 @@ for (const width of [1280, 375]) {
             await expect(build.locator('.decimal-tap-slot')).toHaveText(Array(12).fill(''));
             await expect(main(page)).toBeDisabled();
             await expect(feedback(page)).toHaveCount(0);
-            await expect(page.locator('.decimal-build-instruction:visible')).toHaveText("Put each digit under the column it's worth.");
+            // The heading itself says where the digits go; there is no second instruction line.
+            await expect(build.locator('.decimal-build-instruction')).toHaveCount(0);
+            await expect(page.locator('[data-screen-heading]:visible').first()).toHaveText("Work out 5.3 + 12.46 by putting each digit under the column it's worth.");
             await shot('try3-empty');
             await put('a:units', 5); await put('a:tenths', 3);
             await shot('try3-half');
