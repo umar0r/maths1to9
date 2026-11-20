@@ -1,303 +1,287 @@
 (() => {
     'use strict';
 
-    const toCents = text => {
-        const [whole, decimal = ''] = text.split('.');
-        return Number(whole) * 100 + Number(decimal.padEnd(2, '0'));
-    };
-    const decimalText = cents => `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
-    const shortText = number => String(Number(number.toFixed(3)));
-    const worked = { a: '14.7', b: '6.82', total: '21.52' };
-    const keys = ['hundredths', 'tenths', 'ones', 'tens'];
-    const positions = { tens: 1, ones: 2, tenths: 4, hundredths: 5 };
+    const practiceTypes = [
+        'add-different-lengths', 'subtract-exchange', 'add-then-subtract',
+        'subtract-card', 'money-in-out', 'change', 'money-card',
+        'price-difference', 'missing-addend', 'missing-refund'
+    ];
+    const decimalText = cents => `${cents < 0 ? '-' : ''}${Math.floor(Math.abs(cents) / 100)}.${String(Math.abs(cents) % 100).padStart(2, '0')}`;
+    const oneDecimal = cents => (cents / 100).toFixed(1);
+    const money = cents => `${cents < 0 ? '−' : ''}£${decimalText(Math.abs(cents))}`;
     const option = (label, feedback, correct = false) => ({ label, feedback, correct });
 
-    function cells(text) {
-        const [whole, decimal = ''] = text.split('.');
-        return [whole.length > 1 ? whole[0] : '', whole.slice(-1), '.', decimal[0] || '', decimal[1] || ''];
+    function prepare(question, random) {
+        return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : question;
     }
 
-    function columnSteps(a, b) {
-        const x = toCents(a), y = toCents(b);
-        let carry = 0;
-        return keys.map((key, index) => {
-            const left = Math.floor(x / 10 ** index) % 10;
-            const right = Math.floor(y / 10 ** index) % 10;
-            const incoming = carry;
-            const total = left + right + incoming;
-            carry = Math.floor(total / 10);
-            return { key, left, right, incoming, total, digit: total % 10, carry };
+    function pick(random) {
+        return practiceTypes.map(type => ({ type, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random) }));
+    }
+
+    function columnSteps(a, b, operator, tens = false) {
+        let incoming = 0;
+        return ['hundredths', 'tenths', 'units', ...(tens ? ['tens'] : [])].map((key, index) => {
+            const left = Math.floor(a / 10 ** index) % 10;
+            const right = Math.floor(b / 10 ** index) % 10;
+            if (operator === '+') {
+                const total = left + right + incoming;
+                const step = { key, left, right, incoming, total, digit: total % 10, outgoing: Math.floor(total / 10) };
+                incoming = step.outgoing;
+                return step;
+            }
+            const reduced = left - incoming;
+            const outgoing = Number(reduced < right);
+            const available = reduced + 10 * outgoing;
+            const step = { key, left, right, incoming, outgoing, available, digit: available - right };
+            incoming = outgoing;
+            return step;
         });
     }
 
-    function drawGrid(host, a, b, config = {}) {
-        const grid = document.createElement('div');
-        grid.className = 'decimal-grid';
-        grid.setAttribute('role', 'group');
-        grid.setAttribute('aria-label', `Place-value columns for ${a} plus ${b}`);
-        function row(values, className) {
-            const node = document.createElement('div');
-            node.className = className;
-            for (const value of values) {
-                const cell = document.createElement('span');
-                cell.textContent = value;
-                if (value === '.') cell.className = 'decimal-point';
-                node.append(cell);
-            }
-            grid.append(node);
-            return node;
-        }
-        row(['', 'tens', 'ones', '', 'tenths', 'hundredths', ''], 'decimal-labels');
-        const carryRow = row(Array.from({ length: 7 }, (_, index) => {
-            const key = Object.keys(positions).find(key => positions[key] === index);
-            return config.carries?.[key] || '';
-        }), 'decimal-carry');
-        row(['', ...cells(a), ''], 'decimal-row');
-        const second = row(Array(7).fill(''), 'decimal-row decimal-row--second');
-        let answerRow;
-        if (config.result) {
-            const values = Array.isArray(config.result) ? config.result : cells(config.result);
-            answerRow = row(['', ...values, ''], 'decimal-row decimal-row--answer');
-        }
-        if (config.highlight) {
-            const at = positions[config.highlight];
-            for (const node of grid.querySelectorAll('.decimal-row')) node.children[at].classList.add('decimal-highlight');
-        }
-        function move(offset) {
-            const values = Array(7).fill('');
-            cells(b).forEach((value, index) => { values[index + 1 + offset] = value; });
-            [...second.children].forEach((cell, index) => {
-                cell.replaceChildren();
-                cell.textContent = values[index];
-                cell.classList.toggle('decimal-point', values[index] === '.');
-            });
-            // The plus sign is separate from the digits so a shifted row cannot hide it.
-            grid.dataset.offset = String(offset);
-        }
-        move(config.offset || 0);
-        host.append(grid);
-        return { grid, carryRow, answerRow, move };
-    }
-
-    function alignmentWidget(a, b) {
+    function cardProblem(a, b, operator, currency = false, leftText = decimalText(a), rightText = decimalText(b)) {
+        const answer = operator === '+' ? a + b : a - b;
+        const tens = answer >= 1000;
+        const steps = columnSteps(a, b, operator, tens);
+        const nextColumn = { hundredths: 'tenths', tenths: 'units', units: 'tens' };
         return {
-            render(host, { value, onChange }) {
-                const picture = drawGrid(host, a, b);
-                const label = document.createElement('label');
-                label.className = 'decimal-slider-label';
-                label.textContent = 'Move the second number';
-                const input = document.createElement('input');
-                input.type = 'range';
-                input.min = -1;
-                input.max = 1;
-                input.step = 1;
-                input.setAttribute('aria-label', 'Move the second number');
-                input.addEventListener('input', () => {
-                    const offset = Number(input.value);
-                    picture.move(offset);
-                    onChange(offset);
-                });
-                label.append(input);
-                host.append(label);
-                return {
-                    update({ value, editable }) {
-                        input.value = String(value === null ? 1 : value);
-                        input.disabled = !editable;
-                        picture.move(Number(input.value));
-                    },
-                    focus() { input.focus(); }
-                };
-            },
-            isEmpty: value => value === null,
-            mark: value => ({
-                correct: value === 0,
-                feedback: value === 0 ? 'The decimal points line up. The same-sized parts are in the same columns.'
-                    : 'The decimal points are in different columns. Move the second row so they line up.'
-            }),
-            answerText: value => value === 0 ? 'Decimal points lined up' : 'Decimal points in different columns'
-        };
-    }
-
-    function columnWidget(a, b) {
-        const steps = columnSteps(a, b);
-        const total = toCents(a) + toCents(b);
-        const fields = keys.slice(0, total >= 1000 ? 4 : 3);
-        const carryTen = steps[2].carry;
-        if (carryTen) fields.push('carry');
-        function expected(key) { return key === 'carry' ? String(carryTen) : String(steps.find(step => step.key === key).digit); }
-        return {
-            render(host, { value, onChange }) {
-                const picture = drawGrid(host, a, b, { result: ['', '', '.', '', ''] });
-                const inputs = {};
-                for (const key of fields) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.inputMode = 'numeric';
-                    input.maxLength = 1;
-                    input.autocomplete = 'off';
-                    input.tabIndex = key === 'hundredths' ? 0 : -1;
-                    input.addEventListener('keydown', event => {
-                        if (event.key !== 'Tab') return;
-                        const next = fields.indexOf(key) + (event.shiftKey ? -1 : 1);
-                        if (next >= 0 && next < fields.length) {
-                            event.preventDefault();
-                            inputs[fields[next]].focus();
-                        } else if (next === fields.length) {
-                            event.preventDefault();
-                            // Leave the managed digit order for the engine's existing action.
-                            const action = document.querySelector('.lesson-controls button.button--primary');
-                            if (action && !action.disabled) action.focus();
-                            else document.querySelector('.site-logo')?.focus();
-                        }
-                    });
-                    input.setAttribute('aria-label', key === 'carry' ? 'Carry to tens' : `${key[0].toUpperCase() + key.slice(1)} digit`);
-                    input.addEventListener('input', () => {
-                        onChange(Object.fromEntries(fields.map(field => [field, inputs[field].value])));
-                    });
-                    inputs[key] = input;
-                    const cell = key === 'carry' ? picture.carryRow.children[1] : picture.answerRow.children[positions[key]];
-                    if (key === 'carry') {
-                        const label = document.createElement('label');
-                        label.className = 'decimal-carry-label';
-                        label.append('Carry', input);
-                        cell.replaceChildren(label);
-                    } else cell.replaceChildren(input);
-                }
-                return {
-                    update({ value, editable }) {
-                        for (const key of fields) {
-                            inputs[key].value = value?.[key] || '';
-                            inputs[key].disabled = !editable;
-                        }
-                    },
-                    focus() { inputs[fields[0]].focus(); }
-                };
-            },
-            isEmpty: value => !value || fields.some(key => !String(value[key] ?? '').trim()),
+            a: leftText, b: rightText, operator, tens,
+            showCarry: () => false,
+            feedback: `${currency ? money(a) : leftText} ${operator} ${currency ? money(b) : rightText} = ${currency ? money(answer) : decimalText(answer)}.`,
             mark(value) {
-                const wrong = fields.find(key => String(value?.[key]) !== expected(key));
-                if (!wrong) return { correct: true, feedback: `${a} + ${b} = ${decimalText(total)}. The decimal points stay in the same column.` };
-                if (wrong === 'carry') return { correct: false, feedback: `The ones column makes ${steps[2].total} ones. Carry ${carryTen} ten to the tens column.` };
-                const step = steps.find(step => step.key === wrong);
-                const sum = `${step.left} + ${step.right}${step.incoming ? ` + ${step.incoming}` : ''}`;
-                return { correct: false, feedback: `Check the ${wrong}: ${sum} = ${step.total}. Write the digit ${step.digit}.` };
-            },
-            answerText(value) {
-                if (!value) return '';
-                return `${total >= 1000 ? value.tens : ''}${value.ones}.${value.tenths}${value.hundredths}`;
-            },
-            fields, expected
+                const wrong = steps.find(step => value?.[step.key] !== String(step.digit));
+                if (!wrong) return '';
+                if (operator === '+') {
+                    const sum = `${wrong.left} + ${wrong.right}${wrong.incoming ? ' + the carried 1' : ''}`;
+                    return `Check the ${wrong.key}: ${sum} = ${wrong.total}.${wrong.outgoing ? ` Write ${wrong.digit} and carry 1.` : ''}`;
+                }
+                if (wrong.outgoing) {
+                    return `Check the ${wrong.key}: you can't take ${wrong.right} from ${wrong.left - wrong.incoming}, so take 1 from the ${nextColumn[wrong.key]}. ${wrong.available} − ${wrong.right} = ${wrong.digit}.`;
+                }
+                return `Check the ${wrong.key}: ${wrong.left}${wrong.incoming ? ' − 1' : ''} − ${wrong.right} = ${wrong.digit}.`;
+            }
         };
     }
 
-    function examples() {
-        return [
-            { a: '8.4', b: '2.35', input: 'custom', questionType: 'alignment', prompt: 'Move the second number so the decimal points line up.', widget: alignmentWidget('8.4', '2.35') },
-            { a: '8.4', b: '2.35', input: 'number', questionType: 'zero', prompt: 'What digit can you write after the 4 without changing 8.4?', answer: '0',
-                feedback: '8.4 = 8.40. The extra zero does not change the value.', rules: [
-                    { value: '4', feedback: '8.44 is a different number. A zero at the end keeps 8.4 unchanged.' },
-                    { value: '1', feedback: '8.41 is bigger than 8.4. Use a digit that adds no hundredths.' }
-                ], fallback: 'Choose a digit that adds no hundredths to 8.4.' },
-            { a: '8.40', b: '2.35', input: 'custom', questionType: 'columns', prompt: 'Add 8.40 + 2.35. Start on the right. Write each answer digit, and write any carry in the small box.', widget: columnWidget('8.40', '2.35') },
-            { a: '8.4', b: '2.35', input: 'choice', questionType: 'decimal-point', prompt: 'Where should the answer’s decimal point go?', options: [
-                option('Directly below the decimal points in the two numbers.', 'The decimal points stay in the same column.', true),
-                option('Before the last digit.', 'The last digit may be tenths or hundredths. Use the decimal points above it.'),
-                option('In the middle of the answer.', 'The middle depends on the number of digits. Use the decimal-point column.'),
-                option('Under the last digits of the two numbers.', 'The last digits may have different place values. The decimal points must line up.')
-            ] },
-            { a: '3.6', b: '1.25', input: 'custom', questionType: 'alignment', prompt: 'Move the second number so the decimal points line up.', widget: alignmentWidget('3.6', '1.25') },
-            { a: '3.60', b: '1.25', input: 'custom', questionType: 'columns', prompt: 'Add 3.60 + 1.25. Start on the right. Write each answer digit.', widget: columnWidget('3.60', '1.25') }
-        ];
+    function cardQuestion(type, a, b, operator, currency, leftText, rightText) {
+        const answer = operator === '+' ? a + b : a - b;
+        const problem = cardProblem(a, b, operator, currency, leftText, rightText);
+        const widget = window.DecimalAddition.createCardWidget(problem);
+        return {
+            questionType: type, input: 'custom',
+            prompt: `Work out ${currency ? money(a) : leftText} ${operator} ${currency ? money(b) : rightText}.`,
+            answer: decimalText(answer), widget,
+            onReset: () => widget.reset(),
+            onReplayReset: () => widget.reset(),
+            onReplayFeedback: result => widget.replayFeedback(result),
+            values: { a, b, operator }, cardProblem: problem
+        };
     }
 
-    function mistakes(a, b) {
-        const x = toCents(a), y = toCents(b), sum = x + y;
-        const noCarries = keys.reduce((total, key, index) => total + ((Math.floor(x / 10 ** index) % 10 + Math.floor(y / 10 ** index) % 10) % 10) * 10 ** index, 0);
-        const candidates = [
-            { value: shortText((Number(a.replace('.', '')) + Number(b.replace('.', ''))) / 100), feedback: 'That lines up the last digits instead of the decimal points.' },
-            { value: shortText(noCarries / 100), feedback: 'That leaves out a carried digit. Add from right to left and include each carry.' },
-            { value: shortText(sum / 1000), feedback: 'The decimal point is one place too far left. Keep it under the decimal points above.' },
-            { value: shortText(sum / 10), feedback: 'The decimal point is one place too far right. Keep it under the decimal points above.' },
-            { value: String(sum), feedback: 'That leaves out the decimal point. Keep it under the decimal points in the two numbers.' }
-        ];
-        return candidates.filter((item, index) => Number(item.value) !== sum / 100 && candidates.findIndex(other => other.value === item.value) === index);
+    function choiceQuestion(type, prompt, answer, errors, currency = false, figure) {
+        const label = currency ? money : decimalText;
+        return {
+            questionType: type, input: 'choice', prompt, answer: decimalText(answer), figure,
+            options: [option(label(answer), '', true), ...errors.map(error => option(label(error.value), error.feedback))]
+        };
     }
 
-    function calculate(a, b, input = 'number', prompt, currency = false) {
-        const total = decimalText(toCents(a) + toCents(b));
-        const errors = mistakes(a, b);
-        const feedback = `${a} + ${b} = ${total}. Line up the decimal points and add from right to left.`;
-        const question = { a, b, questionType: 'calculate', input, prompt: prompt || `Work out ${a} + ${b}.`,
-            feedback, figure: host => drawGrid(host, a, b) };
-        if (input === 'choice') question.options = [
-            option(`${currency ? '£' : ''}${total}`, feedback, true),
-            ...errors.slice(0, 3).map(error => option(`${currency ? '£' : ''}${error.value}`, error.feedback))
-        ];
-        else Object.assign(question, { answer: total, rules: errors, fallback: `Line up the decimal points. Add from the hundredths column to the left, including any carried digits.${currency ? ' Leave out the £ sign.' : ''}` });
-        return question;
+    function numberQuestion(type, prompt, answer, errors, feedback, fallback) {
+        return {
+            questionType: type, input: 'number', prompt, answer: decimalText(answer), feedback,
+            rules: errors.map(error => ({ value: decimalText(error.value), feedback: error.feedback })),
+            fallback
+        };
+    }
+
+    function smallerFromLarger(a, b) {
+        let answer = 0;
+        for (let place = 1; place <= Math.max(a, b); place *= 10) {
+            answer += Math.abs(Math.floor(a / place) % 10 - Math.floor(b / place) % 10) * place;
+        }
+        return answer;
+    }
+
+    function uniqueAnswers(question) {
+        const values = question.options ? question.options.map(item => Number(item.label.replace(/[£]/g, '').replace('−', '-')))
+            : [Number(question.answer), ...(question.rules || []).map(rule => Number(rule.value))];
+        return new Set(values).size === values.length;
+    }
+
+    function drawPrices(host, prices) {
+        const table = document.createElement('table');
+        table.className = 'decimal-price-list';
+        const caption = document.createElement('caption');
+        caption.textContent = 'A price list';
+        table.append(caption);
+        const head = document.createElement('thead');
+        const headings = document.createElement('tr');
+        for (const title of ['Depot', 'Small parcel', 'Large parcel']) {
+            const cell = document.createElement('th');
+            cell.scope = 'col';
+            cell.textContent = title;
+            headings.append(cell);
+        }
+        head.append(headings);
+        const body = document.createElement('tbody');
+        for (const [name, small, large] of [['North', prices.northSmall, prices.northLarge], ['South', prices.southSmall, prices.southLarge]]) {
+            const row = document.createElement('tr');
+            const label = document.createElement('th');
+            label.scope = 'row';
+            label.textContent = name;
+            row.append(label);
+            for (const value of [small, large]) {
+                const cell = document.createElement('td');
+                cell.textContent = money(value);
+                row.append(cell);
+            }
+            body.append(row);
+        }
+        table.append(head, body);
+        host.append(table);
+    }
+
+    function generate(item, random) {
+        const integer = (min, max) => window.Maths1to9LessonEngine.randomInt(min, max, random);
+        const twoPlaces = () => integer(11, 999);
+        const onePlace = () => integer(11, 399) * 10;
+        const price = () => integer(50, 999);
+        for (let attempt = 0; attempt < 500; attempt++) {
+            let question;
+            if (item.type === 'add-different-lengths') {
+                const a = onePlace(), b = twoPlaces();
+                if (b % 10 === 0) continue;
+                question = cardQuestion(item.type, a, b, '+', false, oneDecimal(a), decimalText(b));
+            } else if (item.type === 'subtract-exchange') {
+                const a = onePlace(), b = twoPlaces();
+                if (a <= b || b % 10 === 0) continue;
+                const answer = a - b;
+                question = choiceQuestion(item.type, `Work out ${oneDecimal(a)} − ${decimalText(b)}.`, answer, [
+                    { value: smallerFromLarger(a, b), feedback: "Don't take the smaller digit from the larger in each column. If the top digit is too small, take 1 from the column on its left." },
+                    { value: a + b, feedback: 'You added. This question asks you to take away.' },
+                    { value: answer + 10, feedback: 'Taking 1 tenth gives 10 hundredths. Remember to take that 1 off the tenths.' }
+                ]);
+                question.options[0].feedback = `${oneDecimal(a)} − ${decimalText(b)} = ${decimalText(answer)}.`;
+                question.values = { a, b };
+            } else if (item.type === 'add-then-subtract') {
+                const a = onePlace(), b = twoPlaces(), c = onePlace();
+                if (a + b <= c) continue;
+                question = numberQuestion(item.type, `Work out ${oneDecimal(a)} + ${decimalText(b)} − ${oneDecimal(c)}.`, a + b - c, [
+                    { value: a + b + c, feedback: `You added ${oneDecimal(c)} instead of taking it away.` },
+                    { value: a - b - c, feedback: `You took away both numbers. Add ${decimalText(b)}.` },
+                    { value: a + b - c / 10, feedback: `Write ${oneDecimal(c)} as ${decimalText(c)}, not ${decimalText(c / 10)}.` }
+                ], `${oneDecimal(a)} + ${decimalText(b)} = ${decimalText(a + b)}. Then ${decimalText(a + b)} − ${oneDecimal(c)} = ${decimalText(a + b - c)}.`, 'Add the first two numbers, then take away the third.');
+                question.values = { a, b, c };
+            } else if (item.type === 'subtract-card') {
+                const a = twoPlaces(), b = twoPlaces();
+                if (Math.floor(a / 100) <= Math.floor(b / 100) || Math.floor(a / 10) % 10 >= Math.floor(b / 10) % 10 || a % 10 < b % 10) continue;
+                question = cardQuestion(item.type, a, b, '−', false, decimalText(a), decimalText(b));
+            } else if (item.type === 'money-in-out') {
+                const balance = integer(10000, 99999), payment = integer(2000, 19999), refund = integer(500, 4999);
+                if (balance <= payment) continue;
+                const answer = balance - payment + refund;
+                question = choiceQuestion(item.type, `A bank account has ${money(balance)}. A payment of ${money(payment)} goes out, then a refund of ${money(refund)} comes in. How much is in the account now?`, answer, [
+                    { value: balance - payment, feedback: 'This stops before the refund. Add the refund to the balance.' },
+                    { value: balance + payment + refund, feedback: 'The payment goes out, so take it away.' },
+                    { value: balance - payment - refund, feedback: 'The refund comes in, so add it.' }
+                ], true);
+                question.options[0].feedback = `${money(balance)} − ${money(payment)} + ${money(refund)} = ${money(answer)}.`;
+                question.values = { balance, payment, refund };
+            } else if (item.type === 'change') {
+                const cost = price();
+                const notes = [500, 1000, 2000].filter(note => note > cost);
+                const paid = notes[integer(0, notes.length - 1)];
+                question = numberQuestion(item.type, `You pay for a ${money(cost)} magazine with a ${money(paid).replace('.00', '')} note. How much change do you get? Leave out the £ sign.`, paid - cost, [
+                    { value: smallerFromLarger(paid, cost), feedback: 'If the top digit is too small, take 1 from the column on its left.' },
+                    { value: paid + cost, feedback: 'Take the price away from the note. Do not add them.' }
+                ], `${money(paid)} − ${money(cost)} = ${money(paid - cost)}.`, 'Take the price away from the note.');
+                question.values = { cost, paid };
+            } else if (item.type === 'money-card') {
+                const a = price(), b = price();
+                if (!columnSteps(a, b, '+', a + b >= 1000).some(step => step.outgoing)) continue;
+                question = cardQuestion(item.type, a, b, '+', true, decimalText(a), decimalText(b));
+            } else if (item.type === 'price-difference') {
+                const northSmall = integer(50, 899), northLarge = integer(northSmall + 1, 999);
+                const southSmall = integer(50, 899), southLarge = integer(southSmall + 1, 999);
+                const prices = { northSmall, northLarge, southSmall, southLarge };
+                const answer = northLarge - northSmall;
+                question = choiceQuestion(item.type, 'How much more is a large parcel than a small parcel at North?', answer, [
+                    { value: southLarge - southSmall, feedback: 'That uses South. The question asks for North.' },
+                    { value: northLarge + northSmall, feedback: 'Find how much more, so take the small price away from the large price.' },
+                    { value: answer * 10, feedback: 'That answer is ten times too big. Line up the decimal points.' }
+                ], true, host => drawPrices(host, prices));
+                question.options[0].feedback = `${money(northLarge)} − ${money(northSmall)} = ${money(answer)}.`;
+                question.values = prices;
+            } else if (item.type === 'missing-addend') {
+                const a = twoPlaces(), b = onePlace();
+                const total = integer(Math.ceil((a + b) / 100) + 1, Math.ceil((a + b) / 100) + 9) * 100;
+                const answer = total - a - b;
+                if (answer < 11 || answer > 999) continue;
+                const totalText = String(total / 100);
+                question = numberQuestion(item.type, `${decimalText(a)} + ${oneDecimal(b)} + □ = ${totalText}. What is the missing number?`, answer, [
+                    { value: total - a, feedback: `You also need to take away ${oneDecimal(b)}.` },
+                    { value: total - b, feedback: `You also need to take away ${decimalText(a)}.` },
+                    { value: a + b, feedback: 'That is the total of the two numbers you know. Find how much is still needed.' },
+                    { value: total + a + b, feedback: `Take the two known numbers away from ${totalText}, rather than adding them.` }
+                ], `${decimalText(a)} + ${oneDecimal(b)} = ${decimalText(a + b)}. Then ${totalText} − ${decimalText(a + b)} = ${decimalText(answer)}.`, 'Add the two known numbers, then take their total away from the number on the right.');
+                question.values = { a, b, total };
+            } else if (item.type === 'missing-refund') {
+                const balance = integer(1000, 9999), refund = integer(500, 4999);
+                const after = balance + refund;
+                question = numberQuestion(item.type, `A balance is ${money(balance)}. One refund comes in and the balance becomes ${money(after)}. How much was the refund? Leave out the £ sign.`, refund, [
+                    { value: balance + after, feedback: 'Take the old balance away from the new balance. Do not add them.' },
+                    { value: refund * 10, feedback: 'That answer is ten times too big. Line up the decimal points.' },
+                    { value: -refund, feedback: 'The balance goes up. The refund is a positive amount.' }
+                ], `${money(after)} − ${money(balance)} = ${money(refund)}.`, 'Take the old balance away from the new balance.');
+                question.values = { balance, refund, after };
+            } else throw new TypeError(`Unknown decimal question kind: ${item.type}`);
+            if (uniqueAnswers(question)) return prepare(question, random);
+        }
+        throw new Error(`Could not make distinct answers for ${item.type}.`);
     }
 
     function checks() {
         return [
-            calculate('5.8', '0.34'),
-            { questionType: 'explanation', input: 'choice', prompt: 'A student lines up the last digits to add 5.8 and 0.34. Which explanation is right?', options: [
-                option('Line up the decimal points. The 8 is tenths and the 4 is hundredths.', 'The last digits have different place values. Line up the decimal points.', true),
-                option('Line up the last digits. The 8 and 4 are both ones.', 'The 8 means eight tenths and the 4 means four hundredths. They do not belong in the same column.'),
-                option('Line up the first digits. Decimal points do not matter.', 'The first digits can have different place values. The decimal points tell you which columns match.'),
-                option('Move each decimal point to the end before adding.', 'Moving a decimal point changes the number. Keep each point in its place.')
-            ] },
-            calculate('1.75', '0.8', 'number', 'A bottle contains 1.75 litres. Another contains 0.8 litres. How much water is there altogether? Type the number of litres.'),
-            calculate('6.75', '2.40', 'choice', 'Work out £6.75 + £2.40.', true),
-            calculate('7.48', '3.76')
+            {
+                questionType: 'line-up-points', input: 'choice',
+                prompt: 'Sam works out 5.8 + 0.34 by lining up the last digits. What has Sam done wrong?',
+                options: [
+                    option("The 8 is tenths and the 4 is hundredths, so they don't belong in the same column.", 'Right. Line up the decimal points instead.', true),
+                    option('The 8 and the 4 are both units.', "The 8 is 8 tenths and the 4 is 4 hundredths. They're worth different amounts."),
+                    option('Nothing. You always line up the last digits.', 'That only works when both numbers have the same number of decimal places.'),
+                    option('Sam should have lined up the first digits.', 'First digits can be worth different amounts too. Line up the decimal points.')
+                ]
+            },
+            {
+                questionType: 'zeros-fill-gaps', input: 'choice', prompt: 'Why can you write 7.6 as 7.60?',
+                options: [
+                    option("7.6 has no hundredths, so a 0 there doesn't change it.", 'Right.', true),
+                    option('A zero is worth nothing anywhere in a number.', 'Not true: 7.06 is a different number from 7.6.'),
+                    option("You can't: 7.60 is a bigger number.", '7.60 is the same size: 7 units and 6 tenths.'),
+                    option('Every decimal must have two digits after the point.', 'No. The zero just helps the columns line up.')
+                ]
+            },
+            {
+                questionType: 'carry-one', input: 'choice', prompt: 'In 7.60 + 0.48 the tenths make 6 + 4 = 10. What do you do?',
+                options: [
+                    option('Write 0 in the tenths and add 1 to the units.', 'Right. 10 tenths make 1 unit.', true),
+                    option('Write 10 in the tenths.', 'Each column holds one digit. 10 tenths make 1 unit.'),
+                    option('Write 1 in the tenths and add 0 to the units.', 'The other way round: write the 0 and add the 1 to the units.'),
+                    option('Write 0 and forget the 1.', 'Then the answer is 1 too small.')
+                ]
+            },
+            {
+                questionType: 'receipt-operations', input: 'choice',
+                prompt: 'A receipt has a sandwich for £2.40, a drink for £1.35 and a voucher for £0.50 off. Which working gives the total?',
+                options: [
+                    option('2.40 + 1.35 − 0.50', 'Right. Add the items, then take off the voucher.', true),
+                    option('2.40 + 1.35 + 0.50', 'The voucher comes off, so take it away.'),
+                    option('2.40 − 1.35 − 0.50', 'The drink is bought, so add it.'),
+                    option('2.40 + 1.35', "Don't forget to take off the voucher.")
+                ]
+            }
         ];
     }
 
-    const practiceTypes = ['no-carry', 'carry-tenths', 'carry-ones', 'mixed-places', 'money', 'double-carry'];
-    function pick(random) {
-        return practiceTypes.map(type => ({ type, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random) }));
-    }
-    function prepare(question, random) {
-        return question.options ? { ...question, options: window.Maths1to9LessonEngine.shuffle(question.options, random) } : { ...question };
-    }
-    function generate(item, random) {
-        const integer = (min, max) => window.Maths1to9LessonEngine.randomInt(min, max, random);
-        let x, y;
-        if (item.type === 'mixed-places') {
-            x = integer(1, 25) * 100 + integer(1, 9);
-            y = integer(1, 9) * 100 + integer(1, 9) * 10;
-        } else if (item.type === 'money') {
-            x = integer(100, 3900); y = integer(100, 3900);
-        } else {
-            const ones = item.type === 'no-carry' ? [integer(1, 4), integer(1, 4)]
-                : item.type === 'carry-tenths' ? [integer(0, 4), integer(1, 4)] : [integer(7, 9), integer(3, 9)];
-            let tenths = item.type === 'carry-tenths' ? [integer(6, 9), integer(5, 9)] : [integer(0, 4), integer(0, 4)];
-            if (item.type === 'double-carry') {
-                const first = integer(1, 9);
-                tenths = [first, integer(9 - first, 9)];
-            }
-            const hundredths = item.type === 'double-carry' ? [integer(6, 9), integer(6, 9)]
-                : item.type === 'carry-tenths' ? [integer(0, 9), integer(0, 9)] : [integer(0, 4), integer(0, 4)];
-            x = ones[0] * 100 + tenths[0] * 10 + hundredths[0];
-            y = ones[1] * 100 + tenths[1] * 10 + hundredths[1];
-        }
-        if (item.type === 'money') {
-            if (x % 10 === 0) x += x === 3900 ? -1 : 1;
-            if (y % 10 === 0) y += y === 3900 ? -1 : 1;
-        }
-        if (x % 100 === 0 && y % 100 === 0) y++;
-        const trim = number => decimalText(number).replace(/0+$/, '').replace(/\.$/, '');
-        const a = trim(x), b = trim(y);
-        const input = ['no-carry', 'carry-ones', 'mixed-places'].includes(item.type) ? 'choice' : 'number';
-        const prompt = item.type === 'money' ? `Work out £${a} + £${b}. Leave out the £ sign.` : undefined;
-        return prepare({ ...calculate(a, b, input, prompt, item.type === 'money'), questionType: item.type }, random);
-    }
-
-    function drawExample(host, question, correct) {
-        if (question.input === 'custom') return;
-        const a = question.questionType === 'zero' && correct ? decimalText(toCents(question.a)) : question.a;
-        drawGrid(host, a, question.b, { result: correct && question.questionType === 'decimal-point' ? decimalText(toCents(question.a) + toCents(question.b)) : undefined });
-    }
-
-    window.DecimalAddition = { toCents, decimalText, worked, cells, columnSteps, drawGrid, alignmentWidget, columnWidget,
-        examples, mistakes, calculate, checks, practiceTypes, pick, prepare, generate, drawExample };
+    window.DecimalAddition = { decimalText, money, oneDecimal, columnSteps, cardProblem, practiceTypes, pick, generate, prepare, checks };
 })();

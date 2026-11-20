@@ -380,3 +380,15 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 
 .decimal-previous-addition { transition: opacity 150ms ease; }
 .decimal-previous-addition.is-faded { opacity: .4; }
+
+.decimal-column-table--tens th[data-column="point"] { width: 72px; }
+.decimal-learned { display: grid; gap: .9rem; margin: 1.25rem 0 0; padding-left: 1.25rem; line-height: 1.5; }
+.decimal-price-list { width: min(100%, 416px); margin: 1.5rem auto; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.decimal-price-list caption { margin-bottom: .5rem; font-weight: 800; }
+.decimal-price-list th, .decimal-price-list td { padding: .65rem; border: 2px solid #cbd5e1; }
+.decimal-price-list thead th { background: #f1f5f9; }
+.decimal-price-list td { text-align: right; }
+@media (max-width: 640px) {
+    .decimal-column-table--tens th[data-column="point"] { width: 40px; }
+    .decimal-price-list th, .decimal-price-list td { padding: .4rem; font-size: .85rem; }
+}

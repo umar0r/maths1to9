@@ -9,18 +9,20 @@
     },
     "assessment": {
         "question_types": {
-            "alignment": "decimal-add-subtract",
-            "zero": "decimal-add-subtract",
-            "columns": "decimal-add-subtract",
-            "decimal-point": "decimal-add-subtract",
-            "calculate": "decimal-add-subtract",
-            "explanation": "decimal-add-subtract",
-            "no-carry": "decimal-add-subtract",
-            "carry-tenths": "decimal-add-subtract",
-            "carry-ones": "decimal-add-subtract",
-            "mixed-places": "decimal-add-subtract",
-            "money": "decimal-add-subtract",
-            "double-carry": "decimal-add-subtract"
+            "add-different-lengths": "decimal-add-subtract",
+            "subtract-exchange": "decimal-add-subtract",
+            "add-then-subtract": "decimal-add-subtract",
+            "subtract-card": "decimal-add-subtract",
+            "money-in-out": "decimal-add-subtract",
+            "change": "decimal-add-subtract",
+            "money-card": "decimal-add-subtract",
+            "price-difference": "decimal-add-subtract",
+            "missing-addend": "decimal-add-subtract",
+            "missing-refund": "decimal-add-subtract",
+            "line-up-points": "decimal-add-subtract",
+            "zeros-fill-gaps": "decimal-add-subtract",
+            "carry-one": "decimal-add-subtract",
+            "receipt-operations": "decimal-add-subtract"
         }
     },
     "explanation": {
@@ -41,7 +43,7 @@
         "eyebrow": "Practice",
         "title": "Practise adding decimals",
         "intro": "",
-        "session_length": 6,
+        "session_length": 10,
         "hide_eyebrow": true
     },
     "section_order": [
@@ -86,24 +88,34 @@
         "intro": "",
         "questions": [
             {
-                "type": "calculate"
+                "type": "line-up-points"
             },
             {
-                "type": "explanation"
+                "type": "zeros-fill-gaps"
             },
             {
-                "type": "calculate"
+                "type": "carry-one"
             },
             {
-                "type": "calculate"
-            },
-            {
-                "type": "calculate"
+                "type": "receipt-operations"
             }
         ],
         "summary": {
-            "title": "Your Check is complete",
-            "points": []
+            "title": "What you've learned",
+            "points": [
+                {
+                    "text": "Line up the decimal points, so digits that are worth the same sit in the same column."
+                },
+                {
+                    "text": "You can fill a gap after the decimal point with a zero. 7.6 is the same as 7.60."
+                },
+                {
+                    "text": "If a column makes 10 or more, write the last digit and add 1 to the column on its left."
+                },
+                {
+                    "text": "On a receipt, add the items first, then take away anything that comes off."
+                }
+            ]
         },
         "hide_eyebrow": true,
         "hide_heading": true

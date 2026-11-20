@@ -94,13 +94,13 @@
         host.append(grid);
     }
 
-    function columnTable({ zero = false, fillGap = null, moving = false, a = '7.6', b = '0.48', operator = '+' } = {}) {
-        const table = element('table', '', 'decimal-column-table');
+    function columnTable({ zero = false, fillGap = null, moving = false, a = '7.6', b = '0.48', operator = '+', tens = false } = {}) {
+        const table = element('table', '', `decimal-column-table${tens ? ' decimal-column-table--tens' : ''}`);
         table.setAttribute('aria-label', `${a} ${operator === '−' ? 'minus' : 'plus'} ${b} in place-value columns`);
         const head = element('thead');
         const headings = element('tr');
         headings.append(element('td', '', 'decimal-column-table__gutter'));
-        ['units', 'decimal point', 'tenths', 'hundredths'].forEach(label => {
+        [...(tens ? ['tens'] : []), 'units', 'decimal point', 'tenths', 'hundredths'].forEach(label => {
             const cell = element('th', label);
             cell.scope = 'col';
             headings.append(cell);
@@ -110,7 +110,9 @@
         let topCells, bottomCells, bottomRow, sign;
         function places(number, fillZero) {
             const [units, decimal = ''] = number.split('.');
-            return [units, '.', decimal[0] || '', decimal[1] || (fillZero ? '0' : '')];
+            const values = [units.slice(-1), '.', decimal[0] || '', decimal[1] || (fillZero ? '0' : '')];
+            if (tens) values.unshift(units.length > 1 ? units.slice(0, -1) : '');
+            return values;
         }
         [places(a, zero), places(b, true)].forEach((digits, rowIndex) => {
             const row = element('tr');
@@ -123,7 +125,7 @@
             row.append(gutter);
             const cells = digits.map((digit, index) => {
                 const cell = element('td');
-                const gap = rowIndex === 0 && index === 3 && fillGap && !zero;
+                const gap = rowIndex === 0 && index === (tens ? 4 : 3) && fillGap && !zero;
                 const value = element(gap ? 'button' : 'span', moving && rowIndex === 1 ? '' : digit, gap ? 'decimal-table-gap' : 'decimal-table-digit');
                 if (gap) {
                     value.type = 'button';
@@ -149,16 +151,16 @@
         const { table, topCells } = columnTable({ zero: true,
             a: growing ? '3.25' : problem.a,
             b: growing ? '1.42' : problem.b,
-            operator: growing ? '+' : problem.operator
+            operator: growing ? '+' : problem.operator, tens: problem.tens
         });
-        let carryCell = topCells[0];
+        let carryCell = topCells[problem.tens ? 1 : 0];
         let subtotalRow = null;
         function equalsGutter() {
             const gutter = element('td', '', 'decimal-column-table__gutter');
             gutter.append(element('span', '=', 'decimal-column-table__sign'));
             return gutter;
         }
-        topCells[0].classList.add('decimal-written-carry-cell');
+        carryCell.classList.add('decimal-written-carry-cell');
         if (growing) {
             table.querySelectorAll('tbody > tr').forEach(row => row.classList.add('decimal-previous-addition'));
             table.setAttribute('aria-label', '3.25 plus 1.42, then subtract 0.85 in place-value columns');
@@ -193,7 +195,7 @@
         }
         const slots = {};
         answer.append(equalsGutter());
-        ['units', 'point', 'tenths', 'hundredths'].forEach(key => {
+        [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'].forEach(key => {
             const cell = element('td');
             if (key === 'point') cell.append(element('span', '.', 'decimal-table-digit'));
             else {
@@ -208,7 +210,7 @@
         });
         table.querySelector('tbody').append(answer);
         const columns = [];
-        ['units', 'point', 'tenths', 'hundredths'].forEach((key, index) => {
+        [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'].forEach((key, index) => {
             table.querySelectorAll('tr').forEach(row => {
                 const cell = row.children[index + 1];
                 cell.dataset.column = key;
@@ -233,7 +235,7 @@
     }
 
     function additionCardsWidget(problem) {
-        const order = ['hundredths', 'tenths', 'units'];
+        const order = ['hundredths', 'tenths', 'units', ...(problem.tens ? ['tens'] : [])];
         let view;
         return {
             reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
@@ -317,7 +319,7 @@
                 const error = problem.mark(value.digits);
                 return { correct: !error, feedback: error || problem.feedback };
             },
-            answerText: value => value ? `${value.digits?.units || ''}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
+            answerText: value => value ? `${problem.tens ? value.digits?.tens || '' : ''}${value.digits?.units || ''}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
         };
     }
 
@@ -537,7 +539,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 15,
+            version: 16,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -636,7 +638,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 11,
+            version: 12,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -745,6 +747,7 @@
         }
     }
 
+    window.DecimalAddition.createCardWidget = additionCardsWidget;
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[SLUG] = mountTryIt;
     document.addEventListener('maths1to9:lesson-rendered', event => {

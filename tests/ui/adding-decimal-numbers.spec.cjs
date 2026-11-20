@@ -1,136 +1,117 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/adding-decimal-numbers.cjs');
 const { MAIN_ACTION, watchForErrors, goToStage } = require('./helpers.cjs');
-
+const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const score = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
-const mainAction = page => page.locator(`${MAIN_ACTION}:visible`);
 const back = page => page.getByRole('button', { name: 'Previous screen', exact: true });
-const prompt = page => page.locator('.question-prompt:visible');
-
+const feedback = page => page.locator('.question-feedback:visible');
 async function reload(page) {
     await page.reload({ waitUntil: 'networkidle' });
-    await expect(mainAction(page)).toBeVisible();
+    await expect(main(page)).toBeVisible();
 }
-
-async function goBackAndForward(page) {
-    if (!await back(page).isEnabled()) return;
-    const url = page.url();
-    const points = await score(page);
-    await back(page).click();
-    await expect(mainAction(page)).toBeEnabled();
-    await mainAction(page).click();
-    await expect(page).toHaveURL(url);
-    expect(await score(page)).toBe(points);
-}
-
-async function finishQuestions(page) {
-    for (let step = 0; step < 100; step++) {
+async function finishPractice(page) {
+    for (let step = 0; step < 80; step++) {
         if (await page.getByRole('button', { name: 'Practise again', exact: true }).isVisible()) return;
         if (await solve(page)) continue;
-        await expect(mainAction(page)).toBeEnabled();
-        await mainAction(page).click();
+        await expect(main(page)).toBeEnabled();
+        await main(page).click();
     }
-    throw new Error('Practice did not finish');
+    throw Error('Practice did not finish');
 }
 
 for (const width of [1280, 375]) {
     test.describe(`adding-decimal-numbers ${width}px with touch`, () => {
         test.use({ viewport: { width, height: 900 }, hasTouch: true });
-        test('new work survives retries, reloads, Back and two more Practice sessions', async ({ page }) => {
+        test('cards, choices and typing survive reload, locked Back reviews and further Practice', async ({ page }) => {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
             await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
-            await expect(prompt(page)).toHaveCount(0);
-            await expect(page.getByText('Write 14.7 and 6.82 underneath each other.', { exact: true })).toBeVisible();
-            const tested = new Set();
-            let penalty = 0;
+            await expect(page.getByText("We add and take away decimals when amounts aren't whole numbers.", { exact: true })).toBeVisible();
             const visited = new Set();
+            const wrongKinds = new Set();
+            let penalty = 0, practiceCount = 0, checkCount = 0;
             for (let step = 0; step < 160; step++) {
-                const url = page.url();
-                if (!visited.has(url)) {
-                    await goBackAndForward(page);
-                    visited.add(url);
-                }
                 expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-                const button = mainAction(page);
-                if (await button.innerText() === 'All lessons') break;
-                const slider = page.locator('#lesson-section-explanation input[type=range]:visible');
-                for (const control of await slider.all()) {
-                    await control.focus();
-                    await control.press('End');
-                    await reload(page);
-                    await expect(page.getByLabel(await control.getAttribute('aria-label'), { exact: true })).toHaveValue(await control.getAttribute('max'));
+                const label = await main(page).innerText();
+                if (label === 'All lessons') break;
+                if (label !== 'Check') {
+                    await expect(main(page)).toBeEnabled();
+                    await main(page).click();
+                    continue;
                 }
-                if (await prompt(page).count() && await button.innerText() === 'Check') {
-                    const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
-                    const options = page.locator('.question-card-options:visible button');
-                    const custom = await page.locator('.question-card:visible input[type=range]').count() || await page.locator('.question-card:visible input[type=text]').count() > 1;
-                    const kind = await options.count() ? 'choice' : custom ? 'custom' : 'number';
-                    const key = `${section}:${kind}`;
-                    if (kind !== 'custom' && (kind === 'choice' || !tested.has(key))) {
-                        if (section !== 'interactive') penalty += 5;
-                        tested.add(key);
-                        await solve(page);
-                        if (kind === 'choice') {
-                            await expect(options).toHaveCount(4);
-                            const rightLabel = await page.locator('.question-card-options:visible button.is-selected').innerText();
-                            const labels = await options.allTextContents();
-                            const feedbacks = new Set();
-                            for (const label of labels.filter(label => label !== rightLabel)) {
-                                await page.getByRole('button', { name: label, exact: true }).click();
-                                await reload(page); // answering, with the selected wrong option
-                                await button.click();
-                                await expect(button).toHaveText('Try again');
-                                const feedback = await page.locator('.question-feedback:visible').innerText();
-                                feedbacks.add(feedback);
-                                await reload(page); // wrong
-                                await expect(page.locator('.question-feedback:visible')).toHaveText(feedback);
-                                await button.click();
-                            }
-                            expect(feedbacks.size).toBe(3);
-                        } else {
-                            await page.locator('.question-card:visible input[type=text]').fill('999');
-                            await reload(page); // answering, with typed input
-                            await expect(page.locator('.question-card:visible input[type=text]')).toHaveValue('999');
-                            await button.click();
-                            await expect(button).toHaveText('Try again');
-                            await reload(page);
-                            await expect(button).toHaveText('Try again');
-                            await button.click();
-                        }
-                        await solve(page);
-                        await button.click();
-                        if (section === 'interactive') {
-                            // Try it goes straight on after a right answer.
-                            await expect(page).not.toHaveURL(url);
-                            const earned = await score(page);
-                            await reload(page);
-                            expect(await score(page)).toBe(earned);
-                            continue;
-                        }
-                        await expect(button).toHaveText('Continue');
-                        const earned = await score(page);
-                        await reload(page); // correct after a retry
-                        expect(await score(page)).toBe(earned);
-                        await expect(button).toHaveText('Continue');
-                        await expect(page.locator('.question-card:visible')).not.toContainText('Right first time');
-                        await button.click();
-                        continue;
-                    }
+                const section = await page.evaluate(() => window.Maths1to9Lesson.getCurrentSection().id);
+                const url = page.url();
+                const options = page.locator('.question-card-options:visible button');
+                const slots = page.locator('.decimal-tap-slot:visible');
+                const kind = await slots.count() ? 'custom' : await options.count() ? 'choice' : 'number';
+                if (!visited.has(url)) {
+                    visited.add(url);
+                    if (section === 'question-bank') practiceCount++;
+                    if (section === 'comparison') checkCount++;
+                }
+                if (section === 'question-bank') {
+                    await expect(feedback(page)).toHaveCount(0);
+                    await expect(page.locator('.decimal-written-carry:visible')).toHaveCount(0);
+                }
+                await solve(page);
+                if (section === 'question-bank') await expect(feedback(page)).toHaveCount(0);
+                const key = `${section}:${kind}`;
+                if (section !== 'interactive' && !wrongKinds.has(key)) {
+                    wrongKinds.add(key);
+                    penalty += 5;
+                    if (kind === 'custom') {
+                        const slot = page.getByRole('button', { name: 'Hundredths answer digit', exact: true });
+                        const digit = Number(await slot.innerText());
+                        await slot.click();
+                        await page.getByRole('button', { name: `Digit ${(digit + 1) % 10}`, exact: true }).click();
+                    } else if (kind === 'choice') {
+                        const right = await page.locator('.question-card-options:visible button.is-selected').innerText();
+                        const labels = await options.allTextContents();
+                        await page.getByRole('button', { name: labels.find(label => label !== right), exact: true }).click();
+                    } else await page.locator('.question-card:visible input[type=text]').fill('99999');
+                    await reload(page);
+                    await expect(feedback(page)).toHaveCount(0);
+                    await main(page).click();
+                    await expect(main(page)).toHaveText('Try again');
+                    const message = await feedback(page).innerText();
+                    await reload(page);
+                    await expect(feedback(page)).toHaveText(message);
+                    await main(page).click();
                     await solve(page);
                 }
-                await expect(button).toBeEnabled();
-                await button.click();
+                await main(page).click();
+                await expect(main(page)).toHaveText('Continue');
+                const earned = await score(page);
+                await reload(page);
+                expect(await score(page)).toBe(earned);
+                await expect(main(page)).toHaveText('Continue');
+                await expect(page.locator('.retained-answer:visible')).toHaveCount(0);
+                await main(page).click();
+                if (section !== 'interactive') {
+                    const next = page.url();
+                    await back(page).click();
+                    await expect(feedback(page)).toBeVisible();
+                    if (kind === 'custom') {
+                        for (const slot of await page.locator('.decimal-tap-slot:visible').all()) await expect(slot).toBeDisabled();
+                    } else if (kind === 'choice') {
+                        await expect(options).toHaveCount(4);
+                        for (const option of await options.all()) await expect(option).toBeDisabled();
+                    } else await expect(page.locator('.question-card:visible input[type=text]')).toBeDisabled();
+                    await main(page).click();
+                    await expect(page).toHaveURL(next);
+                    expect(await score(page)).toBe(earned);
+                }
             }
-            await expect(mainAction(page)).toHaveText('All lessons');
+            expect(practiceCount).toBe(10);
+            expect(checkCount).toBe(4);
+            await expect(main(page)).toHaveText('All lessons');
+            await expect(page.locator('.decimal-learned li')).toHaveCount(4);
+            await expect(page.locator('.retained-results:visible, .score-panel:visible')).toHaveCount(0);
             const earned = await score(page);
-            expect(penalty).toBe(35);
-            expect(earned).toBe(160 - penalty);
-            await reload(page); // finished
+            expect(earned).toBe(175 - penalty);
+            await reload(page);
             expect(await score(page)).toBe(earned);
-            await expect(page.locator('#adding-decimal-numbers-comparison .retained-results')).toContainText('2nd try');
-            await goBackAndForward(page);
-            await mainAction(page).click();
+            await main(page).click();
             await expect(page).toHaveURL(/\/$/);
             expect((await page.request.get(page.url())).ok()).toBe(true);
             await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
@@ -139,16 +120,15 @@ for (const width of [1280, 375]) {
             for (let session = 0; session < 2; session++) {
                 await page.getByRole('button', { name: 'Practise again', exact: true }).click();
                 await reload(page);
-                await finishQuestions(page);
+                await finishPractice(page);
                 expect(await score(page)).toBe(earned);
             }
             await expect(page.getByText('Earlier practice 1', { exact: true })).toBeVisible();
             await expect(page.getByText('Earlier practice 2', { exact: true })).toBeVisible();
-            expect(await page.evaluate(() => window.Maths1to9Lesson.getProgress().finished)).toBe(true);
             const evidenceAfter = await page.evaluate(() => window.Maths1to9Progress.getSkillProgress('decimal-add-subtract'));
             expect(evidenceAfter).not.toEqual(evidenceBefore);
+            expect(await page.evaluate(() => window.Maths1to9Lesson.getProgress().finished)).toBe(true);
             expect(errors).toEqual([]);
-            await page.screenshot({ path: `/private/tmp/adding-decimal-numbers-${width}.png`, fullPage: true });
         });
     });
 }
@@ -156,14 +136,15 @@ for (const width of [1280, 375]) {
 test('adding-decimal-numbers: built static lesson finishes and All lessons reaches its homepage', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('dist/content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
-    for (let step = 0; step < 100; step++) {
-        if (await mainAction(page).innerText() === 'All lessons') break;
+    for (let step = 0; step < 110; step++) {
+        if (await main(page).innerText() === 'All lessons') break;
         if (await solve(page)) continue;
-        await mainAction(page).click();
+        await expect(main(page)).toBeEnabled();
+        await main(page).click();
     }
-    await expect(mainAction(page)).toHaveText('All lessons');
+    await expect(main(page)).toHaveText('All lessons');
     const expected = new URL('../../', page.url()).href;
-    await mainAction(page).click();
+    await main(page).click();
     await expect(page).toHaveURL(expected);
     expect((await page.request.get(expected)).ok()).toBe(true);
 });
