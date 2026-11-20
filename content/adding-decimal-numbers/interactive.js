@@ -94,9 +94,9 @@
         host.append(grid);
     }
 
-    function columnTable({ zero = false, fillGap = null, moving = false } = {}) {
+    function columnTable({ zero = false, fillGap = null, moving = false, a = '7.6', b = '0.48', operator = '+' } = {}) {
         const table = element('table', '', 'decimal-column-table');
-        table.setAttribute('aria-label', '7.6 plus 0.48 in place-value columns');
+        table.setAttribute('aria-label', `${a} ${operator === '−' ? 'minus' : 'plus'} ${b} in place-value columns`);
         const head = element('thead');
         const headings = element('tr');
         headings.append(element('td', '', 'decimal-column-table__gutter'));
@@ -108,11 +108,15 @@
         head.append(headings);
         const body = element('tbody');
         let topCells, bottomCells, bottomRow, sign;
-        [['7', '.', '6', zero ? '0' : ''], ['0', '.', '4', '8']].forEach((digits, rowIndex) => {
+        function places(number, fillZero) {
+            const [units, decimal = ''] = number.split('.');
+            return [units, '.', decimal[0] || '', decimal[1] || (fillZero ? '0' : '')];
+        }
+        [places(a, zero), places(b, true)].forEach((digits, rowIndex) => {
             const row = element('tr');
             const gutter = element('td', '', 'decimal-column-table__gutter');
             if (rowIndex === 1) {
-                sign = element('span', '+', 'decimal-column-table__sign');
+                sign = element('span', operator, 'decimal-column-table__sign');
                 gutter.append(sign);
                 bottomRow = row;
             }
@@ -139,11 +143,11 @@
         return { table, topCells, bottomCells, bottomRow, sign };
     }
 
-    function drawAdditionChart(host) {
+    function drawAdditionChart(host, problem) {
         const chart = element('div', '', 'decimal-place-chart decimal-addition-chart');
-        const { table, topCells } = columnTable({ zero: true });
-        const carry = element('span', '+1', 'decimal-written-carry');
-        carry.setAttribute('aria-label', 'Carried 1');
+        const { table, topCells } = columnTable({ zero: true, a: problem.a, b: problem.b, operator: problem.operator });
+        const carry = element('span', problem.carryText || '', 'decimal-written-carry');
+        carry.setAttribute('aria-label', problem.carryText === '−1' ? 'Take 1 from units' : 'Carried 1');
         carry.hidden = true;
         topCells[0].classList.add('decimal-written-carry-cell');
         const answer = element('tr', '', 'decimal-addition-answer');
@@ -187,7 +191,7 @@
         return { slots, carry, columns };
     }
 
-    function additionCardsWidget() {
+    function additionCardsWidget(problem) {
         const order = ['hundredths', 'tenths', 'units'];
         let view;
         return {
@@ -197,7 +201,7 @@
             },
             render(host, { onChange }) {
                 let digits = {}, active = order[0], editable = true;
-                const { slots, carry, columns } = drawAdditionChart(host);
+                const { slots, carry, columns } = drawAdditionChart(host, problem);
                 Object.entries(slots).forEach(([key, button]) => {
                     button.addEventListener('click', () => {
                         if (!editable) return;
@@ -231,7 +235,7 @@
                     columns.forEach(cell => {
                         cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active);
                     });
-                    carry.hidden = digits.tenths !== '0';
+                    carry.hidden = !problem.showCarry(digits);
                     cards.forEach(button => { button.disabled = !editable || !active; });
                 }
                 function save() {
@@ -265,8 +269,8 @@
             },
             isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined),
             mark(value) {
-                const error = markAddition(value.digits);
-                return { correct: !error, feedback: error || '7.60 + 0.48 = 8.08.' };
+                const error = problem.mark(value.digits);
+                return { correct: !error, feedback: error || problem.feedback };
             },
             answerText: value => value ? `${value.digits?.units || ''}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
         };
@@ -409,8 +413,71 @@
         return () => observer.disconnect();
     }
 
-    function examples() {
-        return window.DecimalAddition.examples();
+    function tryItProblems() {
+        return [
+            {
+                id: 'example-1', hash: 'try-it-1',
+                title: 'Work out 7.6 + 0.48.',
+                a: '7.60', b: '0.48', operator: '+', carryText: '+1',
+                showCarry: digits => digits.tenths === '0', mark: markAddition,
+                feedback: '7.60 + 0.48 = 8.08.'
+            },
+            {
+                id: 'receipt-add', hash: 'try-it-2', receiptStep: 1,
+                title: 'Work out the total on this receipt.',
+                a: '3.25', b: '1.42', operator: '+', showCarry: () => false,
+                mark(value) {
+                    if (value.hundredths !== '7') return 'Check the hundredths: 5 + 2 = 7.';
+                    if (value.tenths !== '6') return 'Check the tenths: 2 + 4 = 6.';
+                    if (value.units !== '4') return 'Check the units: 3 + 1 = 4.';
+                    return '';
+                },
+                feedback: '£3.25 + £1.42 = £4.67.'
+            },
+            {
+                id: 'receipt-subtract', hash: 'try-it-2-step-2', receiptStep: 2,
+                title: 'Work out the total on this receipt.',
+                a: '4.67', b: '0.85', operator: '−', carryText: '−1',
+                showCarry: digits => digits.tenths !== undefined,
+                mark(value) {
+                    if (value.hundredths !== '2') return 'Check the hundredths: 7 − 5 = 2.';
+                    if (value.tenths !== '8') return "Check the tenths: you can't take 8 from 6, so take 1 from the units. 16 − 8 = 8.";
+                    if (value.units !== '3') return 'Check the units: 4 − 1 − 0 = 3.';
+                    return '';
+                },
+                feedback: '£3.25 + £1.42 = £4.67, then £4.67 − £0.85 = £3.82.'
+            }
+        ];
+    }
+
+    function drawReceipt(host, step, correct) {
+        const receipt = element('div', '', 'decimal-receipt');
+        const edge = 'M15 9H270L291 30V220Q284.25 228 277.5 220T264 220T250.5 220T237 220T223.5 220T210 220T196.5 220T183 220T169.5 220T156 220T142.5 220T129 220T115.5 220T102 220T88.5 220T75 220T61.5 220T48 220T34.5 220T21 220Q15 212 9 220V15Q9 9 15 9Z';
+        receipt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 235" fill="var(--text)" font-family="inherit" role="img" aria-label="Receipt: Sandwich £3.25, Juice £1.42, Voucher minus £0.85. Work out the subtotal and total.">
+            <defs><clipPath id="decimal-task-receipt-clip"><path d="${edge}"/></clipPath></defs>
+            <path d="${edge}" fill="#f8fafc"/>
+            <g clip-path="url(#decimal-task-receipt-clip)"><rect x="9" y="9" width="282" height="38" fill="color-mix(in srgb, var(--primary) 25%, #fff)"/>
+                <text x="24" y="36" font-size="21" font-weight="800">Receipt</text></g>
+            <path d="M270 9V30H291Z" fill="var(--primary-dark)"/>
+            <text x="24" y="78" font-size="18">Sandwich</text><text x="276" y="78" text-anchor="end" font-size="18">£3.25</text>
+            <text x="24" y="108" font-size="18">Juice</text><text x="276" y="108" text-anchor="end" font-size="18">£1.42</text>
+            <text x="24" y="138" font-size="18">Subtotal</text><text data-receipt-subtotal x="276" y="138" text-anchor="end" font-size="18"></text><path data-subtotal-blank d="M210 141H276" stroke="#94a3b8"/>
+            <text x="24" y="168" font-size="18">Voucher</text><text x="276" y="168" text-anchor="end" font-size="18">−£0.85</text>
+            <path d="M24 184H276" stroke="#94a3b8"/>
+            <text x="24" y="201" font-size="20" font-weight="800">Total</text><text data-receipt-total x="276" y="201" text-anchor="end" font-size="20" font-weight="800"></text><path data-total-blank d="M210 204H276" stroke="#94a3b8"/>
+            <path d="${edge}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>`;
+        host.append(receipt);
+        function update(isCorrect) {
+            const subtotal = step === 2 || isCorrect;
+            const total = step === 2 && isCorrect;
+            receipt.querySelector('[data-receipt-subtotal]').textContent = subtotal ? '£4.67' : '';
+            receipt.querySelector('[data-receipt-total]').textContent = total ? '£3.82' : '';
+            receipt.querySelector('[data-subtotal-blank]').style.display = subtotal ? 'none' : '';
+            receipt.querySelector('[data-total-blank]').style.display = total ? 'none' : '';
+        }
+        update(correct);
+        return { update };
     }
 
     function sectionEvent(sectionId, name) {
@@ -519,16 +586,13 @@
     }
 
     async function mountTryIt(root) {
-        const questions = examples();
+        const questions = tryItProblems();
         const api = window.Maths1to9Lesson;
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 6,
-            initial: () => ({
-                index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
-                seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
-            }),
+            version: 7,
+            initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
         const state = section.state;
@@ -536,7 +600,7 @@
 
         function syncHash() {
             if (api.getCurrentSection().id === 'interactive') {
-                api.setSlideHash(`try-it-${state.screen + 1}`, { replace: true });
+                api.setSlideHash(questions[state.screen].hash, { replace: true });
             }
         }
 
@@ -549,106 +613,89 @@
         }
 
         function reportProgress() {
-            const card = state.cards[`example-${state.index + 1}`];
+            const card = state.cards[questions[state.screen].id];
             const completed = state.finished ? questions.length : state.index + Number(card?.correct === true);
             api.setSectionProgress('interactive', completed, questions.length);
         }
 
-        function continueExample() {
-            section.update(state => {
-                state.index++;
-                state.screen = state.index;
-                state.furthestScreen = state.screen;
-                state.finished = state.index === questions.length;
-            });
-            render();
+        function leaveTryIt() {
+            api.completeSection('interactive');
+            api.continueSection();
         }
 
-        function drawExample(container, index, readOnly) {
-            const example = questions[index];
-            if (index === 0) {
-                const widget = additionCardsWidget();
-                const cardRoot = element('div');
-                container.append(cardRoot);
-                api.createQuestion(cardRoot, {
-                    sectionId: 'interactive', questionId: 'example-1',
-                    questionType: 'column-addition', input: 'custom', scored: false,
-                    prompt: '', widget, readOnly, lockedReview: true,
-                    autoContinue: false,
-                    onReset: () => widget.reset(),
-                    onReplayReset: () => widget.reset(),
-                    onReplayFeedback: result => widget.replayFeedback(result),
-                    onFeedback: reportProgress,
-                    onContinue: continueExample
-                });
-                return;
-            }
-            const visual = document.createElement('div');
-            window.DecimalAddition.drawExample(visual, example, state.cards[`example-${index + 1}`]?.correct);
-            container.append(visual);
-            const cardRoot = document.createElement('div');
-            container.append(cardRoot);
-            function drawAnswer(correct) {
-                visual.replaceChildren();
-                window.DecimalAddition.drawExample(visual, example, correct);
-            }
-            api.createQuestion(cardRoot, {
-                ...window.DecimalAddition.prepare(example, window.Maths1to9LessonEngine.seededRandom(state.seed + index)), sectionId: 'interactive', questionId: `example-${index + 1}`,
-                scored: false, readOnly,
-                onReset: () => drawAnswer(false),
-                onReplayReset: () => drawAnswer(false),
-                onReplayFeedback: result => drawAnswer(result.correct),
-                onFeedback(result) {
-                    reportProgress();
-                    drawAnswer(result.correct);
-                },
-                onContinue: continueExample
+        function continueExample() {
+            section.update(state => {
+                state.index = state.screen + 1;
+                state.finished = state.index === questions.length;
+                if (!state.finished) {
+                    state.screen = state.index;
+                    state.furthestScreen = Math.max(state.furthestScreen, state.screen);
+                }
             });
+            render();
+            if (state.finished) leaveTryIt();
         }
 
         function render() {
             root.replaceChildren();
-            const heading = document.createElement('h3');
+            const problem = questions[state.screen];
+            const heading = element('h3', problem.title);
             heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === 0 ? 'Work out 7.6 + 0.48.'
-                : state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
             root.append(heading);
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)
             } : null);
-            if (state.finished) sectionEvent('interactive', 'complete');
-            if (state.screen === questions.length) {
-                questions.forEach((example, index) => {
-                    const completed = document.createElement('article');
-                    root.append(completed);
-                    drawExample(completed, index, true);
-                });
-                api.clearSectionAction('interactive');
-            } else {
-                const readOnly = state.screen < state.index;
-                drawExample(root, state.screen, readOnly);
-                if (readOnly) api.setSectionAction('interactive', {
-                    label: 'Next', onClick: () => showScreen(state.screen + 1)
-                });
+            const receipt = problem.receiptStep ? drawReceipt(root, problem.receiptStep,
+                state.cards[problem.id]?.correct === true) : null;
+            const widget = additionCardsWidget(problem);
+            const cardRoot = element('div');
+            root.append(cardRoot);
+            const readOnly = state.screen < state.index;
+            function resetVisual() {
+                widget.reset();
+                receipt?.update(false);
             }
+            function showFeedback(result) {
+                receipt?.update(result.correct);
+            }
+            api.createQuestion(cardRoot, {
+                sectionId: 'interactive', questionId: problem.id,
+                questionType: problem.operator === '−' ? 'column-subtraction' : 'column-addition',
+                input: 'custom', prompt: '', widget, scored: false, readOnly,
+                lockedReview: true, autoContinue: false,
+                onReset: resetVisual,
+                onReplayReset: resetVisual,
+                onReplayFeedback(result) {
+                    widget.replayFeedback(result);
+                    showFeedback(result);
+                },
+                onFeedback(result) {
+                    reportProgress();
+                    showFeedback(result);
+                },
+                onContinue: continueExample
+            });
+            if (state.finished) api.completeSection('interactive');
+            if (readOnly) api.setSectionAction('interactive', state.screen === questions.length - 1
+                ? { label: 'Continue', onClick: leaveTryIt }
+                : { label: 'Next', onClick: () => showScreen(state.screen + 1) });
             syncHash();
         }
 
-        for (let index = 0; index <= questions.length; index++) {
-            api.registerHashRoute(`try-it-${index + 1}`, () => {
+        questions.forEach((problem, index) => {
+            api.registerHashRoute(problem.hash, () => {
                 if (!api.goToSection('interactive', { moveFocus: false })) {
                     document.dispatchEvent(new CustomEvent('maths1to9:section-change'));
                     return;
                 }
                 showScreen(Math.min(index, state.furthestScreen));
             });
-        }
+        });
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         reportProgress();
         render();
-        const requested = Array.from({ length: questions.length + 1 }, (_, index) => index)
-            .find(index => initialHash === `#try-it-${index + 1}`);
-        if (requested !== undefined && api.goToSection('interactive', { moveFocus: false })) {
+        const requested = questions.findIndex(problem => initialHash === `#${problem.hash}`);
+        if (requested >= 0 && api.goToSection('interactive', { moveFocus: false })) {
             showScreen(Math.min(requested, state.furthestScreen));
         }
     }

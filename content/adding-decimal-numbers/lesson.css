@@ -367,3 +367,6 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 
 .decimal-addition-chart [data-column] { transition: background-color 150ms ease; }
 .decimal-addition-chart [data-column].is-active-column { background: color-mix(in srgb, var(--success-background) 50%, #fff); }
+
+.decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
+.decimal-receipt svg { display: block; width: 100%; height: auto; }
