@@ -186,6 +186,12 @@
         Object.entries(inputs).forEach(([key, input]) => {
             input.getBoundingClientRect();
             input.value = value[key] || '';
+            if (!editable) requestAnimationFrame(() => {
+                if (input.isConnected) {
+                    input.value = '';
+                    input.value = value[key] || '';
+                }
+            });
         });
     }
 
