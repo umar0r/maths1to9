@@ -8,6 +8,7 @@
         {
             kind: 'why',
             title: "We add and take away decimals when amounts aren't whole numbers.",
+            line: "Here are some places in real life where you'll see decimals.",
             pictures: true
         },
         {
@@ -266,7 +267,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 12,
+            version: 13,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
