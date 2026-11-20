@@ -297,6 +297,7 @@
 /* Learn's column addition keeps the same table as the introduction. */
 .decimal-addition-chart { margin-top: 2.75rem; }
 .decimal-addition-digit {
+    transform: translateZ(0);
     width: 2.25rem;
     height: 2.5rem;
     padding: .1rem;
