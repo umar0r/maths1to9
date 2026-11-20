@@ -27,7 +27,7 @@ $pageTitle = 'Adding and subtracting decimals';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=62">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=63">
     <link rel="stylesheet" href="./lesson.css?v=35">
 </head>
 
