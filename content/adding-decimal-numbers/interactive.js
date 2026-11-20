@@ -185,6 +185,89 @@
         Object.entries(inputs).forEach(([key, input]) => { input.value = value[key] || ''; });
     }
 
+    function additionCardsWidget() {
+        const order = ['hundredths', 'tenths', 'carry', 'units'];
+        return {
+            render(host, { onChange }) {
+                let digits = {}, active = order[0], editable = true;
+                drawAdditionChart(host, { value: {}, editable: false, onChange() {} });
+                const slots = {};
+                host.querySelectorAll('.decimal-addition-digit').forEach(input => {
+                    const key = input.getAttribute('aria-label') === 'Carry to units' ? 'carry'
+                        : input.getAttribute('aria-label').split(' ')[0].toLowerCase();
+                    const button = element('button', '', 'decimal-tap-slot');
+                    button.type = 'button';
+                    button.setAttribute('aria-label', input.getAttribute('aria-label'));
+                    if (key === 'carry') button.classList.add('decimal-tap-slot--carry');
+                    button.addEventListener('click', () => {
+                        if (!editable) return;
+                        delete digits[key];
+                        active = key;
+                        save();
+                    });
+                    input.replaceWith(button);
+                    slots[key] = button;
+                });
+                const keys = element('div', '', 'decimal-digit-keys');
+                keys.setAttribute('role', 'group');
+                keys.setAttribute('aria-label', 'Number cards');
+                const cards = Array.from({ length: 10 }, (_, digit) => {
+                    const button = element('button', String(digit), 'decimal-digit-key');
+                    button.type = 'button';
+                    button.setAttribute('aria-label', `Digit ${digit}`);
+                    button.addEventListener('click', () => choose(String(digit)));
+                    keys.append(button);
+                    return button;
+                });
+                host.append(keys);
+                function paint() {
+                    Object.entries(slots).forEach(([key, button]) => {
+                        button.textContent = digits[key] ?? '';
+                        button.disabled = !editable;
+                        const selected = editable && key === active;
+                        button.classList.toggle('is-highlighted', selected);
+                        button.closest('td').classList.toggle('is-highlighted', selected && key !== 'carry');
+                        button.setAttribute('aria-pressed', String(selected));
+                    });
+                    cards.forEach(button => { button.disabled = !editable || !active; });
+                }
+                function save() {
+                    onChange({ digits: { ...digits }, active });
+                    paint();
+                }
+                function choose(digit) {
+                    if (!editable || !active) return;
+                    const index = order.indexOf(active);
+                    digits[active] = digit;
+                    active = order.slice(index + 1).find(key => digits[key] === undefined)
+                        || order.find(key => digits[key] === undefined) || null;
+                    save();
+                }
+                host.addEventListener('keydown', event => {
+                    if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                        event.preventDefault();
+                        choose(event.key);
+                    }
+                });
+                return {
+                    update(next) {
+                        digits = { ...(next.value?.digits || {}) };
+                        active = next.value ? next.value.active : order[0];
+                        editable = next.editable;
+                        paint();
+                    },
+                    focus() { slots[active || order[0]].focus(); }
+                };
+            },
+            isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined),
+            mark(value) {
+                const error = markAddition(value.digits);
+                return { correct: !error, feedback: error || '7.60 + 0.48 = 8.08.' };
+            },
+            answerText: value => value ? `${value.digits?.units || ''}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
+        };
+    }
+
     function markAddition(value) {
         if (value.hundredths !== '8') return 'Check the hundredths: 0 + 8 = 8.';
         if (value.tenths !== '0') return 'Check the tenths: 6 + 4 = 10. Write 0 and carry 1.';
@@ -491,7 +574,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -533,6 +616,19 @@
 
         function drawExample(container, index, readOnly) {
             const example = questions[index];
+            if (index === 0) {
+                const cardRoot = element('div');
+                container.append(cardRoot);
+                api.createQuestion(cardRoot, {
+                    sectionId: 'interactive', questionId: 'example-1',
+                    questionType: 'column-addition', input: 'custom', scored: false,
+                    prompt: '', widget: additionCardsWidget(), readOnly, lockedReview: true,
+                    autoContinue: false,
+                    onFeedback: reportProgress,
+                    onContinue: continueExample
+                });
+                return;
+            }
             const visual = document.createElement('div');
             window.DecimalAddition.drawExample(visual, example, state.cards[`example-${index + 1}`]?.correct);
             container.append(visual);
@@ -560,7 +656,8 @@
             root.replaceChildren();
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
-            heading.textContent = state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
+            heading.textContent = state.screen === 0 ? 'Work out 7.6 + 0.48.'
+                : state.screen === questions.length ? 'Your completed examples' : `Example ${state.screen + 1}`;
             root.append(heading);
             api.setSectionBack('interactive', state.screen > 0 ? {
                 onClick: () => showScreen(state.screen - 1)

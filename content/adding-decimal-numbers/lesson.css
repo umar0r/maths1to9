@@ -325,3 +325,57 @@
     padding: .15rem;
     border-bottom: 0;
 }
+
+/* Programmatic slide focus keeps its location without a heading outline. */
+body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
+.decimal-addition-chart { max-width: 100%; }
+.decimal-addition-chart .decimal-column-table { min-width: 0; }
+.decimal-addition-chart .decimal-column-table th { padding-inline: .4rem; }
+.decimal-tap-slot {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius-medium);
+    background: #fbfcfe;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.decimal-tap-slot--carry { width: 1.6rem; height: 1.8rem; font-size: 1rem; }
+.decimal-column-table td.is-highlighted,
+.decimal-tap-slot--carry.is-highlighted { background: #ecfeff; box-shadow: inset 0 0 0 2px #155e75; }
+.decimal-tap-slot:disabled { opacity: 1; cursor: default; }
+.decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
+.decimal-digit-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; max-width: 32rem; margin: 1.5rem auto .5rem; }
+.decimal-digit-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 0;
+    padding: 0;
+    color: #fff;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    border: 0;
+    border-radius: .6rem;
+    background: var(--primary);
+    box-shadow: 0 4px 0 var(--primary-dark);
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .08s ease;
+}
+.decimal-digit-key:hover { background: #3d7af0; }
+.decimal-digit-key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-dark); }
+.decimal-digit-key:disabled { opacity: 1; color: #fff; background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: default; }
+.decimal-digit-key:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
+@media (max-width: 640px) {
+    .decimal-addition-chart { width: calc(100% - 16px); }
+    .decimal-addition-chart .decimal-column-table th { padding-inline: .1rem; font-size: .64rem; }
+    .decimal-digit-keys { max-width: 16rem; }
+}
