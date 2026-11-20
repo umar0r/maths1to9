@@ -160,6 +160,7 @@
         }
         topCells[0].classList.add('decimal-written-carry-cell');
         if (growing) {
+            table.querySelectorAll('tbody > tr').forEach(row => row.classList.add('decimal-previous-addition'));
             table.setAttribute('aria-label', '3.25 plus 1.42, then subtract 0.85 in place-value columns');
             const subtotal = element('tr', '', 'decimal-addition-answer decimal-receipt-subtotal-row');
             subtotal.append(equalsGutter());
@@ -228,7 +229,7 @@
         observer.observe(chart);
         requestAnimationFrame(positionCarry);
         document.fonts.ready.then(positionCarry);
-        return { slots, carry, columns, subtotalRow };
+        return { slots, carry, columns, subtotalRow, previousRows: [...table.querySelectorAll('.decimal-previous-addition')] };
     }
 
     function additionCardsWidget(problem) {
@@ -241,7 +242,7 @@
             },
             render(host, { onChange }) {
                 let digits = {}, active = order[0], editable = true, markedRight = false;
-                const { slots, carry, columns, subtotalRow } = drawAdditionChart(host, problem);
+                const { slots, carry, columns, subtotalRow, previousRows } = drawAdditionChart(host, problem);
                 Object.entries(slots).forEach(([key, button]) => {
                     button.addEventListener('click', () => {
                         if (!editable) return;
@@ -273,8 +274,10 @@
                         button.setAttribute('aria-pressed', String(selected));
                     });
                     columns.forEach(cell => {
-                        cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active);
+                        cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active
+                            && !cell.closest('.decimal-previous-addition'));
                     });
+                    previousRows.forEach(row => row.classList.toggle('is-faded', !markedRight));
                     subtotalRow?.classList.toggle('is-subtotal', problem.receiptStep === 2 || markedRight);
                     carry.hidden = !problem.showCarry(digits);
                     cards.forEach(button => { button.disabled = !editable || !active; });
@@ -633,7 +636,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 10,
+            version: 11,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });

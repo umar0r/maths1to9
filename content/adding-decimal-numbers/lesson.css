@@ -377,3 +377,6 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 .decimal-addition-chart .decimal-receipt-subtotal-row.is-subtotal > td:not(.decimal-column-table__gutter) {
     background: color-mix(in srgb, var(--primary) 25%, #fff);
 }
+
+.decimal-previous-addition { transition: opacity 150ms ease; }
+.decimal-previous-addition.is-faded { opacity: .4; }
