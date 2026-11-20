@@ -78,11 +78,6 @@
             },
             render(host, { onChange }) {
                 let value = null, editable = true, phase = 'answer';
-                let instruction = null;
-                if (problem.hints) {
-                    instruction = element('p', "Put each digit under the column it's worth.", 'decimal-build-instruction');
-                    host.append(instruction);
-                }
                 const { table } = D.columnTable({ a: problem.a, b: problem.b, operator: problem.operator, tens: problem.tens });
                 const keys = [...problem.keys].reverse();
                 const places = [...keys];
@@ -142,8 +137,6 @@
                 }
                 function paint() {
                     const active = value?.active, digits = value?.digits || {};
-                    // A right answer replaces the hints with the feedback box.
-                    if (instruction) instruction.hidden = phase === 'correct';
                     Object.entries(slots).forEach(([field, slot]) => {
                         slot.textContent = digits[field] ?? '';
                         slot.disabled = !editable || field.startsWith('answer:') && !operandsReady(digits);

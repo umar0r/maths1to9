@@ -350,14 +350,12 @@
     }
 
     // Draws a note with its arrow to one box, and redraws both when the figure resizes.
-    // prepare() places the note first, so the arrow can start from where it ends up;
-    // before says where the note sits in the flow (the end of the figure by default).
-    function noteWithArrow(block, note, target, route, { prepare = () => {}, before = null } = {}) {
+    // prepare() places the note first, so the arrow can start from where it ends up.
+    function noteWithArrow(block, note, target, route, { prepare = () => {} } = {}) {
         const arrow = document.createElementNS(SVG_NAMESPACE, 'svg');
         arrow.setAttribute('class', 'decimal-intro-arrow');
         arrow.setAttribute('aria-hidden', 'true');
-        block.insertBefore(note, before);
-        block.append(arrow);
+        block.append(note, arrow);
         function draw() {
             if (!block.isConnected) { observer.disconnect(); return; }
             const origin = block.getBoundingClientRect();
@@ -406,15 +404,13 @@
                 const sy = label.top - origin.top + label.height * .35;
                 return arrowPath(`M ${sx} ${sy} C ${sx + 22} ${sy}, ${headX - 26} ${ty - 10}, ${headX - 8} ${ty}`, headX, ty, 'right');
             }
-            // Down the narrow strip beside the table, then into the row it points at.
-            const lineX = box.left - origin.left - 7;
-            const headY = box.top - origin.top + 8;
-            const sx = label.left - origin.left + 10;
-            const sy = label.bottom - origin.top + 3;
-            return arrowPath(`M ${sx} ${sy} C ${sx - 20} ${sy + 26}, ${lineX + 2} ${headY - 80}, ${lineX} ${headY - 8}`,
-                lineX, headY, 'down');
+            // Under the table: up its outside edge to the voucher sign.
+            const headX = box.left - origin.left - 8;
+            const sx = label.left - origin.left + 8;
+            const sy = label.top - origin.top - 3;
+            return arrowPath(`M ${sx} ${sy} C ${headX + 2} ${sy - 14}, ${headX + 2} ${ty + 26}, ${headX + 6} ${ty}`,
+                headX, ty, 'left');
         }, {
-            before: table,
             prepare(origin, box) {
                 // Left of the table on a computer, level with the voucher row.
                 if (!desktop.matches) { note.style.top = ''; return; }
@@ -555,7 +551,8 @@
             },
             {
                 id: 'build-add', hash: 'try-it-3', buildIt: true,
-                title: 'Work out 5.3 + 12.46.', a: '5.3', b: '12.46', operator: '+'
+                title: "Work out 5.3 + 12.46 by putting each digit under the column it's worth.",
+                a: '5.3', b: '12.46', operator: '+'
             }
         ];
     }
