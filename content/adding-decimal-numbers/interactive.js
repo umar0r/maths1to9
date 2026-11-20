@@ -152,7 +152,7 @@
                 columns.push(cell);
             });
         });
-        // Keep the written carry outside the faded cells so it stays full strength.
+        // Keep the written carry positioned above the units digit.
         chart.append(table, carry);
         host.append(chart);
         function positionCarry() {
@@ -211,7 +211,7 @@
                         button.setAttribute('aria-pressed', String(selected));
                     });
                     columns.forEach(cell => {
-                        cell.classList.toggle('is-dimmed', editable && Boolean(active) && cell.dataset.column !== active);
+                        cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active);
                     });
                     carry.hidden = digits.tenths !== '0';
                     cards.forEach(button => { button.disabled = !editable || !active; });

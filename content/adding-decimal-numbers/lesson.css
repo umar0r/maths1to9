@@ -365,5 +365,5 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     font-weight: 700;
 }
 
-.decimal-addition-chart [data-column] { transition: opacity 150ms ease; }
-.decimal-addition-chart [data-column].is-dimmed { opacity: .6; }
+.decimal-addition-chart [data-column] { transition: background-color 150ms ease; }
+.decimal-addition-chart [data-column].is-active-column { background: var(--success-background); }
