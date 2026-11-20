@@ -373,3 +373,7 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 
 /* Keep the subtotal row in place when its slots become the carried-from row. */
 .decimal-column-table .decimal-receipt-subtotal-row > td:not(.decimal-column-table__gutter) { height: 74px; }
+
+.decimal-addition-chart .decimal-receipt-subtotal-row.is-subtotal > td:not(.decimal-column-table__gutter) {
+    background: color-mix(in srgb, var(--primary) 25%, #fff);
+}

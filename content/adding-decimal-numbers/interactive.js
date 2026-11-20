@@ -152,11 +152,18 @@
             operator: growing ? '+' : problem.operator
         });
         let carryCell = topCells[0];
+        let subtotalRow = null;
+        function equalsGutter() {
+            const gutter = element('td', '', 'decimal-column-table__gutter');
+            gutter.append(element('span', '=', 'decimal-column-table__sign'));
+            return gutter;
+        }
         topCells[0].classList.add('decimal-written-carry-cell');
         if (growing) {
             table.setAttribute('aria-label', '3.25 plus 1.42, then subtract 0.85 in place-value columns');
             const subtotal = element('tr', '', 'decimal-addition-answer decimal-receipt-subtotal-row');
-            subtotal.append(element('td', '', 'decimal-column-table__gutter'));
+            subtotal.append(equalsGutter());
+            subtotalRow = subtotal;
             ['4', '.', '6', '7'].forEach(digit => {
                 const cell = element('td');
                 cell.append(element('span', digit, 'decimal-table-digit'));
@@ -179,9 +186,12 @@
         carry.hidden = true;
         carryCell.classList.add('decimal-written-carry-cell');
         const answer = element('tr', '', 'decimal-addition-answer');
-        if (problem.receiptStep === 1) answer.classList.add('decimal-receipt-subtotal-row');
+        if (problem.receiptStep === 1) {
+            answer.classList.add('decimal-receipt-subtotal-row');
+            subtotalRow = answer;
+        }
         const slots = {};
-        answer.append(element('td', '', 'decimal-column-table__gutter'));
+        answer.append(equalsGutter());
         ['units', 'point', 'tenths', 'hundredths'].forEach(key => {
             const cell = element('td');
             if (key === 'point') cell.append(element('span', '.', 'decimal-table-digit'));
@@ -218,7 +228,7 @@
         observer.observe(chart);
         requestAnimationFrame(positionCarry);
         document.fonts.ready.then(positionCarry);
-        return { slots, carry, columns };
+        return { slots, carry, columns, subtotalRow };
     }
 
     function additionCardsWidget(problem) {
@@ -230,8 +240,8 @@
                 view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' });
             },
             render(host, { onChange }) {
-                let digits = {}, active = order[0], editable = true;
-                const { slots, carry, columns } = drawAdditionChart(host, problem);
+                let digits = {}, active = order[0], editable = true, markedRight = false;
+                const { slots, carry, columns, subtotalRow } = drawAdditionChart(host, problem);
                 Object.entries(slots).forEach(([key, button]) => {
                     button.addEventListener('click', () => {
                         if (!editable) return;
@@ -265,6 +275,7 @@
                     columns.forEach(cell => {
                         cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active);
                     });
+                    subtotalRow?.classList.toggle('is-subtotal', problem.receiptStep === 2 || markedRight);
                     carry.hidden = !problem.showCarry(digits);
                     cards.forEach(button => { button.disabled = !editable || !active; });
                 }
@@ -291,6 +302,7 @@
                         digits = { ...(next.value?.digits || {}) };
                         active = next.value ? next.value.active : order[0];
                         editable = next.editable;
+                        markedRight = next.phase === 'correct';
                         paint();
                     },
                     focus() { slots[active || order[0]].focus(); }
@@ -621,7 +633,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 9,
+            version: 10,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
