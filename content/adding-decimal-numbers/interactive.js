@@ -138,7 +138,7 @@
             input.maxLength = 1;
             input.autocomplete = 'off';
             input.setAttribute('aria-label', label);
-            input.disabled = !editable;
+            input.readOnly = !editable;
             input.addEventListener('input', () => {
                 onChange(Object.fromEntries(Object.entries(inputs).map(([name, field]) => [name, field.value])));
             });
@@ -384,7 +384,7 @@
                     });
                     if (wrong) render();
                     else {
-                        root.querySelectorAll('.decimal-addition-digit').forEach(input => { input.disabled = true; });
+                        root.querySelectorAll('.decimal-addition-digit').forEach(input => { input.readOnly = true; });
                         root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
                             correct: state.finished, text: state.additionFeedback
                         }));
