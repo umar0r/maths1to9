@@ -157,6 +157,7 @@
         });
         let carryCell = topCells[problem.tens ? 1 : 0];
         let subtotalRow = null;
+        let voucherRow = null;
         function equalsGutter() {
             const gutter = element('td', '', 'decimal-column-table__gutter');
             gutter.append(element('span', '=', 'decimal-column-table__sign'));
@@ -185,6 +186,7 @@
                 voucher.append(cell);
             });
             table.querySelector('tbody').append(subtotal, voucher);
+            voucherRow = voucher;
         }
         const carry = element('span', problem.carryText || '', 'decimal-written-carry');
         carry.setAttribute('aria-label', problem.carryText === '−1' ? 'Take 1 from units' : 'Carried 1');
@@ -222,6 +224,7 @@
         // Keep the written carry positioned above the units digit.
         chart.append(table, carry);
         host.append(chart);
+        if (voucherRow) drawVoucherNote(chart, table, voucherRow);
         function positionCarry() {
             if (!chart.isConnected) { observer.disconnect(); return; }
             const origin = chart.getBoundingClientRect();
@@ -332,6 +335,43 @@
         return '';
     }
 
+    const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+    // A thin dark curve ending in an open arrowhead, as in Place value's arrowedChart.
+    const ARROW_HEADS = {
+        left: (x, y) => `M ${x + 8} ${y - 5} L ${x} ${y} L ${x + 8} ${y + 5}`,
+        right: (x, y) => `M ${x - 8} ${y - 5} L ${x} ${y} L ${x - 8} ${y + 5}`,
+        down: (x, y) => `M ${x - 5} ${y - 9} L ${x} ${y} L ${x + 5} ${y - 8}`
+    };
+    function arrowPath(line, headX, headY, direction) {
+        const path = document.createElementNS(SVG_NAMESPACE, 'path');
+        path.setAttribute('d', `${line} ${ARROW_HEADS[direction](headX, headY)}`);
+        return path;
+    }
+
+    // Draws a note with its arrow to one box, and redraws both when the figure resizes.
+    // prepare() places the note first, so the arrow can start from where it ends up;
+    // before says where the note sits in the flow (the end of the figure by default).
+    function noteWithArrow(block, note, target, route, { prepare = () => {}, before = null } = {}) {
+        const arrow = document.createElementNS(SVG_NAMESPACE, 'svg');
+        arrow.setAttribute('class', 'decimal-intro-arrow');
+        arrow.setAttribute('aria-hidden', 'true');
+        block.insertBefore(note, before);
+        block.append(arrow);
+        function draw() {
+            if (!block.isConnected) { observer.disconnect(); return; }
+            const origin = block.getBoundingClientRect();
+            prepare(origin, target.getBoundingClientRect());
+            arrow.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
+            arrow.replaceChildren(route(origin, note.getBoundingClientRect(), target.getBoundingClientRect()));
+        }
+        const observer = new ResizeObserver(draw);
+        observer.observe(block);
+        requestAnimationFrame(draw);
+        document.fonts.ready.then(draw);
+        return { draw, dispose: () => observer.disconnect() };
+    }
+
     function drawIntroChart(host) {
         const block = element('div', '', 'decimal-intro-figure');
         const built = columnTable();
@@ -339,36 +379,53 @@
         const gap = built.topCells[3];
         gap.dataset.introGap = '';
         const note = element('span', '7.6 is the same as 7.60.', 'decimal-intro-note');
-        const svgNs = 'http://www.w3.org/2000/svg';
-        const arrow = document.createElementNS(svgNs, 'svg');
-        arrow.setAttribute('class', 'decimal-intro-arrow');
-        arrow.setAttribute('aria-hidden', 'true');
-        block.append(chart, note, arrow);
+        block.append(chart);
         host.append(block);
-
-        function draw() {
-            if (!block.isConnected) { observer.disconnect(); return; }
-            const origin = block.getBoundingClientRect();
-            const chartBox = chart.getBoundingClientRect();
-            const label = note.getBoundingClientRect();
-            const box = gap.getBoundingClientRect();
+        const arrow = noteWithArrow(block, note, gap, (origin, label, box) => {
             const sx = label.right - origin.left + 4;
             const sy = label.top + label.height / 2 - origin.top;
             const tx = box.left + box.width / 2 - origin.left;
             const ty = box.top + box.height / 2 - origin.top;
-            const outside = chartBox.right - origin.left + 8;
-            arrow.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
-            const path = document.createElementNS(svgNs, 'path');
-            path.setAttribute('d', `M ${sx} ${sy} Q ${outside} ${sy}, ${outside} ${sy + 16}`
-                + ` L ${outside} ${ty - 18} Q ${outside} ${ty}, ${tx} ${ty}`
-                + ` M ${tx + 8} ${ty - 5} L ${tx} ${ty} L ${tx + 8} ${ty + 5}`);
-            arrow.replaceChildren(path);
+            const outside = origin.width + 8;
+            return arrowPath(`M ${sx} ${sy} Q ${outside} ${sy}, ${outside} ${sy + 16}`
+                + ` L ${outside} ${ty - 18} Q ${outside} ${ty}, ${tx} ${ty}`, tx, ty, 'left');
+        });
+        return () => arrow.dispose();
+    }
+
+    // Step 2 points at the row it has to take away, in Learn 2's note-and-arrow style.
+    function drawVoucherNote(chart, table, row) {
+        const note = element('span', 'Now take away the £0.85 voucher.', 'decimal-voucher-note');
+        const desktop = window.matchMedia('(min-width: 1024px)');
+        const arrow = noteWithArrow(chart, note, row, (origin, label, box) => {
+            const ty = box.top + box.height / 2 - origin.top;
+            if (desktop.matches) {
+                // Alongside the voucher row, left of the table.
+                const headX = box.left - origin.left - 34;
+                const sx = label.right - origin.left + 6;
+                const sy = label.top - origin.top + label.height * .35;
+                return arrowPath(`M ${sx} ${sy} C ${sx + 22} ${sy}, ${headX - 26} ${ty - 10}, ${headX - 8} ${ty}`, headX, ty, 'right');
+            }
+            // Down the narrow strip beside the table, then into the row it points at.
+            const lineX = box.left - origin.left - 7;
+            const headY = box.top - origin.top + 8;
+            const sx = label.left - origin.left + 10;
+            const sy = label.bottom - origin.top + 3;
+            return arrowPath(`M ${sx} ${sy} C ${sx - 20} ${sy + 26}, ${lineX + 2} ${headY - 80}, ${lineX} ${headY - 8}`,
+                lineX, headY, 'down');
+        }, {
+            before: table,
+            prepare(origin, box) {
+                // Left of the table on a computer, level with the voucher row.
+                if (!desktop.matches) { note.style.top = ''; return; }
+                note.style.top = `${box.top + box.height / 2 - origin.top - note.offsetHeight / 2}px`;
+            }
+        });
+        function follow() {
+            if (!chart.isConnected) { desktop.removeEventListener('change', follow); return; }
+            arrow.draw();
         }
-        const observer = new ResizeObserver(draw);
-        observer.observe(block);
-        requestAnimationFrame(draw);
-        document.fonts.ready.then(draw);
-        return () => observer.disconnect();
+        desktop.addEventListener('change', follow);
     }
 
     function drawLearnChart(host, { aligned, zero, fillGap, alignRow }) {

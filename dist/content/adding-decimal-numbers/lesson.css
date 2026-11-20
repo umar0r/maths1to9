@@ -284,6 +284,25 @@
     stroke-linejoin: round;
 }
 
+/* Try it 2 step 2: a note pointing at the voucher row, sized like Learn 2's note. */
+.decimal-voucher-note {
+    display: block;
+    margin: 0 0 .6rem;
+    color: #334155;
+    font-size: .9rem;
+    line-height: 1.25;
+}
+
+@media (min-width: 1024px) {
+    .decimal-voucher-note {
+        position: absolute;
+        right: calc(100% + 90px);
+        width: 140px;
+        margin: 0;
+        text-align: right;
+    }
+}
+
 @media (max-width: 640px) {
     .decimal-column-table th,
     .decimal-column-table td { padding: .4rem .15rem; }
