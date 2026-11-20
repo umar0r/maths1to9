@@ -324,7 +324,7 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 .decimal-tap-slot.is-filled { border-color: transparent; }
 .decimal-tap-slot:disabled { opacity: 1; cursor: default; }
 .decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
-.decimal-digit-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; width: min(calc(100% - 32px), 416px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
+.decimal-digit-keys { display: grid; grid-template-columns: repeat(5, 2.6rem); justify-content: center; gap: .5rem; width: min(calc(100% - 32px), 416px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
 .decimal-digit-key {
     display: inline-flex;
     align-items: center;
@@ -364,3 +364,6 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     line-height: 1;
     font-weight: 700;
 }
+
+.decimal-addition-chart [data-column] { transition: opacity 150ms ease; }
+.decimal-addition-chart [data-column].is-dimmed { opacity: .35; }

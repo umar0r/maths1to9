@@ -128,7 +128,6 @@
         carry.setAttribute('aria-label', 'Carried 1');
         carry.hidden = true;
         topCells[0].classList.add('decimal-written-carry-cell');
-        topCells[0].append(carry);
         const answer = element('tr', '', 'decimal-addition-answer');
         const slots = {};
         answer.append(element('td', '', 'decimal-column-table__gutter'));
@@ -145,9 +144,29 @@
             answer.append(cell);
         });
         table.querySelector('tbody').append(answer);
-        chart.append(table);
+        const columns = [];
+        ['units', 'point', 'tenths', 'hundredths'].forEach((key, index) => {
+            table.querySelectorAll('tr').forEach(row => {
+                const cell = row.children[index + 1];
+                cell.dataset.column = key;
+                columns.push(cell);
+            });
+        });
+        // Keep the written carry outside the faded cells so it stays full strength.
+        chart.append(table, carry);
         host.append(chart);
-        return { slots, carry };
+        function positionCarry() {
+            if (!chart.isConnected) { observer.disconnect(); return; }
+            const origin = chart.getBoundingClientRect();
+            const units = topCells[0].getBoundingClientRect();
+            carry.style.left = `${units.left - origin.left + units.width / 2}px`;
+            carry.style.top = `${units.top - origin.top + 1.6}px`;
+        }
+        const observer = new ResizeObserver(positionCarry);
+        observer.observe(chart);
+        requestAnimationFrame(positionCarry);
+        document.fonts.ready.then(positionCarry);
+        return { slots, carry, columns };
     }
 
     function additionCardsWidget() {
@@ -160,7 +179,7 @@
             },
             render(host, { onChange }) {
                 let digits = {}, active = order[0], editable = true;
-                const { slots, carry } = drawAdditionChart(host);
+                const { slots, carry, columns } = drawAdditionChart(host);
                 Object.entries(slots).forEach(([key, button]) => {
                     button.addEventListener('click', () => {
                         if (!editable) return;
@@ -190,6 +209,9 @@
                         button.classList.toggle('is-filled', digits[key] !== undefined);
                         button.closest('td').classList.toggle('is-highlighted', selected);
                         button.setAttribute('aria-pressed', String(selected));
+                    });
+                    columns.forEach(cell => {
+                        cell.classList.toggle('is-dimmed', editable && Boolean(active) && cell.dataset.column !== active);
                     });
                     carry.hidden = digits.tenths !== '0';
                     cards.forEach(button => { button.disabled = !editable || !active; });
