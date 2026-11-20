@@ -353,8 +353,9 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     .decimal-addition-chart .decimal-column-table th { padding-inline: .1rem; font-size: .64rem; }
 }
 
-.decimal-written-carry-cell { position: relative; }
+.decimal-column-table .decimal-written-carry-cell { position: relative; height: 72px; }
 .decimal-written-carry {
+    color: #15803d;
     position: absolute;
     top: .1rem;
     left: 50%;

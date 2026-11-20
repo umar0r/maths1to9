@@ -124,7 +124,7 @@
     function drawAdditionChart(host) {
         const chart = element('div', '', 'decimal-place-chart decimal-addition-chart');
         const { table, topCells } = columnTable({ zero: true });
-        const carry = element('span', '1', 'decimal-written-carry');
+        const carry = element('span', '+1', 'decimal-written-carry');
         carry.setAttribute('aria-label', 'Carried 1');
         carry.hidden = true;
         topCells[0].classList.add('decimal-written-carry-cell');
