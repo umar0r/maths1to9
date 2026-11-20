@@ -45,16 +45,16 @@
                     <text x="160" y="66" text-anchor="end" font-size="16.5">£1.85</text>
                     <text x="20" y="91" font-size="16.5">Sandwich</text>
                     <text x="160" y="91" text-anchor="end" font-size="16.5">£3.49</text>
-                    <path d="M20 105H160" stroke="#94a3b8" stroke-width="1"/>
-                    <text x="20" y="128" font-size="17" font-weight="800">Total</text>
-                    <text x="160" y="128" text-anchor="end" font-size="17" font-weight="800">£5.34</text>
+                    <path d="M20 99H160" stroke="#94a3b8" stroke-width="1"/>
+                    <text x="20" y="116" font-size="17" font-weight="800">Total</text>
+                    <text x="160" y="116" text-anchor="end" font-size="17" font-weight="800">£5.34</text>
                     <path d="${receiptEdge}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>`
             },
             {
                 label: 'Fuel',
                 description: 'Petrol pump display: 32.45 litres and £45.10.',
                 drawing: `<rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>
-                    ${header('Fuel')}
+                    ${header('Petrol pump')}
                     <text x="20" y="77" font-size="16">Litres</text>
                     <text x="160" y="77" text-anchor="end" font-size="16">32.45</text>
                     <text x="20" y="113" font-size="16">Cost</text>
