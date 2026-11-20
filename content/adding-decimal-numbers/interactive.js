@@ -26,50 +26,68 @@
     }
 
     function drawUsePictures(host) {
+        const headerFill = 'color-mix(in srgb, var(--primary) 25%, #fff)';
+        const frame = '<rect x="9" y="9" width="162" height="132" rx="6" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+        function header(title) {
+            return `<path d="M15 9H165Q171 9 171 15V41H9V15Q9 9 15 9Z" fill="${headerFill}"/>
+                <text x="20" y="31" font-size="18" font-weight="800">${title}</text>`;
+        }
+        const receiptEdge = 'M15 9H151L171 29V136Q164.25 144 157.5 136T144 136T130.5 136T117 136T103.5 136T90 136T76.5 136T63 136T49.5 136T36 136T22.5 136T9 136V15Q9 9 15 9Z';
         const pictures = [
             {
                 label: 'Money',
                 description: 'Receipt: Drink £1.85, Sandwich £3.49, Total £5.34.',
-                drawing: `<path d="M18 9H162V127L153 136L144 127L135 136L126 127L117 136L108 127L99 136L90 127L81 136L72 127L63 136L54 127L45 136L36 127L27 136L18 127Z" fill="#fffbeb" stroke="#cbd5e1" stroke-width="2"/>
-                    <text x="29" y="41" font-size="16.5">Drink £1.85</text>
-                    <text x="29" y="66" font-size="16.5">Sandwich £3.49</text>
-                    <path d="M29 81H151" stroke="#64748b" stroke-width="1.5"/>
-                    <text x="29" y="108" font-size="17" font-weight="800">Total £5.34</text>`
+                drawing: `<defs><clipPath id="decimal-receipt-clip"><path d="${receiptEdge}"/></clipPath></defs>
+                    <path d="${receiptEdge}" fill="#f8fafc"/>
+                    <g clip-path="url(#decimal-receipt-clip)">${header('Receipt')}</g>
+                    <path d="M151 9V29H171Z" fill="var(--primary-dark)"/>
+                    <text x="20" y="66" font-size="16.5">Drink</text>
+                    <text x="160" y="66" text-anchor="end" font-size="16.5">£1.85</text>
+                    <text x="20" y="91" font-size="16.5">Sandwich</text>
+                    <text x="160" y="91" text-anchor="end" font-size="16.5">£3.49</text>
+                    <path d="M20 105H160" stroke="#94a3b8" stroke-width="1"/>
+                    <text x="20" y="128" font-size="17" font-weight="800">Total</text>
+                    <text x="160" y="128" text-anchor="end" font-size="17" font-weight="800">£5.34</text>
+                    <path d="${receiptEdge}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>`
             },
             {
                 label: 'Fuel',
                 description: 'Petrol pump display: 32.45 litres and £45.10.',
-                drawing: `<path d="M139 43C164 43 165 60 165 80V109C165 125 144 125 144 108V89" fill="none" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
-                    <path d="M151 31L166 44L161 58L149 47Z" fill="#475569"/>
-                    <rect x="17" y="13" width="124" height="121" rx="10" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
-                    <rect x="26" y="28" width="106" height="62" rx="5" fill="#172b3b"/>
-                    <text x="79" y="52" text-anchor="middle" font-size="16" fill="#a7f3d0">32.45 litres</text>
-                    <text x="79" y="77" text-anchor="middle" font-size="20" font-weight="800" fill="#a7f3d0">£45.10</text>
-                    <path d="M28 134H131" stroke="#64748b" stroke-width="5" stroke-linecap="round"/>`
+                drawing: `<rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>
+                    ${header('Fuel')}
+                    <text x="20" y="77" font-size="16">Litres</text>
+                    <text x="160" y="77" text-anchor="end" font-size="16">32.45</text>
+                    <text x="20" y="113" font-size="16">Cost</text>
+                    <text x="160" y="113" text-anchor="end" font-size="20" font-weight="800">£45.10</text>
+                    ${frame}`
             },
             {
                 label: 'Measurements',
                 description: 'Room blueprint: 4.25 metres by 3.6 metres.',
-                drawing: `<defs><pattern id="decimal-room-grid" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="white" stroke-opacity=".22" stroke-width="1"/></pattern></defs>
-                    <rect x="9" y="9" width="162" height="132" rx="8" fill="#1d4ed8"/>
-                    <rect x="9" y="9" width="162" height="132" rx="8" fill="url(#decimal-room-grid)"/>
-                    <path d="M44 29H144V106H44Z M94 106V85 M94 85A21 21 0 0 1 115 106" fill="none" stroke="white" stroke-width="2"/>
-                    <text x="94" y="130" text-anchor="middle" font-size="18" fill="white">4.25 m</text>
-                    <text x="28" y="72" text-anchor="middle" transform="rotate(-90 28 72)" font-size="18" fill="white">3.6 m</text>`
+                drawing: `<defs><pattern id="decimal-room-grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="var(--primary)" stroke-opacity=".18" stroke-width="1"/></pattern></defs>
+                    <rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>
+                    ${header('Room plan')}
+                    <rect x="10" y="42" width="160" height="94" fill="url(#decimal-room-grid)"/>
+                    <path d="M49 55H153V108H49Z M99 108V90 M99 90A18 18 0 0 1 117 108" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                    <text x="101" y="131" text-anchor="middle" font-size="18">4.25 m</text>
+                    <text x="29" y="83" text-anchor="middle" transform="rotate(-90 29 83)" font-size="18">3.6 m</text>
+                    ${frame}`
             },
             {
                 label: 'Science',
                 description: 'Carbon periodic-table tile: C, 12.011.',
-                drawing: `<rect x="30" y="9" width="120" height="132" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="2"/>
-                    <text x="90" y="90" text-anchor="middle" font-size="76" font-weight="800" fill="#166534">C</text>
-                    <text x="90" y="121" text-anchor="middle" font-size="22" fill="#166534">12.011</text>`
+                drawing: `<rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>
+                    ${header('Carbon')}
+                    <text x="90" y="105" text-anchor="middle" font-size="76" font-weight="800">C</text>
+                    <text x="90" y="131" text-anchor="middle" font-size="22">12.011</text>
+                    ${frame}`
             }
         ];
         const grid = element('div', '', 'decimal-uses');
         pictures.forEach(picture => {
             const figure = element('figure');
             const drawing = element('div', '', 'decimal-use-picture');
-            drawing.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 150" role="img" aria-label="${picture.description}">${picture.drawing}</svg>`;
+            drawing.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 150" fill="var(--text)" font-family="inherit" role="img" aria-label="${picture.description}">${picture.drawing}</svg>`;
             figure.append(drawing, element('figcaption', picture.label));
             grid.append(figure);
         });
