@@ -621,7 +621,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 8,
+            version: 9,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -692,7 +692,7 @@
                 sectionId: 'interactive', questionId: problem.id,
                 questionType: problem.operator === '−' ? 'column-subtraction' : 'column-addition',
                 input: 'custom', prompt: '', widget, scored: false, readOnly,
-                lockedReview: true, autoContinue: problem.receiptStep === 1,
+                lockedReview: true, autoContinue: false,
                 onReset: resetVisual,
                 onReplayReset: resetVisual,
                 onReplayFeedback(result) {
