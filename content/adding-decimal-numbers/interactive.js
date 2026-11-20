@@ -15,11 +15,6 @@
             kind: 'intro',
             title: 'Adding and subtracting decimals works just like whole numbers.',
             line: "Let's add 7.6 and 0.48 by lining the numbers up in columns."
-        },
-        {
-            kind: 'addition',
-            title: 'Add one column at a time, starting on the right.',
-            line: 'If a column makes 10 or more, write the last digit and carry the 1 into the next column on the left.'
         }
     ];
 
@@ -126,87 +121,48 @@
         return { table, topCells, bottomCells, bottomRow, sign };
     }
 
-    // Use the digit fields and saved-value pattern from columnWidget.
-    function drawAdditionChart(host, { value, editable, onChange }) {
+    function drawAdditionChart(host) {
         const chart = element('div', '', 'decimal-place-chart decimal-addition-chart');
-        const { table } = columnTable({ zero: true });
-        const inputs = {};
-        function inputFor(key, label) {
-            const input = element('input', '', 'decimal-addition-digit');
-            input.type = 'text';
-            input.inputMode = 'numeric';
-            input.maxLength = 1;
-            input.autocomplete = 'off';
-            input.setAttribute('aria-label', label);
-            input.readOnly = !editable;
-            input.addEventListener('input', () => {
-                onChange(Object.fromEntries(Object.entries(inputs).map(([name, field]) => [name, field.value])));
-            });
-            inputs[key] = input;
-            return input;
-        }
-        const carry = inputFor('carry', 'Carry to units');
-        carry.classList.add('decimal-addition-carry');
-        const carryRow = element('tr', '', 'decimal-addition-carry-row');
-        carryRow.append(element('td', '', 'decimal-column-table__gutter'));
-        for (let index = 0; index < 4; index++) {
-            const cell = element('td');
-            if (index === 0) cell.append(carry);
-            carryRow.append(cell);
-        }
-        table.querySelector('tbody').prepend(carryRow);
+        const { table, topCells } = columnTable({ zero: true });
+        const carry = element('span', '1', 'decimal-written-carry');
+        carry.setAttribute('aria-label', 'Carried 1');
+        carry.hidden = true;
+        topCells[0].classList.add('decimal-written-carry-cell');
+        topCells[0].append(carry);
         const answer = element('tr', '', 'decimal-addition-answer');
+        const slots = {};
         answer.append(element('td', '', 'decimal-column-table__gutter'));
         ['units', 'point', 'tenths', 'hundredths'].forEach(key => {
             const cell = element('td');
-            cell.append(key === 'point' ? element('span', '.', 'decimal-table-digit')
-                : inputFor(key, `${key[0].toUpperCase() + key.slice(1)} answer digit`));
+            if (key === 'point') cell.append(element('span', '.', 'decimal-table-digit'));
+            else {
+                const button = element('button', '', 'decimal-tap-slot');
+                button.type = 'button';
+                button.setAttribute('aria-label', `${key[0].toUpperCase() + key.slice(1)} answer digit`);
+                slots[key] = button;
+                cell.append(button);
+            }
             answer.append(cell);
         });
         table.querySelector('tbody').append(answer);
-        // Keyboard order follows the calculation, from right to left, then the carry.
-        const order = ['hundredths', 'tenths', 'units', 'carry'];
-        order.forEach((key, index) => {
-            inputs[key].tabIndex = index === 0 ? 0 : -1;
-            inputs[key].addEventListener('keydown', event => {
-                if (event.key !== 'Tab') return;
-                const next = index + (event.shiftKey ? -1 : 1);
-                if (next >= 0 && next < order.length) {
-                    event.preventDefault();
-                    inputs[order[next]].focus();
-                } else if (next === order.length) {
-                    event.preventDefault();
-                    document.querySelector('.lesson-controls button.button--primary')?.focus();
-                }
-            });
-        });
         chart.append(table);
         host.append(chart);
-        Object.entries(inputs).forEach(([key, input]) => { input.value = value[key] || ''; });
+        return { slots, carry };
     }
 
     function additionCardsWidget() {
-        const order = ['hundredths', 'tenths', 'carry', 'units'];
+        const order = ['hundredths', 'tenths', 'units'];
         return {
             render(host, { onChange }) {
                 let digits = {}, active = order[0], editable = true;
-                drawAdditionChart(host, { value: {}, editable: false, onChange() {} });
-                const slots = {};
-                host.querySelectorAll('.decimal-addition-digit').forEach(input => {
-                    const key = input.getAttribute('aria-label') === 'Carry to units' ? 'carry'
-                        : input.getAttribute('aria-label').split(' ')[0].toLowerCase();
-                    const button = element('button', '', 'decimal-tap-slot');
-                    button.type = 'button';
-                    button.setAttribute('aria-label', input.getAttribute('aria-label'));
-                    if (key === 'carry') button.classList.add('decimal-tap-slot--carry');
+                const { slots, carry } = drawAdditionChart(host);
+                Object.entries(slots).forEach(([key, button]) => {
                     button.addEventListener('click', () => {
                         if (!editable) return;
                         delete digits[key];
                         active = key;
                         save();
                     });
-                    input.replaceWith(button);
-                    slots[key] = button;
                 });
                 const keys = element('div', '', 'decimal-digit-keys');
                 keys.setAttribute('role', 'group');
@@ -226,9 +182,10 @@
                         button.disabled = !editable;
                         const selected = editable && key === active;
                         button.classList.toggle('is-highlighted', selected);
-                        button.closest('td').classList.toggle('is-highlighted', selected && key !== 'carry');
+                        button.closest('td').classList.toggle('is-highlighted', selected);
                         button.setAttribute('aria-pressed', String(selected));
                     });
+                    carry.hidden = digits.tenths !== '0';
                     cards.forEach(button => { button.disabled = !editable || !active; });
                 }
                 function save() {
@@ -272,7 +229,6 @@
         if (value.hundredths !== '8') return 'Check the hundredths: 0 + 8 = 8.';
         if (value.tenths !== '0') return 'Check the tenths: 6 + 4 = 10. Write 0 and carry 1.';
         if (value.units !== '8') return 'Check the units: 7 + 0 + the carried 1 = 8.';
-        if (value.carry !== '1') return 'Check the tenths: 6 + 4 = 10. Write 0 and carry 1.';
         return '';
     }
 
@@ -422,8 +378,8 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 14,
-            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false, addition: {}, additionPhase: 'answer', additionFeedback: '' }),
+            version: 15,
+            initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
         const state = section.state;
@@ -447,56 +403,19 @@
             heading.focus();
         }
 
-        function additionAction() {
-            const wrong = state.additionPhase === 'wrong';
-            api.setSectionAction('explanation', {
-                label: wrong ? 'Try again' : 'Check',
-                disabled: !wrong && ['units', 'tenths', 'hundredths', 'carry'].some(key => !state.addition[key]),
-                onClick() {
-                    section.update(state => {
-                        if (wrong) {
-                            state.addition = {};
-                            state.additionPhase = 'answer';
-                            state.additionFeedback = '';
-                        } else {
-                            const error = markAddition(state.addition);
-                            state.additionPhase = error ? 'wrong' : 'correct';
-                            state.additionFeedback = error || '7.60 + 0.48 = 8.08. The 10 tenths made 1 whole, so 1 was carried into the units.';
-                            state.finished = !error;
-                        }
-                    });
-                    if (wrong) render();
-                    else {
-                        root.querySelectorAll('.decimal-addition-digit').forEach(input => { input.readOnly = true; });
-                        root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
-                            correct: state.finished, text: state.additionFeedback
-                        }));
-                        if (state.finished) {
-                            sectionEvent('explanation', 'complete');
-                            api.clearSectionAction('explanation');
-                        } else additionAction();
-                    }
-                }
-            });
-        }
-
         function render() {
             disposeChart();
             const screen = screens[state.screen];
             const information = screen.kind === 'why' || screen.kind === 'intro';
             api.setSectionReset('explanation', information ? null : () => {
                 section.update(state => {
-                    if (screen.kind === 'addition') {
-                        state.addition = {};
-                        state.additionPhase = 'answer';
-                        state.additionFeedback = '';
-                    } else if (screen.kind === 'align') state.aligned = false;
+                    if (screen.kind === 'align') state.aligned = false;
                     else state.zero = false;
                     state.finished = false;
                 });
                 render();
             });
-            const done = information || (screen.kind === 'addition' ? state.additionPhase === 'correct' : screen.kind === 'align' ? state.aligned : state.zero);
+            const done = information || (screen.kind === 'align' ? state.aligned : state.zero);
             if (information && state.screen === screens.length - 1 && !state.finished) {
                 section.update(state => { state.finished = true; });
             }
@@ -512,17 +431,7 @@
                 const picture = element('div');
                 root.append(picture);
                 if (screen.instruction) root.append(element('p', screen.instruction, 'decimal-learn-instruction'));
-                if (screen.kind === 'addition') {
-                    drawAdditionChart(picture, {
-                        value: state.addition,
-                        editable: state.additionPhase === 'answer',
-                        onChange(value) {
-                            section.update(state => { state.addition = value; });
-                            additionAction();
-                        }
-                    });
-                    disposeChart = () => {};
-                } else if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
+                if (screen.kind === 'intro') disposeChart = drawIntroChart(picture);
                 else disposeChart = drawLearnChart(picture, {
                     aligned: screen.kind === 'zero' || state.aligned,
                     zero: screen.kind === 'zero' && state.zero,
@@ -536,11 +445,6 @@
                     } : null
                 });
             }
-            if (screen.kind === 'addition' && state.additionPhase !== 'answer') {
-                root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
-                    correct: state.additionPhase === 'correct', text: state.additionFeedback
-                }));
-            }
             if (done && screen.feedback) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
                 correct: true, text: screen.feedback
             }));
@@ -548,8 +452,7 @@
                 onClick: () => showScreen(state.screen - 1)
             } : null);
             if (state.finished) sectionEvent('explanation', 'complete');
-            if (screen.kind === 'addition' && !done) additionAction();
-            else if (state.screen === screens.length - 1 && done) api.clearSectionAction('explanation');
+            if (state.screen === screens.length - 1 && done) api.clearSectionAction('explanation');
             else api.setSectionAction('explanation', {
                 label: 'Next', disabled: !done, onClick: () => showScreen(state.screen + 1)
             });
@@ -574,7 +477,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 2,
+            version: 3,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)

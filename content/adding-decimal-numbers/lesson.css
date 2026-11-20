@@ -294,36 +294,10 @@
     .decimal-uses figcaption { font-size: .9rem; }
 }
 
-/* Learn's column addition keeps the same table as the introduction. */
+/* Try it's column addition keeps the same table as the introduction. */
 .decimal-addition-chart { margin-top: 2.75rem; }
-.decimal-addition-digit {
-    transform: translateZ(0);
-    width: 2.25rem;
-    height: 2.5rem;
-    padding: .1rem;
-    border: 2px solid #94a3b8;
-    border-radius: 5px;
-    background: white;
-    color: inherit;
-    font: inherit;
-    text-align: center;
-}
-.decimal-addition-digit:read-only { opacity: 1; background: #f1f5f9; }
-.decimal-addition-digit:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
-.lesson-section .decimal-addition-chart input.decimal-addition-carry {
-    width: 1.6rem;
-    height: 1.8rem;
-    min-height: 0;
-    font-size: 1rem;
-}
 .decimal-column-table .decimal-addition-answer > td:not(.decimal-column-table__gutter) {
     border-top: 3px solid #64748b;
-}
-
-.decimal-column-table .decimal-addition-carry-row > td:not(.decimal-column-table__gutter) {
-    height: 38px;
-    padding: .15rem;
-    border-bottom: 0;
 }
 
 /* Programmatic slide focus keeps its location without a heading outline. */
@@ -344,9 +318,7 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     font: inherit;
     cursor: pointer;
 }
-.decimal-tap-slot--carry { width: 1.6rem; height: 1.8rem; font-size: 1rem; }
-.decimal-column-table td.is-highlighted,
-.decimal-tap-slot--carry.is-highlighted { background: #ecfeff; box-shadow: inset 0 0 0 2px #155e75; }
+.decimal-column-table td.is-highlighted { background: #ecfeff; box-shadow: inset 0 0 0 2px #155e75; }
 .decimal-tap-slot:disabled { opacity: 1; cursor: default; }
 .decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
 .decimal-digit-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; max-width: 32rem; margin: 1.5rem auto .5rem; }
@@ -378,4 +350,15 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     .decimal-addition-chart { width: calc(100% - 16px); }
     .decimal-addition-chart .decimal-column-table th { padding-inline: .1rem; font-size: .64rem; }
     .decimal-digit-keys { max-width: 16rem; }
+}
+
+.decimal-written-carry-cell { position: relative; }
+.decimal-written-carry {
+    position: absolute;
+    top: .1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .9rem;
+    line-height: 1;
+    font-weight: 700;
 }
