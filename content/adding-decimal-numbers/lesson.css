@@ -293,3 +293,34 @@
     .decimal-uses { gap: .75rem; }
     .decimal-uses figcaption { font-size: .9rem; }
 }
+
+/* Learn's column addition keeps the same table as the introduction. */
+.decimal-addition-chart { margin-top: 2.75rem; }
+.decimal-addition-digit {
+    width: 2.25rem;
+    height: 2.5rem;
+    padding: .1rem;
+    border: 2px solid #94a3b8;
+    border-radius: 5px;
+    background: white;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+}
+.decimal-addition-digit:disabled { opacity: 1; background: #f1f5f9; }
+.decimal-addition-digit:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.lesson-section .decimal-addition-chart input.decimal-addition-carry {
+    width: 1.6rem;
+    height: 1.8rem;
+    min-height: 0;
+    font-size: 1rem;
+}
+.decimal-column-table .decimal-addition-answer > td:not(.decimal-column-table__gutter) {
+    border-top: 3px solid #64748b;
+}
+
+.decimal-column-table .decimal-addition-carry-row > td:not(.decimal-column-table__gutter) {
+    height: 38px;
+    padding: .15rem;
+    border-bottom: 0;
+}
