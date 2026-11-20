@@ -115,3 +115,280 @@
     overflow-wrap: anywhere;
     hyphens: auto;
 }
+
+
+/* Lesson-drawn pictures: all numbers stay readable in two phone columns. */
+.decimal-uses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 300px;
+    margin: 1.25rem auto 0;
+}
+
+.decimal-uses figure { margin: 0; text-align: center; }
+.decimal-use-picture { width: min(100%, 135px); margin-inline: auto; }
+.decimal-use-picture svg { display: block; width: 100%; height: auto; }
+.decimal-uses figcaption { margin-top: .3rem; font-weight: 800; }
+
+.decimal-place-chart,
+.decimal-intro-figure {
+    position: relative;
+    width: min(100%, 520px);
+    margin: 1.75rem auto 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Copied from Place value's table under this lesson's own class names. */
+.decimal-column-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+}
+
+.decimal-column-table th,
+.decimal-column-table td {
+    padding: .65rem 1rem;
+    border: 0 solid #cbd5e1;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.decimal-column-table th {
+    border-top-width: 2px;
+    font-size: .85rem;
+    line-height: 1.2;
+    font-weight: 700;
+    background: #f1f5f9;
+}
+
+.decimal-column-table tr > :nth-child(2) { border-left-width: 2px; }
+.decimal-column-table th:first-of-type { border-top-left-radius: 6px; }
+.decimal-column-table th:last-child { border-top-right-radius: 6px; }
+.decimal-column-table tbody tr:last-child > :nth-child(2) { border-bottom-left-radius: 6px; }
+.decimal-column-table tbody tr:last-child > :last-child { border-bottom-right-radius: 6px; }
+
+.decimal-column-table td {
+    height: 72px;
+    vertical-align: middle;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: #f8fafc;
+}
+
+.decimal-column-table .decimal-column-table__gutter {
+    position: relative;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.decimal-column-table__sign {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.decimal-column-table .decimal-column-table__tap { padding: 0; }
+
+.decimal-table-gap {
+    display: block;
+    width: 100%;
+    height: 72px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.decimal-table-moving {
+    position: absolute;
+    left: 0;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.decimal-table-moving__digit {
+    position: absolute;
+    top: 0;
+    display: grid;
+    place-items: center;
+    height: 100%;
+}
+
+.decimal-table-moving.is-dragging { cursor: grabbing; }
+.decimal-table-moving.is-locked { cursor: default; }
+
+.decimal-table-gap:focus-visible,
+.decimal-table-moving:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: -3px;
+}
+
+.decimal-row-controls {
+    display: flex;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: .9rem;
+}
+
+.decimal-row-move {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: white;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.decimal-row-move:disabled { opacity: .35; cursor: default; }
+.decimal-learn-instruction { text-align: center; }
+
+.decimal-intro-figure { padding-top: 40px; }
+
+.decimal-intro-note {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    color: #334155;
+    font-size: .9rem;
+}
+
+.decimal-intro-arrow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.decimal-intro-arrow path {
+    fill: none;
+    stroke: #334155;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 640px) {
+    .decimal-column-table th,
+    .decimal-column-table td { padding: .4rem .15rem; }
+    .decimal-column-table th { font-size: .68rem; }
+    .decimal-column-table td,
+    .decimal-table-gap { height: 60px; }
+    .decimal-uses { gap: .75rem; }
+    .decimal-uses figcaption { font-size: .9rem; }
+}
+
+/* Try it's column addition keeps the same table as the introduction. */
+.decimal-addition-chart { margin-top: 2.75rem; }
+.decimal-column-table .decimal-addition-answer > td:not(.decimal-column-table__gutter) {
+    border-top: 3px solid #64748b;
+}
+
+/* Programmatic slide focus keeps its location without a heading outline. */
+body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
+.decimal-addition-chart { width: min(calc(100% - 32px), 416px); max-width: 100%; }
+.decimal-addition-chart .decimal-column-table__gutter { width: 0; }
+.decimal-addition-chart .decimal-column-table__sign { left: -1rem; }
+.decimal-addition-chart .decimal-column-table { min-width: 0; }
+.decimal-addition-chart .decimal-column-table th { padding-inline: .4rem; }
+.decimal-tap-slot {
+    display: inline-grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border: 2px dashed #cbd5e1;
+    border-radius: .35rem;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.decimal-tap-slot.is-highlighted { border-color: #94a3b8; }
+.decimal-tap-slot.is-filled { border-color: transparent; }
+.decimal-tap-slot:disabled { opacity: 1; cursor: default; }
+.decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
+.decimal-digit-keys { display: grid; grid-template-columns: repeat(5, 2.6rem); justify-content: center; gap: .5rem; width: min(calc(100% - 32px), 416px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
+.decimal-digit-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 0;
+    padding: 0;
+    color: #fff;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    border: 0;
+    border-radius: .6rem;
+    background: var(--primary);
+    box-shadow: 0 4px 0 var(--primary-dark);
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .08s ease;
+}
+.decimal-digit-key:hover { background: #3d7af0; }
+.decimal-digit-key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-dark); }
+.decimal-digit-key:disabled { opacity: 1; color: #fff; background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: default; }
+.decimal-digit-key:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
+@media (max-width: 640px) {
+    .decimal-addition-chart .decimal-column-table th { padding-inline: .1rem; font-size: .64rem; }
+}
+
+.decimal-column-table .decimal-written-carry-cell { position: relative; height: 72px; }
+.decimal-written-carry {
+    color: #15803d;
+    position: absolute;
+    top: .1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .9rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.decimal-addition-chart [data-column] { transition: background-color 150ms ease; }
+.decimal-addition-chart [data-column].is-active-column { background: color-mix(in srgb, var(--success-background) 50%, #fff); }
+
+.decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
+.decimal-receipt svg { display: block; width: 100%; height: auto; }
+
+/* Keep the subtotal row in place when its slots become the carried-from row. */
+.decimal-column-table .decimal-receipt-subtotal-row > td:not(.decimal-column-table__gutter) { height: 74px; }
+
+.decimal-addition-chart .decimal-receipt-subtotal-row.is-subtotal > td:not(.decimal-column-table__gutter) {
+    background: color-mix(in srgb, var(--primary) 25%, #fff);
+}
+
+.decimal-previous-addition { transition: opacity 150ms ease; }
+.decimal-previous-addition.is-faded { opacity: .4; }
+
+.decimal-column-table--tens th[data-column="point"] { width: 72px; }
+.decimal-learned { display: grid; gap: .9rem; margin: 1.25rem 0 0; padding-left: 1.25rem; line-height: 1.5; }
+.decimal-price-list { width: min(100%, 416px); margin: 1.5rem auto; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.decimal-price-list caption { margin-bottom: .5rem; font-weight: 800; }
+.decimal-price-list th, .decimal-price-list td { padding: .65rem; border: 2px solid #cbd5e1; }
+.decimal-price-list thead th { background: #f1f5f9; }
+.decimal-price-list td { text-align: right; }
+@media (max-width: 640px) {
+    .decimal-column-table--tens th[data-column="point"] { width: 40px; }
+    .decimal-price-list th, .decimal-price-list td { padding: .4rem; font-size: .85rem; }
+}
