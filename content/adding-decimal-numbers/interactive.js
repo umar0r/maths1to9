@@ -152,7 +152,12 @@
 
     function additionCardsWidget() {
         const order = ['hundredths', 'tenths', 'units'];
+        let view;
         return {
+            reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
+            replayFeedback(result) {
+                view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' });
+            },
             render(host, { onChange }) {
                 let digits = {}, active = order[0], editable = true;
                 const { slots, carry } = drawAdditionChart(host);
@@ -191,8 +196,6 @@
                 }
                 function save() {
                     onChange({ digits: { ...digits }, active });
-                    // Let the section Reset track keyboard digits as well as taps.
-                    host.dispatchEvent(new Event('input', { bubbles: true }));
                     paint();
                 }
                 function choose(digit) {
@@ -209,7 +212,7 @@
                         choose(event.key);
                     }
                 });
-                return {
+                view = {
                     update(next) {
                         digits = { ...(next.value?.digits || {}) };
                         active = next.value ? next.value.active : order[0];
@@ -218,6 +221,7 @@
                     },
                     focus() { slots[active || order[0]].focus(); }
                 };
+                return view;
             },
             isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined),
             mark(value) {
@@ -480,7 +484,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 5,
+            version: 6,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -523,16 +527,20 @@
         function drawExample(container, index, readOnly) {
             const example = questions[index];
             if (index === 0) {
+                const widget = additionCardsWidget();
                 const cardRoot = element('div');
                 container.append(cardRoot);
-                window.Maths1to9LessonEngine.createQuestion(cardRoot, {
+                api.createQuestion(cardRoot, {
                     sectionId: 'interactive', questionId: 'example-1',
                     questionType: 'column-addition', input: 'custom', scored: false,
-                    prompt: '', widget: additionCardsWidget(), readOnly, lockedReview: true,
+                    prompt: '', widget, readOnly, lockedReview: true,
                     autoContinue: false,
+                    onReset: () => widget.reset(),
+                    onReplayReset: () => widget.reset(),
+                    onReplayFeedback: result => widget.replayFeedback(result),
                     onFeedback: reportProgress,
                     onContinue: continueExample
-                }, section, api);
+                });
                 return;
             }
             const visual = document.createElement('div');
@@ -559,16 +567,6 @@
         }
 
         function render() {
-            // This card resets its saved work, rather than opening a temporary replay.
-            api.setSectionReset('interactive', state.screen === 0 ? () => {
-                section.update(state => {
-                    delete state.cards['example-1'];
-                    state.index = 0;
-                    state.finished = false;
-                });
-                reportProgress();
-                render();
-            } : null);
             root.replaceChildren();
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
