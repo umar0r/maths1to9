@@ -6,9 +6,9 @@
         'subtract-card', 'money-in-out', 'change', 'money-card',
         'price-difference', 'missing-addend', 'missing-refund'
     ];
-    const decimalText = cents => `${cents < 0 ? '-' : ''}${Math.floor(Math.abs(cents) / 100)}.${String(Math.abs(cents) % 100).padStart(2, '0')}`;
-    const oneDecimal = cents => (cents / 100).toFixed(1);
-    const money = cents => `${cents < 0 ? '−' : ''}£${decimalText(Math.abs(cents))}`;
+    const decimalText = cents => (cents / 100).toFixed(2).replace(/\.?0+$/, '');
+    const oneDecimal = cents => (cents / 100).toFixed(1).replace(/\.0$/, '');
+    const money = cents => `${cents < 0 ? '−' : ''}£${(Math.abs(cents) / 100).toFixed(2)}`;
     const option = (label, feedback, correct = false) => ({ label, feedback, correct });
 
     function prepare(question, random) {
@@ -143,8 +143,9 @@
 
     function generate(item, random) {
         const integer = (min, max) => window.Maths1to9LessonEngine.randomInt(min, max, random);
-        const twoPlaces = () => integer(11, 999);
-        const onePlace = () => integer(11, 399) * 10;
+        const nonZeroEnd = value => value % 10 === 0 ? value + 1 : value;
+        const twoPlaces = () => nonZeroEnd(integer(11, 999));
+        const onePlace = () => nonZeroEnd(integer(11, 399)) * 10;
         const price = () => integer(50, 999);
         for (let attempt = 0; attempt < 500; attempt++) {
             let question;
@@ -169,7 +170,7 @@
                 question = numberQuestion(item.type, `Work out ${oneDecimal(a)} + ${decimalText(b)} − ${oneDecimal(c)}.`, a + b - c, [
                     { value: a + b + c, feedback: `You added ${oneDecimal(c)} instead of taking it away.` },
                     { value: a - b - c, feedback: `You took away both numbers. Add ${decimalText(b)}.` },
-                    { value: a + b - c / 10, feedback: `Write ${oneDecimal(c)} as ${decimalText(c)}, not ${decimalText(c / 10)}.` }
+                    { value: a + b - c / 10, feedback: `Write ${oneDecimal(c)} as ${(c / 100).toFixed(2)}, not ${decimalText(c / 10)}.` }
                 ], `${oneDecimal(a)} + ${decimalText(b)} = ${decimalText(a + b)}. Then ${decimalText(a + b)} − ${oneDecimal(c)} = ${decimalText(a + b - c)}.`, 'Add the first two numbers, then take away the third.');
                 question.values = { a, b, c };
             } else if (item.type === 'subtract-card') {
@@ -191,7 +192,7 @@
                 const cost = price();
                 const notes = [500, 1000, 2000].filter(note => note > cost);
                 const paid = notes[integer(0, notes.length - 1)];
-                question = numberQuestion(item.type, `You pay for a ${money(cost)} magazine with a ${money(paid).replace('.00', '')} note. How much change do you get? Leave out the £ sign.`, paid - cost, [
+                question = numberQuestion(item.type, `You pay for a ${money(cost)} magazine with a ${money(paid)} note. How much change do you get? Leave out the £ sign.`, paid - cost, [
                     { value: smallerFromLarger(paid, cost), feedback: 'If the top digit is too small, take 1 from the column on its left.' },
                     { value: paid + cost, feedback: 'Take the price away from the note. Do not add them.' }
                 ], `${money(paid)} − ${money(cost)} = ${money(paid - cost)}.`, 'Take the price away from the note.');

@@ -146,3 +146,26 @@ test('decimals: four approved Check questions test understanding with separate m
     assert.equal(checks[2].options.find(o => o.correct).label, 'Write 0 in the tenths and add 1 to the units.');
     assert.equal(checks[3].options.find(o => o.correct).label, '2.40 + 1.35 − 0.50');
 });
+
+
+test('decimals: non-money questions omit trailing decimal zeros; money keeps two places', () => {
+    for (const q of generated) {
+        for (const text of [q.prompt, ...(q.options || []).map(o => o.label)]) {
+            for (const money of text.matchAll(/£(\d+(?:\.\d+)?)/g)) assert.match(money[1], /^\d+\.\d{2}$/);
+            for (const match of text.matchAll(/(£?)(\d+\.\d+)/g)) {
+                if (match[1]) assert.match(match[2], /^\d+\.\d{2}$/);
+                else assert.doesNotMatch(match[2], /0$/);
+            }
+        }
+        if (['add-different-lengths', 'subtract-exchange', 'add-then-subtract', 'missing-addend'].includes(q.questionType)) {
+            if (q.questionType !== 'missing-addend') assert.notEqual(q.values.b % 10, 0);
+            else assert.notEqual(q.values.a % 10, 0);
+            const onePlace = q.questionType === 'missing-addend' ? q.values.b : q.values.a;
+            assert.notEqual(Math.floor(onePlace / 10) % 10, 0);
+        }
+        if (q.widget && q.questionType !== 'money-card') {
+            assert.doesNotMatch(q.cardProblem.a, /\.\d*0$/);
+            assert.doesNotMatch(q.cardProblem.b, /\.\d*0$/);
+        }
+    }
+});

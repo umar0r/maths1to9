@@ -65,10 +65,10 @@ $pageTitle = 'Adding and subtracting decimals';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="./decimal-addition.js?v=4"></script>
+    <script src="./decimal-addition.js?v=5"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./questions.js?v=18"></script>
+    <script src="./questions.js?v=19"></script>
     <script src="./interactive.js?v=49"></script>
 
     <!-- Shared lesson renderer; loaded last -->
