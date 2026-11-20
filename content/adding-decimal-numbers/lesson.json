@@ -3,6 +3,7 @@
     "slug": "adding-decimal-numbers",
     "title": "Adding and subtracting decimals",
     "subtitle": "Line up the decimal points, then work one column at a time.",
+    "hide_saved_answer": true,
     "navigation": {
         "back_button": true
     },

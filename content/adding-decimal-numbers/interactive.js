@@ -191,6 +191,8 @@
                 }
                 function save() {
                     onChange({ digits: { ...digits }, active });
+                    // Let the section Reset track keyboard digits as well as taps.
+                    host.dispatchEvent(new Event('input', { bubbles: true }));
                     paint();
                 }
                 function choose(digit) {
@@ -478,7 +480,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 4,
+            version: 5,
             initial: () => ({
                 index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {},
                 seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295)
@@ -523,14 +525,14 @@
             if (index === 0) {
                 const cardRoot = element('div');
                 container.append(cardRoot);
-                api.createQuestion(cardRoot, {
+                window.Maths1to9LessonEngine.createQuestion(cardRoot, {
                     sectionId: 'interactive', questionId: 'example-1',
                     questionType: 'column-addition', input: 'custom', scored: false,
                     prompt: '', widget: additionCardsWidget(), readOnly, lockedReview: true,
                     autoContinue: false,
                     onFeedback: reportProgress,
                     onContinue: continueExample
-                });
+                }, section, api);
                 return;
             }
             const visual = document.createElement('div');
@@ -557,6 +559,16 @@
         }
 
         function render() {
+            // This card resets its saved work, rather than opening a temporary replay.
+            api.setSectionReset('interactive', state.screen === 0 ? () => {
+                section.update(state => {
+                    delete state.cards['example-1'];
+                    state.index = 0;
+                    state.finished = false;
+                });
+                reportProgress();
+                render();
+            } : null);
             root.replaceChildren();
             const heading = document.createElement('h3');
             heading.dataset.screenHeading = '';
