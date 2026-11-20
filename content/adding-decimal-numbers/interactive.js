@@ -182,17 +182,7 @@
         });
         chart.append(table);
         host.append(chart);
-        // Set saved text after the table has sized the centred input fields.
-        Object.entries(inputs).forEach(([key, input]) => {
-            input.getBoundingClientRect();
-            input.value = value[key] || '';
-            if (!editable) requestAnimationFrame(() => {
-                if (input.isConnected) {
-                    input.value = '';
-                    input.value = value[key] || '';
-                }
-            });
-        });
+        Object.entries(inputs).forEach(([key, input]) => { input.value = value[key] || ''; });
     }
 
     function markAddition(value) {
@@ -392,7 +382,17 @@
                             state.finished = !error;
                         }
                     });
-                    render();
+                    if (wrong) render();
+                    else {
+                        root.querySelectorAll('.decimal-addition-digit').forEach(input => { input.disabled = true; });
+                        root.append(window.Maths1to9LessonEngine.createFeedback('explanation', {
+                            correct: state.finished, text: state.additionFeedback
+                        }));
+                        if (state.finished) {
+                            sectionEvent('explanation', 'complete');
+                            api.clearSectionAction('explanation');
+                        } else additionAction();
+                    }
                 }
             });
         }
