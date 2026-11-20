@@ -12,6 +12,7 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-eng
 const Q = loadScript(path.join(folder, 'decimal-addition.js'),
     ['columnSteps', 'cardProblem', 'checks', 'practiceTypes', 'generate', 'pick'], { window });
 loadScript(path.join(folder, 'interactive.js'), ['screens', 'tryItProblems'], { window });
+loadScript(path.join(folder, 'build-it.js'), ['buildProblem', 'buildWidget'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
 const lesson = JSON.parse(fs.readFileSync(path.join(folder, 'lesson.json')));
 const numeric = text => Math.round(Number(text.replace(/£/g, '').replace('−', '-')) * 100);
@@ -25,9 +26,8 @@ const generated = seeds.flatMap(seed => Q.pick(seededRandom(seed)).map(item => Q
 const answerFor = q => {
     const v = q.values;
     switch (q.questionType) {
-    case 'add-different-lengths': case 'money-card': return v.a + v.b;
+    case 'add-different-lengths': case 'add-build': case 'money-card': return v.a + v.b;
     case 'subtract-exchange': case 'subtract-card': return v.a - v.b;
-    case 'add-then-subtract': return v.a + v.b - v.c;
     case 'money-in-out': return v.balance - v.payment + v.refund;
     case 'change': return v.paid - v.cost;
     case 'price-difference': return v.northLarge - v.northSmall;
@@ -61,7 +61,7 @@ test('decimals: 200 seeds per kind have exact integer-cent answers and distinct 
 });
 
 test('decimals: ordered sessions repeat from all 32-bit seeds and mix cards, choices and typing', () => {
-    const inputs = ['custom', 'choice', 'number', 'custom', 'choice', 'number', 'custom', 'choice', 'number', 'number'];
+    const inputs = ['custom', 'custom', 'custom', 'custom', 'choice', 'number', 'custom', 'choice', 'number', 'number'];
     for (const seed of seeds) {
         const items = Q.pick(seededRandom(seed));
         assert.deepEqual(items.map(i => i.type), Q.practiceTypes);
@@ -78,7 +78,7 @@ test('decimals: ordered sessions repeat from all 32-bit seeds and mix cards, cho
 test('decimals: generated ranges and required exchanges are preserved', () => {
     for (const q of generated) {
         const v = q.values;
-        if (q.questionType === 'add-different-lengths' || q.questionType === 'subtract-exchange') {
+        if (['add-different-lengths', 'subtract-exchange', 'add-build'].includes(q.questionType)) {
             assert.ok(v.a >= 110 && v.a <= 3990 && v.a % 10 === 0);
             assert.ok(v.b >= 11 && v.b <= 999 && v.b % 10 !== 0);
         }
@@ -109,7 +109,7 @@ test('decimals: generated ranges and required exchanges are preserved', () => {
 });
 
 test('decimals: card digits, tens, first wrong column and incomplete answers are checked', () => {
-    for (const q of generated.filter(q => q.widget)) {
+    for (const q of generated.filter(q => q.widget && !q.buildProblem)) {
         const answer = answerFor(q);
         const keys = ['hundredths', 'tenths', 'units', ...(answer >= 1000 ? ['tens'] : [])];
         const value = { digits: Object.fromEntries(keys.map((key, i) => [key, String(Math.floor(answer / 10 ** i) % 10)])), active: null };
@@ -157,15 +157,76 @@ test('decimals: non-money questions omit trailing decimal zeros; money keeps two
                 else assert.doesNotMatch(match[2], /0$/);
             }
         }
-        if (['add-different-lengths', 'subtract-exchange', 'add-then-subtract', 'missing-addend'].includes(q.questionType)) {
+        if (['add-different-lengths', 'subtract-exchange', 'add-build', 'missing-addend'].includes(q.questionType)) {
             if (q.questionType !== 'missing-addend') assert.notEqual(q.values.b % 10, 0);
             else assert.notEqual(q.values.a % 10, 0);
             const onePlace = q.questionType === 'missing-addend' ? q.values.b : q.values.a;
             assert.notEqual(Math.floor(onePlace / 10) % 10, 0);
         }
-        if (q.widget && q.questionType !== 'money-card') {
+        if (q.cardProblem && q.questionType !== 'money-card') {
             assert.doesNotMatch(q.cardProblem.a, /\.\d*0$/);
             assert.doesNotMatch(q.cardProblem.b, /\.\d*0$/);
         }
     }
+});
+
+
+test('decimals: build-it cards mark placement before answers and accept blank or zero padding', () => {
+    const fixed = window.DecimalAddition.buildProblem('5.3', '12.46', '+', true);
+    const problems = [fixed, ...generated.filter(q => q.buildProblem).map(q => q.buildProblem)];
+    for (const problem of problems) {
+        const widget = window.DecimalAddition.createBuildWidget(problem);
+        const digits = Object.fromEntries(problem.operands.flatMap(operand => problem.keys.filter(key => operand.fields[key].required)
+            .map(key => [`${operand.id}:${key}`, operand.fields[key].digit])));
+        for (const key of problem.keys) digits[`answer:${key}`] = problem.answerDigits[key];
+        const value = { digits, active: null };
+        assert.equal(widget.isEmpty(null), true);
+        assert.equal(widget.isEmpty(value), false);
+        assert.equal(widget.mark(value).correct, true);
+        assert.equal(numeric(widget.answerText(value)), problem.answer);
+        for (const operand of problem.operands) for (const key of problem.keys) {
+            const wrong = structuredClone(value);
+            wrong.digits[`${operand.id}:${key}`] = operand.fields[key].required
+                ? String((Number(operand.fields[key].digit) + 1) % 10) : '9';
+            assert.equal(widget.mark(wrong).correct, false);
+            assert.ok(widget.mark(wrong).feedback.includes(operand.text));
+            wrong.digits['answer:hundredths'] = '9';
+            assert.ok(!widget.mark(wrong).feedback.startsWith('Check the'), 'placement feedback must come first');
+            if (!operand.fields[key].required) value.digits[`${operand.id}:${key}`] = '0';
+        }
+        assert.equal(widget.mark(value).correct, true);
+        for (const key of problem.keys) {
+            const wrong = structuredClone(value);
+            wrong.digits[`answer:${key}`] = String((Number(problem.answerDigits[key]) + 1) % 10);
+            assert.equal(widget.mark(wrong).correct, false);
+            assert.match(widget.mark(wrong).feedback, new RegExp(`Check the ${key}:`));
+            delete wrong.digits[`answer:${key}`];
+            assert.equal(widget.isEmpty(wrong), true);
+        }
+    }
+    assert.equal(fixed.feedback, '5.30 + 12.46 = 17.76.');
+    assert.equal(fixed.placementHint(fixed.operands[0], 'tenths', { 'a:tenths': '9' }), 'The 3 in 5.3 is 3 tenths.');
+    assert.equal(fixed.placementHint(fixed.operands[1], 'tens', { 'b:tens': '9' }), 'The 1 in 12.46 is 1 ten.');
+    assert.ok(generated.filter(q => q.questionType === 'add-build').every(q => q.values.a >= 1000 && q.buildProblem.tens));
+});
+
+test('decimals: a place a number does not use may be left empty or padded with 0', () => {
+    const problem = window.DecimalAddition.buildProblem('5.3', '12.46', '+', true);
+    const widget = window.DecimalAddition.createBuildWidget(problem);
+    const digits = {
+        'a:units': '5', 'a:tenths': '3',
+        'b:tens': '1', 'b:units': '2', 'b:tenths': '4', 'b:hundredths': '6',
+        'answer:tens': '1', 'answer:units': '7', 'answer:tenths': '7', 'answer:hundredths': '6'
+    };
+    // Left empty: 5.3 has no tens and no hundredths.
+    assert.equal(widget.mark({ digits, active: null }).correct, true);
+    // Padded with zeros: 05.30 is the same number.
+    const padded = { ...digits, 'a:tens': '0', 'a:hundredths': '0' };
+    const marked = widget.mark({ digits: padded, active: null });
+    assert.equal(marked.correct, true);
+    assert.equal(marked.feedback, '5.30 + 12.46 = 17.76.');
+    // A zero in a place the number does use is still a wrong digit.
+    const displaced = { ...digits, 'a:tenths': '0' };
+    assert.equal(widget.mark({ digits: displaced, active: null }).correct, false);
+    assert.equal(widget.mark({ digits: displaced, active: null }).feedback, 'The 3 in 5.3 is 3 tenths.');
 });

@@ -103,6 +103,8 @@
         [...(tens ? ['tens'] : []), 'units', 'decimal point', 'tenths', 'hundredths'].forEach(label => {
             const cell = element('th', label);
             cell.scope = 'col';
+            // The decimal point gets its own narrow column, as in Place value.
+            cell.dataset.column = label === 'decimal point' ? 'point' : label;
             headings.append(cell);
         });
         head.append(headings);
@@ -493,6 +495,10 @@
                     return '';
                 },
                 feedback: '£3.25 + £1.42 = £4.67, then £4.67 − £0.85 = £3.82.'
+            },
+            {
+                id: 'build-add', hash: 'try-it-3', buildIt: true,
+                title: 'Work out 5.3 + 12.46.', a: '5.3', b: '12.46', operator: '+'
             }
         ];
     }
@@ -638,7 +644,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 12,
+            version: 13,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -694,7 +700,9 @@
             } : null);
             const receipt = problem.receiptStep ? drawReceipt(root, problem.receiptStep,
                 state.cards[problem.id]?.correct === true) : null;
-            const widget = additionCardsWidget(problem);
+            const widget = problem.buildIt
+                ? window.DecimalAddition.createBuildWidget(window.DecimalAddition.buildProblem(problem.a, problem.b, problem.operator, true))
+                : additionCardsWidget(problem);
             const cardRoot = element('div');
             root.append(cardRoot);
             const readOnly = state.screen < state.index;
@@ -748,6 +756,7 @@
     }
 
     window.DecimalAddition.createCardWidget = additionCardsWidget;
+    window.DecimalAddition.columnTable = columnTable;
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[SLUG] = mountTryIt;
     document.addEventListener('maths1to9:lesson-rendered', event => {

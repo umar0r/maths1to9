@@ -5,6 +5,33 @@ const decimal = total => (total / 100).toFixed(2);
 module.exports = async function solve(page) {
     const main = page.locator('.lesson-controls button.button--primary:visible');
     if (await main.innerText() !== 'Check' || await main.isEnabled()) return false;
+    const build = page.locator('.decimal-build-chart:visible');
+    if (await build.count()) {
+        const text = await page.locator('[data-screen-heading]:visible').first().innerText();
+        const [leftText, rightText] = text.match(/\d+(?:\.\d+)?/g);
+        const a = cents(leftText), b = cents(rightText);
+        const answer = text.includes('−') ? a - b : a + b;
+        // A pupil leaves a place a number does not use empty, so the solver does too.
+        const usedPlaces = number => {
+            const [whole, decimal = ''] = number.split('.');
+            return { tens: whole.length > 1, units: true, tenths: decimal.length > 0, hundredths: decimal.length > 1 };
+        };
+        const rows = [
+            ['a', a, usedPlaces(leftText)],
+            ['b', b, usedPlaces(rightText)],
+            ['answer', answer, { tens: true, units: true, tenths: true, hundredths: true }]
+        ];
+        for (const [row, number, places] of rows) {
+            for (const [place, key] of ['hundredths', 'tenths', 'units', 'tens'].entries()) {
+                if (!places[key]) continue;
+                const slot = build.locator(`[data-build-field="${row}:${key}"]`);
+                if (!await slot.count()) continue;
+                await slot.click();
+                await page.getByRole('button', { name: `Digit ${Math.floor(number / 10 ** place) % 10}`, exact: true }).click();
+            }
+        }
+        return true;
+    }
     const slots = page.locator('.decimal-tap-slot:visible');
     if (await slots.count()) {
         const rows = await page.locator('.decimal-column-table:visible tbody tr').evaluateAll(rows => rows.map(row =>
