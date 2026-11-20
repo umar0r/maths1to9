@@ -19,7 +19,8 @@ module.exports = async function solve(page) {
         const rows = [
             ['a', a, usedPlaces(leftText)],
             ['b', b, usedPlaces(rightText)],
-            ['answer', answer, { tens: true, units: true, tenths: true, hundredths: true }]
+            // The answer's tens cell is left empty when the answer has no tens digit.
+            ['answer', answer, { tens: answer >= 1000, units: true, tenths: true, hundredths: true }]
         ];
         for (const [row, number, places] of rows) {
             for (const [place, key] of ['hundredths', 'tenths', 'units', 'tens'].entries()) {

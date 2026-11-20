@@ -158,6 +158,21 @@ for (const width of [1280, 375]) {
             test.setTimeout(180_000);
             const errors = watchForErrors(page);
             await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
+            // The pictures have to show a take-away whose answer is under 10, with its tens cell
+            // left empty, so start Practice from a fixed seed whose second question is one.
+            const practicePrompts = await page.evaluate(async () => {
+                const engine = window.Maths1to9LessonEngine;
+                const items = window.DecimalAddition.pick(engine.seededRandom(1503238553));
+                await window.Maths1to9Progress.saveLessonActivityState('adding-decimal-numbers', 'question-bank', {
+                    sharedState: 1, version: 5,
+                    data: { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} }
+                });
+                return items.map(item => window.DecimalAddition.generate(item, engine.seededRandom(item.seed)).prompt);
+            });
+            await reload(page);
+            const takeAway = practicePrompts[1].match(/\d+(?:\.\d+)?/g).map(Number);
+            expect(takeAway[0]).toBeGreaterThanOrEqual(10);
+            expect(takeAway[0] - takeAway[1]).toBeLessThan(10);
             for (let step = 0; step < 30 && !page.url().endsWith('#try-it-3'); step++) {
                 if (await solve(page)) continue;
                 await expect(main(page)).toBeEnabled();
@@ -250,6 +265,7 @@ for (const width of [1280, 375]) {
                 await main(page).click();
                 await expect(main(page)).toHaveText('Continue');
                 await shot(`practice${number}-checked`);
+                if (number === 2) await expect(build.locator('[data-build-field="answer:tens"]')).toHaveText('');
                 const points = await score(page);
                 await reload(page);
                 await expect(main(page)).toHaveText('Continue');

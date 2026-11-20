@@ -201,13 +201,60 @@ test('decimals: build-it cards mark placement before answers and accept blank or
             assert.equal(widget.mark(wrong).correct, false);
             assert.match(widget.mark(wrong).feedback, new RegExp(`Check the ${key}:`));
             delete wrong.digits[`answer:${key}`];
-            assert.equal(widget.isEmpty(wrong), true);
+            // A blank tens cell counts as 0 when the answer has no tens digit.
+            const optional = key === 'tens' && problem.answer < 1000;
+            assert.equal(widget.isEmpty(wrong), !optional);
+            assert.equal(widget.mark(wrong).correct, optional);
         }
     }
     assert.equal(fixed.feedback, '5.30 + 12.46 = 17.76.');
     assert.equal(fixed.placementHint(fixed.operands[0], 'tenths', { 'a:tenths': '9' }), 'The 3 in 5.3 is 3 tenths.');
     assert.equal(fixed.placementHint(fixed.operands[1], 'tens', { 'b:tens': '9' }), 'The 1 in 12.46 is 1 ten.');
     assert.ok(generated.filter(q => q.questionType === 'add-build').every(q => q.values.a >= 1000 && q.buildProblem.tens));
+});
+
+test('decimals: the answer keeps a digit in every column except an unused leading tens', () => {
+    const blank = value => ({ digits: value, active: null });
+    // 14.1 - 6.17 = 7.93: the answer has no tens digit, so its tens cell may stay empty.
+    const takeAway = window.DecimalAddition.buildProblem('14.1', '6.17', '−', true);
+    const widget = window.DecimalAddition.createBuildWidget(takeAway);
+    const digits = {
+        'a:tens': '1', 'a:units': '4', 'a:tenths': '1',
+        'b:units': '6', 'b:tenths': '1', 'b:hundredths': '7',
+        'answer:units': '7', 'answer:tenths': '9', 'answer:hundredths': '3'
+    };
+    assert.equal(takeAway.answer, 793);
+    assert.equal(widget.isEmpty(blank(digits)), false);
+    const marked = widget.mark(blank(digits));
+    assert.equal(marked.correct, true);
+    assert.equal(marked.feedback, '14.10 − 6.17 = 7.93.');
+    assert.equal(widget.answerText(blank(digits)), '7.93');
+    // A 0 in that cell is still right.
+    assert.equal(widget.mark(blank({ ...digits, 'answer:tens': '0' })).correct, true);
+    // Every other answer column needs a digit, even when that digit is 0.
+    const withoutUnits = { ...digits };
+    delete withoutUnits['answer:units'];
+    assert.equal(widget.isEmpty(blank(withoutUnits)), true);
+    assert.equal(widget.mark(blank(withoutUnits)).correct, false);
+    const underOne = window.DecimalAddition.buildProblem('1.2', '0.27', '−', true);
+    const underOneWidget = window.DecimalAddition.createBuildWidget(underOne);
+    const noughts = {
+        'a:units': '1', 'a:tenths': '2', 'b:units': '0', 'b:tenths': '2', 'b:hundredths': '7',
+        'answer:units': '0', 'answer:tenths': '9', 'answer:hundredths': '3'
+    };
+    assert.equal(underOne.answer, 93);
+    assert.equal(underOneWidget.mark(blank(noughts)).correct, true);
+    delete noughts['answer:units'];
+    assert.equal(underOneWidget.isEmpty(blank(noughts)), true);
+    const trailingZero = window.DecimalAddition.buildProblem('8', '0.1', '−', true);
+    const trailingWidget = window.DecimalAddition.createBuildWidget(trailingZero);
+    const sevenPointNine = {
+        'a:units': '8', 'b:units': '0', 'b:tenths': '1', 'answer:units': '7', 'answer:tenths': '9'
+    };
+    assert.equal(trailingZero.answer, 790);
+    assert.equal(trailingWidget.isEmpty(blank(sevenPointNine)), true);
+    assert.equal(trailingWidget.mark(blank(sevenPointNine)).correct, false);
+    assert.equal(trailingWidget.mark(blank({ ...sevenPointNine, 'answer:hundredths': '0' })).correct, true);
 });
 
 test('decimals: a place a number does not use may be left empty or padded with 0', () => {
