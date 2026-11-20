@@ -389,6 +389,10 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 .decimal-price-list thead th { background: #f1f5f9; }
 .decimal-price-list td { text-align: right; }
 @media (max-width: 640px) {
-    .decimal-column-table--tens th[data-column="point"] { width: 40px; }
+    /* Five columns on a phone: the headings still fit inside their cells. */
+    .decimal-addition-chart .decimal-column-table--tens th { font-size: .6rem; }
+    .decimal-column-table--tens th[data-column="point"] { width: 46px; }
     .decimal-price-list th, .decimal-price-list td { padding: .4rem; font-size: .85rem; }
 }
+
+.decimal-build-chart .decimal-tap-slot:disabled:not(.is-filled) { cursor: default; }

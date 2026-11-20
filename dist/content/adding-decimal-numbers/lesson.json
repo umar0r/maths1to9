@@ -11,7 +11,7 @@
         "question_types": {
             "add-different-lengths": "decimal-add-subtract",
             "subtract-exchange": "decimal-add-subtract",
-            "add-then-subtract": "decimal-add-subtract",
+            "add-build": "decimal-add-subtract",
             "subtract-card": "decimal-add-subtract",
             "money-in-out": "decimal-add-subtract",
             "change": "decimal-add-subtract",
@@ -131,6 +131,10 @@
         },
         {
             "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
             "kind": "guided"
         }
     ]

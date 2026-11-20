@@ -2,7 +2,7 @@
     'use strict';
 
     const practiceTypes = [
-        'add-different-lengths', 'subtract-exchange', 'add-then-subtract',
+        'add-different-lengths', 'subtract-exchange', 'add-build',
         'subtract-card', 'money-in-out', 'change', 'money-card',
         'price-difference', 'missing-addend', 'missing-refund'
     ];
@@ -39,9 +39,9 @@
         });
     }
 
-    function cardProblem(a, b, operator, currency = false, leftText = decimalText(a), rightText = decimalText(b)) {
+    function cardProblem(a, b, operator, currency = false, leftText = decimalText(a), rightText = decimalText(b), forceTens = false) {
         const answer = operator === '+' ? a + b : a - b;
-        const tens = answer >= 1000;
+        const tens = forceTens || answer >= 1000;
         const steps = columnSteps(a, b, operator, tens);
         const nextColumn = { hundredths: 'tenths', tenths: 'units', units: 'tens' };
         return {
@@ -153,26 +153,17 @@
                 const a = onePlace(), b = twoPlaces();
                 if (b % 10 === 0) continue;
                 question = cardQuestion(item.type, a, b, '+', false, oneDecimal(a), decimalText(b));
-            } else if (item.type === 'subtract-exchange') {
+            } else if (item.type === 'subtract-exchange' || item.type === 'add-build') {
                 const a = onePlace(), b = twoPlaces();
-                if (a <= b || b % 10 === 0) continue;
-                const answer = a - b;
-                question = choiceQuestion(item.type, `Work out ${oneDecimal(a)} − ${decimalText(b)}.`, answer, [
-                    { value: smallerFromLarger(a, b), feedback: "Don't take the smaller digit from the larger in each column. If the top digit is too small, take 1 from the column on its left." },
-                    { value: a + b, feedback: 'You added. This question asks you to take away.' },
-                    { value: answer + 10, feedback: 'Taking 1 tenth gives 10 hundredths. Remember to take that 1 off the tenths.' }
-                ]);
-                question.options[0].feedback = `${oneDecimal(a)} − ${decimalText(b)} = ${decimalText(answer)}.`;
-                question.values = { a, b };
-            } else if (item.type === 'add-then-subtract') {
-                const a = onePlace(), b = twoPlaces(), c = onePlace();
-                if (a + b <= c) continue;
-                question = numberQuestion(item.type, `Work out ${oneDecimal(a)} + ${decimalText(b)} − ${oneDecimal(c)}.`, a + b - c, [
-                    { value: a + b + c, feedback: `You added ${oneDecimal(c)} instead of taking it away.` },
-                    { value: a - b - c, feedback: `You took away both numbers. Add ${decimalText(b)}.` },
-                    { value: a + b - c / 10, feedback: `Write ${oneDecimal(c)} as ${(c / 100).toFixed(2)}, not ${decimalText(c / 10)}.` }
-                ], `${oneDecimal(a)} + ${decimalText(b)} = ${decimalText(a + b)}. Then ${decimalText(a + b)} − ${oneDecimal(c)} = ${decimalText(a + b - c)}.`, 'Add the first two numbers, then take away the third.');
-                question.values = { a, b, c };
+                if (item.type === 'subtract-exchange' && (a <= b || b % 10 === 0) || item.type === 'add-build' && a < 1000) continue;
+                const operator = item.type === 'subtract-exchange' ? '−' : '+';
+                const problem = window.DecimalAddition.buildProblem(oneDecimal(a), decimalText(b), operator);
+                const widget = window.DecimalAddition.createBuildWidget(problem);
+                question = {
+                    questionType: item.type, input: 'custom', prompt: `Work out ${oneDecimal(a)} ${operator} ${decimalText(b)}.`,
+                    answer: decimalText(problem.answer), values: { a, b }, buildProblem: problem, widget,
+                    onReset: () => widget.reset(), onReplayReset: () => widget.reset(), onReplayFeedback: result => widget.replayFeedback(result)
+                };
             } else if (item.type === 'subtract-card') {
                 const a = twoPlaces(), b = twoPlaces();
                 if (Math.floor(a / 100) <= Math.floor(b / 100) || Math.floor(a / 10) % 10 >= Math.floor(b / 10) % 10 || a % 10 < b % 10) continue;
