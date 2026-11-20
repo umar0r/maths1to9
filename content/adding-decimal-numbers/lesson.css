@@ -370,3 +370,6 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 
 .decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
 .decimal-receipt svg { display: block; width: 100%; height: auto; }
+
+/* Keep the subtotal row in place when its slots become the carried-from row. */
+.decimal-column-table .decimal-receipt-subtotal-row > td:not(.decimal-column-table__gutter) { height: 74px; }

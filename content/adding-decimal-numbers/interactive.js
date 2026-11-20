@@ -145,12 +145,41 @@
 
     function drawAdditionChart(host, problem) {
         const chart = element('div', '', 'decimal-place-chart decimal-addition-chart');
-        const { table, topCells } = columnTable({ zero: true, a: problem.a, b: problem.b, operator: problem.operator });
+        const growing = problem.receiptStep === 2;
+        const { table, topCells } = columnTable({ zero: true,
+            a: growing ? '3.25' : problem.a,
+            b: growing ? '1.42' : problem.b,
+            operator: growing ? '+' : problem.operator
+        });
+        let carryCell = topCells[0];
+        topCells[0].classList.add('decimal-written-carry-cell');
+        if (growing) {
+            table.setAttribute('aria-label', '3.25 plus 1.42, then subtract 0.85 in place-value columns');
+            const subtotal = element('tr', '', 'decimal-addition-answer decimal-receipt-subtotal-row');
+            subtotal.append(element('td', '', 'decimal-column-table__gutter'));
+            ['4', '.', '6', '7'].forEach(digit => {
+                const cell = element('td');
+                cell.append(element('span', digit, 'decimal-table-digit'));
+                subtotal.append(cell);
+            });
+            carryCell = subtotal.children[1];
+            const voucher = element('tr', '', 'decimal-receipt-voucher-row');
+            const gutter = element('td', '', 'decimal-column-table__gutter');
+            gutter.append(element('span', '−', 'decimal-column-table__sign'));
+            voucher.append(gutter);
+            ['0', '.', '8', '5'].forEach(digit => {
+                const cell = element('td');
+                cell.append(element('span', digit, 'decimal-table-digit'));
+                voucher.append(cell);
+            });
+            table.querySelector('tbody').append(subtotal, voucher);
+        }
         const carry = element('span', problem.carryText || '', 'decimal-written-carry');
         carry.setAttribute('aria-label', problem.carryText === '−1' ? 'Take 1 from units' : 'Carried 1');
         carry.hidden = true;
-        topCells[0].classList.add('decimal-written-carry-cell');
+        carryCell.classList.add('decimal-written-carry-cell');
         const answer = element('tr', '', 'decimal-addition-answer');
+        if (problem.receiptStep === 1) answer.classList.add('decimal-receipt-subtotal-row');
         const slots = {};
         answer.append(element('td', '', 'decimal-column-table__gutter'));
         ['units', 'point', 'tenths', 'hundredths'].forEach(key => {
@@ -161,6 +190,7 @@
                 button.type = 'button';
                 button.setAttribute('aria-label', `${key[0].toUpperCase() + key.slice(1)} answer digit`);
                 slots[key] = button;
+                if (problem.receiptStep === 1 && key === 'units') cell.classList.add('decimal-written-carry-cell');
                 cell.append(button);
             }
             answer.append(cell);
@@ -180,7 +210,7 @@
         function positionCarry() {
             if (!chart.isConnected) { observer.disconnect(); return; }
             const origin = chart.getBoundingClientRect();
-            const units = topCells[0].getBoundingClientRect();
+            const units = carryCell.getBoundingClientRect();
             carry.style.left = `${units.left - origin.left + units.width / 2}px`;
             carry.style.top = `${units.top - origin.top + 1.6}px`;
         }
@@ -463,8 +493,8 @@
             <text x="24" y="108" font-size="18">Juice</text><text x="276" y="108" text-anchor="end" font-size="18">£1.42</text>
             <text x="24" y="138" font-size="18">Subtotal</text><text data-receipt-subtotal x="276" y="138" text-anchor="end" font-size="18"></text><path data-subtotal-blank d="M210 141H276" stroke="#94a3b8"/>
             <text x="24" y="168" font-size="18">Voucher</text><text x="276" y="168" text-anchor="end" font-size="18">−£0.85</text>
-            <path d="M24 184H276" stroke="#94a3b8"/>
-            <text x="24" y="201" font-size="20" font-weight="800">Total</text><text data-receipt-total x="276" y="201" text-anchor="end" font-size="20" font-weight="800"></text><path data-total-blank d="M210 204H276" stroke="#94a3b8"/>
+            <path d="M24 178H276" stroke="#94a3b8"/>
+            <text x="24" y="196" font-size="20" font-weight="800">Total</text><text data-receipt-total x="276" y="196" text-anchor="end" font-size="20" font-weight="800"></text><path data-total-blank d="M210 199H276" stroke="#94a3b8"/>
             <path d="${edge}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>
         </svg>`;
         host.append(receipt);
@@ -591,7 +621,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 7,
+            version: 8,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -662,7 +692,7 @@
                 sectionId: 'interactive', questionId: problem.id,
                 questionType: problem.operator === '−' ? 'column-subtraction' : 'column-addition',
                 input: 'custom', prompt: '', widget, scored: false, readOnly,
-                lockedReview: true, autoContinue: false,
+                lockedReview: true, autoContinue: problem.receiptStep === 1,
                 onReset: resetVisual,
                 onReplayReset: resetVisual,
                 onReplayFeedback(result) {
