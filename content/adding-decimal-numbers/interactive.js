@@ -14,13 +14,6 @@
             kind: 'intro',
             title: 'Adding and subtracting decimals works just like whole numbers.',
             line: "Let's add 7.6 and 0.48 by lining the numbers up in columns."
-        },
-        {
-            kind: 'zero',
-            title: 'You can fill a gap with a zero.',
-            line: '7.6 has no hundredths, so 7.6 and 7.60 are the same number.',
-            instruction: 'Tap the gap after 7.6.',
-            feedback: 'Now both numbers have two digits after the point, so every column has a digit to add.'
         }
     ];
 
@@ -273,7 +266,7 @@
         const api = window.Maths1to9Lesson;
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('learn', {
-            version: 11,
+            version: 12,
             initial: () => ({ screen: 0, furthestScreen: 0, finished: false, aligned: false, zero: false }),
             upgrade: () => null
         });
@@ -311,6 +304,9 @@
                 render();
             });
             const done = information || (screen.kind === 'align' ? state.aligned : state.zero);
+            if (information && state.screen === screens.length - 1 && !state.finished) {
+                section.update(state => { state.finished = true; });
+            }
             root.replaceChildren();
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';

@@ -69,7 +69,7 @@ $pageTitle = 'Adding and subtracting decimals';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=17"></script>
-    <script src="./interactive.js?v=27"></script>
+    <script src="./interactive.js?v=28"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=80"></script>
