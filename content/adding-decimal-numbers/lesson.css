@@ -318,7 +318,7 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     font: inherit;
     cursor: pointer;
 }
-.decimal-tap-slot.is-highlighted { border-color: #155e75; }
+.decimal-tap-slot.is-highlighted { border-color: #94a3b8; }
 .decimal-tap-slot.is-filled { border-color: transparent; }
 .decimal-tap-slot:disabled { opacity: 1; cursor: default; }
 .decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
