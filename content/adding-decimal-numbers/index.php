@@ -28,7 +28,7 @@ $pageTitle = 'Adding and subtracting decimals';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=63">
-    <link rel="stylesheet" href="./lesson.css?v=37">
+    <link rel="stylesheet" href="./lesson.css?v=38">
 </head>
 
 <body
@@ -69,7 +69,7 @@ $pageTitle = 'Adding and subtracting decimals';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./questions.js?v=20"></script>
-    <script src="./interactive.js?v=51"></script>
+    <script src="./interactive.js?v=52"></script>
 
     <script src="./build-it.js?v=3"></script>
 
