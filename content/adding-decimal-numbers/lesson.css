@@ -366,4 +366,4 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 }
 
 .decimal-addition-chart [data-column] { transition: opacity 150ms ease; }
-.decimal-addition-chart [data-column].is-dimmed { opacity: .35; }
+.decimal-addition-chart [data-column].is-dimmed { opacity: .6; }
