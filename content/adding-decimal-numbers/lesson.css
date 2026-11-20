@@ -302,7 +302,9 @@
 
 /* Programmatic slide focus keeps its location without a heading outline. */
 body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
-.decimal-addition-chart { max-width: 100%; }
+.decimal-addition-chart { width: min(calc(100% - 32px), 416px); max-width: 100%; }
+.decimal-addition-chart .decimal-column-table__gutter { width: 0; }
+.decimal-addition-chart .decimal-column-table__sign { left: -1rem; }
 .decimal-addition-chart .decimal-column-table { min-width: 0; }
 .decimal-addition-chart .decimal-column-table th { padding-inline: .4rem; }
 .decimal-tap-slot {
@@ -322,7 +324,7 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 .decimal-tap-slot.is-filled { border-color: transparent; }
 .decimal-tap-slot:disabled { opacity: 1; cursor: default; }
 .decimal-tap-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
-.decimal-digit-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; width: min(100%, 520px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
+.decimal-digit-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; width: min(calc(100% - 32px), 416px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
 .decimal-digit-key {
     display: inline-flex;
     align-items: center;
@@ -348,7 +350,6 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 .decimal-digit-key:disabled { opacity: 1; color: #fff; background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: default; }
 .decimal-digit-key:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
 @media (max-width: 640px) {
-    .decimal-addition-chart { width: calc(100% - 16px); }
     .decimal-addition-chart .decimal-column-table th { padding-inline: .1rem; font-size: .64rem; }
 }
 
