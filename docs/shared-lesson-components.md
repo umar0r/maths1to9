@@ -955,3 +955,11 @@ include the value and unit, joined by a non-breaking space. Paired fields
 keep their labels and units beside their own boxes. Units on any input
 type other than `number` throw a TypeError. Cards without units keep their
 existing appearance and answer text.
+
+## Shared number cards
+
+Use `Maths1to9DigitCards` for blue digit cards, slots and column tables.
+Load `assets/js/digit-cards.js` and `assets/css/digit-cards.css` in lessons
+that use them. See [Shared number cards](shared-digit-cards.md) for tap,
+drag, keyboard, group advance directions, table hooks and custom widget
+integration. Place value and Rounding retain their existing cards.
