@@ -25,7 +25,7 @@ module.exports = async function solve(page) {
         for (const [row, number, places] of rows) {
             for (const [place, key] of ['hundredths', 'tenths', 'units', 'tens'].entries()) {
                 if (!places[key]) continue;
-                const slot = build.locator(`[data-build-field="${row}:${key}"]`);
+                const slot = build.locator(`[data-slot="${row}:${key}"]`);
                 if (!await slot.count()) continue;
                 await slot.click();
                 await page.getByRole('button', { name: `Digit ${Math.floor(number / 10 ** place) % 10}`, exact: true }).click();
@@ -33,7 +33,7 @@ module.exports = async function solve(page) {
         }
         return true;
     }
-    const slots = page.locator('.decimal-tap-slot:visible');
+    const slots = page.locator('.digit-card-slot:visible');
     if (await slots.count()) {
         const rows = await page.locator('.decimal-column-table:visible tbody tr').evaluateAll(rows => rows.map(row =>
             [...row.cells].map(cell => cell.textContent.trim())));

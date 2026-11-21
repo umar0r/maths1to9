@@ -277,3 +277,44 @@ test('decimals: a place a number does not use may be left empty or padded with 0
     assert.equal(widget.mark({ digits: displaced, active: null }).correct, false);
     assert.equal(widget.mark({ digits: displaced, active: null }).feedback, 'The 3 in 5.3 is 3 tenths.');
 });
+
+test('decimals: shared cards keep saved values, group directions, erasing and locked review', () => {
+    // Exercise the public component without a browser. The lesson's UI tests
+    // separately cover real mouse/touch input, animation and table layout.
+    const node = () => ({
+        children: [], dataset: {}, style: {}, listeners: {},
+        classList: { add() {}, remove() {}, toggle() {} },
+        append(child) { this.children.push(child); },
+        setAttribute() {}, addEventListener(name, handler) { this.listeners[name] = handler; },
+        removeEventListener() {}, remove() {}, focus() {}
+    });
+    const sharedWindow = { matchMedia: () => ({ matches: true }) };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/digit-cards.js'), 'utf8'), {
+        window: sharedWindow, document: { createElement: node }
+    });
+    for (const advance of ['left', 'right', 'none']) {
+        const host = node(), changes = [];
+        const slots = ['a', 'blocked', 'b', 'c'].map(id => ({ id, group: 'row', element: node(), allowed: () => id !== 'blocked' }));
+        const original = { digits: { c: '2' }, active: advance === 'left' ? 'b' : 'a' };
+        const view = sharedWindow.Maths1to9DigitCards.create(host, {
+            slots, groups: { row: { advance } }, value: original,
+            onChange: value => changes.push(value)
+        });
+        host.listeners.keydown({ key: '7', preventDefault() {} });
+        const saved = changes.at(-1);
+        assert.equal(saved.digits[original.active], '7');
+        assert.equal(saved.active, advance === 'left' ? 'a' : advance === 'right' ? 'b' : 'a');
+        assert.equal(original.digits[original.active], undefined, 'input value is never mutated');
+        slots[0].element.listeners.click();
+        host.listeners.keydown({ key: 'Backspace', preventDefault() {} });
+        assert.equal(changes.at(-1).digits.a, undefined);
+        view.update({ value: saved, editable: false, phase: 'correct' });
+        const count = changes.length;
+        host.listeners.keydown({ key: '9', preventDefault() {} });
+        assert.equal(changes.length, count, 'locked review cannot change saved work');
+        assert.ok(slots.every(slot => slot.element.disabled));
+        view.update({ value: null, editable: true, phase: 'answer' });
+        assert.ok(slots.every(slot => slot.element.textContent === ''));
+        assert.equal(changes.length, count, 'restore and Reset do not report pupil input');
+    }
+});

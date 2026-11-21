@@ -55,7 +55,7 @@ test('adding-decimal-numbers: mobile keyboard cards save partial work, retry and
         await expect(slot).toHaveText('9');
         const reset = page.getByRole('button', { name: 'Reset card', exact: true });
         await reset.click();
-        await expect(page.locator('.decimal-tap-slot:visible')).toHaveText(['', '', '']);
+        await expect(page.locator('.digit-card-slot:visible')).toHaveText(['', '', '']);
         await slot.focus();
         await slot.press('9');
         await slot.press('0');

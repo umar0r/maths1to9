@@ -95,140 +95,78 @@
     }
 
     function columnTable({ zero = false, fillGap = null, moving = false, a = '7.6', b = '0.48', operator = '+', tens = false } = {}) {
-        const table = element('table', '', `decimal-column-table${tens ? ' decimal-column-table--tens' : ''}`);
-        table.setAttribute('aria-label', `${a} ${operator === '−' ? 'minus' : 'plus'} ${b} in place-value columns`);
-        const head = element('thead');
-        const headings = element('tr');
-        headings.append(element('td', '', 'decimal-column-table__gutter'));
-        [...(tens ? ['tens'] : []), 'units', 'decimal point', 'tenths', 'hundredths'].forEach(label => {
-            const cell = element('th', label);
-            cell.scope = 'col';
-            // The decimal point gets its own narrow column, as in Place value.
-            cell.dataset.column = label === 'decimal point' ? 'point' : label;
-            headings.append(cell);
-        });
-        head.append(headings);
-        const body = element('tbody');
-        let topCells, bottomCells, bottomRow, sign;
+        const columns = [...(tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'];
         function places(number, fillZero) {
-            const [units, decimal = ''] = number.split('.');
-            const values = [units.slice(-1), '.', decimal[0] || '', decimal[1] || (fillZero ? '0' : '')];
-            if (tens) values.unshift(units.length > 1 ? units.slice(0, -1) : '');
-            return values;
+            const [whole, decimal = ''] = number.split('.');
+            return { tens: whole.length > 1 ? whole.slice(0, -1) : '', units: whole.slice(-1), point: '.',
+                tenths: decimal[0] || '', hundredths: decimal[1] || (fillZero ? '0' : '') };
         }
-        [places(a, zero), places(b, true)].forEach((digits, rowIndex) => {
-            const row = element('tr');
-            const gutter = element('td', '', 'decimal-column-table__gutter');
-            if (rowIndex === 1) {
-                sign = element('span', operator, 'decimal-column-table__sign');
-                gutter.append(sign);
-                bottomRow = row;
+        const built = window.Maths1to9DigitCards.columnTable({
+            label: `${a} ${operator === '−' ? 'minus' : 'plus'} ${b} in place-value columns`,
+            className: `decimal-column-table${tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
+            columns: columns.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })),
+            rows: [
+                { id: 'a', values: places(a, zero) },
+                { id: 'b', sign: operator, values: moving ? {} : places(b, true) }
+            ],
+            cellExtra(cell, { row, column }) {
+                if (row.id !== 'a' || column.id !== 'hundredths' || !fillGap || zero) return;
+                const gap = element('button', '', 'decimal-table-gap');
+                gap.type = 'button';
+                gap.setAttribute('aria-label', 'Gap after 7.6');
+                gap.addEventListener('click', fillGap);
+                cell.classList.add('decimal-column-table__tap');
+                cell.replaceChildren(gap);
             }
-            row.append(gutter);
-            const cells = digits.map((digit, index) => {
-                const cell = element('td');
-                const gap = rowIndex === 0 && index === (tens ? 4 : 3) && fillGap && !zero;
-                const value = element(gap ? 'button' : 'span', moving && rowIndex === 1 ? '' : digit, gap ? 'decimal-table-gap' : 'decimal-table-digit');
-                if (gap) {
-                    value.type = 'button';
-                    value.setAttribute('aria-label', 'Gap after 7.6');
-                    value.addEventListener('click', fillGap);
-                    cell.classList.add('decimal-column-table__tap');
-                }
-                cell.append(value);
-                row.append(cell);
-                return cell;
-            });
-            if (rowIndex === 0) topCells = cells;
-            else bottomCells = cells;
-            body.append(row);
         });
-        table.append(head, body);
-        return { table, topCells, bottomCells, bottomRow, sign };
+        return { table: built.table, topCells: Object.values(built.cells.a), bottomCells: Object.values(built.cells.b),
+            bottomRow: built.rows.b, sign: built.rows.b.querySelector('.digit-column-table__sign') };
     }
 
     function drawAdditionChart(host, problem) {
-        const chart = element('div', '', 'decimal-place-chart decimal-addition-chart');
+        const chart = element('div', '', 'decimal-place-chart decimal-addition-chart digit-card-chart');
         const growing = problem.receiptStep === 2;
-        const { table, topCells } = columnTable({ zero: true,
-            a: growing ? '3.25' : problem.a,
-            b: growing ? '1.42' : problem.b,
-            operator: growing ? '+' : problem.operator, tens: problem.tens
+        const keys = [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'];
+        const places = number => {
+            const [whole, decimal = ''] = number.split('.');
+            return { tens: whole.length > 1 ? whole.slice(0, -1) : '', units: whole.slice(-1), point: '.',
+                tenths: decimal[0] || '0', hundredths: decimal[1] || '0' };
+        };
+        const rows = [
+            { id: 'a', values: places(growing ? '3.25' : problem.a), faded: growing },
+            { id: 'b', sign: growing ? '+' : problem.operator, values: places(growing ? '1.42' : problem.b), faded: growing }
+        ];
+        if (growing) rows.push(
+            { id: 'subtotal', sign: '=', answer: true, highlighted: true, className: 'decimal-receipt-subtotal-row', values: places('4.67') },
+            { id: 'voucher', sign: '−', className: 'decimal-receipt-voucher-row', values: places('0.85') }
+        );
+        rows.push({ id: 'answer', sign: '=', answer: true,
+            className: problem.receiptStep === 1 ? 'decimal-receipt-subtotal-row' : '',
+            values: Object.fromEntries(keys.map(key => [key, key === 'point' ? '.' : {
+                slot: key, label: `${key[0].toUpperCase() + key.slice(1)} answer digit`
+            }]))
         });
-        let carryCell = topCells[problem.tens ? 1 : 0];
-        let subtotalRow = null;
-        let voucherRow = null;
-        function equalsGutter() {
-            const gutter = element('td', '', 'decimal-column-table__gutter');
-            gutter.append(element('span', '=', 'decimal-column-table__sign'));
-            return gutter;
-        }
-        carryCell.classList.add('decimal-written-carry-cell');
-        if (growing) {
-            table.querySelectorAll('tbody > tr').forEach(row => row.classList.add('decimal-previous-addition'));
-            table.setAttribute('aria-label', '3.25 plus 1.42, then subtract 0.85 in place-value columns');
-            const subtotal = element('tr', '', 'decimal-addition-answer decimal-receipt-subtotal-row');
-            subtotal.append(equalsGutter());
-            subtotalRow = subtotal;
-            ['4', '.', '6', '7'].forEach(digit => {
-                const cell = element('td');
-                cell.append(element('span', digit, 'decimal-table-digit'));
-                subtotal.append(cell);
-            });
-            carryCell = subtotal.children[1];
-            const voucher = element('tr', '', 'decimal-receipt-voucher-row');
-            const gutter = element('td', '', 'decimal-column-table__gutter');
-            gutter.append(element('span', '−', 'decimal-column-table__sign'));
-            voucher.append(gutter);
-            ['0', '.', '8', '5'].forEach(digit => {
-                const cell = element('td');
-                cell.append(element('span', digit, 'decimal-table-digit'));
-                voucher.append(cell);
-            });
-            table.querySelector('tbody').append(subtotal, voucher);
-            voucherRow = voucher;
-        }
         const carry = element('span', problem.carryText || '', 'decimal-written-carry');
         carry.setAttribute('aria-label', problem.carryText === '−1' ? 'Take 1 from units' : 'Carried 1');
         carry.hidden = true;
-        carryCell.classList.add('decimal-written-carry-cell');
-        const answer = element('tr', '', 'decimal-addition-answer');
-        if (problem.receiptStep === 1) {
-            answer.classList.add('decimal-receipt-subtotal-row');
-            subtotalRow = answer;
-        }
-        const slots = {};
-        answer.append(equalsGutter());
-        [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'].forEach(key => {
-            const cell = element('td');
-            if (key === 'point') cell.append(element('span', '.', 'decimal-table-digit'));
-            else {
-                const button = element('button', '', 'decimal-tap-slot');
-                button.type = 'button';
-                button.setAttribute('aria-label', `${key[0].toUpperCase() + key.slice(1)} answer digit`);
-                slots[key] = button;
-                if (problem.receiptStep === 1 && key === 'units') cell.classList.add('decimal-written-carry-cell');
-                cell.append(button);
+        let carryCell;
+        const built = window.Maths1to9DigitCards.columnTable({
+            label: growing ? '3.25 plus 1.42, then subtract 0.85 in place-value columns' : `${problem.a} ${problem.operator} ${problem.b} in place-value columns`,
+            className: `decimal-column-table${problem.tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
+            columns: keys.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })), rows,
+            cellExtra(cell, { row, column }) {
+                if (row.id === (growing ? 'subtotal' : 'a') && column.id === 'units') {
+                    carryCell = cell;
+                    cell.classList.add('decimal-written-carry-cell');
+                }
             }
-            answer.append(cell);
         });
-        table.querySelector('tbody').append(answer);
-        const columns = [];
-        [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'].forEach((key, index) => {
-            table.querySelectorAll('tr').forEach(row => {
-                const cell = row.children[index + 1];
-                cell.dataset.column = key;
-                columns.push(cell);
-            });
-        });
-        // Keep the written carry positioned above the units digit.
-        chart.append(table, carry);
+        chart.append(built.table, carry);
         host.append(chart);
-        if (voucherRow) drawVoucherNote(chart, table, voucherRow);
+        if (growing) drawVoucherNote(chart, built.table, built.rows.voucher);
         function positionCarry() {
             if (!chart.isConnected) { observer.disconnect(); return; }
-            const origin = chart.getBoundingClientRect();
-            const units = carryCell.getBoundingClientRect();
+            const origin = chart.getBoundingClientRect(), units = carryCell.getBoundingClientRect();
             carry.style.left = `${units.left - origin.left + units.width / 2}px`;
             carry.style.top = `${units.top - origin.top + 1.6}px`;
         }
@@ -236,7 +174,7 @@
         observer.observe(chart);
         requestAnimationFrame(positionCarry);
         document.fonts.ready.then(positionCarry);
-        return { slots, carry, columns, subtotalRow, previousRows: [...table.querySelectorAll('.decimal-previous-addition')] };
+        return { built, carry };
     }
 
     function additionCardsWidget(problem) {
@@ -248,75 +186,18 @@
                 view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' });
             },
             render(host, { onChange }) {
-                let digits = {}, active = order[0], editable = true, markedRight = false;
-                const { slots, carry, columns, subtotalRow, previousRows } = drawAdditionChart(host, problem);
-                Object.entries(slots).forEach(([key, button]) => {
-                    button.addEventListener('click', () => {
-                        if (!editable) return;
-                        delete digits[key];
-                        active = key;
-                        save();
-                    });
-                });
-                const keys = element('div', '', 'decimal-digit-keys');
-                keys.setAttribute('role', 'group');
-                keys.setAttribute('aria-label', 'Number cards');
-                const cards = Array.from({ length: 10 }, (_, digit) => {
-                    const button = element('button', String(digit), 'decimal-digit-key');
-                    button.type = 'button';
-                    button.setAttribute('aria-label', `Digit ${digit}`);
-                    button.addEventListener('click', () => choose(String(digit)));
-                    keys.append(button);
-                    return button;
-                });
-                host.append(keys);
-                function paint() {
-                    Object.entries(slots).forEach(([key, button]) => {
-                        button.textContent = digits[key] ?? '';
-                        button.disabled = !editable;
-                        const selected = editable && key === active;
-                        button.classList.toggle('is-highlighted', selected);
-                        button.classList.toggle('is-filled', digits[key] !== undefined);
-                        button.closest('td').classList.toggle('is-highlighted', selected);
-                        button.setAttribute('aria-pressed', String(selected));
-                    });
-                    columns.forEach(cell => {
-                        cell.classList.toggle('is-active-column', editable && Boolean(active) && cell.dataset.column === active
-                            && !cell.closest('.decimal-previous-addition'));
-                    });
-                    previousRows.forEach(row => row.classList.toggle('is-faded', !markedRight));
-                    subtotalRow?.classList.toggle('is-subtotal', problem.receiptStep === 2 || markedRight);
-                    carry.hidden = !problem.showCarry(digits);
-                    cards.forEach(button => { button.disabled = !editable || !active; });
-                }
-                function save() {
-                    onChange({ digits: { ...digits }, active });
-                    paint();
-                }
-                function choose(digit) {
-                    if (!editable || !active) return;
-                    const index = order.indexOf(active);
-                    digits[active] = digit;
-                    active = order.slice(index + 1).find(key => digits[key] === undefined)
-                        || order.find(key => digits[key] === undefined) || null;
-                    save();
-                }
-                host.addEventListener('keydown', event => {
-                    if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                        event.preventDefault();
-                        choose(event.key);
+                const { built, carry } = drawAdditionChart(host, problem);
+                view = window.Maths1to9DigitCards.create(host, {
+                    slots: built.slots, groups: { answer: { advance: 'left' } }, active: order[0], onChange,
+                    onPaint({ value, active, editable, phase }) {
+                        const markedRight = phase === 'correct';
+                        built.update({ activeColumn: editable ? active : null,
+                            faded: { a: problem.receiptStep === 2 && !markedRight, b: problem.receiptStep === 2 && !markedRight },
+                            highlighted: { subtotal: true, answer: problem.receiptStep === 1 && markedRight }
+                        });
+                        carry.hidden = !problem.showCarry(value?.digits || {});
                     }
                 });
-                view = {
-                    update(next) {
-                        digits = { ...(next.value?.digits || {}) };
-                        active = next.value ? next.value.active : order[0];
-                        editable = next.editable;
-                        markedRight = next.phase === 'correct';
-                        paint();
-                    },
-                    focus() { slots[active || order[0]].focus(); }
-                };
                 return view;
             },
             isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined),
