@@ -77,96 +77,32 @@
                 return `${problem.tens ? digits['answer:tens'] || '' : ''}${digits['answer:units'] || ''}.${digits['answer:tenths'] || ''}${digits['answer:hundredths'] || ''}`;
             },
             render(host, { onChange }) {
-                let value = null, editable = true, phase = 'answer';
-                const { table } = D.columnTable({ a: problem.a, b: problem.b, operator: problem.operator, tens: problem.tens });
                 const keys = [...problem.keys].reverse();
                 const places = [...keys];
                 places.splice(places.length - 2, 0, 'point');
-                const body = table.querySelector('tbody');
-                const slots = {}, columns = [];
-                problem.operands.forEach((operand, index) => {
-                    const row = body.rows[index];
-                    places.forEach((key, column) => {
-                        const cell = row.cells[column + 1];
-                        cell.dataset.column = key;
-                        if (key !== 'point') addSlot(cell, `${operand.id}:${key}`, `${index === 0 ? 'First' : 'Second'} number, ${key}`);
-                        columns.push({ cell, key });
-                    });
+                const rows = [...problem.operands.map((operand, index) => ({
+                    id: operand.id, sign: index === 1 ? problem.operator : '',
+                    values: Object.fromEntries(places.map(key => [key, key === 'point' ? '.' : {
+                        slot: `${operand.id}:${key}`, label: `${index === 0 ? 'First' : 'Second'} number, ${key}`
+                    }]))
+                })), {
+                    id: 'answer', sign: '=', answer: true,
+                    values: Object.fromEntries(places.map(key => [key, key === 'point' ? '.' : {
+                        slot: `answer:${key}`, label: `Answer, ${key}`, allowed: value => operandsReady(value?.digits)
+                    }]))
+                }];
+                const built = window.Maths1to9DigitCards.columnTable({
+                    label: `${problem.a} ${problem.operator} ${problem.b} in place-value columns`,
+                    className: `decimal-column-table${problem.tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
+                    columns: places.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })), rows
                 });
-                const answer = element('tr', '', 'decimal-addition-answer');
-                const gutter = element('td', '', 'decimal-column-table__gutter');
-                gutter.append(element('span', '=', 'decimal-column-table__sign'));
-                answer.append(gutter);
-                places.forEach(key => {
-                    const cell = element('td');
-                    cell.dataset.column = key;
-                    if (key === 'point') cell.append(element('span', '.', 'decimal-table-digit'));
-                    else addSlot(cell, `answer:${key}`, `Answer, ${key}`);
-                    columns.push({ cell, key });
-                    answer.append(cell);
-                });
-                body.append(answer);
-                const chart = element('div', '', 'decimal-place-chart decimal-addition-chart decimal-build-chart');
-                chart.append(table);
+                const chart = element('div', '', 'decimal-place-chart decimal-addition-chart decimal-build-chart digit-card-chart');
+                chart.append(built.table);
                 host.append(chart);
-                const tray = element('div', '', 'decimal-digit-keys');
-                tray.setAttribute('role', 'group');
-                tray.setAttribute('aria-label', 'Number cards');
-                const cards = Array.from({ length: 10 }, (_, digit) => {
-                    const card = element('button', String(digit), 'decimal-digit-key');
-                    card.type = 'button';
-                    card.setAttribute('aria-label', `Digit ${digit}`);
-                    card.addEventListener('click', () => choose(String(digit)));
-                    tray.append(card);
-                    return card;
+                view = window.Maths1to9DigitCards.create(host, {
+                    slots: built.slots, groups: { answer: { advance: 'left' } }, onChange,
+                    onPaint({ active, editable }) { built.update({ activeColumn: editable ? active?.split(':')[1] : null }); }
                 });
-                host.append(tray);
-                function addSlot(cell, field, label) {
-                    const slot = element('button', '', 'decimal-tap-slot');
-                    slot.type = 'button';
-                    slot.dataset.buildField = field;
-                    slot.setAttribute('aria-label', label);
-                    slot.addEventListener('click', () => {
-                        if (!editable || field.startsWith('answer:') && !operandsReady(value?.digits)) return;
-                        value ||= { digits: {}, active: null };
-                        value.active = field;
-                        save();
-                    });
-                    cell.replaceChildren(slot);
-                    slots[field] = slot;
-                }
-                function paint() {
-                    const active = value?.active, digits = value?.digits || {};
-                    Object.entries(slots).forEach(([field, slot]) => {
-                        slot.textContent = digits[field] ?? '';
-                        slot.disabled = !editable || field.startsWith('answer:') && !operandsReady(digits);
-                        slot.classList.toggle('is-filled', digits[field] !== undefined);
-                        slot.classList.toggle('is-highlighted', editable && active === field);
-                        slot.setAttribute('aria-pressed', String(editable && active === field));
-                    });
-                    columns.forEach(({ cell, key }) => cell.classList.toggle('is-active-column', editable && active?.split(':')[1] === key));
-                    cards.forEach(card => { card.disabled = !editable || !active; });
-                }
-                function save() { onChange(value); paint(); }
-                function choose(digit) {
-                    if (!editable || !value?.active) return;
-                    value.digits[value.active] = digit;
-                    save();
-                }
-                host.addEventListener('keydown', event => {
-                    if (/^[0-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                        event.preventDefault(); choose(event.key);
-                    } else if (['Backspace', 'Delete'].includes(event.key) && editable && value?.active) {
-                        event.preventDefault(); delete value.digits[value.active]; save();
-                    }
-                });
-                view = {
-                    update(next) {
-                        value = next.value ? JSON.parse(JSON.stringify(next.value)) : null;
-                        editable = next.editable; phase = next.phase; paint();
-                    },
-                    focus() { slots[value?.active || `a:${keys[0]}`]?.focus(); }
-                };
                 return view;
             }
         };
