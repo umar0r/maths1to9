@@ -5,8 +5,7 @@
     const initialHash = window.location.hash;
     const screens = [
         {
-            title: 'We multiply and divide decimals to work out costs and share things out.',
-            line: "Here are some places in real life where you'll see this."
+            title: 'We multiply and divide decimals to work out costs and share things out.'
         },
         {
             title: 'To multiply decimals, first count the digits after each point.',
@@ -55,6 +54,10 @@
             {
                 label: 'Measuring', description: 'A 2.4 m plank cut into 3 equal pieces, each 0.8 m.',
                 drawing: `<rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>${header('Plank')}<text x="90" y="65" text-anchor="middle" font-size="18">2.4 m</text><rect x="23" y="76" width="134" height="22" fill="#f6dfb6" stroke="#64748b"/><path d="M68 76V98M112 76V98" stroke="#64748b" stroke-dasharray="3 2"/><text x="90" y="116" text-anchor="middle" font-size="15">3 equal pieces</text><text x="90" y="134" text-anchor="middle" font-size="16">0.8 m each</text>${frame}`
+            },
+            {
+                label: 'Fuel', description: 'Petrol pump: 20 litres at £1.48 per litre, £29.60.',
+                drawing: `<rect x="9" y="9" width="162" height="132" rx="6" fill="#f8fafc"/>${header('Petrol pump')}<text x="90" y="70" text-anchor="middle" font-size="18">20 litres</text><text x="90" y="96" text-anchor="middle" font-size="16">£1.48 per litre</text><text x="90" y="125" text-anchor="middle" font-size="23" font-weight="800">£29.60</text>${frame}`
             }
         ];
         const grid = element('div', '', 'decimal-uses');
@@ -114,7 +117,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 1,
+            version: 2,
             initial: () => ({ screen: 0, furthestScreen: 0, tapped: [], gaps: {}, moves: 0, feedback: {} }),
             upgrade: () => null
         });
@@ -160,7 +163,8 @@
             const screen = screens[state.screen], complete = done();
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';
-            root.append(heading, element('p', screen.line));
+            root.append(heading);
+            if (screen.line) root.append(element('p', screen.line));
             if (state.screen === 0) drawUsePictures(root);
             if (state.screen === 1) drawCount();
             if (state.screen === 2) drawProduct();
