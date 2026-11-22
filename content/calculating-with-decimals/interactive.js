@@ -11,7 +11,7 @@
             title: 'To multiply decimals, count how many digits there are after the decimal points.'
         },
         {
-            title: 'When you divide by a whole number, the point goes straight up.'
+            title: 'To divide by a whole number, count how many digits there are after the decimal point.'
         },
         {
             title: 'To divide by a decimal, times both numbers by 10 first.'
@@ -122,7 +122,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 6,
+            version: 7,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -266,12 +266,50 @@
             host.append(chart);
         }
 
-        // Learn 3: divide by a whole number, so the point goes straight up.
+        // Learn 3: count the digits, divide, then move the point back.
         function drawDivisionPicture() {
-            showBusStop(root, {
-                label: '8.4 divided by 3', divisor: '3', dividend: '8.4',
-                answer: { '0': '2', '2': '8' }, carries: { '2': '2' }
+            const picture = element('div', '', 'decimal-learn-steps');
+            const sumRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
+            const sum = element('div', '', 'decimal-big-number');
+            const sumDigits = [];
+            [...'8.4'].forEach(digit => {
+                const node = digit === '.' ? element('span', '.', 'decimal-number-point')
+                    : element('span', digit, 'decimal-digit');
+                sumDigits.push(node);
+                sum.append(node);
             });
+            sum.append(element('span', '\u00f7', 'decimal-times'), element('span', '3', 'decimal-digit'));
+            sumRow.append(sum);
+
+            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
+            const answer = element('div', '', 'decimal-big-number');
+            const answerDigits = [];
+            [...'2.8'].forEach(digit => {
+                const node = digit === '.' ? element('span', '.', 'decimal-number-point')
+                    : element('span', digit, 'decimal-digit');
+                answerDigits.push(node);
+                answer.append(node);
+            });
+            answerStep.append(answer);
+
+            picture.append(sumRow,
+                element('p', 'In this example there is 1.', 'decimal-learn-line'),
+                element('p', 'Take the decimal point out and divide.', 'decimal-learn-line'),
+                element('div', '84 \u00f7 3 = 28', 'decimal-big-number'),
+                element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
+                element('p', 'So 28 becomes', 'decimal-learn-line'),
+                answerStep);
+            root.append(picture);
+
+            // One hop over the 4, from the point to the gap after it.
+            const stopSum = drawArrows(sumRow, [
+                { from: { node: sumDigits[1], side: 'centre' }, to: { node: sumDigits[2], side: 'right' }, label: '1', head: true }
+            ]);
+            // Back over the 8, landing on the point.
+            const stopAnswer = drawArrows(answerStep, [
+                { from: { node: answerDigits[2], side: 'right' }, to: { node: answerDigits[1], side: 'centre' }, label: '1', head: true }
+            ]);
+            dispose = () => { stopSum(); stopAnswer(); };
         }
 
         // Learn 4: times both numbers by 10, then divide as in Learn 3.
