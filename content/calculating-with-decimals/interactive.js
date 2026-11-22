@@ -8,7 +8,7 @@
             title: 'We multiply and divide decimals to work out costs and share things out.'
         },
         {
-            title: 'To multiply decimals, take the points out, then put them back at the end.'
+            title: 'To multiply decimals, count how many digits there are after the decimal points.'
         },
         {
             title: 'When you divide by a whole number, the point goes straight up.'
@@ -122,7 +122,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 5,
+            version: 6,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -141,31 +141,89 @@
             heading.tabIndex = -1;
             heading.focus();
         }
-        // Learn 2: the whole method as a finished picture, nothing to tap.
+        // One thin curved arrow with an open head, as on the Place value line:
+        // it starts on one side of a number and lands past the last digit.
+        function drawArrows(host, arrows) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.classList.add('decimal-hops');
+            svg.setAttribute('aria-hidden', 'true');
+            host.append(svg);
+            function draw() {
+                if (!host.isConnected) { observer.disconnect(); return; }
+                const origin = host.getBoundingClientRect();
+                svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
+                svg.replaceChildren();
+                arrows.forEach(({ from, to, toSide = 'right', label }) => {
+                    const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+                    const x1 = a.right - origin.left;
+                    const x2 = (toSide === 'left' ? b.left : b.right) - origin.left;
+                    const y = b.top - origin.top - 3;
+                    const rise = 26, mid = (x1 + x2) / 2;
+                    // The head sits on the landing end and points the way the arrow travels.
+                    const arm = Math.sign(x1 - x2) * 7;
+                    const path = document.createElementNS(svg.namespaceURI, 'path');
+                    path.setAttribute('d', `M ${x1} ${y} Q ${mid} ${y - rise} ${x2} ${y}`
+                        + ` M ${x2 + arm} ${y - 6} L ${x2} ${y} L ${x2 + arm} ${y + 6}`);
+                    svg.append(path);
+                    if (!label) return;
+                    const count = document.createElementNS(svg.namespaceURI, 'text');
+                    count.setAttribute('x', mid);
+                    count.setAttribute('y', y - rise - 5);
+                    count.textContent = label;
+                    svg.append(count);
+                });
+            }
+            const observer = new ResizeObserver(draw);
+            observer.observe(host);
+            requestAnimationFrame(draw);
+            document.fonts.ready.then(draw);
+            return () => observer.disconnect();
+        }
+
+        // A finished long multiplication: the sums are printed, nothing to tap.
+        function showLongMultiplication(host) {
+            const built = window.Maths1to9DigitCards.columnTable({
+                label: '24 times 3 in long multiplication',
+                className: 'digit-column-table--wide decimal-long-multiplication',
+                columns: [{ id: 'tens', label: 'tens' }, { id: 'units', label: 'units' }],
+                rows: [
+                    { id: 'top', values: { tens: '2', units: '4' } },
+                    { id: 'times', sign: '\u00d7', values: { units: '3' } },
+                    { id: 'answer', answer: true, values: { tens: '7', units: '2' } }
+                ],
+                cellExtra(cell, { row, column }) {
+                    if (row.id !== 'answer' || column.id !== 'tens') return;
+                    // 4 × 3 = 12, so the 1 is carried into the tens.
+                    cell.classList.add('decimal-written-carry-cell');
+                    const carry = element('span', '+1', 'decimal-written-carry');
+                    carry.setAttribute('aria-label', 'Carried 1');
+                    cell.append(carry);
+                }
+            });
+            const chart = element('div', '', 'digit-card-chart digit-card-chart--wide decimal-long-chart');
+            chart.append(built.table);
+            host.append(chart);
+        }
+
+        // Learn 2: count the digits, multiply, then move the point back.
         function drawMultiplyPicture() {
             const picture = element('div', '', 'decimal-learn-steps');
             const factorsRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
             const factors = element('div', '', 'decimal-big-number');
-            const counted = [];
+            const digits = [];
             ['0.24', '0.003'].forEach((number, factor) => {
                 if (factor) factors.append(element('span', '\u00d7', 'decimal-times'));
-                const afterPoint = [];
-                let pastPoint = false;
                 [...number].forEach(digit => {
                     const node = digit === '.' ? element('span', '.', 'decimal-number-point')
                         : element('span', digit, 'decimal-digit');
-                    if (digit === '.') pastPoint = true;
-                    else if (pastPoint) afterPoint.push(node);
+                    digits.push(node);
                     factors.append(node);
                 });
-                // Each number counts its own digits after the point, starting at 1.
-                afterPoint.forEach((node, index) => counted.push(digitHop(node, String(index + 1))));
             });
-            factorsRow.append(factors, element('p', '2 + 3 = 5 digits after the points', 'decimal-learn-note'));
-
-            const answerRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
-            const answer = element('div', '', 'decimal-big-number');
-            answer.append(element('span', '=', 'decimal-times'));
+            factorsRow.append(factors);
+            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
+            const answerLine = element('p', 'So 72 becomes ', 'decimal-learn-line');
+            const answer = element('span', '', 'decimal-big-number decimal-big-number--inline');
             const product = [];
             [...'0.00072'].forEach(digit => {
                 const node = digit === '.' ? element('span', '.', 'decimal-number-point')
@@ -173,15 +231,32 @@
                 product.push(node);
                 answer.append(node);
             });
-            answerRow.append(answer);
+            const answerGroup = element('span', '', 'decimal-learn-answer');
+            answerGroup.append(answer, element('span', '.', 'decimal-learn-full-stop'));
+            answerLine.append(answerGroup);
+            answerStep.append(answerLine);
 
-            picture.append(factorsRow, downArrow(), element('div', '24 \u00d7 3 = 72', 'decimal-big-number'),
-                downArrow(), answerRow);
+            picture.append(factorsRow,
+                element('p', 'In this example there are 5 in total.', 'decimal-learn-line'),
+                element('p', 'Take the decimal points out and use long multiplication.', 'decimal-learn-line'));
+            showLongMultiplication(picture);
+            picture.append(
+                element('p', 'Move the point back 5 digits. Put 0s in the gaps.', 'decimal-learn-line'),
+                answerStep);
             root.append(picture);
-            const stopFactors = drawHops(factorsRow, counted);
-            // The answer counts that total back from the right: 1 on the last digit.
-            const tail = product.slice(product.findIndex(node => node.textContent === '.') + 1);
-            const stopAnswer = drawHops(answerRow, tail.map((node, index) => digitHop(node, String(tail.length - index))));
+
+            // The first number's digits after its point, and the second's.
+            const firstPoint = digits.findIndex(node => node.textContent === '.');
+            const secondPoint = digits.findIndex((node, index) => index > firstPoint && node.textContent === '.');
+            const stopFactors = drawArrows(factorsRow, [
+                { from: digits[firstPoint], to: digits[firstPoint + 2], label: '2' },
+                { from: digits[secondPoint], to: digits[secondPoint + 3], label: '3' }
+            ]);
+            // Back from the last digit to where the point lands, 5 places away.
+            const productPoint = product.findIndex(node => node.textContent === '.');
+            const stopAnswer = drawArrows(answerStep, [
+                { from: product[product.length - 1], to: product[productPoint + 1], toSide: 'left', label: '5' }
+            ]);
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 

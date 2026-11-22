@@ -90,6 +90,21 @@ button.decimal-digit { cursor: pointer; }
     line-height: 1;
     color: var(--text-muted);
 }
+/* Learn 2: sentences between the sums, with the answer in the big digits. */
+.decimal-learn-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    margin: .55rem 0;
+    text-align: center;
+}
+.decimal-learn-answer { display: inline-flex; align-items: center; }
+.decimal-learn-full-stop { margin-left: -.35rem; }
+.decimal-learn-line .decimal-big-number--inline { font-size: 1.8rem; }
+.decimal-learn-line .decimal-big-number--inline .decimal-digit { width: 28px; height: 44px; }
+.decimal-learn-line .decimal-big-number--inline .decimal-number-point { width: 12px; }
 /* Learn 4: the bus stop is the last row of the worked example. */
 .decimal-learn-steps .decimal-division-picture { margin-block: .5rem 0; }
 body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
