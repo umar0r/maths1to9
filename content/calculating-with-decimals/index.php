@@ -68,7 +68,7 @@ $pageTitle = 'Multiplying and dividing decimals';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="../../assets/js/digit-cards.js?v=3"></script>
-    <script src="./interactive.js?v=12"></script>
+    <script src="./interactive.js?v=13"></script>
     <script src="./try-it.js?v=3"></script>
 
     <script src="./decimal-calculations.js?v=4"></script>

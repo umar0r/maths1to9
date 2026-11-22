@@ -180,31 +180,6 @@
             return () => observer.disconnect();
         }
 
-        // A finished long multiplication: the sums are printed, nothing to tap.
-        function showLongMultiplication(host) {
-            const built = window.Maths1to9DigitCards.columnTable({
-                label: '24 times 3 in long multiplication',
-                className: 'digit-column-table--wide decimal-long-multiplication',
-                columns: [{ id: 'tens', label: 'tens' }, { id: 'units', label: 'units' }],
-                rows: [
-                    { id: 'top', values: { tens: '2', units: '4' } },
-                    { id: 'times', sign: '\u00d7', values: { units: '3' } },
-                    { id: 'answer', answer: true, values: { tens: '7', units: '2' } }
-                ],
-                cellExtra(cell, { row, column }) {
-                    if (row.id !== 'answer' || column.id !== 'tens') return;
-                    // 4 × 3 = 12, so the 1 is carried into the tens.
-                    cell.classList.add('decimal-written-carry-cell');
-                    const carry = element('span', '+1', 'decimal-written-carry');
-                    carry.setAttribute('aria-label', 'Carried 1');
-                    cell.append(carry);
-                }
-            });
-            const chart = element('div', '', 'digit-card-chart digit-card-chart--wide decimal-long-chart');
-            chart.append(built.table);
-            host.append(chart);
-        }
-
         // Learn 2: count the digits, multiply, then move the point back.
         function drawMultiplyPicture() {
             const picture = element('div', '', 'decimal-learn-steps');
@@ -235,7 +210,7 @@
             picture.append(factorsRow,
                 element('p', 'In this example there are 5 in total.', 'decimal-learn-line'),
                 element('p', 'Take the decimal points out and use long multiplication.', 'decimal-learn-line'));
-            showLongMultiplication(picture);
+            picture.append(element('div', '24 \u00d7 3 = 72', 'decimal-big-number'));
             picture.append(
                 element('p', 'Move the point back 5 digits. Put 0s in the gaps.', 'decimal-learn-line'),
                 element('p', 'So 72 becomes', 'decimal-learn-line'),
