@@ -10,13 +10,20 @@
         return node;
     }
 
+    // Return a separate saved value: marking must never mutate the engine's input.
+    function markedValue(value, marks) {
+        return { ...value, digits: { ...value?.digits }, marks: { ...marks } };
+    }
+
     function columnTable({ columns, rows, label, className = '', cellExtra }) {
         const table = element('table', '', `digit-column-table ${className}`);
         table.setAttribute('aria-label', label || 'Place-value columns');
         const head = element('thead'), headings = element('tr');
         headings.append(element('td', '', 'digit-column-table__gutter'));
         columns.forEach(column => {
-            const cell = element('th', column.label);
+            const cell = element('th');
+            cell.append(element('span', column.label, 'digit-column-table__heading'));
+            if (column.ariaLabel) cell.setAttribute('aria-label', column.ariaLabel);
             cell.scope = 'col';
             cell.dataset.column = column.id;
             headings.append(cell);
@@ -55,6 +62,24 @@
             body.append(node);
         });
         table.append(head, body);
+        // Fit the complete words to the actual columns, including intermediate
+        // tablet widths and the wider tables used for four-figure amounts.
+        function fitHeadings() {
+            if (!table.isConnected) return;
+            const labels = [...headings.querySelectorAll('.digit-column-table__heading')];
+            labels.forEach(label => { label.style.fontSize = ''; });
+            const base = labels.map(label => parseFloat(getComputedStyle(label).fontSize));
+            const ratio = Math.min(1, ...labels.map(label => {
+                const style = getComputedStyle(label.parentElement);
+                const available = label.parentElement.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+                return available / Math.max(1, label.getBoundingClientRect().width);
+            }));
+            if (ratio < 1) labels.forEach((label, index) => { label.style.fontSize = `${base[index] * ratio * .98}px`; });
+        }
+        const resize = new ResizeObserver(fitHeadings);
+        resize.observe(table);
+        requestAnimationFrame(fitHeadings);
+        document.fonts.ready.then(fitHeadings);
         return {
             table, cells, rows: rowNodes, slots,
             update({ activeColumn = null, faded = {}, highlighted = {} } = {}) {
@@ -72,7 +97,7 @@
 
     function create(host, { slots, groups = {}, value: initialValue = null, active: initialActive = null,
         editable: initialEditable = true, onChange = () => {}, onPaint = () => {}, disabledDigits = [] } = {}) {
-        let value = initialValue, editable = initialEditable, phase = 'answer', drag = null;
+        let value = initialValue ? JSON.parse(JSON.stringify(initialValue)) : null, editable = initialEditable, phase = 'answer', drag = null;
         let suppressClick = false;
         const flights = new Set();
         const tray = element('div', '', 'digit-card-tray');
@@ -101,7 +126,7 @@
             slot.element.dataset.slot = slot.id;
             slot.element.addEventListener('click', () => {
                 if (!allowed(slot)) return;
-                value = { digits: { ...value?.digits }, active: slot.id };
+                value = { ...value, digits: { ...value?.digits }, active: slot.id };
                 save();
             });
         });
@@ -114,15 +139,21 @@
                 button.classList.toggle('is-highlighted', selected);
                 button.classList.toggle('is-filled', digits[slot.id] !== undefined);
                 button.setAttribute('aria-pressed', String(selected));
+                const mark = value?.marks?.[slot.id];
+                button.classList.toggle('answer-choice', Boolean(mark));
+                button.classList.toggle('is-correct', mark === 'right');
+                button.classList.toggle('is-incorrect', mark === 'wrong');
+                if (mark === 'wrong') button.setAttribute('aria-invalid', 'true');
+                else button.removeAttribute('aria-invalid');
             });
             cards.forEach((card, digit) => {
-                // A card can still be dragged when no slot has been selected.
-                card.disabled = !editable || disabledDigits.includes(String(digit)) || !slots.some(allowed);
+                const selected = byId.get(active);
+                card.disabled = !selected || !allowed(selected) || disabledDigits.includes(String(digit));
             });
             onPaint({ value, active, editable, phase });
         }
         function save() {
-            onChange({ digits: { ...value.digits }, active: value.active });
+            onChange(JSON.parse(JSON.stringify(value)));
             paint();
         }
         function nextSlot(id, digits) {
@@ -131,11 +162,23 @@
             const ordered = slots.filter(candidate => candidate.group === slot.group);
             if (group.advance === 'left') ordered.reverse();
             const index = ordered.indexOf(slot);
-            return [...ordered.slice(index + 1), ...ordered.slice(0, index)].find(candidate =>
-                allowed(candidate) && digits[candidate.id] === undefined)?.id || null;
+            const remaining = group.wrap === false ? ordered.slice(index + 1)
+                : [...ordered.slice(index + 1), ...ordered.slice(0, index)];
+            const next = remaining.find(candidate => allowed(candidate) && (digits[candidate.id] === undefined || value?.marks?.[candidate.id] === 'wrong'));
+            if (next) return next.id;
+            let followingGroup = group.next;
+            const visited = new Set([slot.group]);
+            while (followingGroup && !visited.has(followingGroup)) {
+                visited.add(followingGroup);
+                const following = slots.filter(candidate => candidate.group === followingGroup);
+                if (groups[followingGroup]?.advance === 'left') following.reverse();
+                const next = following.find(candidate => allowed(candidate) && (digits[candidate.id] === undefined || value?.marks?.[candidate.id] === 'wrong'));
+                if (next) return next.id;
+                followingGroup = groups[followingGroup]?.next;
+            }
+            return value?.marks?.[id] === 'wrong' ? id : null;
         }
-        function ghost(card) {
-            const box = card.getBoundingClientRect();
+        function ghost(card, box = card.getBoundingClientRect()) {
             const node = element('span', card.textContent, 'digit-card digit-card-flight');
             node.setAttribute('aria-hidden', 'true');
             Object.assign(node.style, { left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px` });
@@ -147,8 +190,8 @@
         function fly(node, from, to, finish = () => {}) {
             if (reduced()) { removeFlight(node); finish(); return; }
             const animation = node.animate([
-                { transform: `translate(${from.x}px, ${from.y}px)` },
-                { transform: `translate(${to.x}px, ${to.y}px)` }
+                { transform: `translate3d(${from.x}px, ${from.y}px, 0)` },
+                { transform: `translate3d(${to.x}px, ${to.y}px, 0)` }
             ], { duration: 200, easing: 'ease-out', fill: 'forwards' });
             animation.finished.catch(() => {}).then(() => { removeFlight(node); finish(); });
         }
@@ -157,7 +200,9 @@
             if (!slot || !allowed(slot)) return false;
             const flight = flying || (!reduced() && source ? ghost(source) : null);
             const digits = { ...value?.digits, [id]: digit };
-            value = { digits, active: id };
+            const marks = { ...value?.marks };
+            if (value?.digits?.[id] !== digit) delete marks[id];
+            value = { ...value, digits, marks, active: id };
             value.active = nextSlot(id, digits);
             save();
             if (flight) {
@@ -178,7 +223,7 @@
         function startDrag(event, card, digit) {
             if (!editable || card.disabled || event.button !== 0 || drag) return;
             const start = { x: event.clientX, y: event.clientY };
-            drag = { card, digit, pointer: event.pointerId, start, flight: null };
+            drag = { card, digit, pointer: event.pointerId, start, origin: card.getBoundingClientRect(), flight: null };
             card.setPointerCapture(event.pointerId);
         }
         function moveDrag(event) {
@@ -186,9 +231,9 @@
             const x = event.clientX - drag.start.x, y = event.clientY - drag.start.y;
             if (!drag.flight && Math.hypot(x, y) < 6) return;
             event.preventDefault();
-            drag.flight ||= ghost(drag.card);
+            drag.flight ||= ghost(drag.card, drag.origin);
             drag.flight.offset = { x, y };
-            drag.flight.node.style.transform = `translate(${x}px, ${y}px)`;
+            drag.flight.node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
             clearDropTargets();
             targetAt(event.clientX, event.clientY)?.element.classList.add('is-drop-target');
         }
@@ -220,13 +265,22 @@
                 event.preventDefault();
                 const digits = { ...value?.digits };
                 delete digits[current()];
-                value = { digits, active: current() };
+                const marks = { ...value?.marks };
+                if (value?.digits?.[current()] !== undefined) delete marks[current()];
+                value = { ...value, digits, marks, active: current() };
                 save();
             }
         }
         host.addEventListener('keydown', keydown);
         paint();
         return {
+            mark(marks) { value = markedValue(value, marks); save(); },
+            clearMark(id) {
+                if (!value?.marks?.[id]) return;
+                value = markedValue(value, value.marks);
+                delete value.marks[id];
+                save();
+            },
             update(next) {
                 if (drag) endDrag({ type: 'pointercancel', pointerId: drag.pointer });
                 flights.forEach(removeFlight);
@@ -234,7 +288,17 @@
                 value = next.value ? JSON.parse(JSON.stringify(next.value)) : null;
                 editable = next.editable;
                 phase = next.phase;
-                paint();
+                if (next.retry && value) {
+                    value.retrying = true;
+                    value.marks = Object.fromEntries(Object.entries(value.marks || {}).filter(([, mark]) => mark === 'wrong'));
+                    const groupIds = [...new Set(slots.map(slot => slot.group))];
+                    const ordered = groupIds.flatMap(id => {
+                        const groupSlots = slots.filter(slot => slot.group === id);
+                        return groups[id]?.advance === 'left' ? groupSlots.reverse() : groupSlots;
+                    });
+                    value.active = ordered.find(slot => allowed(slot) && value.marks[slot.id] === 'wrong')?.id ?? current();
+                    save();
+                } else paint();
             },
             focus() { (byId.get(current()) || slots.find(allowed))?.element.focus(); },
             destroy() {
@@ -245,5 +309,5 @@
             }
         };
     }
-    window.Maths1to9DigitCards = { create, columnTable };
+    window.Maths1to9DigitCards = { create, columnTable, markedValue };
 })();
