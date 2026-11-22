@@ -49,7 +49,7 @@ button.scatter-pair-table__column:focus-visible {
 }
 
 .scatter-pair-table__column.is-selected {
-    background: var(--accent-light);
+    background: #fdba74;
 }
 
 .scatter-graph-host {

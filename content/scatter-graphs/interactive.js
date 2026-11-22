@@ -30,6 +30,7 @@
         });
         const state = section.state;
         let graph = null;
+        let initialRender = true;
 
         function syncHash() {
             if (api.getCurrentSection().id === id) {
@@ -44,7 +45,8 @@
             render();
             const heading = root.querySelector('[data-screen-heading]');
             heading.tabIndex = -1;
-            heading.focus();
+            if (!initialRender) heading.focus();
+            initialRender = false;
         }
         function progress() {
             const completed = Number(state.furthest >= 1) + Number(state.columnDone) + Number(state.axisStage === 2);
@@ -150,7 +152,7 @@
                         }
                     });
                     graph.describe(stage === 0 && y === 0 ? `You tapped ${x} on the bottom axis.`
-                        : stage === 1 && x === 0 ? `You tapped ${y} on the side axis.` : 'You tapped the graph.');
+                        : stage === 1 && x === 0 ? `You tapped ${y} on the side axis.` : 'You tapped the grid, not an axis.');
                     if (state.axisStage === 2) picker.stop();
                     paint();
                 } });
