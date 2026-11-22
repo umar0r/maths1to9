@@ -141,8 +141,9 @@
             heading.tabIndex = -1;
             heading.focus();
         }
-        // One thin curved arrow with an open head, as on the Place value line:
-        // it starts on one side of a number and lands past the last digit.
+        // A textbook hop: a symmetric arch that leaves the decimal point, jumps
+        // over the digits and comes straight down in the gap after them, with an
+        // open head pointing down. Both ends sit at the middle of the digits.
         function drawArrows(host, arrows) {
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.classList.add('decimal-hops');
@@ -153,22 +154,28 @@
                 const origin = host.getBoundingClientRect();
                 svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
                 svg.replaceChildren();
-                arrows.forEach(({ from, to, toSide = 'right', label }) => {
-                    const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-                    const x1 = a.right - origin.left;
-                    const x2 = (toSide === 'left' ? b.left : b.right) - origin.left;
-                    const y = b.top - origin.top - 3;
-                    const rise = 26, mid = (x1 + x2) / 2;
-                    // The head sits on the landing end and points the way the arrow travels.
-                    const arm = Math.sign(x1 - x2) * 7;
+                const row = host.querySelector('.decimal-digit')?.getBoundingClientRect();
+                if (!row) return;
+                const y = row.top + row.height / 2 - origin.top;
+                const anchor = ({ node, side }) => {
+                    const box = node.getBoundingClientRect();
+                    const x = side === 'centre' ? box.left + box.width / 2
+                        : side === 'before' ? box.left - 2 : box.right + 2;
+                    return x - origin.left;
+                };
+                arrows.forEach(({ tail, head, label }) => {
+                    const x1 = anchor(tail), x2 = anchor(head);
+                    const rise = Math.min(64, Math.max(44, Math.abs(x2 - x1) * .5));
+                    const apex = y - rise * .75;
                     const path = document.createElementNS(svg.namespaceURI, 'path');
-                    path.setAttribute('d', `M ${x1} ${y} Q ${mid} ${y - rise} ${x2} ${y}`
-                        + ` M ${x2 + arm} ${y - 6} L ${x2} ${y} L ${x2 + arm} ${y + 6}`);
+                    // Vertical tangents at both ends keep the arch the same on each side.
+                    path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
+                        + ` M ${x2 - 7} ${y - 9} L ${x2} ${y} L ${x2 + 7} ${y - 9}`);
                     svg.append(path);
                     if (!label) return;
                     const count = document.createElementNS(svg.namespaceURI, 'text');
-                    count.setAttribute('x', mid);
-                    count.setAttribute('y', y - rise - 5);
+                    count.setAttribute('x', (x1 + x2) / 2);
+                    count.setAttribute('y', apex - 6);
                     count.textContent = label;
                     svg.append(count);
                 });
@@ -183,7 +190,7 @@
         // Learn 2: count the digits, multiply, then move the point back.
         function drawMultiplyPicture() {
             const picture = element('div', '', 'decimal-learn-steps');
-            const factorsRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
+            const factorsRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
             const factors = element('div', '', 'decimal-big-number');
             const digits = [];
             ['0.24', '0.003'].forEach((number, factor) => {
@@ -196,7 +203,7 @@
                 });
             });
             factorsRow.append(factors);
-            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
+            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
             const answer = element('div', '', 'decimal-big-number');
             const product = [];
             [...'0.00072'].forEach(digit => {
@@ -221,13 +228,13 @@
             const firstPoint = digits.findIndex(node => node.textContent === '.');
             const secondPoint = digits.findIndex((node, index) => index > firstPoint && node.textContent === '.');
             const stopFactors = drawArrows(factorsRow, [
-                { from: digits[firstPoint], to: digits[firstPoint + 2], label: '2' },
-                { from: digits[secondPoint], to: digits[secondPoint + 3], label: '3' }
+                { tail: { node: digits[firstPoint], side: 'centre' }, head: { node: digits[firstPoint + 2], side: 'after' }, label: '2' },
+                { tail: { node: digits[secondPoint], side: 'centre' }, head: { node: digits[secondPoint + 3], side: 'after' }, label: '3' }
             ]);
             // Back from the last digit to where the point lands, 5 places away.
             const productPoint = product.findIndex(node => node.textContent === '.');
             const stopAnswer = drawArrows(answerStep, [
-                { from: product[product.length - 1], to: product[productPoint + 1], toSide: 'left', label: '5' }
+                { tail: { node: product[product.length - 1], side: 'after' }, head: { node: product[productPoint], side: 'centre' }, label: '5' }
             ]);
             dispose = () => { stopFactors(); stopAnswer(); };
         }
