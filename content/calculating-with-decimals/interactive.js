@@ -166,12 +166,13 @@
                     return x - origin.left;
                 };
                 const groups = new Map();
-                hops.forEach(({ from, to, label }) => {
+                hops.forEach(({ from, to, label, head }) => {
                     const x1 = place(from), x2 = place(to);
                     const path = document.createElementNS(svg.namespaceURI, 'path');
                     // Vertical tangents at both ends keep the hop the same on each side.
+                    // Only the hop that finishes a group carries an open head.
                     path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
-                        + ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}`);
+                        + (head ? ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}` : ''));
                     svg.append(path);
                     const span = groups.get(label) || { min: Infinity, max: -Infinity };
                     groups.set(label, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2) });
@@ -233,10 +234,10 @@
             const secondPoint = digits.findIndex((node, index) => index > firstPoint && node.textContent === '.');
             const stopFactors = drawArrows(factorsRow, [
                 { from: { node: digits[firstPoint], side: 'centre' }, to: { node: digits[firstPoint + 1], side: 'right' }, label: '2' },
-                { from: { node: digits[firstPoint + 1], side: 'right' }, to: { node: digits[firstPoint + 2], side: 'right' }, label: '2' },
+                { from: { node: digits[firstPoint + 1], side: 'right' }, to: { node: digits[firstPoint + 2], side: 'right' }, label: '2', head: true },
                 { from: { node: digits[secondPoint], side: 'centre' }, to: { node: digits[secondPoint + 1], side: 'right' }, label: '3' },
                 { from: { node: digits[secondPoint + 1], side: 'right' }, to: { node: digits[secondPoint + 2], side: 'right' }, label: '3' },
-                { from: { node: digits[secondPoint + 2], side: 'right' }, to: { node: digits[secondPoint + 3], side: 'right' }, label: '3' }
+                { from: { node: digits[secondPoint + 2], side: 'right' }, to: { node: digits[secondPoint + 3], side: 'right' }, label: '3', head: true }
             ]);
             // Back from the last digit to where the point lands, 5 places away.
             const productPoint = product.findIndex(node => node.textContent === '.');
@@ -244,7 +245,8 @@
             const answerHops = product.slice(productPoint + 1).map((node, index) => ({
                 from: { node, side: 'right' },
                 to: index === 0 ? { node: product[productPoint], side: 'centre' } : { node, side: 'left' },
-                label: '5'
+                label: '5',
+                head: index === 0
             }));
             const stopAnswer = drawArrows(answerStep, answerHops);
             dispose = () => { stopFactors(); stopAnswer(); };
