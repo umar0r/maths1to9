@@ -222,8 +222,7 @@
             });
             factorsRow.append(factors);
             const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
-            const answerLine = element('p', 'So 72 becomes ', 'decimal-learn-line');
-            const answer = element('span', '', 'decimal-big-number decimal-big-number--inline');
+            const answer = element('div', '', 'decimal-big-number');
             const product = [];
             [...'0.00072'].forEach(digit => {
                 const node = digit === '.' ? element('span', '.', 'decimal-number-point')
@@ -231,10 +230,7 @@
                 product.push(node);
                 answer.append(node);
             });
-            const answerGroup = element('span', '', 'decimal-learn-answer');
-            answerGroup.append(answer, element('span', '.', 'decimal-learn-full-stop'));
-            answerLine.append(answerGroup);
-            answerStep.append(answerLine);
+            answerStep.append(answer);
 
             picture.append(factorsRow,
                 element('p', 'In this example there are 5 in total.', 'decimal-learn-line'),
@@ -242,6 +238,7 @@
             showLongMultiplication(picture);
             picture.append(
                 element('p', 'Move the point back 5 digits. Put 0s in the gaps.', 'decimal-learn-line'),
+                element('p', 'So 72 becomes', 'decimal-learn-line'),
                 answerStep);
             root.append(picture);
 

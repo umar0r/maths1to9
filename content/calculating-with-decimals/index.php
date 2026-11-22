@@ -29,7 +29,7 @@ $pageTitle = 'Multiplying and dividing decimals';
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=64">
     <link rel="stylesheet" href="../../assets/css/digit-cards.css?v=3">
-    <link rel="stylesheet" href="./lesson.css?v=9">
+    <link rel="stylesheet" href="./lesson.css?v=10">
 </head>
 
 <body
@@ -68,7 +68,7 @@ $pageTitle = 'Multiplying and dividing decimals';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="../../assets/js/digit-cards.js?v=3"></script>
-    <script src="./interactive.js?v=11"></script>
+    <script src="./interactive.js?v=12"></script>
     <script src="./try-it.js?v=3"></script>
 
     <script src="./decimal-calculations.js?v=4"></script>
