@@ -14,7 +14,7 @@
             title: 'To divide by a whole number, count how many digits there are after the decimal point.'
         },
         {
-            title: 'To divide by a decimal, times both numbers by 10 first.'
+            title: 'To divide by a decimal, move both points until you are dividing by a whole number.'
         }
     ];
 
@@ -110,19 +110,13 @@
         return () => observer.disconnect();
     }
 
-    // A hop over one digit, edge to edge, so neighbouring hops meet end to end
-    // instead of crossing over each other.
-    function digitHop(digit, label) {
-        return { from: digit, to: digit, label, startEdge: true };
-    }
-
     async function mountLearn() {
         const api = window.Maths1to9Lesson;
         const root = element('article');
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 8,
+            version: 9,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -166,7 +160,7 @@
                     return x - origin.left;
                 };
                 const groups = new Map();
-                hops.forEach(({ from, to, label, head }) => {
+                hops.forEach(({ from, to, label, group, head }) => {
                     const x1 = place(from), x2 = place(to);
                     const path = document.createElementNS(svg.namespaceURI, 'path');
                     // Vertical tangents at both ends keep the hop the same on each side.
@@ -174,10 +168,12 @@
                     path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
                         + (head ? ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}` : ''));
                     svg.append(path);
-                    const span = groups.get(label) || { min: Infinity, max: -Infinity };
-                    groups.set(label, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2) });
+                    // Two numbers on one row can share a count, so groups may be named.
+                    const key = group ?? label;
+                    const span = groups.get(key) || { min: Infinity, max: -Infinity, label };
+                    groups.set(key, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2), label: span.label });
                 });
-                groups.forEach(({ min, max }, label) => {
+                groups.forEach(({ min, max, label }) => {
                     const count = document.createElementNS(svg.namespaceURI, 'text');
                     count.setAttribute('x', (min + max) / 2);
                     count.setAttribute('y', y - rise * .75 - 6);
@@ -252,20 +248,6 @@
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 
-        // A finished bus stop: the answer is printed, not filled in.
-        function showBusStop(host, { label, divisor, dividend, answer, carries }) {
-            const chart = element('div', '', 'digit-card-chart decimal-division-picture');
-            const built = window.Maths1to9DigitCards.shortDivision({ label, divisor, dividend, carries });
-            chart.append(built.table);
-            built.slots.forEach(slot => {
-                const digit = answer[slot.column];
-                if (digit != null) slot.element.textContent = digit;
-                slot.element.classList.add('is-filled');
-                slot.element.disabled = true;
-            });
-            host.append(chart);
-        }
-
         // Learn 3: count the digits, divide, then move the point back.
         function drawDivisionPicture() {
             const picture = element('div', '', 'decimal-learn-steps');
@@ -319,36 +301,52 @@
             dispose = () => { stopSum(); stopAnswer(); };
         }
 
-        // Learn 4: times both numbers by 10, then divide as in Learn 3.
+        // Learn 4: move both points, then divide as in Learn 3.
         function drawScalePicture() {
             const picture = element('div', '', 'decimal-learn-steps');
-            const scaleRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
-            const sums = element('div', '', 'decimal-big-number');
-            const hops = [];
-            ['11.07', '0.9'].forEach((number, term) => {
-                if (term) sums.append(element('span', '÷', 'decimal-times'));
-                [...number].forEach(digit => {
-                    const node = digit === '.' ? element('span', '.', 'decimal-number-point')
-                        : element('span', digit, 'decimal-digit');
-                    const movedPoint = (term === 0 && digit === '0') || (term === 1 && digit === '9');
-                    if (movedPoint) hops.push(digitHop(node, '× 10'));
-                    sums.append(node);
-                });
+            const sumRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
+            const sum = element('div', '', 'decimal-big-number');
+            const build = (text, host) => [...text].map(character => {
+                const node = character === '.' ? element('span', '.', 'decimal-number-point')
+                    : element('span', character, 'decimal-digit');
+                host.append(node);
+                return node;
             });
-            scaleRow.append(sums);
-            const scaled = element('div', '', 'decimal-big-number');
-            [...'110.7'].forEach(digit => scaled.append(digit === '.'
-                ? element('span', '.', 'decimal-number-point')
-                : element('span', digit, 'decimal-digit')));
-            scaled.append(element('span', '÷', 'decimal-times'), element('span', '9', 'decimal-digit'));
-            picture.append(scaleRow, downArrow(), scaled, downArrow());
+            const dividend = build('11.07', sum);
+            sum.append(element('span', '\u00f7', 'decimal-times'));
+            const divisor = build('0.9', sum);
+            sumRow.append(sum);
+
+            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
+            const answer = element('div', '', 'decimal-big-number');
+            const product = build('12.3', answer);
+            answerStep.append(answer);
+
+            picture.append(sumRow,
+                element('p', 'Move both points 1 place.', 'decimal-learn-line'),
+                element('div', '110.7 \u00f7 9', 'decimal-big-number'),
+                element('p', 'Now there is 1 digit after the point. Take it out and divide.', 'decimal-learn-line'),
+                element('div', '1107 \u00f7 9 = 123', 'decimal-big-number'),
+                element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
+                element('p', 'So 123 becomes', 'decimal-learn-line'),
+                answerStep);
             root.append(picture);
-            dispose = drawHops(scaleRow, hops);
-            showBusStop(picture, {
-                label: '110.7 divided by 9', divisor: '9', dividend: '110.7',
-                answer: { '1': '1', '2': '2', '4': '3' }, carries: { '2': '2', '4': '2' }
-            });
+
+            // One hop over the 0 in 11.07 and one over the 9 in 0.9, a count of 1 each.
+            const dividendPoint = dividend.findIndex(node => node.textContent === '.');
+            const divisorPoint = divisor.findIndex(node => node.textContent === '.');
+            const stopSum = drawArrows(sumRow, [
+                { from: { node: dividend[dividendPoint], side: 'centre' }, to: { node: dividend[dividendPoint + 1], side: 'right' }, label: '1', group: 'dividend', head: true },
+                { from: { node: divisor[divisorPoint], side: 'centre' }, to: { node: divisor[divisorPoint + 1], side: 'right' }, label: '1', group: 'divisor', head: true }
+            ]);
+            // Back over the 3, landing on the point.
+            const answerPoint = product.findIndex(node => node.textContent === '.');
+            const stopAnswer = drawArrows(answerStep, [
+                { from: { node: product[answerPoint + 1], side: 'right' }, to: { node: product[answerPoint], side: 'centre' }, label: '1', head: true }
+            ]);
+            dispose = () => { stopSum(); stopAnswer(); };
         }
+
         function render() {
             dispose();
             dispose = () => {};

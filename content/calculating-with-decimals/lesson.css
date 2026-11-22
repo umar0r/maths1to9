@@ -60,7 +60,6 @@ button.decimal-digit { cursor: pointer; }
 .decimal-hops { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .decimal-hops path { fill: none; stroke: #334155; stroke-width: 1.5; stroke-linecap: round; }
 .decimal-hops text { fill: #334155; font: 700 16px Nunito, sans-serif; text-anchor: middle; }
-.decimal-division-picture { max-width: 240px; margin-block: 2rem; }
 .decimal-fraction { position: relative; width: max-content; max-width: 100%; margin: 1.25rem auto; }
 .decimal-fraction-row { padding-top: 48px; padding-bottom: 14px; }
 .decimal-fraction-row:first-child { border-bottom: 2px solid #64748b; }
@@ -103,8 +102,6 @@ button.decimal-digit { cursor: pointer; }
     margin: .55rem 0;
     text-align: center;
 }
-/* Learn 4: the bus stop is the last row of the worked example. */
-.decimal-learn-steps .decimal-division-picture { margin-block: .5rem 0; }
 body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
 @media (max-width: 640px) {
     .decimal-uses { gap: .75rem; }
