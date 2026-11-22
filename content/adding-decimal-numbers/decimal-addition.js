@@ -19,9 +19,15 @@
         return practiceTypes.map(type => ({ type, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random) }));
     }
 
+    const placeNames = ['hundredths', 'tenths', 'units', 'tens', 'hundreds', 'thousands'];
+    function answerPlaces(a, b, answer, forceTens = false) {
+        const length = Math.max(forceTens ? 4 : 3, String(Math.max(a, b, answer)).length);
+        return placeNames.slice(0, length);
+    }
+
     function columnSteps(a, b, operator, tens = false) {
         let incoming = 0;
-        return ['hundredths', 'tenths', 'units', ...(tens ? ['tens'] : [])].map((key, index) => {
+        return (Array.isArray(tens) ? tens : answerPlaces(a, b, operator === '+' ? a + b : a - b, tens)).map((key, index) => {
             const left = Math.floor(a / 10 ** index) % 10;
             const right = Math.floor(b / 10 ** index) % 10;
             if (operator === '+') {
@@ -41,11 +47,13 @@
 
     function cardProblem(a, b, operator, currency = false, leftText = decimalText(a), rightText = decimalText(b), forceTens = false) {
         const answer = operator === '+' ? a + b : a - b;
-        const tens = forceTens || answer >= 1000;
-        const steps = columnSteps(a, b, operator, tens);
-        const nextColumn = { hundredths: 'tenths', tenths: 'units', units: 'tens' };
+        const keys = Array.isArray(forceTens) ? forceTens : answerPlaces(a, b, answer, forceTens);
+        const tens = keys.includes('tens');
+        const steps = columnSteps(a, b, operator, keys);
+        const nextColumn = Object.fromEntries(placeNames.map((key, index) => [key, placeNames[index + 1]]));
         return {
-            a: leftText, b: rightText, operator, tens,
+            a: leftText, b: rightText, operator, tens, keys,
+            answerDigits: Object.fromEntries(steps.map(step => [step.key, String(step.digit)])),
             showCarry: () => false,
             feedback: `${currency ? money(a) : leftText} ${operator} ${currency ? money(b) : rightText} = ${currency ? money(answer) : decimalText(answer)}.`,
             mark(value) {
@@ -78,34 +86,105 @@
         };
     }
 
-    function choiceQuestion(type, prompt, answer, errors, currency = false, figure) {
-        const label = currency ? money : decimalText;
+    function sumChoice(type, prompt, terms, mistakes, currency) {
+        const text = currency ? money : decimalText;
+        const label = parts => parts.map(part => typeof part === 'number' ? text(part) : part).join(' ');
+        const evaluate = parts => {
+            let result = parts[0];
+            for (let index = 1; index < parts.length; index += 2) {
+                result += (parts[index] === '+' ? 1 : -1) * parts[index + 1];
+            }
+            return result;
+        };
         return {
-            questionType: type, input: 'choice', prompt, answer: decimalText(answer), figure,
-            options: [option(label(answer), '', true), ...errors.map(error => option(label(error.value), error.feedback))]
+            questionType: type, input: 'choice', prompt,
+            options: [
+                { ...option(label(terms), 'Right. Use this calculation in the table.', true), value: evaluate(terms) },
+                ...mistakes.map(([parts, feedback]) => ({ ...option(label(parts), feedback), value: evaluate(parts) }))
+            ]
         };
     }
 
-    function numberQuestion(type, prompt, answer, errors, feedback, fallback) {
-        return {
-            questionType: type, input: 'number', prompt, answer: decimalText(answer), feedback,
-            rules: errors.map(error => ({ value: decimalText(error.value), feedback: error.feedback })),
-            fallback
-        };
-    }
-
-    function smallerFromLarger(a, b) {
-        let answer = 0;
-        for (let place = 1; place <= Math.max(a, b); place *= 10) {
-            answer += Math.abs(Math.floor(a / place) % 10 - Math.floor(b / place) % 10) * place;
+    function workedQuestion(type, prompt, calculations, selection = null, currency = false, figure) {
+        const tables = calculations.map(([a, b, operator], index) => {
+            const result = operator === '+' ? a + b : a - b;
+            const text = currency ? value => (value / 100).toFixed(2) : decimalText;
+            const problem = cardProblem(a, b, operator, currency, text(a), text(b));
+            if (index) {
+                const [left, right, sign] = calculations[index - 1];
+                problem.previous = { a: text(left), b: text(right), operator: sign, answer: text(a) };
+                // Use one width throughout the growing table.
+                problem.keys = answerPlaces(left, right, Math.max(a, b, result));
+                problem.tens = problem.keys.includes('tens');
+                const originalMark = cardProblem(a, b, operator, currency, text(a), text(b), problem.keys);
+                problem.mark = originalMark.mark;
+            }
+            const widget = window.DecimalAddition.createCardWidget(problem);
+            return {
+                questionType: type, input: 'custom', prompt, widget, cardProblem: problem,
+                answer: decimalText(result), figure,
+                onReset: () => widget.reset(), onReplayReset: () => widget.reset(),
+                onReplayFeedback: outcome => widget.replayFeedback(outcome)
+            };
+        });
+        if (tables.length > 1) {
+            const text = currency ? money : decimalText;
+            tables.at(-1).cardProblem.feedback = calculations.map(([a, b, operator]) =>
+                `${text(a)} ${operator} ${text(b)} = ${text(operator === '+' ? a + b : a - b)}`).join(', then ') + '.';
         }
-        return answer;
+        const stages = [...(selection ? [selection] : []), ...tables];
+        return { ...tables.at(-1), stages, selection };
     }
 
     function uniqueAnswers(question) {
-        const values = question.options ? question.options.map(item => Number(item.label.replace(/[£]/g, '').replace('−', '-')))
-            : [Number(question.answer), ...(question.rules || []).map(rule => Number(rule.value))];
-        return new Set(values).size === values.length;
+        return (question.stages || [question]).every(stage => !stage.options ||
+            new Set(stage.options.map(item => item.value ?? item.label)).size === stage.options.length);
+    }
+
+    function stageCount(type) {
+        if (type === 'money-in-out') return 2;
+        if (type === 'missing-addend') return 3;
+        return ['change', 'price-difference', 'missing-refund'].includes(type) ? 2 : 1;
+    }
+
+    function pickSteps(random) {
+        return pick(random).flatMap((problem, parent) => Array.from({ length: stageCount(problem.type) }, (_, step) => ({
+            type: problem.type, seed: window.Maths1to9LessonEngine.randomInt(0, 4294967295, random),
+            problemSeed: problem.seed, parent, step
+        })));
+    }
+
+    function selectedCalculation(host, selection) {
+        const group = document.createElement('div');
+        group.className = 'decimal-selected-calculation';
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', 'Chosen calculation');
+        selection.options.forEach(choice => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `button${choice.correct ? ' is-correct' : ''}`;
+            button.disabled = true;
+            button.setAttribute('aria-pressed', String(choice.correct));
+            button.textContent = choice.label;
+            group.append(button);
+        });
+        host.append(group);
+    }
+
+    function generateStep(item) {
+        const random = window.Maths1to9LessonEngine.seededRandom(item.problemSeed);
+        const problem = generate(item, random);
+        const stage = (problem.stages || [problem])[item.step];
+        const figure = stage.figure || problem.figure;
+        return { ...stage, figure(host) {
+            host.classList.add('decimal-practice-context');
+            host.dataset.kind = item.type;
+            host.dataset.step = String(item.step);
+            host.dataset.problem = String(item.parent + 1);
+            window.Maths1to9Lesson.setSectionPosition('question-bank', `Question ${item.parent + 1} of 10`);
+            figure?.(host);
+            if (problem.selection && stage.input !== 'choice') selectedCalculation(host, problem.selection);
+        } };
     }
 
     function drawPrices(host, prices) {
@@ -171,22 +250,21 @@
             } else if (item.type === 'money-in-out') {
                 const balance = integer(10000, 99999), payment = integer(2000, 19999), refund = integer(500, 4999);
                 if (balance <= payment) continue;
-                const answer = balance - payment + refund;
-                question = choiceQuestion(item.type, `A bank account has ${money(balance)}. A payment of ${money(payment)} goes out, then a refund of ${money(refund)} comes in. How much is in the account now?`, answer, [
-                    { value: balance - payment, feedback: 'This stops before the refund. Add the refund to the balance.' },
-                    { value: balance + payment + refund, feedback: 'The payment goes out, so take it away.' },
-                    { value: balance - payment - refund, feedback: 'The refund comes in, so add it.' }
-                ], true);
-                question.options[0].feedback = `${money(balance)} − ${money(payment)} + ${money(refund)} = ${money(answer)}.`;
+                const subtotal = balance - payment;
+                const prompt = `A bank account has ${money(balance)}. A payment of ${money(payment)} goes out, then a refund of ${money(refund)} comes in. How much is in the account now?`;
+                question = workedQuestion(item.type, prompt, [[balance, payment, '−'], [subtotal, refund, '+']], null, true);
                 question.values = { balance, payment, refund };
             } else if (item.type === 'change') {
                 const cost = price();
                 const notes = [500, 1000, 2000].filter(note => note > cost);
                 const paid = notes[integer(0, notes.length - 1)];
-                question = numberQuestion(item.type, `You pay for a ${money(cost)} magazine with a ${money(paid)} note. How much change do you get? Leave out the £ sign.`, paid - cost, [
-                    { value: smallerFromLarger(paid, cost), feedback: 'If the top digit is too small, take 1 from the column on its left.' },
-                    { value: paid + cost, feedback: 'Take the price away from the note. Do not add them.' }
-                ], `${money(paid)} − ${money(cost)} = ${money(paid - cost)}.`, 'Take the price away from the note.');
+                const prompt = `You pay for a ${money(cost)} magazine with a ${money(paid)} note. How much change do you get?`;
+                const selection = sumChoice(item.type, prompt, [paid, '−', cost], [
+                    [[cost, '−', paid], `Take the price away from the ${money(paid)}, not the other way round.`],
+                    [[paid, '+', cost], "Change is what's left, so take away."],
+                    [[paid, '−', cost * 10], `The price is ${money(cost)}, not ${money(cost * 10)}.`]
+                ], true);
+                question = workedQuestion(item.type, prompt, [[paid, cost, '−']], selection, true);
                 question.values = { cost, paid };
             } else if (item.type === 'money-card') {
                 const a = price(), b = price();
@@ -196,38 +274,49 @@
                 const northSmall = integer(50, 899), northLarge = integer(northSmall + 1, 999);
                 const southSmall = integer(50, 899), southLarge = integer(southSmall + 1, 999);
                 const prices = { northSmall, northLarge, southSmall, southLarge };
-                const answer = northLarge - northSmall;
-                question = choiceQuestion(item.type, 'How much more is a large parcel than a small parcel at North?', answer, [
-                    { value: southLarge - southSmall, feedback: 'That uses South. The question asks for North.' },
-                    { value: northLarge + northSmall, feedback: 'Find how much more, so take the small price away from the large price.' },
-                    { value: answer * 10, feedback: 'That answer is ten times too big. Line up the decimal points.' }
-                ], true, host => drawPrices(host, prices));
-                question.options[0].feedback = `${money(northLarge)} − ${money(northSmall)} = ${money(answer)}.`;
+                const prompt = 'How much more is a large parcel than a small parcel at North?';
+                const selection = sumChoice(item.type, prompt, [northLarge, '−', northSmall], [
+                    [[northSmall, '−', northLarge], 'Take the small price away from the large price, not the other way round.'],
+                    [[southLarge, '−', southSmall], 'That uses South. The question asks for North.'],
+                    [[northLarge, '+', northSmall], 'Find how much more, so take the small price away from the large price.']
+                ], true);
+                const figure = host => drawPrices(host, prices);
+                selection.figure = figure;
+                question = workedQuestion(item.type, prompt, [[northLarge, northSmall, '−']], selection, true, figure);
                 question.values = prices;
             } else if (item.type === 'missing-addend') {
                 const a = twoPlaces(), b = onePlace();
                 const total = integer(Math.ceil((a + b) / 100) + 1, Math.ceil((a + b) / 100) + 9) * 100;
                 const answer = total - a - b;
                 if (answer < 11 || answer > 999) continue;
-                const totalText = String(total / 100);
-                question = numberQuestion(item.type, `${decimalText(a)} + ${oneDecimal(b)} + □ = ${totalText}. What is the missing number?`, answer, [
-                    { value: total - a, feedback: `You also need to take away ${oneDecimal(b)}.` },
-                    { value: total - b, feedback: `You also need to take away ${decimalText(a)}.` },
-                    { value: a + b, feedback: 'That is the total of the two numbers you know. Find how much is still needed.' },
-                    { value: total + a + b, feedback: `Take the two known numbers away from ${totalText}, rather than adding them.` }
-                ], `${decimalText(a)} + ${oneDecimal(b)} = ${decimalText(a + b)}. Then ${totalText} − ${decimalText(a + b)} = ${decimalText(answer)}.`, 'Add the two known numbers, then take their total away from the number on the right.');
+                const prompt = `${decimalText(a)} + ${oneDecimal(b)} + □ = ${decimalText(total)}. What is the missing number?`;
+                const selection = sumChoice(item.type, prompt, [total, '−', a, '−', b], [
+                    [[total, '−', a], `You also need to take away ${oneDecimal(b)}.`],
+                    [[total, '−', b], `You also need to take away ${decimalText(a)}.`],
+                    [[total, '+', a, '+', b], `Take the two known numbers away from ${decimalText(total)}, rather than adding them.`]
+                ], false);
+                question = workedQuestion(item.type, prompt, [[total, a, '−'], [total - a, b, '−']], selection);
                 question.values = { a, b, total };
             } else if (item.type === 'missing-refund') {
                 const balance = integer(1000, 9999), refund = integer(500, 4999);
                 const after = balance + refund;
-                question = numberQuestion(item.type, `A balance is ${money(balance)}. One refund comes in and the balance becomes ${money(after)}. How much was the refund? Leave out the £ sign.`, refund, [
-                    { value: balance + after, feedback: 'Take the old balance away from the new balance. Do not add them.' },
-                    { value: refund * 10, feedback: 'That answer is ten times too big. Line up the decimal points.' },
-                    { value: -refund, feedback: 'The balance goes up. The refund is a positive amount.' }
-                ], `${money(after)} − ${money(balance)} = ${money(refund)}.`, 'Take the old balance away from the new balance.');
+                const prompt = `A balance is ${money(balance)}. One refund comes in and the balance becomes ${money(after)}. How much was the refund?`;
+                const selection = sumChoice(item.type, prompt, [after, '−', balance], [
+                    [[balance, '−', after], 'Take the old balance away from the new balance, not the other way round.'],
+                    [[after, '+', balance], 'Find how much was added, so take the old balance away from the new balance.'],
+                    [[after, '−', 0], 'The new balance includes the money already there. Take away the old balance.']
+                ], true);
+                question = workedQuestion(item.type, prompt, [[after, balance, '−']], selection, true);
                 question.values = { balance, refund, after };
             } else throw new TypeError(`Unknown decimal question kind: ${item.type}`);
-            if (uniqueAnswers(question)) return prepare(question, random);
+            if (uniqueAnswers(question)) {
+                if (question.stages) {
+                    question.stages = question.stages.map(stage => prepare(stage, random));
+                    question.selection = question.stages.find(stage => stage.input === 'choice') || null;
+                    return question;
+                }
+                return prepare(question, random);
+            }
         }
         throw new Error(`Could not make distinct answers for ${item.type}.`);
     }
@@ -275,5 +364,5 @@
         ];
     }
 
-    window.DecimalAddition = { decimalText, money, oneDecimal, columnSteps, cardProblem, practiceTypes, pick, generate, prepare, checks };
+    window.DecimalAddition = { decimalText, money, oneDecimal, columnSteps, cardProblem, practiceTypes, pick, pickSteps, generate, generateStep, prepare, checks };
 })();

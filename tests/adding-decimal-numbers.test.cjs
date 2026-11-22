@@ -9,8 +9,9 @@ const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), {
     window, document: { body: { dataset: { lessonRenderer: 'custom' } } }
 });
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/digit-cards.js'), 'utf8'), { window });
 const Q = loadScript(path.join(folder, 'decimal-addition.js'),
-    ['columnSteps', 'cardProblem', 'checks', 'practiceTypes', 'generate', 'pick'], { window });
+    ['columnSteps', 'cardProblem', 'checks', 'practiceTypes', 'generate', 'pick', 'pickSteps', 'generateStep'], { window });
 loadScript(path.join(folder, 'interactive.js'), ['screens', 'tryItProblems'], { window });
 loadScript(path.join(folder, 'build-it.js'), ['buildProblem', 'buildWidget'], { window });
 const { seededRandom } = window.Maths1to9LessonEngine;
@@ -61,7 +62,7 @@ test('decimals: 200 seeds per kind have exact integer-cent answers and distinct 
 });
 
 test('decimals: ordered sessions repeat from all 32-bit seeds and mix cards, choices and typing', () => {
-    const inputs = ['custom', 'custom', 'custom', 'custom', 'choice', 'number', 'custom', 'choice', 'number', 'number'];
+    const inputs = Array(10).fill('custom');
     for (const seed of seeds) {
         const items = Q.pick(seededRandom(seed));
         assert.deepEqual(items.map(i => i.type), Q.practiceTypes);
@@ -111,7 +112,7 @@ test('decimals: generated ranges and required exchanges are preserved', () => {
 test('decimals: card digits, tens, first wrong column and incomplete answers are checked', () => {
     for (const q of generated.filter(q => q.widget && !q.buildProblem)) {
         const answer = answerFor(q);
-        const keys = ['hundredths', 'tenths', 'units', ...(answer >= 1000 ? ['tens'] : [])];
+        const keys = q.cardProblem.keys;
         const value = { digits: Object.fromEntries(keys.map((key, i) => [key, String(Math.floor(answer / 10 ** i) % 10)])), active: null };
         assert.equal(q.widget.isEmpty(value), false);
         assert.equal(q.widget.mark(value).correct, true);
@@ -120,9 +121,15 @@ test('decimals: card digits, tens, first wrong column and incomplete answers are
         for (const key of keys) {
             const wrong = { digits: { ...value.digits, [key]: String((Number(value.digits[key]) + 1) % 10) } };
             assert.equal(q.widget.mark(wrong).correct, false);
+            assert.equal(q.widget.mark(wrong).marks[key], 'wrong');
+            assert.equal(q.widget.keepValueOnRetry, true);
+            assert.equal(q.widget.mark(wrong).value.marks[key], 'wrong');
+            assert.equal(wrong.marks, undefined, 'checking never mutates the supplied value');
             assert.match(q.widget.mark(wrong).feedback, new RegExp(`Check the ${key}:`));
             delete wrong.digits[key];
-            assert.equal(q.widget.isEmpty(wrong), true);
+            const optionalLeadingZero = keys.indexOf(key) >= 3 && Math.floor(answer / 10 ** keys.indexOf(key)) === 0;
+            assert.equal(q.widget.isEmpty(wrong), !optionalLeadingZero);
+            assert.equal(q.widget.mark(wrong).marks[key], optionalLeadingZero ? undefined : 'wrong');
         }
         assert.match(q.widget.mark({ digits: {} }).feedback, /Check the hundredths:/);
     }
@@ -163,7 +170,7 @@ test('decimals: non-money questions omit trailing decimal zeros; money keeps two
             const onePlace = q.questionType === 'missing-addend' ? q.values.b : q.values.a;
             assert.notEqual(Math.floor(onePlace / 10) % 10, 0);
         }
-        if (q.cardProblem && q.questionType !== 'money-card') {
+        if (q.cardProblem && !['money-card', 'money-in-out', 'change', 'price-difference', 'missing-refund'].includes(q.questionType)) {
             assert.doesNotMatch(q.cardProblem.a, /\.\d*0$/);
             assert.doesNotMatch(q.cardProblem.b, /\.\d*0$/);
         }
@@ -189,6 +196,10 @@ test('decimals: build-it cards mark placement before answers and accept blank or
             wrong.digits[`${operand.id}:${key}`] = operand.fields[key].required
                 ? String((Number(operand.fields[key].digit) + 1) % 10) : '9';
             assert.equal(widget.mark(wrong).correct, false);
+            assert.equal(widget.keepValueOnRetry, true);
+            assert.equal(widget.mark(wrong).marks[`${operand.id}:${key}`], 'wrong');
+            assert.equal(widget.mark(wrong).marks['answer:units'], 'right');
+            assert.equal(widget.mark(wrong).value.marks[`${operand.id}:${key}`], 'wrong');
             assert.ok(widget.mark(wrong).feedback.includes(operand.text));
             wrong.digits['answer:hundredths'] = '9';
             assert.ok(!widget.mark(wrong).feedback.startsWith('Check the'), 'placement feedback must come first');
@@ -285,7 +296,7 @@ test('decimals: shared cards keep saved values, group directions, erasing and lo
         children: [], dataset: {}, style: {}, listeners: {},
         classList: { add() {}, remove() {}, toggle() {} },
         append(child) { this.children.push(child); },
-        setAttribute() {}, addEventListener(name, handler) { this.listeners[name] = handler; },
+        setAttribute() {}, removeAttribute() {}, addEventListener(name, handler) { this.listeners[name] = handler; },
         removeEventListener() {}, remove() {}, focus() {}
     });
     const sharedWindow = { matchMedia: () => ({ matches: true }) };
@@ -316,5 +327,76 @@ test('decimals: shared cards keep saved values, group directions, erasing and lo
         view.update({ value: null, editable: true, phase: 'answer' });
         assert.ok(slots.every(slot => slot.element.textContent === ''));
         assert.equal(changes.length, count, 'restore and Reset do not report pupil input');
+    }
+    const host = node(), changes = [];
+    const slots = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'].map(id => ({ id, group: id[0], element: node() }));
+    const groups = { a: { advance: 'right', wrap: false, next: 'b' }, b: { advance: 'right', wrap: false, next: 'c' }, c: { advance: 'left' } };
+    const view = sharedWindow.Maths1to9DigitCards.create(host, { slots, groups, active: 'a1', onChange: value => changes.push(value) });
+    for (const active of ['a2', 'b1', 'b2', 'c2', 'c1', null]) {
+        host.listeners.keydown({ key: '7', preventDefault() {} });
+        assert.equal(changes.at(-1).active, active);
+    }
+    assert.ok(host.children[0].children.every(card => card.disabled), 'completed groups have no enabled cards without a chosen box');
+    view.update({ value: null, editable: true, phase: 'answer' });
+    assert.ok(host.children[0].children.every(card => !card.disabled), 'Reset restores the chosen starting box');
+    const unselectedHost = node();
+    sharedWindow.Maths1to9DigitCards.create(unselectedHost, { slots });
+    assert.ok(unselectedHost.children[0].children.every(card => card.disabled), 'a component without a starting slot looks disabled');
+});
+
+
+test('decimals: ten seeded problems have sixteen saved stages, with four distinct calculation choices', () => {
+    const counts = [1, 1, 1, 1, 2, 2, 1, 2, 3, 2];
+    assert.equal(lesson.question_bank.session_length, 16);
+    for (const seed of seeds) {
+        const items = Q.pickSteps(seededRandom(seed));
+        assert.equal(items.length, 16);
+        assert.equal(JSON.stringify(items), JSON.stringify(Q.pickSteps(seededRandom(seed))));
+        assert.equal(new Set(items.map(item => item.seed)).size, 16);
+        for (let parent = 0; parent < 10; parent++) {
+            const stages = items.filter(item => item.parent === parent);
+            assert.equal(stages.length, counts[parent]);
+            assert.equal(new Set(stages.map(item => item.problemSeed)).size, 1);
+            assert.deepEqual(stages.map(item => item.step), Array.from({ length: counts[parent] }, (_, index) => index));
+            assert.equal(stages[0].type, Q.practiceTypes[parent]);
+        }
+        for (const item of items) {
+            const stage = Q.generateStep(item);
+            assert.equal(stage.questionType, item.type);
+            if (stage.input === 'choice') {
+                assert.equal(stage.options.length, 4);
+                assert.equal(stage.options.filter(choice => choice.correct).length, 1);
+                assert.equal(new Set(stage.options.map(choice => choice.value)).size, 4);
+                assert.equal(new Set(stage.options.map(choice => choice.feedback)).size, 4);
+                for (const choice of stage.options) {
+                    const parts = choice.label.match(/−|\+|\d+(?:\.\d+)?/g);
+                    let total = numeric(parts[0]);
+                    for (let index = 1; index < parts.length; index += 2) total += (parts[index] === '+' ? 1 : -1) * numeric(parts[index + 1]);
+                    assert.equal(choice.value, total, choice.label);
+                    assert.ok(choice.feedback);
+                }
+                const problem = Q.generate(item, seededRandom(item.problemSeed));
+                assert.equal(stage.options.find(choice => choice.correct).value, answerFor(problem));
+            } else if (stage.cardProblem) {
+                const problem = stage.cardProblem;
+                const left = numeric(problem.a), right = numeric(problem.b);
+                const answer = problem.operator === '+' ? left + right : left - right;
+                const value = { digits: Object.fromEntries(problem.keys.map((key, index) => [key, String(Math.floor(answer / 10 ** index) % 10)])), active: null };
+                assert.equal(stage.widget.isEmpty(value), false);
+                assert.equal(stage.widget.mark(value).correct, true, stage.prompt);
+                assert.equal(numeric(stage.widget.answerText(value)), answer);
+                for (const key of problem.keys) {
+                    const wrong = { digits: { ...value.digits, [key]: String((Number(value.digits[key]) + 1) % 10) } };
+                    assert.equal(stage.widget.mark(wrong).correct, false);
+                    assert.match(stage.widget.mark(wrong).feedback, new RegExp(`Check the ${key}:`));
+                }
+                if (problem.previous) {
+                    const previous = problem.previous;
+                    const subtotal = previous.operator === '+' ? numeric(previous.a) + numeric(previous.b) : numeric(previous.a) - numeric(previous.b);
+                    assert.equal(numeric(previous.answer), subtotal);
+                    assert.equal(left, subtotal);
+                }
+            }
+        }
     }
 });

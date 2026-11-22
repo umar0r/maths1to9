@@ -33,9 +33,9 @@ test('adding-decimal-numbers: approved journey earns full marks and keeps four n
     await advance(page);
     await expect(page.locator('.decimal-learned li')).toHaveCount(4);
     await expect(page.locator('.retained-results:visible, .score-panel:visible')).toHaveCount(0);
-    expect(await points(page)).toBe(180);
+    expect(await points(page)).toBe(240);
     await page.reload({ waitUntil: 'networkidle' });
-    expect(await points(page)).toBe(180);
+    expect(await points(page)).toBe(240);
     await main(page).click();
     await expect(page).toHaveURL(/\/$/);
     expect(errors).toEqual([]);
@@ -104,7 +104,7 @@ test('adding-decimal-numbers: Check keeps four locked options and saves a correc
     await main(page).click();
     await advance(page);
     await expect(page.locator('.decimal-learned li')).toHaveCount(4);
-    expect(await points(page)).toBe(175);
+    expect(await points(page)).toBe(235);
     await page.reload({ waitUntil: 'networkidle' });
-    expect(await points(page)).toBe(175);
+    expect(await points(page)).toBe(235);
 });

@@ -4,7 +4,8 @@ const decimal = total => (total / 100).toFixed(2);
 
 module.exports = async function solve(page) {
     const main = page.locator('.lesson-controls button.button--primary:visible');
-    if (await main.innerText() !== 'Check' || await main.isEnabled()) return false;
+    if (await main.innerText() !== 'Check') return false;
+    let changed = false;
     const build = page.locator('.decimal-build-chart:visible');
     if (await build.count()) {
         const text = await page.locator('[data-screen-heading]:visible').first().innerText();
@@ -23,15 +24,18 @@ module.exports = async function solve(page) {
             ['answer', answer, { tens: answer >= 1000, units: true, tenths: true, hundredths: true }]
         ];
         for (const [row, number, places] of rows) {
-            for (const [place, key] of ['hundredths', 'tenths', 'units', 'tens'].entries()) {
+            for (const [place, key] of ['hundredths', 'tenths', 'units', 'tens', 'hundreds', 'thousands'].entries()) {
                 if (!places[key]) continue;
                 const slot = build.locator(`[data-slot="${row}:${key}"]`);
                 if (!await slot.count()) continue;
+                const digit = String(Math.floor(number / 10 ** place) % 10);
+                if (await slot.innerText() === digit) continue;
                 await slot.click();
-                await page.getByRole('button', { name: `Digit ${Math.floor(number / 10 ** place) % 10}`, exact: true }).click();
+                await page.getByRole('button', { name: `Digit ${digit}`, exact: true }).click();
+                changed = true;
             }
         }
-        return true;
+        return changed;
     }
     const slots = page.locator('.digit-card-slot:visible');
     if (await slots.count()) {
@@ -42,13 +46,16 @@ module.exports = async function solve(page) {
         const a = cents(left.slice(1).join(''));
         const b = cents(right.slice(1).join(''));
         const answer = right[0].includes('−') ? a - b : a + b;
-        for (const [index, key] of ['hundredths', 'tenths', 'units', 'tens'].entries()) {
+        for (const [index, key] of ['hundredths', 'tenths', 'units', 'tens', 'hundreds', 'thousands'].entries()) {
             const slot = page.getByRole('button', { name: `${key[0].toUpperCase() + key.slice(1)} answer digit`, exact: true });
             if (!await slot.count()) continue;
+            const digit = String(Math.floor(answer / 10 ** index) % 10);
+            if (await slot.innerText() === digit) continue;
             await slot.click();
-            await page.getByRole('button', { name: `Digit ${Math.floor(answer / 10 ** index) % 10}`, exact: true }).click();
+            await page.getByRole('button', { name: `Digit ${digit}`, exact: true }).click();
+            changed = true;
         }
-        return true;
+        return changed;
     }
     const prompt = page.locator('.question-prompt:visible');
     if (!await prompt.count()) return false;
@@ -60,7 +67,9 @@ module.exports = async function solve(page) {
         [/^A receipt has/, '2.40 + 1.35 − 0.50']
     ].find(([pattern]) => pattern.test(text));
     if (conceptual) {
-        await page.getByRole('button', { name: conceptual[1], exact: true }).click();
+        const choice = page.getByRole('button', { name: conceptual[1], exact: true });
+        if ((await choice.getAttribute('class')).includes('is-selected')) return false;
+        await choice.click();
         return true;
     }
     const values = (text.match(/\d+(?:\.\d+)?/g) || []).map(cents);
@@ -78,12 +87,15 @@ module.exports = async function solve(page) {
     const options = page.locator('.question-card-options:visible button');
     if (await options.count()) {
         for (const option of await options.all()) {
-            if (cents(await option.innerText()) === answer) {
-                await option.click();
-                return true;
+            const parts = (await option.innerText()).match(/−|\+|\d+(?:\.\d+)?/g);
+            let result = cents(parts[0]);
+            for (let index = 1; index < parts.length; index += 2) result += (parts[index] === '+' ? 1 : -1) * cents(parts[index + 1]);
+            if (result === answer) {
+                if ((await option.getAttribute('class')).includes('is-selected')) return false;
+                await option.click(); return true;
             }
         }
-        throw new Error(`No option equals ${decimal(answer)}: ${text}`);
+        throw new Error(`No calculation equals ${decimal(answer)}: ${text}`);
     }
     await page.locator('.question-card:visible input[type=text]').fill(decimal(answer));
     return true;

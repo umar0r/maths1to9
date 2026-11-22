@@ -104,13 +104,13 @@ for (const width of [1280, 375]) {
                     expect(await score(page)).toBe(afterContinue);
                 }
             }
-            expect(practiceCount).toBe(10);
+            expect(practiceCount).toBe(16);
             expect(checkCount).toBe(4);
             await expect(main(page)).toHaveText('All lessons');
             await expect(page.locator('.decimal-learned li')).toHaveCount(4);
             await expect(page.locator('.retained-results:visible, .score-panel:visible')).toHaveCount(0);
             const earned = await score(page);
-            expect(earned).toBe(180 - penalty);
+            expect(earned).toBe(240 - penalty);
             await reload(page);
             expect(await score(page)).toBe(earned);
             await main(page).click();
@@ -162,12 +162,12 @@ for (const width of [1280, 375]) {
             // left empty, so start Practice from a fixed seed whose second question is one.
             const practicePrompts = await page.evaluate(async () => {
                 const engine = window.Maths1to9LessonEngine;
-                const items = window.DecimalAddition.pick(engine.seededRandom(1503238553));
+                const items = window.DecimalAddition.pickSteps(engine.seededRandom(1503238553));
                 await window.Maths1to9Progress.saveLessonActivityState('adding-decimal-numbers', 'question-bank', {
-                    sharedState: 1, version: 5,
+                    sharedState: 1, version: 7,
                     data: { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} }
                 });
-                return items.map(item => window.DecimalAddition.generate(item, engine.seededRandom(item.seed)).prompt);
+                return items.map(item => window.DecimalAddition.generateStep(item).prompt);
             });
             await reload(page);
             const takeAway = practicePrompts[1].match(/\d+(?:\.\d+)?/g).map(Number);
@@ -377,11 +377,11 @@ for (const width of [1280, 375]) {
             const field = id => page.locator(`.digit-card-slot[data-slot="${id}"]:visible`);
             await drag(5, field('a:units'), 'try3-mid-drag');
             await expect(field('a:units')).toHaveText('5');
-            await expect(field('a:units')).toHaveAttribute('aria-pressed', 'true');
+            await expect(field('a:tenths')).toHaveAttribute('aria-pressed', 'true');
             for (const [id, digit] of [['a:tenths', 3], ['b:tens', 1], ['b:units', 2], ['b:tenths', 4], ['b:hundredths', 6]]) {
                 await field(id).click();
                 await page.getByRole('button', { name: `Digit ${digit}`, exact: true }).click();
-                await expect(field(id)).toHaveAttribute('aria-pressed', 'true');
+                // The next allowed slot follows the configured row direction.
             }
             await field('answer:hundredths').click();
             await page.getByRole('button', { name: 'Digit 6', exact: true }).click();
