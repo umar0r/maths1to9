@@ -107,3 +107,33 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
     body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-digit { width: 28px; }
     body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-gap { width: 28px; }
 }
+
+.decimal-ali-working {
+    margin: 1rem auto;
+    width: 160px;
+    text-align: center;
+}
+
+.decimal-ali-working figcaption {
+    margin-bottom: .4rem;
+    font-size: .875rem;
+}
+
+.decimal-ali-working svg {
+    display: block;
+    width: 160px;
+    height: 110px;
+}
+
+.decimal-learned {
+    display: grid;
+    gap: 1rem;
+    padding-left: 1.5rem;
+}
+
+.decimal-learned small {
+    display: block;
+    margin-top: .25rem;
+    color: var(--muted);
+    font-size: .875rem;
+}

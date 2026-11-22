@@ -425,13 +425,4 @@
 
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[SLUG] = mountTryIt;
-    document.addEventListener('maths1to9:lesson-rendered', event => {
-        if (event.detail?.slug !== SLUG) return;
-        // Stage 3 will supply these questions. Finishing Try it still enters
-        // Practice directly, where its main Check stays disabled for now.
-        for (const sectionId of ['question-bank', 'comparison']) {
-            document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId } }));
-            window.Maths1to9Lesson.setSectionAction(sectionId, { label: 'Check', disabled: true, onClick() {} });
-        }
-    });
 })();

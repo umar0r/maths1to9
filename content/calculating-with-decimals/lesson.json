@@ -7,7 +7,24 @@
         "back_button": true
     },
     "assessment": {
-        "question_types": {}
+        "question_types": {
+            "multiply-whole-card": "decimal-multiply-divide",
+            "money-multiply": "decimal-multiply-divide",
+            "divide-whole-card": "decimal-multiply-divide",
+            "multiply-decimals": "decimal-multiply-divide",
+            "known-fact": "decimal-multiply-divide",
+            "divide-by-decimal": "decimal-multiply-divide",
+            "share-the-bill": "decimal-multiply-divide",
+            "meter-bill": "decimal-multiply-divide",
+            "times-ten": "decimal-multiply-divide",
+            "year-cost": "decimal-multiply-divide",
+            "divide-difference": "decimal-multiply-divide",
+            "count-digits": "decimal-multiply-divide",
+            "known-fact-check": "decimal-multiply-divide",
+            "fill-zeros": "decimal-multiply-divide",
+            "point-straight-up": "decimal-multiply-divide",
+            "scale-divisor": "decimal-multiply-divide"
+        }
     },
     "explanation": {
         "title": "Learn",
@@ -23,7 +40,7 @@
         "title": "Practice",
         "hide_heading": true,
         "hide_eyebrow": true,
-        "session_length": 0
+        "session_length": 12
     },
     "section_order": [
         "explanation",
@@ -81,7 +98,32 @@
             {
                 "type": "scale-divisor"
             }
-        ]
+        ],
+        "summary": {
+            "title": "What you've learned",
+            "points": [
+                {
+                    "text": "To multiply decimals, take the points out and multiply.",
+                    "example": "2.4 × 0.3 → 24 × 3 = 72"
+                },
+                {
+                    "text": "Count the digits after the points, and put the same number back in the answer.",
+                    "example": "2.4 × 0.3 = 0.72"
+                },
+                {
+                    "text": "If you run out of digits, fill the gap with zeros.",
+                    "example": "0.3 × 0.2 = 0.06"
+                },
+                {
+                    "text": "When you divide by a whole number, the point goes straight up.",
+                    "example": "8.4 ÷ 3 = 2.8"
+                },
+                {
+                    "text": "To divide by a decimal, times both numbers by 10 until you’re dividing by a whole number.",
+                    "example": "11.07 ÷ 0.9 = 110.7 ÷ 9 = 12.3"
+                }
+            ]
+        }
     },
     "score_activities": [
         {
