@@ -12,10 +12,11 @@
 
     function mountPractice() {
         const api = window.Maths1to9Lesson;
-        // The eleven problems contain twelve assessed steps. Each figure shows
-        // its problem number while the engine saves and marks every step.
+        // The eleven problems contain thirteen assessed steps: two of them take
+        // two screens with the same number. Each figure shows its problem number
+        // while the engine saves and marks every step.
         return api.runQuestionSet('question-bank', {
-            version: 1, count: api.getLesson().question_bank.session_length,
+            version: 2, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DecimalCalculations.pickSteps,
             question: window.DecimalCalculations.generateStep,

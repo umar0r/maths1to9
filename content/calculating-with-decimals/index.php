@@ -71,8 +71,8 @@ $pageTitle = 'Multiplying and dividing decimals';
     <script src="./interactive.js?v=3"></script>
     <script src="./try-it.js?v=3"></script>
 
-    <script src="./decimal-calculations.js?v=1"></script>
-    <script src="./questions.js?v=1"></script>
+    <script src="./decimal-calculations.js?v=3"></script>
+    <script src="./questions.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=82"></script>
