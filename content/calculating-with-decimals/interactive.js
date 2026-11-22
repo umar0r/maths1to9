@@ -14,7 +14,7 @@
             title: 'To divide by a whole number, count how many digits there are after the decimal point.'
         },
         {
-            title: 'To divide by a decimal, move both points until you are dividing by a whole number.'
+            title: 'To divide by a decimal, count how many digits there are after the decimal points.'
         }
     ];
 
@@ -116,7 +116,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 9,
+            version: 10,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -301,7 +301,7 @@
             dispose = () => { stopSum(); stopAnswer(); };
         }
 
-        // Learn 4: move both points, then divide.
+        // Learn 4: count both numbers' digits, take them away, then divide.
         function drawScalePicture() {
             const picture = element('div', '', 'decimal-learn-steps');
             const sumRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
@@ -317,20 +317,34 @@
             const divisor = build('0.9', sum);
             sumRow.append(sum);
 
+            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
+            const answer = element('div', '', 'decimal-big-number');
+            const product = build('12.3', answer);
+            answerStep.append(answer);
+
             picture.append(sumRow,
-                element('p', 'Move both points 1 place.', 'decimal-learn-line'),
-                element('div', '110.7 \u00f7 9 = 12.3', 'decimal-big-number'),
-                element('p', 'So 11.07 \u00f7 0.9 = 12.3 too.', 'decimal-learn-line'));
+                element('p', 'In this example there are 2 and 1. When you divide, take them away: 2 \u2212 1 = 1.', 'decimal-learn-line'),
+                element('p', 'Take the decimal points out and divide.', 'decimal-learn-line'),
+                element('div', '1107 \u00f7 9 = 123', 'decimal-big-number'),
+                element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
+                element('p', 'So 123 becomes', 'decimal-learn-line'),
+                answerStep);
             root.append(picture);
 
-            // One hop over the 0 in 11.07 and one over the 9 in 0.9, a count of 1 each.
+            // Two hops over the 07, then one over the 9; a head on each last hop.
             const dividendPoint = dividend.findIndex(node => node.textContent === '.');
             const divisorPoint = divisor.findIndex(node => node.textContent === '.');
             const stopSum = drawArrows(sumRow, [
-                { from: { node: dividend[dividendPoint], side: 'centre' }, to: { node: dividend[dividendPoint + 1], side: 'right' }, label: '1', group: 'dividend', head: true },
-                { from: { node: divisor[divisorPoint], side: 'centre' }, to: { node: divisor[divisorPoint + 1], side: 'right' }, label: '1', group: 'divisor', head: true }
+                { from: { node: dividend[dividendPoint], side: 'centre' }, to: { node: dividend[dividendPoint + 1], side: 'right' }, label: '2' },
+                { from: { node: dividend[dividendPoint + 1], side: 'right' }, to: { node: dividend[dividendPoint + 2], side: 'right' }, label: '2', head: true },
+                { from: { node: divisor[divisorPoint], side: 'centre' }, to: { node: divisor[divisorPoint + 1], side: 'right' }, label: '1', head: true }
             ]);
-            dispose = stopSum;
+            // Back over the 3, landing on the point.
+            const answerPoint = product.findIndex(node => node.textContent === '.');
+            const stopAnswer = drawArrows(answerStep, [
+                { from: { node: product[answerPoint + 1], side: 'right' }, to: { node: product[answerPoint], side: 'centre' }, label: '1', head: true }
+            ]);
+            dispose = () => { stopSum(); stopAnswer(); };
         }
 
         function render() {
