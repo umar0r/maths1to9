@@ -1,0 +1,88 @@
+/* The three small pictures match Adding and subtracting decimals. */
+.decimal-uses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 300px;
+    margin: 1.25rem auto 0;
+}
+.decimal-uses figure { margin: 0; text-align: center; }
+.decimal-use-picture { width: min(100%, 135px); margin-inline: auto; }
+.decimal-use-picture svg { display: block; width: 100%; height: auto; }
+.decimal-uses figcaption { margin-top: .3rem; font-weight: 800; }
+.decimal-number-picture {
+    position: relative;
+    margin: 1.75rem auto 1rem;
+    padding-top: 48px;
+    width: max-content;
+    max-width: 100%;
+}
+.decimal-big-number, .decimal-fraction-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.decimal-digit {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 56px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+}
+button.decimal-digit { cursor: pointer; }
+.decimal-number-point { width: 18px; text-align: center; }
+.decimal-times { margin-inline: 12px; }
+.decimal-gap {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 44px;
+    padding: 0;
+    border: 2px dashed #94a3b8;
+    border-radius: .35rem;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+}
+.decimal-gap.is-placed { border-color: transparent; }
+.decimal-gap:disabled { opacity: 1; cursor: default; }
+.decimal-gap:focus-visible, .decimal-digit:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.decimal-hops { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.decimal-hops path { fill: none; stroke: #334155; stroke-width: 1.5; stroke-linecap: round; }
+.decimal-hops text { fill: #334155; font: 700 16px Nunito, sans-serif; text-anchor: middle; }
+.decimal-division-picture { max-width: 240px; margin-block: 2rem; }
+.decimal-division-picture .decimal-gap { font-size: 1.8rem; }
+.decimal-division-gap { position: absolute; width: 40px; }
+.decimal-fraction { position: relative; width: max-content; max-width: 100%; margin: 1.25rem auto; }
+.decimal-fraction-row { padding-top: 48px; padding-bottom: 14px; }
+.decimal-fraction-row:first-child { border-bottom: 2px solid #64748b; }
+.decimal-fraction-row .decimal-digit { width: 34px; }
+.decimal-fraction-row .decimal-gap { width: 26px; border-color: transparent; }
+.decimal-fraction-row .decimal-gap:not(:disabled):not(.is-placed) { border-color: #94a3b8; }
+.decimal-fraction-row.is-nine > :nth-child(-n+3) { width: 0; visibility: hidden; }
+.decimal-learn-instruction { text-align: center; font-size: .85rem; }
+body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
+@media (max-width: 640px) {
+    .decimal-uses { gap: .75rem; }
+    .decimal-uses figcaption { font-size: .9rem; }
+    .decimal-big-number, .decimal-fraction-row { font-size: 2.2rem; }
+    .decimal-big-number .decimal-digit { width: 32px; }
+    .decimal-number-point { width: 14px; }
+    .decimal-times { margin-inline: 8px; }
+    .decimal-fraction-row .decimal-digit { width: 32px; }
+    .decimal-fraction-row .decimal-gap { width: 24px; }
+}
+
+.decimal-big-number.is-complete .decimal-gap:empty { width: 0; border: 0; }
+
+.decimal-division-picture.is-complete .decimal-division-gap { visibility: hidden; }

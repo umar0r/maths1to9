@@ -1,0 +1,87 @@
+{
+    "id": "calculating-with-decimals",
+    "slug": "calculating-with-decimals",
+    "title": "Multiplying and dividing decimals",
+    "subtitle": "Take the points out, work it out, then put the point back.",
+    "navigation": {
+        "back_button": true
+    },
+    "assessment": {
+        "question_types": {}
+    },
+    "explanation": {
+        "title": "Learn",
+        "hide_heading": true,
+        "hide_eyebrow": true
+    },
+    "interactive": {
+        "title": "Try it",
+        "hide_heading": true,
+        "hide_eyebrow": true
+    },
+    "question_bank": {
+        "title": "Practice",
+        "hide_heading": true,
+        "hide_eyebrow": true,
+        "session_length": 0
+    },
+    "section_order": [
+        "explanation",
+        "interactive",
+        "question-bank",
+        "comparison"
+    ],
+    "navigation_stages": [
+        {
+            "id": "learn",
+            "label": "Learn",
+            "sections": [
+                "explanation"
+            ]
+        },
+        {
+            "id": "try-it",
+            "label": "Try it",
+            "sections": [
+                "interactive"
+            ]
+        },
+        {
+            "id": "practice",
+            "label": "Practice",
+            "sections": [
+                "question-bank"
+            ]
+        },
+        {
+            "id": "check",
+            "label": "Check",
+            "sections": [
+                "comparison"
+            ]
+        }
+    ],
+    "comparison": {
+        "title": "Check",
+        "hide_heading": true,
+        "hide_eyebrow": true,
+        "questions": [
+            {
+                "type": "count-digits"
+            },
+            {
+                "type": "known-fact-check"
+            },
+            {
+                "type": "fill-zeros"
+            },
+            {
+                "type": "point-straight-up"
+            },
+            {
+                "type": "scale-divisor"
+            }
+        ]
+    },
+    "score_activities": []
+}
