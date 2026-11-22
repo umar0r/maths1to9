@@ -36,10 +36,25 @@
             { "prompt": "Coming soon." }
         ]
     },
-    "assessment": { "question_types": { "placeholder": "scatter-graphs" } },
+    "assessment": { "question_types": {
+        "read-pair": "scatter-graphs",
+        "read-up": "scatter-graphs",
+        "read-across": "scatter-graphs",
+        "plot-pair": "scatter-graphs",
+        "pick-point": "scatter-graphs",
+        "plot-same-start": "scatter-graphs"
+    } },
     "score_activities": [
         { "id": "step:explanation--read:0", "kind": "guided" },
         { "id": "step:explanation--read:1", "kind": "guided" },
-        { "id": "step:explanation--read:2", "kind": "guided" }
+        { "id": "step:explanation--read:2", "kind": "guided" },
+        { "id": "step:interactive--read:0", "kind": "guided" },
+        { "id": "step:interactive--read:1", "kind": "guided" },
+        { "id": "step:interactive--read:2", "kind": "guided" },
+        { "id": "step:explanation--plot:0", "kind": "guided" },
+        { "id": "step:explanation--plot:1", "kind": "guided" },
+        { "id": "step:interactive--plot:0", "kind": "guided" },
+        { "id": "step:interactive--plot:1", "kind": "guided" },
+        { "id": "step:interactive--plot:2", "kind": "guided" }
     ]
 }

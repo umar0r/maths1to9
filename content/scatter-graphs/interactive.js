@@ -186,7 +186,7 @@
         root.closest('.lesson-section').setAttribute('aria-label', 'Read Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState(`interactive:read`, {
-            version: 2, upgrade: () => null,
+            version: 3, upgrade: () => null,
             initial: () => ({
                 screen: 0, furthest: 0,
                 t1Stage: 0, t1Hint: '', t1Done: false,
@@ -294,12 +294,13 @@
                 graph = makeGraph(graphHost, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                     axisNames: { x: 'Rainy days', y: 'Road accidents' },
                     label: 'Scatter graph of rainy days and road accidents.' });
-                tryItPoints.forEach(p => graph.point(p, { size: 'small', tone: 'neutral', coordinates: false }));
+                const points = tryItPoints.map(p => graph.point(p, { size: 'small', tone: 'neutral', coordinates: false }));
                 let picker = null;
                 let arrows = [];
                 function paint() {
                     arrows.forEach(a => a.remove()); arrows = [];
                     if (state.t2Picked && state.t2Done) {
+                        points[1].update({ size: 'large' });
                         const [px, py] = state.t2Picked;
                         arrows.push(graph.arrow([px, py], [px, 0], { dash: true, tone: 'ink' }));
                         arrows.push(graph.arrow([px, py], [0, py], { dash: true, tone: 'ink' }));
@@ -330,11 +331,11 @@
                                 saved.t2Hint = 'That point is 7 rainy days and 3 accidents. Find the one above 3 on the bottom axis.';
                                 saved.t2Done = false;
                             } else {
-                                saved.t2Hint = `That point is ${x} rainy days and ${y} accidents. Find the one above 3 on the bottom axis.`;
+                                saved.t2Hint = `That point is ${S.quantity(x, 'rainy days')} and ${S.quantity(y, 'accidents')}. Find the one above 3 on the bottom axis.`;
                                 saved.t2Done = false;
                             }
                         });
-                        graph.describe(match ? `You tapped the point for ${x} rainy days and ${y} accidents.`
+                        graph.describe(match ? `You tapped the point for ${S.quantity(x, 'rainy days')} and ${S.quantity(y, 'accidents')}.`
                             : 'You tapped the grid, not a point.');
                         if (state.t2Done) picker.stop();
                         paint();
@@ -343,7 +344,7 @@
                 }
                 paint();
             } else {
-                prompt.textContent = 'Fill in the table for the big point.';
+                prompt.remove();
                 const allPoints = tryItPoints.concat([[5, 8]]);
                 graph = makeGraph(graphHost, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                     axisNames: { x: 'Rainy days', y: 'Road accidents' },
@@ -461,6 +462,184 @@
         render();
     }
 
+    const plotAxes = { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1 };
+    const plotLearn = [
+        {
+            title: 'To plot a pair, go across to the first number, then up to the second.',
+            rows: ['Shots', 'Goals'], values: [[1, 2], [4, 3], [6, 5], [3, 5]],
+            points: [[1, 2], [4, 3], [6, 5]], targets: [[3, 5]], column: 3,
+            line: 'Tap where the point for the orange column goes.',
+            axisNames: { x: 'Shots on target', y: 'Goals' },
+            success: 'Across to 3, then up to 5.',
+            hint: point => S.samePoint(point, [5, 3]) ? 'You went across to 5. Across is the top number in the table, 3.'
+                : 'Go along the bottom to 3 first, then up to 5.'
+        },
+        {
+            title: 'Two pairs can start with the same number. Each pair still gets its own point.',
+            rows: ['Shots', 'Goals'], values: [[2, 4], [4, 6], [4, 8]],
+            points: [[2, 4], [4, 6]], targets: [[4, 8]], column: 2,
+            line: 'Tap where the point for the orange column goes.',
+            axisNames: { x: 'Shots on target', y: 'Goals' },
+            success: 'Both pairs start at 4, so their points sit one above the other.',
+            hint: point => S.samePoint(point, [4, 6]) ? "That's the point for 4 shots and 6 goals. This pair goes up to 8, so it needs its own point."
+                : S.samePoint(point, [8, 4]) ? 'You went across to 8. Across is the top number, 4.'
+                    : 'Go along the bottom to 4, then up to 8.'
+        }
+    ];
+    const sunshineAxes = { x: 'Hours of sunshine', y: 'Ice creams sold (boxes)' };
+    const plotTryIt = [
+        {
+            title: 'Plot the pair in the table.', rows: ['Sunshine', 'Boxes'], values: [[6, 2]],
+            points: [], targets: [[6, 2]], axisNames: sunshineAxes,
+            success: 'Across to 6, up to 2.',
+            hint: point => S.samePoint(point, [2, 6]) ? "That's across 2. The top number, 6, goes across."
+                : 'Go across to 6 first, then up to 2.'
+        },
+        {
+            title: 'Plot every pair in the table.', rows: ['Sunshine', 'Boxes'],
+            values: [[1, 4], [3, 6], [3, 2], [5, 7], [8, 9]],
+            points: [], targets: [[1, 4], [3, 6], [3, 2], [5, 7], [8, 9]], column: 0,
+            axisNames: sunshineAxes,
+            success: 'All five pairs are plotted. The two pairs that start at 3 sit one above the other.',
+            hint(point, [a, b]) {
+                return S.samePoint(point, [b, a]) ? `That's across ${b}. The top number, ${a}, goes across.`
+                    : `Go across to ${a} first, then up to ${b}.`;
+            }
+        },
+        {
+            title: 'One point is in the wrong place. Drag it to where it belongs.',
+            rows: ['Sunshine', 'Boxes'], values: [[2, 3], [4, 8], [7, 5], [9, 6]], column: 1,
+            points: [[2, 3], [7, 5], [9, 6]], targets: [[4, 8]], drag: [8, 4],
+            axisNames: sunshineAxes, success: "Now it's across 4 and up 8.",
+            hint: () => 'Across 4, then up 8.'
+        }
+    ];
+
+    async function mountPlotScreens(api, root, id, key, screens, kind) {
+        const E = window.Maths1to9LessonEngine;
+        const route = kind === 'explanation' ? 'plot-learn' : 'plot-try-it';
+        const section = await api.useSectionState(key, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ screen: 0, furthest: 0,
+                cards: screens.map(screen => ({ count: 0, done: false, hint: '', position: screen.drag || null })) })
+        });
+        const state = section.state;
+        let graph = null;
+        api.gateSection(id);
+        function syncHash() {
+            if (api.getCurrentSection().id === id) api.setSlideHash(`${route}-${state.screen + 1}`, { replace: true });
+        }
+        function show(index) {
+            section.update(saved => { saved.screen = index; saved.furthest = Math.max(saved.furthest, index); });
+            render();
+            root.querySelector('h2').focus();
+        }
+        function render() {
+            graph?.destroy();
+            root.replaceChildren();
+            const index = state.screen;
+            const screen = screens[index];
+            const card = state.cards[index];
+            const heading = element('h2', screen.title);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            if (screen.line) root.append(element('p', screen.line));
+            const tableHost = element('div');
+            const graphHost = element('div', '', 'scatter-graph-host');
+            const feedback = E.createFeedback(kind, { visible: false });
+            root.append(tableHost, graphHost, feedback);
+            graph = S.makeGraph(graphHost, { ...plotAxes, axisNames: screen.axisNames, label: screen.title });
+            screen.points.forEach(point => graph.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
+            if (!screen.drag) screen.targets.slice(0, card.count).forEach(point => {
+                graph.point(point, { size: 'small', tone: 'neutral', coordinates: false });
+            });
+            let picker = null;
+            let dragging = false;
+            let arrows = [];
+            function paint() {
+                tableHost.replaceChildren();
+                S.pairTable(tableHost, { rows: screen.rows, values: screen.values,
+                    selected: screen.column === undefined ? null : screen.column + (screen.targets.length > 1 ? Math.min(card.count, screen.targets.length - 1) : 0) });
+                feedback.textContent = card.hint;
+                feedback.className = E.feedbackClassName(kind, { visible: Boolean(card.hint), correct: card.done });
+                arrows.forEach(arrow => arrow.remove());
+                arrows = [];
+                if (card.count > 0 && !screen.drag) {
+                    const [x, y] = screen.targets[card.count - 1];
+                    arrows.push(graph.arrow([0, 0], [x, 0], { dash: true, tone: 'ink' }));
+                    arrows.push(graph.arrow([x, 0], [x, y], { dash: true, tone: 'ink' }));
+                }
+                const completed = state.cards.filter(saved => saved.done).length;
+                api.setSectionProgress(id, completed, screens.length);
+                if (completed === screens.length) api.completeSection(id);
+                api.setSectionAction(id, {
+                    label: index < screens.length - 1 ? 'Next' : 'Continue', disabled: !card.done,
+                    onClick() {
+                        if (index < screens.length - 1) show(index + 1);
+                        else { api.completeSection(id); api.continueSection(); }
+                    }
+                });
+                syncHash();
+            }
+            function choose(point) {
+                if (card.done) return;
+                const target = screen.targets[card.count];
+                const correct = S.samePoint(point, target);
+                section.update(() => {
+                    if (correct) card.count++;
+                    card.done = card.count === screen.targets.length;
+                    card.hint = card.done ? screen.success : correct ? '' : screen.hint(point, target);
+                });
+                if (correct && !screen.drag) graph.point(point, { size: 'small', tone: 'neutral', coordinates: false });
+                graph.describe(`You ${screen.drag ? 'moved' : 'tapped'} across ${point[0]} and up ${point[1]}.`);
+                if (card.done) {
+                    picker?.stop();
+                    graph.setEditable(false);
+                }
+                paint();
+            }
+            if (screen.drag) {
+                graphHost.addEventListener('pointerdown', () => { dragging = true; });
+                graphHost.addEventListener('pointerup', () => {
+                    dragging = false;
+                    if (!card.done) choose(card.position);
+                });
+                graphHost.addEventListener('pointercancel', () => { dragging = false; });
+                graph.point(card.position, { size: 'large', tone: 'neutral', coordinates: false,
+                    drag: card.done ? false : 'free', onMove(point) {
+                        section.update(() => { card.position = point; });
+                        graph.describe(`You moved across ${point[0]} and up ${point[1]}.`);
+                        if (!dragging) choose(point);
+                    } });
+                graph.setEditable(!card.done);
+            } else if (!card.done) picker = graph.pick({ label: screen.line || screen.title, onPick: choose });
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, () => {
+                section.resetFields([['cards', index]]);
+                render();
+            });
+            paint();
+        }
+        screens.forEach((_, index) => api.registerHashRoute(`${route}-${index + 1}`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            show(Math.min(index, state.furthest));
+        }));
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    async function mountPlot(api, root, section) {
+        const learn = document.getElementById('lesson-section-explanation--plot');
+        const article = element('article');
+        learn.append(article);
+        await mountPlotScreens(api, article, 'explanation--plot', 'learn:plot', plotLearn, 'explanation');
+        root.closest('.lesson-section').removeAttribute('aria-labelledby');
+        root.closest('.lesson-section').setAttribute('aria-label', 'Plot Try it');
+        await mountPlotScreens(api, root, section.id, 'interactive:plot', plotTryIt, 'interactive');
+    }
+
     function placeholder(api, host, id) {
         host.append(element('h2', 'Coming soon.'));
         api.gateSection(id);
@@ -475,6 +654,8 @@
         if (section.part === 'read') {
             await mountRead(api);
             await mountTryIt(api, root, section);
+        } else if (section.part === 'plot') {
+            await mountPlot(api, root, section);
         } else {
             placeholder(api, document.getElementById(`lesson-section-explanation--${section.part}`), `explanation--${section.part}`);
             placeholder(api, root, section.id);
