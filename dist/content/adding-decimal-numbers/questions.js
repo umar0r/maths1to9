@@ -15,7 +15,7 @@
         // The ten problems contain sixteen assessed steps. Each figure shows
         // its problem number while the engine saves and marks every step.
         return api.runQuestionSet('question-bank', {
-            version: 7, count: api.getLesson().question_bank.session_length,
+            version: 8, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DecimalAddition.pickSteps,
             question: window.DecimalAddition.generateStep,

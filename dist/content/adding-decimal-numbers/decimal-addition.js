@@ -86,9 +86,8 @@
         };
     }
 
-    function sumChoice(type, prompt, terms, mistakes, currency) {
-        const text = currency ? money : decimalText;
-        const label = parts => parts.map(part => typeof part === 'number' ? text(part) : part).join(' ');
+    function sumChoice(type, prompt, terms, mistakes, currency, text = currency ? money : decimalText) {
+        const label = parts => parts.map((part, index) => typeof part === 'number' ? text(part, index, parts) : part).join(' ');
         const evaluate = parts => {
             let result = parts[0];
             for (let index = 1; index < parts.length; index += 2) {
@@ -258,12 +257,13 @@
                 const cost = price();
                 const notes = [500, 1000, 2000].filter(note => note > cost);
                 const paid = notes[integer(0, notes.length - 1)];
-                const prompt = `You pay for a ${money(cost)} magazine with a ${money(paid)} note. How much change do you get?`;
+                const note = `£${paid / 100}`;
+                const prompt = `You pay for a ${money(cost)} magazine with a ${note} note. How much change do you get?`;
                 const selection = sumChoice(item.type, prompt, [paid, '−', cost], [
-                    [[cost, '−', paid], `Take the price away from the ${money(paid)}, not the other way round.`],
+                    [[cost, '−', paid], `Take the price away from the ${note}, not the other way round.`],
                     [[paid, '+', cost], "Change is what's left, so take away."],
                     [[paid, '−', cost * 10], `The price is ${money(cost)}, not ${money(cost * 10)}.`]
-                ], true);
+                ], true, (value, index, parts) => value === paid && (index === 0 || parts[0] === cost) ? note : money(value));
                 question = workedQuestion(item.type, prompt, [[paid, cost, '−']], selection, true);
                 question.values = { cost, paid };
             } else if (item.type === 'money-card') {
@@ -304,7 +304,7 @@
                 const selection = sumChoice(item.type, prompt, [after, '−', balance], [
                     [[balance, '−', after], 'Take the old balance away from the new balance, not the other way round.'],
                     [[after, '+', balance], 'Find how much was added, so take the old balance away from the new balance.'],
-                    [[after, '−', 0], 'The new balance includes the money already there. Take away the old balance.']
+                    [[after, '−', Math.round(balance / 10)], `The old balance is ${money(balance)}, not ${money(Math.round(balance / 10))}.`]
                 ], true);
                 question = workedQuestion(item.type, prompt, [[after, balance, '−']], selection, true);
                 question.values = { balance, refund, after };
