@@ -1,7 +1,7 @@
 # Shared number cards
 
-Load `../../assets/css/digit-cards.css?v=2` and
-`../../assets/js/digit-cards.js?v=2` before the lesson scripts.
+Load `../../assets/css/digit-cards.css?v=3` and
+`../../assets/js/digit-cards.js?v=3` before the lesson scripts.
 The shared implementation was extracted from the decimal lesson's
 `additionCardsWidget` and `buildWidget`; lessons keep their maths and marking.
 
