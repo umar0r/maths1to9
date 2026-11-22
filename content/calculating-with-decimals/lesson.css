@@ -77,8 +77,9 @@ button.decimal-digit { cursor: pointer; }
 }
 .decimal-learn-step { position: relative; }
 .decimal-learn-step--hops { padding-top: 48px; }
-/* Learn 2: room above the digits for a textbook arch and its label. */
-.decimal-learn-step--arch { padding-top: 56px; }
+/* Learn 2: room above the digits for the hops, and clear air round the x. */
+.decimal-learn-step--arch { padding-top: 48px; }
+.decimal-learn-step--arch .decimal-times { margin-inline: 1rem; }
 .decimal-learn-note {
     margin: .35rem 0 0;
     text-align: center;

@@ -141,10 +141,11 @@
             heading.tabIndex = -1;
             heading.focus();
         }
-        // A textbook hop: a symmetric arch that leaves the decimal point, jumps
-        // over the digits and comes straight down in the gap after them, with an
-        // open head pointing down. Both ends sit at the middle of the digits.
-        function drawArrows(host, arrows) {
+        // A textbook hop: one small arch over one digit, from one gap to the next.
+        // Both ends sit just above the digit tops, and a small open head points
+        // down into the gap it lands in. Each number carries one label over its
+        // group of hops.
+        function drawArrows(host, hops) {
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.classList.add('decimal-hops');
             svg.setAttribute('aria-hidden', 'true');
@@ -156,26 +157,29 @@
                 svg.replaceChildren();
                 const row = host.querySelector('.decimal-digit')?.getBoundingClientRect();
                 if (!row) return;
-                const y = row.top + row.height / 2 - origin.top;
-                const anchor = ({ node, side }) => {
+                const y = row.top - origin.top - 2;
+                const rise = 22;
+                const place = ({ node, side }) => {
                     const box = node.getBoundingClientRect();
                     const x = side === 'centre' ? box.left + box.width / 2
-                        : side === 'before' ? box.left - 2 : box.right + 2;
+                        : side === 'left' ? box.left : box.right;
                     return x - origin.left;
                 };
-                arrows.forEach(({ tail, head, label }) => {
-                    const x1 = anchor(tail), x2 = anchor(head);
-                    const rise = Math.min(64, Math.max(44, Math.abs(x2 - x1) * .5));
-                    const apex = y - rise * .75;
+                const groups = new Map();
+                hops.forEach(({ from, to, label }) => {
+                    const x1 = place(from), x2 = place(to);
                     const path = document.createElementNS(svg.namespaceURI, 'path');
-                    // Vertical tangents at both ends keep the arch the same on each side.
+                    // Vertical tangents at both ends keep the hop the same on each side.
                     path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
-                        + ` M ${x2 - 7} ${y - 9} L ${x2} ${y} L ${x2 + 7} ${y - 9}`);
+                        + ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}`);
                     svg.append(path);
-                    if (!label) return;
+                    const span = groups.get(label) || { min: Infinity, max: -Infinity };
+                    groups.set(label, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2) });
+                });
+                groups.forEach(({ min, max }, label) => {
                     const count = document.createElementNS(svg.namespaceURI, 'text');
-                    count.setAttribute('x', (x1 + x2) / 2);
-                    count.setAttribute('y', apex - 6);
+                    count.setAttribute('x', (min + max) / 2);
+                    count.setAttribute('y', y - rise * .75 - 6);
                     count.textContent = label;
                     svg.append(count);
                 });
@@ -228,14 +232,21 @@
             const firstPoint = digits.findIndex(node => node.textContent === '.');
             const secondPoint = digits.findIndex((node, index) => index > firstPoint && node.textContent === '.');
             const stopFactors = drawArrows(factorsRow, [
-                { tail: { node: digits[firstPoint], side: 'centre' }, head: { node: digits[firstPoint + 2], side: 'after' }, label: '2' },
-                { tail: { node: digits[secondPoint], side: 'centre' }, head: { node: digits[secondPoint + 3], side: 'after' }, label: '3' }
+                { from: { node: digits[firstPoint], side: 'centre' }, to: { node: digits[firstPoint + 1], side: 'right' }, label: '2' },
+                { from: { node: digits[firstPoint + 1], side: 'right' }, to: { node: digits[firstPoint + 2], side: 'right' }, label: '2' },
+                { from: { node: digits[secondPoint], side: 'centre' }, to: { node: digits[secondPoint + 1], side: 'right' }, label: '3' },
+                { from: { node: digits[secondPoint + 1], side: 'right' }, to: { node: digits[secondPoint + 2], side: 'right' }, label: '3' },
+                { from: { node: digits[secondPoint + 2], side: 'right' }, to: { node: digits[secondPoint + 3], side: 'right' }, label: '3' }
             ]);
             // Back from the last digit to where the point lands, 5 places away.
             const productPoint = product.findIndex(node => node.textContent === '.');
-            const stopAnswer = drawArrows(answerStep, [
-                { tail: { node: product[product.length - 1], side: 'after' }, head: { node: product[productPoint], side: 'centre' }, label: '5' }
-            ]);
+            // Five hops back from the right, one digit each, the last landing on the point.
+            const answerHops = product.slice(productPoint + 1).map((node, index) => ({
+                from: { node, side: 'right' },
+                to: index === 0 ? { node: product[productPoint], side: 'centre' } : { node, side: 'left' },
+                label: '5'
+            }));
+            const stopAnswer = drawArrows(answerStep, answerHops);
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 
