@@ -219,6 +219,78 @@
         host.append(table);
     }
 
+    // Check 1: Sam's working as a pupil writes it on paper, every character
+    // in a cell of its own, so the last digits line up and the points do not.
+    function drawSamWorking(host) {
+        const figure = document.createElement('figure');
+        figure.className = 'decimal-sam-working';
+        const working = document.createElement('div');
+        working.className = 'decimal-sam-working__grid';
+        working.setAttribute('role', 'img');
+        working.setAttribute('aria-label', 'Sam wrote 5.8 and 0.34 with their last digits lined up, and answered 0.92.');
+        function row(sign, cells) {
+            const signCell = document.createElement('span');
+            signCell.className = 'decimal-sam-working__sign';
+            signCell.textContent = sign;
+            working.append(signCell);
+            for (const text of cells) {
+                const cell = document.createElement('span');
+                cell.textContent = text;
+                working.append(cell);
+            }
+        }
+        row('', ['', '5', '.', '8']);
+        row('+', ['0', '.', '3', '4']);
+        const line = document.createElement('span');
+        line.className = 'decimal-sam-working__line';
+        working.append(line);
+        row('', ['0', '.', '9', '2']);
+        const caption = document.createElement('figcaption');
+        caption.textContent = "Sam's working";
+        figure.append(caption, working);
+        host.append(figure);
+    }
+
+    // Check 3: the lesson's own column table, read-only, with the tenths
+    // lit as the column being worked on.
+    function drawCarryTable(host) {
+        const chart = document.createElement('div');
+        chart.className = 'decimal-place-chart decimal-check-table';
+        const columns = ['units', 'point', 'tenths', 'hundredths'];
+        const built = window.Maths1to9DigitCards.columnTable({
+            label: '7.60 plus 0.48 in place-value columns',
+            className: 'decimal-column-table',
+            columns: columns.map(id => ({ id, label: id === 'point' ? 'point' : id, ariaLabel: id === 'point' ? 'decimal point' : id })),
+            rows: [
+                { id: 'a', values: { units: '7', point: '.', tenths: '6', hundredths: '0' } },
+                { id: 'b', sign: '+', values: { units: '0', point: '.', tenths: '4', hundredths: '8' } },
+                { id: 'answer', sign: '=', answer: true, values: { units: '', point: '.', tenths: '', hundredths: '8' } }
+            ]
+        });
+        chart.append(built.table);
+        host.append(chart);
+        built.update({ activeColumn: 'tenths' });
+    }
+
+    // Check 4: a small receipt in Try it's art style, with no total line.
+    function drawCheckReceipt(host) {
+        const receipt = document.createElement('div');
+        receipt.className = 'decimal-check-receipt';
+        const edge = 'M15 9H270L291 30V168Q284.25 176 277.5 168T264 168T250.5 168T237 168T223.5 168T210 168T196.5 168T183 168T169.5 168T156 168T142.5 168T129 168T115.5 168T102 168T88.5 168T75 168T61.5 168T48 168T34.5 168T21 168Q15 160 9 168V15Q9 9 15 9Z';
+        receipt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 184" fill="var(--text)" font-family="inherit" role="img" aria-label="Receipt: Sandwich £2.40, Drink £1.35, Voucher minus £0.50.">
+            <defs><clipPath id="decimal-check-receipt-clip"><path d="${edge}"/></clipPath></defs>
+            <path d="${edge}" fill="#f8fafc"/>
+            <g clip-path="url(#decimal-check-receipt-clip)"><rect x="9" y="9" width="282" height="38" fill="color-mix(in srgb, var(--primary) 25%, #fff)"/>
+                <text x="24" y="36" font-size="21" font-weight="800">Receipt</text></g>
+            <path d="M270 9V30H291Z" fill="var(--primary-dark)"/>
+            <text x="24" y="78" font-size="18">Sandwich</text><text x="276" y="78" text-anchor="end" font-size="18">£2.40</text>
+            <text x="24" y="108" font-size="18">Drink</text><text x="276" y="108" text-anchor="end" font-size="18">£1.35</text>
+            <text x="24" y="138" font-size="18">Voucher</text><text x="276" y="138" text-anchor="end" font-size="18">−£0.50</text>
+            <path d="${edge}" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>`;
+        host.append(receipt);
+    }
+
     function generate(item, random) {
         const integer = (min, max) => window.Maths1to9LessonEngine.randomInt(min, max, random);
         const nonZeroEnd = value => value % 10 === 0 ? value + 1 : value;
@@ -325,7 +397,8 @@
         return [
             {
                 questionType: 'line-up-points', input: 'choice',
-                prompt: 'Sam works out 5.8 + 0.34 by lining up the last digits. What has Sam done wrong?',
+                prompt: 'Sam works out 5.8 + 0.34 like this. What has Sam done wrong?',
+                figure: drawSamWorking,
                 options: [
                     option("The 8 is tenths and the 4 is hundredths, so they don't belong in the same column.", 'Right. Line up the decimal points instead.', true),
                     option('The 8 and the 4 are both units.', "The 8 is 8 tenths and the 4 is 4 hundredths. They're worth different amounts."),
@@ -343,7 +416,8 @@
                 ]
             },
             {
-                questionType: 'carry-one', input: 'choice', prompt: 'In 7.60 + 0.48 the tenths make 6 + 4 = 10. What do you do?',
+                questionType: 'carry-one', input: 'choice', prompt: 'The tenths make 6 + 4 = 10. What do you write?',
+                figure: drawCarryTable,
                 options: [
                     option('Write 0 in the tenths and add 1 to the units.', 'Right. 10 tenths make 1 unit.', true),
                     option('Write 10 in the tenths.', 'Each column holds one digit. 10 tenths make 1 unit.'),
@@ -353,7 +427,8 @@
             },
             {
                 questionType: 'receipt-operations', input: 'choice',
-                prompt: 'A receipt has a sandwich for £2.40, a drink for £1.35 and a voucher for £0.50 off. Which working gives the total?',
+                prompt: 'Which working gives the total to pay?',
+                figure: drawCheckReceipt,
                 options: [
                     option('2.40 + 1.35 − 0.50', 'Right. Add the items, then take off the voucher.', true),
                     option('2.40 + 1.35 + 0.50', 'The voucher comes off, so take it away.'),
