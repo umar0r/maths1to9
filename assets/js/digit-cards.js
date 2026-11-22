@@ -95,6 +95,65 @@
         };
     }
 
+    // Short division shares the card slots and place-value column widths.
+    // Character indices include the point: in 8.4, the 4 is column "2".
+    function shortDivision({ label, divisor, dividend, answer = {}, carries = {} }) {
+        const table = element('table', '', 'digit-short-division');
+        table.setAttribute('aria-label', label || `${dividend} divided by ${divisor}`);
+        const columns = element('colgroup');
+        columns.append(element('col', '', 'digit-short-division__divisor-column'));
+        [...String(dividend)].forEach(character => {
+            columns.append(element('col', '', character === '.' ? 'digit-short-division__point-column' : ''));
+        });
+        const body = element('tbody');
+        const answerRow = element('tr'), dividendRow = element('tr');
+        answerRow.append(element('td'));
+        dividendRow.append(element('td', String(divisor), 'digit-short-division__divisor'));
+        const cells = { answer: {}, dividend: {} }, slots = [], carryNodes = {};
+        [...String(dividend)].forEach((character, index) => {
+            const column = String(index);
+            const top = element('td'), bottom = element('td', '', 'digit-short-division__dividend');
+            top.dataset.column = bottom.dataset.column = column;
+            if (index === 0) bottom.classList.add('digit-short-division__bracket');
+            if (character === '.') {
+                // Supply a node (or false) only when the pupil places the point.
+                if (answer.point instanceof Node) top.append(answer.point);
+                else if (answer.point !== false) top.append(element('span', '.'));
+                bottom.append(element('span', '.'));
+            } else {
+                const button = element('button', '', 'digit-card-slot');
+                button.type = 'button';
+                const id = `answer:${column}`;
+                button.setAttribute('aria-label', `Answer digit above ${character}, column ${index + 1}`);
+                button.dataset.slot = id;
+                top.append(button);
+                slots.push({ id, element: button, column, group: 'answer' });
+                const carry = element('span', '', 'digit-short-division__carry');
+                carryNodes[column] = carry;
+                bottom.append(carry, element('span', character));
+            }
+            cells.answer[column] = top;
+            cells.dividend[column] = bottom;
+            answerRow.append(top);
+            dividendRow.append(bottom);
+        });
+        body.append(answerRow, dividendRow);
+        table.append(columns, body);
+        function update({ activeColumn = null, carries: nextCarries = carries } = {}) {
+            Object.values(cells).forEach(row => Object.entries(row).forEach(([column, cell]) => {
+                cell.classList.toggle('is-active-column', column === String(activeColumn));
+            }));
+            Object.entries(carryNodes).forEach(([column, node]) => {
+                const value = nextCarries[column];
+                node.textContent = value == null ? '' : String(value);
+                node.hidden = value == null || value === '';
+                node.setAttribute('aria-label', value == null ? '' : `Carried ${value}`);
+            });
+        }
+        update();
+        return { table, cells, slots, update };
+    }
+
     function create(host, { slots, groups = {}, value: initialValue = null, active: initialActive = null,
         editable: initialEditable = true, onChange = () => {}, onPaint = () => {}, disabledDigits = [] } = {}) {
         let value = initialValue ? JSON.parse(JSON.stringify(initialValue)) : null, editable = initialEditable, phase = 'answer', drag = null;
@@ -309,5 +368,5 @@
             }
         };
     }
-    window.Maths1to9DigitCards = { create, columnTable, markedValue };
+    window.Maths1to9DigitCards = { create, columnTable, shortDivision, markedValue };
 })();
