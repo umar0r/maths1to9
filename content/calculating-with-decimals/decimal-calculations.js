@@ -392,11 +392,14 @@
                 if (q % 10 === 0 || c * q % 10 === 0) continue;
                 const difference = c * q, a = difference + b * 10, answer = decimal(q, 1, false);
                 const numerator = a * c - b * 1000, denominator = 1000 * c;
-                // Dividing first: a − b ÷ c, to 2 decimal places.
-                const wrongOrder = decimal(Math.round(Math.abs(numerator) * 100 / denominator) * Math.sign(numerator), 2);
-                question = { input: 'choice', prompt: `Work out (${decimal(a, 3, false)} − ${decimal(b, 2, false)}) ÷ ${decimal(c, 2, false)}.`,
+                // Dividing first: a − b ÷ c, to 2 decimal places. Pupils never
+                // see a negative option, so pick new numbers when it would be.
+                const dividedFirst = Math.round(Math.abs(numerator) * 100 / denominator) * Math.sign(numerator);
+                if (dividedFirst <= 0) continue;
+                const wrongOrder = decimal(dividedFirst, 2);
+                question = { input: 'choice', prompt: `Work out (${decimal(a, 3, false)} − ${decimal(b, 2)}) ÷ ${decimal(c, 2, false)}.`,
                     answer, values: { a, b, c, q, difference }, options: [
-                        option(answer, q, `${decimal(a, 3, false)} − ${decimal(b, 2, false)} = ${decimal(difference, 3, false)}, then ${decimal(difference, 3, false)} ÷ ${decimal(c, 2, false)} = ${answer}.`, true),
+                        option(answer, q, `${decimal(a, 3, false)} − ${decimal(b, 2)} = ${decimal(difference, 3, false)}, then ${decimal(difference, 3, false)} ÷ ${decimal(c, 2, false)} = ${answer}.`, true),
                         option(decimal(q, 2), q * 100, 'Move both points the same number of places.'),
                         option(String(q), q * 10, 'You moved one point more places than the other. Move both the same.'),
                         option(wrongOrder, q * 1000, 'Work out the top first, then divide.')
