@@ -1291,3 +1291,49 @@ test('question-set results include units for one-box and field cards, including 
     finish();
     for (const answer of expected) assert.equal(unitNodes(container, 'td').filter(node => node.textContent === answer).length, 2);
 });
+
+
+test('custom keepValueOnRetry preserves a copied checked value, retry flag and first attempt across reload', () => {
+    const fake = customWidgetFixture();
+    fake.widget.keepValueOnRetry = true;
+    let returned;
+    fake.widget.mark = value => {
+        returned = { ...value, marks: { units: value.number === 4 ? 'right' : 'wrong' } };
+        return { correct: value.number === 4, feedback: 'Marked', value: returned };
+    };
+    let card = questionFixture({ input: 'custom', widget: fake.widget, scored: true });
+    fake.change({ number: 2 });
+    card.action.onClick();
+    returned.marks.units = 'changed after marking';
+    assert.equal(card.section.state.cards['stable-1'].value.marks.units, 'wrong');
+    card = card.reload();
+    assert.equal(fake.calls.updates.at(-1).value.marks.units, 'wrong');
+    assert.equal(fake.calls.updates.at(-1).phase, 'wrong');
+    card.action.onClick();
+    assert.deepEqual(fake.calls.updates.at(-1), {
+        value: { number: 2, marks: { units: 'wrong' } }, editable: true, phase: 'answer', retry: true
+    });
+    assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+    assert.equal(card.section.state.cards['stable-1'].feedback, '');
+    assert.equal(card.card.result().firstCorrect, false);
+    fake.change({ number: 4 });
+    card.action.onClick();
+    assert.equal(card.card.result().correct, true);
+    assert.equal(card.card.result().firstCorrect, false);
+    assert.equal(card.assessments.length, 1); // only the post-reload Check belongs to this harness
+});
+
+test('custom default and explicit false ignore checked replacement values and still clear on retry', () => {
+    for (const optIn of [undefined, false]) {
+        const fake = customWidgetFixture();
+        if (optIn !== undefined) fake.widget.keepValueOnRetry = optIn;
+        fake.widget.mark = () => ({ correct: false, feedback: 'Wrong', value: { number: 99 } });
+        const card = questionFixture({ input: 'custom', widget: fake.widget });
+        fake.change({ number: 2 });
+        card.action.onClick();
+        assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+        card.action.onClick();
+        assert.equal(card.section.state.cards['stable-1'].value, null);
+        assert.deepEqual(fake.calls.updates.at(-1), { value: null, editable: true, phase: 'answer' });
+    }
+});

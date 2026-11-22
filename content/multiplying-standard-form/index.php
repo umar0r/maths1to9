@@ -73,6 +73,6 @@ $pageTitle = 'Multiplying numbers in standard form';
     <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=80"></script>
+    <script src="../../assets/js/lesson-engine.js?v=81"></script>
 </body>
 </html>

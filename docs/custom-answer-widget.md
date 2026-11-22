@@ -40,12 +40,13 @@ Maths1to9Lesson.createQuestion(container, {
     prompt: 'Draw y = 3.',
     input: 'custom',
     widget: {
+        keepValueOnRetry: true, // optional; false by default
         render(host, { value, editable, onChange }) {
             // Draw the answer area into host. Call onChange(value) whenever
             // the pupil's answer changes. value is plain JSON, or null for
             // no answer yet.
             return {
-                update({ value, editable, phase }) {},  // phase: 'answer' | 'wrong' | 'correct'
+                update({ value, editable, phase, retry }) {},  // phase: 'answer' | 'wrong' | 'correct'
                 focus() {}                              // optional
             };
         },
@@ -103,6 +104,10 @@ definition, because the set passes its definition through to
   `recordAssessment` once if `scored`.
 - Call `handle.update({ value, editable: false, phase })` so the widget can
   show red or green.
+- With `keepValueOnRetry: true`, `mark` may also return `value` (plain JSON).
+  The engine saves a copy of this checked value before updating the handle.
+  This lets a widget save marks alongside the digits. Without the opt-in,
+  an extra `value` in the marking result is ignored, as before.
 - `onFeedback` gets `{ correct, firstCorrect, hint, value }`, with `value`
   a copy.
 
@@ -112,6 +117,13 @@ definition, because the set passes its definition through to
   `hint`, as the number box is cleared.
 - Call `handle.update({ value: null, editable: true, phase: 'answer' })`,
   then `handle.focus?.()`.
+- Opt-in: `widget.keepValueOnRetry === true` preserves `saved.value` instead.
+  The handle receives `{ value, editable: true, phase: 'answer', retry: true }`.
+  Feedback and hint still clear; `firstCorrect` and scoring stay unchanged.
+  During this retry update the widget may call `onChange` to save its retry
+  presentation (for example, removing green marks and selecting a red box).
+  Reload restores that value through the ordinary update, without `retry`.
+  Reset still supplies `null`; it does not preserve digits or marks.
 
 ### Continue
 

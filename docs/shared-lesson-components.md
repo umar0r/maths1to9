@@ -573,6 +573,13 @@ one assessment per scored Check are saved. The handle receives `update`
 with `editable: false`; `onFeedback` receives a copy of the value.
 Try again clears value to `null`, feedback and hint, updates the handle
 with `editable: true` and phase `answer`, then calls optional `focus()`.
+With `widget.keepValueOnRetry: true`, it keeps the value and passes
+`retry: true` in that update. The widget may call `onChange` during the retry
+update to save its retry presentation and chosen slot. Reset still clears it.
+For this opt-in only, `mark` may return an updated JSON `value`; the engine
+copies and saves it before showing feedback, so slot marks survive reload.
+First-attempt accuracy and scoring do not change. Other widgets retain the
+existing clear-on-retry behaviour. See [Custom answer widgets](custom-answer-widget.md).
 Continue calls the usual `onContinue`.
 
 Read-only cards render with `editable: false`, update with the saved phase,
