@@ -90,9 +90,9 @@
             const origin = host.getBoundingClientRect();
             svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
             svg.replaceChildren();
-            hops.forEach(({ from, to, label }) => {
+            hops.forEach(({ from, to, label, startEdge }) => {
                 const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-                const x1 = a.left + a.width / 2 - origin.left;
+                const x1 = (startEdge ? a.left : a.left + a.width / 2) - origin.left;
                 const x2 = b.right - origin.left;
                 const y = b.top - origin.top - 3;
                 const path = document.createElementNS(svg.namespaceURI, 'path');
@@ -109,6 +109,12 @@
         requestAnimationFrame(draw);
         document.fonts.ready.then(draw);
         return () => observer.disconnect();
+    }
+
+    // A hop over one digit, edge to edge, so neighbouring hops meet end to end
+    // instead of crossing over each other.
+    function digitHop(digit, label) {
+        return { from: digit, to: digit, label, startEdge: true };
     }
 
     async function mountLearn() {
@@ -159,7 +165,7 @@
                     characters.push(node);
                     factors.append(node);
                 });
-                counted.push({ from: characters[1], to: characters[2], label: String(factor + 1) });
+                counted.push(digitHop(characters[2], String(factor + 1)));
             });
             factorsRow.append(factors, element('p', '2 digits after the points', 'decimal-learn-note'));
 
@@ -179,10 +185,7 @@
                 downArrow(), answerRow);
             root.append(picture);
             const stopFactors = drawHops(factorsRow, counted);
-            const stopAnswer = drawHops(answerRow, [
-                { from: product[1], to: product[2], label: '1' },
-                { from: product[2], to: product[3], label: '2' }
-            ]);
+            const stopAnswer = drawHops(answerRow, [digitHop(product[2], '1'), digitHop(product[3], '2')]);
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 
