@@ -86,3 +86,22 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
 .decimal-big-number.is-complete .decimal-gap:empty { width: 0; border: 0; }
 
 .decimal-division-picture.is-complete .decimal-division-gap { visibility: hidden; }
+
+/* Working notes use a slim final column, so the long sums fit on a phone. */
+.decimal-long-chart { margin-top: 2rem; }
+.decimal-long-multiplication [data-column="note"] { width: 76px; }
+.decimal-long-multiplication td[data-column="note"] { font-size: .8rem; font-weight: 400; color: var(--text-muted); white-space: nowrap; }
+.decimal-long-multiplication .digit-column-table__heading { font-size: inherit; }
+.decimal-written-carry-cell { position: relative; }
+.decimal-written-carry { position: absolute; top: .15rem; left: 50%; transform: translateX(-50%); color: #15803d; font-size: .85rem; font-weight: 700; line-height: 1; }
+.decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
+.decimal-receipt svg { display: block; width: 100%; height: auto; }
+.decimal-receipt-chart { margin-top: 2rem; }
+@media (max-width: 640px) {
+    .decimal-long-multiplication [data-column="note"] { width: 62px; }
+    .decimal-long-multiplication td[data-column="note"] { font-size: .65rem; }
+    .decimal-long-multiplication td { height: 64px; }
+    .decimal-long-multiplication .decimal-written-carry { top: 0; font-size: .7rem; }
+    body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-digit { width: 28px; }
+    body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-gap { width: 28px; }
+}

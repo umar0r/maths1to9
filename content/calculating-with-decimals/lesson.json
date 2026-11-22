@@ -83,5 +83,31 @@
             }
         ]
     },
-    "score_activities": []
+    "score_activities": [
+        {
+            "id": "step:interactive:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:2",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:3",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:4",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive:5",
+            "kind": "guided"
+        }
+    ],
+    "hide_saved_answer": true
 }

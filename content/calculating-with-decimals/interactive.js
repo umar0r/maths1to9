@@ -86,7 +86,7 @@
         svg.setAttribute('aria-hidden', 'true');
         host.append(svg);
         function draw() {
-            if (!host.isConnected) return;
+            if (!host.isConnected) { observer.disconnect(); return; }
             const origin = host.getBoundingClientRect();
             svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
             svg.replaceChildren();
@@ -183,11 +183,10 @@
                 render();
             } : null);
             if (state.screen === 4 && complete) api.completeSection('explanation');
-            // Stages 2 and 3 are deliberately unbuilt. Keep their sections locked.
             api.setSectionAction('explanation', {
                 label: state.screen === 4 ? 'Continue' : 'Next',
-                disabled: !complete || state.screen === 4,
-                onClick: () => showScreen(state.screen + 1)
+                disabled: !complete,
+                onClick: () => state.screen === 4 ? api.continueSection() : showScreen(state.screen + 1)
             });
             syncHash();
         }
@@ -340,9 +339,7 @@
         else render();
     }
 
-    // Retain four sections while the later stages await their own builds.
-    window.Maths1to9Interactives ??= {};
-    window.Maths1to9Interactives[SLUG] = () => sectionEvent('interactive', 'gate');
+    window.DecimalCalculations = { element, button, drawHops };
     document.addEventListener('maths1to9:lesson-rendered', event => {
         if (event.detail?.slug === SLUG) mountLearn();
     });
