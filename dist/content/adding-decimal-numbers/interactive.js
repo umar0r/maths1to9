@@ -104,7 +104,7 @@
         const built = window.Maths1to9DigitCards.columnTable({
             label: `${a} ${operator === '−' ? 'minus' : 'plus'} ${b} in place-value columns`,
             className: `decimal-column-table${tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
-            columns: columns.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })),
+            columns: columns.map(id => ({ id, label: id === 'point' ? 'point' : id, ariaLabel: id === 'point' ? 'decimal point' : id })),
             rows: [
                 { id: 'a', values: places(a, zero) },
                 { id: 'b', sign: operator, values: moving ? {} : places(b, true) }
@@ -124,21 +124,31 @@
     }
 
     function drawAdditionChart(host, problem) {
-        const chart = element('div', '', 'decimal-place-chart decimal-addition-chart digit-card-chart');
-        const growing = problem.receiptStep === 2;
-        const keys = [...(problem.tens ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'];
-        const places = number => {
+        const chart = element('div', '', `decimal-place-chart decimal-addition-chart digit-card-chart${problem.keys?.length > 4 ? ' digit-card-chart--wide' : ''}`);
+        const previous = problem.previous || (problem.receiptStep === 2
+            ? { a: '3.25', b: '1.42', operator: '+', answer: '4.67' } : null);
+        const growing = Boolean(previous);
+        const keys = [...(problem.keys || ['hundredths', 'tenths', 'units', ...(problem.tens ? ['tens'] : [])])].reverse();
+        keys.splice(keys.length - 2, 0, 'point');
+        const places = (number, answer = false) => {
             const [whole, decimal = ''] = number.split('.');
-            return { tens: whole.length > 1 ? whole.slice(0, -1) : '', units: whole.slice(-1), point: '.',
-                tenths: decimal[0] || '0', hundredths: decimal[1] || '0' };
+            return Object.fromEntries(keys.map(key => {
+                if (key === 'point') return [key, '.'];
+                if (key === 'tenths') return [key, decimal[0] || '0'];
+                if (key === 'hundredths') return [key, decimal[1] || '0'];
+                const place = ['units', 'tens', 'hundreds', 'thousands'].indexOf(key);
+                return [key, whole[whole.length - place - 1] || (answer ? '0' : '')];
+            }));
         };
         const rows = [
-            { id: 'a', values: places(growing ? '3.25' : problem.a), faded: growing },
-            { id: 'b', sign: growing ? '+' : problem.operator, values: places(growing ? '1.42' : problem.b), faded: growing }
+            { id: 'a', values: places(growing ? previous.a : problem.a), faded: growing },
+            { id: 'b', sign: growing ? previous.operator : problem.operator,
+                values: places(growing ? previous.b : problem.b), faded: growing }
         ];
         if (growing) rows.push(
-            { id: 'subtotal', sign: '=', answer: true, highlighted: true, className: 'decimal-receipt-subtotal-row', values: places('4.67') },
-            { id: 'voucher', sign: '−', className: 'decimal-receipt-voucher-row', values: places('0.85') }
+            { id: 'subtotal', sign: '=', answer: true, highlighted: true, className: 'decimal-receipt-subtotal-row', values: places(previous.answer, true) },
+            { id: 'next', sign: problem.operator,
+                className: problem.receiptStep === 2 ? 'decimal-receipt-voucher-row' : '', values: places(problem.b) }
         );
         rows.push({ id: 'answer', sign: '=', answer: true,
             className: problem.receiptStep === 1 ? 'decimal-receipt-subtotal-row' : '',
@@ -151,9 +161,9 @@
         carry.hidden = true;
         let carryCell;
         const built = window.Maths1to9DigitCards.columnTable({
-            label: growing ? '3.25 plus 1.42, then subtract 0.85 in place-value columns' : `${problem.a} ${problem.operator} ${problem.b} in place-value columns`,
-            className: `decimal-column-table${problem.tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
-            columns: keys.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })), rows,
+            label: growing ? `${previous.a} ${previous.operator} ${previous.b}, then ${problem.operator} ${problem.b} in place-value columns` : `${problem.a} ${problem.operator} ${problem.b} in place-value columns`,
+            className: `decimal-column-table${problem.tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}${keys.length > 5 ? ' digit-column-table--wide' : ''}`,
+            columns: keys.map(id => ({ id, label: id === 'point' ? 'point' : id, ariaLabel: id === 'point' ? 'decimal point' : id })), rows,
             cellExtra(cell, { row, column }) {
                 if (row.id === (growing ? 'subtotal' : 'a') && column.id === 'units') {
                     carryCell = cell;
@@ -163,7 +173,7 @@
         });
         chart.append(built.table, carry);
         host.append(chart);
-        if (growing) drawVoucherNote(chart, built.table, built.rows.voucher);
+        if (problem.receiptStep === 2) drawVoucherNote(chart, built.table, built.rows.next);
         function positionCarry() {
             if (!chart.isConnected) { observer.disconnect(); return; }
             const origin = chart.getBoundingClientRect(), units = carryCell.getBoundingClientRect();
@@ -178,9 +188,15 @@
     }
 
     function additionCardsWidget(problem) {
-        const order = ['hundredths', 'tenths', 'units', ...(problem.tens ? ['tens'] : [])];
+        const order = problem.keys || ['hundredths', 'tenths', 'units', ...(problem.tens ? ['tens'] : [])];
         let view;
+        const left = Math.round(Number(problem.a) * 100), right = Math.round(Number(problem.b) * 100);
+        const answer = problem.operator === '+' ? left + right : left - right;
+        const expected = problem.answerDigits || Object.fromEntries(order.map((key, place) => [key, String(Math.floor(answer / 10 ** place) % 10)]));
+        const optional = key => order.indexOf(key) >= 3 && Math.floor(answer / 10 ** order.indexOf(key)) === 0;
+        const normalized = value => Object.fromEntries(order.map(key => [key, value?.digits?.[key] ?? (optional(key) ? '0' : undefined)]));
         return {
+            keepValueOnRetry: true,
             reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
             replayFeedback(result) {
                 view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' });
@@ -192,7 +208,8 @@
                     onPaint({ value, active, editable, phase }) {
                         const markedRight = phase === 'correct';
                         built.update({ activeColumn: editable ? active : null,
-                            faded: { a: problem.receiptStep === 2 && !markedRight, b: problem.receiptStep === 2 && !markedRight },
+                            faded: { a: Boolean(problem.previous || problem.receiptStep === 2) && !markedRight,
+                                b: Boolean(problem.previous || problem.receiptStep === 2) && !markedRight },
                             highlighted: { subtotal: true, answer: problem.receiptStep === 1 && markedRight }
                         });
                         carry.hidden = !problem.showCarry(value?.digits || {});
@@ -200,12 +217,15 @@
                 });
                 return view;
             },
-            isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined),
+            isEmpty: value => !value || order.some(key => value.digits?.[key] === undefined && !optional(key)),
             mark(value) {
-                const error = problem.mark(value.digits);
-                return { correct: !error, feedback: error || problem.feedback };
+                const error = problem.mark(normalized(value));
+                const marks = Object.fromEntries(order.filter(key => value?.digits?.[key] !== undefined || !optional(key))
+                    .map(key => [key, normalized(value)[key] === expected[key] ? 'right' : 'wrong']));
+                return { correct: !error, feedback: error || problem.feedback, marks,
+                    value: window.Maths1to9DigitCards.markedValue(value, marks) };
             },
-            answerText: value => value ? `${problem.tens ? value.digits?.tens || '' : ''}${value.digits?.units || ''}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
+            answerText: value => value ? `${order.slice(2).reverse().map(key => value.digits?.[key] || '').join('')}.${value.digits?.tenths || ''}${value.digits?.hundredths || ''}` : ''
         };
     }
 
@@ -579,7 +599,7 @@
         sectionEvent('interactive', 'gate');
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 13,
+            version: 15,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });

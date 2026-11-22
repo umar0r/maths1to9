@@ -886,13 +886,14 @@
                 updateAnswer(() => {
                     saved.phase = 'answer';
                     saved.selected = null;
-                    if (!fields) saved.value = custom ? null : '';
+                    if (!fields && !(custom && widget.keepValueOnRetry === true)) saved.value = custom ? null : '';
                     saved.feedback = '';
                     saved.hint = null;
                 });
                 update();
                 if (custom) {
-                    handle.update({ value: null, editable: true, phase: 'answer' });
+                    handle.update({ value: saved.value, editable: true, phase: 'answer',
+                        ...(widget.keepValueOnRetry === true ? { retry: true } : {}) });
                     handle.focus?.();
                 }
                 if (input) input.focus();
@@ -913,7 +914,10 @@
                     throw new TypeError(`Custom question "${questionId}" mark must return a boolean correct.`);
                 }
                 correct = response.correct;
-                value = saved.value;
+                // Only opted-in widgets may return a checked value, for example
+                // saved per-slot marks. Other custom widgets keep their old cycle.
+                value = widget.keepValueOnRetry === true && Object.hasOwn(response, 'value')
+                    ? JSON.parse(JSON.stringify(response.value)) : saved.value;
             } else if (fields) {
                 if (empty()) return;
                 const invalid = fieldInputs.find(({ id }) => fractionValue(saved.value[id]) === null);

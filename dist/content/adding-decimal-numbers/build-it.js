@@ -58,6 +58,7 @@
         const optionalAnswer = key => key === 'tens' && problem.answer < 1000;
         const answerDigit = (digits, key) => digits?.[`answer:${key}`] ?? (optionalAnswer(key) ? '0' : undefined);
         return {
+            keepValueOnRetry: true,
             reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
             replayFeedback(result) { view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' }); },
             isEmpty(value) {
@@ -67,10 +68,22 @@
             },
             mark(value) {
                 const placement = problem.misplaced(value?.digits);
-                if (placement) return { correct: false, feedback: placement };
                 const digits = Object.fromEntries(problem.keys.map(key => [key, answerDigit(value?.digits, key)]));
                 const error = problem.row.mark(digits);
-                return { correct: !error, feedback: error || problem.feedback };
+                const marks = {};
+                for (const operand of problem.operands) for (const key of problem.keys) {
+                    const id = `${operand.id}:${key}`;
+                    if (value?.digits?.[id] !== undefined || operand.fields[key].required) {
+                        marks[id] = problem.placementHint(operand, key, value?.digits) ? 'wrong' : 'right';
+                    }
+                }
+                for (const key of problem.keys) {
+                    if (value?.digits?.[`answer:${key}`] !== undefined || !optionalAnswer(key)) {
+                        marks[`answer:${key}`] = answerDigit(value?.digits, key) === problem.answerDigits[key] ? 'right' : 'wrong';
+                    }
+                }
+                return { correct: !placement && !error, feedback: placement || error || problem.feedback, marks,
+                    value: window.Maths1to9DigitCards.markedValue(value, marks) };
             },
             answerText(value) {
                 const digits = value?.digits || {};
@@ -88,19 +101,24 @@
                 })), {
                     id: 'answer', sign: '=', answer: true,
                     values: Object.fromEntries(places.map(key => [key, key === 'point' ? '.' : {
-                        slot: `answer:${key}`, label: `Answer, ${key}`, allowed: value => operandsReady(value?.digits)
+                        slot: `answer:${key}`, label: `Answer, ${key}`, allowed: value => value?.retrying || operandsReady(value?.digits)
                     }]))
                 }];
                 const built = window.Maths1to9DigitCards.columnTable({
                     label: `${problem.a} ${problem.operator} ${problem.b} in place-value columns`,
                     className: `decimal-column-table${problem.tens ? ' decimal-column-table--tens digit-column-table--tens' : ''}`,
-                    columns: places.map(id => ({ id, label: id === 'point' ? 'decimal point' : id })), rows
+                    columns: places.map(id => ({ id, label: id === 'point' ? 'point' : id, ariaLabel: id === 'point' ? 'decimal point' : id })), rows
                 });
                 const chart = element('div', '', 'decimal-place-chart decimal-addition-chart decimal-build-chart digit-card-chart');
                 chart.append(built.table);
                 host.append(chart);
                 view = window.Maths1to9DigitCards.create(host, {
-                    slots: built.slots, groups: { answer: { advance: 'left' } }, onChange,
+                    slots: built.slots, active: `a:${keys[0]}`, onChange,
+                    groups: {
+                        a: { advance: 'right', wrap: false, next: 'b' },
+                        b: { advance: 'right', wrap: false, next: 'answer' },
+                        answer: { advance: 'left' }
+                    },
                     onPaint({ active, editable }) { built.update({ activeColumn: editable ? active?.split(':')[1] : null }); }
                 });
                 return view;
