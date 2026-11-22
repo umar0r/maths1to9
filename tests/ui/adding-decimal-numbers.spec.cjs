@@ -164,7 +164,7 @@ for (const width of [1280, 375]) {
                 const engine = window.Maths1to9LessonEngine;
                 const items = window.DecimalAddition.pickSteps(engine.seededRandom(1503238553));
                 await window.Maths1to9Progress.saveLessonActivityState('adding-decimal-numbers', 'question-bank', {
-                    sharedState: 1, version: 7,
+                    sharedState: 1, version: 8,
                     data: { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} }
                 });
                 return items.map(item => window.DecimalAddition.generateStep(item).prompt);

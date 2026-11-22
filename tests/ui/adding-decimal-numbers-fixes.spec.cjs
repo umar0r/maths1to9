@@ -30,7 +30,7 @@ async function start(page) {
     await page.evaluate(async () => {
         const items = window.DecimalAddition.pickSteps(window.Maths1to9LessonEngine.seededRandom(1503238553));
         await window.Maths1to9Progress.saveLessonActivityState('adding-decimal-numbers', 'question-bank', {
-            sharedState: 1, version: 7,
+            sharedState: 1, version: 8,
             data: { session: 1, items, index: 0, screen: 0, finished: false, earlier: [], cards: {} }
         });
     });

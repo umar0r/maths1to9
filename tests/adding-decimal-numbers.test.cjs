@@ -158,7 +158,10 @@ test('decimals: four approved Check questions test understanding with separate m
 test('decimals: non-money questions omit trailing decimal zeros; money keeps two places', () => {
     for (const q of generated) {
         for (const text of [q.prompt, ...(q.options || []).map(o => o.label)]) {
-            for (const money of text.matchAll(/£(\d+(?:\.\d+)?)/g)) assert.match(money[1], /^\d+\.\d{2}$/);
+            for (const money of text.matchAll(/£(\d+(?:\.\d+)?)/g)) {
+                if (q.questionType === 'change' && money[1] === String(q.values.paid / 100)) continue;
+                assert.match(money[1], /^\d+\.\d{2}$/);
+            }
             for (const match of text.matchAll(/(£?)(\d+\.\d+)/g)) {
                 if (match[1]) assert.match(match[2], /^\d+\.\d{2}$/);
                 else assert.doesNotMatch(match[2], /0$/);
@@ -397,6 +400,34 @@ test('decimals: ten seeded problems have sixteen saved stages, with four distinc
                     assert.equal(left, subtotal);
                 }
             }
+        }
+    }
+});
+
+
+test('decimals: note wording omits pennies only outside the working table and refund distractors slip a decimal place', () => {
+    const sameAmount = Q.generate({ type: 'change', seed: 0 }, () => 0);
+    assert.equal(sameAmount.values.cost * 10, sameAmount.values.paid);
+    for (const q of [...generated, sameAmount]) {
+        if (q.questionType === 'change') {
+            const note = `£${q.values.paid / 100}`;
+            assert.ok(q.prompt.includes(`${note} note`));
+            assert.ok(!q.prompt.includes(`${note}.00 note`));
+            const choice = q.stages[0];
+            for (const option of choice.options) {
+                const terms = option.label.split(' ');
+                const noteIndex = terms[0] === `£${(q.values.cost / 100).toFixed(2)}` ? 2 : 0;
+                assert.equal(terms[noteIndex], note);
+                assert.match(terms[noteIndex === 0 ? 2 : 0], /^£\d+\.\d{2}$/);
+            }
+            assert.equal(q.cardProblem.a, (q.values.paid / 100).toFixed(2));
+        }
+        if (q.questionType === 'missing-refund') {
+            const { balance, after } = q.values;
+            const old = (balance / 100).toFixed(2), slipped = (Math.round(balance / 10) / 100).toFixed(2);
+            const option = q.stages[0].options.find(option => option.feedback === `The old balance is £${old}, not £${slipped}.`);
+            assert.equal(option.label, `£${(after / 100).toFixed(2)} − £${slipped}`);
+            assert.equal(option.correct, false);
         }
     }
 });
