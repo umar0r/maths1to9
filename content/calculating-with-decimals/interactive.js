@@ -11,7 +11,7 @@
             title: 'To multiply decimals, count how many digits there are after the decimal points.'
         },
         {
-            title: 'To divide by a whole number, count how many digits there are after the decimal point.'
+            title: 'To divide decimals, count how many digits there are after the decimal point.'
         },
         {
             title: 'To divide by a decimal, times both numbers by 10 first.'
@@ -122,7 +122,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 7,
+            version: 8,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -272,7 +272,7 @@
             const sumRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
             const sum = element('div', '', 'decimal-big-number');
             const sumDigits = [];
-            [...'8.4'].forEach(digit => {
+            [...'0.24'].forEach(digit => {
                 const node = digit === '.' ? element('span', '.', 'decimal-number-point')
                     : element('span', digit, 'decimal-digit');
                 sumDigits.push(node);
@@ -284,7 +284,7 @@
             const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
             const answer = element('div', '', 'decimal-big-number');
             const answerDigits = [];
-            [...'2.8'].forEach(digit => {
+            [...'0.08'].forEach(digit => {
                 const node = digit === '.' ? element('span', '.', 'decimal-number-point')
                     : element('span', digit, 'decimal-digit');
                 answerDigits.push(node);
@@ -293,22 +293,29 @@
             answerStep.append(answer);
 
             picture.append(sumRow,
-                element('p', 'In this example there is 1.', 'decimal-learn-line'),
+                element('p', 'In this example there are 2.', 'decimal-learn-line'),
                 element('p', 'Take the decimal point out and divide.', 'decimal-learn-line'),
-                element('div', '84 \u00f7 3 = 28', 'decimal-big-number'),
-                element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
-                element('p', 'So 28 becomes', 'decimal-learn-line'),
+                element('div', '24 \u00f7 3 = 8', 'decimal-big-number'),
+                element('p', 'Move the point back 2 digits. Put 0s in the gaps.', 'decimal-learn-line'),
+                element('p', 'So 8 becomes', 'decimal-learn-line'),
                 answerStep);
             root.append(picture);
 
-            // One hop over the 4, from the point to the gap after it.
+            // Two hops over the 24, one digit each, head on the last. None on the 3.
+            const sumPoint = sumDigits.findIndex(node => node.textContent === '.');
             const stopSum = drawArrows(sumRow, [
-                { from: { node: sumDigits[1], side: 'centre' }, to: { node: sumDigits[2], side: 'right' }, label: '1', head: true }
+                { from: { node: sumDigits[sumPoint], side: 'centre' }, to: { node: sumDigits[sumPoint + 1], side: 'right' }, label: '2' },
+                { from: { node: sumDigits[sumPoint + 1], side: 'right' }, to: { node: sumDigits[sumPoint + 2], side: 'right' }, label: '2', head: true }
             ]);
-            // Back over the 8, landing on the point.
-            const stopAnswer = drawArrows(answerStep, [
-                { from: { node: answerDigits[2], side: 'right' }, to: { node: answerDigits[1], side: 'centre' }, label: '1', head: true }
-            ]);
+            // Two hops back from the 8, the last landing on the point.
+            const answerPoint = answerDigits.findIndex(node => node.textContent === '.');
+            const answerHops = answerDigits.slice(answerPoint + 1).map((node, index) => ({
+                from: { node, side: 'right' },
+                to: index === 0 ? { node: answerDigits[answerPoint], side: 'centre' } : { node, side: 'left' },
+                label: '2',
+                head: index === 0
+            }));
+            const stopAnswer = drawArrows(answerStep, answerHops);
             dispose = () => { stopSum(); stopAnswer(); };
         }
 
