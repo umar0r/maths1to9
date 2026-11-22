@@ -327,8 +327,18 @@
                         rect.setAttribute('rx', String(px(10)));
                         label.style.fontSize = `${labelSize.toFixed(1)}px`;
                         label.setAttribute('y', String(boxTop + boxHeight / 2 + labelSize * 0.35));
-                        if (Number(end.dataset.end) === chosen) end.classList.add('is-selected');
+                        // A second box sits 3 px lower, behind the first, so the
+                        // end has the same raised edge as a multiple choice answer.
+                        const lip = rect.cloneNode();
+                        lip.classList.add('rounding-end-lip');
+                        lip.setAttribute('y', String(boxTop + px(3)));
+                        end.insertBefore(lip, rect);
+                        const picked = Number(end.dataset.end) === chosen;
+                        if (picked) end.classList.add('is-selected');
                         if (editable) continue;
+                        // After Check the chosen end turns green or red, like a
+                        // marked multiple choice answer.
+                        if (picked) end.classList.add(chosen === answer ? 'is-correct' : 'is-incorrect');
                         // Once it is marked the ends still show the choice, but
                         // nothing on the line is tappable any more.
                         end.removeAttribute('tabindex');
