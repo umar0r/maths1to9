@@ -1,0 +1,59 @@
+.scatter-pair-table {
+    display: grid;
+    grid-template-columns: minmax(3.5rem, 1.3fr) repeat(6, minmax(0, 1fr));
+    width: 100%;
+    max-width: 440px;
+    margin: 1rem auto;
+    border: 1px solid var(--border-dark);
+    border-radius: 0.4rem;
+    overflow: hidden;
+}
+
+.scatter-pair-table__headings,
+.scatter-pair-table__column {
+    display: grid;
+    grid-template-rows: repeat(2, 2.5rem);
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+}
+
+.scatter-pair-table__headings {
+    font-weight: 700;
+}
+
+.scatter-pair-table__headings span,
+.scatter-pair-table__column span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scatter-pair-table__headings span:first-child,
+.scatter-pair-table__column span:first-child {
+    border-bottom: 1px solid var(--border);
+}
+
+button.scatter-pair-table__column {
+    cursor: pointer;
+}
+
+button.scatter-pair-table__column:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: -3px;
+}
+
+.scatter-pair-table__column.is-selected {
+    background: var(--accent-light);
+}
+
+.scatter-graph-host {
+    width: 100%;
+    max-width: 440px;
+    margin: 1rem auto;
+}

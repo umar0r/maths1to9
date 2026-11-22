@@ -1,0 +1,45 @@
+{
+    "slug": "scatter-graphs",
+    "title": "Plotting scatter graphs",
+    "subtitle": "Plot and read pairs of numbers on a scatter graph.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "read", "label": "Read",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "plot", "label": "Plot",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "scales", "label": "Scales",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            { "prompt": "Coming soon." },
+            { "prompt": "Coming soon." },
+            { "prompt": "Coming soon." },
+            { "prompt": "Coming soon." },
+            { "prompt": "Coming soon." }
+        ]
+    },
+    "assessment": { "question_types": { "placeholder": "scatter-graphs" } },
+    "score_activities": [
+        { "id": "step:explanation--read:0", "kind": "guided" },
+        { "id": "step:explanation--read:1", "kind": "guided" },
+        { "id": "step:explanation--read:2", "kind": "guided" }
+    ]
+}
