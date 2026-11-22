@@ -122,7 +122,7 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 4,
+            version: 5,
             initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
@@ -147,24 +147,27 @@
             const factorsRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
             const factors = element('div', '', 'decimal-big-number');
             const counted = [];
-            ['2.4', '0.3'].forEach((number, factor) => {
-                if (factor) factors.append(element('span', '×', 'decimal-times'));
-                const characters = [];
+            ['0.24', '0.003'].forEach((number, factor) => {
+                if (factor) factors.append(element('span', '\u00d7', 'decimal-times'));
+                const afterPoint = [];
+                let pastPoint = false;
                 [...number].forEach(digit => {
                     const node = digit === '.' ? element('span', '.', 'decimal-number-point')
                         : element('span', digit, 'decimal-digit');
-                    characters.push(node);
+                    if (digit === '.') pastPoint = true;
+                    else if (pastPoint) afterPoint.push(node);
                     factors.append(node);
                 });
-                counted.push(digitHop(characters[2], String(factor + 1)));
+                // Each number counts its own digits after the point, starting at 1.
+                afterPoint.forEach((node, index) => counted.push(digitHop(node, String(index + 1))));
             });
-            factorsRow.append(factors, element('p', '2 digits after the points', 'decimal-learn-note'));
+            factorsRow.append(factors, element('p', '2 + 3 = 5 digits after the points', 'decimal-learn-note'));
 
             const answerRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
             const answer = element('div', '', 'decimal-big-number');
             answer.append(element('span', '=', 'decimal-times'));
             const product = [];
-            [...'0.72'].forEach(digit => {
+            [...'0.00072'].forEach(digit => {
                 const node = digit === '.' ? element('span', '.', 'decimal-number-point')
                     : element('span', digit, 'decimal-digit');
                 product.push(node);
@@ -172,11 +175,13 @@
             });
             answerRow.append(answer);
 
-            picture.append(factorsRow, downArrow(), element('div', '24 × 3 = 72', 'decimal-big-number'),
+            picture.append(factorsRow, downArrow(), element('div', '24 \u00d7 3 = 72', 'decimal-big-number'),
                 downArrow(), answerRow);
             root.append(picture);
             const stopFactors = drawHops(factorsRow, counted);
-            const stopAnswer = drawHops(answerRow, [digitHop(product[2], '1'), digitHop(product[3], '2')]);
+            // The answer counts that total back from the right: 1 on the last digit.
+            const tail = product.slice(product.findIndex(node => node.textContent === '.') + 1);
+            const stopAnswer = drawHops(answerRow, tail.map((node, index) => digitHop(node, String(tail.length - index))));
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 
