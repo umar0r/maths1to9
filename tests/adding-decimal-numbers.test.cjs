@@ -164,7 +164,10 @@ test('decimals: four approved Check questions test understanding with separate m
         assert.equal(typeof shuffled.figure === 'function', prompts[index][2]);
         assert.equal(shuffled.options.map(o => o.label).sort().join('|'), q.options.map(o => o.label).sort().join('|'));
     });
-    assert.match(checks[0].options.find(o => o.correct).label, /8 is tenths.*4 is hundredths/);
+    assert.equal(checks[0].options.find(o => o.correct).label, 'Sam should have lined up the decimal points.');
+    assert.match(checks[0].options.find(o => o.correct).feedback, /8 is tenths.*4 is hundredths/);
+    assert.ok(!checks[0].options.some(o => o.label === "The 8 is tenths and the 4 is hundredths, so they don't belong in the same column."),
+        'the old correct label is gone');
     assert.match(checks[1].options.find(o => o.correct).label, /no hundredths/);
     assert.equal(checks[2].options.find(o => o.correct).label, 'Write 0 in the tenths and add 1 to the units.');
     assert.equal(checks[3].options.find(o => o.correct).label, '2.40 + 1.35 − 0.50');

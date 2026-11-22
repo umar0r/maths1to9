@@ -61,7 +61,7 @@ module.exports = async function solve(page) {
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
     const conceptual = [
-        [/^Sam works/, "The 8 is tenths and the 4 is hundredths, so they don't belong in the same column."],
+        [/^Sam works/, 'Sam should have lined up the decimal points.'],
         [/^Why can/, "7.6 has no hundredths, so a 0 there doesn't change it."],
         [/^The tenths make/, 'Write 0 in the tenths and add 1 to the units.'],
         [/^Which working/, '2.40 + 1.35 − 0.50']

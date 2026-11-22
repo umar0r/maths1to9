@@ -300,23 +300,8 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
     line-height: 1.5;
 }
 .decimal-sam-working__sign { display: block; text-align: center; }
-.decimal-sam-working__digits {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, 1.15rem);
-    text-align: center;
-}
-.decimal-sam-working__digit { display: block; }
-/* The point is a small dot between two digits, not a column of its own. */
-.decimal-sam-working__point {
-    position: absolute;
-    bottom: .42em;
-    width: .16em;
-    height: .16em;
-    border-radius: 50%;
-    background: currentColor;
-    transform: translateX(-50%);
-}
+/* Each number is written in one go, right-aligned, so the last digits line up. */
+.decimal-sam-working__number { display: block; text-align: right; white-space: nowrap; }
 .decimal-sam-working__line { grid-column: 2; height: 0; border-top: 2px solid #334155; }
 
 .decimal-check-table { margin-top: 1.25rem; }

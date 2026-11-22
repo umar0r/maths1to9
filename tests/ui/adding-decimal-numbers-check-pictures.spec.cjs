@@ -34,34 +34,51 @@ for (const width of [1280, 375]) {
             const sam = page.locator('.decimal-sam-working');
             await expect(sam).toBeVisible();
             await expect(sam.locator('figcaption')).toHaveText("Sam's working");
-            // Only digits take a column. Each number is right-aligned in three.
-            const numbers = sam.locator('.decimal-sam-working__digits');
-            await expect(numbers.nth(0).locator('.decimal-sam-working__digit')).toHaveText(['', '5', '8']);
-            await expect(numbers.nth(1).locator('.decimal-sam-working__digit')).toHaveText(['0', '3', '4']);
-            await expect(numbers.nth(2).locator('.decimal-sam-working__digit')).toHaveText(['0', '9', '2']);
-            const digit = (row, column) => numbers.nth(row).locator('.decimal-sam-working__digit').nth(column);
-            // The 5 sits exactly over the 3, and the 8 exactly over the 4.
-            const five = await digit(0, 1).boundingBox();
-            const three = await digit(1, 1).boundingBox();
-            expect(Math.abs(five.x - three.x)).toBeLessThan(1);
-            const eight = await digit(0, 2).boundingBox();
-            const four = await digit(1, 2).boundingBox();
-            expect(Math.abs(eight.x - four.x)).toBeLessThan(1);
-            // The smaller row leaves its first column empty.
-            const short = await numbers.nth(0).boundingBox();
-            expect(Math.abs(short.width - (await numbers.nth(1).boundingBox()).width)).toBeLessThan(1);
-            // A point is a small dot between its own digits, so 5.8's is one column
-            // right of the points in 0.34 and 0.92, which line up with each other.
-            const points = sam.locator('.decimal-sam-working__point');
-            await expect(points).toHaveCount(3);
-            const shortPoint = await points.nth(0).boundingBox();
-            const longPoint = await points.nth(1).boundingBox();
-            const answerPoint = await points.nth(2).boundingBox();
-            expect(Math.abs(shortPoint.x - longPoint.x)).toBeGreaterThan(10);
-            expect(Math.abs(longPoint.x - answerPoint.x)).toBeLessThan(1);
-            expect(shortPoint.width).toBeLessThan(6);
-            expect(Math.abs((shortPoint.x + shortPoint.width / 2) - (eight.x + eight.width / 2))).toBeGreaterThan(4);
+            // Each number is written in one go, with equal-width digits, and the
+            // three are right-aligned so their last digits line up.
+            const numbers = sam.locator('.decimal-sam-working__number');
+            await expect(numbers).toHaveText(['5.8', '0.34', '0.92']);
+            expect(await numbers.nth(1).evaluate(node => getComputedStyle(node).fontVariantNumeric)).toContain('tabular-nums');
+            // Measure the end of each number's last digit and where its point sits.
+            const ink = await page.evaluate(() => [...document.querySelectorAll('.decimal-sam-working__number')].map(run => {
+                const text = run.firstChild;
+                const glyph = index => {
+                    const range = document.createRange();
+                    range.setStart(text, index);
+                    range.setEnd(text, index + 1);
+                    return range.getBoundingClientRect();
+                };
+                return {
+                    point: glyph(text.textContent.indexOf('.')).left,
+                    lastDigit: glyph(text.textContent.length - 1).right
+                };
+            }));
+            // The 8 sits over the 4, and the 4 of 0.34 over the 2 of 0.92.
+            expect(Math.abs(ink[0].lastDigit - ink[1].lastDigit)).toBeLessThan(1);
+            expect(Math.abs(ink[1].lastDigit - ink[2].lastDigit)).toBeLessThan(1);
+            // The points do not line up: the one in 5.8 sits further right.
+            expect(Math.abs(ink[1].point - ink[2].point)).toBeLessThan(1);
+            expect(ink[0].point - ink[1].point).toBeGreaterThan(4);
+            // The + keeps a small gap before the 0.
+            const gap = await page.evaluate(() => {
+                const signs = [...document.querySelectorAll('.decimal-sam-working__sign')];
+                const runs = [...document.querySelectorAll('.decimal-sam-working__number')];
+                const glyph = (node, index) => {
+                    const range = document.createRange();
+                    range.setStart(node.firstChild, index);
+                    range.setEnd(node.firstChild, index + 1);
+                    return range.getBoundingClientRect();
+                };
+                return glyph(runs[1], 0).left - glyph(signs[1], 0).right;
+            });
+            expect(gap).toBeGreaterThan(1);
             await noSidewaysScroll();
+            // The right answer is now lining up the points, and the old label is gone.
+            const options = page.locator('.question-card-options:visible button');
+            await expect(options).toHaveCount(4);
+            const labels = await options.allTextContents();
+            expect(labels).toContain('Sam should have lined up the decimal points.');
+            expect(labels).not.toContain("The 8 is tenths and the 4 is hundredths, so they don't belong in the same column.");
             await solve(page);
             await main(page).click();
             await expect(feedback(page)).toBeVisible();

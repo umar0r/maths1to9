@@ -219,9 +219,9 @@
         host.append(table);
     }
 
-    // Check 1: Sam's working as a pupil writes it on paper. Only digits take
-    // a column, so the last digits line up; each point is a small dot between
-    // its own two digits, and that is why the points do not line up.
+    // Check 1: Sam's working as a pupil writes it on paper. Each number is
+    // written in one go and the three are right-aligned, so the last digits
+    // line up and the decimal points do not.
     function drawSamWorking(host) {
         const figure = document.createElement('figure');
         figure.className = 'decimal-sam-working';
@@ -229,30 +229,14 @@
         working.className = 'decimal-sam-working__grid';
         working.setAttribute('role', 'img');
         working.setAttribute('aria-label', 'Sam wrote 5.8 and 0.34 with their last digits lined up, and answered 0.92.');
-        const COLUMNS = 3;
         function row(sign, number) {
-            const [whole, decimal] = number.split('.');
-            const digits = whole + decimal;
-            const cells = [...Array(COLUMNS - digits.length).fill(''), ...digits];
-            const boxes = document.createElement('div');
-            boxes.className = 'decimal-sam-working__digits';
-            for (const text of cells) {
-                const cell = document.createElement('span');
-                cell.className = 'decimal-sam-working__digit';
-                cell.textContent = text;
-                boxes.append(cell);
-            }
-            // The point sits on the boundary after the last whole digit.
-            const boundary = COLUMNS - digits.length + whole.length;
-            const point = document.createElement('span');
-            point.className = 'decimal-sam-working__point';
-            point.style.left = `${(boundary / COLUMNS) * 100}%`;
-            point.setAttribute('aria-hidden', 'true');
-            boxes.append(point);
             const signCell = document.createElement('span');
             signCell.className = 'decimal-sam-working__sign';
             signCell.textContent = sign;
-            working.append(signCell, boxes);
+            const value = document.createElement('span');
+            value.className = 'decimal-sam-working__number';
+            value.textContent = number;
+            working.append(signCell, value);
         }
         row('', '5.8');
         row('+', '0.34');
@@ -416,10 +400,10 @@
                 prompt: 'Sam works out 5.8 + 0.34 like this. What has Sam done wrong?',
                 figure: drawSamWorking,
                 options: [
-                    option("The 8 is tenths and the 4 is hundredths, so they don't belong in the same column.", 'Right. Line up the decimal points instead.', true),
-                    option('The 8 and the 4 are both units.', "The 8 is 8 tenths and the 4 is 4 hundredths. They're worth different amounts."),
+                    option('Sam should have lined up the decimal points.', "Right. The 8 is tenths and the 4 is hundredths, so they don't belong in the same column.", true),
                     option('Nothing. You always line up the last digits.', 'That only works when both numbers have the same number of decimal places.'),
-                    option('Sam should have lined up the first digits.', 'First digits can be worth different amounts too. Line up the decimal points.')
+                    option('Sam should have lined up the first digits.', 'First digits can be worth different amounts too. Line up the decimal points.'),
+                    option('The 8 and the 4 are both units.', "The 8 is 8 tenths and the 4 is 4 hundredths. They're worth different amounts.")
                 ]
             },
             {
