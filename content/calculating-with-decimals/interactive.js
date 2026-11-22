@@ -11,7 +11,7 @@
             title: 'To multiply decimals, count how many digits there are after the decimal points.'
         },
         {
-            title: 'To divide decimals, count how many digits there are after the decimal point.'
+            title: 'To divide by a whole number, count how many digits there are after the decimal point.'
         },
         {
             title: 'To divide by a decimal, times both numbers by 10 first.'
