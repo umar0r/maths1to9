@@ -53,9 +53,10 @@
                 { id: 'answer', answer: true, values: values('answer', places) }
             ],
             cellExtra(cell, { row, column }) {
-                if (row.id === 'a' && column.id === 'tens') carryNodes.first = writtenCarry(cell, '1');
-                if (row.id === 'a' && column.id === 'hundreds') carryNodes.second = writtenCarry(cell, '2');
-                if (row.id === 'first' && column.id === 'hundreds') carryNodes.sum = writtenCarry(cell, '+1');
+                if (row.id === 'first' && column.id === 'tens') carryNodes.firstTens = writtenCarry(cell, '+1');
+                if (row.id === 'first' && column.id === 'hundreds') carryNodes.firstHundreds = writtenCarry(cell, '+4');
+                if (row.id === 'second' && column.id === 'thousands') carryNodes.secondThousands = writtenCarry(cell, '+2');
+                if (row.id === 'answer' && column.id === 'hundreds') carryNodes.sum = writtenCarry(cell, '+1');
             }
         });
         const chart = element('div', '', 'digit-card-chart digit-card-chart--wide decimal-long-chart');
@@ -68,9 +69,9 @@
             feedback: '62 × 8 = 496 and 62 × 40 = 2480, so 62 × 48 = 2976.',
             paint(value) {
                 const digits = value?.digits || {};
-                const secondStarted = Object.keys(digits).some(id => id.startsWith('second:'));
-                carryNodes.first.hidden = digits['first:units'] !== '6' || secondStarted;
-                carryNodes.second.hidden = digits['second:hundreds'] !== '4';
+                carryNodes.firstTens.hidden = digits['first:units'] !== '6';
+                carryNodes.firstHundreds.hidden = digits['first:tens'] !== '9';
+                carryNodes.secondThousands.hidden = digits['second:hundreds'] !== '4';
                 carryNodes.sum.hidden = digits['answer:tens'] !== '7';
             }
         };
@@ -127,7 +128,7 @@
             columns: columns.map(id => ({ id, label: id, ariaLabel: id === 'point' ? 'decimal point' : id })),
             rows: [
                 { id: 'a', values: { units: '1', point: '.', tenths: '4', hundredths: '5' } },
-                { id: 'b', sign: '×', values: { units: '3', point: '.' } },
+                { id: 'b', sign: '×', values: { units: '3' } },
                 { id: 'answer', answer: true, values: Object.fromEntries(columns.map(id => [id,
                     id === 'point' ? '.' : { slot: `answer:${id}`, label: `${id} answer digit` }])) }
             ],
@@ -170,6 +171,12 @@
                         const activeColumn = editable && active ? active.split(':')[1] : null;
                         model.built.update({ activeColumn });
                         model.paint(value, activeColumn);
+                        // Optional leading zeros belong to this answer's marking rule.
+                        // Keep the shared slot in place while hiding its empty locked view.
+                        for (const id of model.optional || []) {
+                            const slot = model.built.slots.find(slot => slot.id === id);
+                            slot.element.classList.toggle('decimal-empty-leading-answer', !editable && value?.digits?.[id] === undefined);
+                        }
                     }
                 });
                 return view;
@@ -332,7 +339,8 @@
 
     const problems = [
         { id: 'long-multiplication', hash: 'try-it-1', title: 'Work out 6.2 × 0.48.', widget: () => tableWidget(longMultiplication) },
-        { id: 'product-point', hash: 'try-it-1-step-2', title: 'Work out 6.2 × 0.48.', widget: pointWidget },
+        { id: 'product-point', hash: 'try-it-1-step-2', title: 'Work out 6.2 × 0.48.',
+            line: '62 × 48 = 2976. Tap where the point goes.', widget: pointWidget },
         { id: 'divide-whole', hash: 'try-it-2', title: 'Work out 9.36 ÷ 4.', widget: () => tableWidget(host => shortDivision(host, false)) },
         { id: 'scale-divisor', hash: 'try-it-3', title: 'Work out 11.07 ÷ 0.9.', widget: scaleWidget },
         { id: 'divide-scaled', hash: 'try-it-3-step-2', title: 'Work out 11.07 ÷ 0.9.', widget: () => tableWidget(host => shortDivision(host, true)) },
@@ -344,7 +352,7 @@
         document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId: 'interactive' } }));
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 1,
+            version: 2,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -394,7 +402,7 @@
                 input: 'custom', widget, scored: false, readOnly, lockedReview: true, autoContinue: false,
                 figure: problem.receipt ? (host, { replay }) => {
                     receipt = drawReceipt(host, !replay && state.cards[problem.id]?.correct === true);
-                } : undefined,
+                } : problem.line ? host => host.append(element('p', problem.line)) : undefined,
                 onReset: reset, onReplayReset: reset, onReplayFeedback: replay,
                 onFeedback(result) { reportProgress(); receipt?.update(result.correct); },
                 onContinue: continueExample
