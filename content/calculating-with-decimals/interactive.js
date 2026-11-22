@@ -301,7 +301,7 @@
             dispose = () => { stopSum(); stopAnswer(); };
         }
 
-        // Learn 4: move both points, then divide as in Learn 3.
+        // Learn 4: move both points, then divide.
         function drawScalePicture() {
             const picture = element('div', '', 'decimal-learn-steps');
             const sumRow = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
@@ -317,19 +317,10 @@
             const divisor = build('0.9', sum);
             sumRow.append(sum);
 
-            const answerStep = element('div', '', 'decimal-learn-step decimal-learn-step--arch');
-            const answer = element('div', '', 'decimal-big-number');
-            const product = build('12.3', answer);
-            answerStep.append(answer);
-
             picture.append(sumRow,
                 element('p', 'Move both points 1 place.', 'decimal-learn-line'),
-                element('div', '110.7 \u00f7 9', 'decimal-big-number'),
-                element('p', 'Now there is 1 digit after the point. Take it out and divide.', 'decimal-learn-line'),
-                element('div', '1107 \u00f7 9 = 123', 'decimal-big-number'),
-                element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
-                element('p', 'So 123 becomes', 'decimal-learn-line'),
-                answerStep);
+                element('div', '110.7 \u00f7 9 = 12.3', 'decimal-big-number'),
+                element('p', 'So 11.07 \u00f7 0.9 = 12.3 too.', 'decimal-learn-line'));
             root.append(picture);
 
             // One hop over the 0 in 11.07 and one over the 9 in 0.9, a count of 1 each.
@@ -339,12 +330,7 @@
                 { from: { node: dividend[dividendPoint], side: 'centre' }, to: { node: dividend[dividendPoint + 1], side: 'right' }, label: '1', group: 'dividend', head: true },
                 { from: { node: divisor[divisorPoint], side: 'centre' }, to: { node: divisor[divisorPoint + 1], side: 'right' }, label: '1', group: 'divisor', head: true }
             ]);
-            // Back over the 3, landing on the point.
-            const answerPoint = product.findIndex(node => node.textContent === '.');
-            const stopAnswer = drawArrows(answerStep, [
-                { from: { node: product[answerPoint + 1], side: 'right' }, to: { node: product[answerPoint], side: 'centre' }, label: '1', head: true }
-            ]);
-            dispose = () => { stopSum(); stopAnswer(); };
+            dispose = stopSum;
         }
 
         function render() {
