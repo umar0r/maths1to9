@@ -186,7 +186,7 @@
         root.closest('.lesson-section').setAttribute('aria-label', 'Read Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState(`interactive:read`, {
-            version: 1, upgrade: () => null,
+            version: 2, upgrade: () => null,
             initial: () => ({
                 screen: 0, furthest: 0,
                 t1Stage: 0, t1Hint: '', t1Done: false,
@@ -290,7 +290,7 @@
                 }
                 paint();
             } else if (index === 1) {
-                prompt.textContent = 'Tap the point for 3 rainy days and 7 accidents.';
+                prompt.remove();
                 graph = makeGraph(graphHost, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                     axisNames: { x: 'Rainy days', y: 'Road accidents' },
                     label: 'Scatter graph of rainy days and road accidents.' });
@@ -314,7 +314,7 @@
                     syncHash();
                 }
                 if (!state.t2Done) {
-                    picker = graph.pick({ label: prompt.textContent, onPick([x, y]) {
+                    picker = graph.pick({ label: tryItTitles[index], onPick([x, y]) {
                         const match = tryItPoints.find(p => p[0] === x && p[1] === y);
                         sectionState.update(saved => {
                             if (!match) {
@@ -380,22 +380,12 @@
                 root.append(trayHost);
 
                 const slots = [
-                    { id: 'rainy', element: rainySlot, group: 'answer', column: 'rainy' },
-                    { id: 'accidents', element: accSlot, group: 'answer', column: 'accidents' }
+                    { id: 'rainy', element: rainySlot, group: 'answer', column: 'rainy',
+                        allowed: value => value?.marks?.rainy !== 'right' },
+                    { id: 'accidents', element: accSlot, group: 'answer', column: 'accidents',
+                        allowed: value => value?.marks?.accidents !== 'right' }
                 ];
                 const groups = { answer: { advance: 'none' } };
-
-                function applyMarks() {
-                    const marks = state.t3Marks || {};
-                    rainySlot.classList.toggle('is-correct', marks.rainy === 'right');
-                    rainySlot.classList.toggle('is-incorrect', marks.rainy === 'wrong');
-                    accSlot.classList.toggle('is-correct', marks.accidents === 'right');
-                    accSlot.classList.toggle('is-incorrect', marks.accidents === 'wrong');
-                    const v = state.t3Value;
-                    const digits = v?.digits || {};
-                    rainySlot.textContent = digits.rainy || '';
-                    accSlot.textContent = digits.accidents || '';
-                }
 
                 digitView = DC.create(trayHost, {
                     slots, groups,
@@ -404,7 +394,6 @@
                     editable: !state.t3Done,
                     disabledDigits: [],
                     onChange(value) {
-                        // ignore if marks already applied (from our own mark call) - but we don't use mark()
                         sectionState.update(saved => { saved.t3Value = value; });
                         state.t3Value = value;
                         const digits = value?.digits || {};
@@ -426,7 +415,9 @@
                         state.t3Marks = marks;
                         state.t3Done = done;
                         state.t3Hint = hint;
-                        applyMarks();
+                        const marked = DC.markedValue(value, marks);
+                        sectionState.update(saved => { saved.t3Value = marked; });
+                        digitView.update({ value: marked, editable: !done, phase: 'answer' });
                         const msg = hint;
                         feedback.textContent = msg;
                         feedback.className = E.feedbackClassName('interactive', { visible: Boolean(msg), correct: done });
@@ -436,12 +427,8 @@
                             onClick: () => { if (state.t3Done) api.continueSection(); }
                         });
                         syncHash();
-                    },
-                    onPaint({ value, active, editable, phase }) {
-                        applyMarks();
                     }
                 });
-                applyMarks();
                 if (state.t3Value) digitView.update({ value: state.t3Value, editable: !state.t3Done, phase: 'answer' });
 
                 const msg = state.t3Hint || (state.t3Done ? '5 rainy days and 8 accidents.' : '');

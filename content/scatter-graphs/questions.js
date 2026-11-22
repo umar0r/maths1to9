@@ -51,14 +51,14 @@
         return cands[randomInt(0, cands.length - 1, random)];
     }
 
-    function makeFigure(ctx, points, asked) {
+    function makeFigure(ctx, points, asked, highlight) {
         return (host, { readOnly }) => {
             const graph = S.makeGraph(host, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                 axisNames: { x: ctx.x, y: ctx.y },
                 label: 'Scatter graph.' });
             points.forEach(p => {
-                const big = p[0] === asked[0] && p[1] === asked[1];
-                graph.point(p, { size: big ? 'large' : 'small', tone: big ? 'neutral' : 'muted', coordinates: false });
+                const big = highlight && p[0] === asked[0] && p[1] === asked[1];
+                graph.point(p, { size: big ? 'large' : 'small', tone: !highlight || big ? 'neutral' : 'muted', coordinates: false });
             });
             graph.setEditable(!readOnly);
         };
@@ -84,7 +84,7 @@
             tries++;
         }
         const [a, b] = asked;
-        const figure = makeFigure(ctx, points, asked);
+        const figure = makeFigure(ctx, points, asked, item.type === 'read-pair');
 
         if (item.type === 'read-pair') {
             const opts = [
