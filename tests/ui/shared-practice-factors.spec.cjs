@@ -42,6 +42,9 @@ for (const width of [1280, 375]) {
                     await expect(main(page)).toHaveText('Try again');
                     expect(await skillCount(page)).toBe(assessed);
                     await main(page).click();
+                    await expect(input).toHaveValue('-999');
+                    await expect(input).toHaveAttribute('aria-invalid', 'true');
+                    await expect(input).toBeFocused();
                 }
                 await finish(page, true);
                 await page.reload({ waitUntil: 'networkidle' });

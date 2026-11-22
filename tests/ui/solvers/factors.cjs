@@ -17,7 +17,7 @@ async function solve(page) {
         }
         return true;
     }
-    if (await main.isEnabled()) return false;
+    if (await main.isEnabled() && !await page.locator('.question-card:visible input[aria-invalid="true"]:enabled').count()) return false;
     let answer;
     if (prompt.includes('contains every factor')) answer = factors(Number(prompt.match(/factor of (\d+)/)[1])).join(', ');
     else if (prompt.startsWith('How many factors')) answer = String(factors(Number(prompt.match(/does (\d+) have/)[1])).length);

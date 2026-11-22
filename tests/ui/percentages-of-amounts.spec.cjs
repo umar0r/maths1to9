@@ -96,6 +96,10 @@ for (const width of [1280, 375]) {
                             await reload(page);
                             await expect(button).toHaveText('Try again');
                             await button.click();
+                            const kept = page.locator('.question-card:visible input[type=text]');
+                            await expect(kept).toHaveValue('999');
+                            await expect(kept).toHaveAttribute('aria-invalid', 'true');
+                            await expect(kept).toBeFocused();
                         }
                         await solve(page);
                         await button.click();

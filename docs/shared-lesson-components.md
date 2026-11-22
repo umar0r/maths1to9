@@ -409,7 +409,14 @@ From `docs/lesson-specification.md`:
   answer → **Continue** after a correct one. Enter in the number box runs
   Check.
 - A wrong option greys out with a × and stays disabled; Try again keeps the
-  other options. A wrong number clears the box on Try again.
+  other options. Try again keeps every typed answer, in a single box or several fields.
+  Wrong boxes have the shared red border and `aria-invalid="true"` after
+  Check and throughout the retry, until that box is edited. Right fields
+  keep their values with no colour. Focus goes to the first wrong box,
+  with the cursor at the end, without selecting its text. The saved
+  `wrongInputs` ids restore the red boxes after a reload in the answer
+  phase. Editing clears only that box's mark; Reset still clears all work.
+  Choice questions keep their existing rejected-option behaviour.
 - Feedback is one sentence from the lesson, drawn by the shared feedback
   box (see "Feedback boxes" below). A `hint`, if the
   wrong answer has one, appears only with that feedback. There is no hint
@@ -573,6 +580,13 @@ one assessment per scored Check are saved. The handle receives `update`
 with `editable: false`; `onFeedback` receives a copy of the value.
 Try again clears value to `null`, feedback and hint, updates the handle
 with `editable: true` and phase `answer`, then calls optional `focus()`.
+With `widget.keepValueOnRetry: true`, it keeps the value and passes
+`retry: true` in that update. The widget may call `onChange` during the retry
+update to save its retry presentation and chosen slot. Reset still clears it.
+For this opt-in only, `mark` may return an updated JSON `value`; the engine
+copies and saves it before showing feedback, so slot marks survive reload.
+First-attempt accuracy and scoring do not change. Other widgets retain the
+existing clear-on-retry behaviour. See [Custom answer widgets](custom-answer-widget.md).
 Continue calls the usual `onContinue`.
 
 Read-only cards render with `editable: false`, update with the saved phase,
@@ -955,3 +969,11 @@ include the value and unit, joined by a non-breaking space. Paired fields
 keep their labels and units beside their own boxes. Units on any input
 type other than `number` throw a TypeError. Cards without units keep their
 existing appearance and answer text.
+
+## Shared number cards
+
+Use `Maths1to9DigitCards` for blue digit cards, slots and column tables.
+Load `assets/js/digit-cards.js` and `assets/css/digit-cards.css` in lessons
+that use them. See [Shared number cards](shared-digit-cards.md) for tap,
+drag, keyboard, group advance directions, table hooks and custom widget
+integration. Place value and Rounding retain their existing cards.

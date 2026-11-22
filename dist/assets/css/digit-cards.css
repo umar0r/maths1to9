@@ -1,0 +1,169 @@
+/* Extracted from the decimal lesson's working column table and cards. */
+.digit-column-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+}
+
+.digit-column-table th,
+.digit-column-table td {
+    padding: .65rem 1rem;
+    border: 0 solid #cbd5e1;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.digit-column-table th {
+    border-top-width: 2px;
+    font-size: .85rem;
+    line-height: 1.2;
+    font-weight: 700;
+    background: #f1f5f9;
+}
+
+.digit-column-table tr > :nth-child(2) { border-left-width: 2px; }
+.digit-column-table th:first-of-type { border-top-left-radius: 6px; }
+.digit-column-table th:last-child { border-top-right-radius: 6px; }
+.digit-column-table tbody tr:last-child > :nth-child(2) { border-bottom-left-radius: 6px; }
+.digit-column-table tbody tr:last-child > :last-child { border-bottom-right-radius: 6px; }
+
+.digit-column-table td {
+    height: 72px;
+    vertical-align: middle;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: #f8fafc;
+}
+
+.digit-column-table .digit-column-table__gutter {
+    position: relative;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.digit-column-table__sign {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.digit-column-table .digit-column-table__tap { padding: 0; }
+
+.digit-card-slot {
+    display: inline-grid;
+    place-items: center;
+    width: 2.4rem;
+    max-width: 100%;
+    height: 2.4rem;
+    padding: 0;
+    border: 2px dashed #cbd5e1;
+    border-radius: .35rem;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.digit-card-slot.is-highlighted { border-color: #94a3b8; }
+.digit-card-slot.is-filled { border-color: transparent; }
+.digit-card-slot:disabled { opacity: 1; cursor: default; }
+.digit-card-slot:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
+.digit-card-tray { display: grid; grid-template-columns: repeat(5, 2.6rem); justify-content: center; gap: .5rem; width: min(calc(100% - 32px), 416px); box-sizing: border-box; padding: 1rem; border-radius: .75rem; background: #f1f5f9; margin: 1.5rem auto .5rem; }
+.digit-card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 0;
+    padding: 0;
+    color: #fff;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    border: 0;
+    border-radius: .6rem;
+    background: var(--primary);
+    box-shadow: 0 4px 0 var(--primary-dark);
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .08s ease;
+}
+.digit-card:hover { background: #3d7af0; }
+.digit-card:not(.digit-card-flight):active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-dark); }
+.digit-card:disabled { opacity: 1; color: #fff; background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: default; }
+.digit-card:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 3px; }
+@media (max-width: 640px) {
+    .digit-card-chart .digit-column-table th { padding-inline: .1rem; font-size: .64rem; }
+}
+
+
+.digit-card-chart { margin: 1.75rem auto 1rem; }
+.digit-card-chart { width: 100%; max-width: min(calc(100% - 32px), 416px); position: relative; font-variant-numeric: tabular-nums; }
+.digit-card-chart .digit-column-table__gutter { width: 0; }
+.digit-card-chart .digit-column-table__sign { left: -1rem; }
+.digit-card-chart .digit-column-table th { padding-inline: .3rem; overflow-wrap: normal; word-break: normal; }
+.digit-column-table [data-column="point"] { width: 72px; }
+.digit-column-table .is-answer > td:not(.digit-column-table__gutter) { border-top: 3px solid #64748b; }
+.digit-column-table .is-faded { opacity: .4; }
+.digit-column-table .is-blue > td:not(.digit-column-table__gutter) { background: color-mix(in srgb, var(--primary) 25%, #fff); }
+.digit-column-table [data-column].is-active-column { background: color-mix(in srgb, var(--success-background) 50%, #fff); }
+.digit-card { touch-action: none; user-select: none; -webkit-user-select: none; }
+.digit-card-flight { transition: none; position: fixed; z-index: 10000; pointer-events: none; margin: 0; display: grid; place-items: center; }
+.digit-card-slot.is-drop-target { outline: 3px solid var(--primary); outline-offset: 2px; }
+.digit-card-slot.is-arriving { color: transparent; }
+@media (max-width: 640px) {
+    .digit-card-chart .digit-column-table th { padding-inline: .1rem; font-size: .64rem; }
+    .digit-column-table [data-column="point"] { width: 46px; }
+    .digit-card-chart .digit-column-table--tens th { font-size: .6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .digit-card { transition: none; }
+}
+
+@media (max-width: 640px) {
+    .digit-column-table th, .digit-column-table td { padding: .4rem .15rem; }
+    .digit-column-table th { font-size: .68rem; }
+    .digit-column-table td { height: 60px; }
+}
+
+/* Larger amounts can need hundreds and thousands as well as tens. */
+.digit-column-table--wide th, .digit-column-table--wide td { padding-inline: .15rem; }
+.digit-card-chart .digit-column-table--wide th { padding-inline: .1rem; font-size: .75rem; }
+.digit-column-table--wide [data-column="point"] { width: 62px; }
+@media (max-width: 640px) {
+    .digit-card-chart .digit-column-table--wide th { padding-inline: 0; font-size: .6rem; }
+    .digit-column-table--wide [data-column="point"] { width: 38px; }
+}
+
+.digit-card-chart.digit-card-chart--wide { max-width: min(100%, 416px); }
+@media (max-width: 640px) {
+    .digit-card-chart--wide .digit-column-table__sign { left: -.6rem; font-size: 1.2rem; }
+}
+
+.digit-column-table__heading { display: inline-block; white-space: nowrap; }
+/* Keep the shared answer colours, with the geometry of a digit slot. */
+.digit-card-slot.answer-choice {
+    min-height: 0;
+    padding: 0;
+    border: 2px solid currentColor;
+    border-radius: .35rem;
+    text-align: center;
+    box-shadow: none;
+}
+.digit-card-slot.answer-choice.is-incorrect:hover {
+    background: var(--error-background);
+    color: var(--error-dark);
+    border-color: var(--error);
+    transform: none;
+}
+.digit-card-slot.answer-choice.is-correct:hover {
+    background: var(--success-background);
+    color: var(--success-dark);
+    border-color: var(--success);
+    transform: none;
+}

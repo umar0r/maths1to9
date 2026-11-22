@@ -1,126 +1,94 @@
 const { test, expect } = require('@playwright/test');
 const solve = require('./solvers/adding-decimal-numbers.cjs');
-const { MAIN_ACTION, watchForErrors, checkThenMoveOn, goToStage } = require('./helpers.cjs');
+const { MAIN_ACTION, watchForErrors } = require('./helpers.cjs');
 const main = page => page.locator(`${MAIN_ACTION}:visible`);
 const points = page => page.evaluate(() => window.Maths1to9Lesson.getScore().points);
-
 async function advance(page, target) {
     for (let step = 0; step < 150; step++) {
         if (target && await page.evaluate(id => window.Maths1to9Lesson.getCurrentSection().id === id, target)) return;
         if (await main(page).innerText() === 'All lessons') return;
-        if (page.url().endsWith('#learn-6')) {
-            await page.screenshot({ path: `/private/tmp/decimal-learn-${page.viewportSize().width}.png`, fullPage: true });
-        }
         if (await solve(page)) continue;
         await expect(main(page)).toBeEnabled();
         await main(page).click();
     }
-    throw new Error('Decimal addition did not reach the requested screen');
+    throw Error('Decimal lesson did not reach the requested screen');
 }
 
-test('adding-decimal-numbers: decimal addition journey, scoring and four anchors', async ({ page }) => {
+test('adding-decimal-numbers: approved journey earns full marks and keeps four navigation anchors', async ({ page }) => {
     test.setTimeout(120_000);
     const errors = watchForErrors(page);
     await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
     expect(await points(page)).toBe(0);
     await expect(page.locator('.lesson-navigation__button')).toHaveCount(4);
-    await expect(page.locator('.decimal-labels:visible')).toHaveText('tensonestenthshundredths');
+    await expect(page.locator('.decimal-uses svg')).toHaveCount(4);
     await advance(page, 'interactive');
-    const expectedHashes = ['try-it-1', 'try-it-2', 'try-it-3', 'try-it-4', 'try-it-5', 'try-it-6'];
-    for (const hash of expectedHashes) {
+    for (const hash of ['try-it-1', 'try-it-2', 'try-it-2-step-2', 'try-it-3']) {
         await expect(page).toHaveURL(new RegExp(`#${hash}$`));
-        if (hash === 'try-it-3' || hash === 'try-it-6') {
-            await page.screenshot({ path: `/private/tmp/decimal-columns-${hash}.png`, fullPage: true });
-            const digit = page.getByLabel('Hundredths digit', { exact: true });
-            await digit.fill('5');
-            await page.reload({ waitUntil: 'networkidle' });
-            await expect(page.getByLabel('Hundredths digit', { exact: true })).toHaveValue('5');
-        }
         await solve(page);
-        await checkThenMoveOn(page);
-    }
-    await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('10.75');
-    await expect(page.locator('#adding-decimal-numbers-interactive')).toContainText('4.85');
-    await main(page).click();
-    let moneyDraft;
-    for (let question = 0; question < 6; question++) {
-        await solve(page);
-        if (question === 4) {
-            const input = page.locator('.question-card:visible input[type=text]');
-            moneyDraft = `${await input.inputValue()}0`;
-            await input.fill(moneyDraft); // A trailing zero is an equivalent number.
-        }
         await main(page).click();
+        await expect(main(page)).toHaveText('Continue');
         await main(page).click();
     }
-    await page.getByText('Show all answers', { exact: true }).click();
-    await expect(page.locator('#lesson-section-question-bank tbody tr')).toHaveCount(6);
-    await expect(page.locator('#lesson-section-question-bank tbody')).toContainText(moneyDraft);
-    await main(page).click();
-    await expect(page.getByRole('checkbox')).toHaveCount(0); // No self-assessment checkbox.
+    await expect(page).toHaveURL(/#question-bank-question-1$/);
     await advance(page);
-    await expect(main(page)).toHaveText('All lessons');
-    expect(await points(page)).toBe(160);
+    await expect(page.locator('.decimal-learned li')).toHaveCount(4);
+    await expect(page.locator('.retained-results:visible, .score-panel:visible')).toHaveCount(0);
+    expect(await points(page)).toBe(240);
     await page.reload({ waitUntil: 'networkidle' });
-    expect(await points(page)).toBe(160);
+    expect(await points(page)).toBe(240);
     await main(page).click();
     await expect(page).toHaveURL(/\/$/);
-    await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
-    await goToStage(page, 'Practice');
-    await page.getByText('Show all answers', { exact: true }).click();
-    await expect(page.locator('#lesson-section-question-bank tbody tr')).toHaveCount(6);
-    expect(await points(page)).toBe(160);
-    await expect(main(page)).toHaveCount(1);
     expect(errors).toEqual([]);
 });
 
-test('adding-decimal-numbers: mobile keyboard alignment and supported feedback', async ({ browser }) => {
+test('adding-decimal-numbers: mobile keyboard cards save partial work, retry and Reset replay', async ({ browser }) => {
+    test.setTimeout(120_000);
     const context = await browser.newContext({ viewport: { width: 375, height: 844 }, hasTouch: true });
-    const page = await context.newPage();
-    await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
-    await advance(page, 'interactive');
-    const before = await points(page);
-    const slider = page.locator('input[type=range][aria-label="Move the second number"]:visible');
-    await slider.focus();
-    await slider.press('Home');
-    await main(page).click();
-    await expect(page.locator('.question-feedback:visible')).toContainText('decimal points');
-    await page.reload({ waitUntil: 'networkidle' });
-    await expect(main(page)).toHaveText('Try again');
-    await main(page).click();
-    await slider.focus();
-    await slider.press('ArrowLeft');
-    await main(page).click();
-    expect(await points(page) - before).toBe(5);
-    await page.reload({ waitUntil: 'networkidle' });
-    expect(await points(page) - before).toBe(5);
-    // Try it went straight on to the next question.
-    await solve(page);
-    await checkThenMoveOn(page);
-    const hundredths = page.locator('.question-card:visible input[aria-label="Hundredths digit"]');
-    await hundredths.focus();
-    await hundredths.fill('5');
-    await hundredths.press('Tab');
-    await expect(page.locator('.question-card:visible input[aria-label="Tenths digit"]')).toBeFocused();
-    await page.reload({ waitUntil: 'networkidle' });
-    await expect(page.locator('.question-card:visible input[aria-label="Hundredths digit"]')).toHaveValue('5');
-    await solve(page);
-    const carry = page.locator('.question-card:visible input[aria-label="Carry to tens"]');
-    await carry.focus();
-    await carry.press('Tab');
-    await expect(main(page)).toBeFocused();
-    await checkThenMoveOn(page, undefined, () => main(page).press('Enter'));
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.screenshot({ path: '/private/tmp/decimal-addition-mobile.png', fullPage: true });
-    await context.close();
+    try {
+        const page = await context.newPage();
+        await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
+        await advance(page, 'interactive');
+        const slot = page.getByRole('button', { name: 'Hundredths answer digit', exact: true });
+        await slot.focus();
+        await slot.press('9');
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(slot).toHaveText('9');
+        const reset = page.getByRole('button', { name: 'Reset card', exact: true });
+        await reset.click();
+        await expect(page.locator('.digit-card-slot:visible')).toHaveText(['', '', '']);
+        await slot.focus();
+        await slot.press('9');
+        await slot.press('0');
+        await slot.press('8');
+        await main(page).click();
+        await expect(page.locator('.question-feedback:visible')).toContainText('hundredths');
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(main(page)).toHaveText('Try again');
+        await main(page).click();
+        await solve(page);
+        await main(page).click();
+        const earned = await points(page);
+        await expect(main(page)).toHaveText('Continue');
+        await reset.click();
+        await solve(page);
+        await main(page).click();
+        expect(await points(page)).toBe(earned);
+        await page.reload({ waitUntil: 'networkidle' });
+        await expect(slot).toHaveText('8');
+        expect(await points(page)).toBe(earned);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    } finally { await context.close(); }
 });
 
-test('adding-decimal-numbers: final check withholds answers and allows a corrected retry', async ({ page }) => {
+test('adding-decimal-numbers: Check keeps four locked options and saves a corrected retry', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('content/adding-decimal-numbers/', { waitUntil: 'networkidle' });
     await advance(page, 'comparison');
-    await expect(page.locator('#adding-decimal-numbers-comparison')).not.toContainText('6.14');
-    await page.locator('.question-card:visible input[type=text]').fill('1');
+    const wrong = page.getByRole('button', { name: 'The 8 and the 4 are both units.', exact: true });
+    await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
+    await expect(page.locator('.question-feedback:visible')).toHaveCount(0);
+    await wrong.click();
+    await expect(page.locator('.question-feedback:visible')).toHaveCount(0);
     await main(page).click();
     await expect(main(page)).toHaveText('Try again');
     await page.reload({ waitUntil: 'networkidle' });
@@ -129,10 +97,14 @@ test('adding-decimal-numbers: final check withholds answers and allows a correct
     await solve(page);
     await main(page).click();
     await main(page).click();
+    await page.getByRole('button', { name: 'Previous screen', exact: true }).click();
+    await expect(page.locator('.question-card-options:visible button')).toHaveCount(4);
+    await expect(page.locator('.question-card-options:visible button:enabled')).toHaveCount(0);
+    await expect(page.locator('.question-feedback:visible')).toBeVisible();
+    await main(page).click();
     await advance(page);
-    await expect(page.locator('#adding-decimal-numbers-comparison .retained-results > li')).toHaveCount(5);
-    await expect(page.locator('#adding-decimal-numbers-comparison .retained-results > li').first()).toContainText('2nd try');
-    expect(await points(page)).toBe(155);
+    await expect(page.locator('.decimal-learned li')).toHaveCount(4);
+    expect(await points(page)).toBe(235);
     await page.reload({ waitUntil: 'networkidle' });
-    expect(await points(page)).toBe(155);
+    expect(await points(page)).toBe(235);
 });

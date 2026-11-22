@@ -2,7 +2,7 @@
 const tidy = value => String(Number(value.toFixed(4)));
 module.exports = async function solve(page) {
     const main = page.locator('.lesson-controls button.button--primary:visible');
-    if (await main.isEnabled()) return false;
+    if (await main.isEnabled() && !await page.locator('.question-card:visible input[aria-invalid="true"]:enabled').count()) return false;
     const prompt = page.locator('.question-prompt:visible');
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();

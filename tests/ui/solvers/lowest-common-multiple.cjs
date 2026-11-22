@@ -35,7 +35,7 @@ async function solve(page) {
     if (!await prompt.count()) return false;
     const text = await prompt.innerText();
     if (text.startsWith('Choose the tiles') && await main.innerText() === 'Check') return chooseTiles(page);
-    if (await main.isEnabled()) return false;
+    if (await main.isEnabled() && !await page.locator('.question-card:visible input[aria-invalid="true"]:enabled').count()) return false;
     if (text.startsWith('Match all')) { await matchPrimes(page); return true; }
     const pair = text.match(/LCM of (\d+) and (\d+)/)?.slice(1).map(Number)
         || [...text.matchAll(/\b(\d+) =/g)].slice(0, 2).map(match => Number(match[1]));

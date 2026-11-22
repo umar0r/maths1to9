@@ -115,3 +115,200 @@
     overflow-wrap: anywhere;
     hyphens: auto;
 }
+
+
+/* Lesson-drawn pictures: all numbers stay readable in two phone columns. */
+.decimal-uses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 300px;
+    margin: 1.25rem auto 0;
+}
+
+.decimal-uses figure { margin: 0; text-align: center; }
+.decimal-use-picture { width: min(100%, 135px); margin-inline: auto; }
+.decimal-use-picture svg { display: block; width: 100%; height: auto; }
+.decimal-uses figcaption { margin-top: .3rem; font-weight: 800; }
+
+.decimal-place-chart,
+.decimal-intro-figure {
+    position: relative;
+    width: min(100%, 520px);
+    margin: 1.75rem auto 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.decimal-table-gap {
+    display: block;
+    width: 100%;
+    height: 72px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.decimal-table-moving {
+    position: absolute;
+    left: 0;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.decimal-table-moving__digit {
+    position: absolute;
+    top: 0;
+    display: grid;
+    place-items: center;
+    height: 100%;
+}
+
+.decimal-table-moving.is-dragging { cursor: grabbing; }
+.decimal-table-moving.is-locked { cursor: default; }
+
+.decimal-table-gap:focus-visible,
+.decimal-table-moving:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: -3px;
+}
+
+.decimal-row-controls {
+    display: flex;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: .9rem;
+}
+
+.decimal-row-move {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: white;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.decimal-row-move:disabled { opacity: .35; cursor: default; }
+.decimal-learn-instruction { text-align: center; }
+
+.decimal-intro-figure { padding-top: 40px; }
+
+.decimal-intro-note {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    color: #334155;
+    font-size: .9rem;
+}
+
+.decimal-intro-arrow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.decimal-intro-arrow path {
+    fill: none;
+    stroke: #334155;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Try it 2 step 2: a note under the table pointing up at the voucher row, sized like Learn 2's note. */
+.decimal-voucher-note {
+    display: block;
+    margin: .7rem 0 0;
+    color: #334155;
+    font-size: .9rem;
+    line-height: 1.25;
+}
+
+@media (min-width: 1024px) {
+    .decimal-voucher-note {
+        position: absolute;
+        right: calc(100% + 90px);
+        width: 140px;
+        margin: 0;
+        text-align: right;
+    }
+}
+
+@media (max-width: 640px) {
+    .decimal-table-gap { height: 60px; }
+    .decimal-uses { gap: .75rem; }
+    .decimal-uses figcaption { font-size: .9rem; }
+}
+
+/* Try it's column addition keeps the same table as the introduction. */
+.decimal-addition-chart { margin-top: 2.75rem; }
+/* Programmatic slide focus keeps its location without a heading outline. */
+body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
+.decimal-column-table .decimal-written-carry-cell { position: relative; height: 72px; }
+.decimal-written-carry {
+    color: #15803d;
+    position: absolute;
+    top: .1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .9rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
+.decimal-receipt svg { display: block; width: 100%; height: auto; }
+
+/* Keep the subtotal row in place when its slots become the carried-from row. */
+.decimal-column-table .decimal-receipt-subtotal-row > td:not(.decimal-column-table__gutter) { height: 74px; }
+
+.decimal-learned { display: grid; gap: .9rem; margin: 1.25rem 0 0; padding-left: 1.25rem; line-height: 1.5; }
+.decimal-price-list { width: min(100%, 416px); margin: 1.5rem auto; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.decimal-price-list caption { margin-bottom: .5rem; font-weight: 800; }
+.decimal-price-list th, .decimal-price-list td { padding: .65rem; border: 2px solid #cbd5e1; }
+.decimal-price-list thead th { background: #f1f5f9; }
+.decimal-price-list td { text-align: right; }
+@media (max-width: 640px) {
+    .decimal-price-list th, .decimal-price-list td { padding: .4rem; font-size: .85rem; }
+}
+
+.decimal-column-table .decimal-column-table__tap { padding: 0; }
+
+/* Check pictures: Sam's working, the column table and the receipt. */
+.decimal-sam-working { width: min(100%, 200px); margin: 1.25rem auto .5rem; }
+.decimal-sam-working figcaption { margin-bottom: .4rem; font-size: .9rem; color: var(--text-muted); }
+.decimal-sam-working__grid {
+    display: grid;
+    grid-template-columns: 1.2rem auto;
+    justify-content: start;
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+}
+.decimal-sam-working__sign { display: block; text-align: center; }
+/* Each number is written in one go, right-aligned, so the last digits line up. */
+.decimal-sam-working__number { display: block; text-align: right; white-space: nowrap; }
+.decimal-sam-working__line { grid-column: 2; height: 0; border-top: 2px solid #334155; }
+
+.decimal-check-table { margin-top: 1.25rem; }
+.decimal-check-receipt { width: min(100%, 210px); margin: 1.25rem auto .5rem; }
+.decimal-check-receipt svg { display: block; width: 100%; height: auto; }
+
+.decimal-selected-calculation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+@media (max-width: 640px) {
+    .decimal-selected-calculation { grid-template-columns: 1fr; }
+}

@@ -286,6 +286,7 @@ function resultsFixture(katex) {
             return search(this);
         }
         focus() { this.focused = true; }
+        setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; }
     }
     const document = { body: { dataset: { lessonRenderer: 'custom' } }, createElement: tag => new Node(tag),
         createElementNS: (namespaceURI, tag) => Object.assign(new Node(tag), { namespaceURI }),
@@ -550,7 +551,7 @@ test('shared number input keeps its node and restores invalid feedback without a
     assert.equal(harness.action.label, 'Continue');
 });
 
-test('shared number retry clears input and checks misconception rules in order', () => {
+test('shared number retry retains input and checks misconception rules in order', () => {
     const harness = questionFixture({ input: 'number', answer: '72',
         rules: [{ value: '6', feedback: 'First rule', hint: 'overlap' },
             { value: '6.0', feedback: 'Second rule' }], fallback: 'Use every tile' });
@@ -559,8 +560,8 @@ test('shared number retry clears input and checks misconception rules in order',
     assert.equal(harness.card.result().explanation, 'First rule');
     assert.equal(harness.feedback[0].hint, 'overlap');
     harness.action.onClick();
-    assert.equal(harness.section.state.cards['stable-1'].value, '');
-    assert.equal(harness.action.disabled, true);
+    assert.equal(harness.section.state.cards['stable-1'].value, '6.0');
+    assert.equal(harness.action.disabled, false);
     harness.type('7');
     harness.action.onClick();
     assert.equal(harness.card.result().explanation, 'Use every tile');
@@ -1290,4 +1291,98 @@ test('question-set results include units for one-box and field cards, including 
     unitNodes(container, 'button').find(button => button.textContent === 'Practise again').events.click();
     finish();
     for (const answer of expected) assert.equal(unitNodes(container, 'td').filter(node => node.textContent === answer).length, 2);
+});
+
+
+test('custom keepValueOnRetry preserves a copied checked value, retry flag and first attempt across reload', () => {
+    const fake = customWidgetFixture();
+    fake.widget.keepValueOnRetry = true;
+    let returned;
+    fake.widget.mark = value => {
+        returned = { ...value, marks: { units: value.number === 4 ? 'right' : 'wrong' } };
+        return { correct: value.number === 4, feedback: 'Marked', value: returned };
+    };
+    let card = questionFixture({ input: 'custom', widget: fake.widget, scored: true });
+    fake.change({ number: 2 });
+    card.action.onClick();
+    returned.marks.units = 'changed after marking';
+    assert.equal(card.section.state.cards['stable-1'].value.marks.units, 'wrong');
+    card = card.reload();
+    assert.equal(fake.calls.updates.at(-1).value.marks.units, 'wrong');
+    assert.equal(fake.calls.updates.at(-1).phase, 'wrong');
+    card.action.onClick();
+    assert.deepEqual(fake.calls.updates.at(-1), {
+        value: { number: 2, marks: { units: 'wrong' } }, editable: true, phase: 'answer', retry: true
+    });
+    assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+    assert.equal(card.section.state.cards['stable-1'].feedback, '');
+    assert.equal(card.card.result().firstCorrect, false);
+    fake.change({ number: 4 });
+    card.action.onClick();
+    assert.equal(card.card.result().correct, true);
+    assert.equal(card.card.result().firstCorrect, false);
+    assert.equal(card.assessments.length, 1); // only the post-reload Check belongs to this harness
+});
+
+test('custom default and explicit false ignore checked replacement values and still clear on retry', () => {
+    for (const optIn of [undefined, false]) {
+        const fake = customWidgetFixture();
+        if (optIn !== undefined) fake.widget.keepValueOnRetry = optIn;
+        fake.widget.mark = () => ({ correct: false, feedback: 'Wrong', value: { number: 99 } });
+        const card = questionFixture({ input: 'custom', widget: fake.widget });
+        fake.change({ number: 2 });
+        card.action.onClick();
+        assert.equal(card.section.state.cards['stable-1'].value.number, 2);
+        card.action.onClick();
+        assert.equal(card.section.state.cards['stable-1'].value, null);
+        assert.deepEqual(fake.calls.updates.at(-1), { value: null, editable: true, phase: 'answer' });
+    }
+});
+
+
+test('single typed retries save the wrong mark, retain text, focus the end and clear only on editing', () => {
+    let card = questionFixture({ input: 'number', answer: '72', fallback: 'Try the sum again.' });
+    let box = card.type('6.0');
+    card.action.onClick();
+    assert.equal(box.attributes['aria-invalid'], 'true');
+    card.action.onClick();
+    assert.equal(box.value, '6.0');
+    assert.equal(box.focused, true);
+    assert.equal(box.selectionStart, 3); assert.equal(box.selectionEnd, 3);
+    assert.equal(card.action.disabled, false);
+    card = card.reload();
+    box = card.container.children[0].children[1].children[0];
+    assert.equal(box.value, '6.0'); assert.equal(box.attributes['aria-invalid'], 'true');
+    card.type('6.1');
+    assert.equal(box.attributes['aria-invalid'], 'false');
+    card = card.reload();
+    box = card.container.children[0].children[1].children[0];
+    assert.equal(box.value, '6.1'); assert.equal(box.attributes['aria-invalid'], 'false');
+    card.type('72'); card.action.onClick();
+    assert.equal(card.card.result().correct, true);
+    assert.equal(card.card.result().firstCorrect, false);
+});
+
+test('several typed fields retain right texts without colour and wrong marks until each field changes', () => {
+    let card = questionFixture(fieldDefinition);
+    typeField(card, 0, '-1'); typeField(card, 1, '12/7');
+    card.action.onClick();
+    assert.equal(fieldBox(card, 0).attributes['aria-invalid'], 'false');
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'true');
+    card.action.onClick();
+    assert.equal(fieldBox(card, 0).value, '−1');
+    assert.equal(fieldBox(card, 1).value, '12/7');
+    assert.equal(fieldBox(card, 1).focused, true);
+    assert.equal(fieldBox(card, 1).selectionStart, 4); assert.equal(fieldBox(card, 1).selectionEnd, 4);
+    card = card.reload();
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'true');
+    typeField(card, 0, '−2'); // Editing another field must keep this red mark.
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'true');
+    typeField(card, 1, '2/4');
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'false');
+    card = card.reload();
+    assert.equal(fieldBox(card, 1).value, '2/4');
+    assert.equal(fieldBox(card, 1).attributes['aria-invalid'], 'false');
+    typeField(card, 0, '−1'); card.action.onClick();
+    assert.equal(card.card.result().correct, true);
 });
