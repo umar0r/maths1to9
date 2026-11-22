@@ -14,8 +14,7 @@
             title: 'When you divide by a whole number, the point goes straight up.'
         },
         {
-            title: 'To divide by a decimal, first make it a whole number.',
-            line: 'Multiply both numbers by 10. The answer stays the same.'
+            title: 'To divide by a decimal, times both numbers by 10 first.'
         }
     ];
 
@@ -123,16 +122,12 @@
         document.getElementById('lesson-section-explanation').append(root);
         sectionEvent('explanation', 'gate');
         const section = await api.useSectionState('explanation', {
-            version: 3,
-            initial: () => ({ screen: 0, furthestScreen: 0, moves: 0, feedback: {} }),
+            version: 4,
+            initial: () => ({ screen: 0, furthestScreen: 0 }),
             upgrade: () => null
         });
         const state = section.state;
         let dispose = () => {};
-        // Learn 1 and the two show-only screens have nothing for the pupil to do.
-        function done() {
-            return state.screen < 3 || state.moves === 2;
-        }
         function syncHash() {
             if (api.getCurrentSection().id === 'explanation') api.setSlideHash(`learn-${state.screen + 1}`, { replace: true });
         }
@@ -145,10 +140,6 @@
             const heading = root.querySelector('h3');
             heading.tabIndex = -1;
             heading.focus();
-        }
-        function feedback(text, correct = false) {
-            section.update(state => { state.feedback[state.screen] = { text, correct }; });
-            render();
         }
         // Learn 2: the whole method as a finished picture, nothing to tap.
         function drawMultiplyPicture() {
@@ -189,25 +180,63 @@
             dispose = () => { stopFactors(); stopAnswer(); };
         }
 
-        // Learn 3: the finished bus stop. The answer is printed, not filled in.
-        function drawDivisionPicture() {
+        // A finished bus stop: the answer is printed, not filled in.
+        function showBusStop(host, { label, divisor, dividend, answer, carries }) {
             const chart = element('div', '', 'digit-card-chart decimal-division-picture');
-            const built = window.Maths1to9DigitCards.shortDivision({
-                label: '8.4 divided by 3', divisor: '3', dividend: '8.4', carries: { '2': '2' }
-            });
+            const built = window.Maths1to9DigitCards.shortDivision({ label, divisor, dividend, carries });
             chart.append(built.table);
-            built.slots.forEach((slot, index) => {
-                slot.element.textContent = '28'[index];
+            built.slots.forEach(slot => {
+                const digit = answer[slot.column];
+                if (digit != null) slot.element.textContent = digit;
                 slot.element.classList.add('is-filled');
                 slot.element.disabled = true;
             });
-            root.append(chart);
+            host.append(chart);
+        }
+
+        // Learn 3: divide by a whole number, so the point goes straight up.
+        function drawDivisionPicture() {
+            showBusStop(root, {
+                label: '8.4 divided by 3', divisor: '3', dividend: '8.4',
+                answer: { '0': '2', '2': '8' }, carries: { '2': '2' }
+            });
+        }
+
+        // Learn 4: times both numbers by 10, then divide as in Learn 3.
+        function drawScalePicture() {
+            const picture = element('div', '', 'decimal-learn-steps');
+            const scaleRow = element('div', '', 'decimal-learn-step decimal-learn-step--hops');
+            const sums = element('div', '', 'decimal-big-number');
+            const hops = [];
+            ['11.07', '0.9'].forEach((number, term) => {
+                if (term) sums.append(element('span', '÷', 'decimal-times'));
+                [...number].forEach(digit => {
+                    const node = digit === '.' ? element('span', '.', 'decimal-number-point')
+                        : element('span', digit, 'decimal-digit');
+                    const movedPoint = (term === 0 && digit === '0') || (term === 1 && digit === '9');
+                    if (movedPoint) hops.push(digitHop(node, '× 10'));
+                    sums.append(node);
+                });
+            });
+            scaleRow.append(sums);
+            const scaled = element('div', '', 'decimal-big-number');
+            [...'110.7'].forEach(digit => scaled.append(digit === '.'
+                ? element('span', '.', 'decimal-number-point')
+                : element('span', digit, 'decimal-digit')));
+            scaled.append(element('span', '÷', 'decimal-times'), element('span', '9', 'decimal-digit'));
+            picture.append(scaleRow, downArrow(), scaled, downArrow());
+            root.append(picture);
+            dispose = drawHops(scaleRow, hops);
+            showBusStop(picture, {
+                label: '110.7 divided by 9', divisor: '9', dividend: '110.7',
+                answer: { '1': '1', '2': '2', '4': '3' }, carries: { '2': '2', '4': '2' }
+            });
         }
         function render() {
             dispose();
             dispose = () => {};
             root.replaceChildren();
-            const screen = screens[state.screen], complete = done();
+            const screen = screens[state.screen];
             const heading = element('h3', screen.title);
             heading.dataset.screenHeading = '';
             root.append(heading);
@@ -215,68 +244,16 @@
             if (state.screen === 0) drawUsePictures(root);
             if (state.screen === 1) drawMultiplyPicture();
             if (state.screen === 2) drawDivisionPicture();
-            if (state.screen === 3) drawScale();
-            const saved = state.feedback[state.screen];
-            if (saved) root.append(window.Maths1to9LessonEngine.createFeedback('explanation', saved));
+            if (state.screen === 3) drawScalePicture();
             api.setSectionBack('explanation', state.screen > 0 ? { onClick: () => showScreen(state.screen - 1) } : null);
-            api.setSectionReset('explanation', state.screen === 3 ? () => {
-                section.update(state => {
-                    state.moves = 0;
-                    delete state.feedback[3];
-                });
-                render();
-            } : null);
-            if (state.screen === screens.length - 1 && complete) api.completeSection('explanation');
+            api.setSectionReset('explanation', null);
+            if (state.screen === screens.length - 1) api.completeSection('explanation');
             api.setSectionAction('explanation', {
                 label: state.screen === screens.length - 1 ? 'Continue' : 'Next',
-                disabled: !complete,
+                disabled: false,
                 onClick: () => state.screen === screens.length - 1 ? api.continueSection() : showScreen(state.screen + 1)
             });
             syncHash();
-        }
-        function drawScale() {
-            const fraction = element('div', '', 'decimal-fraction');
-            const hops = [];
-            ['11.07', '0.9'].forEach((number, rowIndex) => {
-                const moved = rowIndex === 0 ? state.moves === 2 : state.moves >= 1;
-                const active = rowIndex === 1 ? state.moves === 0 : state.moves === 1;
-                const row = element('div', '', 'decimal-fraction-row');
-                const digits = number.replace('.', '');
-                const original = number.indexOf('.');
-                const target = original + 1;
-                const digitNodes = [], gapNodes = [];
-                for (let index = 0; index <= digits.length; index++) {
-                    const pointHere = index === (moved ? target : original);
-                    const gap = button(pointHere && !(moved && rowIndex === 1) ? '.' : '',
-                        `Move the point in ${number} to gap ${index + 1}`, () => {
-                            if (!active) return;
-                            if (index !== target) {
-                                feedback('Move it one place to the right, the same as the other number.');
-                                return;
-                            }
-                            section.update(state => { state.moves++; delete state.feedback[3]; });
-                            if (state.moves === 2) feedback('11.07 ÷ 0.9 is the same as 110.7 ÷ 9. Now you can use short division.', true);
-                            else render();
-                        });
-                    gap.disabled = !active;
-                    gap.classList.toggle('is-placed', pointHere);
-                    gapNodes.push(gap);
-                    row.append(gap);
-                    if (index < digits.length) {
-                        const digit = element('span', moved && rowIndex === 1 && index === 0 ? '' : digits[index], 'decimal-digit');
-                        digitNodes.push(digit);
-                        row.append(digit);
-                    }
-                }
-                // Hide empty columns once 0.9 has become 9, so it stays centred.
-                if (moved && rowIndex === 1) row.classList.add('is-nine');
-                fraction.append(row);
-                if (moved) hops.push({ from: gapNodes[original], to: digitNodes[original], label: '× 10' });
-            });
-            root.append(fraction);
-            if (state.moves < 2) root.append(element('p', state.moves === 0
-                ? 'Move the point in 0.9 one place to the right.' : 'Now move the point in 11.07 one place too.', 'decimal-learn-instruction'));
-            dispose = drawHops(fraction, hops);
         }
         screens.forEach((screen, index) => api.registerHashRoute(`learn-${index + 1}`, () => {
             api.goToSection('explanation', { moveFocus: false });

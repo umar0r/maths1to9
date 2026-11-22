@@ -90,6 +90,8 @@ button.decimal-digit { cursor: pointer; }
     line-height: 1;
     color: var(--text-muted);
 }
+/* Learn 4: the bus stop is the last row of the worked example. */
+.decimal-learn-steps .decimal-division-picture { margin-block: .5rem 0; }
 body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
 @media (max-width: 640px) {
     .decimal-uses { gap: .75rem; }
