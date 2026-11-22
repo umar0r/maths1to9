@@ -14,7 +14,7 @@
             title: 'To divide by a whole number, count how many digits there are after the decimal point.'
         },
         {
-            title: 'To divide by a decimal, count how many digits there are after the decimal points.'
+            title: 'To divide by a decimal, count the digits after each point, then take them away.'
         }
     ];
 
@@ -323,7 +323,7 @@
             answerStep.append(answer);
 
             picture.append(sumRow,
-                element('p', 'In this example there are 2 and 1. When you divide, take them away: 2 \u2212 1 = 1.', 'decimal-learn-line'),
+                element('p', 'In this example there are 2 and 1, so 2 \u2212 1 = 1.', 'decimal-learn-line'),
                 element('p', 'Take the decimal points out and divide.', 'decimal-learn-line'),
                 element('div', '1107 \u00f7 9 = 123', 'decimal-big-number'),
                 element('p', 'Move the point back 1 digit.', 'decimal-learn-line'),
