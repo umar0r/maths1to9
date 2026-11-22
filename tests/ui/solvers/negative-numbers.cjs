@@ -5,7 +5,7 @@ const signed = value => String(value).replace('-', '−');
 module.exports = async function solve(page) {
     if (await require('../negative-numbers-learn-helper.cjs')(page)) return true;
     const main = page.locator('.lesson-controls button.button--primary:visible');
-    if (await main.isEnabled()) return false;
+    if (await main.isEnabled() && !await page.locator('.question-card:visible input[aria-invalid="true"]:enabled').count()) return false;
     // The sign-rule gaps: a tapped card fills the next gap if it's the
     // right sign, so tapping each card in turn fills them all.
     const signCards = page.locator('.nn-sign-card:visible');

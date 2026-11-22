@@ -32,7 +32,7 @@ $pageTitle = 'Finding the gradient';
         type="font/woff2"
         crossorigin
     >
-    <link rel="stylesheet" href="../../assets/css/app.css?v=63">
+    <link rel="stylesheet" href="../../assets/css/app.css?v=64">
 </head>
 
 <body
@@ -83,6 +83,6 @@ $pageTitle = 'Finding the gradient';
     <script src="./questions.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=81"></script>
+    <script src="../../assets/js/lesson-engine.js?v=82"></script>
 </body>
 </html>

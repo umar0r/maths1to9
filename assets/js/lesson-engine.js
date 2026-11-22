@@ -655,7 +655,8 @@
         }
         const freshAnswer = () => ({
             selected: null, rejected: [], value: custom ? null : fields ? Object.fromEntries(fields.map(field => [field.id, ''])) : '', phase: 'answer',
-            firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false
+            firstCorrect: null, correct: null, feedback: '', hint: null, invalid: false,
+            ...(config.input === 'number' ? { wrongInputs: [] } : {})
         });
         if (!isReplay && !section.state.cards?.[questionId]) {
             section.update(state => {
@@ -791,6 +792,7 @@
                     updateAnswer(() => {
                         if (fields) saved.value[field.id] = box.value;
                         else saved.value = box.value;
+                        saved.wrongInputs = (saved.wrongInputs || []).filter(id => id !== (fields ? field.id : 'answer'));
                         saved.invalid = false;
                     });
                     update();
@@ -851,13 +853,14 @@
                 }
             }
             if (input) {
-                input.value = saved.value;
+                if (input.value !== saved.value) input.value = saved.value;
                 input.disabled = lockedCard || saved.phase !== 'answer';
+                input.setAttribute('aria-invalid', String(saved.invalid === true || saved.wrongInputs?.includes('answer') === true));
             }
             for (const { id, box } of fieldInputs) {
-                box.value = saved.value[id];
+                if (box.value !== saved.value[id]) box.value = saved.value[id];
                 box.disabled = lockedCard || saved.phase !== 'answer';
-                box.setAttribute('aria-invalid', String(saved.invalid === id));
+                box.setAttribute('aria-invalid', String(saved.invalid === id || saved.wrongInputs?.includes(id) === true));
             }
             const shown = saved.invalid || saved.phase !== 'answer';
             feedback.className = feedbackClassName(sectionId, {
@@ -886,7 +889,8 @@
                 updateAnswer(() => {
                     saved.phase = 'answer';
                     saved.selected = null;
-                    if (!fields && !(custom && widget.keepValueOnRetry === true)) saved.value = custom ? null : '';
+                    if (config.input === 'choice') saved.value = '';
+                    else if (custom && widget.keepValueOnRetry !== true) saved.value = null;
                     saved.feedback = '';
                     saved.hint = null;
                 });
@@ -896,8 +900,11 @@
                         ...(widget.keepValueOnRetry === true ? { retry: true } : {}) });
                     handle.focus?.();
                 }
-                if (input) input.focus();
-                fieldInputs.find(({ id }) => !matches(saved.value[id], config.answer[id], id))?.box.focus();
+                const wrongBox = input || fieldInputs.find(({ id }) => saved.wrongInputs?.includes(id))?.box;
+                if (wrongBox) {
+                    wrongBox.focus();
+                    wrongBox.setSelectionRange?.(wrongBox.value.length, wrongBox.value.length);
+                }
                 return;
             }
             let correct;
@@ -951,6 +958,11 @@
                 saved.feedback = response.feedback || '';
                 saved.hint = response.hint || null;
                 if (value !== undefined) saved.value = value;
+                if (config.input === 'number') {
+                    saved.wrongInputs = fields
+                        ? fields.filter(field => !matches(value[field.id], config.answer[field.id], field.id)).map(field => field.id)
+                        : correct ? [] : ['answer'];
+                }
                 if (!correct && config.input === 'choice') saved.rejected.push(saved.selected);
             });
             if (!isReplay && config.scored === true) {

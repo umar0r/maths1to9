@@ -3910,7 +3910,7 @@ noscript p {
 }
 
 .lesson-section input:is([type="text"], [type="number"])[aria-invalid="true"] {
-    border-color: var(--danger, #b75421);
+    border-color: var(--error);
 }
 
 .question-answer-label input {

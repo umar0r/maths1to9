@@ -409,7 +409,14 @@ From `docs/lesson-specification.md`:
   answer → **Continue** after a correct one. Enter in the number box runs
   Check.
 - A wrong option greys out with a × and stays disabled; Try again keeps the
-  other options. A wrong number clears the box on Try again.
+  other options. Try again keeps every typed answer, in a single box or several fields.
+  Wrong boxes have the shared red border and `aria-invalid="true"` after
+  Check and throughout the retry, until that box is edited. Right fields
+  keep their values with no colour. Focus goes to the first wrong box,
+  with the cursor at the end, without selecting its text. The saved
+  `wrongInputs` ids restore the red boxes after a reload in the answer
+  phase. Editing clears only that box's mark; Reset still clears all work.
+  Choice questions keep their existing rejected-option behaviour.
 - Feedback is one sentence from the lesson, drawn by the shared feedback
   box (see "Feedback boxes" below). A `hint`, if the
   wrong answer has one, appears only with that feedback. There is no hint

@@ -114,7 +114,7 @@ definition, because the set passes its definition through to
 ### Try again
 
 - Set `saved.value` to `null`, phase `'answer'`, clear `feedback` and
-  `hint`, as the number box is cleared.
+  `hint`. Ordinary typed boxes retain their text; custom widgets use the rules below.
 - Call `handle.update({ value: null, editable: true, phase: 'answer' })`,
   then `handle.focus?.()`.
 - Opt-in: `widget.keepValueOnRetry === true` preserves `saved.value` instead.
