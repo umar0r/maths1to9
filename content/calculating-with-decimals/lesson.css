@@ -61,8 +61,6 @@ button.decimal-digit { cursor: pointer; }
 .decimal-hops path { fill: none; stroke: #334155; stroke-width: 1.5; stroke-linecap: round; }
 .decimal-hops text { fill: #334155; font: 700 16px Nunito, sans-serif; text-anchor: middle; }
 .decimal-division-picture { max-width: 240px; margin-block: 2rem; }
-.decimal-division-picture .decimal-gap { font-size: 1.8rem; }
-.decimal-division-gap { position: absolute; width: 40px; }
 .decimal-fraction { position: relative; width: max-content; max-width: 100%; margin: 1.25rem auto; }
 .decimal-fraction-row { padding-top: 48px; padding-bottom: 14px; }
 .decimal-fraction-row:first-child { border-bottom: 2px solid #64748b; }
@@ -71,6 +69,27 @@ button.decimal-digit { cursor: pointer; }
 .decimal-fraction-row .decimal-gap:not(:disabled):not(.is-placed) { border-color: #94a3b8; }
 .decimal-fraction-row.is-nine > :nth-child(-n+3) { width: 0; visibility: hidden; }
 .decimal-learn-instruction { text-align: center; font-size: .85rem; }
+/* Learn 2: a finished worked example, stacked in three rows. */
+.decimal-learn-steps {
+    margin: 1.75rem auto 1.5rem;
+    width: max-content;
+    max-width: 100%;
+}
+.decimal-learn-step { position: relative; }
+.decimal-learn-step--hops { padding-top: 48px; }
+.decimal-learn-note {
+    margin: .35rem 0 0;
+    text-align: center;
+    font-size: .85rem;
+    color: var(--text-muted);
+}
+.decimal-learn-arrow {
+    margin: .4rem 0;
+    text-align: center;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-muted);
+}
 body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex="-1"]:focus { outline: none; }
 @media (max-width: 640px) {
     .decimal-uses { gap: .75rem; }
@@ -83,9 +102,6 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
     .decimal-fraction-row .decimal-gap { width: 24px; }
 }
 
-.decimal-big-number.is-complete .decimal-gap:empty { width: 0; border: 0; }
-
-.decimal-division-picture.is-complete .decimal-division-gap { visibility: hidden; }
 
 /* Working notes use a slim final column, so the long sums fit on a phone. */
 .decimal-long-chart { margin-top: 2rem; }
