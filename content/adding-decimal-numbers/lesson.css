@@ -287,6 +287,26 @@ body[data-lesson-id="adding-decimal-numbers"] [data-screen-heading][tabindex="-1
 
 .decimal-column-table .decimal-column-table__tap { padding: 0; }
 
+/* Check pictures: Sam's working, the column table and the receipt. */
+.decimal-sam-working { width: min(100%, 200px); margin: 1.25rem auto .5rem; }
+.decimal-sam-working figcaption { margin-bottom: .4rem; font-size: .9rem; color: var(--text-muted); }
+.decimal-sam-working__grid {
+    display: grid;
+    grid-template-columns: 1.05rem repeat(4, 1.1rem);
+    justify-content: start;
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+    text-align: center;
+}
+.decimal-sam-working__grid > span { display: block; }
+.decimal-sam-working__line { grid-column: 2 / -1; height: 0; border-top: 2px solid #334155; }
+
+.decimal-check-table { margin-top: 1.25rem; }
+.decimal-check-receipt { width: min(100%, 210px); margin: 1.25rem auto .5rem; }
+.decimal-check-receipt svg { display: block; width: 100%; height: auto; }
+
 .decimal-selected-calculation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
 @media (max-width: 640px) {
     .decimal-selected-calculation { grid-template-columns: 1fr; }

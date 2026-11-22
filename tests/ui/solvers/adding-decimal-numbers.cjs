@@ -63,8 +63,8 @@ module.exports = async function solve(page) {
     const conceptual = [
         [/^Sam works/, "The 8 is tenths and the 4 is hundredths, so they don't belong in the same column."],
         [/^Why can/, "7.6 has no hundredths, so a 0 there doesn't change it."],
-        [/^In 7.60/, 'Write 0 in the tenths and add 1 to the units.'],
-        [/^A receipt has/, '2.40 + 1.35 − 0.50']
+        [/^The tenths make/, 'Write 0 in the tenths and add 1 to the units.'],
+        [/^Which working/, '2.40 + 1.35 − 0.50']
     ].find(([pattern]) => pattern.test(text));
     if (conceptual) {
         const choice = page.getByRole('button', { name: conceptual[1], exact: true });

@@ -148,6 +148,22 @@ test('decimals: four approved Check questions test understanding with separate m
         assert.ok(q.options.every(o => o.feedback));
         assert.equal(lesson.assessment.question_types[q.questionType], 'decimal-add-subtract');
     }
+    // Three questions show a picture above their choices; the zeros question needs none.
+    const prompts = [
+        ['line-up-points', 'Sam works out 5.8 + 0.34 like this. What has Sam done wrong?', true],
+        ['zeros-fill-gaps', 'Why can you write 7.6 as 7.60?', false],
+        ['carry-one', 'The tenths make 6 + 4 = 10. What do you write?', true],
+        ['receipt-operations', 'Which working gives the total to pay?', true]
+    ];
+    checks.forEach((q, index) => {
+        assert.equal(q.questionType, prompts[index][0]);
+        assert.equal(q.prompt, prompts[index][1]);
+        assert.equal(typeof q.figure === 'function', prompts[index][2], `${q.questionType} picture`);
+        // Shuffling the choices keeps the picture.
+        const shuffled = window.DecimalAddition.prepare(q, seededRandom(index + 1));
+        assert.equal(typeof shuffled.figure === 'function', prompts[index][2]);
+        assert.equal(shuffled.options.map(o => o.label).sort().join('|'), q.options.map(o => o.label).sort().join('|'));
+    });
     assert.match(checks[0].options.find(o => o.correct).label, /8 is tenths.*4 is hundredths/);
     assert.match(checks[1].options.find(o => o.correct).label, /no hundredths/);
     assert.equal(checks[2].options.find(o => o.correct).label, 'Write 0 in the tenths and add 1 to the units.');
