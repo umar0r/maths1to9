@@ -34,15 +34,33 @@ for (const width of [1280, 375]) {
             const sam = page.locator('.decimal-sam-working');
             await expect(sam).toBeVisible();
             await expect(sam.locator('figcaption')).toHaveText("Sam's working");
-            const cells = sam.locator('.decimal-sam-working__grid > span');
-            // Two rows of a sign and four characters, the line, then the answer row.
-            await expect(cells).toHaveText(['', '', '5', '.', '8', '+', '0', '.', '3', '4', '', '', '0', '.', '9', '2']);
-            const eight = await cells.nth(4).boundingBox();
-            const four = await cells.nth(9).boundingBox();
+            // Only digits take a column. Each number is right-aligned in three.
+            const numbers = sam.locator('.decimal-sam-working__digits');
+            await expect(numbers.nth(0).locator('.decimal-sam-working__digit')).toHaveText(['', '5', '8']);
+            await expect(numbers.nth(1).locator('.decimal-sam-working__digit')).toHaveText(['0', '3', '4']);
+            await expect(numbers.nth(2).locator('.decimal-sam-working__digit')).toHaveText(['0', '9', '2']);
+            const digit = (row, column) => numbers.nth(row).locator('.decimal-sam-working__digit').nth(column);
+            // The 5 sits exactly over the 3, and the 8 exactly over the 4.
+            const five = await digit(0, 1).boundingBox();
+            const three = await digit(1, 1).boundingBox();
+            expect(Math.abs(five.x - three.x)).toBeLessThan(1);
+            const eight = await digit(0, 2).boundingBox();
+            const four = await digit(1, 2).boundingBox();
             expect(Math.abs(eight.x - four.x)).toBeLessThan(1);
-            const topPoint = await cells.nth(3).boundingBox();
-            const bottomPoint = await cells.nth(7).boundingBox();
-            expect(Math.abs(topPoint.x - bottomPoint.x)).toBeGreaterThan(5);
+            // The smaller row leaves its first column empty.
+            const short = await numbers.nth(0).boundingBox();
+            expect(Math.abs(short.width - (await numbers.nth(1).boundingBox()).width)).toBeLessThan(1);
+            // A point is a small dot between its own digits, so 5.8's is one column
+            // right of the points in 0.34 and 0.92, which line up with each other.
+            const points = sam.locator('.decimal-sam-working__point');
+            await expect(points).toHaveCount(3);
+            const shortPoint = await points.nth(0).boundingBox();
+            const longPoint = await points.nth(1).boundingBox();
+            const answerPoint = await points.nth(2).boundingBox();
+            expect(Math.abs(shortPoint.x - longPoint.x)).toBeGreaterThan(10);
+            expect(Math.abs(longPoint.x - answerPoint.x)).toBeLessThan(1);
+            expect(shortPoint.width).toBeLessThan(6);
+            expect(Math.abs((shortPoint.x + shortPoint.width / 2) - (eight.x + eight.width / 2))).toBeGreaterThan(4);
             await noSidewaysScroll();
             await solve(page);
             await main(page).click();

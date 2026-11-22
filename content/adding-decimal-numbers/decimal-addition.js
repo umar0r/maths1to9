@@ -219,8 +219,9 @@
         host.append(table);
     }
 
-    // Check 1: Sam's working as a pupil writes it on paper, every character
-    // in a cell of its own, so the last digits line up and the points do not.
+    // Check 1: Sam's working as a pupil writes it on paper. Only digits take
+    // a column, so the last digits line up; each point is a small dot between
+    // its own two digits, and that is why the points do not line up.
     function drawSamWorking(host) {
         const figure = document.createElement('figure');
         figure.className = 'decimal-sam-working';
@@ -228,23 +229,38 @@
         working.className = 'decimal-sam-working__grid';
         working.setAttribute('role', 'img');
         working.setAttribute('aria-label', 'Sam wrote 5.8 and 0.34 with their last digits lined up, and answered 0.92.');
-        function row(sign, cells) {
+        const COLUMNS = 3;
+        function row(sign, number) {
+            const [whole, decimal] = number.split('.');
+            const digits = whole + decimal;
+            const cells = [...Array(COLUMNS - digits.length).fill(''), ...digits];
+            const boxes = document.createElement('div');
+            boxes.className = 'decimal-sam-working__digits';
+            for (const text of cells) {
+                const cell = document.createElement('span');
+                cell.className = 'decimal-sam-working__digit';
+                cell.textContent = text;
+                boxes.append(cell);
+            }
+            // The point sits on the boundary after the last whole digit.
+            const boundary = COLUMNS - digits.length + whole.length;
+            const point = document.createElement('span');
+            point.className = 'decimal-sam-working__point';
+            point.style.left = `${(boundary / COLUMNS) * 100}%`;
+            point.setAttribute('aria-hidden', 'true');
+            boxes.append(point);
             const signCell = document.createElement('span');
             signCell.className = 'decimal-sam-working__sign';
             signCell.textContent = sign;
-            working.append(signCell);
-            for (const text of cells) {
-                const cell = document.createElement('span');
-                cell.textContent = text;
-                working.append(cell);
-            }
+            working.append(signCell, boxes);
         }
-        row('', ['', '5', '.', '8']);
-        row('+', ['0', '.', '3', '4']);
-        const line = document.createElement('span');
+        row('', '5.8');
+        row('+', '0.34');
+        const line = document.createElement('div');
         line.className = 'decimal-sam-working__line';
+        line.setAttribute('aria-hidden', 'true');
         working.append(line);
-        row('', ['0', '.', '9', '2']);
+        row('', '0.92');
         const caption = document.createElement('figcaption');
         caption.textContent = "Sam's working";
         figure.append(caption, working);
