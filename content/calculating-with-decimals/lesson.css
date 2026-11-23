@@ -151,7 +151,6 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
     .decimal-long-multiplication td[data-column="note"] { font-size: .65rem; }
     .decimal-long-multiplication td { height: 72px; }
     .decimal-long-multiplication .decimal-written-carry { top: 0; font-size: .7rem; }
-    body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-digit { width: 28px; }
 }
 
 .decimal-ali-working {

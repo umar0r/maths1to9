@@ -56,10 +56,11 @@
             picture.append(row);
             host.append(element('div', task.sum, 'decimal-big-number decimal-point-sum'), picture);
             if (editable) host.append(element('p', 'Tap the gap where the point goes.', 'decimal-learn-instruction'));
+            // One hop over each digit after the point, the first one landing on it.
             const back = digits.slice(task.gap);
             dispose = drawArrows(picture, correct ? back.map((node, index) => ({
                 from: { node, side: 'right' },
-                to: index === 0 ? { node: gaps[task.gap], side: 'centre' } : { node: back[index - 1], side: 'left' },
+                to: index === 0 ? { node: gaps[task.gap], side: 'centre' } : { node, side: 'left' },
                 label: String(task.count),
                 head: index === 0
             })) : []);
