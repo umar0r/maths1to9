@@ -143,6 +143,11 @@ with them).
 
 ### Axis steps, arrows and drawing options (added 2026-10-12)
 
+- `labelEvery` accepts one positive whole number for both axes, or an object
+  such as `{ x: 5, y: 2 }` for separate intervals. Each interval counts grid
+  lines. A missing axis uses the usual automatic interval. Invalid intervals
+  throw a `RangeError`; existing numeric settings keep the same labels.
+
 - `create(host, { x: [-6, 6], y: [-12, 12], step: { x: 1, y: 2 } })`
   defaults each step to 1. Grid lines occur at multiples of the step;
   labels show their values in units. `labelEvery` counts grid lines.

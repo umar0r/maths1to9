@@ -132,7 +132,7 @@ test('default graph retains its bounding box, square shape and axis letters', ()
     assert.deepEqual(labels.slice(-2), ['x', 'y']);
 });
 
-function labelBoard() {
+function labelBoard(options = {}) {
     const texts = [];
     const node = () => ({ style: { setProperty() {} }, append() {}, setAttribute() {}, addEventListener() {} });
     const document = { createElement: node, body: node() };
@@ -147,8 +147,8 @@ function labelBoard() {
         window, document, getComputedStyle: () => ({ getPropertyValue: property => property }),
         ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} }
     });
-    const graph = window.Maths1to9Graph.create({ isConnected: true, ownerDocument: document, append() {} });
-    return { graph, last: () => texts.at(-1), position: () => Array.from(texts.at(-1).args.slice(0, 2), fn => fn()) };
+    const graph = window.Maths1to9Graph.create({ isConnected: true, ownerDocument: document, append() {} }, options);
+    return { graph, texts, last: () => texts.at(-1), position: () => Array.from(texts.at(-1).args.slice(0, 2), fn => fn()) };
 }
 test('segment labels retain their original anchor and line tone without new options', () => {
     const fixture = labelBoard();
@@ -178,5 +178,30 @@ test('opt-in segment labels use each side and clear marked points inside the gri
         assert.ok(left + 7 <= 159 || left >= 181 || top + 12 <= 109 || top >= 131, 'label must clear the marked point');
         assert.equal(fixture.last().attributes.anchorY, 'top');
         assert.equal(fixture.last().attributes.strokeColor, '--text');
+    }
+});
+
+
+test('numeric labelEvery keeps the same interval on both axes', () => {
+    const fixture = labelBoard({ labelEvery: 3 });
+    assert.deepEqual(fixture.texts.map(text => text.args[2]), ['−6', '−3', '3', '6', '−6', '−3', '3', '6', '0', 'x', 'y']);
+});
+
+test('object labelEvery labels each axis independently', () => {
+    const fixture = labelBoard({ labelEvery: { x: 2, y: 3 } });
+    assert.deepEqual(fixture.texts.map(text => text.args[2]), ['−6', '−4', '−2', '2', '4', '6', '−6', '−3', '3', '6', '0', 'x', 'y']);
+});
+
+test('a missing labelEvery axis retains the automatic interval', () => {
+    const fixture = labelBoard({ x: [-10, 10], labelEvery: { y: 3 } });
+    assert.deepEqual(fixture.texts.map(text => text.args[2]), ['−10', '−8', '−6', '−4', '−2', '2', '4', '6', '8', '10', '−6', '−3', '3', '6', '0', 'x', 'y']);
+    const other = labelBoard({ labelEvery: { x: 2 } });
+    assert.deepEqual(other.texts.slice(6, 18).map(text => text.args[2]), ['−6', '−5', '−4', '−3', '−2', '−1', '1', '2', '3', '4', '5', '6']);
+});
+
+test('labelEvery rejects non-positive, fractional and malformed intervals', () => {
+    for (const value of [0, -1, 1.5, Infinity, NaN, '2', null, [], true,
+        { x: 0 }, { y: -1 }, { x: 1.5 }, { y: Infinity }, { x: undefined }, { y: null }, { x: '2' }]) {
+        assert.throws(() => labelBoard({ labelEvery: value }), { name: 'RangeError' });
     }
 });

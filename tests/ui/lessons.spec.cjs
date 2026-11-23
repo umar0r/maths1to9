@@ -89,6 +89,17 @@ for (const lesson of lessons) {
         });
 
         test('later sections are locked at the start', async ({ page }) => {
+            const lessonFile = path.join(contentDir, lesson, 'lesson.json');
+            const layout = fs.existsSync(lessonFile) ? JSON.parse(fs.readFileSync(lessonFile, 'utf8')).layout : null;
+            if (layout === 'parts') {
+                // Parts lessons show no stage bar, so check the lock by its
+                // address: Check can't be opened on a fresh start.
+                await page.goto(`content/${lesson}/#check-1`, { waitUntil: 'networkidle' });
+                await page.waitForTimeout(300);
+                expect(page.url(), 'Check should be locked on a fresh start').not.toMatch(/#check-1$/);
+                await expect(page.locator('.lesson-navigation'), 'parts lessons show no stage bar').toHaveCount(0);
+                return;
+            }
             await page.goto(`content/${lesson}/`, { waitUntil: 'networkidle' });
             // Section tabs are buttons in most lessons, plain links in some.
             const stages = page.locator('nav .lesson-navigation__button:visible, nav button:visible')

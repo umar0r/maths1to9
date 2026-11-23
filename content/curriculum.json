@@ -169,7 +169,8 @@
         {"folder":"averages-and-range","title":"Averages and range","subtitle":"Calculate and choose suitable measures of centre and spread.","skills":["mean-median-mode","range-and-outliers","choose-average"]},
         {"folder":"averages-from-tables","title":"Averages from tables","subtitle":"Calculate averages from frequency and grouped tables.","skills":["mean-frequency-table","estimated-mean-grouped","modal-class"]},
         {"folder":"comparing-distributions","title":"Comparing distributions","subtitle":"Use averages, range and graphs to compare data sets.","skills":["compare-distributions"]},
-        {"folder":"scatter-graphs","title":"Scatter graphs","subtitle":"Plot paired data and describe the strength and direction of correlation.","skills":["scatter-graphs","recognise-correlation","correlation-not-causation"]},
+        {"folder":"scatter-graphs","title":"Plotting scatter graphs","subtitle":"Plot and read pairs of numbers on a scatter graph.","skills":["scatter-graphs"]},
+        {"folder":"scatter-graph-correlation","title":"Correlation","subtitle":"Spot positive, negative and no correlation on a scatter graph.","skills":["recognise-correlation","correlation-not-causation"]},
         {"folder":"lines-of-best-fit","title":"Lines of best fit","subtitle":"Draw a trend line and use it to estimate values carefully.","skills":["line-of-best-fit","interpolate-extrapolate"]},
         {"folder":"time-series","title":"Time series","subtitle":"Display data over time and interpret trends and patterns.","skills":["time-series-graphs","interpret-time-series"]}
       ]

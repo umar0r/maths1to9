@@ -55,6 +55,24 @@
         })[character]);
     }
 
+    function labelIntervals(value, automatic) {
+        if (value === undefined) return { x: automatic, y: automatic };
+        const object = value !== null && typeof value === 'object' && !Array.isArray(value);
+        if (!object && typeof value !== 'number') {
+            throw new RangeError('Graph label intervals must be positive whole numbers.');
+        }
+        const result = {};
+        for (const axis of ['x', 'y']) {
+            let interval = value;
+            if (object) interval = Object.hasOwn(value, axis) ? value[axis] : automatic;
+            if (!Number.isInteger(interval) || interval < 1) {
+                throw new RangeError('Graph label intervals must be positive whole numbers.');
+            }
+            result[axis] = interval;
+        }
+        return result;
+    }
+
     function create(host, options = {}) {
         if (options.aspect !== undefined && !options.step) {
             throw new TypeError('Graph aspect requires step.');
@@ -74,6 +92,8 @@
         if (![step.x, step.y].every(value => Number.isFinite(value) && value > 0)) {
             throw new RangeError('Graph axis steps must be positive finite numbers.');
         }
+        const automaticLabels = Math.max((x[1] - x[0]) / step.x, (y[1] - y[0]) / step.y) > 12 ? 2 : 1;
+        const every = labelIntervals(options.labelEvery, automaticLabels);
         const subdivide = subdivisions(options.subdivide);
         const minorStep = { x: step.x / subdivide.x, y: step.y / subdivide.y };
         const wrapper = document.createElement('div');
@@ -185,18 +205,17 @@
                 });
             }
         }
-        const every = options.labelEvery || (Math.max((x[1] - x[0]) / step.x, (y[1] - y[0]) / step.y) > 12 ? 2 : 1);
         for (let tick = Math.ceil(x[0] / step.x); tick * step.x <= x[1]; tick++) {
             const value = tick * step.x;
             segment([value, y[0]], [value, y[1]], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && tick % every === 0) {
+            if (value !== 0 && tick % every.x === 0) {
                 axisText([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
             }
         }
         for (let tick = Math.ceil(y[0] / step.y); tick * step.y <= y[1]; tick++) {
             const value = tick * step.y;
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && tick % every === 0) {
+            if (value !== 0 && tick % every.y === 0) {
                 axisText([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }
