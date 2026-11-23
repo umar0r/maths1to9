@@ -239,6 +239,22 @@
     "question-bank",
     "comparison"
   ],
+  "scatter-graph-correlation": [
+    "explanation--type",
+    "interactive--type",
+    "question-bank--type",
+    "explanation--strength",
+    "interactive--strength",
+    "question-bank--strength",
+    "explanation--describe",
+    "interactive--describe",
+    "question-bank--describe",
+    "explanation--cause",
+    "interactive--cause",
+    "question-bank--cause",
+    "question-bank",
+    "comparison"
+  ],
   "scatter-graphs": [
     "explanation--read",
     "interactive--read",

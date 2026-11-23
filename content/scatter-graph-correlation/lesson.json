@@ -1,0 +1,59 @@
+{
+    "slug": "scatter-graph-correlation",
+    "title": "Correlation",
+    "subtitle": "Spot positive, negative and no correlation on a scatter graph.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "type", "label": "Type",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "strength", "label": "Strength",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "describe", "label": "Describe",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "cause", "label": "Cause",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            { "prompt": "Check questions come in a later stage." }
+        ]
+    },
+    "assessment": { "question_types": {
+        "name-type": "recognise-correlation",
+        "drag-type": "recognise-correlation",
+        "name-strength": "recognise-correlation",
+        "drag-strong": "recognise-correlation",
+        "strongest": "recognise-correlation",
+        "describe-pattern": "recognise-correlation",
+        "finish-sentence": "recognise-correlation",
+        "tend-not-always": "recognise-correlation",
+        "cause-claim": "correlation-not-causation",
+        "cause-sort": "correlation-not-causation",
+        "cause-reason": "correlation-not-causation",
+        "positive-meaning": "recognise-correlation",
+        "direction-and-none": "recognise-correlation",
+        "strength-choice": "recognise-correlation",
+        "describe-choice": "recognise-correlation",
+        "not-causation": "correlation-not-causation"
+    } }
+}
