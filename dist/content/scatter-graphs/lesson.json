@@ -1,0 +1,190 @@
+{
+    "slug": "scatter-graphs",
+    "title": "Plotting scatter graphs",
+    "subtitle": "Plot and read pairs of numbers on a scatter graph.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "read", "label": "Read",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "plot", "label": "Plot",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "scales", "label": "Scales",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            {
+                "type": "one-pair",
+                "prompt": "What does one point on a scatter graph show?",
+                "correct": "One pair of numbers from the table.",
+                "feedback": "Yes. One number across, one number up.",
+                "wrong": [
+                    {
+                        "label": "One number from the table.",
+                        "feedback": "A point needs two numbers: one across and one up."
+                    },
+                    {
+                        "label": "The two numbers added together.",
+                        "feedback": "We don't add them. The point sits at both numbers."
+                    },
+                    {
+                        "label": "The difference between the two numbers.",
+                        "feedback": "We don't take them away. The point sits at both numbers."
+                    }
+                ]
+            },
+            {
+                "type": "read-method",
+                "picture": "point",
+                "prompt": "How do you read this point?",
+                "correct": "Go straight down to the bottom axis, then straight across to the side axis.",
+                "feedback": "Yes. That gives the first number, then the second.",
+                "wrong": [
+                    {
+                        "label": "Read the side axis first, then the bottom axis.",
+                        "feedback": "That gives the pair back to front."
+                    },
+                    {
+                        "label": "Read the nearest number written on the grid.",
+                        "feedback": "The point might not sit on a written number. Go down and across to the axes."
+                    },
+                    {
+                        "label": "Count the points to the left of it.",
+                        "feedback": "The other points don't matter. Go down and across to the axes."
+                    }
+                ]
+            },
+            {
+                "type": "swapped-pair",
+                "prompt": "Sam plots the pair 6 and 2 by going across to 2 and up to 6. What went wrong?",
+                "correct": "Sam swapped the numbers. It's across to 6, then up to 2.",
+                "feedback": "Yes. The first number goes across.",
+                "wrong": [
+                    {
+                        "label": "Nothing. The order doesn't matter.",
+                        "feedback": "Across 2, up 6 is a different place from across 6, up 2."
+                    },
+                    {
+                        "label": "Sam should have added 6 and 2 first.",
+                        "feedback": "We never add them. One goes across and one goes up."
+                    },
+                    {
+                        "label": "Sam should have plotted two points.",
+                        "feedback": "One pair makes one point."
+                    }
+                ]
+            },
+            {
+                "type": "same-start",
+                "prompt": "Two pupils both revised for 4 hours. One got a mark of 6 and the other got 8. How do you plot them?",
+                "correct": "Two points, one above the other, both across at 4.",
+                "feedback": "Yes. Each pair gets its own point.",
+                "wrong": [
+                    {
+                        "label": "One point at 4, halfway between 6 and 8.",
+                        "feedback": "Each pupil needs their own point."
+                    },
+                    {
+                        "label": "Just one point, because they both revised for 4 hours.",
+                        "feedback": "Each pair gets its own point, even if the first numbers match."
+                    },
+                    {
+                        "label": "Two points side by side along the bottom.",
+                        "feedback": "Both go across to 4, so one sits above the other."
+                    }
+                ]
+            },
+            {
+                "type": "square-scale",
+                "picture": "scale",
+                "prompt": "On this side axis, what is one square worth?",
+                "correct": "10",
+                "feedback": "Yes. Two squares make 20, so one square is 10.",
+                "wrong": [
+                    {
+                        "label": "20",
+                        "feedback": "That's the gap between two numbers. There are two squares in that gap."
+                    },
+                    {
+                        "label": "1",
+                        "feedback": "Squares aren't always worth 1. Count the squares between two numbers."
+                    },
+                    {
+                        "label": "2",
+                        "feedback": "2 is how many squares there are between numbers, not what each one is worth."
+                    }
+                ]
+            }
+        ],
+        "summary": {
+            "title": "What you've learned",
+            "points": [
+                {
+                    "text": "A scatter graph shows pairs of numbers as points."
+                },
+                {
+                    "text": "Each point is one pair: the first number goes across, the second goes up."
+                },
+                {
+                    "text": "To read a point, go straight down to the bottom axis, then straight across to the side axis."
+                },
+                {
+                    "text": "Two pairs that start with the same number get two points, one above the other."
+                },
+                {
+                    "text": "Before you read or plot, find what one square is worth."
+                }
+            ]
+        }
+    },
+    "assessment": { "question_types": {
+        "read-pair": "scatter-graphs",
+        "read-up": "scatter-graphs",
+        "read-across": "scatter-graphs",
+        "plot-pair": "scatter-graphs",
+        "pick-point": "scatter-graphs",
+        "plot-same-start": "scatter-graphs",
+        "square-worth": "scatter-graphs",
+        "plot-scaled": "scatter-graphs",
+        "read-scaled": "scatter-graphs",
+        "which-graph": "scatter-graphs",
+        "one-pair": "scatter-graphs",
+        "read-method": "scatter-graphs",
+        "swapped-pair": "scatter-graphs",
+        "same-start": "scatter-graphs",
+        "square-scale": "scatter-graphs"
+    } },
+    "score_activities": [
+        { "id": "step:explanation--read:0", "kind": "guided" },
+        { "id": "step:explanation--read:1", "kind": "guided" },
+        { "id": "step:explanation--read:2", "kind": "guided" },
+        { "id": "step:interactive--read:0", "kind": "guided" },
+        { "id": "step:interactive--read:1", "kind": "guided" },
+        { "id": "step:interactive--read:2", "kind": "guided" },
+        { "id": "step:explanation--plot:0", "kind": "guided" },
+        { "id": "step:explanation--plot:1", "kind": "guided" },
+        { "id": "step:interactive--plot:0", "kind": "guided" },
+        { "id": "step:interactive--plot:1", "kind": "guided" },
+        { "id": "step:interactive--plot:2", "kind": "guided" },
+        { "id": "step:explanation--scales:0", "kind": "guided" },
+        { "id": "step:interactive--scales:0", "kind": "guided" },
+        { "id": "step:interactive--scales:1", "kind": "guided" },
+        { "id": "step:interactive--scales:2", "kind": "guided" }
+    ]
+}

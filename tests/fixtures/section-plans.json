@@ -245,6 +245,19 @@
     "question-bank",
     "comparison"
   ],
+  "scatter-graphs": [
+    "explanation--read",
+    "interactive--read",
+    "question-bank--read",
+    "explanation--plot",
+    "interactive--plot",
+    "question-bank--plot",
+    "explanation--scales",
+    "interactive--scales",
+    "question-bank--scales",
+    "question-bank",
+    "comparison"
+  ],
   "significant-figures": [
     "explanation",
     "interactive",

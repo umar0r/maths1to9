@@ -1943,8 +1943,10 @@
         const header = renderLessonHeader();
         const navigation = renderSectionNavigation();
 
-        // Parts use the existing in-page stage bar so every stage stays
-        // visible. The header's compact stage bar shows one stage on phones.
+        // Parts lessons show no stage bar: Learn, Try it and Practice repeat
+        // for each part, so a bar would be long and tell the pupil little.
+        // Back and the marks are enough. The bar is still built (the engine
+        // keeps its buttons up to date) but never added to the page.
         const siteHeader = document.querySelector('.site-header__inner');
         const stagesInSiteHeader = Boolean(siteHeader) && !state.hasParts &&
             navigation.classList.contains('lesson-navigation--stages');
@@ -2101,7 +2103,7 @@
 
         app.append(
             ...(marksInSiteHeader ? [] : [header]),
-            ...(stagesInSiteHeader ? [] : [navigation]),
+            ...(stagesInSiteHeader || state.hasParts ? [] : [navigation]),
             sectionContainer,
             controls
         );

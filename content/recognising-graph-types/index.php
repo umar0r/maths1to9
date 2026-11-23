@@ -69,7 +69,7 @@ $pageTitle = 'Recognising graph types';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=10"></script>
+    <script src="../../assets/js/graph.js?v=11"></script>
     <script src="./graphtypes.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
@@ -77,6 +77,6 @@ $pageTitle = 'Recognising graph types';
     <script src="./interactive.js?v=3"></script>
 
     <!-- Shared lesson renderer; loaded last -->
-    <script src="../../assets/js/lesson-engine.js?v=82"></script>
+    <script src="../../assets/js/lesson-engine.js?v=83"></script>
 </body>
 </html>
