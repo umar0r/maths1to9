@@ -8,7 +8,7 @@
             title: 'We multiply and divide decimals to work out costs and share things out.'
         },
         {
-            title: 'To multiply decimals, count how many digits there are after the decimal points.'
+            title: 'To multiply decimals, count the digits after each point, then add them.'
         },
         {
             title: 'To divide by a whole number, count how many digits there are after the decimal point.'
@@ -216,7 +216,7 @@
             answerStep.append(answer);
 
             picture.append(factorsRow,
-                element('p', 'In this example there are 5 in total.', 'decimal-learn-line'),
+                element('p', 'In this example there are 2 and 3, so 2\u00a0+\u00a03\u00a0=\u00a05.', 'decimal-learn-line'),
                 element('p', 'Take the decimal points out and use long multiplication.', 'decimal-learn-line'));
             picture.append(element('div', '24 \u00d7 3 = 72', 'decimal-big-number'));
             picture.append(
