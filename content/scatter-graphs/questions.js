@@ -228,8 +228,8 @@
             { points: pairs.map(([a, b]) => [b, a]), feedback: 'These are back to front: the second number went across.' },
             { points: across.map((value, index) => [value, sorted[index]]),
                 feedback: 'The up numbers were put in order, so the pairs got mixed up. Keep each column together.' },
-            { points: pairs.map(([a, b], index) => [a + Number(index === 0), b]),
-                feedback: 'One point is one square off. Check each point against its column.' }
+            { points: pairs.map(([a, b], index) => [a + 3 * Number(index === 0), b]),
+                feedback: 'One point is in the wrong place. Check each point against its column.' }
         ], random);
         const graph = { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 2, axisNames: { x: '', y: '' } };
         return {

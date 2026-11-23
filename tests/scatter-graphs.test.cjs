@@ -165,7 +165,16 @@ test('scatter graphs: the four which-graph diagrams show the table and the three
             else if (option.feedback.startsWith('The up numbers')) {
                 const ys = m.pairs.map(point => point[1]).sort((a, b) => a - b);
                 assert.equal(set(points), set(m.pairs.map(([x], i) => [x, ys[i]])));
-            } else assert.equal(points.reduce((sum, point, i) => sum + Math.abs(point[0] - m.pairs[i][0]) + Math.abs(point[1] - m.pairs[i][1]), 0), 1);
+            } else {
+                const changed = points.filter((point, i) => key(point) !== key(m.pairs[i]));
+                assert.equal(changed.length, 1);
+                const index = points.indexOf(changed[0]);
+                const [x, y] = changed[0], [a, b] = m.pairs[index];
+                assert.ok(Math.abs(x - a) + Math.abs(y - b) >= 3);
+                assert.ok(x === a || y === b);
+                assert.ok(!m.pairs.some(point => key(point) === key(changed[0])));
+                assert.equal(option.feedback, 'One point is in the wrong place. Check each point against its column.');
+            }
         }
     }
 });

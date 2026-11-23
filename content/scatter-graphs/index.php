@@ -73,7 +73,7 @@ $pageTitle = 'Plotting scatter graphs';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./scatter-graphs.js?v=5"></script>
-    <script src="./questions.js?v=7"></script>
+    <script src="./questions.js?v=8"></script>
     <script src="./interactive.js?v=7"></script>
 
     <!-- Shared lesson renderer; loaded last -->
