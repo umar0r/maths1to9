@@ -267,6 +267,26 @@ function solveQuestion(text, memory) {
     const figures = tidy.match(/How many significant figures does ([\d.,]+) show/i);
     if (figures) return String(countSignificant(figures[1]));
 
+    // Rounding's method question: the steps start by finding the digit you round to.
+    const steps = tidy.match(/^Which steps, in the right order, round a number to the nearest (\d[\d,]*)\?/i);
+    if (steps) return `1. Find the ${{ '10': 'tens', '100': 'hundreds', '1,000': 'thousands' }[steps[1]]} digit.`;
+
+    // Significant figures guided steps: "Which is the last digit you keep?" or
+    // "Which digit decides?", answered as a digit and its place, e.g. "8 (thousandths)".
+    const which = tidy.match(/^Round ([\d,.]+) to (\d+) significant figures?\..*\bWhich\b/i);
+    if (which) {
+        const number = which[1].replace(/,/g, '');
+        const n = Number(which[2]);
+        const indexes = [...number].map((digit, i) => /\d/.test(digit) ? i : -1).filter(i => i >= 0);
+        const start = indexes.findIndex(i => number[i] !== '0');
+        const index = indexes[start + n - Number(/Which is the last digit/i.test(tidy))];
+        const point = number.includes('.') ? number.indexOf('.') : number.length;
+        const power = point - index - Number(index < point);
+        const names = { 6: 'millions', 5: 'hundred-thousands', 4: 'ten-thousands', 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones',
+            '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths', '-4': 'ten-thousandths', '-5': 'hundred-thousandths', '-6': 'millionths' };
+        return `${number[index]} (${names[power]})`;
+    }
+
     const correction = tidy.match(/([\d][\d,]*(?:\.\d+)?) rounds to [\d.,]+ at (\d+) decimal places?/i);
     if (correction) return roundToPower(correction[1], -Number(correction[2]));
 
@@ -305,7 +325,7 @@ async function readScreen(page) {
             // Only the Practice results page has a score panel of this shape in its own section.
             summary: Boolean(root.querySelector('.practice-summary__score')),
             main: main ? { label: text(main), disabled: main.disabled } : null,
-            slider: Boolean([...document.querySelectorAll('input[type=range]')].find(element => visible(element) && !element.disabled)),
+            slider: Boolean([...document.querySelectorAll('.rounding-line-move')].find(element => visible(element) && !element.disabled)),
             digitTaps: [...document.querySelectorAll('.significant-digits[role=group] button')].filter(visible).length,
             ends: [...document.querySelectorAll('.rounding-end')].filter(visible).length,
             road: Boolean([...document.querySelectorAll('.rounding-road svg')].find(element => visible(element) && element.getAttribute('aria-disabled') === 'false')),
@@ -318,13 +338,11 @@ async function readScreen(page) {
                 const data = window.Rounding?.tryIt?.slides.find(item => item.title === text(heading));
                 const line = block.querySelector('.rounding-line');
                 return {
-                    keep: data ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy).target : null,
+                    keep: data?.digits ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy).target : null,
                     labels: data?.labels ?? null,
                     buttons: block.querySelectorAll('.significant-digits[role=group] button').length,
-                    line: line ? {
-                        base: Number(line.dataset.base), step: Number(line.dataset.step),
-                        edge: Number(line.dataset.edge), value: Number(line.dataset.tapValue)
-                    } : null,
+                    line: line ? data?.line ?? null : null,
+                    half: data?.line ? (data.line.value >= data.line.base + 5 * data.line.step ? 'upper' : 'lower') : null,
                     dot: Boolean(block.querySelector('.rounding-dot')),
                     slots: [...block.querySelectorAll('.tryit-slot')].map(slot => ({
                         index: Number(slot.dataset.slot), filled: slot.classList.contains('is-filled')
@@ -403,7 +421,7 @@ async function tapEnd(page, info) {
     const division = readDivision(words);
     const question = info.paragraphs.at(-1) ?? '';
     let target;
-    if (division && /rack|helmet|troph|piece|cord|divide/i.test(words)) {
+    if (division && /rack|helmet|minibus|troph|piece|cord|divide/i.test(words)) {
         // Enough of something rounds up; what you can only pay for whole rounds down.
         const down = /full pieces|can they buy/i.test(question);
         target = down ? Math.floor(division.total / division.size) : Math.ceil(division.total / division.size);
@@ -419,12 +437,11 @@ async function tapEnd(page, info) {
     return String(target);
 }
 
-// Try it: move the number along the line with the slider.
+// Try it: move the dot along the line to the end with the → button.
 async function moveSlider(page) {
-    const slider = page.locator('input[type=range]').first();
-    await slider.focus();
-    await slider.press('End');
-    return slider.inputValue();
+    const up = page.locator('.rounding-line-move[aria-label="Move the number up"]').first();
+    while (await up.isEnabled()) await up.click();
+    return page.locator('.rounding-line[role=slider]').first().getAttribute('aria-valuenow');
 }
 
 /* Try it's two hands-on slides: tap the digit, then tap or drag the number
@@ -465,10 +482,9 @@ async function slideAction(page, slide) {
     }
     if (!slide.line) return null;
     if (!slide.labels && !slide.dot) {
-        const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
-        await page.mouse.click(box.x + acrossLine(slide.line, slide.line.value) * box.width, box.y + box.height / 2);
+        await page.locator(`.rounding-tryit .rounding-half-button[data-half="${slide.half}"]`).click();
         await settle(page, 300);
-        return 'tapped the line';
+        return 'tapped the half of the line';
     }
     const empty = slide.slots.find(slot => !slot.filled);
     if (slide.labels && empty) {
