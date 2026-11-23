@@ -3,317 +3,97 @@
 
     const SLUG = document.body.dataset.lessonId;
     const initialHash = window.location.hash;
-    const { element, button, drawHops } = window.DecimalCalculations;
-    const cards = window.Maths1to9DigitCards;
-    const places = ['thousands', 'hundreds', 'tens', 'units'];
+    const { element, button, drawArrows } = window.DecimalCalculations;
 
-    function writtenCarry(cell, text) {
-        const carry = element('span', text, 'decimal-written-carry');
-        carry.setAttribute('aria-label', `Carried ${text}`);
-        carry.hidden = true;
-        cell.classList.add('decimal-written-carry-cell');
-        cell.append(carry);
-        return carry;
+    // The answer's digits with the point in one gap: gap 0 sits in front of
+    // the first digit, gap 4 after the last one in a four-digit answer.
+    function pointText(digits, gap) {
+        return gap >= digits.length ? digits : `${digits.slice(0, gap)}.${digits.slice(gap)}`;
     }
 
-    function longMultiplication(host) {
-        const expected = {
-            'first:hundreds': '4', 'first:tens': '9', 'first:units': '6',
-            'second:thousands': '2', 'second:hundreds': '4', 'second:tens': '8', 'second:units': '0',
-            'answer:thousands': '2', 'answer:hundreds': '9', 'answer:tens': '7', 'answer:units': '6'
-        };
-        const order = ['first:units', 'first:tens', 'first:hundreds',
-            'second:units', 'second:tens', 'second:hundreds', 'second:thousands',
-            'answer:units', 'answer:tens', 'answer:hundreds', 'answer:thousands'];
-        const errors = [
-            'Check 62 × 8: 2 × 8 = 16, write 6 and carry 1.',
-            'Check 62 × 8: 6 × 8 + 1 = 49, write 9 and carry 4.',
-            'Check 62 × 8: write the carried 4 in the hundreds.',
-            'Check 62 × 40: write 0 in the units first.',
-            'Check 62 × 40: 2 × 4 = 8. Write the 8 in the tens.',
-            'Check 62 × 40: 6 × 4 = 24, write 4 and carry 2.',
-            'Check 62 × 40: write the carried 2 in the thousands.',
-            'Check the answer row: 6 + 0 = 6.',
-            'Check the answer row: 9 + 8 = 17, write 7 and carry 1.',
-            'Check the answer row: 4 + 4 + 1 = 9.',
-            'Check the answer row: 0 + 2 = 2.'
-        ];
-        const values = (row, keys) => Object.fromEntries(keys.map(column => [column,
-            { slot: `${row}:${column}`, label: `${row === 'first' ? '62 times 8' : row === 'second' ? '62 times 40' : 'Answer'}, ${column} digit` }]));
-        const carryNodes = {};
-        const built = cards.columnTable({
-            label: '62 times 48 in long multiplication',
-            className: 'digit-column-table--wide decimal-long-multiplication',
-            columns: [...places.map(id => ({ id, label: id })), { id: 'note', label: '' }],
-            rows: [
-                { id: 'a', values: { tens: '6', units: '2' } },
-                { id: 'b', sign: '×', values: { tens: '4', units: '8' } },
-                { id: 'first', values: { ...values('first', places.slice(1)), note: '62 × 8' } },
-                { id: 'second', values: { ...values('second', places), note: '62 × 40' } },
-                { id: 'answer', answer: true, values: values('answer', places) }
-            ],
-            cellExtra(cell, { row, column }) {
-                if (row.id === 'first' && column.id === 'tens') carryNodes.firstTens = writtenCarry(cell, '+1');
-                if (row.id === 'first' && column.id === 'hundreds') carryNodes.firstHundreds = writtenCarry(cell, '+4');
-                if (row.id === 'second' && column.id === 'thousands') carryNodes.secondThousands = writtenCarry(cell, '+2');
-                if (row.id === 'answer' && column.id === 'hundreds') carryNodes.sum = writtenCarry(cell, '+1');
-            }
-        });
-        const chart = element('div', '', 'digit-card-chart digit-card-chart--wide decimal-long-chart');
-        chart.append(built.table);
-        host.append(chart);
-        return {
-            built, expected, order, errors, answer: places.map(id => `answer:${id}`), active: 'first:units',
-            groups: { first: { advance: 'left', wrap: false, next: 'second' },
-                second: { advance: 'left', wrap: false, next: 'answer' }, answer: { advance: 'left' } },
-            feedback: '62 × 8 = 496 and 62 × 40 = 2480, so 62 × 48 = 2976.',
-            paint(value) {
-                const digits = value?.digits || {};
-                carryNodes.firstTens.hidden = digits['first:units'] !== '6';
-                carryNodes.firstHundreds.hidden = digits['first:tens'] !== '9';
-                carryNodes.secondThousands.hidden = digits['second:hundreds'] !== '4';
-                carryNodes.sum.hidden = digits['answer:tens'] !== '7';
-            }
-        };
-    }
-
-    function shortDivision(host, decimalDivisor) {
-        const dividend = decimalDivisor ? '110.7' : '9.36';
-        const divisor = decimalDivisor ? '9' : '4';
-        const built = cards.shortDivision({ divisor, dividend });
-        const chart = element('div', '', 'digit-card-chart');
-        chart.append(built.table);
-        host.append(chart);
-        const expected = decimalDivisor ? { 'answer:0': '0', 'answer:1': '1', 'answer:2': '2', 'answer:4': '3' }
-            : { 'answer:0': '2', 'answer:2': '3', 'answer:3': '4' };
-        const order = Object.keys(expected);
-        return {
-            built, expected, order,
-            answer: [...dividend].map((digit, index) => digit === '.' ? '.' : `answer:${index}`),
-            optional: decimalDivisor ? ['answer:0'] : [],
-            active: decimalDivisor ? 'answer:1' : 'answer:0',
-            groups: { answer: { advance: 'right', wrap: false } },
-            errors: decimalDivisor ? [
-                'The first 1 is less than 9. Leave that box empty or put 0 there.',
-                'Check the 11: 11 ÷ 9 = 1, remainder 2.',
-                'Check the 20: 20 ÷ 9 = 2, remainder 2.',
-                'Check the 27: 27 ÷ 9 = 3.'
-            ] : [
-                'Check the 9: 9 ÷ 4 = 2, remainder 1.',
-                'Check the 13: 13 ÷ 4 = 3, remainder 1.',
-                'Check the 16: 16 ÷ 4 = 4.'
-            ],
-            feedback: decimalDivisor ? '110.7 ÷ 9 = 12.3, so 11.07 ÷ 0.9 = 12.3.' : '9.36 ÷ 4 = 2.34.',
-            paint(value, activeColumn) {
-                const digits = value?.digits || {};
-                const carries = decimalDivisor ? {
-                    '1': digits['answer:0'] === undefined || digits['answer:0'] === '0' ? '1' : '',
-                    '2': digits['answer:1'] === '1' ? '2' : '',
-                    '4': digits['answer:1'] === '1' && digits['answer:2'] === '2' ? '2' : ''
-                } : {
-                    '2': digits['answer:0'] === '2' ? '1' : '',
-                    '3': digits['answer:0'] === '2' && digits['answer:2'] === '3' ? '1' : ''
-                };
-                built.update({ activeColumn, carries });
-            }
-        };
-    }
-
-    function receiptMultiplication(host) {
-        const columns = ['units', 'point', 'tenths', 'hundredths'];
-        const expected = { 'answer:units': '4', 'answer:tenths': '3', 'answer:hundredths': '5' };
-        const carryNodes = {};
-        const built = cards.columnTable({
-            label: '1.45 times 3 in columns',
-            columns: columns.map(id => ({ id, label: id, ariaLabel: id === 'point' ? 'decimal point' : id })),
-            rows: [
-                { id: 'a', values: { units: '1', point: '.', tenths: '4', hundredths: '5' } },
-                { id: 'b', sign: '×', values: { units: '3' } },
-                { id: 'answer', answer: true, values: Object.fromEntries(columns.map(id => [id,
-                    id === 'point' ? '.' : { slot: `answer:${id}`, label: `${id} answer digit` }])) }
-            ],
-            cellExtra(cell, { row, column }) {
-                if (row.id === 'a' && ['units', 'tenths'].includes(column.id)) carryNodes[column.id] = writtenCarry(cell, '+1');
-            }
-        });
-        const chart = element('div', '', 'digit-card-chart decimal-receipt-chart');
-        chart.append(built.table);
-        host.append(chart);
-        return {
-            built, expected, order: ['answer:hundredths', 'answer:tenths', 'answer:units'],
-            answer: ['answer:units', '.', 'answer:tenths', 'answer:hundredths'],
-            active: 'answer:hundredths', groups: { answer: { advance: 'left' } },
-            errors: [
-                'Check the hundredths: 5 × 3 = 15, write 5 and carry 1.',
-                'Check the tenths: 4 × 3 + 1 = 13, write 3 and carry 1.',
-                'Check the units: 1 × 3 + 1 = 4.'
-            ],
-            feedback: '3 × £1.45 = £4.35.',
-            paint(value) {
-                const digits = value?.digits || {};
-                carryNodes.tenths.hidden = digits['answer:hundredths'] !== '5';
-                carryNodes.units.hidden = digits['answer:hundredths'] !== '5' || digits['answer:tenths'] !== '3';
-            }
-        };
-    }
-
-    function tableWidget(build) {
-        let model, view;
-        const normalized = value => Object.fromEntries(model.order.map(id => [id,
-            value?.digits?.[id] ?? (model.optional?.includes(id) ? '0' : undefined)]));
-        return {
-            keepValueOnRetry: true,
-            render(host, { value, editable, onChange }) {
-                model = build(host);
-                view = cards.create(host, {
-                    slots: model.built.slots, groups: model.groups, active: model.active, value, editable, onChange,
-                    onPaint({ value, active, editable }) {
-                        const activeColumn = editable && active ? active.split(':')[1] : null;
-                        model.built.update({ activeColumn });
-                        model.paint(value, activeColumn);
-                        // Optional leading zeros belong to this answer's marking rule.
-                        // Keep the shared slot in place while hiding its empty locked view.
-                        for (const id of model.optional || []) {
-                            const slot = model.built.slots.find(slot => slot.id === id);
-                            slot.element.classList.toggle('decimal-empty-leading-answer', !editable && value?.digits?.[id] === undefined);
-                        }
-                    }
-                });
-                return view;
-            },
-            reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
-            replayFeedback(result) { view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' }); },
-            isEmpty(value) { return !value || model.order.some(id => value.digits?.[id] === undefined && !model.optional?.includes(id)); },
-            mark(value) {
-                const digits = normalized(value);
-                const wrong = model.order.findIndex(id => digits[id] !== model.expected[id]);
-                const marks = Object.fromEntries(model.order.filter(id => value?.digits?.[id] !== undefined || !model.optional?.includes(id))
-                    .map(id => [id, digits[id] === model.expected[id] ? 'right' : 'wrong']));
-                return { correct: wrong < 0, feedback: wrong < 0 ? model.feedback : model.errors[wrong],
-                    value: cards.markedValue(value, marks) };
-            },
-            answerText(value) { return model.answer.map(id => id === '.' ? '.' : value?.digits?.[id] || '').join(''); }
-        };
-    }
-
-    function productText(gap) {
-        if (gap === 0) return '0.2976';
-        if (gap === 4) return '2976';
-        return `${'2976'.slice(0, gap)}.${'2976'.slice(gap)}`;
-    }
-
-    function pointWidget() {
-        let value = null, editable = true, host, onChange, dispose = () => {};
+    // One tap per screen: the sum is already worked out, and the pupil puts
+    // the point in the gap where it belongs. Right, Learn's hops look back
+    // from the last digit to the point.
+    function pointWidget(task) {
+        let value = null;
+        let editable = true;
+        let host, onChange;
+        let gaps = [];
+        let dispose = () => {};
         function paint() {
             dispose();
+            dispose = () => {};
             host.replaceChildren();
-            const picture = element('div', '', 'decimal-number-picture');
-            const row = element('div', '', 'decimal-big-number');
-            const correct = value?.gap === 1 && !editable;
-            row.classList.toggle('is-complete', correct);
-            if (value?.gap === 0) row.append(element('span', '0', 'decimal-digit'));
-            const gaps = [], digits = [];
-            for (let index = 0; index <= 4; index++) {
-                const selected = value?.gap === index;
-                const gap = button(selected ? '.' : '', `Put the point in 2976 at gap ${index + 1}`, () => {
-                    if (!editable) return;
-                    value = { gap: index, wrongGap: value?.gap === index ? value.wrongGap : null };
-                    onChange(value);
-                    paint();
-                });
+            const placed = value?.gap;
+            const correct = placed === task.gap && !editable;
+            const picture = element('div', '', 'decimal-number-picture decimal-point-picture');
+            const row = element('div', '', 'decimal-big-number decimal-point-row');
+            // Blanks only show while the pupil can still tap one.
+            row.classList.toggle('is-locked', !editable);
+            const digits = [];
+            gaps = [];
+            // A point in front of the number needs its 0 to read as 0.123.
+            if (placed === 0) row.append(element('span', '0', 'decimal-digit'));
+            for (let index = 0; index <= task.digits.length; index++) {
+                const gap = button(placed === index ? '.' : '',
+                    `Put the point in ${task.digits} in gap ${index + 1}`, () => {
+                        if (!editable) return;
+                        value = { gap: index };
+                        onChange(value);
+                        paint();
+                    });
                 gap.disabled = !editable;
-                gap.classList.toggle('is-placed', selected);
-                if (value?.wrongGap === index) gap.classList.add('answer-choice', 'is-incorrect');
-                else if (correct && selected) gap.classList.add('answer-choice', 'is-correct');
+                gap.classList.toggle('is-placed', placed === index);
+                if (placed === index && !correct && value?.wrongGap === index) gap.classList.add('is-wrong');
                 gaps.push(gap);
                 row.append(gap);
-                if (index < 4) {
-                    const digit = element('span', '2976'[index], 'decimal-digit');
+                if (index < task.digits.length) {
+                    const digit = element('span', task.digits[index], 'decimal-digit');
                     digits.push(digit);
                     row.append(digit);
                 }
             }
             picture.append(row);
-            host.append(picture);
-            dispose = drawHops(picture, correct ? [1, 2, 3].map((count, index) => ({
-                from: gaps[index + 1], to: digits[index + 1], label: String(count)
+            host.append(element('div', task.sum, 'decimal-big-number decimal-point-sum'), picture);
+            if (editable) host.append(element('p', 'Tap the gap where the point goes.', 'decimal-learn-instruction'));
+            const back = digits.slice(task.gap);
+            dispose = drawArrows(picture, correct ? back.map((node, index) => ({
+                from: { node, side: 'right' },
+                to: index === 0 ? { node: gaps[task.gap], side: 'centre' } : { node: back[index - 1], side: 'left' },
+                label: String(task.count),
+                head: index === 0
             })) : []);
         }
         return {
             keepValueOnRetry: true,
             render(container, options) {
-                host = container; onChange = options.onChange;
-                return { update(next) { value = next.value; editable = next.editable; paint(); } };
+                host = container;
+                onChange = options.onChange;
+                return {
+                    update(next) {
+                        value = next.value;
+                        editable = next.editable;
+                        paint();
+                    },
+                    focus() { gaps[value?.gap ?? 0]?.focus(); }
+                };
+            },
+            reset() {
+                if (!host) return;
+                value = null;
+                editable = true;
+                paint();
             },
             isEmpty: value => value?.gap == null,
             mark(value) {
-                const correct = value.gap === 1;
-                return { correct, feedback: correct
-                    ? '62 × 48 = 2976. 6.2 × 0.48 has 3 digits after the points, so 6.2 × 0.48 = 2.976.'
-                    : `That gives ${productText(value.gap)}, with ${4 - value.gap} digits after the point. 6.2 × 0.48 has 3.`,
-                    value: { ...value, wrongGap: correct ? null : value.gap } };
+                const correct = value.gap === task.gap;
+                return {
+                    correct,
+                    feedback: correct ? task.right : task.wrong(value.gap),
+                    value: { gap: value.gap, wrongGap: correct ? null : value.gap }
+                };
             },
-            answerText: value => value?.gap == null ? '' : productText(value.gap)
-        };
-    }
-
-    function scaleWidget() {
-        let value = null, editable = true, host, onChange, dispose = () => {};
-        function paint() {
-            dispose();
-            host.replaceChildren();
-            const moves = value?.moves || 0;
-            const fraction = element('div', '', 'decimal-fraction');
-            const hops = [];
-            ['11.07', '0.9'].forEach((number, rowIndex) => {
-                const moved = rowIndex === 0 ? moves === 2 : moves >= 1;
-                const active = editable && (rowIndex === 1 ? moves === 0 : moves === 1);
-                const row = element('div', '', 'decimal-fraction-row');
-                const digits = number.replace('.', ''), original = number.indexOf('.'), target = original + 1;
-                const digitNodes = [], gapNodes = [];
-                for (let index = 0; index <= digits.length; index++) {
-                    const pointHere = index === (moved ? target : original);
-                    const gap = button(pointHere && !(moved && rowIndex === 1) ? '.' : '',
-                        `Move the point in ${number} to gap ${index + 1}`, () => {
-                            if (!active) return;
-                            value = index === target ? { moves: moves + 1, wrong: null }
-                                : { moves, wrong: { row: rowIndex, gap: index } };
-                            onChange(value);
-                            paint();
-                        });
-                    gap.disabled = !active;
-                    gap.classList.toggle('is-placed', pointHere);
-                    if (value?.wrong?.row === rowIndex && value.wrong.gap === index) gap.classList.add('answer-choice', 'is-incorrect');
-                    gapNodes.push(gap);
-                    row.append(gap);
-                    if (index < digits.length) {
-                        const digit = element('span', moved && rowIndex === 1 && index === 0 ? '' : digits[index], 'decimal-digit');
-                        digitNodes.push(digit);
-                        row.append(digit);
-                    }
-                }
-                if (moved && rowIndex === 1) row.classList.add('is-nine');
-                fraction.append(row);
-                if (moved) hops.push({ from: gapNodes[original], to: digitNodes[original], label: '× 10' });
-            });
-            host.append(fraction);
-            if (moves < 2) host.append(element('p', moves === 0 ? 'Move the point in 0.9 one place to the right.'
-                : 'Now move the point in 11.07 one place too.', 'decimal-learn-instruction'));
-            dispose = drawHops(fraction, hops);
-        }
-        return {
-            keepValueOnRetry: true,
-            render(container, options) {
-                host = container; onChange = options.onChange;
-                return { update(next) { value = next.value; editable = next.editable; paint(); } };
-            },
-            isEmpty: value => !value || (value.moves < 2 && !value.wrong),
-            mark(value) {
-                return { correct: value.moves === 2, feedback: value.moves === 2
-                    ? '11.07 ÷ 0.9 is the same as 110.7 ÷ 9. Now you can use short division.'
-                    : 'Move it one place to the right, the same as the other number.', value };
-            },
-            answerText: value => value?.moves === 2 ? '110.7 ÷ 9' : value?.moves === 1 ? '11.07 ÷ 9' : '11.07 ÷ 0.9'
+            answerText: value => value?.gap == null ? '' : pointText(task.digits, value.gap)
         };
     }
 
@@ -337,22 +117,51 @@
         return { update };
     }
 
-    const problems = [
-        { id: 'long-multiplication', hash: 'try-it-1', title: 'Work out 6.2 × 0.48.', widget: () => tableWidget(longMultiplication) },
-        { id: 'product-point', hash: 'try-it-1-step-2', title: 'Work out 6.2 × 0.48.',
-            line: '62 × 48 = 2976. Tap where the point goes.', widget: pointWidget },
-        { id: 'divide-whole', hash: 'try-it-2', title: 'Work out 9.36 ÷ 4.', widget: () => tableWidget(host => shortDivision(host, false)) },
-        { id: 'scale-divisor', hash: 'try-it-3', title: 'Work out 11.07 ÷ 0.9.', widget: scaleWidget },
-        { id: 'divide-scaled', hash: 'try-it-3-step-2', title: 'Work out 11.07 ÷ 0.9.', widget: () => tableWidget(host => shortDivision(host, true)) },
-        { id: 'receipt', hash: 'try-it-4', title: 'Work out the total on this receipt.', widget: () => tableWidget(receiptMultiplication), receipt: true }
+    // Four sums, one tap each. `gap` is where the point belongs; `count` is
+    // the number of digits after it in the answer.
+    const tasks = [
+        {
+            id: 'multiply-point', hash: 'try-it-1', title: 'Work out 6.2 \u00d7 0.48.',
+            sum: '62 \u00d7 48 = 2976', digits: '2976', gap: 1, count: 3,
+            right: '1 + 2 = 3 digits after the points, so 2.976.',
+            wrong: gap => gap === 0
+                ? 'That\u2019s 4 digits after the point. You need 1 + 2 = 3.'
+                : 'Count the digits after both points and add them: 1 + 2 = 3.'
+        },
+        {
+            id: 'divide-whole', hash: 'try-it-2', title: 'Work out 9.36 \u00f7 4.',
+            sum: '936 \u00f7 4 = 234', digits: '234', gap: 1, count: 2,
+            right: '9.36 has 2 digits after the point, so 2.34.',
+            wrong: () => '9.36 has 2 digits after the point. Move the point back 2 digits.'
+        },
+        {
+            id: 'divide-decimal', hash: 'try-it-3', title: 'Work out 11.07 \u00f7 0.9.',
+            sum: '1107 \u00f7 9 = 123', digits: '123', gap: 2, count: 1,
+            right: '2 \u2212 1 = 1 digit after the point, so 12.3.',
+            wrong: gap => gap === 0 ? 'When you divide, take them away: 2 \u2212 1 = 1.'
+                : gap === 1 ? 'That\u2019s 2 digits after the point. You need 2 \u2212 1 = 1.'
+                    : 'That\u2019s 0 digits after the point. You need 2 \u2212 1 = 1.'
+        },
+        {
+            id: 'receipt', hash: 'try-it-4', title: 'Work out the total on this receipt.',
+            sum: '3 \u00d7 145 = 435', digits: '435', gap: 1, count: 2,
+            right: '\u00a31.45 has 2 digits after the point, so \u00a34.35.',
+            wrong: () => '\u00a31.45 has 2 digits after the point. Move the point back 2 digits.',
+            receipt: true
+        }
     ];
+
+    const problems = tasks.map(task => ({
+        id: task.id, hash: task.hash, title: task.title, receipt: task.receipt === true,
+        widget: () => pointWidget(task)
+    }));
 
     async function mountTryIt(root) {
         const api = window.Maths1to9Lesson;
         document.dispatchEvent(new CustomEvent('maths1to9:section-gate', { detail: { sectionId: 'interactive' } }));
         api.setSectionAction('interactive', { label: 'Check', disabled: true, onClick() {} });
         const section = await api.useSectionState('interactive', {
-            version: 2,
+            version: 3,
             initial: () => ({ index: 0, screen: 0, furthestScreen: 0, finished: false, cards: {} }),
             upgrade: () => null
         });
@@ -402,7 +211,7 @@
                 input: 'custom', widget, scored: false, readOnly, lockedReview: true, autoContinue: false,
                 figure: problem.receipt ? (host, { replay }) => {
                     receipt = drawReceipt(host, !replay && state.cards[problem.id]?.correct === true);
-                } : problem.line ? host => host.append(element('p', problem.line)) : undefined,
+                } : undefined,
                 onReset: reset, onReplayReset: reset, onReplayFeedback: replay,
                 onFeedback(result) { reportProgress(); receipt?.update(result.correct); },
                 onContinue: continueExample

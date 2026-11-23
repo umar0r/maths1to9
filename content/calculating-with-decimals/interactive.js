@@ -77,9 +77,11 @@
         return node;
     }
 
-    // A quadratic curved hop, as on the Negative numbers line. SVG coordinates
-    // follow the real digit positions so phone layouts keep the counts clear.
-    function drawHops(host, hops) {
+    // A textbook hop: one small arch over one digit, from one gap to the next.
+    // Both ends sit just above the digit tops, and a small open head points
+    // down into the gap it lands in. Each number carries one label over its
+    // group of hops.
+    function drawArrows(host, hops) {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('decimal-hops');
         svg.setAttribute('aria-hidden', 'true');
@@ -89,18 +91,36 @@
             const origin = host.getBoundingClientRect();
             svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
             svg.replaceChildren();
-            hops.forEach(({ from, to, label, startEdge }) => {
-                const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-                const x1 = (startEdge ? a.left : a.left + a.width / 2) - origin.left;
-                const x2 = b.right - origin.left;
-                const y = b.top - origin.top - 3;
+            const row = host.querySelector('.decimal-digit')?.getBoundingClientRect();
+            if (!row) return;
+            const y = row.top - origin.top - 2;
+            const rise = 22;
+            const place = ({ node, side }) => {
+                const box = node.getBoundingClientRect();
+                const x = side === 'centre' ? box.left + box.width / 2
+                    : side === 'left' ? box.left : box.right;
+                return x - origin.left;
+            };
+            const groups = new Map();
+            hops.forEach(({ from, to, label, group, head }) => {
+                const x1 = place(from), x2 = place(to);
                 const path = document.createElementNS(svg.namespaceURI, 'path');
-                path.setAttribute('d', `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y - 35} ${x2} ${y}`);
+                // Vertical tangents at both ends keep the hop the same on each side.
+                // Only the hop that finishes a group carries an open head.
+                path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
+                    + (head ? ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}` : ''));
+                svg.append(path);
+                // Two numbers on one row can share a count, so groups may be named.
+                const key = group ?? label;
+                const span = groups.get(key) || { min: Infinity, max: -Infinity, label };
+                groups.set(key, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2), label: span.label });
+            });
+            groups.forEach(({ min, max, label }) => {
                 const count = document.createElementNS(svg.namespaceURI, 'text');
-                count.setAttribute('x', (x1 + x2) / 2);
-                count.setAttribute('y', y - 24);
+                count.setAttribute('x', (min + max) / 2);
+                count.setAttribute('y', y - rise * .75 - 6);
                 count.textContent = label;
-                svg.append(path, count);
+                svg.append(count);
             });
         }
         const observer = new ResizeObserver(draw);
@@ -135,59 +155,6 @@
             heading.tabIndex = -1;
             heading.focus();
         }
-        // A textbook hop: one small arch over one digit, from one gap to the next.
-        // Both ends sit just above the digit tops, and a small open head points
-        // down into the gap it lands in. Each number carries one label over its
-        // group of hops.
-        function drawArrows(host, hops) {
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.classList.add('decimal-hops');
-            svg.setAttribute('aria-hidden', 'true');
-            host.append(svg);
-            function draw() {
-                if (!host.isConnected) { observer.disconnect(); return; }
-                const origin = host.getBoundingClientRect();
-                svg.setAttribute('viewBox', `0 0 ${origin.width} ${origin.height}`);
-                svg.replaceChildren();
-                const row = host.querySelector('.decimal-digit')?.getBoundingClientRect();
-                if (!row) return;
-                const y = row.top - origin.top - 2;
-                const rise = 22;
-                const place = ({ node, side }) => {
-                    const box = node.getBoundingClientRect();
-                    const x = side === 'centre' ? box.left + box.width / 2
-                        : side === 'left' ? box.left : box.right;
-                    return x - origin.left;
-                };
-                const groups = new Map();
-                hops.forEach(({ from, to, label, group, head }) => {
-                    const x1 = place(from), x2 = place(to);
-                    const path = document.createElementNS(svg.namespaceURI, 'path');
-                    // Vertical tangents at both ends keep the hop the same on each side.
-                    // Only the hop that finishes a group carries an open head.
-                    path.setAttribute('d', `M ${x1} ${y} C ${x1} ${y - rise} ${x2} ${y - rise} ${x2} ${y}`
-                        + (head ? ` M ${x2 - 5} ${y - 7} L ${x2} ${y} L ${x2 + 5} ${y - 7}` : ''));
-                    svg.append(path);
-                    // Two numbers on one row can share a count, so groups may be named.
-                    const key = group ?? label;
-                    const span = groups.get(key) || { min: Infinity, max: -Infinity, label };
-                    groups.set(key, { min: Math.min(span.min, x1, x2), max: Math.max(span.max, x1, x2), label: span.label });
-                });
-                groups.forEach(({ min, max, label }) => {
-                    const count = document.createElementNS(svg.namespaceURI, 'text');
-                    count.setAttribute('x', (min + max) / 2);
-                    count.setAttribute('y', y - rise * .75 - 6);
-                    count.textContent = label;
-                    svg.append(count);
-                });
-            }
-            const observer = new ResizeObserver(draw);
-            observer.observe(host);
-            requestAnimationFrame(draw);
-            document.fonts.ready.then(draw);
-            return () => observer.disconnect();
-        }
-
         // Learn 2: count the digits, multiply, then move the point back.
         function drawMultiplyPicture() {
             const picture = element('div', '', 'decimal-learn-steps');
@@ -380,7 +347,7 @@
         else render();
     }
 
-    window.DecimalCalculations = { element, button, drawHops };
+    window.DecimalCalculations = { element, button, drawArrows };
     document.addEventListener('maths1to9:lesson-rendered', event => {
         if (event.detail?.slug === SLUG) mountLearn();
     });

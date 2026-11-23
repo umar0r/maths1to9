@@ -17,7 +17,7 @@
     width: max-content;
     max-width: 100%;
 }
-.decimal-big-number, .decimal-fraction-row {
+.decimal-big-number {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -60,13 +60,6 @@ button.decimal-digit { cursor: pointer; }
 .decimal-hops { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .decimal-hops path { fill: none; stroke: #334155; stroke-width: 1.5; stroke-linecap: round; }
 .decimal-hops text { fill: #334155; font: 700 16px Nunito, sans-serif; text-anchor: middle; }
-.decimal-fraction { position: relative; width: max-content; max-width: 100%; margin: 1.25rem auto; }
-.decimal-fraction-row { padding-top: 48px; padding-bottom: 14px; }
-.decimal-fraction-row:first-child { border-bottom: 2px solid #64748b; }
-.decimal-fraction-row .decimal-digit { width: 34px; }
-.decimal-fraction-row .decimal-gap { width: 26px; border-color: transparent; }
-.decimal-fraction-row .decimal-gap:not(:disabled):not(.is-placed) { border-color: #94a3b8; }
-.decimal-fraction-row.is-nine > :nth-child(-n+3) { width: 0; visibility: hidden; }
 .decimal-learn-instruction { text-align: center; font-size: .85rem; }
 /* Learn 2: a finished worked example, stacked in three rows. */
 .decimal-learn-steps {
@@ -106,12 +99,10 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
 @media (max-width: 640px) {
     .decimal-uses { gap: .75rem; }
     .decimal-uses figcaption { font-size: .9rem; }
-    .decimal-big-number, .decimal-fraction-row { font-size: 2.2rem; }
+    .decimal-big-number { font-size: 2.2rem; }
     .decimal-big-number .decimal-digit { width: 32px; }
     .decimal-number-point { width: 14px; }
     .decimal-times { margin-inline: 8px; }
-    .decimal-fraction-row .decimal-digit { width: 32px; }
-    .decimal-fraction-row .decimal-gap { width: 24px; }
 }
 
 
@@ -126,14 +117,41 @@ body[data-lesson-id="calculating-with-decimals"] [data-screen-heading][tabindex=
 .decimal-long-multiplication .decimal-written-carry { top: .1rem; left: .2rem; transform: none; }
 .decimal-receipt { width: min(100%, 280px); margin: 1.5rem auto 0; }
 .decimal-receipt svg { display: block; width: 100%; height: auto; }
-.decimal-receipt-chart { margin-top: 2rem; }
+/* Try it: the sum, then the answer's digits with a gap for the point. */
+.decimal-point-sum { margin: .75rem 0 0; }
+.decimal-point-picture { margin: .35rem auto 0; }
+.decimal-point-row .decimal-gap {
+    position: relative;
+    width: 34px;
+    border: 0;
+    border-radius: 0;
+}
+/* Each gap is a short blank under the digits, so the answer still reads
+   as one number, and the whole 34px width is the tap target. */
+.decimal-point-row .decimal-gap::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border-bottom: 2px dashed #94a3b8;
+}
+.decimal-point-row .decimal-gap.is-placed { width: 20px; }
+.decimal-point-row .decimal-gap.is-placed::after { content: none; }
+.decimal-point-row.is-locked .decimal-gap::after { content: none; }
+/* A judged answer reads as one tidy number, like Learn's rows. */
+.decimal-point-row.is-locked .decimal-gap { width: 0; }
+.decimal-point-row.is-locked .decimal-gap.is-placed { width: 20px; }
+.decimal-point-row .decimal-gap.is-wrong { color: #b91c1c; }
+@media (max-width: 640px) {
+    .decimal-point-sum { font-size: 1.9rem; }
+}
 @media (max-width: 640px) {
     .decimal-long-multiplication [data-column="note"] { width: 62px; }
     .decimal-long-multiplication td[data-column="note"] { font-size: .65rem; }
     .decimal-long-multiplication td { height: 72px; }
     .decimal-long-multiplication .decimal-written-carry { top: 0; font-size: .7rem; }
     body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-digit { width: 28px; }
-    body[data-lesson-id="calculating-with-decimals"] #lesson-section-interactive .decimal-big-number .decimal-gap { width: 28px; }
 }
 
 .decimal-ali-working {
