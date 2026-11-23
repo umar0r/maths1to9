@@ -1,9 +1,8 @@
 (() => {
     'use strict';
 
-    const slug = document.body.dataset.lessonId;
-    const S = window.ScatterGraphs;
-    const E = window.Maths1to9LessonEngine;
+    const slug = typeof document === 'undefined' ? 'scatter-graphs' : document.body.dataset.lessonId;
+    const S = typeof module !== 'undefined' && module.exports ? require('./scatter-graphs.js') : window.ScatterGraphs;
 
     const contexts = [
         { x: 'Hours of revision', y: 'Test mark', xw: 'hours', yw: 'marks',
@@ -124,9 +123,9 @@
 
     function scalesPractice(item, random, helpers) {
         const { randomInt, shuffle } = helpers;
-        const xs = scales[randomInt(0, scales.length - 1, random)];
+        const xs = scales[randomInt(0, 2, random)];
         const ys = scales[randomInt(0, scales.length - 1, random)];
-        const graph = { x: [0, xs.step * 10], y: [0, ys.step * 10],
+        const graph = { x: [0, 40], y: [0, ys.step * 10],
             step: { x: xs.step, y: ys.step }, labelEvery: { x: xs.labels, y: ys.labels },
             axisNames: { x: 'Temperature (°C)', y: 'Ice creams sold' }, label: 'Scatter graph with scaled axes.' };
         if (item.type === 'square-worth') {
@@ -155,7 +154,7 @@
         if (item.type === 'plot-scaled') {
             let across, up;
             do {
-                across = randomInt(1, Math.min(9, Math.floor(40 / xs.step)), random);
+                across = randomInt(1, Math.floor(40 / xs.step), random);
                 up = randomInt(1, 9, random);
             } while (across % xs.labels === 0 && up % ys.labels === 0);
             const target = [across * xs.step, up * ys.step];
@@ -166,14 +165,16 @@
                     mark: value => S.markScaledPlot(value, { target, step: graph.step }) }) };
         }
         graph.axisNames.x = 'Hours of sunshine';
-        const maxHours = Math.min(9, Math.floor(24 / xs.step));
-        const a = randomInt(1, maxHours, random) * xs.step;
+        graph.x = [0, 10];
+        graph.step.x = 1;
+        graph.labelEvery.x = 1;
+        const a = randomInt(1, 9, random);
         let b = randomInt(1, 9, random) * ys.step;
         while (a === b) b = randomInt(1, 9, random) * ys.step;
         const target = [a, b];
         const points = [];
         while (points.length < 3) {
-            const point = [randomInt(0, maxHours, random) * xs.step, randomInt(1, 9, random) * ys.step];
+            const point = [randomInt(1, 9, random), randomInt(1, 9, random) * ys.step];
             if (point[0] !== a && !points.some(other => S.samePoint(point, other))) points.push(point);
         }
         points.push(target);
@@ -194,18 +195,92 @@
             } };
     }
 
+    const practiceTypes = {
+        read: ['read-pair', 'read-up', 'read-across'],
+        plot: ['plot-pair', 'pick-point', 'plot-same-start'],
+        scales: ['square-worth', 'plot-scaled', 'read-scaled']
+    };
+    const customTypes = ['plot-pair', 'plot-same-start', 'plot-scaled'];
+    const numberTypes = ['read-up', 'read-across', 'read-scaled'];
+    const inputFor = type => customTypes.includes(type) ? 'custom' : numberTypes.includes(type) ? 'number' : 'choice';
+
+    function validMix(types) {
+        const which = types.indexOf('which-graph');
+        if (which < 1 || which > types.length - 2) return false;
+        for (let index = 1; index < types.length; index++) {
+            const input = inputFor(types[index]);
+            if (input === 'custom' && inputFor(types[index - 1]) === input) return false;
+            if (index > 1 && inputFor(types[index - 1]) === input && inputFor(types[index - 2]) === input) return false;
+        }
+        return true;
+    }
+
+    function whichGraph(random, { randomInt, shuffle }) {
+        const across = [randomInt(1, 2, random), randomInt(4, 5, random), randomInt(7, 8, random)];
+        let up;
+        do { up = [randomInt(1, 2, random), randomInt(4, 5, random), randomInt(7, 8, random)]; }
+        while (up.every((value, index) => value === across[index]));
+        const sorted = [...up];
+        do { up = shuffle(sorted, random); } while (up.every((value, index) => value === sorted[index]));
+        const pairs = across.map((value, index) => [value, up[index]]);
+        const entries = shuffle([
+            { points: pairs, correct: true, feedback: 'Each point matches one column of the table.' },
+            { points: pairs.map(([a, b]) => [b, a]), feedback: 'These are back to front: the second number went across.' },
+            { points: across.map((value, index) => [value, sorted[index]]),
+                feedback: 'The up numbers were put in order, so the pairs got mixed up. Keep each column together.' },
+            { points: pairs.map(([a, b], index) => [a + Number(index === 0), b]),
+                feedback: 'One point is one square off. Check each point against its column.' }
+        ], random);
+        const graph = { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 2, axisNames: { x: '', y: '' } };
+        return {
+            input: 'choice', questionType: 'which-graph',
+            prompt: 'The table gives three pairs. Which graph plots them correctly?',
+            options: entries.map((entry, index) => ({ label: 'ABCD'[index], correct: Boolean(entry.correct), feedback: entry.feedback })),
+            model: { graph, points: [], pairs, graphs: entries.map(entry => entry.points) },
+            figure(host) {
+                S.pairTable(host, { rows: ['Hours', 'Mark'], values: pairs });
+                const gallery = document.createElement('div');
+                gallery.className = 'scatter-mini-graphs';
+                host.append(gallery);
+                entries.forEach((entry, index) => {
+                    const figure = document.createElement('figure');
+                    figure.className = 'scatter-mini-graph';
+                    const caption = document.createElement('figcaption');
+                    caption.textContent = 'ABCD'[index];
+                    figure.append(caption);
+                    const boardHost = document.createElement('div');
+                    figure.append(boardHost);
+                    gallery.append(figure);
+                    const board = S.makeGraph(boardHost, { ...graph, label: `Graph ${'ABCD'[index]}.` });
+                    entry.points.forEach(point => board.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
+                    board.setEditable(false);
+                });
+            }
+        };
+    }
+
     function pickPractice(part, count, random, helpers) {
         const { shuffle, randomInt } = helpers;
         let types;
         if (part === 'plot') {
             const plots = shuffle(['plot-pair', 'plot-same-start'], random);
             types = [plots[0], 'pick-point', plots[1]];
-        } else if (part === 'scales') types = shuffle(['square-worth', 'plot-scaled', 'read-scaled'], random);
-        else types = shuffle(['read-pair', 'read-up', 'read-across'], random);
+        } else if (part) types = shuffle(practiceTypes[part], random);
+        else {
+            const chosen = Object.values(practiceTypes).map(group => group[randomInt(0, group.length - 1, random)]);
+            const remaining = shuffle(Object.values(practiceTypes).flat().filter(type => !chosen.includes(type)), random);
+            chosen.push(...remaining.slice(0, 2), 'which-graph');
+            let attempts = 0;
+            do {
+                types = shuffle(chosen, random);
+                if (++attempts > 1000) throw new Error('Could not arrange Mixed Practice questions.');
+            } while (!validMix(types));
+        }
         return types.map(type => ({ type, seed: randomInt(0, 0xffffffff, random) }));
     }
 
     function practiceQuestion(item, random, helpers) {
+        if (item.type === 'which-graph') return whichGraph(random, helpers);
         if (['square-worth', 'plot-scaled', 'read-scaled'].includes(item.type)) return scalesPractice(item, random, helpers);
         if (['plot-pair', 'pick-point', 'plot-same-start'].includes(item.type)) return plotPractice(item, random, helpers);
         const { shuffle, randomInt } = helpers;
@@ -222,6 +297,8 @@
         }
         const [a, b] = asked;
         const figure = makeFigure(ctx, points, asked, item.type === 'read-pair');
+        const model = { target: asked, points, graph: { x: [0, 10], y: [0, 10],
+            step: { x: 1, y: 1 }, labelEvery: 1, axisNames: { x: ctx.x, y: ctx.y } } };
 
         if (item.type === 'read-pair') {
             const opts = [
@@ -236,7 +313,7 @@
             return {
                 input: 'choice', questionType: 'read-pair',
                 prompt: 'Which pair does the big point show?',
-                figure, options: shuffle(distinct, random)
+                figure, model, options: shuffle(distinct, random)
             };
         }
 
@@ -254,7 +331,7 @@
             return {
                 input: 'number', questionType: 'read-up',
                 prompt: ctx.promptUp(a),
-                figure, answer: String(b), feedback: `Up from ${a} to the point, then across to ${b}.`,
+                figure, model, answer: String(b), feedback: `Up from ${a} to the point, then across to ${b}.`,
                 rules, fallback: `Find ${a} on the bottom axis, go up to the point, then across.`
             };
         }
@@ -273,13 +350,113 @@
         return {
             input: 'number', questionType: 'read-across',
             prompt: ctx.promptAcross(b),
-            figure, answer: String(a), feedback: `Across from ${b} to the point, then down to ${a}.`,
+            figure, model, answer: String(a), feedback: `Across from ${b} to the point, then down to ${a}.`,
             rules, fallback: `Find ${b} on the side axis, go across to the point, then down.`
         };
     }
 
+    function checkQuestion(definition, random, { shuffle }) {
+        const question = {
+            input: 'choice', questionType: definition.type, prompt: definition.prompt, lockedReview: true,
+            options: shuffle([{ label: definition.correct, correct: true, feedback: definition.feedback }, ...definition.wrong], random)
+        };
+        if (definition.picture) question.figure = host => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'scatter-graph-host';
+            host.append(wrapper);
+            const scaled = definition.picture === 'scale';
+            const board = S.makeGraph(wrapper, { x: [0, 10], y: [0, scaled ? 60 : 10],
+                step: { x: 1, y: scaled ? 10 : 1 }, labelEvery: scaled ? { x: 2, y: 2 } : 1,
+                axisNames: scaled ? { x: 'Hours of sunshine', y: 'Ice creams sold' }
+                    : { x: 'Hours of revision', y: 'Test mark' },
+                label: scaled ? 'A side axis with two squares between 0, 20, 40 and 60.' : 'A scatter graph with one big point.' });
+            if (!scaled) [[1, 3], [3, 7], [5, 4], [8, 9]].forEach(point => {
+                const big = S.samePoint(point, [5, 4]);
+                board.point(point, { size: big ? 'large' : 'small', tone: big ? 'neutral' : 'muted', coordinates: false });
+            });
+            board.setEditable(false);
+        };
+        return question;
+    }
+
+    async function mountCheck(api, root) {
+        const id = 'comparison';
+        const { questions, summary } = api.getSection(id).config;
+        const E = window.Maths1to9LessonEngine;
+        const count = questions.length;
+        const section = await api.useSectionState(id, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ index: 0, screen: 0, finished: false, cards: {}, seed: E.randomInt(0, 0xffffffff) })
+        });
+        const state = section.state;
+        root.closest('.lesson-section').removeAttribute('aria-labelledby');
+        root.closest('.lesson-section').setAttribute('aria-label', 'Check');
+        api.gateSection(id);
+        function syncHash() {
+            if (api.getCurrentSection().id === id) api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
+        }
+        function show(screen) {
+            section.update(saved => { saved.screen = screen; });
+            render();
+            const heading = root.querySelector('[data-screen-heading]');
+            heading.tabIndex = -1;
+            heading.focus();
+        }
+        function progress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress(id, state.finished ? count : state.index + Number(current?.correct === true), count);
+        }
+        function render() {
+            root.replaceChildren();
+            api.setSectionBack(id, state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
+            api.setSectionPosition(id, null);
+            if (state.finished) api.completeSection(id);
+            if (state.screen === count && state.finished) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.textContent = summary.title;
+                const list = document.createElement('ul');
+                list.className = 'scatter-learned';
+                summary.points.forEach(point => {
+                    const item = document.createElement('li');
+                    item.textContent = point.text;
+                    list.append(item);
+                });
+                root.append(heading, list);
+                api.setSectionReset(id, null);
+                api.setSectionAction(id, { label: 'All lessons', async onClick() {
+                    api.completeLesson();
+                    await window.Maths1to9Progress.saveCurrentLesson();
+                    window.location.assign(new URL('../../', window.location.href).href);
+                } });
+            } else {
+                const index = state.screen;
+                const readOnly = index < state.index;
+                api.createQuestion(root, {
+                    ...checkQuestion(questions[index], E.seededRandom((state.seed + index) >>> 0), E),
+                    sectionId: id, questionId: `final-check-${index + 1}`, scored: true, readOnly, lockedReview: true,
+                    onFeedback: progress,
+                    onContinue() {
+                        section.update(saved => { saved.index++; saved.screen = saved.index; saved.finished = saved.index === count; });
+                        progress();
+                        render();
+                    }
+                });
+                if (readOnly) api.setSectionAction(id, { label: 'Next', onClick: () => show(index + 1) });
+            }
+            syncHash();
+        }
+        for (let index = 0; index <= count; index++) api.registerHashRoute(index === count ? 'summary' : `check-${index + 1}`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            show(Math.min(index, state.index));
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        progress();
+        render();
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { pickPractice, practiceQuestion };
+        module.exports = { pickPractice, practiceQuestion, practiceTypes, checkQuestion };
         return;
     }
 
@@ -291,35 +468,16 @@
             if (kind !== 'question-bank') continue;
             const containerId = helpers.questionSetContainerId(slug, id);
             const host = document.getElementById(containerId);
-            if (!['read', 'plot', 'scales'].includes(part)) {
-                // placeholder for not-yet-built parts
-                const h = document.createElement('h2');
-                h.textContent = 'Coming soon.';
-                host.append(h);
-                api.gateSection(id);
-                api.setSectionBack(id, null);
-                api.setSectionReset(id, null);
-                api.setSectionAction(id, { label: 'Continue', disabled: true, onClick() {} });
-                continue;
-            }
             const section = host.closest('.lesson-section');
             section.removeAttribute('aria-labelledby');
-            section.setAttribute('aria-label', `${{ read: 'Read', plot: 'Plot', scales: 'Scales' }[part]} Practice`);
+            section.setAttribute('aria-label', part ? `${{ read: 'Read', plot: 'Plot', scales: 'Scales' }[part]} Practice` : 'Mixed Practice');
             await api.runQuestionSet(id, {
-                version: part === 'plot' ? 3 : part === 'scales' ? 1 : 2, count: config.session_length, upgrade: () => null,
+                version: part === 'plot' ? 3 : part === 'scales' ? 2 : part === 'read' ? 2 : 1, count: config.session_length, upgrade: () => null,
                 pick: random => pickPractice(part, config.session_length, random, helpers),
                 question: (item, random) => practiceQuestion(item, random, helpers)
             });
         }
-        // comparison (Check) placeholder
-        const comparison = api.getSection('comparison');
-        const cHost = document.getElementById(helpers.questionSetContainerId(slug, comparison.id));
-        const ch = document.createElement('h2');
-        ch.textContent = 'Coming soon.';
-        cHost.append(ch);
-        api.gateSection(comparison.id);
-        api.setSectionBack(comparison.id, null);
-        api.setSectionReset(comparison.id, null);
-        api.setSectionAction(comparison.id, { label: 'Continue', disabled: true, onClick() {} });
+        const checkRoot = document.getElementById(helpers.questionSetContainerId(slug, 'comparison'));
+        await mountCheck(api, checkRoot);
     };
 })();

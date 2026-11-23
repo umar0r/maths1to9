@@ -602,7 +602,11 @@
                     card.hint = card.done ? screen.success : correct ? '' : screen.hint(point, target);
                 });
                 if (correct && !screen.drag) graph.point(point, { size: screen.big ? 'large' : 'small', tone: 'neutral', coordinates: false });
-                graph.describe(`You ${screen.drag ? 'moved' : 'tapped'} across ${point[0]} and up ${point[1]}.`);
+                if (screen.axis === 'y') graph.describe(point[0] === 0
+                    ? `You tapped ${point[1]} on the side axis.` : 'You tapped the grid, not the side axis.');
+                else if (screen.axis === 'x') graph.describe(point[1] === 0
+                    ? `You tapped ${point[0]} on the bottom axis.` : 'You tapped the grid, not the bottom axis.');
+                else graph.describe(`You ${screen.drag ? 'moved' : 'tapped'} across ${point[0]} and up ${point[1]}.`);
                 if (card.done) {
                     picker?.stop();
                     graph.setEditable(false);
@@ -665,7 +669,7 @@
     const scalesLearn = [{
         title: 'Before you read or plot, find what one square is worth.',
         line: 'Tap where 30 goes on the side axis.', graph: sunshineScale, axisNames: iceCreamAxes,
-        points: [], targets: [[0, 30]], big: true, guides: false,
+        points: [], targets: [[0, 30]], big: true, guides: false, axis: 'y',
         success: 'Two squares make 20, so one square is 10. 30 is three squares up.',
         hint: ([x, y]) => x !== 0 ? 'Tap on the side axis, the line up the left.'
             : y === 60 ? "That's 60. You counted three numbers, but there are two squares between each number."
@@ -757,14 +761,6 @@
         await mountGraphScreens(api, root, section.id, 'interactive:scales', scalesTryIt, 'interactive');
     }
 
-    function placeholder(api, host, id) {
-        host.append(element('h2', 'Coming soon.'));
-        api.gateSection(id);
-        api.setSectionBack(id, null);
-        api.setSectionReset(id, null);
-        api.setSectionAction(id, { label: 'Continue', disabled: true, onClick() {} });
-    }
-
     window.Maths1to9Interactives ??= {};
     window.Maths1to9Interactives[slug] = async (root, section) => {
         const api = window.Maths1to9Lesson;
@@ -776,8 +772,7 @@
         } else if (section.part === 'scales') {
             await mountScales(api, root, section);
         } else {
-            placeholder(api, document.getElementById(`lesson-section-explanation--${section.part}`), `explanation--${section.part}`);
-            placeholder(api, root, section.id);
+            throw new Error(`Unknown scatter graph part: ${section.part}`);
         }
     };
 })();

@@ -57,3 +57,34 @@ button.scatter-pair-table__column:focus-visible {
     max-width: 440px;
     margin: 1rem auto;
 }
+
+.scatter-mini-graphs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    gap: 6px;
+    margin: 1rem 0;
+}
+
+.scatter-mini-graph {
+    min-width: 150px;
+    margin: 0;
+}
+
+.scatter-mini-graph figcaption {
+    font-weight: 800;
+    text-align: center;
+}
+
+.scatter-learned {
+    display: grid;
+    gap: 0.9rem;
+    margin: 1.25rem 0 0;
+    padding-left: 1.25rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+    .scatter-mini-graphs {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+    }
+}

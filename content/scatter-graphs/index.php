@@ -31,7 +31,7 @@ $pageTitle = 'Plotting scatter graphs';
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <link rel="stylesheet" href="../../assets/css/digit-cards.css?v=2">
-    <link rel="stylesheet" href="./lesson.css?v=3">
+    <link rel="stylesheet" href="./lesson.css?v=4">
 </head>
 
 <body
@@ -73,8 +73,8 @@ $pageTitle = 'Plotting scatter graphs';
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./scatter-graphs.js?v=5"></script>
-    <script src="./questions.js?v=6"></script>
-    <script src="./interactive.js?v=6"></script>
+    <script src="./questions.js?v=7"></script>
+    <script src="./interactive.js?v=7"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=82"></script>
