@@ -515,16 +515,18 @@
         }
     ];
 
-    async function mountPlotScreens(api, root, id, key, screens, kind) {
+    async function mountGraphScreens(api, root, id, key, screens, kind) {
         const E = window.Maths1to9LessonEngine;
-        const route = kind === 'explanation' ? 'plot-learn' : 'plot-try-it';
+        const part = api.getSection(id).part;
+        const route = `${part}-${kind === 'explanation' ? 'learn' : 'try-it'}`;
         const section = await api.useSectionState(key, {
             version: 1, upgrade: () => null,
             initial: () => ({ screen: 0, furthest: 0,
-                cards: screens.map(screen => ({ count: 0, done: false, hint: '', position: screen.drag || null })) })
+                cards: screens.map(screen => ({ count: 0, done: false, hint: '', value: null, position: screen.drag || null })) })
         });
         const state = section.state;
         let graph = null;
+        let digitView = null;
         api.gateSection(id);
         function syncHash() {
             if (api.getCurrentSection().id === id) api.setSlideHash(`${route}-${state.screen + 1}`, { replace: true });
@@ -536,6 +538,8 @@
         }
         function render() {
             graph?.destroy();
+            digitView?.destroy();
+            digitView = null;
             root.replaceChildren();
             const index = state.screen;
             const screen = screens[index];
@@ -550,23 +554,28 @@
             const graphHost = element('div', '', 'scatter-graph-host');
             const feedback = E.createFeedback(kind, { visible: false });
             root.append(tableHost, graphHost, feedback);
-            graph = S.makeGraph(graphHost, { ...plotAxes, axisNames: screen.axisNames, label: screen.title });
-            screen.points.forEach(point => graph.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
-            if (!screen.drag) screen.targets.slice(0, card.count).forEach(point => {
-                graph.point(point, { size: 'small', tone: 'neutral', coordinates: false });
+            graph = S.makeGraph(graphHost, { ...(screen.graph || plotAxes), axisNames: screen.axisNames, label: screen.title });
+            screen.points.forEach(point => {
+                const big = S.samePoint(point, screen.bigPoint);
+                graph.point(point, { size: big ? 'large' : 'small', tone: screen.bigPoint && !big ? 'muted' : 'neutral', coordinates: false });
+            });
+            if (!screen.drag && !screen.digits) screen.targets.slice(0, card.count).forEach(point => {
+                graph.point(point, { size: screen.big ? 'large' : 'small', tone: 'neutral', coordinates: false });
             });
             let picker = null;
             let dragging = false;
             let arrows = [];
             function paint() {
-                tableHost.replaceChildren();
-                S.pairTable(tableHost, { rows: screen.rows, values: screen.values,
-                    selected: screen.column === undefined ? null : screen.column + (screen.targets.length > 1 ? Math.min(card.count, screen.targets.length - 1) : 0) });
+                if (screen.values) {
+                    tableHost.replaceChildren();
+                    S.pairTable(tableHost, { rows: screen.rows, values: screen.values,
+                        selected: screen.column === undefined ? null : screen.column + (screen.targets.length > 1 ? Math.min(card.count, screen.targets.length - 1) : 0) });
+                }
                 feedback.textContent = card.hint;
                 feedback.className = E.feedbackClassName(kind, { visible: Boolean(card.hint), correct: card.done });
                 arrows.forEach(arrow => arrow.remove());
                 arrows = [];
-                if (card.count > 0 && !screen.drag) {
+                if (card.count > 0 && !screen.drag && screen.guides !== false) {
                     const [x, y] = screen.targets[card.count - 1];
                     arrows.push(graph.arrow([0, 0], [x, 0], { dash: true, tone: 'ink' }));
                     arrows.push(graph.arrow([x, 0], [x, y], { dash: true, tone: 'ink' }));
@@ -592,7 +601,7 @@
                     card.done = card.count === screen.targets.length;
                     card.hint = card.done ? screen.success : correct ? '' : screen.hint(point, target);
                 });
-                if (correct && !screen.drag) graph.point(point, { size: 'small', tone: 'neutral', coordinates: false });
+                if (correct && !screen.drag) graph.point(point, { size: screen.big ? 'large' : 'small', tone: 'neutral', coordinates: false });
                 graph.describe(`You ${screen.drag ? 'moved' : 'tapped'} across ${point[0]} and up ${point[1]}.`);
                 if (card.done) {
                     picker?.stop();
@@ -600,7 +609,12 @@
                 }
                 paint();
             }
-            if (screen.drag) {
+            if (screen.digits) {
+                digitView = scaleDigitTable(root, card, (value, done, hint) => {
+                    section.update(() => { card.value = value; card.done = done; card.count = Number(done); card.hint = hint; });
+                    paint();
+                });
+            } else if (screen.drag) {
                 graphHost.addEventListener('pointerdown', () => { dragging = true; });
                 graphHost.addEventListener('pointerup', () => {
                     dragging = false;
@@ -634,10 +648,113 @@
         const learn = document.getElementById('lesson-section-explanation--plot');
         const article = element('article');
         learn.append(article);
-        await mountPlotScreens(api, article, 'explanation--plot', 'learn:plot', plotLearn, 'explanation');
+        await mountGraphScreens(api, article, 'explanation--plot', 'learn:plot', plotLearn, 'explanation');
         root.closest('.lesson-section').removeAttribute('aria-labelledby');
         root.closest('.lesson-section').setAttribute('aria-label', 'Plot Try it');
-        await mountPlotScreens(api, root, section.id, 'interactive:plot', plotTryIt, 'interactive');
+        await mountGraphScreens(api, root, section.id, 'interactive:plot', plotTryIt, 'interactive');
+    }
+
+    const sunshineScale = {
+        x: [0, 10], y: [0, 100], step: { x: 1, y: 10 }, labelEvery: { x: 1, y: 2 }
+    };
+    const temperatureScale = {
+        x: [0, 30], y: [0, 100], step: { x: 2, y: 10 }, labelEvery: { x: 5, y: 2 }
+    };
+    const iceCreamAxes = { x: 'Hours of sunshine', y: 'Ice creams sold' };
+    const temperatureAxes = { x: 'Temperature (°C)', y: 'Ice creams sold' };
+    const scalesLearn = [{
+        title: 'Before you read or plot, find what one square is worth.',
+        line: 'Tap where 30 goes on the side axis.', graph: sunshineScale, axisNames: iceCreamAxes,
+        points: [], targets: [[0, 30]], big: true, guides: false,
+        success: 'Two squares make 20, so one square is 10. 30 is three squares up.',
+        hint: ([x, y]) => x !== 0 ? 'Tap on the side axis, the line up the left.'
+            : y === 60 ? "That's 60. You counted three numbers, but there are two squares between each number."
+                : 'Two squares make 20, so one square is 10. Count up 10, 20, 30.'
+    }];
+    const scalesTryIt = [
+        {
+            title: 'Plot 6 hours of sunshine and 70 ice creams.', graph: sunshineScale, axisNames: iceCreamAxes,
+            points: [], targets: [[6, 70]], success: 'Across to 6, then up 7 squares to 70.',
+            hint: ([x]) => x === 6 ? 'One square is 10. Count up 10, 20, 30… to 70.' : 'Go across to 6 first.'
+        },
+        {
+            title: 'Plot 14 °C and 50 ice creams.', graph: temperatureScale, axisNames: temperatureAxes,
+            points: [], targets: [[14, 50]], success: 'One square across is 2, so 14 is seven squares across.',
+            hint: ([x, y]) => y !== 50 ? 'One square up is 10. Count up to 50.'
+                : 'Five squares make 10 across, so one square is 2. Count 2, 4, 6… to 14.'
+        },
+        {
+            title: 'Fill in the table for the big point.', graph: temperatureScale, axisNames: temperatureAxes,
+            points: [[6, 30], [10, 40], [22, 80], [18, 90]], bigPoint: [18, 90], targets: [[18, 90]],
+            digits: true, guides: false, success: '18 °C and 90 ice creams.'
+        }
+    ];
+
+    function scaleDigitTable(host, card, onChange) {
+        const DC = window.Maths1to9DigitCards;
+        const table = element('div', '', 'scatter-pair-table');
+        table.style.gridTemplateColumns = 'minmax(8.5rem, 1.5fr) minmax(0, 1fr)';
+        const headings = element('div', '', 'scatter-pair-table__headings');
+        const column = element('div', '', 'scatter-pair-table__column');
+        const slots = [];
+        const expected = { 'temperature:tens': '1', 'temperature:units': '8', 'icecreams:tens': '9', 'icecreams:units': '0' };
+        for (const [group, label] of [['temperature', 'Temperature (°C)'], ['icecreams', 'Ice creams']]) {
+            headings.append(element('span', label));
+            const cell = element('div');
+            cell.style.display = 'flex';
+            cell.style.justifyContent = 'center';
+            cell.style.gap = '0.25rem';
+            for (const place of ['tens', 'units']) {
+                const id = `${group}:${place}`;
+                const button = element('button');
+                button.type = 'button';
+                button.setAttribute('aria-label', `${label}, ${place} digit`);
+                cell.append(button);
+                slots.push({ id, element: button, group, column: place, allowed: value => value?.marks?.[id] !== 'right' });
+            }
+            column.append(cell);
+        }
+        table.append(headings, column);
+        host.append(table);
+        const tray = element('div');
+        host.append(tray);
+        let view;
+        view = DC.create(tray, {
+            slots, active: 'temperature:tens', value: card.value, editable: !card.done,
+            onChange(value) {
+                const digits = value?.digits || {};
+                const marks = {};
+                Object.keys(expected).forEach(id => {
+                    if (digits[id] !== undefined) marks[id] = digits[id] === expected[id] ? 'right' : 'wrong';
+                });
+                const done = Object.keys(expected).every(id => marks[id] === 'right');
+                let hint = done ? '18 °C and 90 ice creams.' : '';
+                for (const group of ['temperature', 'icecreams']) {
+                    const ids = [`${group}:tens`, `${group}:units`];
+                    if (!hint && ids.some(id => marks[id] === 'wrong')) {
+                        const number = Number(ids.map(id => digits[id] || '').join(''));
+                        hint = number === 9 ? group === 'temperature'
+                            ? "That's the number of squares. Each square across is 2."
+                            : "That's the number of squares. Each square up is 10."
+                            : 'Count the squares, then times by what one square is worth.';
+                    }
+                }
+                const marked = DC.markedValue(value, marks);
+                view.update({ value: marked, editable: !done, phase: 'answer' });
+                onChange(marked, done, hint);
+            }
+        });
+        return view;
+    }
+
+    async function mountScales(api, root, section) {
+        const learn = document.getElementById('lesson-section-explanation--scales');
+        const article = element('article');
+        learn.append(article);
+        await mountGraphScreens(api, article, 'explanation--scales', 'learn:scales', scalesLearn, 'explanation');
+        root.closest('.lesson-section').removeAttribute('aria-labelledby');
+        root.closest('.lesson-section').setAttribute('aria-label', 'Scales Try it');
+        await mountGraphScreens(api, root, section.id, 'interactive:scales', scalesTryIt, 'interactive');
     }
 
     function placeholder(api, host, id) {
@@ -656,6 +773,8 @@
             await mountTryIt(api, root, section);
         } else if (section.part === 'plot') {
             await mountPlot(api, root, section);
+        } else if (section.part === 'scales') {
+            await mountScales(api, root, section);
         } else {
             placeholder(api, document.getElementById(`lesson-section-explanation--${section.part}`), `explanation--${section.part}`);
             placeholder(api, root, section.id);

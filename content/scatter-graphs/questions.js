@@ -77,10 +77,10 @@
             axisNames: { x: ctx.x, y: ctx.y }, label: 'Scatter graph.' };
         if (item.type === 'pick-point') {
             const candidates = shuffle([
-                { point: target, correct: true, feedback: `Across to ${a}, up to ${b}.` },
-                { point: [b, a], feedback: `That point is back to front: ${b} across and ${a} up.` },
-                { point: [a, b + 1], feedback: 'That one is one square too high or low. Count up again.' },
-                { point: [a + 1, b], feedback: 'That one is one square off across. Count along again.' }
+                { point: target, labelSide: a === 9 ? 'right' : 'left', correct: true, feedback: `Across to ${a}, up to ${b}.` },
+                { point: [b, a], labelSide: b > a ? (a === 1 ? 'right' : 'below') : 'left', feedback: `That point is back to front: ${b} across and ${a} up.` },
+                { point: [a, b === 9 ? b - 1 : b + 1], labelSide: b === 9 ? 'below' : 'above', feedback: 'That one is one square too high or low. Count up again.' },
+                { point: [a === 9 ? a - 1 : a + 1, b], labelSide: a === 9 ? 'left' : 'right', feedback: 'That one is one square off across. Count along again.' }
             ], random);
             const options = candidates.map((candidate, index) => ({ label: 'ABCD'[index],
                 correct: Boolean(candidate.correct), feedback: candidate.feedback }));
@@ -91,7 +91,7 @@
                 figure(host) {
                     const board = S.makeGraph(host, graph);
                     candidates.forEach((candidate, index) => board.point(candidate.point, {
-                        size: 'small', tone: 'neutral', label: 'ABCD'[index], coordinates: false
+                        size: 'small', tone: 'neutral', label: 'ABCD'[index], labelSide: candidate.labelSide, coordinates: false
                     }));
                     board.setEditable(false);
                 }
@@ -120,17 +120,93 @@
         };
     }
 
+    const scales = [{ step: 2, labels: 5 }, { step: 5, labels: 2 }, { step: 10, labels: 2 }, { step: 20, labels: 5 }];
+
+    function scalesPractice(item, random, helpers) {
+        const { randomInt, shuffle } = helpers;
+        const xs = scales[randomInt(0, scales.length - 1, random)];
+        const ys = scales[randomInt(0, scales.length - 1, random)];
+        const graph = { x: [0, xs.step * 10], y: [0, ys.step * 10],
+            step: { x: xs.step, y: ys.step }, labelEvery: { x: xs.labels, y: ys.labels },
+            axisNames: { x: 'Temperature (°C)', y: 'Ice creams sold' }, label: 'Scatter graph with scaled axes.' };
+        if (item.type === 'square-worth') {
+            const axis = random() < 0.5 ? 'x' : 'y';
+            const scale = axis === 'x' ? xs : ys;
+            const alternatives = [
+                { label: String(scale.step), correct: true,
+                    feedback: `There are ${scale.labels} squares between each number, so one square is ${scale.step}.` },
+                { label: String(scale.step * scale.labels), feedback: "That's the gap between two numbers. Count the squares in that gap." },
+                { label: '1', feedback: "Squares aren't always worth 1. Count the squares between two numbers." },
+                { label: String(scale.labels), feedback: "That's how many squares there are, not what each one is worth." }
+            ];
+            const seen = new Set();
+            for (const option of alternatives) {
+                if (seen.has(option.label)) {
+                    option.label = String(scale.step * 2);
+                    option.feedback = 'Count the squares between two numbers again.';
+                }
+                seen.add(option.label);
+            }
+            return { input: 'choice', questionType: item.type,
+                prompt: `What is one square worth on the ${axis === 'x' ? 'bottom' : 'side'} axis?`,
+                options: shuffle(alternatives, random), model: { graph, axis, step: scale.step, points: [] },
+                figure(host) { S.makeGraph(host, graph).setEditable(false); } };
+        }
+        if (item.type === 'plot-scaled') {
+            let across, up;
+            do {
+                across = randomInt(1, Math.min(9, Math.floor(40 / xs.step)), random);
+                up = randomInt(1, 9, random);
+            } while (across % xs.labels === 0 && up % ys.labels === 0);
+            const target = [across * xs.step, up * ys.step];
+            return { input: 'custom', questionType: item.type,
+                prompt: `Plot ${S.quantity(target[0], '°C')} and ${S.quantity(target[1], 'ice creams')}.`,
+                model: { target, points: [], graph },
+                widget: S.plotWidget({ graph, points: [], target, words: { x: '°C', y: 'ice creams' },
+                    mark: value => S.markScaledPlot(value, { target, step: graph.step }) }) };
+        }
+        graph.axisNames.x = 'Hours of sunshine';
+        const maxHours = Math.min(9, Math.floor(24 / xs.step));
+        const a = randomInt(1, maxHours, random) * xs.step;
+        let b = randomInt(1, 9, random) * ys.step;
+        while (a === b) b = randomInt(1, 9, random) * ys.step;
+        const target = [a, b];
+        const points = [];
+        while (points.length < 3) {
+            const point = [randomInt(0, maxHours, random) * xs.step, randomInt(1, 9, random) * ys.step];
+            if (point[0] !== a && !points.some(other => S.samePoint(point, other))) points.push(point);
+        }
+        points.push(target);
+        return { input: 'number', questionType: item.type,
+            prompt: `How many ice creams were sold on the day with ${S.quantity(a, 'hours of sunshine')}?`,
+            answer: String(b), feedback: `Across from ${a} to the point, then count the squares: ${b}.`,
+            rules: [
+                { value: String(b / ys.step), feedback: `That's the number of squares. One square is worth ${ys.step}.` },
+                { value: String(a), feedback: `${a} is on the bottom axis.` },
+                ...[b - ys.step, b + ys.step].map(value => ({ value: String(value), feedback: 'Count the squares again.' }))
+            ], fallback: `Go straight up from ${a}, across to the side axis, then count the squares.`,
+            model: { graph, target, points },
+            figure(host) {
+                const board = S.makeGraph(host, graph);
+                points.forEach(point => board.point(point, { size: S.samePoint(point, target) ? 'large' : 'small',
+                    tone: 'neutral', coordinates: false }));
+                board.setEditable(false);
+            } };
+    }
+
     function pickPractice(part, count, random, helpers) {
         const { shuffle, randomInt } = helpers;
         let types;
         if (part === 'plot') {
             const plots = shuffle(['plot-pair', 'plot-same-start'], random);
             types = [plots[0], 'pick-point', plots[1]];
-        } else types = shuffle(['read-pair', 'read-up', 'read-across'], random);
+        } else if (part === 'scales') types = shuffle(['square-worth', 'plot-scaled', 'read-scaled'], random);
+        else types = shuffle(['read-pair', 'read-up', 'read-across'], random);
         return types.map(type => ({ type, seed: randomInt(0, 0xffffffff, random) }));
     }
 
     function practiceQuestion(item, random, helpers) {
+        if (['square-worth', 'plot-scaled', 'read-scaled'].includes(item.type)) return scalesPractice(item, random, helpers);
         if (['plot-pair', 'pick-point', 'plot-same-start'].includes(item.type)) return plotPractice(item, random, helpers);
         const { shuffle, randomInt } = helpers;
         const ctx = contexts[randomInt(0, contexts.length - 1, random)];
@@ -215,7 +291,7 @@
             if (kind !== 'question-bank') continue;
             const containerId = helpers.questionSetContainerId(slug, id);
             const host = document.getElementById(containerId);
-            if (!['read', 'plot'].includes(part)) {
+            if (!['read', 'plot', 'scales'].includes(part)) {
                 // placeholder for not-yet-built parts
                 const h = document.createElement('h2');
                 h.textContent = 'Coming soon.';
@@ -228,9 +304,9 @@
             }
             const section = host.closest('.lesson-section');
             section.removeAttribute('aria-labelledby');
-            section.setAttribute('aria-label', `${part === 'read' ? 'Read' : 'Plot'} Practice`);
+            section.setAttribute('aria-label', `${{ read: 'Read', plot: 'Plot', scales: 'Scales' }[part]} Practice`);
             await api.runQuestionSet(id, {
-                version: 2, count: config.session_length, upgrade: () => null,
+                version: part === 'plot' ? 3 : part === 'scales' ? 1 : 2, count: config.session_length, upgrade: () => null,
                 pick: random => pickPractice(part, config.session_length, random, helpers),
                 question: (item, random) => practiceQuestion(item, random, helpers)
             });

@@ -42,7 +42,10 @@
         "read-across": "scatter-graphs",
         "plot-pair": "scatter-graphs",
         "pick-point": "scatter-graphs",
-        "plot-same-start": "scatter-graphs"
+        "plot-same-start": "scatter-graphs",
+        "square-worth": "scatter-graphs",
+        "plot-scaled": "scatter-graphs",
+        "read-scaled": "scatter-graphs"
     } },
     "score_activities": [
         { "id": "step:explanation--read:0", "kind": "guided" },
@@ -55,6 +58,10 @@
         { "id": "step:explanation--plot:1", "kind": "guided" },
         { "id": "step:interactive--plot:0", "kind": "guided" },
         { "id": "step:interactive--plot:1", "kind": "guided" },
-        { "id": "step:interactive--plot:2", "kind": "guided" }
+        { "id": "step:interactive--plot:2", "kind": "guided" },
+        { "id": "step:explanation--scales:0", "kind": "guided" },
+        { "id": "step:interactive--scales:0", "kind": "guided" },
+        { "id": "step:interactive--scales:1", "kind": "guided" },
+        { "id": "step:interactive--scales:2", "kind": "guided" }
     ]
 }

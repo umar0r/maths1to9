@@ -68,6 +68,14 @@
         return { correct: false, feedback: `Go across to ${a} first, then up to ${b}.` };
     }
 
+    function markScaledPlot(value, { target: [a, b], step }) {
+        if (samePoint(value, [a, b])) return { correct: true, feedback: `Across to ${a}, up to ${b}.` };
+        if (samePoint(value, [b, a])) return { correct: false, feedback: "That's back to front." };
+        return { correct: false, feedback: value?.[0] === a
+            ? `One square up is ${step.y}. Count up to ${b}.`
+            : `One square across is ${step.x}. Count across to ${a}.` };
+    }
+
     function plotWidget({ graph: options, points, target, existing = null, words, table = null, mark = null }) {
         return {
             render(host, { value, editable, onChange }) {
@@ -113,7 +121,7 @@
         };
     }
 
-    const helpers = { pairs, makeGraph, pairTable, samePoint, markPlot, plotWidget, quantity };
+    const helpers = { pairs, makeGraph, pairTable, samePoint, markPlot, plotWidget, quantity, markScaledPlot };
     if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
     else window.ScatterGraphs = helpers;
 })();
