@@ -749,14 +749,15 @@ keeps pupils' work, so the behaviour to match is known).
 
 Use parts when a topic needs a separate Learn, Try it and Practice for each
 small idea. The engine shows those three sections for each part in order,
-then Mixed Practice and Check for the whole lesson. The stage bar shows one
-button per part, then **Mix** and **Check**. A stage unlocks when the pupil
-reaches its first section.
+then Mixed Practice and Check for the whole lesson. Parts lessons show no
+stage bar: Learn, Try it and Practice repeat for each part, so a bar would be
+long and tell the pupil little. Back and the marks are enough. A section
+unlocks when the pupil reaches it.
 
 ### Lesson JSON
 
 Use two to five parts. Give each part a short, one-word label of about eight
-characters or fewer so up to seven stage buttons fit at 375 px. Use distinct
+characters or fewer. Use distinct
 ids made of lowercase letters, digits and hyphens. The sequence `--` is
 reserved for section ids.
 
@@ -794,8 +795,8 @@ reserved for section ids.
 This example shows the configuration shape. Supply your full Check question
 definitions and use the lesson's usual assessment mapping for its one skill.
 Each part needs all three config blocks. The top-level `question_bank` is
-Mixed Practice and `comparison` is Check. The engine builds the order and
-stage bar, so leave out top-level `explanation`, `interactive`,
+Mixed Practice and `comparison` is Check. The engine builds the section
+order, so leave out top-level `explanation`, `interactive`,
 `section_order` and `navigation_stages`.
 
 The engine shows a lesson-load error for a missing or malformed `parts`
