@@ -213,27 +213,16 @@
         };
     }
 
-    function aliWorking(host) {
-        const figure = element('figure', '', 'decimal-ali-working');
-        figure.append(element('figcaption', "Ali's working"));
-        const drawing = element('div');
-        drawing.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 110" fill="var(--text)" font-family="inherit" role="img" aria-label="Ali's working: 8.4 divided by 3, with 28 above the line and no point.">
-            <path d="M43 103V49H149" fill="none" stroke="#64748b" stroke-width="2"/>
-            <g font-size="28" font-weight="700" text-anchor="middle"><text x="21" y="88">3</text><text x="76" y="36">2</text><text x="127" y="36">8</text><text x="76" y="88">8</text><text x="101" y="88">.</text><text x="127" y="88">4</text></g>
-        </svg>`;
-        figure.append(drawing); host.append(figure);
-    }
-
     function checks() {
         return [
             { type: 'count-digits', prompt: '46 × 35 = 1610. Where does the point go in 0.46 × 0.35?', options: [
-                { label: '0.1610', correct: true, feedback: '0.46 × 0.35 has 4 digits after the points, so the answer has 4 too.' },
+                { label: '0.1610', correct: true, feedback: '2 + 2 = 4 digits after the points, so 0.1610.' },
                 { label: '16.10', feedback: "That's only 2 digits after the point. Count the digits in both numbers." },
                 { label: '1.610', feedback: "That's 3 digits after the point. There are 4." },
                 { label: '161.0', feedback: "That's 1 digit after the point. There are 4." }
             ] },
             { type: 'known-fact-check', prompt: '63 × 24 = 1512. What is 6.3 × 2.4?', options: [
-                { label: '15.12', correct: true, feedback: '6.3 × 2.4 has 2 digits after the points, so 15.12.' },
+                { label: '15.12', correct: true, feedback: '1 + 1 = 2 digits after the points, so 15.12.' },
                 { label: '151.2', feedback: "That's only 1 digit after the point. Count both numbers." },
                 { label: '1.512', feedback: "That's 3 digits after the point. There are only 2." },
                 { label: '1512', feedback: 'You need to put the point back.' }
@@ -244,17 +233,17 @@
                 { label: 'You always add a 0 when you multiply decimals.', feedback: 'The 0 is only there to make 2 digits after the point.' },
                 { label: 'Multiplying always makes numbers smaller, so 0.6 is too big.', feedback: 'Not always: 4 × 3 = 12 is bigger. The 0 is there so the answer has 2 digits after the point.' }
             ] },
-            { type: 'point-straight-up', prompt: 'Ali works out 8.4 ÷ 3 like this. What has Ali done wrong?', figure: aliWorking, options: [
-                { label: 'The point should go above the point in 8.4, making 2.8.', correct: true, feedback: 'Right. When you divide by a whole number, the point goes straight up.' },
-                { label: 'Nothing. 8.4 ÷ 3 = 28.', feedback: '28 × 3 is 84, not 8.4. The answer needs a point.' },
-                { label: 'Ali should have divided 3 by 8.4.', feedback: "8.4 ÷ 3 means 8.4 shared into 3, so Ali divided the right way round." },
-                { label: 'The answer should be 0.28.', feedback: '0.28 × 3 is 0.84. Put the point right above the point in 8.4.' }
+            { type: 'point-straight-up', prompt: '24 ÷ 3 = 8. What is 0.24 ÷ 3?', options: [
+                { label: '0.08', correct: true, feedback: '0.24 has 2 digits after the point, so 8 becomes 0.08.' },
+                { label: '0.8', feedback: "That's only 1 digit after the point. 0.24 has 2." },
+                { label: '8', feedback: 'Put the point back: 2 digits after it.' },
+                { label: '0.008', feedback: "That's 3 digits after the point. 0.24 has 2." }
             ] },
-            { type: 'scale-divisor', prompt: 'Which gives the same answer as 2.7 ÷ 0.06?', options: [
-                { label: '270 ÷ 6', correct: true, feedback: 'Both numbers are 100 times bigger, so the answer stays the same.' },
-                { label: '2.7 ÷ 6', feedback: "You changed 0.06 but not 2.7. Change both the same way." },
-                { label: '27 ÷ 6', feedback: '2.7 was times 10 but 0.06 was times 100. Change both the same way.' },
-                { label: '0.027 ÷ 6', feedback: 'The point in 2.7 moved the wrong way. Move both to the right.' }
+            { type: 'scale-divisor', prompt: '312 ÷ 4 = 78. What is 3.12 ÷ 0.4?', options: [
+                { label: '7.8', correct: true, feedback: '2 − 1 = 1 digit after the point, so 7.8.' },
+                { label: '0.078', feedback: 'You added 2 + 1. When you divide, take them away.' },
+                { label: '0.78', feedback: "That's 2 digits after the point. You need 2 − 1 = 1." },
+                { label: '78', feedback: 'Put the point back: 1 digit after it.' }
             ] }
         ];
     }

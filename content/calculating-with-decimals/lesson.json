@@ -103,24 +103,24 @@
             "title": "What you've learned",
             "points": [
                 {
-                    "text": "To multiply decimals, take the points out and multiply.",
-                    "example": "2.4 × 0.3 → 24 × 3 = 72"
+                    "text": "To multiply decimals, count the digits after each point, then add them.",
+                    "example": "0.24 × 0.003: 2 + 3 = 5"
                 },
                 {
-                    "text": "Count the digits after the points, and put the same number back in the answer.",
-                    "example": "2.4 × 0.3 = 0.72"
+                    "text": "Take the points out and work out the whole-number sum.",
+                    "example": "24 × 3 = 72"
                 },
                 {
-                    "text": "If you run out of digits, fill the gap with zeros.",
-                    "example": "0.3 × 0.2 = 0.06"
+                    "text": "Move the point back that many digits. Put 0s in the gaps.",
+                    "example": "72 → 0.00072"
                 },
                 {
-                    "text": "When you divide by a whole number, the point goes straight up.",
-                    "example": "8.4 ÷ 3 = 2.8"
+                    "text": "To divide by a whole number, count the digits after the point.",
+                    "example": "0.24 ÷ 3: 24 ÷ 3 = 8, so 0.08"
                 },
                 {
-                    "text": "To divide by a decimal, times both numbers by 10 until you’re dividing by a whole number.",
-                    "example": "11.07 ÷ 0.9 = 110.7 ÷ 9 = 12.3"
+                    "text": "To divide by a decimal, count the digits after each point, then take them away.",
+                    "example": "11.07 ÷ 0.9: 2 − 1 = 1, 1107 ÷ 9 = 123, so 12.3"
                 }
             ]
         }
