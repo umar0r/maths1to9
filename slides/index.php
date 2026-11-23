@@ -86,10 +86,15 @@ function generatedAt(string $stamp): string
 }
 
 // The lesson's own name, e.g. "Rounding", so the page matches the lesson.
-function lessonTitle(string $slug): string
+// The walk records it in slides.json, because the checkout it walked may not be
+// this one; the lesson.json next to the slides is the fallback.
+function lessonTitle(string $slug, ?array $slides = null): string
 {
-    $lesson = readSlides(SLIDES_DIRECTORY . '/../content/' . $slug . '/lesson.json');
-    $title = $lesson['title'] ?? '';
+    $title = $slides['title'] ?? '';
+    if (!is_string($title) || trim($title) === '') {
+        $lesson = readSlides(SLIDES_DIRECTORY . '/../content/' . $slug . '/lesson.json');
+        $title = $lesson['title'] ?? '';
+    }
 
     return is_string($title) && trim($title) !== ''
         ? trim($title)
@@ -125,7 +130,7 @@ $requested = isset($_GET['lesson']) && is_string($_GET['lesson']) ? trim($_GET['
 $slug = in_array($requested, $lessons, true) ? $requested : ($lessons[0] ?? '');
 $slides = $slug === '' ? null : readSlides(SLIDES_DIRECTORY . '/' . $slug . '/slides.json');
 $screens = is_array($slides['screens'] ?? null) ? $slides['screens'] : [];
-$title = lessonTitle($slug);
+$title = lessonTitle($slug, is_array($slides) ? $slides : null);
 ?>
 <!DOCTYPE html>
 <html lang="en-GB">

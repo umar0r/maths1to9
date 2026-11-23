@@ -52,6 +52,16 @@ if (!fs.existsSync(lessonPage)) {
     process.exit(66);
 }
 const { chromium } = require(require.resolve('@playwright/test', { paths: [root] }));
+// The lesson's own name, so the page matches the lesson it came from even when
+// the checkout it was walked from is somewhere else.
+const lessonTitle = (() => {
+    try {
+        const lesson = JSON.parse(fs.readFileSync(path.join(root, 'content', slug, 'lesson.json'), 'utf8'));
+        return typeof lesson.title === 'string' && lesson.title.trim() ? lesson.title.trim() : slug;
+    } catch {
+        return slug;
+    }
+})();
 const PHP = process.env.PHP_BIN || '/Applications/XAMPP/xamppfiles/bin/php';
 const PORT = Number(process.env.SLIDES_PORT || 8767);
 const lessonUrl = `http://127.0.0.1:${PORT}/content/${slug}/index.php`;
@@ -510,7 +520,7 @@ function buildSlides(records) {
     }
     const counts = {};
     for (const screen of screens) counts[screen.label] = (counts[screen.label] ?? 0) + 1;
-    return { lesson: slug, generated: new Date().toISOString(), seed: SEED, widths: Object.keys(SIZES), counts, screens };
+    return { lesson: slug, title: lessonTitle, generated: new Date().toISOString(), seed: SEED, widths: Object.keys(SIZES), counts, screens };
 }
 
 /* ------------------------------------------------------------------ *
