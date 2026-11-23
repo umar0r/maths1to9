@@ -10,6 +10,7 @@
         'multiply-decimals', 'known-fact', 'divide-by-decimal', 'share-the-bill',
         'meter-bill', 'times-ten', 'year-cost', 'divide-difference'];
     const choiceTypes = new Set(['money-multiply', 'divide-by-decimal', 'meter-bill', 'divide-difference']);
+    const firstStepChoiceTypes = new Set([...choiceTypes, 'share-the-bill']);
     // Two kinds take two screens with the same numbers: they share one seed.
     const twoStepTypes = new Set(['share-the-bill']);
     const stepCount = type => twoStepTypes.has(type) ? 2 : 1;
@@ -42,7 +43,7 @@
 
     function mixed(order) {
         const inputs = order.flatMap(type => Array.from({ length: stepCount(type) },
-            (_, step) => choiceTypes.has(type) && step === 0 ? 'choice' : 'work'));
+            (_, step) => firstStepChoiceTypes.has(type) && step === 0 ? 'choice' : 'work'));
         return inputs.every((input, index) => index < 2 || input !== inputs[index - 1] || input !== inputs[index - 2]);
     }
 
@@ -144,7 +145,8 @@
                     wrong: () => `${money(total)} has 2 digits after the point. Move the point back 2 digits.`
                 };
                 const table = { input: 'custom', widget: window.PointGap.pointWidget(task),
-                    prompt: `${money(f)} + ${money(g)} = ${money(total)}. Work out ${money(total)} ÷ ${n}.` };
+                    prompt: `${money(f)} + ${money(g)} = ${money(total)}. Work out ${money(total)} ÷ ${n}.`,
+                    answer: decimal(answer, 2, false) };
                 question = { stages: [selection, table], values: { n, answer, total, f, g } };
             } else if (type === 'meter-bill') {
                 const first = integer(1000, 9000, random), used = integer(12, 48, random) * 10;
