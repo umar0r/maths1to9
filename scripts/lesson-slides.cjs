@@ -11,6 +11,13 @@
 // every Try it example, all the Practice questions, all the Check questions
 // and the end page.
 //
+// The answer to every card comes from the lesson itself, never from the words
+// on screen. A small script starts before the lesson and keeps the question
+// the engine was given: the option the lesson marks correct, the lesson's own
+// number answer, and the widget a custom card uses. Custom widgets are filled
+// by asking the widget's own mark() which value it accepts, so a new lesson
+// needs no special case here.
+//
 // Each screen gets two pictures: "before" (as the pupil first sees it) and
 // "after" (answered, with the feedback showing). The whole walk happens twice,
 // at desktop (1280 wide) and phone (375 wide, touch on).
@@ -68,235 +75,62 @@ const SECTIONS = {
 const LABELS = { learn: 'Learn', 'try-it': 'Try it', practice: 'Practice', check: 'Check', end: 'End' };
 
 /* ------------------------------------------------------------------ *
- * Maths, worked out here rather than asked of the lesson.
+ * Keeping the question the lesson gave the engine.
+ *
+ * Runs before any lesson script. window.Maths1to9LessonEngine is set by the
+ * shared engine, so an accessor catches that assignment and wraps
+ * createQuestion. Every card the engine draws then leaves behind the config
+ * that made it: the correct option, the lesson's answer and the widget.
  * ------------------------------------------------------------------ */
 
-const placeNames = {
-    6: 'millions', 5: 'hundred-thousands', 4: 'ten-thousands', 3: 'thousands',
-    2: 'hundreds', 1: 'tens', 0: 'ones', '-1': 'tenths', '-2': 'hundredths',
-    '-3': 'thousandths', '-4': 'ten-thousandths', '-5': 'hundred-thousandths',
-    '-6': 'millionths'
+const CAPTURE = function () {
+    let engineValue;
+    const copy = value => {
+        try { return value === undefined ? null : JSON.parse(JSON.stringify(value)); }
+        catch { return null; }
+    };
+    function install(engine) {
+        if (!engine || engine.__slidesCapture) return;
+        engine.__slidesCapture = true;
+        const original = engine.createQuestion;
+        if (typeof original !== 'function') return;
+        window.__slides = { entries: {}, next: 0 };
+        engine.createQuestion = function (container, config, ...rest) {
+            const entry = {
+                index: window.__slides.next++,
+                input: config?.input ?? null,
+                answer: config?.answer === undefined ? null : copy(config.answer),
+                options: (config?.options || []).map(option => ({ label: option?.label ?? '', correct: option?.correct === true })),
+                fields: Array.isArray(config?.fields) ? config.fields.map(field => ({ id: field.id, label: field.label })) : null,
+                questionType: config?.questionType ?? null,
+                prompt: config?.prompt ?? '',
+                widget: config?.widget ?? null,
+                onChange: null
+            };
+            const widget = entry.widget;
+            if (widget && typeof widget.render === 'function' && !widget.__slidesWrapped) {
+                const render = widget.render.bind(widget);
+                widget.render = (host, options) => {
+                    entry.onChange = options?.onChange ?? null;
+                    return render(host, options);
+                };
+                widget.__slidesWrapped = true;
+            }
+            const card = original.call(this, container, config, ...rest);
+            const articles = container?.querySelectorAll?.('.question-card') || [];
+            const article = container?.lastElementChild?.matches?.('.question-card')
+                ? container.lastElementChild : articles[articles.length - 1];
+            if (article) article.dataset.slidesEntry = String(entry.index);
+            window.__slides.entries[entry.index] = entry;
+            return card;
+        };
+    }
+    Object.defineProperty(window, 'Maths1to9LessonEngine', {
+        configurable: true,
+        get() { return engineValue; },
+        set(value) { engineValue = value; install(value); }
+    });
 };
-
-const clean = text => String(text).replace(/[,\u00a0\s]/g, '').replace(/…|\.\.\./g, '');
-const numberOf = text => Number(clean(text));
-const fixed = (value, places) => Number(value.toFixed(places));
-
-// 1250 -> "1,250", as the lesson writes numbers on screen.
-function spaced(text) {
-    const [whole, fraction] = String(text).split('.');
-    return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction === undefined ? '' : `.${fraction}`);
-}
-
-// Round to 10^power, keeping the zeros that show how accurate the answer is.
-function roundToPower(value, power) {
-    const [whole, fraction = ''] = clean(value).split('.');
-    const digits = BigInt((whole || '0') + fraction);
-    const drop = fraction.length + power;
-    let kept;
-    if (drop <= 0) {
-        kept = digits * 10n ** BigInt(-drop);
-    } else {
-        const unit = 10n ** BigInt(drop);
-        kept = digits / unit;
-        if ((digits % unit) * 2n >= unit) kept += 1n;
-    }
-    const answer = kept.toString();
-    if (power >= 0) return answer + '0'.repeat(power);
-    const places = -power;
-    const padded = answer.padStart(places + 1, '0');
-    return `${padded.slice(0, padded.length - places)}.${padded.slice(-places)}`;
-}
-
-// Round to n significant figures, keeping leading zeros and the final zeros.
-function roundSig(value, n) {
-    const [whole, fraction = ''] = clean(value).split('.');
-    const digits = whole + fraction;
-    const first = digits.search(/[1-9]/);
-    if (first < 0) throw new Error(`No significant figures in ${value}`);
-    const significant = digits.slice(first);
-    let kept = significant.slice(0, n).padEnd(n, '0');
-    let power = whole.length - first - n;
-    if (Number(significant[n] || '0') >= 5) {
-        kept = String(Number(kept) + 1);
-        if (kept.length > n) {
-            kept = kept.slice(0, n);
-            power += 1;
-        }
-    }
-    if (power >= 0) return kept + '0'.repeat(power);
-    const point = kept.length + power;
-    return point <= 0 ? `0.${'0'.repeat(-point)}${kept}` : `${kept.slice(0, point)}.${kept.slice(point)}`;
-}
-
-const round = (value, kind, accuracy) =>
-    kind === 'sig' ? roundSig(value, accuracy) : roundToPower(value, kind === 'decimal' ? -accuracy : accuracy);
-
-function countSignificant(value) {
-    return clean(value).replace(/\./g, '').replace(/^0+/, '').length;
-}
-
-// Where the digit to keep and the digit to look at sit in the number, and the
-// name of each digit's place ("7 (ones)").
-function digitPositions(value, kind, accuracy) {
-    const text = clean(value);
-    const digitIndexes = [...text].map((digit, index) => /[0-9]/.test(digit) ? index : -1).filter(index => index >= 0);
-    const point = text.includes('.') ? text.indexOf('.') : text.length;
-    let keep;
-    let look;
-    if (kind === 'sig') {
-        const start = digitIndexes.findIndex(index => text[index] !== '0');
-        const significant = digitIndexes.slice(start);
-        keep = significant[accuracy - 1];
-        look = significant[accuracy];
-    } else {
-        const power = kind === 'decimal' ? -accuracy : accuracy;
-        keep = power >= 0 ? point - 1 - power : point - power;
-        look = digitIndexes[digitIndexes.indexOf(keep) + 1];
-    }
-    const label = index => index === undefined ? ''
-        : `${text[index]} (${placeNames[point - index - (index < point ? 1 : 0)]})`;
-    return { keep, look, label };
-}
-
-// The number being rounded and the place asked for, read from the words on
-// screen: "Round 4,276 to 2 decimal places", "A path is 532 m long. Round its
-// length to the nearest 10 metres", "0.730 → 3 significant figures".
-function readRounding(text) {
-    const phrase = text.match(/(nearest whole number|nearest million|nearest [\d,]+|\d+ decimal places?|\d+ significant figures?)/i);
-    if (!phrase) return null;
-    const words = phrase[0].toLowerCase();
-    let kind = 'nearest';
-    let accuracy;
-    if (words.startsWith('nearest whole')) accuracy = 0;
-    else if (words.startsWith('nearest million')) accuracy = 6;
-    else if (words.startsWith('nearest')) accuracy = words.replace(/[^\d]/g, '').length - 1;
-    else {
-        kind = words.includes('decimal') ? 'decimal' : 'sig';
-        accuracy = Number(words.match(/\d+/)[0]);
-    }
-    const named = text.match(/round(?:ed|s)?\s+(?:it\s+|this\s+|the\s+(?:number|length)\s+)?(\d[\d,]*(?:\.\d*)?)/i);
-    if (named) return { number: clean(named[1]).replace(/\.$/, ''), kind, accuracy };
-    const arrow = text.match(/(\d[\d,]*(?:\.\d*)?)\s*(?:≈|→|->)/);
-    if (arrow) return { number: clean(arrow[1]), kind, accuracy };
-    const found = text.replace(phrase[0], ' ').match(/\d[\d,]*(?:\.\d+)?/);
-    return found ? { number: clean(found[0]), kind, accuracy } : null;
-}
-
-// The last "a ÷ b" the example has said, e.g. "131 ÷ 18 = 7.277…".
-function readDivision(text) {
-    const matches = [...text.matchAll(/(\d[\d,]*(?:\.\d+)?)\s*÷\s*(\d[\d,]*(?:\.\d+)?)/g)];
-    if (!matches.length) return null;
-    const [, total, size] = matches.at(-1);
-    return { total: numberOf(total), size: numberOf(size) };
-}
-
-/* ------------------------------------------------------------------ *
- * Working out the answer from what is on screen.
- * ------------------------------------------------------------------ */
-
-// A note of what this worked example has said so far: later steps often leave
-// the numbers out ("What is the charge?").
-const newMemory = () => ({ texts: [], answers: [] });
-
-const lastPrice = text => {
-    const match = text.match(/(?:costs?|sells for|charges?)\s*£(\d+(?:\.\d+)?)/i);
-    return match ? numberOf(match[1]) : null;
-};
-const firstAmount = text => {
-    const match = text.match(/£(\d+(?:\.\d+)?)/);
-    return match ? numberOf(match[1]) : null;
-};
-
-// Word problems from Try it and Practice. Each branch reads the words on
-// screen (and the numbers the example has already used) and gives the answer.
-function wordProblem(text, memory) {
-    const all = [...memory.texts, text].join(' ');
-    const division = readDivision(all);
-    const last = memory.answers.at(-1);
-    const numbers = [...text.matchAll(/\d[\d,]*(?:\.\d+)?/g)].map(match => numberOf(match[0]));
-    const price = lastPrice(all);
-
-    if (/have no rack/.test(text) && division && last !== undefined) return division.total - last * division.size;
-    if (/smallest number of racks/.test(text) && division) return Math.ceil(division.total / division.size);
-    const each = text.match(/How much do (\d+) [a-z]+ cost/i);
-    if (each && price !== null) return fixed(Number(each[1]) * price, 2);
-    if (/How many more [a-z]+ does it need/i.test(text) && numbers.length >= 2) return numbers[0] - numbers[1];
-    if (/How much money is left/i.test(text) && numbers.length >= 2) {
-        return fixed(numbers.slice(1).reduce((left, value) => left - value, numbers[0]), 2);
-    }
-    if (/How many centimetres is that/i.test(text)) return fixed(numbers[0] * 100, 2);
-    if (/How much cord is left, in centimetres/i.test(text) && division) return fixed(division.total - last * division.size, 2);
-    if (/What is the charge/i.test(text) && last !== undefined && price !== null) return fixed(last * price, 2);
-    const sales = text.match(/How much money do (\d+) sales bring in/i);
-    if (sales && price !== null) return fixed(Number(sales[1]) * price, 2);
-    if (/least number of items .*more than/i.test(text) && division) return Math.floor(division.total / division.size) + 1;
-    if (/How much change .* in pence/i.test(text) && last !== undefined && price !== null) {
-        return Math.round((firstAmount(all) - last * price) * 100);
-    }
-    if (/pence are left over/i.test(text)) {
-        const spent = text.match(/cost £(\d+(?:\.\d+)?)/);
-        const had = text.match(/£(\d+(?:\.\d+)?)/);
-        if (spent && had) return Math.round((numberOf(had[1]) - numberOf(spent[1])) * 100);
-    }
-    if (/boots cost now/i.test(text) && numbers.length >= 2) return numbers[0] - numbers[1];
-    if (/full days will the ink last/i.test(text)) {
-        const rate = text.match(/(\d+) ml a day/);
-        if (rate && last !== undefined) return Math.floor(last / Number(rate[1]));
-    }
-    if (/millilitres of ink is that/i.test(text) && last !== undefined) {
-        const bottle = all.match(/(\d+)\s?ml bottle/);
-        if (bottle) return last * Number(bottle[1]);
-    }
-    if (/How much money does the club get/i.test(text) && last !== undefined && price !== null) return fixed(last * price, 2);
-    if (/How many full pieces/i.test(text) && division) return Math.floor(division.total / division.size);
-    if (/How many full packets/i.test(text) && division) return Math.floor(division.total / division.size);
-    if (/How many blocks are charged/i.test(text) && division) return Math.ceil(division.total / division.size);
-    if (/How many weeks must/i.test(text) && division) return Math.ceil(division.total / division.size);
-    if (/kits are needed/i.test(text) && division) return Math.ceil(division.total / division.size);
-    if (/How many (bags|bottles|trophies|prints) can/i.test(text) && division) return Math.floor(division.total / division.size);
-    if (division && /smallest|needed|must|at least|least/i.test(text)) return Math.ceil(division.total / division.size);
-    if (division && /full|greatest|can buy|can cut|can they|can it|can the/i.test(text)) return Math.floor(division.total / division.size);
-    return null;
-}
-
-// The answer to the question on screen, as a string.
-function solveQuestion(text, memory) {
-    const tidy = text.replace(/\s+/g, ' ').trim();
-
-    const figures = tidy.match(/How many significant figures does ([\d.,]+) show/i);
-    if (figures) return String(countSignificant(figures[1]));
-
-    // Rounding's method question: the steps start by finding the digit you round to.
-    const steps = tidy.match(/^Which steps, in the right order, round a number to the nearest (\d[\d,]*)\?/i);
-    if (steps) return `1. Find the ${{ '10': 'tens', '100': 'hundreds', '1,000': 'thousands' }[steps[1]]} digit.`;
-
-    // Significant figures guided steps: "Which is the last digit you keep?" or
-    // "Which digit decides?", answered as a digit and its place, e.g. "8 (thousandths)".
-    const which = tidy.match(/^Round ([\d,.]+) to (\d+) significant figures?\..*\bWhich\b/i);
-    if (which) {
-        const number = which[1].replace(/,/g, '');
-        const n = Number(which[2]);
-        const indexes = [...number].map((digit, i) => /\d/.test(digit) ? i : -1).filter(i => i >= 0);
-        const start = indexes.findIndex(i => number[i] !== '0');
-        const index = indexes[start + n - Number(/Which is the last digit/i.test(tidy))];
-        const point = number.includes('.') ? number.indexOf('.') : number.length;
-        const power = point - index - Number(index < point);
-        const names = { 6: 'millions', 5: 'hundred-thousands', 4: 'ten-thousands', 3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones',
-            '-1': 'tenths', '-2': 'hundredths', '-3': 'thousandths', '-4': 'ten-thousandths', '-5': 'hundred-thousandths', '-6': 'millionths' };
-        return `${number[index]} (${names[power]})`;
-    }
-
-    const correction = tidy.match(/([\d][\d,]*(?:\.\d+)?) rounds to [\d.,]+ at (\d+) decimal places?/i);
-    if (correction) return roundToPower(correction[1], -Number(correction[2]));
-
-    const rounding = readRounding(tidy);
-    if (rounding) return round(rounding.number, rounding.kind, rounding.accuracy);
-
-    const worked = wordProblem(tidy, memory);
-    if (worked !== null && worked !== undefined && Number.isFinite(worked)) return String(fixed(worked, 2));
-    return null;
-}
 
 /* ------------------------------------------------------------------ *
  * Reading the page.
@@ -315,6 +149,9 @@ async function readScreen(page) {
         const root = document.querySelector(`#lesson-section-${section?.id}`) ?? document.body;
         const paragraphs = [...root.querySelectorAll('p')].filter(visible).map(text);
         const feedback = [...document.querySelectorAll('.question-feedback.is-visible')].find(visible);
+        const card = [...document.querySelectorAll('.question-card')].find(visible);
+        const entryIndex = card?.dataset.slidesEntry;
+        const entry = entryIndex === undefined ? null : window.__slides?.entries?.[entryIndex];
         return {
             hash: window.location.hash,
             sectionId: section?.id ?? '',
@@ -325,31 +162,30 @@ async function readScreen(page) {
             // Only the Practice results page has a score panel of this shape in its own section.
             summary: Boolean(root.querySelector('.practice-summary__score')),
             main: main ? { label: text(main), disabled: main.disabled } : null,
-            slider: Boolean([...document.querySelectorAll('.rounding-line-move')].find(element => visible(element) && !element.disabled)),
-            digitTaps: [...document.querySelectorAll('.significant-digits[role=group] button')].filter(visible).length,
-            ends: [...document.querySelectorAll('.rounding-end')].filter(visible).length,
-            road: Boolean([...document.querySelectorAll('.rounding-road svg')].find(element => visible(element) && element.getAttribute('aria-disabled') === 'false')),
             options: [...document.querySelectorAll('.question-card-options button')].filter(visible).length,
             input: Boolean([...document.querySelectorAll('.question-card input[type=text]')].find(visible)),
-            // Try it's hands-on slides: the digit it asks for, its line and its cards.
-            slide: (() => {
-                const block = [...document.querySelectorAll('.rounding-tryit')].find(visible);
-                if (!block) return null;
-                const data = window.Rounding?.tryIt?.slides.find(item => item.title === text(heading));
-                const line = block.querySelector('.rounding-line');
+            fields: Boolean([...document.querySelectorAll('.question-answer-fields input')].find(visible)),
+            // A hands-on line can put its own answer on the line it draws.
+            handsOn: (() => {
+                const line = [...root.querySelectorAll('[data-answer]')].find(visible);
+                if (!line) return null;
                 return {
-                    keep: data?.digits ? window.Rounding.keyDigits(data.digits, 'nearest', data.accuracy).target : null,
-                    labels: data?.labels ?? null,
-                    buttons: block.querySelectorAll('.significant-digits[role=group] button').length,
-                    line: line ? data?.line ?? null : null,
-                    half: data?.line ? (data.line.value >= data.line.base + 5 * data.line.step ? 'upper' : 'lower') : null,
-                    dot: Boolean(block.querySelector('.rounding-dot')),
-                    slots: [...block.querySelectorAll('.tryit-slot')].map(slot => ({
-                        index: Number(slot.dataset.slot), filled: slot.classList.contains('is-filled')
-                    })),
-                    cards: [...block.querySelectorAll('.tryit-card')].map(card => Number(card.dataset.value))
+                    answer: Number(line.dataset.answer),
+                    current: Number(((line.getAttribute('aria-label') ?? '').replace(/\u2212/g, '-')
+                        .match(/dot is on\s*(-?\d+(?:\.\d+)?)/i) ?? [])[1])
                 };
-            })()
+            })(),
+            // What the lesson itself says the answer is.
+            question: entry ? {
+                index: entry.index,
+                input: entry.input,
+                answer: entry.answer,
+                questionType: entry.questionType,
+                options: entry.options,
+                fields: entry.fields,
+                hasWidget: Boolean(entry.widget),
+                slots: [...card.querySelectorAll('[data-slot]')].map(slot => slot.dataset.slot)
+            } : null
         };
     });
 }
@@ -373,197 +209,153 @@ async function advance(page, before) {
  * Doing a screen.
  * ------------------------------------------------------------------ */
 
-async function chooseOption(page, options, answer) {
-    const labels = (await options.allInnerTexts()).map(label => label.replace(/\s+/g, ' ').trim());
-    const plain = String(answer);
-    const shown = spaced(answer);
-    let index = labels.indexOf(shown);
-    if (index < 0) index = labels.indexOf(plain);
-    if (index < 0) index = labels.findIndex(label => label.includes(shown) || label.includes(plain));
-    if (index < 0) index = labels.findIndex(label => Math.abs(numberOf(label.replace(/\(.*\)/, '')) - Number(plain)) < 1e-9);
-    if (index < 0) throw new Error(`No option matches "${shown}". Options: ${labels.join(' | ')}`);
-    await options.nth(index).click();
-    return labels[index];
-}
-
-// Learn: tap the digit the screen asks for.
-async function tapDigit(page, info) {
-    const words = [info.prompt, ...info.paragraphs].join(' ');
-    const askLast = /last significant figure/i.test(words);
-    const rounding = readRounding(info.prompt) ?? readRounding(words);
-    if (rounding) {
-        const positions = digitPositions(rounding.number, rounding.kind, rounding.accuracy);
-        const index = askLast ? positions.keep : positions.look;
-        if (index !== undefined) {
-            const button = page.locator(`.significant-digits[role=group] button[aria-label="${positions.label(index)}"]`);
-            if (await button.count()) await button.first().click();
-            else await page.locator('.significant-digits[role=group]').locator(':scope > *').nth(index).click();
-            return positions.label(index);
+// Fill a choice or typed card from the lesson's own config.
+async function answerCard(page, question) {
+    if (question.options?.length) {
+        const index = question.options.findIndex(option => option.correct);
+        if (index < 0) return null;
+        const options = page.locator('.question-card-options button:visible');
+        if (!await options.count()) return null;
+        await options.nth(index).click();
+        return question.options[index].label;
+    }
+    if (question.input === 'number') {
+        if (question.fields) {
+            const inputs = page.locator('.question-answer-fields input:visible');
+            if (await inputs.count() < question.fields.length) return null;
+            for (let index = 0; index < question.fields.length; index++) {
+                await inputs.nth(index).fill(String(question.answer[question.fields[index].id]));
+            }
+            return JSON.stringify(question.answer);
         }
+        const input = page.locator('.question-card input[type=text]:visible').first();
+        if (!await input.count()) return null;
+        await input.fill(String(question.answer));
+        return String(question.answer);
     }
-    // A screen that asks for the last significant figure of the number it shows.
-    if (!askLast) return null;
-    const row = page.locator('.significant-digits[role=group]').first();
-    const shown = (await row.innerText()).replace(/\s+/g, '');
-    const last = [...shown].reduce((found, character, index) => /[0-9]/.test(character) ? index : found, -1);
-    if (last < 0) return null;
-    await row.locator(':scope > *').nth(last).click();
-    return `${shown[last]} of ${shown}`;
-}
-
-// Learn: tap the end of the number line the number rounds to.
-async function tapEnd(page, info) {
-    const values = await page.locator('.rounding-end').evaluateAll(nodes => nodes.map(node => Number(node.dataset.end)));
-    if (!values.length) return null;
-    const low = Math.min(...values);
-    const high = Math.max(...values);
-    const words = [info.heading, ...info.paragraphs].join(' ');
-    const division = readDivision(words);
-    const question = info.paragraphs.at(-1) ?? '';
-    let target;
-    if (division && /rack|helmet|minibus|troph|piece|cord|divide/i.test(words)) {
-        // Enough of something rounds up; what you can only pay for whole rounds down.
-        const down = /full pieces|can they buy/i.test(question);
-        target = down ? Math.floor(division.total / division.size) : Math.ceil(division.total / division.size);
-    } else {
-        const label = await page.locator('.rounding-line').first().getAttribute('aria-label');
-        const shown = label?.match(/\d[\d,]*(?:\.\d+)?/) ?? readRounding(words)?.number?.match(/\d[\d,]*(?:\.\d+)?/);
-        if (!shown) return null;
-        const start = numberOf(shown[0]);
-        target = start - low >= high - start ? high : low;
-    }
-    if (!values.includes(target)) return null;
-    await page.locator(`.rounding-end[data-end="${target}"]`).first().click();
-    return String(target);
-}
-
-// Try it: move the dot along the line to the end with the → button.
-async function moveSlider(page) {
-    const up = page.locator('.rounding-line-move[aria-label="Move the number up"]').first();
-    while (await up.isEnabled()) await up.click();
-    return page.locator('.rounding-line[role=slider]').first().getAttribute('aria-valuenow');
-}
-
-/* Try it's two hands-on slides: tap the digit, then tap or drag the number
-   into place. Each step gets its own "before" and "after" picture. */
-const slideDone = slide => Boolean(slide.dot) && (!slide.labels || slide.slots.every(slot => slot.filled));
-
-function slideStepName(slide) {
-    if (slide.buttons) return 'tap the digit';
-    if (!slide.line) return 'nothing to do';
-    if (!slide.labels && !slide.dot) return 'tap the line';
-    if (slide.labels && slide.slots.some(slot => !slot.filled)) return 'drag the labels';
-    if (!slide.dot) return 'drag the number';
-    return 'nothing to do';
-}
-
-// Where a value sits across a 660-wide line, as a fraction of its width.
-const acrossLine = (line, value) =>
-    (line.edge + (value - line.base) / (10 * line.step) * (660 - 2 * line.edge)) / 660;
-
-// A real mouse drag, the same pointer events a finger uses.
-async function dragCardTo(page, from, to) {
-    const box = await from.boundingBox();
-    const startX = box.x + box.width / 2, startY = box.y + box.height / 2;
-    await page.mouse.move(startX, startY);
-    await page.mouse.down();
-    await page.mouse.move(startX + 12, startY + 12, { steps: 4 });
-    await page.mouse.move(to.x, to.y, { steps: 10 });
-    await page.mouse.up();
-    await settle(page, 300);
-}
-
-// Do the next thing the slide asks for. Returns what was done, or null.
-async function slideAction(page, slide) {
-    if (slide.buttons) {
-        await page.locator('.rounding-tryit .significant-digits[role=group] button').nth(slide.keep).click();
-        await settle(page, 250);
-        return 'tapped the digit';
-    }
-    if (!slide.line) return null;
-    if (!slide.labels && !slide.dot) {
-        await page.locator(`.rounding-tryit .rounding-half-button[data-half="${slide.half}"]`).click();
-        await settle(page, 300);
-        return 'tapped the half of the line';
-    }
-    const empty = slide.slots.find(slot => !slot.filled);
-    if (slide.labels && empty) {
-        const value = Number(slide.labels[empty.index].replace(/,/g, ''));
-        const target = await page.locator(`.rounding-tryit .tryit-slot[data-slot="${empty.index}"]`).boundingBox();
-        await dragCardTo(page, page.locator(`.rounding-tryit .tryit-card[data-value="${value}"]`),
-            { x: target.x + target.width / 2, y: target.y + target.height / 2 });
-        return `dragged ${slide.labels[empty.index]} into place`;
-    }
-    if (!slide.dot && slide.cards.includes(slide.line.value)) {
-        const box = await page.locator('.rounding-tryit .rounding-line svg').first().boundingBox();
-        await dragCardTo(page, page.locator(`.rounding-tryit .tryit-card[data-value="${slide.line.value}"]`),
-            { x: box.x + acrossLine(slide.line, slide.line.value) * box.width, y: box.y + box.height / 2 });
-        return 'dragged the number onto the line';
+    if (question.input === 'custom') {
+        // Ask the widget which candidate it marks correct, then hand that
+        // value to the card exactly as the widget would after a pupil's tap,
+        // drag or typed digit.
+        return page.evaluate(index => {
+            const entry = window.__slides?.entries?.[index];
+            const widget = entry?.widget;
+            if (!entry || !widget || typeof widget.mark !== 'function' || typeof entry.onChange !== 'function') {
+                return { given: null, reason: 'the card has no widget answer to use' };
+            }
+            const card = document.querySelector(`.question-card[data-slides-entry="${index}"]`);
+            const slots = [...(card?.querySelectorAll('[data-slot]') || [])].map(slot => slot.dataset.slot);
+            const candidates = [];
+            const add = value => {
+                if (value === undefined) return;
+                if (!candidates.some(other => JSON.stringify(other) === JSON.stringify(value))) candidates.push(value);
+            };
+            const answer = entry.answer;
+            if (answer === null) {
+                // A tap-the-point card keeps its answer in the widget only: try
+                // each gap between the digits it shows.
+                if (card?.querySelector('.decimal-point-row')) {
+                    const digits = card.querySelectorAll('.decimal-digit').length;
+                    for (let gap = 0; gap <= digits; gap++) add({ gap });
+                }
+                // A card that fills one mark per row (like a signs table) takes
+                // a list of filled rows; the widget itself draws the values.
+                for (let length = 1; length <= 8; length++) add(Array(length).fill(true));
+            }
+            if (answer !== null && typeof answer === 'object' && !Array.isArray(answer)) add(answer);
+            else if (answer !== null) {
+                const text = String(answer).replace(/,/g, '');
+                const plain = text.replace(/\u2212/g, '-');
+                add(text);
+                add(plain);
+                const number = Number(plain);
+                if (Number.isFinite(number)) add(number);
+                // A tap-the-point widget takes { gap: index } where the point goes.
+                const digitsOnly = text.replace(/[^0-9]/g, '');
+                add({ gap: text.includes('.') ? text.indexOf('.') : digitsOnly.length });
+                // A card of digit slots takes { digits: { slot: digit } }. Try
+                // the answer's digits against the slots it shows, from the left
+                // and the right, because a table may leave leading slots empty.
+                if (digitsOnly && slots.length) {
+                    for (let offset = 0; offset + digitsOnly.length <= slots.length; offset++) {
+                        const digits = {};
+                        for (let place = 0; place < digitsOnly.length; place++) {
+                            digits[slots[offset + place]] = digitsOnly[place];
+                        }
+                        add({ digits });
+                        const padded = { ...digits };
+                        for (let place = 0; place < offset; place++) padded[slots[place]] = '0';
+                        add({ digits: padded });
+                    }
+                }
+            }
+            for (const candidate of candidates) {
+                // The engine will not accept a value the widget calls empty.
+                try { if (typeof widget.isEmpty === 'function' && widget.isEmpty(candidate)) continue; } catch {}
+                let correct = false;
+                try { correct = widget.mark(candidate)?.correct === true; } catch {}
+                if (!correct) continue;
+                try { entry.onChange(candidate); } catch { continue; }
+                let given = '';
+                try { given = widget.answerText?.(candidate) ?? ''; } catch {}
+                return { given: String(given), reason: null };
+            }
+            return { given: null, reason: `the lesson's answer "${answer}" was not one the widget accepts` };
+        }, question.index);
     }
     return null;
 }
 
-// One step of a hands-on slide: the "before" picture, the tap or drag, then
-// the "after" picture.
-async function captureSlideStep(page, width, index, section, number, info, step) {
-    const name = side => `${width}/${String(index).padStart(2, '0')}-${section}-${number}-${step.replace(/\s+/g, '-')}-${side}.png`;
-    const record = {
-        section, label: LABELS[section], number, step,
-        heading: info.heading, prompt: info.prompt,
-        before: name('before'), after: null, answered: false, skipped: null, given: null
-    };
-    if (!fast) await page.screenshot({ path: path.join(out, record.before), fullPage: true });
-    record.given = await slideAction(page, info.slide);
-    if (!record.given) {
-        record.skipped = 'the slide did not offer another step';
-        return record;
+// A Learn screen can wait for the pupil to tap or drag something before its
+// button will move on. There is no question card to fill, so use the screen's
+// own controls, one at a time, until the main button is ready. This keeps the
+// walk moving without knowing anything about the lesson.
+// The line a hands-on screen draws says the value it wants in data-answer.
+// Move the dot there with the arrow keys the line already listens for.
+async function answerHandsOn(page, info) {
+    const line = page.locator(`#lesson-section-${info.sectionId} [data-answer]:visible`).first();
+    if (!await line.count()) return null;
+    const target = Number(await line.getAttribute('data-answer'));
+    if (!Number.isFinite(target)) return null;
+    await line.focus();
+    let current = Number.isFinite(info.handsOn?.current) ? info.handsOn.current : null;
+    if (current === null) {
+        for (let tries = 0; tries < 60; tries++) {
+            await page.keyboard.press('ArrowRight');
+            const label = (await line.getAttribute('aria-label') ?? '').replace(/\u2212/g, '-');
+            const found = label.match(/dot is on\s*(-?\d+(?:\.\d+)?)/i);
+            if (found) { current = Number(found[1]); break; }
+        }
     }
-    record.answered = true;
-    record.after = name('after');
-    if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
-    return record;
+    if (current === null) return null;
+    const key = target >= current ? 'ArrowRight' : 'ArrowLeft';
+    for (let step = 0; step < Math.abs(target - current); step++) await page.keyboard.press(key);
+    await settle(page, 200);
+    return String(target);
 }
 
-// Try it: drive the car to the nearer sign with a real mouse drag.
-async function driveCar(page) {
-    const road = page.locator('.rounding-road svg').first();
-    const start = Number(await road.getAttribute('aria-valuenow'));
-    const low = Number(await road.getAttribute('aria-valuemin'));
-    const high = Number(await road.getAttribute('aria-valuemax'));
-    const target = start < (low + high) / 2 ? low : high;
-    const signs = page.locator('.rounding-road .rounding-road__sign');
-    // SVG text has no innerText, so read its textContent.
-    const labels = (await signs.locator('.rounding-value').evaluateAll(nodes => nodes.map(node => node.textContent.trim()))).map(numberOf);
-    const signIndex = labels.indexOf(target);
-    if (signIndex < 0) return null;
-
-    async function dragTo(x) {
-        const car = await page.locator('.rounding-road__car').first().boundingBox();
-        const sign = await signs.nth(signIndex).boundingBox();
-        const middle = car.y + car.height / 2;
-        await page.mouse.move(car.x + car.width / 2, middle);
-        await page.mouse.down();
-        await page.mouse.move(x, middle, { steps: 12 });
-        await page.mouse.up();
-        await settle(page, 200);
+async function readyTheScreen(page, info) {
+    const main = page.locator(MAIN).first();
+    if (await main.count() && await main.isEnabled()) return true;
+    const section = page.locator(`#lesson-section-${info.sectionId}`);
+    const controls = section.locator('button:visible, [role=button]:visible, [tabindex="0"]:visible');
+    // Some pages need several taps on the same card (flip every sign, turn the
+    // pattern round, tap every number), so go round the controls again.
+    for (let attempt = 0; attempt < 40; attempt++) {
+        const count = Math.min(await controls.count(), 12);
+        if (!count) return false;
+        const control = controls.nth(attempt % count);
+        if (!await control.isEnabled().catch(() => false)) continue;
+        await control.click({ trial: false }).catch(() => {});
+        await settle(page, 250);
+        if (await main.count() && await main.isEnabled()) return true;
     }
-
-    const sign = await signs.nth(signIndex).boundingBox();
-    await dragTo(sign.x + sign.width / 2);
-    let now = Number(await road.getAttribute('aria-valuenow'));
-    if (now !== target) {
-        // Nudge by the exact number of miles still to go.
-        const centres = await signs.evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().x + node.getBoundingClientRect().width / 2));
-        const perMile = (Math.max(...centres) - Math.min(...centres)) / (high - low);
-        await dragTo(sign.x + sign.width / 2 + (target - now) * perMile);
-        now = Number(await road.getAttribute('aria-valuenow'));
-    }
-    return now === target ? String(target) : null;
+    return false;
 }
 
 // One screen: the "before" shot, the answer, the "after" shot. Leaves the page
 // on the answered screen; the walk presses the main button afterwards.
-async function captureScreen(page, width, index, section, number, info, memory) {
+async function captureScreen(page, width, index, section, number, info) {
     const record = {
         section, label: LABELS[section], number,
         heading: info.summary ? 'Your practice results' : info.heading,
@@ -573,81 +365,79 @@ async function captureScreen(page, width, index, section, number, info, memory) 
     const name = side => `${width}/${String(index).padStart(2, '0')}-${section}-${number}-${side}.png`;
     record.before = name('before');
     if (!fast) await page.screenshot({ path: path.join(out, record.before), fullPage: true });
-    if (info.feedback) throw new Error(`A feedback box was already showing when ${record.label} ${record.number} opened`);
 
-    let given;
-    if (info.digitTaps) given = await tapDigit(page, info);
-    else if (info.ends) given = await tapEnd(page, info);
-    else if (info.slider) given = await moveSlider(page);
-    else if (info.road) given = await driveCar(page);
-
-    if (given !== undefined && given !== null) {
-        await settle(page);
-        // A road screen waits for Check before it says whether the car is right.
+    if (info.handsOn) {
+        const given = await answerHandsOn(page, info);
+        if (!given) {
+            record.skipped = `could not answer ${section} ${number}: the line did not move`;
+            return record;
+        }
+        record.given = given;
+        await settle(page, 250);
         const main = page.locator(MAIN).first();
         if (await main.count() && (await main.innerText()).trim() === 'Check') {
             await main.click();
-            await settle(page, 600);
-            const marked = await readScreen(page);
-            if (/Try again/.test(marked.main?.label ?? '')) {
-                throw new Error(`The answer "${given}" was marked wrong at ${record.label} ${record.number}. ${marked.feedback}`);
-            }
+            await settle(page, 700);
         }
         record.answered = true;
-        record.given = given;
         record.after = name('after');
         if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
         return record;
     }
 
-    if (!info.prompt) {
+    if (!info.question) {
+        // Learn screens and results pages: picture them and press the button.
         record.skipped = section === 'practice' && info.summary
             ? 'results page, nothing to answer'
             : 'nothing to answer on this screen';
+        const readied = await readyTheScreen(page, info);
+        // A Try it page the pupil works by hand: picture it after the taps too.
+        if (readied && section === 'try-it') {
+            record.answered = true;
+            record.after = name('after');
+            if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
+        }
         return record;
     }
 
-    const words = info.prompt || info.paragraphs.join(' ');
-    const answer = solveQuestion(words, memory);
-    if (answer === null) {
-        record.skipped = `could not work out the answer from "${words}"`;
+    let given;
+    try {
+        given = await answerCard(page, info.question);
+    } catch (error) {
+        record.skipped = `could not answer ${section} ${number}: ${error.message}`;
         return record;
     }
-    const options = page.locator('.question-card-options button:visible');
-    const input = page.locator('.question-card input[type=text]:visible').first();
-    if (await options.count()) record.given = await chooseOption(page, options, answer);
-    else if (await input.count()) {
-        await input.fill(answer);
-        record.given = answer;
-    } else {
-        record.skipped = 'no answer box on this screen';
+    if (!given || given.given === null) {
+        const reason = given?.reason ?? 'no answer box on this screen';
+        record.skipped = `could not answer ${section} ${number}: ${reason}`;
         return record;
     }
-    await settle(page, 200);
-    await page.locator(MAIN).first().click();       // Check
-    await settle(page, 600);
+    record.given = given.given ?? given;
+    await settle(page, 250);
 
-    const after = await readScreen(page);
-    if (/Try again/.test(after.main?.label ?? '')) {
-        throw new Error(`"${record.given}" was marked wrong at ${record.label} ${record.number} (${words}). ${after.feedback}`);
+    const main = page.locator(MAIN).first();
+    if (await main.count() && (await main.innerText()).trim() === 'Check') {
+        await main.click();
+        await settle(page, 700);
+        const marked = await readScreen(page);
+        if (/Try again/.test(marked.main?.label ?? '')) {
+            record.skipped = `the lesson marked "${record.given}" wrong at ${section} ${number}`;
+            return record;
+        }
     }
     record.answered = true;
-    memory.texts.push(words);
-    memory.answers.push(Number(answer));
+    record.after = name('after');
 
-    if (after.hash === info.hash && after.heading === info.heading) {
-        record.after = name('after');
-        if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
-        return record;
+    const after = await readScreen(page);
+    if (after.hash !== info.hash || after.heading !== info.heading) {
+        // The card moved on by itself: go back to see the answer and its feedback.
+        const back = page.getByRole('button', { name: 'Previous screen', exact: true });
+        if (await back.count() && await back.isEnabled()) {
+            await back.click();
+            await settle(page, 500);
+        }
     }
-    // The card moved on by itself: go back to see the answer and its feedback.
-    const back = page.getByRole('button', { name: 'Previous screen', exact: true });
-    if (await back.count() && await back.isEnabled()) {
-        await back.click();
-        await settle(page, 500);
-        record.after = name('after');
-        if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
-    }
+    if (!fast) await page.screenshot({ path: path.join(out, record.after), fullPage: true });
     return record;
 }
 
@@ -667,9 +457,6 @@ function screenNumber(section, hash) {
 }
 
 async function walk(page, width, records) {
-    const memory = newMemory();
-    let example = null;
-
     await page.goto(lessonUrl, { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-screen-heading]');
     await settle(page, 600);
@@ -678,7 +465,7 @@ async function walk(page, width, records) {
         const info = await readScreen(page);
         if (info.main?.label === 'All lessons') {
             records.push(await captureScreen(page, width, records.length + 1, 'end', 1,
-                { ...info, heading: info.heading || 'Your completed Check' }, null));
+                { ...info, heading: info.heading || 'Your completed Check' }));
             break;
         }
         const section = SECTIONS[info.sectionId];
@@ -687,32 +474,7 @@ async function walk(page, width, records) {
             throw new Error(`Stopped at an unexpected place: ${info.hash || '(no hash)'} "${info.heading}"`);
         }
 
-        const exampleNumber = /^Example (\d+) of/.exec(info.heading)?.[1];
-        if (exampleNumber !== undefined && exampleNumber !== example) {
-            example = exampleNumber;
-            Object.assign(memory, newMemory());
-        }
-
-        // Try it's hands-on slides have several steps on one screen: picture
-        // each step before and after the tap or drag.
-        if (info.slide) {
-            for (let sub = 0; sub < 6; sub++) {
-                const before = await readScreen(page);
-                if (!before.slide || slideDone(before.slide)) break;
-                const record = await captureSlideStep(page, width, records.length + 1, section, number,
-                    before, `${slideStepName(before.slide)} ${sub + 1}`);
-                records.push(record);
-                if (!record.answered) break;
-            }
-            const left = await readScreen(page);
-            if (!await advance(page, left)) {
-                console.log(`${width}: could not move on from ${left.heading}`);
-                break;
-            }
-            continue;
-        }
-
-        const record = await captureScreen(page, width, records.length + 1, section, number, info, memory);
+        const record = await captureScreen(page, width, records.length + 1, section, number, info);
         records.push(record);
         if (!await advance(page, info)) {
             console.log(`${width}: could not move on from ${record.label} ${record.number}`);
@@ -729,11 +491,10 @@ function buildSlides(records) {
     const screens = [];
     const byKey = new Map();
     for (const record of records) {
-        // Each step of a hands-on slide is its own screen of pictures.
-        const key = `${record.section}:${record.number}${record.step ? `:${record.step}` : ''}`;
+        const key = `${record.section}:${record.number}`;
         if (!byKey.has(key)) {
             const screen = {
-                section: record.section, label: record.label, number: record.number, step: record.step ?? null,
+                section: record.section, label: record.label, number: record.number, step: null,
                 heading: record.heading, prompt: record.prompt,
                 answered: record.answered, skipped: record.skipped, shots: {}
             };
@@ -778,6 +539,7 @@ async function waitForServer() {
         for (const width of widths) {
             const { width: viewWidth, height, ...device } = SIZES[width];
             const context = await browser.newContext({ viewport: { width: viewWidth, height }, ...device });
+            await context.addInitScript(CAPTURE);
             await context.addInitScript(seed => {
                 let state = seed >>> 0;
                 Math.random = () => {
