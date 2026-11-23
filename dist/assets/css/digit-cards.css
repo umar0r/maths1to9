@@ -167,3 +167,33 @@
     border-color: var(--success);
     transform: none;
 }
+
+/* Bus stop: the answer sits directly above the dividend's columns. */
+.digit-short-division {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.digit-short-division td { position: relative; height: 72px; padding: .65rem .15rem; }
+.digit-short-division__divisor-column { width: 2.5rem; }
+.digit-short-division__point-column { width: 72px; }
+.digit-short-division__dividend { border-top: 3px solid #64748b; }
+.digit-short-division__bracket { border-left: 3px solid #64748b; }
+.digit-short-division__carry {
+    position: absolute;
+    left: 8%;
+    top: .2rem;
+    font-size: .85rem;
+    line-height: 1;
+}
+.digit-short-division .is-active-column { background: color-mix(in srgb, var(--success-background) 50%, #fff); }
+@media (max-width: 640px) {
+    .digit-short-division td { height: 60px; padding: .4rem .1rem; }
+    .digit-short-division__point-column { width: 46px; }
+    .digit-short-division__divisor-column { width: 1.8rem; }
+}
