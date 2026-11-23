@@ -72,7 +72,7 @@ $pageTitle = 'Multiplying and dividing decimals';
     <script src="./point-gap.js?v=1"></script>
     <script src="./try-it.js?v=8"></script>
 
-    <script src="./decimal-calculations.js?v=6"></script>
+    <script src="./decimal-calculations.js?v=7"></script>
     <script src="./questions.js?v=4"></script>
 
     <!-- Shared lesson renderer; loaded last -->

@@ -117,13 +117,11 @@
                     ], fallback: 'Take the points out, multiply, then count 2 digits from the end.' };
             } else if (type === 'divide-by-decimal') {
                 const q = integer(12, 80, random), c = integer(2, 9, random), d = q * c;
+                if (d % 10 === 0) continue;
                 const dStr = decimal(d), cStr = decimal(c);
-                const countD = (dStr.split('.')[1] || '').length;
-                const countC = (cStr.split('.')[1] || '').length;
-                const diff = countD - countC;
                 question = { input: 'choice', prompt: `Work out ${dStr} ÷ ${cStr}.`, answer: String(q), values: { q, c, d }, options: [
-                    option(String(q), q * 10000, `${countD} − ${countC} = ${diff}, so ${d} ÷ ${c} = ${q}.`, true),
-                    option(decimal(q, 2), q * 100, "When you divide, take them away. Don't add them."),
+                    option(String(q), q * 10000, `2 − 2 = 0, so ${d} ÷ ${c} = ${q}.`, true),
+                    option(decimal(q, 4), q * 100, "When you divide, take them away. Don't add them."),
                     option(decimal(q, 1), q * 1000, 'Count the digits after each point again, then take them away.'),
                     option(decimal(q * c * c, 4), q * c * c, "That's multiplying. The question asks you to divide.")
                 ] };
@@ -179,6 +177,9 @@
             } else if (type === 'divide-difference') {
                 const c = integer(12, 18, random), q = integer(101, 299, random), b = integer(12, 249, random);
                 if (q % 10 === 0 || c * q % 10 === 0) continue;
+                if (decimal(c * q, 3).split('.')[1]?.length !== 3) continue;
+                if (decimal(b, 2).split('.')[1]?.length !== 2) continue;
+                if (decimal(c, 2).split('.')[1]?.length !== 2) continue;
                 const difference = c * q, a = difference + b * 10, answer = decimal(q, 1, false);
                 const numerator = a * c - b * 1000, denominator = 1000 * c;
                 // Dividing first: a − b ÷ c, to 2 decimal places. Pupils never
