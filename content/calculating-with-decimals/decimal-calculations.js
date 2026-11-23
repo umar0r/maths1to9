@@ -11,7 +11,7 @@
         'meter-bill', 'times-ten', 'year-cost', 'divide-difference'];
     const choiceTypes = new Set(['money-multiply', 'divide-by-decimal', 'meter-bill', 'divide-difference']);
     // Two kinds take two screens with the same numbers: they share one seed.
-    const twoStepTypes = new Set(['share-the-bill', 'multiply-decimals']);
+    const twoStepTypes = new Set(['share-the-bill']);
     const stepCount = type => twoStepTypes.has(type) ? 2 : 1;
 
     // All amounts are integers with an explicit number of decimal places.
@@ -49,261 +49,32 @@
     function pickSteps(random) {
         let order;
         do { order = engine().shuffle(practiceTypes, random); } while (!mixed(order));
-        return order.flatMap((type, parent) => {
+        const result = order.flatMap((type, parent) => {
             const problemSeed = integer(0, 4294967295, random);
             return Array.from({ length: stepCount(type) }, (_, step) => ({
                 type, parent, step, problemSeed, seed: integer(0, 4294967295, random)
             }));
         });
+        return result;
     }
 
-    function tableWidget(model) {
-        let view;
-        return {
-            keepValueOnRetry: true,
-            render(host, { value, editable, onChange }) {
-                const built = model.build(host);
-                view = window.Maths1to9DigitCards.create(host, {
-                    slots: built.slots, groups: model.groups || { answer: { advance: model.direction, wrap: false } },
-                    active: model.order.find(id => !model.optional.includes(id)), value, editable, onChange,
-                    onPaint({ value, active, editable, phase }) {
-                        built.update({ activeColumn: editable && active ? active.split(':')[1] : null });
-                        built.paint?.(!editable && phase !== 'answer', editable && active ? active.split(':')[1] : null);
-                        // In Practice, carries never reveal whether a digit is right
-                        // while the pupil works. They appear only after Check.
-                        for (const id of model.optional) {
-                            built.slots.find(slot => slot.id === id).element.classList.toggle('decimal-empty-leading-answer',
-                                !editable && value?.digits?.[id] === undefined);
-                        }
-                    }
-                });
-                return view;
-            },
-            reset() { view?.update({ value: null, editable: true, phase: 'answer' }); },
-            replayFeedback(result) { view?.update({ value: result.value, editable: false, phase: result.correct ? 'correct' : 'wrong' }); },
-            isEmpty(value) { return !value || model.order.some(id => !model.optional.includes(id) && value.digits?.[id] === undefined); },
-            mark(value) {
-                const actual = id => value?.digits?.[id] ?? (model.optional.includes(id) ? '0' : undefined);
-                const firstWrong = model.order.find(id => actual(id) !== model.expected[id]);
-                const marks = Object.fromEntries(model.order.filter(id => value?.digits?.[id] !== undefined || !model.optional.includes(id))
-                    .map(id => [id, actual(id) === model.expected[id] ? 'right' : 'wrong']));
-                return { correct: !firstWrong, feedback: firstWrong ? model.errors[firstWrong] : model.feedback,
-                    value: window.Maths1to9DigitCards.markedValue(value, marks) };
-            },
-            answerText(value) {
-                return (model.currency ? '£' : '') + model.answer.map(id => id === '.' ? '.' : value?.digits?.[id] || '').join('');
-            }
-        };
-    }
-
-    function carryNode(cell, value) {
-        const carry = element('span', `+${value}`, 'decimal-written-carry');
-        carry.hidden = true;
-        cell.classList.add('decimal-written-carry-cell');
-        cell.append(carry);
-        return carry;
-    }
-
-    function multiplyTable(a, n, feedback) {
-        const answer = a * n;
-        const keys = [...(answer >= 1000 ? ['tens'] : []), 'units', 'point', 'tenths', 'hundredths'];
-        const digitKeys = keys.filter(key => key !== 'point');
-        const answerDigits = String(answer).padStart(digitKeys.length, '0');
-        const original = String(a).padStart(digitKeys.length, '0');
-        const expected = Object.fromEntries(digitKeys.map((key, index) => [`answer:${key}`, answerDigits[index]]));
-        const order = [...digitKeys].reverse().map(key => `answer:${key}`);
-        const errors = {}, carries = {};
-        let carry = 0;
-        [...digitKeys].reverse().forEach(key => {
-            const digit = Number(original[digitKeys.indexOf(key)]);
-            const total = digit * n + carry;
-            errors[`answer:${key}`] = `Check the ${key}: ${digit} × ${n}${carry ? ` + ${carry}` : ''} = ${total}.`
-                + (total >= 10 ? ` Write ${total % 10} and carry ${Math.floor(total / 10)}.` : '');
-            carries[key] = carry;
-            carry = Math.floor(total / 10);
-        });
-        const model = {
-            expected, order, optional: [], direction: 'left', feedback,
-            answer: keys.map(key => key === 'point' ? '.' : `answer:${key}`), errors,
-            build(host) {
-                const carryNodes = [];
-                const built = window.Maths1to9DigitCards.columnTable({
-                    label: `${decimal(a, 2, false)} times ${n} in columns`,
-                    className: keys.length > 4 ? 'digit-column-table--wide' : '',
-                    columns: keys.map(id => ({ id, label: id, ariaLabel: id === 'point' ? 'decimal point' : id })),
-                    rows: [
-                        { id: 'a', values: Object.fromEntries(keys.map(key => [key, key === 'point' ? '.'
-                            : key === 'tens' && a < 1000 ? '' : original[digitKeys.indexOf(key)]])) },
-                        { id: 'b', sign: '×', values: { units: String(n) } },
-                        { id: 'answer', answer: true, values: Object.fromEntries(keys.map(key => [key,
-                            key === 'point' ? '.' : { slot: `answer:${key}`, label: `${key} answer digit` }])) }
-                    ],
-                    cellExtra(cell, { row, column }) {
-                        if (row.id === 'a' && carries[column.id]) carryNodes.push(carryNode(cell, carries[column.id]));
-                    }
-                });
-                const chart = element('div', '', `digit-card-chart${keys.length > 4 ? ' digit-card-chart--wide' : ''}`);
-                chart.append(built.table); host.append(chart);
-                return { ...built, paint(checked) { carryNodes.forEach(node => { node.hidden = !checked; }); } };
-            }
-        };
-        return { input: 'custom', widget: tableWidget(model), answer: decimal(answer, 2, false),
-            values: { a, n, answer }, cardProblem: model };
-    }
-
-    // Long multiplication on paper: row a, row × b, one working row for each
-    // digit of b, then the answer row under the line. Carries sit beside the
-    // digit they are added to, as in Try it 1.
-    function longMultiplyTable(a, b, feedback) {
-        const unitsDigit = b % 10, tensDigit = Math.floor(b / 10);
-        const firstPartial = a * unitsDigit, secondPartial = a * tensDigit * 10, product = a * b;
-        const places = ['thousands', 'hundreds', 'tens', 'units'];
-        const digits = value => String(value).split('').reverse().map(Number);
-        const columns = places.slice(-String(product).length);
-        const wide = columns.length > 3;
-        const columnAt = position => columns[columns.length - 1 - position];
-        const slotId = (row, column) => `${row}:${column}`;
-        const expected = {}, errors = {}, order = [], carries = {};
-
-        function addCarry(row, position, value) {
-            const column = columnAt(position);
-            if (!column) return;
-            carries[row] = carries[row] || {};
-            carries[row][column] = value;
-        }
-
-        function addSlot(row, column, digit, label, error) {
-            const id = slotId(row, column);
-            expected[id] = digit;
-            order.push(id);
-            errors[id] = error;
-            return { slot: id, label: `${label}, ${column} digit` };
-        }
-
-        // One working row: a times a single digit, shifted left by `shift` places.
-        function workingRow(row, multiplier, shift, note) {
-            const values = {}, label = note;
-            if (shift) values[columnAt(0)] = addSlot(row, columnAt(0), '0', label,
-                `Check ${label}: write 0 in the units first.`);
-            let carry = 0;
-            digits(a).forEach((digit, position) => {
-                const total = digit * multiplier + carry;
-                const written = total % 10, next = Math.floor(total / 10);
-                const column = columnAt(position + shift);
-                values[column] = addSlot(row, column, String(written), label,
-                    `Check ${label}: ${digit} × ${multiplier}${carry ? ` + ${carry}` : ''} = ${total}`
-                    + (next ? `, write ${written} and carry ${next}.` : `, write ${written}.`));
-                if (next) addCarry(row, position + shift + 1, next);
-                carry = next;
-            });
-            if (carry) {
-                const column = columnAt(digits(a).length + shift);
-                values[column] = addSlot(row, column, String(carry), label,
-                    `Check ${label}: write the carried ${carry} in the ${column}.`);
-            }
-            return { ...values, note };
-        }
-
-        function answerRow() {
-            const values = {}, ids = [];
-            const firstDigits = digits(firstPartial), secondDigits = digits(secondPartial);
-            let carry = 0;
-            for (let position = 0; position < columns.length; position++) {
-                const top = firstDigits[position] || 0, bottom = secondDigits[position] || 0;
-                const total = top + bottom + carry;
-                const written = total % 10, next = Math.floor(total / 10);
-                const column = columnAt(position);
-                values[column] = addSlot('answer', column, String(written), 'Answer',
-                    `Check the answer row: ${top} + ${bottom}${carry ? ` + ${carry}` : ''} = ${total}`
-                    + (next ? `, write ${written} and carry ${next}.` : `.`));
-                ids.push(slotId('answer', column));
-                if (next && position + 1 < columns.length) addCarry('answer', position + 1, next);
-                carry = next;
-            }
-            return { values, ids };
-        }
-
-        const printed = value => Object.fromEntries([...String(value)].map((digit, index) =>
-            [columnAt(String(value).length - 1 - index), digit]));
-        const firstRow = workingRow('first', unitsDigit, 0, `${a} × ${unitsDigit}`);
-        const secondRow = workingRow('second', tensDigit, 1, `${a} × ${tensDigit * 10}`);
-        const answer = answerRow();
-        const model = {
-            expected, order, optional: [], direction: 'left', feedback, errors,
-            groups: {
-                first: { advance: 'left', wrap: false, next: 'second' },
-                second: { advance: 'left', wrap: false, next: 'answer' },
-                answer: { advance: 'left' }
-            },
-            answer: [...answer.ids].reverse(),
-            build(host) {
-                const carryNodes = [];
-                const built = window.Maths1to9DigitCards.columnTable({
-                    label: `${a} times ${b} in long multiplication`,
-                    className: `${wide ? 'digit-column-table--wide ' : ''}decimal-long-multiplication`,
-                    columns: [...columns.map(id => ({ id, label: id })), { id: 'note', label: '' }],
-                    rows: [
-                        { id: 'a', values: printed(a) },
-                        { id: 'b', sign: '×', values: printed(b) },
-                        { id: 'first', values: firstRow },
-                        { id: 'second', values: secondRow },
-                        { id: 'answer', answer: true, values: answer.values }
-                    ],
-                    cellExtra(cell, { row, column }) {
-                        const carried = carries[row.id]?.[column.id];
-                        if (carried) carryNodes.push(carryNode(cell, carried));
-                    }
-                });
-                const chart = element('div', '',
-                    `digit-card-chart${wide ? ' digit-card-chart--wide' : ''} decimal-long-chart`);
-                chart.append(built.table);
-                host.append(chart);
-                return { ...built, paint(checked) { carryNodes.forEach(node => { node.hidden = !checked; }); } };
-            }
-        };
-        return { input: 'custom', widget: tableWidget(model), answer: String(product),
-            values: { a, b, product }, cardProblem: model };
-    }
-
-    function divideTable(dividend, divisor, feedback, currency = false) {
-        const text = decimal(dividend, 2, false);
-        const expected = {}, errors = {}, carries = {}, order = [], optional = [];
-        let remainder = 0, leading = true;
-        [...text].forEach((digit, index) => {
-            if (digit === '.') return;
-            const id = `answer:${index}`;
-            const top = remainder * 10 + Number(digit);
-            if (remainder) carries[String(index)] = String(remainder);
-            const quotient = Math.floor(top / divisor);
-            remainder = top % divisor;
-            expected[id] = String(quotient);
-            order.push(id);
-            if (leading && quotient === 0) optional.push(id);
-            else leading = false;
-            errors[id] = optional.includes(id) ? `The ${top} is less than ${divisor}. Leave that box empty or put 0 there.`
-                : `Check the ${top}: ${top} ÷ ${divisor} = ${quotient}${remainder ? `, remainder ${remainder}` : ''}.`;
-        });
-        const model = {
-            expected, errors, order, optional, direction: 'right', feedback, currency,
-            answer: [...text].map((digit, index) => digit === '.' ? '.' : `answer:${index}`),
-            build(host) {
-                const built = window.Maths1to9DigitCards.shortDivision({ divisor, dividend: text });
-                const chart = element('div', '', 'digit-card-chart');
-                chart.append(built.table); host.append(chart);
-                return { ...built, paint(checked, activeColumn) { built.update({ activeColumn, carries: checked ? carries : {} }); } };
-            }
-        };
-        return { input: 'custom', widget: tableWidget(model), answer: decimal(dividend / divisor, 2, false),
-            values: { dividend, divisor, answer: dividend / divisor }, cardProblem: model };
-    }
 
     function generateProblem(type, random) {
         let question;
         do {
             if (type === 'multiply-whole-card') {
                 const a = noZero(105, 995, random), n = integer(3, 9, random), result = a * n;
-                question = { ...multiplyTable(a, n, `${decimal(a, 2, false)} × ${n} = ${decimal(result, 2, false)}.`),
-                    prompt: `Work out ${decimal(a, 2, false)} × ${n}.` };
+                const task = {
+                    sum: `${a} × ${n} = ${result}`,
+                    digits: String(result),
+                    gap: String(result).length - 2,
+                    count: 2,
+                    right: `${decimal(a, 2, false)} has 2 digits after the point, so ${decimal(result, 2, false)}.`,
+                    wrong: () => `${decimal(a, 2, false)} has 2 digits after the point. Move the point back 2 digits.`
+                };
+                question = { input: 'custom', widget: window.PointGap.pointWidget(task),
+                    prompt: `Work out ${decimal(a, 2, false)} × ${n}.`,
+                    answer: decimal(result, 2, false), values: { a, n, result } };
             } else if (type === 'money-multiply') {
                 const p = 115 + 5 * integer(0, 76, random), n = integer(3, 9, random), answer = n * p;
                 const item = ['folder', 'pen', 'cake', 'ticket'][integer(0, 3, random)];
@@ -316,20 +87,26 @@
                     ] };
             } else if (type === 'divide-whole-card') {
                 const divisor = integer(2, 9, random), answer = integer(112, 999, random), dividend = answer * divisor;
-                question = { ...divideTable(dividend, divisor, `${decimal(dividend, 2, false)} ÷ ${divisor} = ${decimal(answer, 2, false)}.`),
-                    prompt: `Work out ${decimal(dividend, 2, false)} ÷ ${divisor}.` };
+                const task = {
+                    sum: `${dividend} ÷ ${divisor} = ${answer}`,
+                    digits: String(answer),
+                    gap: String(answer).length - 2,
+                    count: 2,
+                    right: `${decimal(dividend, 2, false)} has 2 digits after the point, so ${decimal(answer, 2, false)}.`,
+                    wrong: () => `${decimal(dividend, 2, false)} has 2 digits after the point. Move the point back 2 digits.`
+                };
+                question = { input: 'custom', widget: window.PointGap.pointWidget(task),
+                    prompt: `Work out ${decimal(dividend, 2, false)} ÷ ${divisor}.`,
+                    answer: decimal(answer, 2, false), values: { dividend, divisor, answer } };
             } else if (type === 'multiply-decimals') {
                 const a = noZero(12, 89, random), b = noZero(12, 89, random), answer = a * b;
-                const table = { ...longMultiplyTable(a, b, `${a} × ${b} = ${answer}.`),
-                    prompt: `Work out ${decimal(a)} × ${decimal(b)}.` };
-                const typed = { input: 'number', prompt: `${a} × ${b} = ${answer}. Now work out ${decimal(a)} × ${decimal(b)}.`,
+                question = { input: 'number', prompt: `${a} × ${b} = ${answer}. Now work out ${decimal(a)} × ${decimal(b)}.`,
                     answer: decimal(answer, 4), values: { a, b, answer },
                     feedback: `${a} × ${b} = ${answer}, and there are 4 digits after the points.`,
                     rules: [
                         { value: decimal(answer, 3), feedback: 'Count the digits after the points again. There are 4.' }
                     ],
                     fallback: 'Take the points out, multiply, then count 4 digits from the end.' };
-                question = { stages: [table, typed], values: { a, b, answer } };
             } else if (type === 'known-fact') {
                 const a = integer(12, 89, random), b = integer(12, 89, random), product = a * b;
                 const x = decimal(a, 1, false), y = decimal(b, 1, false), answer = decimal(product, 2, false);
@@ -340,10 +117,14 @@
                     ], fallback: 'Take the points out, multiply, then count 2 digits from the end.' };
             } else if (type === 'divide-by-decimal') {
                 const q = integer(12, 80, random), c = integer(2, 9, random), d = q * c;
-                question = { input: 'choice', prompt: `Work out ${decimal(d)} ÷ ${decimal(c)}.`, answer: String(q), values: { q, c, d }, options: [
-                    option(String(q), q * 10000, `Multiply both by 100: ${d} ÷ ${c} = ${q}.`, true),
-                    option(decimal(q, 2), q * 100, "You don't need to change the answer back. It stays the same."),
-                    option(decimal(q, 1), q * 1000, 'Move both points the same number of places.'),
+                const dStr = decimal(d), cStr = decimal(c);
+                const countD = (dStr.split('.')[1] || '').length;
+                const countC = (cStr.split('.')[1] || '').length;
+                const diff = countD - countC;
+                question = { input: 'choice', prompt: `Work out ${dStr} ÷ ${cStr}.`, answer: String(q), values: { q, c, d }, options: [
+                    option(String(q), q * 10000, `${countD} − ${countC} = ${diff}, so ${d} ÷ ${c} = ${q}.`, true),
+                    option(decimal(q, 2), q * 100, "When you divide, take them away. Don't add them."),
+                    option(decimal(q, 1), q * 1000, 'Count the digits after each point again, then take them away.'),
                     option(decimal(q * c * c, 4), q * c * c, "That's multiplying. The question asks you to divide.")
                 ] };
             } else if (type === 'share-the-bill') {
@@ -356,7 +137,15 @@
                         option(`(${money(f)} − ${money(g)}) ÷ ${n}`, f - g, 'The friends pay for both, so add them.'),
                         option(`(${money(f)} + ${money(g)}) × ${n}`, total * n * n, 'Sharing means dividing.')
                     ] };
-                const table = { ...divideTable(total, n, `Each friend pays ${money(answer)}.`, true),
+                const task = {
+                    sum: `${total} ÷ ${n} = ${answer}`,
+                    digits: String(answer),
+                    gap: String(answer).length - 2,
+                    count: 2,
+                    right: `${money(total)} has 2 digits after the point, so ${money(answer)}.`,
+                    wrong: () => `${money(total)} has 2 digits after the point. Move the point back 2 digits.`
+                };
+                const table = { input: 'custom', widget: window.PointGap.pointWidget(task),
                     prompt: `${money(f)} + ${money(g)} = ${money(total)}. Work out ${money(total)} ÷ ${n}.` };
                 question = { stages: [selection, table], values: { n, answer, total, f, g } };
             } else if (type === 'meter-bill') {
@@ -399,9 +188,9 @@
                 const wrongOrder = decimal(dividedFirst, 2);
                 question = { input: 'choice', prompt: `Work out (${decimal(a, 3, false)} − ${decimal(b, 2)}) ÷ ${decimal(c, 2, false)}.`,
                     answer, values: { a, b, c, q, difference }, options: [
-                        option(answer, q, `${decimal(a, 3, false)} − ${decimal(b, 2)} = ${decimal(difference, 3, false)}, then ${decimal(difference, 3, false)} ÷ ${decimal(c, 2, false)} = ${answer}.`, true),
-                        option(decimal(q, 2), q * 100, 'Move both points the same number of places.'),
-                        option(String(q), q * 10, 'You moved one point more places than the other. Move both the same.'),
+                        option(answer, q, `${decimal(a, 3, false)} − ${decimal(b, 2)} = ${decimal(difference, 3, false)}. 3 − 2 = 1 digit after the point, so ${decimal(difference, 3, false)} ÷ ${decimal(c, 2, false)} = ${answer}.`, true),
+                        option(decimal(q, 2), q * 100, 'When you divide, take them away: 3 − 2 = 1.'),
+                        option(String(q), q * 10, 'Put the point back: 3 − 2 = 1 digit after it.'),
                         option(wrongOrder, q * 1000, 'Work out the top first, then divide.')
                     ] };
             } else throw new Error(`Unknown decimal question type: ${type}`);

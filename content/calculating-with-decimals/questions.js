@@ -16,7 +16,7 @@
         // two screens with the same number. Each figure shows its problem number
         // while the engine saves and marks every step.
         return api.runQuestionSet('question-bank', {
-            version: 2, count: api.getLesson().question_bank.session_length,
+            version: 3, count: api.getLesson().question_bank.session_length,
             practiseAgain: true, heading: 'Your practice results',
             pick: window.DecimalCalculations.pickSteps,
             question: window.DecimalCalculations.generateStep,
