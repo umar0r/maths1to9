@@ -69,7 +69,7 @@ $pageTitle = 'Drawing cubic graphs';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=10"></script>
+    <script src="../../assets/js/graph.js?v=11"></script>
     <script src="./cubics.js?v=3"></script>
 
     <!-- Data and behaviour specific to this lesson -->
