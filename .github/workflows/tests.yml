@@ -5,7 +5,9 @@ name: Tests
 
 on:
   push:
-    branches: ['codex/**']       # every push to a builder's branch
+    # every push to a builder's branch, and to main (so there's always a
+    # main result to compare with)
+    branches: ['codex/**', 'freebuff/**', 'opencode/**', main]
   pull_request:
     branches: [main]             # every pull request into main
   workflow_dispatch:             # a "Run workflow" button on the Actions tab
