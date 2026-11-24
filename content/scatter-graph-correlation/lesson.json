@@ -1,0 +1,151 @@
+{
+    "slug": "scatter-graph-correlation",
+    "title": "Correlation",
+    "subtitle": "Spot positive, negative and no correlation on a scatter graph.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "type", "label": "Type",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "strength", "label": "Strength",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "describe", "label": "Describe",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "cause", "label": "Cause",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            {
+                "type": "positive-meaning",
+                "prompt": "What does positive correlation mean?",
+                "correct": "As one thing goes up, the other tends to go up too.",
+                "feedback": "Yes. The points go up from left to right.",
+                "wrong": [
+                    { "label": "As one thing goes up, the other tends to go down.",
+                      "feedback": "That's negative correlation." },
+                    { "label": "All the numbers on the graph are bigger than 0.",
+                      "feedback": "Positive here means the pattern goes up. It's nothing to do with the numbers being above 0." },
+                    { "label": "Every point sits exactly on a straight line.",
+                      "feedback": "The points only need to go up overall. They don't have to sit on a line." }
+                ]
+            },
+            {
+                "type": "direction-and-none",
+                "picture": "ab-graphs",
+                "prompt": "Which describes graphs A and B?",
+                "correct": "A: strong negative. B: no correlation.",
+                "feedback": "Yes. A goes down close to a straight line. B has no pattern up or down.",
+                "wrong": [
+                    { "label": "A: strong positive. B: no correlation.",
+                      "feedback": "A goes down from left to right, so it's negative." },
+                    { "label": "A: weak negative. B: strong positive.",
+                      "feedback": "A sits close to a straight line, so it's strong. B doesn't go up." },
+                    { "label": "A: no correlation. B: strong negative.",
+                      "feedback": "A has a clear pattern going down. B has no pattern." }
+                ]
+            },
+            {
+                "type": "strength-choice",
+                "picture": "strength-graph",
+                "prompt": "Which description fits this scatter graph?",
+                "correct": "Strong positive correlation",
+                "feedback": "Yes. The points go up and sit close to a straight line.",
+                "wrong": [
+                    { "label": "Strong negative correlation",
+                      "feedback": "The points go up, so it's positive." },
+                    { "label": "Weak positive correlation",
+                      "feedback": "The points sit close to a straight line, so it's strong." },
+                    { "label": "No correlation",
+                      "feedback": "There's a clear pattern going up." }
+                ]
+            },
+            {
+                "type": "describe-choice",
+                "picture": "describe-graph",
+                "prompt": "Which sentence describes the pattern?",
+                "correct": "Warmer days tend to use less heating.",
+                "feedback": "Yes. The points go down, so as it gets warmer, less heating is used.",
+                "wrong": [
+                    { "label": "Warmer days tend to use more heating.",
+                      "feedback": "That would mean the points go up. They go down." },
+                    { "label": "Every day uses the same amount of heating.",
+                      "feedback": "The points don't stay level. They go down." },
+                    { "label": "Each degree warmer always saves exactly the same heating.",
+                      "feedback": "The points are spread a bit, so it isn't exact. That's why we say \"tend to\"." }
+                ]
+            },
+            {
+                "type": "not-causation",
+                "prompt": "A scatter graph shows positive correlation between hot chocolates sold and gloves sold. Which sentence is right?",
+                "correct": "They tend to go up together, but that doesn't prove one causes the other.",
+                "feedback": "Yes. Cold weather could make both go up.",
+                "wrong": [
+                    { "label": "Drinking hot chocolate makes people buy gloves.",
+                      "feedback": "The graph shows they go together. It can't show why." },
+                    { "label": "Selling less hot chocolate would stop people buying gloves.",
+                      "feedback": "That says one causes the other. Cold weather could explain both." },
+                    { "label": "There's no correlation, because they're different things.",
+                      "feedback": "Different things can still go up together. That's positive correlation." }
+                ]
+            }
+        ],
+        "summary": {
+            "title": "What you've learned",
+            "points": [
+                { "text": "Correlation is the pattern the points make on a scatter graph." },
+                { "text": "Points going up from left to right is positive correlation, going down is negative, and no pattern is no correlation." },
+                { "text": "The closer the points sit to a straight line, the stronger the correlation." },
+                { "text": "Describe it with \"tend to\": pupils who revise for longer tend to get higher marks." },
+                { "text": "Correlation doesn't prove that one thing causes the other." }
+            ]
+        }
+    },
+    "score_activities": [
+        { "id": "step:interactive--type:0", "kind": "guided" },
+        { "id": "step:interactive--type:1", "kind": "guided" },
+        { "id": "step:interactive--type:2", "kind": "guided" },
+        { "id": "step:interactive--strength:0", "kind": "guided" },
+        { "id": "step:interactive--strength:1", "kind": "guided" },
+        { "id": "step:interactive--describe:0", "kind": "guided" },
+        { "id": "step:interactive--describe:1", "kind": "guided" },
+        { "id": "step:interactive--cause:0", "kind": "guided" }
+    ],
+    "assessment": { "question_types": {
+        "name-type": "recognise-correlation",
+        "drag-type": "recognise-correlation",
+        "name-strength": "recognise-correlation",
+        "drag-strong": "recognise-correlation",
+        "strongest": "recognise-correlation",
+        "describe-pattern": "recognise-correlation",
+        "finish-sentence": "recognise-correlation",
+        "tend-not-always": "recognise-correlation",
+        "cause-claim": "correlation-not-causation",
+        "cause-sort": "correlation-not-causation",
+        "cause-reason": "correlation-not-causation",
+        "positive-meaning": "recognise-correlation",
+        "direction-and-none": "recognise-correlation",
+        "strength-choice": "recognise-correlation",
+        "describe-choice": "recognise-correlation",
+        "not-causation": "correlation-not-causation"
+    } }
+}

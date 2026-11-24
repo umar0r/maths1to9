@@ -28,6 +28,7 @@
         "inverse-proportion-graphs",
         "rate-of-change-graphs",
         "scatter-graphs",
+        "scatter-graph-correlation",
         "lines-of-best-fit",
         "time-series"
       ]
