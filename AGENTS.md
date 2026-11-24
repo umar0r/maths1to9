@@ -120,7 +120,8 @@ bottom. Write down every "stop and ask".
 **Step 2. Get the code ready.**
 - `git fetch origin`. Your branch starts from **`origin/main`**, not
   local `main` (local `main` is often behind).
-- Make the branch the spec names, usually `codex/<slug>`.
+- Make the branch the spec names, usually `codex/<slug>`. It must start
+  with `codex/`, `freebuff/` or `opencode/`, or GitHub won't test it.
 - Check the spec's "Before you start" conditions (for example "main has
   PR #9"). If one fails, stop and say so.
 - The main checkout has uncommitted files about DfE subject content
@@ -172,10 +173,18 @@ file.
 **Step 11. Test.**
 - `node --check` on every JS file. Check `lesson.json` is valid JSON.
 - `npm test` (unit tests, seconds).
-- `npm run test:ui` (browser tests, minutes). On a **first build** or a
-  round that touches a shared file, run the full suite on your branch
-  **and** on `origin/main`, and compare. On a **fix round** that touches
-  only the lesson, run `node tests/runner/run-all.cjs --ui --only <slug>`.
+- Browser tests for your lesson only:
+  `node tests/runner/run-all.cjs --ui --only <slug>`. Don't run the full
+  browser suite (`npm run test:ui`) yourself: GitHub runs it for you.
+- **GitHub runs every test.** Each push to your branch runs all the unit
+  and browser tests on GitHub Actions (about 25 minutes). After you push
+  (step 14), wait for that run and check it:
+  `gh run list --branch <your-branch> --limit 1` gives the run id, then
+  `gh run watch <id> --exit-status`. If it fails,
+  `gh run view <id> --log-failed | grep -E "FAIL|Total:"` lists the
+  failed tests. Compare with the latest run on main
+  (`gh run list --branch main --limit 1`). A test that fails on your
+  branch but passes on main is yours to fix; push again and recheck.
 - Add the unit and browser tests the spec asks for.
 - Never weaken or delete an existing test to make it pass. If one fails
   that you didn't cause, say so in the report.
@@ -195,7 +204,8 @@ and the spec file if the spec says so. Clear messages that say what
 changed. Push your branch.
 
 **Step 15. Report and stop.** Use the spec's Report section: commit
-hash, test results (yours compared with `main`), every check you did,
+hash, test results (the link to your GitHub Actions run and its totals,
+compared with main's latest run), every check you did,
 the planned maximum score, template findings, and anything you couldn't
 do. Then **stop**. Don't start the next thing.
 
@@ -213,7 +223,8 @@ Don't work around it and report it afterwards.
 ## 8. Mistakes made before (don't repeat them)
 
 - Saying "done" or "checked" without checking in the browser.
-- Running only `npm test` and skipping `npm run test:ui`.
+- Reporting before the GitHub Actions run on the branch had finished, or
+  without checking it.
 - Option buttons without `role="group"`, so the shared highlight styles
   didn't apply.
 - Re-rendering a whole activity on every slider move, so the slider lost

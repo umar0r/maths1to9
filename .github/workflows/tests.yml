@@ -1,0 +1,73 @@
+# Runs all the Maths1to9 tests on GitHub's computers.
+# A green tick on the branch or pull request means every test passed;
+# a red cross means something failed (click it to see which test).
+name: Tests
+
+on:
+  push:
+    # every push to a builder's branch, and to main (so there's always a
+    # main result to compare with)
+    branches: ['codex/**', 'freebuff/**', 'opencode/**', main]
+  pull_request:
+    branches: [main]             # every pull request into main
+  workflow_dispatch:             # a "Run workflow" button on the Actions tab
+
+jobs:
+  # The maths and file checks (fast).
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Maths and file checks
+        run: npm test
+
+  # The browser checks, split across 4 computers that run at the same time.
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false           # finish every part, even if one fails
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node runs the tests. PHP serves the site for the browser tests
+      # (it comes preinstalled on GitHub's Ubuntu computers).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: php --version
+      - run: npm ci
+
+      # Some tests save screenshots to /private/tmp, which is where a Mac
+      # keeps its temporary files. Point that folder at Ubuntu's /tmp.
+      - name: Make /private/tmp
+        run: sudo mkdir -p /private && sudo ln -sfn /tmp /private/tmp
+
+      - name: Install the test browser (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser checks (part ${{ matrix.shard }} of 4)
+        run: npm run test:ui
+        env:
+          PHP_BIN: php           # use Ubuntu's PHP instead of XAMPP's
+          SHARD: ${{ matrix.shard }}/4
+
+      # If anything failed, keep Playwright's screenshots and traces so the
+      # failure can be looked at (download from the run's Summary page).
+      - name: Save browser test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.shard }}
+          path: /tmp/maths1to9-ui-results
+          retention-days: 14
+          if-no-files-found: ignore

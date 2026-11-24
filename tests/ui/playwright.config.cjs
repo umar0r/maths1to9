@@ -10,12 +10,16 @@ const path = require('node:path');
 const PORT = 8765;
 const PHP = process.env.PHP_BIN ?? '/Applications/XAMPP/xamppfiles/bin/php';
 const projectRoot = path.join(__dirname, '..', '..');
+// SHARD=2/4 runs only the second quarter of the tests (GitHub Actions splits
+// the browser checks across several computers). Unset: run them all.
+const [shardCurrent, shardTotal] = (process.env.SHARD ?? '').split('/').map(Number);
 
 module.exports = defineConfig({
     testDir: '.',
     testMatch: '*.spec.cjs',
     timeout: 60_000,
     fullyParallel: true,
+    shard: shardTotal ? { current: shardCurrent, total: shardTotal } : null,
     reporter: [['list']],
     // Keep screenshots and traces out of the project.
     outputDir: path.join(os.tmpdir(), 'maths1to9-ui-results'),
