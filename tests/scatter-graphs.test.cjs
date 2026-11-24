@@ -92,8 +92,30 @@ test('scatter graphs: Read answers and each named mistake agree with the axes', 
         if (type === 'read-pair') {
             const option = q.options.find(option => option.correct);
             assert.deepEqual(option.label.match(/\d+/g).map(Number), [a, b]);
-            const swapped = q.options.find(option => option.label.match(/\d+/g).map(Number).join(',') === `${b},${a}`);
-            assert.equal(swapped.feedback, "That's back to front. Go down to the bottom axis first.");
+            if (q.model.graph.axisNames.x === 'Shots on target') {
+                // Football: goals are never more than shots, so the mistakes
+                // move one square up, down or across instead of swapping.
+                assert.ok(1 <= b && b < a && a <= 9);
+                assert.equal(q.prompt, 'The blue point is one player. How many shots on target and goals did they have?');
+                assert.equal(q.options.length, 4);
+                assert.equal(new Set(q.options.map(choice => choice.label)).size, 4);
+                for (const choice of q.options) {
+                    const [x, y] = choice.label.match(/\d+/g).map(Number);
+                    assert.ok(y <= x, choice.label);
+                }
+                const expected = [
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b, 'goals')}`, `Down to ${a}, across to ${b}.`],
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b + 1, 'goals')}`, "That's one square too high. Count up the side again from 0."],
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b - 1, 'goals')}`, "That's one square too low. Count up the side again from 0."],
+                    [`${S.quantity(a + 1, 'shots')} and ${S.quantity(b, 'goals')}`, 'Go straight down. Count the bottom axis again from 0.']
+                ];
+                for (const [label, feedback] of expected) {
+                    assert.equal(q.options.find(choice => choice.label === label)?.feedback, feedback, label);
+                }
+            } else {
+                const swapped = q.options.find(choice => choice.label.match(/\d+/g).map(Number).join(',') === `${b},${a}`);
+                assert.equal(swapped.feedback, "That's back to front. Go down to the bottom axis first.");
+            }
         } else if (type === 'read-up') {
             assert.equal(Number(q.answer), b);
             assert.equal(q.feedback, `Up from ${a} to the point, then across to ${b}.`);
@@ -130,6 +152,14 @@ test('scatter graphs: Plot marking recognises correct, swapped, one-square and e
             const index = q.options.findIndex(option => option.correct);
             assert.deepEqual(q.model.points[index], [a, b]);
             assert.ok(q.model.points.every(point => point.every(value => value >= 1 && value <= 9)));
+            if (type === 'pick-point' && q.model.graph.axisNames.x === 'Shots on target') {
+                // Football: one square too low instead of the made-up [b, b].
+                assert.ok(2 <= b && b <= a - 2);
+                const low = q.options.find(option => option.feedback === 'That one is one square too low. Count up again.');
+                assert.ok(low);
+                assert.deepEqual(q.model.points[q.options.indexOf(low)], [a, b - 1]);
+                assert.ok(!q.options.some(option => option.feedback.includes('the number that goes up')));
+            }
         }
     }
 });
@@ -189,5 +219,50 @@ test('scatter graphs: Check has five conceptual choices, locked review and the t
         assert.equal(new Set(q.options.map(option => option.label)).size, 4);
         assert.equal(Boolean(q.figure), index === 1 || index === 4);
         assert.equal(lesson.assessment.question_types[q.questionType], 'scatter-graphs');
+    }
+});
+
+test('scatter graphs: football goals never beat shots on target, anywhere in the lesson', () => {
+    for (const [part, count] of [['read', 3], ['plot', 3], ['scales', 3], [null, 6]]) {
+        for (const seed of seeds) for (const item of Q.pickPractice(part, count, E.seededRandom(seed), E)) {
+            const q = build(item);
+            if (q.model?.graph?.axisNames?.x !== 'Shots on target') continue;
+            const points = [...(q.model.points || [])];
+            if (q.model.target) points.push(q.model.target);
+            if (q.model.existing) points.push(q.model.existing);
+            for (const [x, y] of points) assert.ok(y <= x, `${part} ${q.questionType}: ${x} shots and ${y} goals`);
+            if (q.input === 'choice') for (const option of q.options) {
+                const numbers = (option.label.match(/\d+/g) || []).map(Number);
+                if (numbers.length === 2) assert.ok(numbers[1] <= numbers[0], option.label);
+                assert.ok(!/back to front: \d+ across/.test(option.feedback) || numbers[1] <= numbers[0]);
+            }
+        }
+    }
+});
+
+test('scatter graphs: every read-pair prompt names its own context and no pupil reads "big point"', () => {
+    const prompts = new Map();
+    const strings = new Set();
+    for (const seed of seeds) for (const part of ['read', 'plot', 'scales', null]) {
+        for (const item of Q.pickPractice(part, part ? 3 : 6, E.seededRandom(seed), E)) {
+            const q = build(item);
+            strings.add(q.prompt);
+            if (q.feedback) strings.add(q.feedback);
+            if (q.fallback) strings.add(q.fallback);
+            for (const option of q.options || []) strings.add(`${option.label} ${option.feedback}`);
+            for (const rule of q.rules || []) strings.add(rule.feedback);
+            if (item.type === 'read-pair') prompts.set(q.model.graph.axisNames.x, q.prompt);
+        }
+    }
+    assert.equal(prompts.get('Hours of revision'),
+        'The blue point is one pupil. How many hours did they revise, and what mark did they get?');
+    assert.equal(prompts.get('Rainy days'),
+        'The blue point is one week. How many rainy days and road accidents were there?');
+    assert.equal(prompts.get('Shots on target'),
+        'The blue point is one player. How many shots on target and goals did they have?');
+    for (const text of strings) assert.doesNotMatch(text, /big point/i, text);
+    for (const file of ['questions.js', 'interactive.js', 'lesson.json']) {
+        const source = fs.readFileSync(path.join(__dirname, '../content/scatter-graphs', file), 'utf8');
+        assert.doesNotMatch(source, /big point/i, file);
     }
 });

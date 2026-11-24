@@ -7,25 +7,36 @@
     const contexts = [
         { x: 'Hours of revision', y: 'Test mark', xw: 'hours', yw: 'marks',
             promptUp: a => `A pupil revised for ${S.quantity(a, 'hours')}. What mark did they get?`,
-            promptAcross: b => `One pupil got a mark of ${b}. How many hours did they revise?` },
+            promptAcross: b => `One pupil got a mark of ${b}. How many hours did they revise?`,
+            pairPrompt: 'The blue point is one pupil. How many hours did they revise, and what mark did they get?' },
         { x: 'Rainy days', y: 'Road accidents', xw: 'rainy days', yw: 'accidents',
             promptUp: a => `In the week with ${S.quantity(a, 'rainy days')}, how many accidents were there?`,
-            promptAcross: b => `In the week with ${S.quantity(b, 'accidents')}, how many rainy days were there?` },
-        { x: 'Shots on target', y: 'Goals', xw: 'shots', yw: 'goals',
+            promptAcross: b => `In the week with ${S.quantity(b, 'accidents')}, how many rainy days were there?`,
+            pairPrompt: 'The blue point is one week. How many rainy days and road accidents were there?' },
+        // Goals can never be more than shots on target, so these points keep y <= x.
+        { x: 'Shots on target', y: 'Goals', xw: 'shots', yw: 'goals', football: true,
             promptUp: a => `A player had ${S.quantity(a, 'shots')} on target. How many goals did they score?`,
-            promptAcross: b => `A player scored ${S.quantity(b, 'goals')}. How many shots on target did they have?` }
+            promptAcross: b => `A player scored ${S.quantity(b, 'goals')}. How many shots on target did they have?`,
+            pairPrompt: 'The blue point is one player. How many shots on target and goals did they have?' }
     ];
 
-    function genPoints(random, helpers) {
+    // Football points must make sense: goals (y) are never more than shots
+    // on target (x).
+    function footballPoint(random, helpers) {
+        const { randomInt } = helpers;
+        const x = randomInt(1, 9, random);
+        return [x, randomInt(1, x, random)];
+    }
+
+    function genPoints(random, helpers, football = false) {
         const { randomInt } = helpers;
         let pts = null;
         for (let attempt = 0; attempt < 100; attempt++) {
             const n = randomInt(5, 6, random);
             const set = new Set();
             while (set.size < n) {
-                const x = randomInt(1, 9, random);
-                const y = randomInt(1, 9, random);
-                set.add(`${x},${y}`);
+                const point = football ? footballPoint(random, helpers) : [randomInt(1, 9, random), randomInt(1, 9, random)];
+                set.add(`${point[0]},${point[1]}`);
             }
             pts = [...set].map(s => s.split(',').map(Number));
             // find a valid asked point for read-pair/read-up (unique x, x!==y)
@@ -68,14 +79,23 @@
     function plotPractice(item, random, helpers) {
         const { randomInt, shuffle } = helpers;
         const ctx = [...contexts, sunshineContext][randomInt(0, contexts.length, random)];
-        const a = randomInt(1, 9, random);
-        let b = randomInt(1, 9, random);
+        const football = ctx.football === true;
+        // On a football graph a point can't score more goals than shots on
+        // target, so keep two squares between the pair for its mistakes. The
+        // goals start at 2 so the one square too low mistake stays on the graph.
+        const a = football ? randomInt(4, 9, random) : randomInt(1, 9, random);
+        let b = football ? randomInt(2, a - 2, random) : randomInt(1, 9, random);
         while (b === a) b = randomInt(1, 9, random);
         const target = [a, b];
         const graph = { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
             axisNames: { x: ctx.x, y: ctx.y }, label: 'Scatter graph.' };
         if (item.type === 'pick-point') {
-            const candidates = shuffle([
+            const candidates = shuffle(football ? [
+                { point: target, labelSide: a === 9 ? 'right' : 'left', correct: true, feedback: `Across to ${a}, up to ${b}.` },
+                { point: [a, b + 1], labelSide: 'above', feedback: 'That one is one square too high. Count up again.' },
+                { point: [a - 1, b], labelSide: 'left', feedback: 'That one is one square off across. Count along again.' },
+                { point: [a, b - 1], labelSide: 'below', feedback: 'That one is one square too low. Count up again.' }
+            ] : [
                 { point: target, labelSide: a === 9 ? 'right' : 'left', correct: true, feedback: `Across to ${a}, up to ${b}.` },
                 { point: [b, a], labelSide: b > a ? (a === 1 ? 'right' : 'below') : 'left', feedback: `That point is back to front: ${b} across and ${a} up.` },
                 { point: [a, b === 9 ? b - 1 : b + 1], labelSide: b === 9 ? 'below' : 'above', feedback: 'That one is one square too high or low. Count up again.' },
@@ -100,14 +120,15 @@
         let table = null;
         const points = [];
         if (item.type === 'plot-same-start') {
-            const choices = Array.from({ length: 9 }, (_, index) => index + 1).filter(c => Math.abs(b - c) >= 2);
+            const choices = Array.from({ length: 9 }, (_, index) => index + 1)
+                .filter(c => Math.abs(b - c) >= 2 && (!football || c <= a));
             const c = choices[randomInt(0, choices.length - 1, random)];
             existing = [a, c];
             points.push(existing);
             table = { rows: [ctx.xw, ctx.yw], values: [existing, target], selected: 1 };
         } else {
             while (points.length < 3) {
-                const point = [randomInt(1, 9, random), randomInt(1, 9, random)];
+                const point = football ? footballPoint(random, helpers) : [randomInt(1, 9, random), randomInt(1, 9, random)];
                 if (!S.samePoint(point, target) && !S.samePoint(point, [b, a]) && !points.some(other => S.samePoint(point, other))) points.push(point);
             }
         }
@@ -285,13 +306,13 @@
         if (['plot-pair', 'pick-point', 'plot-same-start'].includes(item.type)) return plotPractice(item, random, helpers);
         const { shuffle, randomInt } = helpers;
         const ctx = contexts[randomInt(0, contexts.length - 1, random)];
-        let points = genPoints(random, helpers);
+        let points = genPoints(random, helpers, ctx.football === true);
         const needUniqueY = item.type === 'read-across';
         let asked = askedPoint(points, needUniqueY, random, helpers);
         // regenerate until valid asked point
         let tries = 0;
         while (!asked && tries < 50) {
-            points = genPoints(random, helpers);
+            points = genPoints(random, helpers, ctx.football === true);
             asked = askedPoint(points, needUniqueY, random, helpers);
             tries++;
         }
@@ -301,7 +322,14 @@
             step: { x: 1, y: 1 }, labelEvery: 1, axisNames: { x: ctx.x, y: ctx.y } } };
 
         if (item.type === 'read-pair') {
-            const opts = [
+            // The swapped pair would say a player scored more goals than they
+            // had shots, so football moves one square up, down or across.
+            const opts = ctx.football === true ? [
+                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: `Down to ${a}, across to ${b}.`, correct: true },
+                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b + 1, ctx.yw)}`, feedback: "That's one square too high. Count up the side again from 0." },
+                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b - 1, ctx.yw)}`, feedback: "That's one square too low. Count up the side again from 0." },
+                { label: `${S.quantity(a + 1, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: 'Go straight down. Count the bottom axis again from 0.' }
+            ] : [
                 { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: `Down to ${a}, across to ${b}.`, correct: true },
                 { label: `${S.quantity(b, ctx.xw)} and ${S.quantity(a, ctx.yw)}`, feedback: "That's back to front. Go down to the bottom axis first." },
                 { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b + 1, ctx.yw)}`, feedback: "Count the side axis again from 0." },
@@ -312,7 +340,7 @@
             const distinct = opts.filter(o => { if (seen.has(o.label)) return false; seen.add(o.label); return true; });
             return {
                 input: 'choice', questionType: 'read-pair',
-                prompt: 'Which pair does the big point show?',
+                prompt: ctx.pairPrompt,
                 figure, model, options: shuffle(distinct, random)
             };
         }
@@ -369,7 +397,7 @@
                 step: { x: 1, y: scaled ? 10 : 1 }, labelEvery: scaled ? { x: 2, y: 2 } : 1,
                 axisNames: scaled ? { x: 'Hours of sunshine', y: 'Ice creams sold' }
                     : { x: 'Hours of revision', y: 'Test mark' },
-                label: scaled ? 'A side axis with two squares between 0, 20, 40 and 60.' : 'A scatter graph with one big point.' });
+                label: scaled ? 'A side axis with two squares between 0, 20, 40 and 60.' : 'A scatter graph with one blue point.' });
             if (!scaled) [[1, 3], [3, 7], [5, 4], [8, 9]].forEach(point => {
                 const big = S.samePoint(point, [5, 4]);
                 board.point(point, { size: big ? 'large' : 'small', tone: big ? 'neutral' : 'muted', coordinates: false });
