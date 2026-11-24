@@ -45,6 +45,11 @@ jobs:
       - run: php --version
       - run: npm ci
 
+      # Some tests save screenshots to /private/tmp, which is where a Mac
+      # keeps its temporary files. Point that folder at Ubuntu's /tmp.
+      - name: Make /private/tmp
+        run: sudo mkdir -p /private && sudo ln -sfn /tmp /private/tmp
+
       - name: Install the test browser (Chromium)
         run: npx playwright install --with-deps chromium
 
