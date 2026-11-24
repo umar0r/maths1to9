@@ -28,7 +28,7 @@ $pageTitle = 'Adding and subtracting decimals';
         crossorigin
     >
     <link rel="stylesheet" href="../../assets/css/app.css?v=64">
-    <link rel="stylesheet" href="../../assets/css/digit-cards.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/digit-cards.css?v=3">
     <link rel="stylesheet" href="./lesson.css?v=44">
 </head>
 
@@ -66,7 +66,7 @@ $pageTitle = 'Adding and subtracting decimals';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
 
-    <script src="../../assets/js/digit-cards.js?v=2"></script>
+    <script src="../../assets/js/digit-cards.js?v=3"></script>
 
     <script src="./decimal-addition.js?v=11"></script>
 

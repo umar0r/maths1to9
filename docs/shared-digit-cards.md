@@ -1,7 +1,7 @@
 # Shared number cards
 
-Load `../../assets/css/digit-cards.css?v=2` and
-`../../assets/js/digit-cards.js?v=2` before the lesson scripts.
+Load `../../assets/css/digit-cards.css?v=3` and
+`../../assets/js/digit-cards.js?v=3` before the lesson scripts.
 The shared implementation was extracted from the decimal lesson's
 `additionCardsWidget` and `buildWidget`; lessons keep their maths and marking.
 
@@ -118,7 +118,7 @@ const built = Maths1to9DigitCards.columnTable({
 Put `built.table` inside a `digit-card-chart` wrapper above the tray. It fits
 at 375 px. Add `digit-column-table--wide` to the table and `digit-card-chart--wide` to
 its wrapper for tables with hundreds or thousands. `point` is the narrow decimal-point column. Columns may include
-other places such as thousands. Row `sign` supports +, − and =. `answer`
+other places such as thousands. Row `sign` supports +, −, × and = (plain text). `answer`
 adds the thick line; `faded` greys a row and `highlighted` colours it blue.
 Optional `className` is available for lesson-specific pictures and notes.
 The result exposes `table`, `cells[rowId][columnId]`, `rows[rowId]` and `slots`.
@@ -140,3 +140,41 @@ retained question cards. If a guided widget uses `reset` or `replayFeedback`,
 forward them to the same view's `update`. Use the engine retry opt-in above for marked answers. A lesson that changes
 its saved value shape, flow or question list must raise its section version and use
 `upgrade: () => null`.
+
+## Short division
+
+`Maths1to9DigitCards.shortDivision({ label, divisor, dividend, answer, carries })`
+draws a bus stop with a slotted answer row above the dividend. Put its `table`
+in a `digit-card-chart` and pass `slots` straight to `create`, just as for
+`columnTable`. It returns `{ table, cells, slots, update }`.
+
+```js
+const built = Maths1to9DigitCards.shortDivision({
+    label: '8.4 divided by 3', divisor: '3', dividend: '8.4',
+    carries: { '2': '2' }
+});
+host.append(built.table);
+const view = Maths1to9DigitCards.create(host, {
+    slots: built.slots, groups: { answer: { advance: 'right' } },
+    active: 'answer:0', value, editable, onChange
+});
+built.update({ activeColumn: '2', carries: { '2': '2' } });
+```
+
+Column ids are character indices, including the point: `8.4` has columns
+`0`, `1`, `2`, and slots `answer:0`, `answer:2`. `cells.answer` and
+`cells.dividend` use those column ids. Carries are small digits before a
+dividend digit; pass a new `carries` map to `update` when the lesson reveals
+one. Omit a carry (or use an empty string) to hide it. `activeColumn` lights
+the working column pale green. Updates retain the original carries unless a
+new map is supplied. Slots never rebuild.
+
+The answer point is printed above the dividend point. For a point-placement
+activity only, use `answer: { point: false }` to omit it, or
+`answer: { point: gapButton }` to supply a tappable point gap while building
+the table. The lesson owns that gap's behaviour. To prefill answer slots,
+pass their digits to `create` and lock it with `editable: false`.
+
+Leading zero slots can stay empty: the lesson decides which blanks count as
+zero when marking. The table fits a one-digit divisor and six-character
+dividend at 375 px, including `188.48`.
