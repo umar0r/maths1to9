@@ -37,12 +37,11 @@
                     const board = C.fullGraph(host, {
                         context: sunshine,
                         blue: [[1, 1], sunshine.set.outlier],
-                        label: 'Scatter graph of hours of sunshine and ice creams sold, with two blue points.'
+                        labels: [{ point: [1, 1], text: 'A' }, { point: sunshine.set.outlier, text: 'B' }],
+                        label: 'Scatter graph of hours of sunshine and ice creams sold, with points labelled A and B.'
                     });
-                    board.arrow([1, 3.2], [1, 1.3], { tone: 'ink' });
-                    board.arrow([7, 3.2], [7, 1.3], { tone: 'ink' });
-                    host.append(C.note('1 hour of sunshine and 1 box sold. This fits.'));
-                    host.append(C.note('7 hours of sunshine but only 1 box sold. This is the outlier.'));
+                    host.append(C.note('A: 1 hour of sunshine and 1 box sold. This fits.'));
+                    host.append(C.note('B: 7 hours of sunshine but only 1 box sold. This is the outlier.'));
                     return [board];
                 }
             }
@@ -106,10 +105,9 @@
                         context: revision,
                         blue: revision.set.main,
                         blueSize: 'small',
-                        label: 'Scatter graph of hours of revision and test marks, with one grey point away from the other points.'
+                        labels: [{ point: revision.set.outlier, text: 'Outlier' }],
+                        label: 'Scatter graph of hours of revision and test marks, with one grey point labelled Outlier.'
                     });
-                    board.arrow([5.6, 0.7], [7.6, 1.6], { tone: 'ink' });
-                    host.append(C.note('Ignore this point.'));
                     host.append(C.sentence('Positive correlation: pupils who revise for longer tend to get higher marks.'));
                     return [board];
                 }

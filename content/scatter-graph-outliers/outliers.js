@@ -7,7 +7,7 @@
        point, which doesn't fit it. */
     const sets = {
         REVISION: {
-            main: [[1, 2], [2, 3], [3, 3], [4, 5], [5, 5], [6, 6], [7, 7], [9, 8]],
+            main: [[1, 1], [2, 3], [3, 3], [4, 5], [5, 5], [6, 6], [7, 7], [9, 8]],
             outlier: [8, 2]
         },
         SUNSHINE: {
