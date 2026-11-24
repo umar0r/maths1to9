@@ -31,7 +31,7 @@ $pageTitle = 'Drawing reciprocal graphs';
     <link rel="stylesheet" href="../../assets/css/app.css?v=64">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body

@@ -274,6 +274,7 @@ test('equations-of-straight-lines all wrong choices and every feedback rule use 
         const options = await page.evaluate(screen => StraightLineEquations.learnChoices[screen - 1].options, screen);
         for (const option of options.filter(option => !option.correct)) {
             const control = root(page).getByRole('button', { name: option.label, exact: true });
+            await control.evaluate(element => element.scrollIntoView({ block: 'center' }));
             await control.click(); await expect(control).toBeDisabled();
             await expect(root(page).locator('.question-feedback.is-visible').last()).toHaveText(`✗ ${option.feedback}`);
             await reload(page); await expect(control).toBeDisabled();
