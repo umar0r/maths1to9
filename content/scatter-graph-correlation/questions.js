@@ -3,8 +3,6 @@
 
     const slug = typeof document === 'undefined' ? 'scatter-graph-correlation' : document.body.dataset.lessonId;
     const C = typeof module !== 'undefined' && module.exports ? require('./correlation.js') : window.Correlation;
-    const practiceLabels = { type: 'Type Practice', strength: 'Strength Practice', describe: 'Describe Practice', cause: 'Cause Practice' };
-
     const names = { 1: 'Positive correlation', '-1': 'Negative correlation', 0: 'No correlation' };
 
     const lowerFirst = text => text[0].toLowerCase() + text.slice(1);
@@ -382,9 +380,12 @@
         };
     }
 
-    /* A full graph of a point set, drawn the same way on every Practice card. */
-    function drawPoints(host, { graph, points }) {
-        const board = C.makeGraph(host, { ...graph, label: 'Scatter graph.' });
+    /* A graph of a point set, drawn the same way on every Practice card. */
+    function drawPoints(host, { graph, points, compact = false }) {
+        const wrapper = document.createElement('div');
+        wrapper.className = compact ? 'correlation-graph correlation-graph--compact' : 'correlation-graph';
+        host.append(wrapper);
+        const board = C.makeGraph(wrapper, { ...graph, label: 'Scatter graph.' });
         points.forEach(point => board.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
         board.setEditable(false);
     }
@@ -412,7 +413,7 @@
             input: 'choice', questionType: 'describe-pattern',
             prompt: 'Which sentence describes the pattern?',
             options,
-            model: { graph, points: set.points, r: set.r, direction, sentence: context.right },
+            model: { graph, points: set.points, r: set.r, direction, sentence: context.right, back: context.back },
             figure: host => drawPoints(host, { graph, points: set.points })
         };
     }
@@ -455,7 +456,8 @@
             input: 'choice', questionType: 'tend-not-always',
             prompt: 'Which sentence describes the graph best?',
             options,
-            model: { graph, points: set.points, r: set.r, direction, sentence: context.right },
+            model: { graph, points: set.points, r: set.r, direction, sentence: context.right,
+                back: context.back, always: context.always },
             figure: host => drawPoints(host, { graph, points: set.points })
         };
     }
@@ -489,6 +491,8 @@
     /* Cause Practice, card 2: sort what the graph shows from what it can't. */
     function causeSort(item, random, helpers) {
         const context = causeContexts[item.context];
+        const set = C.pointSet(random, { direction: 1, strength: 'strong', count: 9 });
+        const graph = { axisNames: { x: context.x, y: context.y } };
         const cards = helpers.shuffle([
             { id: 'shows-1', label: context.shows[0], bin: 'shows' },
             { id: 'shows-2', label: context.shows[1], bin: 'shows' },
@@ -499,7 +503,8 @@
         return {
             input: 'custom', questionType: 'cause-sort',
             prompt: 'Sort the sentences about this graph.',
-            model: { cards: cards.map(card => ({ ...card })), slots, context: context.x },
+            model: { cards: cards.map(card => ({ ...card })), slots, graph, points: set.points, context: context.x },
+            figure: host => drawPoints(host, { graph, points: set.points, compact: true }),
             widget: C.sortSentencesWidget({
                 cards, slots,
                 success: "All four are right. The graph shows the two go together. It can't show why.",
@@ -546,8 +551,57 @@
         throw new Error(`Unknown practice question: ${item.type}`);
     }
 
+    /* Mixed Practice: six of the eleven types, at least one from each part,
+       exactly two widgets, never two widgets in a row and never three choice
+       questions in a row. */
+    const partTypes = {
+        type: ['name-type', 'drag-type'],
+        strength: ['name-strength', 'drag-strong', 'strongest'],
+        describe: ['describe-pattern', 'finish-sentence', 'tend-not-always'],
+        cause: ['cause-claim', 'cause-sort', 'cause-reason']
+    };
+    const widgetTypes = ['drag-type', 'drag-strong', 'finish-sentence', 'cause-sort'];
+
+    function validMix(types) {
+        const kinds = types.map(type => (widgetTypes.includes(type) ? 'widget' : 'choice'));
+        const twoWidgets = kinds.some((kind, index) => kind === 'widget' && kinds[index + 1] === 'widget');
+        const threeChoices = kinds.some((kind, index) => kind === 'choice' && kinds[index + 1] === 'choice'
+            && kinds[index + 2] === 'choice');
+        return !twoWidgets && !threeChoices;
+    }
+
+    function mixedPractice(random, helpers) {
+        const { randomInt, shuffle } = helpers;
+        for (let attempt = 0; attempt < 2000; attempt++) {
+            const picks = Object.values(partTypes).map(types => types[randomInt(0, types.length - 1, random)]);
+            const rest = shuffle(Object.values(partTypes).flat().filter(type => !picks.includes(type)), random);
+            const chosen = [...picks, ...rest.slice(0, 2)];
+            if (chosen.filter(type => widgetTypes.includes(type)).length !== 2) continue;
+            for (let arrange = 0; arrange < 200; arrange++) {
+                const order = shuffle(chosen, random);
+                if (!validMix(order)) continue;
+                const causes = shuffle([0, 1, 2, 3], random);
+                let nextCause = 0;
+                return order.map(type => {
+                    const item = { type, seed: randomInt(0, 0xffffffff, random) };
+                    if (type === 'name-strength') {
+                        item.direction = random() < 0.5 ? 1 : -1;
+                        item.strength = random() < 0.5 ? 'strong' : 'weak';
+                    } else if (type === 'cause-claim' || type === 'cause-sort' || type === 'cause-reason') {
+                        item.context = causes[nextCause++];
+                    } else if (type !== 'strongest') {
+                        item.direction = random() < 0.5 ? 1 : -1;
+                    }
+                    return item;
+                });
+            }
+        }
+        throw new Error('Could not arrange Mixed Practice questions.');
+    }
+
     function pickPractice(part, count, random, helpers) {
         const { randomInt, shuffle } = helpers;
+        if (part === null) return mixedPractice(random, helpers);
         if (part === 'strength') {
             return [
                 { type: 'name-strength', direction: random() < 0.5 ? 1 : -1,
@@ -583,45 +637,142 @@
         return kinds.map(kind => ({ ...kind, seed: randomInt(0, 0xffffffff, random) }));
     }
 
-    function mountPlaceholder(api, host, id, label) {
-        const box = host.closest('.lesson-section');
-        box?.removeAttribute('aria-labelledby');
-        box?.setAttribute('aria-label', label);
-        api.gateSection(id);
-        host.replaceChildren();
-        const heading = document.createElement('h2');
-        heading.textContent = 'This part comes next.';
-        heading.id = `lesson-section-title-${id}`;
-        heading.dataset.screenHeading = '';
-        heading.tabIndex = -1;
-        host.append(heading);
-        api.setSectionBack(id, null);
-        api.setSectionReset(id, null);
-        if (id !== 'comparison') {
-            api.setSectionAction(id, {
-                label: 'Continue',
-                onClick() {
-                    api.completeSection(id);
-                    api.continueSection();
-                }
-            });
-            return;
-        }
-        api.setSectionAction(id, {
-            label: 'All lessons',
-            async onClick() {
-                api.completeSection(id);
-                api.completeLesson();
-                window.location.assign(new URL('../../', window.location.href).href);
+    /* The pictures the Check questions show. */
+    const checkPictures = {
+        'ab-graphs': host => C.smallGraphs(host, [
+            {
+                caption: 'A',
+                points: [[1, 9], [2, 8], [3, 7], [4, 6], [5, 5], [6, 4], [7, 3], [8, 2], [9, 1]],
+                label: 'Graph A: a scatter graph whose points go down.'
+            },
+            {
+                caption: 'B',
+                points: [[2, 2], [2, 5], [2, 8], [5, 2], [5, 8], [8, 2], [8, 5], [8, 8]],
+                label: 'Graph B: a scatter graph with no pattern.'
             }
+        ]),
+        'strength-graph': host => drawPoints(host, {
+            graph: { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1 },
+            points: [[1, 2], [2, 2], [3, 4], [4, 4], [5, 6], [6, 6], [7, 8], [8, 8], [9, 10]]
+        }),
+        'describe-graph': host => drawPoints(host, {
+            graph: {
+                x: [0, 20], y: [0, 50], step: { x: 2, y: 5 }, labelEvery: { x: 5, y: 2 },
+                axisNames: { x: 'Outdoor temperature (°C)', y: 'Heating used (kWh)' }
+            },
+            points: [[2, 43], [4, 38], [6, 39], [8, 31], [10, 29], [12, 23], [14, 24], [16, 16], [18, 15]]
+        })
+    };
+
+    function checkQuestion(definition, random, { shuffle }) {
+        const question = {
+            input: 'choice', questionType: definition.type, prompt: definition.prompt, lockedReview: true,
+            options: shuffle([{ label: definition.correct, correct: true, feedback: definition.feedback },
+                ...definition.wrong], random)
+        };
+        if (definition.picture) question.figure = host => checkPictures[definition.picture](host);
+        return question;
+    }
+
+    /* Check: five fixed questions, each answer kept so Back shows it marked. */
+    async function mountCheck(api, root) {
+        const id = 'comparison';
+        const { questions, summary } = api.getSection(id).config;
+        const E = window.Maths1to9LessonEngine;
+        const count = questions.length;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Check');
+        api.gateSection(id);
+        const section = await api.useSectionState(id, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ index: 0, screen: 0, finished: false, cards: {}, seed: E.randomInt(0, 0xffffffff) })
         });
+        const state = section.state;
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
+            }
+        }
+        function show(screen) {
+            section.update(saved => { saved.screen = screen; });
+            render();
+            const heading = root.querySelector('[data-screen-heading]');
+            if (heading) {
+                heading.tabIndex = -1;
+                heading.focus();
+            }
+        }
+        function progress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress(id, state.finished ? count : state.index + Number(current?.correct === true), count);
+        }
+        function render() {
+            root.replaceChildren();
+            api.setSectionBack(id, state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
+            api.setSectionPosition(id, null);
+            if (state.finished) api.completeSection(id);
+            if (state.screen === count && state.finished) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.textContent = summary.title;
+                const list = document.createElement('ul');
+                list.className = 'correlation-learned';
+                summary.points.forEach(point => {
+                    const item = document.createElement('li');
+                    item.textContent = point.text;
+                    list.append(item);
+                });
+                root.append(heading, list);
+                api.setSectionReset(id, null);
+                api.setSectionAction(id, {
+                    label: 'All lessons',
+                    async onClick() {
+                        api.completeLesson();
+                        await window.Maths1to9Progress.saveCurrentLesson();
+                        window.location.assign(new URL('../../', window.location.href).href);
+                    }
+                });
+            } else {
+                const index = state.screen;
+                const readOnly = index < state.index;
+                api.createQuestion(root, {
+                    ...checkQuestion(questions[index], E.seededRandom((state.seed + index) >>> 0), E),
+                    sectionId: id, questionId: `final-check-${index + 1}`, scored: true, readOnly, lockedReview: true,
+                    onFeedback: progress,
+                    onContinue() {
+                        section.update(saved => {
+                            saved.index++;
+                            saved.screen = saved.index;
+                            saved.finished = saved.index === count;
+                        });
+                        progress();
+                        render();
+                    }
+                });
+                if (readOnly) api.setSectionAction(id, { label: 'Next', onClick: () => show(index + 1) });
+            }
+            syncHash();
+        }
+
+        for (let index = 0; index <= count; index++) {
+            api.registerHashRoute(index === count ? 'summary' : `check-${index + 1}`, () => {
+                if (!api.goToSection(id, { moveFocus: false })) return false;
+                show(Math.min(index, state.index));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        progress();
+        render();
     }
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             pickPractice, practiceQuestion, contexts, causeContexts, sortBins,
             nameStrength, dragStrong, strongest, describePattern, finishSentence,
-            tendNotAlways, causeClaim, causeSort, causeReason
+            tendNotAlways, causeClaim, causeSort, causeReason,
+            checkQuestion, partTypes, widgetTypes, validMix, mixedPractice
         };
         return;
     }
@@ -634,16 +785,15 @@
             if (kind !== 'question-bank' && kind !== 'comparison') continue;
             const host = document.getElementById(helpers.questionSetContainerId(slug, id));
             if (!host) continue;
-            if (kind === 'question-bank' && part) {
+            if (kind === 'question-bank') {
                 await api.runQuestionSet(id, {
-                    version: 2, count: config.session_length, upgrade: () => null,
+                    version: 3, count: config.session_length, upgrade: () => null,
                     pick: random => pickPractice(part, config.session_length, random, helpers),
                     question: (item, random) => practiceQuestion(item, random, helpers)
                 });
                 continue;
             }
-            mountPlaceholder(api, host, id,
-                kind === 'comparison' ? 'Check' : part ? practiceLabels[part] : 'Mixed Practice');
+            await mountCheck(api, host);
         }
     };
 })();
