@@ -120,6 +120,11 @@
             ]
         }
     },
+    "score_activities": [
+        { "id": "step:interactive--spot:0", "kind": "guided" },
+        { "id": "step:interactive--read:0", "kind": "guided" },
+        { "id": "step:interactive--read:1", "kind": "guided" }
+    ],
     "assessment": { "question_types": {
         "which-outlier": "scatter-outliers",
         "tap-outlier": "scatter-outliers",

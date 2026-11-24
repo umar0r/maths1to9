@@ -179,7 +179,319 @@
         render();
     }
 
-    /* Stage one: the other sections say so and move on, so the lesson loads
+    /* Spot Try it: one tap. The right point turns large and green and locks;
+       any other point shows red for a moment. */
+    async function mountSpotTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Spot Try it');
+        api.gateSection(id);
+        const sectionState = await api.useSectionState('interactive:spot', {
+            version: 1, upgrade: () => null,
+            initial: () => ({ screen: 0, furthest: 0, picked: null, done: false, hint: '' })
+        });
+        const state = sectionState.state;
+        const context = C.contexts.heating;
+        const points = [...context.set.main, context.set.outlier];
+        let board = null;
+        let items = [];
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) api.setSlideHash('spot-try-it-1', { replace: true });
+        }
+        function progress() {
+            api.setSectionProgress(id, Number(state.done), 1);
+            if (state.done) api.completeSection(id);
+        }
+
+        function render() {
+            board?.destroy();
+            board = null;
+            root.replaceChildren();
+            const heading = element('h2', 'Tap the outlier.');
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'outliers-picture');
+            root.append(picture);
+            const graphHost = element('div', '', 'outliers-graph');
+            picture.append(graphHost);
+            board = C.makeGraph(graphHost, {
+                axisNames: context.axisNames,
+                label: 'Scatter graph of outdoor temperature and heating used. Tap the outlier.'
+            });
+            items = points.map(point => [point, board.point(point, {
+                size: 'small', tone: 'neutral', coordinates: false
+            })]);
+            const feedback = E.createFeedback('interactive', { visible: false });
+            root.append(feedback);
+
+            function paint() {
+                items.forEach(([point, item]) => {
+                    const isOutlier = C.samePoint(point, context.set.outlier);
+                    const isPicked = Boolean(state.picked) && C.samePoint(state.picked, point);
+                    if (state.done && isOutlier) item.update({ size: 'large', tone: 'correct' });
+                    else if (isPicked) item.update({ size: 'large', tone: 'neutral' });
+                    else item.update({ size: 'small', tone: 'neutral' });
+                });
+                const message = state.done
+                    ? 'Yes. The other points go down, but this one sits far above them.'
+                    : state.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: state.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue', disabled: !state.done,
+                    onClick() {
+                        if (!state.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                if (state.done) board.setEditable(false);
+                progress();
+                syncHash();
+            }
+
+            function flash(point) {
+                const item = items.find(([other]) => C.samePoint(other, point))?.[1];
+                if (!item) return;
+                item.update({ size: 'large', tone: 'incorrect' });
+                window.setTimeout(() => {
+                    if (!state.done) item.update({ size: 'small', tone: 'neutral' });
+                }, 600);
+            }
+
+            if (!state.done) {
+                const picker = board.pick({ label: 'Tap the outlier.', onPick(position) {
+                    if (state.done) return;
+                    const match = points.find(point => C.samePoint(point, position));
+                    if (!match) {
+                        sectionState.update(saved => {
+                            saved.hint = "There's no point there. Tap one of the points.";
+                        });
+                        paint();
+                        return;
+                    }
+                    if (C.samePoint(match, context.set.outlier)) {
+                        sectionState.update(saved => {
+                            saved.picked = [...match];
+                            saved.done = true;
+                            saved.hint = '';
+                        });
+                        picker.stop();
+                        board.describe(`You tapped the point for ${context.words(match)}.`);
+                        paint();
+                        return;
+                    }
+                    sectionState.update(saved => {
+                        saved.hint = 'That point fits the pattern. Find the one away from the others.';
+                    });
+                    board.describe(`You tapped the point for ${context.words(match)}.`);
+                    flash(match);
+                    paint();
+                } });
+            }
+
+            api.setSectionBack(id, null);
+            api.setSectionReset(id, state.done || state.hint || state.picked
+                ? () => {
+                    sectionState.resetFields(['picked', 'done', 'hint']);
+                    render();
+                }
+                : null);
+            paint();
+        }
+
+        api.registerHashRoute('spot-try-it-1', () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            render();
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    /* Read Try it: two taps on the axes, then one tap on the side axis. */
+    async function mountReadTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Read Try it');
+        api.gateSection(id);
+        const sectionState = await api.useSectionState('interactive:read', {
+            version: 1, upgrade: () => null,
+            initial: () => ({
+                screen: 0, furthest: 0,
+                r1: { bottom: null, side: null, hint: '', done: false },
+                r2: { side: null, hint: '', done: false }
+            })
+        });
+        const state = sectionState.state;
+        const headings = [
+            'Find the outlier. Tap the bottom axis right under it.',
+            'How much heating does the outlier show? Tap the number on the side axis.'
+        ];
+        const sunshine = C.contexts.sunshine;
+        const heating = C.contexts.heating;
+        let board = null;
+
+        function syncHash() {
+            if (api.getCurrentSection().id !== id) return;
+            api.setSlideHash(`read-try-it-${state.screen + 1}`, { replace: true });
+        }
+        function show(index) {
+            sectionState.update(saved => {
+                saved.screen = index;
+                saved.furthest = Math.max(saved.furthest, index);
+            });
+            render();
+            root.querySelector('[data-screen-heading]')?.focus();
+        }
+        function progress() {
+            const completed = Number(state.r1.done) + Number(state.r2.done);
+            api.setSectionProgress(id, completed, 2);
+            if (completed === 2) api.completeSection(id);
+        }
+
+        function render() {
+            board?.destroy();
+            board = null;
+            root.replaceChildren();
+            const index = state.screen;
+            const heading = element('h2', headings[index]);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const prompt = element('p');
+            root.append(prompt);
+            const picture = element('div', '', 'outliers-picture');
+            root.append(picture);
+            const graphHost = element('div', '', 'outliers-graph');
+            picture.append(graphHost);
+            const feedback = E.createFeedback('interactive', { visible: false });
+            root.append(feedback);
+            const context = index === 0 ? sunshine : heating;
+            const set = context.set;
+            const points = [...set.main, set.outlier];
+            board = C.makeGraph(graphHost, {
+                axisNames: context.axisNames,
+                label: index === 0
+                    ? 'Scatter graph of hours of sunshine and ice creams sold.'
+                    : 'Scatter graph of outdoor temperature and heating used.'
+            });
+            points.forEach(point => board.point(point, {
+                size: 'small', tone: 'neutral', coordinates: false
+            }));
+
+            if (index === 0) {
+                const card = state.r1;
+                prompt.textContent = card.bottom === null ? '' : card.done ? '' : 'Now tap the side axis level with it.';
+                const message = card.done
+                    ? 'Yes. The outlier shows 7 hours of sunshine and 1 box sold.'
+                    : card.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: card.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Next', disabled: !card.done,
+                    onClick: () => show(1)
+                });
+                if (!card.done) {
+                    board.pick({ label: headings[index], onPick([x, y]) {
+                        const stage = card.bottom === null ? 'bottom' : 'side';
+                        sectionState.update(saved => {
+                            if (stage === 'bottom') {
+                                if (y !== 0) {
+                                    saved.r1.hint = 'Tap on the bottom axis, the line along the bottom.';
+                                } else if (x === 7) {
+                                    saved.r1.bottom = 7;
+                                    saved.r1.hint = '';
+                                } else {
+                                    saved.r1.hint = "That's under a point that fits the pattern. Find the outlier first, then go straight down.";
+                                }
+                            } else if (x !== 0) {
+                                saved.r1.hint = 'Tap on the side axis, the line up the left.';
+                            } else if (y === 1) {
+                                saved.r1.side = 1;
+                                saved.r1.done = true;
+                                saved.r1.hint = '';
+                            } else {
+                                saved.r1.hint = 'Go straight across from the outlier to the side axis.';
+                            }
+                        });
+                        board.describe(stage === 'bottom' && y === 0 ? `You tapped ${x} on the bottom axis.`
+                            : stage === 'side' && x === 0 ? `You tapped ${y} on the side axis.`
+                                : 'You tapped the grid, not an axis.');
+                        // Redraw after this tap has finished, so the board is
+                        // never destroyed inside its own event.
+                        window.setTimeout(render, 0);
+                    } });
+                }
+            } else {
+                const card = state.r2;
+                prompt.textContent = '';
+                const message = card.done ? 'Yes. The outlier shows 7 kWh of heating.' : card.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: card.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue', disabled: !card.done,
+                    onClick() {
+                        if (!card.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                if (!card.done) {
+                    board.pick({ label: headings[index], onPick([x, y]) {
+                        sectionState.update(saved => {
+                            if (x !== 0) {
+                                saved.r2.hint = 'Tap on the side axis, the line up the left.';
+                            } else if (y === 7) {
+                                saved.r2.side = 7;
+                                saved.r2.done = true;
+                                saved.r2.hint = '';
+                            } else if (y === 9) {
+                                saved.r2.hint = "9 is the outlier's temperature, on the bottom axis. This question asks for the heating.";
+                            } else {
+                                saved.r2.hint = 'Go straight across from the outlier to the side axis.';
+                            }
+                        });
+                        board.describe(x === 0 ? `You tapped ${y} on the side axis.` : 'You tapped the grid, not an axis.');
+                        window.setTimeout(render, 0);
+                    } });
+                }
+            }
+
+            const started = index === 0
+                ? Boolean(state.r1.bottom || state.r1.hint)
+                : Boolean(state.r2.side || state.r2.hint);
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, started ? () => {
+                sectionState.resetFields([index === 0 ? 'r1' : 'r2']);
+                render();
+            } : null);
+            progress();
+            syncHash();
+        }
+
+        headings.forEach((_, index) => api.registerHashRoute(`read-try-it-${index + 1}`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            show(Math.min(index, state.furthest));
+        }));
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    /* Stage two: Reason and Ignore say so and move on, so the lesson loads
        from the first Learn screen through to Check. Later stages fill them
        in. */
     function placeholder(host, section, text) {
@@ -214,6 +526,8 @@
         const api = window.Maths1to9Lesson;
         if (!learn[section.part]) throw new Error(`Unknown outliers part: ${section.part}`);
         await mountLearn(api, section.part);
-        mountTryItPlaceholder(api, root, section);
+        if (section.part === 'spot') return mountSpotTryIt(api, root, section);
+        if (section.part === 'read') return mountReadTryIt(api, root, section);
+        return mountTryItPlaceholder(api, root, section);
     };
 })();
