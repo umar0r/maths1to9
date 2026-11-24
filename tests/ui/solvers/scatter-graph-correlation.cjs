@@ -39,9 +39,12 @@ async function drag(page, from, to, index = 0) {
 }
 
 async function sort(page, root, placements) {
+    // Pick the card, then put it in its box with the keyboard: a mouse click on
+    // a box can land on a card already in it and send that one back.
     for (const [label, bin] of placements) {
         await root.locator('.correlation-sort__tray button', { hasText: label }).first().click();
-        await root.locator('.correlation-sort__drop').nth(bin).click();
+        await root.locator('.correlation-sort__drop').nth(bin).focus();
+        await page.keyboard.press('Enter');
         await page.waitForTimeout(80);
     }
 }

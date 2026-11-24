@@ -204,11 +204,11 @@
         box?.setAttribute('aria-label', 'Type Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState('interactive:type', {
-            version: 2, upgrade: () => null,
+            version: 3, upgrade: () => null,
             initial: () => ({
                 screen: 0, furthest: 0,
-                t1: { values: [1, 1], done: false, hint: '' },
-                t2: { values: [9, 9], done: false, hint: '' },
+                t1: { values: [1, 1], moved: [false, false], done: false, hint: '' },
+                t2: { values: [9, 9], moved: [false, false], done: false, hint: '' },
                 t3: { sort: null, done: false, hint: '' }
             })
         });
@@ -273,22 +273,22 @@
                     if (card.done) return;
                     const values = [...card.values];
                     values[order] = point[1];
-                    const done = values.every((value, place) =>
-                        value >= screen.ranges[place][0] && value <= screen.ranges[place][1]);
                     sectionState.update(saved => {
                         const savedCard = index === 0 ? saved.t1 : saved.t2;
                         savedCard.values = values;
-                        savedCard.done = done;
+                        savedCard.moved[order] = true;
                     });
-                    // Once both points are in place there is nothing left to drag.
-                    if (done) paintDrag(index, board, items, feedback);
                 }
             }));
             // The hint waits for the finger to let go: changing it mid-drag would
             // move the page under the point being dragged.
+            // Nothing shows until both points have been moved at least once;
+            // then the two are marked together, with the hint for the first
+            // wrong one from the left.
             function settle() {
                 if (card.done) return;
                 const card_ = index === 0 ? state.t1 : state.t2;
+                if (!card_.moved[0] || !card_.moved[1]) return;
                 const place = screen.ranges.findIndex(([low, high], at) =>
                     card_.values[at] < low || card_.values[at] > high);
                 const hint = place === -1 ? ''
@@ -296,6 +296,7 @@
                 sectionState.update(saved => {
                     const savedCard = index === 0 ? saved.t1 : saved.t2;
                     savedCard.hint = hint;
+                    savedCard.done = place === -1;
                 });
                 paintDrag(index, board, items, feedback);
             }
@@ -387,11 +388,11 @@
         box?.setAttribute('aria-label', 'Strength Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState('interactive:strength', {
-            version: 1, upgrade: () => null,
+            version: 2, upgrade: () => null,
             initial: () => ({
                 screen: 0, furthest: 0,
                 s1: { sort: null, done: false, hint: '' },
-                s2: { values: [...strengthDrag.starts], done: false, hint: '' }
+                s2: { values: [...strengthDrag.starts], moved: [false, false], done: false, hint: '' }
             })
         });
         const state = sectionState.state;
@@ -481,14 +482,10 @@
                     if (state.s2.done) return;
                     const values = [...state.s2.values];
                     values[order] = point[1];
-                    const done = values.every((value, place) =>
-                        value >= strengthDrag.ranges[place][0] && value <= strengthDrag.ranges[place][1]);
                     sectionState.update(saved => {
                         saved.s2.values = values;
-                        saved.s2.done = done;
-                        if (done) saved.s2.hint = '';
+                        saved.s2.moved[order] = true;
                     });
-                    if (done) paint();
                 }
             }));
             function paint() {
@@ -514,12 +511,17 @@
                 progress();
                 syncHash();
             }
-            // As on the Type screens, the hint waits for the pointer to let go.
+            // As on the Type screens, nothing is marked until both points
+            // have been moved, and each let-go re-marks the pair.
             function settle() {
                 if (state.s2.done) return;
+                if (!state.s2.moved[0] || !state.s2.moved[1]) return;
                 const wrong = strengthDrag.ranges.some(([low, high], place) =>
                     state.s2.values[place] < low || state.s2.values[place] > high);
-                sectionState.update(saved => { saved.s2.hint = wrong ? strengthDrag.wrong : ''; });
+                sectionState.update(saved => {
+                    saved.s2.hint = wrong ? strengthDrag.wrong : '';
+                    saved.s2.done = !wrong;
+                });
                 paint();
             }
             graphHost.addEventListener('pointerup', settle);
