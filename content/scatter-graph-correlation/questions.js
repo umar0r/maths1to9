@@ -75,10 +75,10 @@
         const starts = direction === 1 ? [1, 1] : [9, 9];
         const words = direction === 1 ? 'positive' : 'negative';
         const graph = { axisNames: { x: context.x, y: context.y },
-            label: 'Scatter graph with two big points to drag.' };
+            label: 'Scatter graph with two blue points to drag.' };
         return {
             input: 'custom', questionType: 'drag-type',
-            prompt: `Drag the two big points so the graph shows ${words} correlation.`,
+            prompt: `Drag the two blue points so the graph shows ${words} correlation.`,
             model: { graph, fixed, targets, direction },
             widget: C.dragPointsWidget({
                 graph,
@@ -96,7 +96,7 @@
                             ? direction === 1
                                 ? 'That point is too low. Positive means the points keep going up.'
                                 : 'That point is too high. Negative means the points keep going down.'
-                            : 'Keep the big points close to the others, carrying on the pattern.';
+                            : 'Keep the blue points close to the others, carrying on the pattern.';
                     return { correct, feedback, points };
                 },
                 answerText: value => `You moved the points to ${value[0][1]} and ${value[1][1]}.`
@@ -104,15 +104,147 @@
         };
     }
 
+    const capitalise = word => word[0].toUpperCase() + word.slice(1);
+
+    /* Strength Practice, card 1: which description fits the graph. */
+    function nameStrength(item, random, helpers) {
+        const { randomInt, shuffle } = helpers;
+        const { direction, strength } = item;
+        const context = contextFor(direction, random, helpers);
+        const set = C.pointSet(random, { direction, strength, count: 9 });
+        const way = direction === 1 ? 'up' : 'down';
+        const same = direction === 1 ? 'positive' : 'negative';
+        const other = direction === 1 ? 'negative' : 'positive';
+        const otherStrength = strength === 'strong' ? 'weak' : 'strong';
+        const options = shuffle([
+            {
+                label: `${capitalise(strength)} ${same} correlation`,
+                correct: true,
+                feedback: strength === 'strong'
+                    ? `The points go ${way} from left to right and sit close to a straight line.`
+                    : `The points go ${way} from left to right, but they're quite spread out, so it's weak.`
+            },
+            {
+                label: `${capitalise(strength)} ${other} correlation`,
+                feedback: `The points go ${way}, so it's ${same}, not ${other}.`
+            },
+            {
+                label: `${capitalise(otherStrength)} ${same} correlation`,
+                feedback: strength === 'strong'
+                    ? "The points sit close to a straight line, so it's strong."
+                    : "The points are quite spread out, so it's weak."
+            },
+            { label: 'No correlation', feedback: `There is a clear pattern going ${way}.` }
+        ], random);
+        const graph = { axisNames: { x: context.x, y: context.y } };
+        return {
+            input: 'choice', questionType: 'name-strength',
+            prompt: 'Which description fits this scatter graph?',
+            options,
+            model: { graph, points: set.points, r: set.r },
+            figure(host) {
+                const board = C.makeGraph(host, { ...graph, label: 'Scatter graph.' });
+                set.points.forEach(point => board.point(point, {
+                    size: 'small', tone: 'neutral', coordinates: false
+                }));
+                board.setEditable(false);
+            }
+        };
+    }
+
+    /* Strength Practice, card 2: one blue point pulled off a straight set. */
+    function dragStrong(item, random, helpers) {
+        const { randomInt } = helpers;
+        const direction = item.direction;
+        const context = contextFor(direction, random, helpers);
+        const pattern = C.pointSet(random, { direction, strength: 'strong', count: 9 });
+        const { m, c } = pattern;
+        const inside = pattern.points.map(point => point[0]).filter(x => x >= 3 && x <= 7);
+        const x = inside[randomInt(0, inside.length - 1, random)];
+        const p = C.patternY({ c, m }, direction, x);
+        // Four or more away from the pattern, and still on the graph.
+        const away = p <= 5 ? Math.min(10, Math.ceil(p + 4)) : Math.max(0, Math.floor(p - 4));
+        const fixed = pattern.points.filter(point => point[0] !== x);
+        const graph = { axisNames: { x: context.x, y: context.y },
+            label: 'Scatter graph with one blue point to drag.' };
+        return {
+            input: 'custom', questionType: 'drag-strong',
+            prompt: 'Drag the blue point so the correlation is strong.',
+            model: { graph, fixed, target: [x, p], direction, moved: [x, away] },
+            widget: C.dragPointsWidget({
+                graph,
+                fixed,
+                movable: [[x, away]],
+                check(value) {
+                    const right = Math.abs(value[0][1] - p) <= 1;
+                    return {
+                        correct: right,
+                        points: [right],
+                        feedback: right
+                            ? 'Now all the points sit close to a straight line, so the correlation is strong.'
+                            : 'That point is still a long way from the others. Move it so it fits the pattern.'
+                    };
+                },
+                answerText: value => `You moved the point to ${value[0][1]}.`
+            })
+        };
+    }
+
+    /* Strength Practice, card 3: four small graphs, which is the strongest. */
+    function strongest(random, helpers) {
+        const { shuffle } = helpers;
+        const entries = shuffle([
+            { role: 'strong positive', set: C.pointSet(random, { direction: 1, strength: 'strong', count: 9 }) },
+            { role: 'weak positive', set: C.pointSet(random, { direction: 1, strength: 'weak', count: 9 }) },
+            { role: 'weak negative', set: C.pointSet(random, { direction: -1, strength: 'weak', count: 9 }) },
+            { role: 'none', set: C.pointSet(random, { direction: 0, count: 9 }) }
+        ], random);
+        const words = {
+            'strong positive': 'Yes. Its points sit closest to a straight line.',
+            'weak positive': "That one goes up, but the points are spread out, so it's weak.",
+            'weak negative': "Those points are spread out, so it's weak.",
+            none: 'That one has no pattern at all.'
+        };
+        return {
+            input: 'choice', questionType: 'strongest',
+            prompt: 'Which graph shows the strongest correlation?',
+            options: entries.map((entry, index) => ({
+                label: 'ABCD'[index], correct: entry.role === 'strong positive', feedback: words[entry.role]
+            })),
+            model: { graphs: entries.map(entry => ({ role: entry.role, points: entry.set.points, r: entry.set.r })) },
+            figure(host) {
+                const gallery = document.createElement('div');
+                gallery.className = 'correlation-mini-graphs correlation-mini-graphs--four';
+                host.append(gallery);
+                entries.forEach((entry, index) => C.miniGraph(gallery, {
+                    points: entry.set.points,
+                    caption: 'ABCD'[index],
+                    label: `Graph ${'ABCD'[index]}.`
+                }));
+            }
+        };
+    }
+
     function practiceQuestion(item, random, helpers) {
         if (item.type === 'name-type') return nameType(item, random, helpers);
         if (item.type === 'drag-type') return dragType(item, random, helpers);
-        throw new Error(`Unknown Type practice question: ${item.type}`);
+        if (item.type === 'name-strength') return nameStrength(item, random, helpers);
+        if (item.type === 'drag-strong') return dragStrong(item, random, helpers);
+        if (item.type === 'strongest') return strongest(random, helpers);
+        throw new Error(`Unknown practice question: ${item.type}`);
     }
 
     function pickPractice(part, count, random, helpers) {
-        if (part !== 'type') throw new Error(`No practice generator for part ${part} yet.`);
         const { randomInt, shuffle } = helpers;
+        if (part === 'strength') {
+            return [
+                { type: 'name-strength', direction: random() < 0.5 ? 1 : -1,
+                    strength: random() < 0.5 ? 'strong' : 'weak' },
+                { type: 'drag-strong', direction: random() < 0.5 ? 1 : -1 },
+                { type: 'strongest' }
+            ].map(kind => ({ ...kind, seed: randomInt(0, 0xffffffff, random) }));
+        }
+        if (part !== 'type') throw new Error(`No practice generator for part ${part} yet.`);
         // The two name-type cards ask about different directions.
         const directions = shuffle([1, -1, 0], random).slice(0, count === 3 ? 2 : count);
         const kinds = [
@@ -158,7 +290,7 @@
     }
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { pickPractice, practiceQuestion, contexts };
+        module.exports = { pickPractice, practiceQuestion, contexts, nameStrength, dragStrong, strongest };
         return;
     }
 
@@ -170,10 +302,10 @@
             if (kind !== 'question-bank' && kind !== 'comparison') continue;
             const host = document.getElementById(helpers.questionSetContainerId(slug, id));
             if (!host) continue;
-            if (kind === 'question-bank' && part === 'type') {
+            if (kind === 'question-bank' && (part === 'type' || part === 'strength')) {
                 await api.runQuestionSet(id, {
-                    version: 1, count: config.session_length, upgrade: () => null,
-                    pick: random => pickPractice('type', config.session_length, random, helpers),
+                    version: 2, count: config.session_length, upgrade: () => null,
+                    pick: random => pickPractice(part, config.session_length, random, helpers),
                     question: (item, random) => practiceQuestion(item, random, helpers)
                 });
                 continue;

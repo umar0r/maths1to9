@@ -104,7 +104,7 @@
                         points: C.sets.revision,
                         axisNames: { x: 'Hours of revision', y: 'Test mark' },
                         big: [[5, 4], [4, 5]],
-                        label: 'Scatter graph of hours of revision and test marks, with two big points.'
+                        label: 'Scatter graph of hours of revision and test marks, with two blue points.'
                     });
                     board.arrow([9, 1.2], [5.4, 3.6], { tone: 'ink' });
                     host.append(C.note('5 hours, but a lower mark than 4 hours.'));
@@ -128,12 +128,12 @@
         ]
     };
 
-    /* Type Try it, screens 1 and 2: drag two big points into the pattern. */
+    /* Type Try it, screens 1 and 2: drag two blue points into the pattern. */
     const typeDragScreens = [
         {
-            heading: 'Drag the two big points so the graph shows positive correlation.',
+            heading: 'Drag the two blue points so the graph shows positive correlation.',
             axisNames: { x: 'Hours of revision', y: 'Test mark' },
-            label: 'Scatter graph of hours of revision and test marks, with two big points to drag.',
+            label: 'Scatter graph of hours of revision and test marks, with two blue points to drag.',
             fixed: [[1, 2], [2, 2], [3, 4], [4, 4], [5, 5], [6, 6]],
             starts: [1, 1],
             ranges: [[5, 9], [6, 10]],
@@ -142,9 +142,9 @@
             tooHigh: "That's a big jump. Keep it close to the other points."
         },
         {
-            heading: 'Drag the two big points so the graph shows negative correlation.',
+            heading: 'Drag the two blue points so the graph shows negative correlation.',
             axisNames: { x: 'Outdoor temperature (°C)', y: 'Heating used (kWh)' },
-            label: 'Scatter graph of outdoor temperature and heating used, with two big points to drag.',
+            label: 'Scatter graph of outdoor temperature and heating used, with two blue points to drag.',
             fixed: [[1, 9], [2, 8], [3, 8], [4, 6], [5, 6], [6, 4]],
             starts: [9, 9],
             ranges: [[1, 5], [0, 4]],
@@ -187,6 +187,45 @@
                 ? 'These points go up from left to right.'
                 : 'These points go down from left to right.';
         }
+    };
+
+    const strengthSort = {
+        heading: 'Put the right name under each graph.',
+        cards: [
+            { id: 'strong-positive', label: 'Strong positive' },
+            { id: 'weak-positive', label: 'Weak positive' },
+            { id: 'strong-negative', label: 'Strong negative' },
+            { id: 'weak-negative', label: 'Weak negative' }
+        ],
+        // The four graphs, in the order the spec gives: strong positive,
+        // weak negative, weak positive, strong negative.
+        slots: [
+            { id: 'strong-positive', direction: 1, strength: 'strong', seed: 1301 },
+            { id: 'weak-negative', direction: -1, strength: 'weak', seed: 2302 },
+            { id: 'weak-positive', direction: 1, strength: 'weak', seed: 3303 },
+            { id: 'strong-negative', direction: -1, strength: 'strong', seed: 4304 }
+        ],
+        success: 'Up or down tells you positive or negative. How close the points are tells you strong or weak.',
+        hint(slotId, itemId) {
+            const slot = strengthSort.slots.find(entry => entry.id === slotId);
+            const direction = itemId.endsWith('positive') ? 1 : -1;
+            return direction === slot.direction
+                ? 'Right way. Now look how close the points are to a straight line.'
+                : 'Do the points go up or down from left to right?';
+        }
+    };
+
+    /* Strength Try it, screen 2: two blue points into an already straight set. */
+    const strengthDrag = {
+        heading: 'Drag the two blue points so the correlation is strong.',
+        axisNames: { x: 'Hours of sunshine', y: 'Ice creams sold (boxes)' },
+        label: 'Scatter graph of hours of sunshine and ice creams sold, with two blue points to drag.',
+        fixed: [[1, 1], [2, 2], [4, 4], [5, 5], [6, 6], [8, 8], [9, 9]],
+        xs: [3, 7],
+        starts: [8, 2],
+        ranges: [[2, 4], [6, 8]],
+        success: 'Now all the points sit close to a straight line, so the correlation is strong.',
+        wrong: 'That point is still a long way from the others. Move it so it fits the pattern.'
     };
 
     async function mountLearn(api, part) {
@@ -261,7 +300,7 @@
         box?.setAttribute('aria-label', 'Type Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState('interactive:type', {
-            version: 1, upgrade: () => null,
+            version: 2, upgrade: () => null,
             initial: () => ({
                 screen: 0, furthest: 0,
                 t1: { values: [1, 1], done: false, hint: '' },
@@ -321,7 +360,7 @@
             const board = C.makeGraph(graphHost, { axisNames: screen.axisNames, label: screen.label });
             boards.push(board);
             screen.fixed.forEach(point => board.point(point, {
-                size: 'small', tone: 'neutral', coordinates: false
+                size: 'small', tone: 'muted', coordinates: false
             }));
             const items = [7, 8].map((x, order) => board.point([x, card.values[order]], {
                 size: 'large', tone: card.done ? 'correct' : 'neutral', coordinates: false,
@@ -436,6 +475,187 @@
         render();
     }
 
+    async function mountStrengthTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Strength Try it');
+        api.gateSection(id);
+        const sectionState = await api.useSectionState('interactive:strength', {
+            version: 1, upgrade: () => null,
+            initial: () => ({
+                screen: 0, furthest: 0,
+                s1: { sort: null, done: false, hint: '' },
+                s2: { values: [...strengthDrag.starts], done: false, hint: '' }
+            })
+        });
+        const state = sectionState.state;
+        let boards = [];
+        const strengthSets = new Map(strengthSort.slots.map(slot => [slot.id,
+            C.pointSet(E.seededRandom(slot.seed), {
+                direction: slot.direction, strength: slot.strength, count: 8
+            })]));
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash(`strength-try-it-${state.screen + 1}`, { replace: true });
+            }
+        }
+        function show(index) {
+            sectionState.update(saved => {
+                saved.screen = index;
+                saved.furthest = Math.max(saved.furthest, index);
+            });
+            render();
+            root.querySelector('[data-screen-heading]')?.focus();
+        }
+        function progress() {
+            const completed = Number(state.s1.done) + Number(state.s2.done);
+            api.setSectionProgress(id, completed, 2);
+            if (completed === 2) api.completeSection(id);
+        }
+
+        function renderSort(picture, feedback) {
+            function paint() {
+                const message = state.s1.done ? strengthSort.success : state.s1.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: state.s1.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Next', disabled: !state.s1.done,
+                    onClick: () => show(1)
+                });
+                progress();
+                syncHash();
+            }
+            C.sortCards(picture, {
+                items: strengthSort.cards,
+                slots: strengthSort.slots.map((slot, position) => ({
+                    id: slot.id,
+                    dropLabel: `Name for graph ${position + 1}`
+                })),
+                figure: (figureHost, slot) => {
+                    boards.push(C.miniGraph(figureHost, {
+                        points: strengthSets.get(slot.id).points,
+                        label: 'Scatter graph.'
+                    }));
+                },
+                accepts: (slotId, itemId) => slotId === itemId,
+                hint: strengthSort.hint,
+                mode: 'try',
+                value: state.s1.sort,
+                onChange(value) {
+                    const done = strengthSort.cards.every(item =>
+                        Object.keys(value.placed).some(slotId => slotId === item.id && value.placed[slotId].includes(item.id)));
+                    sectionState.update(saved => {
+                        saved.s1.sort = value;
+                        saved.s1.done = done;
+                        saved.s1.hint = done ? '' : (value.hint || '');
+                    });
+                    paint();
+                }
+            });
+            paint();
+        }
+
+        function renderDrag(picture, feedback) {
+            const graphHost = element('div', '', 'correlation-graph');
+            picture.append(graphHost);
+            const board = C.makeGraph(graphHost, {
+                axisNames: strengthDrag.axisNames, label: strengthDrag.label
+            });
+            boards.push(board);
+            strengthDrag.fixed.forEach(point => board.point(point, {
+                size: 'small', tone: 'muted', coordinates: false
+            }));
+            const items = strengthDrag.xs.map((x, order) => board.point([x, state.s2.values[order]], {
+                size: 'large', tone: state.s2.done ? 'correct' : 'neutral', coordinates: false,
+                drag: state.s2.done ? false : 'y',
+                onMove(point) {
+                    if (state.s2.done) return;
+                    const values = [...state.s2.values];
+                    values[order] = point[1];
+                    const done = values.every((value, place) =>
+                        value >= strengthDrag.ranges[place][0] && value <= strengthDrag.ranges[place][1]);
+                    sectionState.update(saved => {
+                        saved.s2.values = values;
+                        saved.s2.done = done;
+                        if (done) saved.s2.hint = '';
+                    });
+                    if (done) paint();
+                }
+            }));
+            function paint() {
+                items.forEach((item, order) => item.update({
+                    value: [strengthDrag.xs[order], state.s2.values[order]],
+                    tone: state.s2.done ? 'correct' : 'neutral',
+                    drag: state.s2.done ? false : 'y'
+                }));
+                board.setEditable(!state.s2.done);
+                const message = state.s2.done ? strengthDrag.success : state.s2.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: state.s2.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue', disabled: !state.s2.done,
+                    onClick() {
+                        if (!state.s2.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                progress();
+                syncHash();
+            }
+            // As on the Type screens, the hint waits for the pointer to let go.
+            function settle() {
+                if (state.s2.done) return;
+                const wrong = strengthDrag.ranges.some(([low, high], place) =>
+                    state.s2.values[place] < low || state.s2.values[place] > high);
+                sectionState.update(saved => { saved.s2.hint = wrong ? strengthDrag.wrong : ''; });
+                paint();
+            }
+            graphHost.addEventListener('pointerup', settle);
+            graphHost.addEventListener('pointercancel', settle);
+            paint();
+        }
+
+        function render() {
+            boards.forEach(board => board.destroy());
+            boards = [];
+            root.replaceChildren();
+            const index = state.screen;
+            const heading = element('h2', index === 0 ? strengthSort.heading : strengthDrag.heading);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'correlation-picture');
+            root.append(picture);
+            const feedback = E.createFeedback('interactive', { visible: false });
+            root.append(feedback);
+            if (index === 0) renderSort(picture, feedback);
+            else renderDrag(picture, feedback);
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, () => {
+                sectionState.resetFields([['s1', 's2'][index]]);
+                render();
+            });
+        }
+
+        for (let index = 0; index < 2; index++) {
+            api.registerHashRoute(`strength-try-it-${index + 1}`, () => {
+                if (!api.goToSection(id, { moveFocus: false })) return false;
+                show(Math.min(index, state.furthest));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
     /* Placeholder for a Try it that a later stage builds. */
     async function mountPlaceholder(api, root, section) {
         const id = section.id;
@@ -466,6 +686,7 @@
         if (!learn[section.part]) throw new Error(`Unknown correlation part: ${section.part}`);
         await mountLearn(api, section.part);
         if (section.part === 'type') await mountTypeTryIt(api, root, section);
+        else if (section.part === 'strength') await mountStrengthTryIt(api, root, section);
         else await mountPlaceholder(api, root, section);
     };
 })();

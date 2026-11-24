@@ -67,7 +67,8 @@
         const row = document.createElement('div');
         row.className = items.length === 2
             ? 'correlation-mini-graphs correlation-mini-graphs--pair'
-            : 'correlation-mini-graphs';
+            : items.length === 4 ? 'correlation-mini-graphs correlation-mini-graphs--four'
+                : 'correlation-mini-graphs';
         host.append(row);
         return items.map(item => miniGraph(row, item));
     }
@@ -109,6 +110,17 @@
         return c + direction * m * x;
     }
 
+    /* A "none" set must not look like a hill or a valley: each half of it,
+       either side of the middle x, has to be flat too. */
+    function flatHalves(points) {
+        const xs = [...new Set(points.map(point => point[0]))].sort((first, second) => first - second);
+        const middle = xs[Math.floor(xs.length / 2)];
+        const left = points.filter(([x]) => x < middle);
+        const right = points.filter(([x]) => x > middle);
+        const flat = half => half.length < 2 || Math.abs(pearson(half)) <= 0.5;
+        return flat(left) && flat(right);
+    }
+
     /* A set of points that shows the asked pattern: direction 1 rises,
        −1 falls and 0 has no pattern. Returns the points, their r, and the
        slope and start used, so a question can work out the pattern's own y. */
@@ -124,7 +136,9 @@
             if (direction === 0) {
                 const points = xs.map(x => [x, pick(1, 9)]);
                 const r = pearson(points);
-                if (keepsRule(0, strength, r)) return { points, r, m: null, c: null };
+                if (keepsRule(0, strength, r) && flatHalves(points)) {
+                    return { points, r, m: null, c: null };
+                }
                 continue;
             }
             const m = [0.7, 0.8, 0.9, 1][pick(0, 3)];
@@ -191,7 +205,9 @@
         let canEdit = editable;
 
         const root = element('div', '', 'correlation-sort');
-        const slotRow = element('div', '', 'correlation-sort__slots');
+        const slotRow = element('div', '', slots.length === 4
+            ? 'correlation-sort__slots correlation-sort__slots--four'
+            : 'correlation-sort__slots');
         const tray = element('div', '', 'correlation-sort__tray');
         tray.setAttribute('role', 'group');
         tray.setAttribute('aria-label', 'Cards to sort');
@@ -205,7 +221,35 @@
             card.type = 'button';
             card.className = 'correlation-card';
             card.textContent = item.label;
-            card.addEventListener('click', () => pick(item.id));
+            let press = null;
+            let dragged = false;
+            card.addEventListener('click', () => {
+                if (!dragged) pick(item.id);
+                dragged = false;
+            });
+            card.addEventListener('pointerdown', event => {
+                if (!canEdit || marked || locked(item.id)) return;
+                press = { x: event.clientX, y: event.clientY };
+                dragged = false;
+                card.setPointerCapture(event.pointerId);
+            });
+            card.addEventListener('pointermove', event => {
+                if (!press) return;
+                if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) {
+                    dragged = true;
+                    state.selected = item.id;
+                    paint();
+                }
+            });
+            card.addEventListener('pointerup', event => {
+                if (!press) return;
+                press = null;
+                if (!dragged) return;
+                const target = document.elementFromPoint(event.clientX, event.clientY);
+                const slot = [...drops].find(([, drop]) => drop.contains(target));
+                if (slot) place(slot[0]);
+            });
+            card.addEventListener('pointercancel', () => { press = null; });
             tray.append(card);
             cards.set(item.id, card);
         });
@@ -332,8 +376,8 @@
         };
     }
 
-    /* The Practice card that asks the pupil to drag big points up or down.
-       Nothing is marked until Check, when each big point turns green or red. */
+    /* The Practice card that asks the pupil to drag blue points up or down.
+       Nothing is marked until Check, when each blue point turns green or red. */
     function dragPointsWidget({ graph, fixed, movable, check, answerText }) {
         return {
             isEmpty: value => !Array.isArray(value),
@@ -341,7 +385,7 @@
                 const boardHost = element('div', '', 'correlation-graph');
                 host.append(boardHost);
                 const board = makeGraph(boardHost, graph);
-                fixed.forEach(point => board.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
+                fixed.forEach(point => board.point(point, { size: 'small', tone: 'muted', coordinates: false }));
                 let positions = movable.map((start, index) => [...(value?.[index] ?? start)]);
                 const items = positions.map((position, index) => board.point(position, {
                     size: 'large', tone: 'neutral', coordinates: false,
@@ -356,9 +400,11 @@
                     if (canEdit) positions = next ? next.map(entry => [...entry]) : movable.map(start => [...start]);
                     else if (next) positions = next.map(entry => [...entry]);
                     const verdict = phase === 'answer' ? null : check(positions);
+                    // A check can mark the points one by one, or all at once.
+                    const mark = index => verdict.points ? verdict.points[index] : verdict.correct;
                     items.forEach((item, index) => item.update({
                         value: positions[index],
-                        tone: verdict ? (verdict.points[index] ? 'correct' : 'incorrect') : 'neutral',
+                        tone: verdict ? (mark(index) ? 'correct' : 'incorrect') : 'neutral',
                         drag: canEdit ? 'y' : false
                     }));
                     board.setEditable(canEdit);
@@ -379,7 +425,8 @@
 
     const helpers = {
         sets, makeGraph, fullGraph, miniGraph, smallGraphs, note, sentence,
-        pearson, pointSet, patternPoints, patternY, sortCards, dragPointsWidget
+        pearson, pointSet, patternPoints, patternY, flatHalves,
+        sortCards, dragPointsWidget
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = helpers;

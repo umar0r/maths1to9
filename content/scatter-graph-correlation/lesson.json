@@ -41,7 +41,9 @@
     "score_activities": [
         { "id": "step:interactive--type:0", "kind": "guided" },
         { "id": "step:interactive--type:1", "kind": "guided" },
-        { "id": "step:interactive--type:2", "kind": "guided" }
+        { "id": "step:interactive--type:2", "kind": "guided" },
+        { "id": "step:interactive--strength:0", "kind": "guided" },
+        { "id": "step:interactive--strength:1", "kind": "guided" }
     ],
     "assessment": { "question_types": {
         "name-type": "recognise-correlation",
