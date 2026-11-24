@@ -11,9 +11,28 @@ on:
   workflow_dispatch:             # a "Run workflow" button on the Actions tab
 
 jobs:
-  tests:
+  # The maths and file checks (fast).
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Maths and file checks
+        run: npm test
+
+  # The browser checks, split across 4 computers that run at the same time.
+  browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false           # finish every part, even if one fails
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
 
@@ -24,21 +43,16 @@ jobs:
           node-version: 24
           cache: npm
       - run: php --version
-
-      - name: Install test tools
-        run: npm ci
+      - run: npm ci
 
       - name: Install the test browser (Chromium)
         run: npx playwright install --with-deps chromium
 
-      - name: Maths and file checks
-        run: npm test
-
-      - name: Browser checks
-        if: ${{ !cancelled() }}  # run even if the maths checks failed
+      - name: Browser checks (part ${{ matrix.shard }} of 4)
         run: npm run test:ui
         env:
           PHP_BIN: php           # use Ubuntu's PHP instead of XAMPP's
+          SHARD: ${{ matrix.shard }}/4
 
       # If anything failed, keep Playwright's screenshots and traces so the
       # failure can be looked at (download from the run's Summary page).
@@ -46,7 +60,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results
+          name: playwright-results-${{ matrix.shard }}
           path: /tmp/maths1to9-ui-results
           retention-days: 14
           if-no-files-found: ignore
