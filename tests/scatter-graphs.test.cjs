@@ -93,18 +93,25 @@ test('scatter graphs: Read answers and each named mistake agree with the axes', 
             const option = q.options.find(option => option.correct);
             assert.deepEqual(option.label.match(/\d+/g).map(Number), [a, b]);
             if (q.model.graph.axisNames.x === 'Shots on target') {
-                // Football: the swapped pair would mean more goals than shots,
-                // so another real mistake takes its place.
-                assert.ok(b < a);
+                // Football: goals are never more than shots, so the mistakes
+                // move one square up, down or across instead of swapping.
+                assert.ok(1 <= b && b < a && a <= 9);
                 assert.equal(q.prompt, 'The blue point is one player. How many shots on target and goals did they have?');
+                assert.equal(q.options.length, 4);
+                assert.equal(new Set(q.options.map(choice => choice.label)).size, 4);
                 for (const choice of q.options) {
                     const [x, y] = choice.label.match(/\d+/g).map(Number);
                     assert.ok(y <= x, choice.label);
                 }
-                const repeated = q.options.find(choice => choice.label === `${S.quantity(b, 'shots')} and ${S.quantity(b, 'goals')}`);
-                assert.equal(repeated.feedback, `That's across ${b}, the number from the side axis. The first number, ${a}, goes across.`);
-                assert.ok(q.options.some(choice => choice.feedback === 'Count the side axis again from 0.'));
-                assert.ok(q.options.some(choice => choice.feedback === 'Go straight down. Count the bottom axis again from 0.'));
+                const expected = [
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b, 'goals')}`, `Down to ${a}, across to ${b}.`],
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b + 1, 'goals')}`, "That's one square too high. Count up the side again from 0."],
+                    [`${S.quantity(a, 'shots')} and ${S.quantity(b - 1, 'goals')}`, "That's one square too low. Count up the side again from 0."],
+                    [`${S.quantity(a + 1, 'shots')} and ${S.quantity(b, 'goals')}`, 'Go straight down. Count the bottom axis again from 0.']
+                ];
+                for (const [label, feedback] of expected) {
+                    assert.equal(q.options.find(choice => choice.label === label)?.feedback, feedback, label);
+                }
             } else {
                 const swapped = q.options.find(choice => choice.label.match(/\d+/g).map(Number).join(',') === `${b},${a}`);
                 assert.equal(swapped.feedback, "That's back to front. Go down to the bottom axis first.");
@@ -145,6 +152,14 @@ test('scatter graphs: Plot marking recognises correct, swapped, one-square and e
             const index = q.options.findIndex(option => option.correct);
             assert.deepEqual(q.model.points[index], [a, b]);
             assert.ok(q.model.points.every(point => point.every(value => value >= 1 && value <= 9)));
+            if (type === 'pick-point' && q.model.graph.axisNames.x === 'Shots on target') {
+                // Football: one square too low instead of the made-up [b, b].
+                assert.ok(2 <= b && b <= a - 2);
+                const low = q.options.find(option => option.feedback === 'That one is one square too low. Count up again.');
+                assert.ok(low);
+                assert.deepEqual(q.model.points[q.options.indexOf(low)], [a, b - 1]);
+                assert.ok(!q.options.some(option => option.feedback.includes('the number that goes up')));
+            }
         }
     }
 });

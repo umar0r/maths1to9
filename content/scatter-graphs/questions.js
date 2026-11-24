@@ -81,9 +81,10 @@
         const ctx = [...contexts, sunshineContext][randomInt(0, contexts.length, random)];
         const football = ctx.football === true;
         // On a football graph a point can't score more goals than shots on
-        // target, so keep two squares between the pair for its mistakes.
-        const a = football ? randomInt(3, 9, random) : randomInt(1, 9, random);
-        let b = football ? randomInt(1, a - 2, random) : randomInt(1, 9, random);
+        // target, so keep two squares between the pair for its mistakes. The
+        // goals start at 2 so the one square too low mistake stays on the graph.
+        const a = football ? randomInt(4, 9, random) : randomInt(1, 9, random);
+        let b = football ? randomInt(2, a - 2, random) : randomInt(1, 9, random);
         while (b === a) b = randomInt(1, 9, random);
         const target = [a, b];
         const graph = { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
@@ -93,7 +94,7 @@
                 { point: target, labelSide: a === 9 ? 'right' : 'left', correct: true, feedback: `Across to ${a}, up to ${b}.` },
                 { point: [a, b + 1], labelSide: 'above', feedback: 'That one is one square too high. Count up again.' },
                 { point: [a - 1, b], labelSide: 'left', feedback: 'That one is one square off across. Count along again.' },
-                { point: [b, b], labelSide: 'right', feedback: `That's across ${b}, the number that goes up. The first number, ${a}, goes across.` }
+                { point: [a, b - 1], labelSide: 'below', feedback: 'That one is one square too low. Count up again.' }
             ] : [
                 { point: target, labelSide: a === 9 ? 'right' : 'left', correct: true, feedback: `Across to ${a}, up to ${b}.` },
                 { point: [b, a], labelSide: b > a ? (a === 1 ? 'right' : 'below') : 'left', feedback: `That point is back to front: ${b} across and ${a} up.` },
@@ -322,12 +323,12 @@
 
         if (item.type === 'read-pair') {
             // The swapped pair would say a player scored more goals than they
-            // had shots, so football uses another real mistake instead.
+            // had shots, so football moves one square up, down or across.
             const opts = ctx.football === true ? [
                 { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: `Down to ${a}, across to ${b}.`, correct: true },
-                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b + 1, ctx.yw)}`, feedback: 'Count the side axis again from 0.' },
-                { label: `${S.quantity(a + 1, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: 'Go straight down. Count the bottom axis again from 0.' },
-                { label: `${S.quantity(b, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: `That's across ${b}, the number from the side axis. The first number, ${a}, goes across.` }
+                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b + 1, ctx.yw)}`, feedback: "That's one square too high. Count up the side again from 0." },
+                { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b - 1, ctx.yw)}`, feedback: "That's one square too low. Count up the side again from 0." },
+                { label: `${S.quantity(a + 1, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: 'Go straight down. Count the bottom axis again from 0.' }
             ] : [
                 { label: `${S.quantity(a, ctx.xw)} and ${S.quantity(b, ctx.yw)}`, feedback: `Down to ${a}, across to ${b}.`, correct: true },
                 { label: `${S.quantity(b, ctx.xw)} and ${S.quantity(a, ctx.yw)}`, feedback: "That's back to front. Go down to the bottom axis first." },
