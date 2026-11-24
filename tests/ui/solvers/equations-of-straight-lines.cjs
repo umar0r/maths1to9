@@ -23,7 +23,7 @@ module.exports = async function solve(page) {
     if (sectionId === 'explanation') {
         const click = async label => {
             const control = root.getByRole('button', { name: label, exact: true });
-            if (await control.count() && await control.isEnabled()) { await control.evaluate(element => element.click()); return true; }
+            if (await control.count() && await control.isEnabled()) { await control.evaluate(element => element.scrollIntoView({ block: 'center' })); await control.click(); return true; }
             return false;
         };
         if (state.screen === 0) {
