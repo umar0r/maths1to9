@@ -31,9 +31,9 @@
         return window.Maths1to9Graph.create(host, options);
     }
 
-    function fullGraph(host, { points, axisNames, label, big = [] }) {
+    function fullGraph(host, { points, axisNames, label, big = [], compact = false }) {
         const boardHost = document.createElement('div');
-        boardHost.className = 'correlation-graph';
+        boardHost.className = compact ? 'correlation-graph correlation-graph--compact' : 'correlation-graph';
         host.append(boardHost);
         const board = makeGraph(boardHost, { ...grids, axisNames, label });
         const isBig = point => big.some(other => other[0] === point[0] && other[1] === point[1]);
@@ -207,7 +207,8 @@
         const root = element('div', '', 'correlation-sort');
         const slotRow = element('div', '', slots.length === 4
             ? 'correlation-sort__slots correlation-sort__slots--four'
-            : 'correlation-sort__slots');
+            : slots.length === 2 ? 'correlation-sort__slots correlation-sort__slots--pair'
+                : 'correlation-sort__slots');
         const tray = element('div', '', 'correlation-sort__tray');
         tray.setAttribute('role', 'group');
         tray.setAttribute('aria-label', 'Cards to sort');
@@ -376,6 +377,148 @@
         };
     }
 
+    /* The sentence pair a filled sentence builder has made, if it is one of
+       the two that say the same thing the right way round. */
+    function sentencePair(sentence, values) {
+        return sentence.pairs.find(pair => pair.values.every((word, index) => word === values[index])) ?? null;
+    }
+
+    /* A sentence with two gaps. Each gap has its own two word chips under the
+       sentence: tap a chip to put its word in that gap, tap the other chip to
+       swap it, tap the chosen chip to take it out. */
+    function createSentence(host, { sentence, value = null, editable = true, marked = false, onChange = () => {} }) {
+        const values = Array.isArray(value) ? sentence.gaps.map((_, index) => value[index] ?? null)
+            : sentence.gaps.map(() => null);
+        let canEdit = editable;
+        let isMarked = marked;
+
+        const root = element('div', '', 'correlation-builder');
+        const line = element('p', '', 'correlation-builder__line');
+        const boxes = sentence.gaps.map((_, index) => {
+            const box = element('span', '', 'correlation-builder__gap');
+            box.setAttribute('aria-label', index === 0 ? 'First gap' : 'Second gap');
+            return box;
+        });
+        sentence.parts.forEach(part => {
+            if (typeof part === 'number') line.append(boxes[part]);
+            else line.append(document.createTextNode(part));
+        });
+        const tray = element('div', '', 'correlation-builder__tray');
+        const groups = sentence.gaps.map((chips, index) => {
+            const group = element('div', '', 'correlation-builder__chips');
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', index === 0 ? 'Words for the first gap' : 'Words for the second gap');
+            chips.forEach(word => {
+                const chip = element('button', word, 'correlation-card');
+                chip.type = 'button';
+                chip.addEventListener('click', () => choose(index, word));
+                group.append(chip);
+            });
+            tray.append(group);
+            return group;
+        });
+        root.append(line, tray);
+        host.append(root);
+
+        function right() {
+            return Boolean(sentencePair(sentence, values));
+        }
+        function paint() {
+            boxes.forEach((box, index) => {
+                box.textContent = values[index] ?? '';
+                box.classList.toggle('is-empty', !values[index]);
+                box.classList.toggle('is-correct', isMarked && right());
+                box.classList.toggle('is-incorrect', isMarked && !right());
+            });
+            groups.forEach((group, index) => [...group.children].forEach(chip => {
+                const chosen = chip.textContent === values[index];
+                chip.classList.toggle('is-selected', chosen);
+                chip.disabled = !canEdit;
+                chip.setAttribute('aria-pressed', String(chosen));
+            }));
+        }
+        function choose(index, word) {
+            if (!canEdit) return;
+            values[index] = values[index] === word ? null : word;
+            paint();
+            onChange([...values]);
+        }
+
+        paint();
+        return {
+            values,
+            update({ value: next, editable: nextEditable = canEdit, marked: nextMarked = isMarked }) {
+                canEdit = nextEditable;
+                isMarked = nextMarked;
+                if (Array.isArray(next)) sentence.gaps.forEach((_, index) => { values[index] = next[index] ?? null; });
+                paint();
+            },
+            filled() {
+                return sentence.gaps.every((_, index) => Boolean(values[index]));
+            },
+            right
+        };
+    }
+
+    /* The Practice version of the sentence builder: nothing is marked until
+       Check, when the whole sentence turns green or red. */
+    function sentenceWidget({ sentence }) {
+        let handle = null;
+        return {
+            isEmpty: value => !Array.isArray(value) || value.some(word => !word),
+            render(host, { value, editable, onChange }) {
+                handle = createSentence(host, { sentence, value, editable, onChange });
+                return {
+                    update({ value: next, editable: nextEditable, phase = 'answer' }) {
+                        handle.update({ value: next, editable: nextEditable === true && phase === 'answer',
+                            marked: phase !== 'answer' });
+                    },
+                    focus() { host.querySelector('button')?.focus(); }
+                };
+            },
+            mark(value) {
+                const pair = sentencePair(sentence, value);
+                return { correct: Boolean(pair), feedback: pair ? pair.feedback : sentence.wrong };
+            },
+            answerText: value => `You chose "${value[0]}" and "${value[1]}".`
+        };
+    }
+
+    /* The Practice version of the word-card sort with sentence cards: the
+       cards can be moved between the boxes until Check, then every box is
+       marked at once. */
+    function sortSentencesWidget({ cards, slots, success, wrong }) {
+        let handle = null;
+        const binOf = itemId => cards.find(card => card.id === itemId)?.bin ?? null;
+        return {
+            isEmpty: value => !value || slots.every(slot => (value.placed?.[slot.id] || []).length === 0),
+            render(host, { value, editable, onChange }) {
+                handle = sortCards(host, {
+                    items: cards, slots, mode: 'check', value, editable,
+                    accepts: (slotId, itemId) => binOf(itemId) === slotId,
+                    onChange(next) { onChange(next); }
+                });
+                return {
+                    update({ value: next, editable: nextEditable, phase = 'answer' }) {
+                        handle.update({ value: next, editable: nextEditable === true && phase === 'answer',
+                            marked: phase !== 'answer' });
+                    },
+                    focus() { handle.root.querySelector('.correlation-card')?.focus(); }
+                };
+            },
+            mark(value) {
+                const correct = cards.every(card => (value.placed?.[card.bin] || []).includes(card.id));
+                return { correct, feedback: correct ? success : wrong };
+            },
+            answerText: value => slots.map(slot => {
+                const labels = (value.placed?.[slot.id] || [])
+                    .map(id => cards.find(card => card.id === id)?.label)
+                    .filter(Boolean);
+                return `${slot.title}: ${labels.length ? labels.join('; ') : 'nothing'}.`;
+            }).join(' ')
+        };
+    }
+
     /* The Practice card that asks the pupil to drag blue points up or down.
        Nothing is marked until Check, when each blue point turns green or red. */
     function dragPointsWidget({ graph, fixed, movable, check, answerText }) {
@@ -426,7 +569,8 @@
     const helpers = {
         sets, makeGraph, fullGraph, miniGraph, smallGraphs, note, sentence,
         pearson, pointSet, patternPoints, patternY, flatHalves,
-        sortCards, dragPointsWidget
+        sortCards, dragPointsWidget, createSentence, sentencePair,
+        sentenceWidget, sortSentencesWidget
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = helpers;

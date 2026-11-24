@@ -656,28 +656,290 @@
         render();
     }
 
-    /* Placeholder for a Try it that a later stage builds. */
-    async function mountPlaceholder(api, root, section) {
+    /* Describe Try it, screens 1 and 2: finish the sentence for the graph. */
+    const describeScreens = [
+        {
+            heading: 'Finish the sentence for this graph.',
+            axisNames: { x: 'Garden length (m)', y: 'Mowing time (minutes)' },
+            x: [0, 30], y: [0, 40], step: { x: 5, y: 5 }, labelEvery: { x: 1, y: 2 },
+            label: 'Scatter graph of garden length and mowing time.',
+            points: [[5, 11], [8, 16], [10, 15], [13, 22], [16, 24], [20, 29], [23, 28], [27, 35]],
+            sentence: {
+                parts: [0, ' gardens tend to take ', 1, ' time to mow.'],
+                gaps: [['Longer', 'Shorter'], ['more', 'less']],
+                pairs: [
+                    { values: ['Longer', 'more'],
+                        feedback: 'Yes. The points go up, so longer gardens tend to take more time.' },
+                    { values: ['Shorter', 'less'],
+                        feedback: "Yes. That's the same pattern said the other way round." }
+                ],
+                wrong: 'That would mean the points go down. Look again: do they go up or down?'
+            }
+        },
+        {
+            heading: 'Finish the sentence for this graph.',
+            axisNames: { x: 'Age of car (years)', y: 'Value (£1000s)' },
+            label: 'Scatter graph of the age of a car and its value.',
+            points: [[1, 9], [2, 9], [3, 7], [4, 7], [5, 5], [6, 5], [7, 4], [8, 2], [9, 2]],
+            sentence: {
+                parts: [0, ' cars tend to be worth ', 1, '.'],
+                gaps: [['Older', 'Newer'], ['more', 'less']],
+                pairs: [
+                    { values: ['Older', 'less'],
+                        feedback: 'Yes. The points go down, so older cars tend to be worth less.' },
+                    { values: ['Newer', 'more'],
+                        feedback: "Yes. That's the same pattern said the other way round." }
+                ],
+                wrong: 'That would mean the points go up. Look again: do they go up or down?'
+            }
+        }
+    ];
+
+    /* Cause Try it: two boxes for the four sentences about the ice cream graph. */
+    const causeSort = {
+        heading: 'Sort the sentences about this graph.',
+        axisNames: { x: 'Ice creams sold (boxes)', y: 'Sunburn cases' },
+        label: 'Scatter graph of ice creams sold and sunburn cases.',
+        points: C.sets.iceCreamSunburn,
+        seed: 20261124,
+        cards: [
+            { id: 'shows-1', label: 'More ice creams tend to go with more sunburn.', bin: 'shows' },
+            { id: 'shows-2', label: 'Fewer ice creams tend to go with less sunburn.', bin: 'shows' },
+            { id: 'cant-1', label: 'Eating ice cream causes sunburn.', bin: 'cant' },
+            { id: 'cant-2', label: 'Selling less ice cream would stop sunburn.', bin: 'cant' }
+        ],
+        slots: [
+            { id: 'shows', title: 'The graph shows this' },
+            { id: 'cant', title: "The graph can't prove this" }
+        ],
+        success: "The graph shows the two go together. It can't show why.",
+        hint(slotId, itemId) {
+            const card = causeSort.cards.find(entry => entry.id === itemId);
+            return card.bin === 'shows'
+                ? 'The points do show this: they go up together.'
+                : 'That says one thing causes the other. The graph only shows that they go together.';
+        }
+    };
+
+    function attemptKey(part, index) {
+        return `${part}${index + 1}`;
+    }
+
+    async function mountDescribeTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
         const id = section.id;
         const box = root.closest('.lesson-section');
         box?.removeAttribute('aria-labelledby');
-        box?.setAttribute('aria-label', 'Try it');
+        box?.setAttribute('aria-label', 'Describe Try it');
         api.gateSection(id);
-        root.replaceChildren();
-        const heading = element('h2', 'This part comes next.');
-        heading.id = `lesson-section-title-${id}`;
-        heading.dataset.screenHeading = '';
-        heading.tabIndex = -1;
-        root.append(heading);
-        api.setSectionBack(id, null);
-        api.setSectionReset(id, null);
-        api.setSectionAction(id, {
-            label: 'Continue',
-            onClick() {
-                api.completeSection(id);
-                api.continueSection();
-            }
+        const sectionState = await api.useSectionState('interactive:describe', {
+            version: 1, upgrade: () => null,
+            initial: () => ({
+                screen: 0, furthest: 0,
+                d1: { values: [null, null], done: false, hint: '', feedback: '' },
+                d2: { values: [null, null], done: false, hint: '', feedback: '' }
+            })
         });
+        const state = sectionState.state;
+        let boards = [];
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash(`describe-try-it-${state.screen + 1}`, { replace: true });
+            }
+        }
+        function show(index) {
+            sectionState.update(saved => {
+                saved.screen = index;
+                saved.furthest = Math.max(saved.furthest, index);
+            });
+            render();
+            root.querySelector('[data-screen-heading]')?.focus();
+        }
+        function progress() {
+            const completed = Number(state.d1.done) + Number(state.d2.done);
+            api.setSectionProgress(id, completed, describeScreens.length);
+            if (completed === describeScreens.length) api.completeSection(id);
+        }
+
+        function render() {
+            boards.forEach(board => board.destroy());
+            boards = [];
+            root.replaceChildren();
+            const index = state.screen;
+            const screen = describeScreens[index];
+            const card = state[attemptKey('d', index)];
+            const heading = element('h2', screen.heading);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'correlation-picture');
+            root.append(picture);
+            const graphHost = element('div', '', 'correlation-graph');
+            picture.append(graphHost);
+            const board = C.makeGraph(graphHost, {
+                x: screen.x, y: screen.y, step: screen.step, labelEvery: screen.labelEvery,
+                axisNames: screen.axisNames, label: screen.label
+            });
+            boards.push(board);
+            screen.points.forEach(point => board.point(point, {
+                size: 'small', tone: 'neutral', coordinates: false
+            }));
+            board.setEditable(false);
+            const feedback = E.createFeedback('interactive', { visible: false });
+            const builder = C.createSentence(picture, {
+                sentence: screen.sentence, value: card.values,
+                editable: !card.done, marked: card.done,
+                onChange(values) {
+                    const pair = values.every(Boolean) ? C.sentencePair(screen.sentence, values) : null;
+                    sectionState.update(saved => {
+                        const savedCard = saved[attemptKey('d', index)];
+                        savedCard.values = values;
+                        if (pair) {
+                            savedCard.done = true;
+                            savedCard.feedback = pair.feedback;
+                            savedCard.hint = '';
+                        } else if (values.every(Boolean)) {
+                            savedCard.hint = screen.sentence.wrong;
+                        }
+                    });
+                    if (pair) {
+                        render();
+                        return;
+                    }
+                    paint();
+                }
+            });
+            picture.append(feedback);
+
+            function paint() {
+                const message = card.done ? card.feedback : card.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: card.done
+                });
+                const last = index === describeScreens.length - 1;
+                api.setSectionAction(id, {
+                    label: last ? 'Continue' : 'Next', disabled: !card.done,
+                    onClick() {
+                        if (!card.done) return;
+                        if (last) {
+                            api.completeSection(id);
+                            api.continueSection();
+                            return;
+                        }
+                        show(index + 1);
+                    }
+                });
+                progress();
+                syncHash();
+            }
+            builder.update({ value: card.values, editable: !card.done, marked: card.done });
+            paint();
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, () => {
+                sectionState.resetFields([attemptKey('d', index)]);
+                render();
+            });
+        }
+
+        describeScreens.forEach((_, index) => api.registerHashRoute(`describe-try-it-${index + 1}`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            show(Math.min(index, state.furthest));
+        }));
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    async function mountCauseTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Cause Try it');
+        api.gateSection(id);
+        const sectionState = await api.useSectionState('interactive:cause', {
+            version: 1, upgrade: () => null,
+            initial: () => ({ screen: 0, furthest: 0, c1: { sort: null, done: false, hint: '' } })
+        });
+        const state = sectionState.state;
+        const cards = E.shuffle(causeSort.cards.map(card => ({ ...card })), E.seededRandom(causeSort.seed));
+        let boards = [];
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash('cause-try-it-1', { replace: true });
+            }
+        }
+
+        function render() {
+            boards.forEach(board => board.destroy());
+            boards = [];
+            root.replaceChildren();
+            const heading = element('h2', causeSort.heading);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'correlation-picture');
+            root.append(picture);
+            boards.push(C.fullGraph(picture, {
+                points: causeSort.points, axisNames: causeSort.axisNames,
+                label: causeSort.label, compact: true
+            }));
+            const feedback = E.createFeedback('interactive', { visible: false });
+            C.sortCards(picture, {
+                items: cards,
+                slots: causeSort.slots,
+                accepts: (slotId, itemId) => causeSort.cards.find(card => card.id === itemId).bin === slotId,
+                hint: causeSort.hint,
+                mode: 'try',
+                value: state.c1.sort,
+                onChange(value) {
+                    const done = cards.every(card => (value.placed[card.bin] || []).includes(card.id));
+                    sectionState.update(saved => {
+                        saved.c1.sort = value;
+                        saved.c1.done = done;
+                        saved.c1.hint = done ? '' : (value.hint || '');
+                    });
+                    paint();
+                }
+            });
+            picture.append(feedback);
+
+            function paint() {
+                const message = state.c1.done ? causeSort.success : state.c1.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: state.c1.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue', disabled: !state.c1.done,
+                    onClick() {
+                        if (!state.c1.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                api.setSectionProgress(id, Number(state.c1.done), 1);
+                if (state.c1.done) api.completeSection(id);
+                syncHash();
+            }
+            paint();
+            api.setSectionBack(id, null);
+            api.setSectionReset(id, () => {
+                sectionState.resetFields(['c1']);
+                render();
+            });
+        }
+
+        api.registerHashRoute('cause-try-it-1', () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            render();
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
     }
 
     window.Maths1to9Interactives ??= {};
@@ -687,6 +949,7 @@
         await mountLearn(api, section.part);
         if (section.part === 'type') await mountTypeTryIt(api, root, section);
         else if (section.part === 'strength') await mountStrengthTryIt(api, root, section);
-        else await mountPlaceholder(api, root, section);
+        else if (section.part === 'describe') await mountDescribeTryIt(api, root, section);
+        else await mountCauseTryIt(api, root, section);
     };
 })();

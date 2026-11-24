@@ -9,6 +9,12 @@
     margin: 1rem auto;
 }
 
+/* The Cause Try it graph sits above two boxes of sentences, so it is a
+   little smaller than a full graph. */
+.correlation-graph--compact {
+    max-width: 320px;
+}
+
 /* The graph's spoken hint stays for screen readers, but the drag screens
    show their own hint underneath, so it needs no line of its own. */
 .correlation-graph .maths-graph__description {
@@ -198,4 +204,73 @@
         justify-self: center;
         width: calc(50% - 0.25rem);
     }
+}
+
+/* Two boxes of whole sentences: side by side on a computer, one at a time on
+   a phone so each sentence has the width to be read. */
+.correlation-sort__slots--pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.correlation-sort__drop .correlation-card {
+    max-width: 100%;
+    text-align: left;
+}
+
+@media (max-width: 767px) {
+    .correlation-sort__slots--pair {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* The sentence builder: each gap sits in the sentence, with its two word
+   chips underneath the sentence. */
+.correlation-builder {
+    max-width: 34rem;
+    margin: 1.25rem auto 0;
+}
+
+.correlation-builder__line {
+    margin: 0;
+    font-weight: 700;
+    line-height: 2;
+    text-align: center;
+}
+
+.correlation-builder__gap {
+    display: inline-block;
+    min-width: 4.5rem;
+    padding: 0 0.4rem;
+    border-bottom: 3px solid var(--border-dark);
+    font-weight: 800;
+    text-align: center;
+}
+
+.correlation-builder__gap.is-empty {
+    min-height: 1.6em;
+}
+
+.correlation-builder__gap.is-correct {
+    border-color: var(--success-dark);
+    color: var(--success-dark);
+}
+
+.correlation-builder__gap.is-incorrect {
+    border-color: var(--error-dark);
+    color: var(--error-dark);
+}
+
+.correlation-builder__tray {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 1rem;
+}
+
+.correlation-builder__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
 }
