@@ -9,9 +9,9 @@
         'To read a point, go straight down to the bottom axis, then straight across to the side axis.'
     ];
     const tryItTitles = [
-        'Read the big point.',
+        'Read the blue point.',
         'Tap the point for 3 rainy days and 7 accidents.',
-        'Fill in the table for the big point.'
+        'Fill in the table for the blue point.'
     ];
     const tryItPoints = [[1, 3], [3, 7], [6, 3], [7, 3], [8, 9]];
 
@@ -69,10 +69,10 @@
             heading.dataset.screenHeading = '';
             root.append(heading);
             const prompt = element('p');
-            if (index === 1) prompt.textContent = 'Tap the column in the table that the big point shows.';
+            if (index === 1) prompt.textContent = 'Tap the column in the table that the blue point shows.';
             if (index === 2) prompt.textContent = state.axisStage === 0
-                ? 'Tap the bottom axis right under the big point.'
-                : state.axisStage === 1 ? 'Now tap the side axis level with the big point.' : '';
+                ? 'Tap the bottom axis right under the blue point.'
+                : state.axisStage === 1 ? 'Now tap the side axis level with the blue point.' : '';
             if (index > 0) root.append(prompt);
             const tableHost = element('div');
             if (index < 2) root.append(tableHost);
@@ -106,7 +106,7 @@
                 x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                 axisNames: { x: 'Hours of revision', y: 'Test mark' },
                 label: index === 0 ? 'Scatter graph of hours of revision and test marks.'
-                    : 'Scatter graph of hours of revision and test marks, with one big point.'
+                    : 'Scatter graph of hours of revision and test marks, with one blue point.'
             });
             const target = index === 1 ? [4, 5] : [5, 4];
             S.pairs.forEach(pair => {
@@ -125,7 +125,7 @@
                 if (index === 2 && state.axisStage >= 1) {
                     arrows.push(graph.arrow([5, 4], [5, 0], { dash: true, tone: 'ink' }));
                     if (state.axisStage === 2) arrows.push(graph.arrow([5, 4], [0, 4], { dash: true, tone: 'ink' }));
-                    prompt.textContent = state.axisStage === 1 ? 'Now tap the side axis level with the big point.' : '';
+                    prompt.textContent = state.axisStage === 1 ? 'Now tap the side axis level with the blue point.' : '';
                 }
                 const message = index === 1 ? state.columnHint : index === 2 ? state.axisHint : '';
                 feedback.textContent = message;
@@ -244,7 +244,7 @@
                 prompt.textContent = 'Tap the bottom axis under the point.';
                 graph = makeGraph(graphHost, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                     axisNames: { x: 'Rainy days', y: 'Road accidents' },
-                    label: 'Scatter graph of rainy days and road accidents, with one big point.' });
+                    label: 'Scatter graph of rainy days and road accidents, with one blue point.' });
                 tryItPoints.forEach(p => {
                     const big = p[0] === 6 && p[1] === 3;
                     graph.point(p, { size: big ? 'large' : 'small', tone: big ? 'neutral' : 'muted', coordinates: false });
@@ -348,7 +348,7 @@
                 const allPoints = tryItPoints.concat([[5, 8]]);
                 graph = makeGraph(graphHost, { x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
                     axisNames: { x: 'Rainy days', y: 'Road accidents' },
-                    label: 'Scatter graph of rainy days and road accidents, with one big point.' });
+                    label: 'Scatter graph of rainy days and road accidents, with one blue point.' });
                 allPoints.forEach(p => {
                     const big = p[0] === 5 && p[1] === 8;
                     graph.point(p, { size: big ? 'large' : 'small', tone: big ? 'neutral' : 'muted', coordinates: false });
@@ -466,24 +466,24 @@
     const plotLearn = [
         {
             title: 'To plot a pair, go across to the first number, then up to the second.',
-            rows: ['Shots', 'Goals'], values: [[1, 2], [4, 3], [6, 5], [3, 5]],
-            points: [[1, 2], [4, 3], [6, 5]], targets: [[3, 5]], column: 3,
+            rows: ['Shots', 'Goals'], values: [[2, 1], [4, 3], [6, 5], [5, 3]],
+            points: [[2, 1], [4, 3], [6, 5]], targets: [[5, 3]], column: 3,
             line: 'Tap where the point for the orange column goes.',
             axisNames: { x: 'Shots on target', y: 'Goals' },
-            success: 'Across to 3, then up to 5.',
-            hint: point => S.samePoint(point, [5, 3]) ? 'You went across to 5. Across is the top number in the table, 3.'
-                : 'Go along the bottom to 3 first, then up to 5.'
+            success: 'Across to 5, then up to 3.',
+            hint: point => S.samePoint(point, [3, 5]) ? 'You went across to 3. Across is the top number in the table, 5.'
+                : 'Go along the bottom to 5 first, then up to 3.'
         },
         {
             title: 'Two pairs can start with the same number. Each pair still gets its own point.',
-            rows: ['Shots', 'Goals'], values: [[2, 4], [4, 6], [4, 8]],
-            points: [[2, 4], [4, 6]], targets: [[4, 8]], column: 2,
+            rows: ['Shots', 'Goals'], values: [[4, 2], [6, 3], [6, 5]],
+            points: [[4, 2], [6, 3]], targets: [[6, 5]], column: 2,
             line: 'Tap where the point for the orange column goes.',
             axisNames: { x: 'Shots on target', y: 'Goals' },
-            success: 'Both pairs start at 4, so their points sit one above the other.',
-            hint: point => S.samePoint(point, [4, 6]) ? "That's the point for 4 shots and 6 goals. This pair goes up to 8, so it needs its own point."
-                : S.samePoint(point, [8, 4]) ? 'You went across to 8. Across is the top number, 4.'
-                    : 'Go along the bottom to 4, then up to 8.'
+            success: 'Both pairs start at 6, so their points sit one above the other.',
+            hint: point => S.samePoint(point, [6, 3]) ? "That's the point for 6 shots and 3 goals. This pair goes up to 5, so it needs its own point."
+                : S.samePoint(point, [5, 6]) ? 'You went across to 5. Across is the top number, 6.'
+                    : 'Go along the bottom to 6, then up to 5.'
         }
     ];
     const sunshineAxes = { x: 'Hours of sunshine', y: 'Ice creams sold (boxes)' };
@@ -688,7 +688,7 @@
                 : 'Five squares make 10 across, so one square is 2. Count 2, 4, 6… to 14.'
         },
         {
-            title: 'Fill in the table for the big point.', graph: temperatureScale, axisNames: temperatureAxes,
+            title: 'Fill in the table for the blue point.', graph: temperatureScale, axisNames: temperatureAxes,
             points: [[6, 30], [10, 40], [22, 80], [18, 90]], bigPoint: [18, 90], targets: [[18, 90]],
             digits: true, guides: false, success: '18 °C and 90 ice creams.'
         }
