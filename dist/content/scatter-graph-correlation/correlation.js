@@ -196,11 +196,13 @@
         const blank = () => ({
             placed: Object.fromEntries(slots.map(slot => [slot.id, []])),
             selected: null,
-            hint: ''
+            hint: '',
+            locked: []
         });
         const state = value && typeof value === 'object' ? JSON.parse(JSON.stringify(value)) : blank();
         slots.forEach(slot => { state.placed[slot.id] ??= []; });
         state.hint ??= '';
+        state.locked = Array.isArray(state.locked) ? state.locked : [];
         let marked = false;
         let canEdit = editable;
 
@@ -286,8 +288,9 @@
                 .find(slotId => state.placed[slotId].includes(itemId)) ?? null;
         }
         function locked(itemId) {
+            if (state.locked.includes(itemId)) return true;
             const slotId = placedIn(itemId);
-            return Boolean(slotId) && accepts(slotId, itemId);
+            return marked && Boolean(slotId) && accepts(slotId, itemId);
         }
         function takeBack(itemId) {
             const slotId = placedIn(itemId);
@@ -310,11 +313,33 @@
             if (from === slotId) return;
             if (from) state.placed[from] = state.placed[from].filter(other => other !== itemId);
             state.selected = null;
-            if (mode === 'try' && !accepts(slotId, itemId)) {
-                state.hint = hint(slotId, itemId);
+            state.placed[slotId] = [...state.placed[slotId], itemId];
+            state.hint = '';
+            paint();
+            onChange({ ...state });
+            if (mode === 'try' && allPlaced()) markAll();
+        }
+
+        // Try it marks every card at once, when the last empty box is filled:
+        // right cards lock green, wrong ones go back to the row and one hint
+        // tells the pupil about the first wrong card.
+        function markAll() {
+            const wrong = [];
+            slots.forEach(slot => state.placed[slot.id].forEach(itemId => {
+                if (!accepts(slot.id, itemId)) wrong.push({ slotId: slot.id, itemId });
+            }));
+            if (!wrong.length) {
+                state.hint = '';
+                state.locked = items.map(item => item.id);
             } else {
-                state.placed[slotId] = [...state.placed[slotId], itemId];
-                state.hint = mode === 'try' && allPlaced() ? '' : state.hint;
+                state.hint = hint(wrong[0].slotId, wrong[0].itemId);
+                wrong.forEach(({ slotId, itemId }) => {
+                    state.placed[slotId] = state.placed[slotId].filter(other => other !== itemId);
+                });
+                state.locked = items
+                    .map(item => [item.id, placedIn(item.id)])
+                    .filter(([itemId, slotId]) => Boolean(slotId) && accepts(slotId, itemId))
+                    .map(([itemId]) => itemId);
             }
             paint();
             onChange({ ...state });
@@ -336,16 +361,15 @@
                 state.placed[slotId].forEach(itemId => {
                     const item = items.find(entry => entry.id === itemId);
                     const right = accepts(slotId, itemId);
-                    const chip = document.createElement(mode === 'check' && !marked ? 'button' : 'span');
+                    const chip = document.createElement(mode === 'check' || mode === 'try' ? 'button' : 'span');
                     chip.className = 'correlation-card correlation-card--placed';
+                    chip.textContent = item.label;
                     if (chip.tagName === 'BUTTON') {
                         chip.type = 'button';
-                        chip.textContent = item.label;
+                        chip.disabled = mode === 'try' && (!canEdit || state.locked.includes(itemId));
                         chip.addEventListener('click', () => takeBack(itemId));
-                    } else {
-                        chip.textContent = item.label;
                     }
-                    if (mode === 'try' && right) chip.classList.add('is-correct');
+                    if (state.locked.includes(itemId)) chip.classList.add('is-correct');
                     if (marked) chip.classList.add(right ? 'is-correct' : 'is-incorrect');
                     drop.append(chip);
                 });
