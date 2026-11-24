@@ -7,7 +7,7 @@
     text-align: center;
 }
 .reciprocal-table th, .reciprocal-table td {
-    padding: 0.35rem 0.05rem;
+    padding: 0.35rem 0.02rem;
     border: 1px solid var(--border);
 }
 .reciprocal-table [aria-current="true"] {
@@ -51,8 +51,8 @@
 }
 .reciprocal-cell {
     width: 100%;
-    max-width: 3.2rem;
-    padding: 0.35rem 0.05rem;
+    max-width: 3.75rem;
+    padding: 0.35rem 0.02rem;
     border: 2px dashed var(--text-muted);
     border-radius: 0.3rem;
     font: inherit;
@@ -78,7 +78,8 @@
     .reciprocal-live__graph { margin: 0; }
 }
 
-.reciprocal-table th { width: 1rem; }
+.reciprocal-table th { width: 0.75rem; }
+.reciprocal-table td { width: 3.4rem; }
 .reciprocal-fraction { display: inline-flex; vertical-align: middle; flex-direction: column; text-align: center; line-height: 1.1; margin-left: 0.25em; }
 .reciprocal-fraction span:first-child { border-bottom: 1px solid currentColor; padding: 0 0.3em 0.1em; }
 .reciprocal-fraction span:last-child { padding-top: 0.1em; }
