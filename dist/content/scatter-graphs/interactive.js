@@ -4,6 +4,7 @@
     const slug = document.body.dataset.lessonId;
     const S = window.ScatterGraphs;
     const titles = [
+        "A bar chart shows one set of numbers. It can't tell us why some marks are higher.",
         'A scatter graph shows pairs of numbers as points, so we can see how they go together.',
         'Each point is one pair from the table.',
         'To read a point, go straight down to the bottom axis, then straight across to the side axis.'
@@ -30,7 +31,7 @@
         host.append(root);
         api.gateSection(id);
         const section = await api.useSectionState('learn:read', {
-            version: 1, upgrade: () => null,
+            version: 2, upgrade: () => null,
             initial: () => ({ screen: 0, furthest: 0, columnDone: false, columnHint: '',
                 axisStage: 0, axisHint: '' })
         });
@@ -55,8 +56,9 @@
             initialRender = false;
         }
         function progress() {
-            const completed = Number(state.furthest >= 1) + Number(state.columnDone) + Number(state.axisStage === 2);
-            api.setSectionProgress(id, completed, 3);
+            const completed = Number(state.furthest >= 1) + Number(state.furthest >= 2) +
+                Number(state.columnDone) + Number(state.axisStage === 2);
+            api.setSectionProgress(id, completed, 4);
             if (state.columnDone && state.axisStage === 2) api.completeSection(id);
         }
         function render() {
@@ -69,24 +71,24 @@
             heading.dataset.screenHeading = '';
             root.append(heading);
             const prompt = element('p');
-            if (index === 1) prompt.textContent = 'Tap the column in the table that the blue point shows.';
-            if (index === 2) prompt.textContent = state.axisStage === 0
+            if (index === 2) prompt.textContent = 'Tap the column in the table that the blue point shows.';
+            if (index === 3) prompt.textContent = state.axisStage === 0
                 ? 'Tap the bottom axis right under the blue point.'
                 : state.axisStage === 1 ? 'Now tap the side axis level with the blue point.' : '';
-            if (index > 0) root.append(prompt);
+            if (index > 1) root.append(prompt);
             const tableHost = element('div');
-            if (index < 2) root.append(tableHost);
+            if (index === 1 || index === 2) root.append(tableHost);
             const graphHost = element('div', '', 'scatter-graph-host');
             root.append(graphHost);
             const feedback = E.createFeedback('explanation', { visible: false });
-            if (index > 0) root.append(feedback);
+            if (index > 1) root.append(feedback);
 
             function drawTable() {
                 tableHost.replaceChildren();
                 S.pairTable(tableHost, {
                     rows: ['Hours', 'Mark'], values: S.pairs,
-                    selected: index === 1 && state.columnDone ? 2 : null,
-                    onPick: index === 1 ? chooseColumn : null
+                    selected: index === 2 && state.columnDone ? 2 : null,
+                    onPick: index === 2 ? chooseColumn : null
                 });
                 if (state.columnDone) tableHost.querySelectorAll('button').forEach(button => { button.disabled = true; });
             }
@@ -101,46 +103,55 @@
                 drawTable();
                 paint();
             }
-            if (index < 2) drawTable();
-            graph = S.makeGraph(graphHost, {
-                x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
-                axisNames: { x: 'Hours of revision', y: 'Test mark' },
-                label: index === 0 ? 'Scatter graph of hours of revision and test marks.'
-                    : 'Scatter graph of hours of revision and test marks, with one blue point.'
-            });
-            const target = index === 1 ? [4, 5] : [5, 4];
-            S.pairs.forEach(pair => {
-                const big = index > 0 && pair[0] === target[0] && pair[1] === target[1];
-                graph.point(pair, { size: big ? 'large' : 'small', tone: index === 0 || big ? 'neutral' : 'muted', coordinates: false });
-            });
+            if (index === 1 || index === 2) drawTable();
+            if (index === 0) {
+                S.barChart(graphHost, {
+                    labels: S.pairs.map((pair, position) => `Pupil ${'ABCDEF'[position]}`),
+                    values: S.pairs.map(pair => pair[1]),
+                    max: 10, axisName: 'Test mark',
+                    description: "Bar chart of the six pupils' test marks: 3, 2, 5, 4, 7 and 9."
+                });
+            } else {
+                graph = S.makeGraph(graphHost, {
+                    x: [0, 10], y: [0, 10], step: { x: 1, y: 1 }, labelEvery: 1,
+                    axisNames: { x: 'Hours of revision', y: 'Test mark' },
+                    label: index === 1 ? 'Scatter graph of hours of revision and test marks.'
+                        : 'Scatter graph of hours of revision and test marks, with one blue point.'
+                });
+                const target = index === 2 ? [4, 5] : [5, 4];
+                S.pairs.forEach(pair => {
+                    const big = index > 1 && pair[0] === target[0] && pair[1] === target[1];
+                    graph.point(pair, { size: big ? 'large' : 'small', tone: index === 1 || big ? 'neutral' : 'muted', coordinates: false });
+                });
+            }
             let arrows = [];
             let picker = null;
             function paint() {
                 arrows.forEach(arrow => arrow.remove());
                 arrows = [];
-                if (index === 1 && state.columnDone) {
+                if (index === 2 && state.columnDone) {
                     arrows.push(graph.arrow([4, 5], [4, 0], { dash: true, tone: 'ink' }));
                     arrows.push(graph.arrow([4, 5], [0, 5], { dash: true, tone: 'ink' }));
                 }
-                if (index === 2 && state.axisStage >= 1) {
+                if (index === 3 && state.axisStage >= 1) {
                     arrows.push(graph.arrow([5, 4], [5, 0], { dash: true, tone: 'ink' }));
                     if (state.axisStage === 2) arrows.push(graph.arrow([5, 4], [0, 4], { dash: true, tone: 'ink' }));
                     prompt.textContent = state.axisStage === 1 ? 'Now tap the side axis level with the blue point.' : '';
                 }
-                const message = index === 1 ? state.columnHint : index === 2 ? state.axisHint : '';
+                const message = index === 2 ? state.columnHint : index === 3 ? state.axisHint : '';
                 feedback.textContent = message;
                 feedback.className = E.feedbackClassName('explanation', {
-                    visible: Boolean(message), correct: index === 1 ? state.columnDone : state.axisStage === 2
+                    visible: Boolean(message), correct: index === 2 ? state.columnDone : state.axisStage === 2
                 });
                 progress();
                 api.setSectionAction(id, {
-                    label: index === 2 ? 'Continue' : 'Next',
-                    disabled: index === 1 ? !state.columnDone : index === 2 ? state.axisStage !== 2 : false,
-                    onClick: () => index === 2 ? api.continueSection() : show(index + 1)
+                    label: index === 3 ? 'Continue' : 'Next',
+                    disabled: index === 2 ? !state.columnDone : index === 3 ? state.axisStage !== 2 : false,
+                    onClick: () => index === 3 ? api.continueSection() : show(index + 1)
                 });
                 syncHash();
             }
-            if (index === 2 && state.axisStage < 2) {
+            if (index === 3 && state.axisStage < 2) {
                 picker = graph.pick({ label: prompt.textContent, onPick([x, y]) {
                     const stage = state.axisStage;
                     section.update(saved => {
@@ -164,8 +175,8 @@
                 } });
             }
             api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
-            api.setSectionReset(id, index === 0 ? null : () => {
-                section.resetFields(index === 1 ? ['columnDone', 'columnHint'] : ['axisStage', 'axisHint']);
+            api.setSectionReset(id, index < 2 ? null : () => {
+                section.resetFields(index === 2 ? ['columnDone', 'columnHint'] : ['axisStage', 'axisHint']);
                 render();
             });
             paint();

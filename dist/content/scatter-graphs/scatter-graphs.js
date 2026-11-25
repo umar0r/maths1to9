@@ -42,6 +42,53 @@
         return table;
     }
 
+    function barChart(host, { labels, values, max = 10, axisName, description }) {
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const width = 320;
+        const height = 320;
+        const left = 44;
+        const right = 306;
+        const top = 24;
+        const bottom = 262;
+        const unit = (bottom - top) / max;
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', description);
+        svg.classList.add('scatter-bar-chart');
+
+        function draw(tag, attributes, text = '') {
+            const node = document.createElementNS(svgNS, tag);
+            Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
+            if (text) node.textContent = text;
+            svg.append(node);
+            return node;
+        }
+
+        for (let value = 1; value <= max; value++) {
+            const y = bottom - value * unit;
+            draw('line', { x1: left, x2: right, y1: y, y2: y, class: 'scatter-bar-chart__grid' });
+        }
+        draw('line', { x1: left, x2: right, y1: bottom, y2: bottom, class: 'scatter-bar-chart__axis' });
+        draw('line', { x1: left, x2: left, y1: bottom, y2: top, class: 'scatter-bar-chart__axis' });
+        for (let value = 0; value <= max; value++) {
+            draw('text', { x: left - 6, y: bottom - value * unit, class: 'scatter-bar-chart__number' }, String(value));
+        }
+        draw('text', { x: left, y: top - 8, class: 'scatter-bar-chart__name' }, axisName);
+
+        const slot = (right - left) / values.length;
+        const barWidth = Math.min(28, slot - 10);
+        values.forEach((value, index) => {
+            const centre = left + slot * (index + 0.5);
+            draw('rect', { x: centre - barWidth / 2, y: bottom - value * unit, width: barWidth,
+                height: value * unit, rx: 2, class: 'scatter-bar-chart__bar' });
+            draw('text', { x: centre, y: bottom + 18, class: 'scatter-bar-chart__label' }, labels[index]);
+        });
+
+        host.append(svg);
+        return svg;
+    }
+
     function quantity(number, word) {
         const singular = {
             hours: 'hour', marks: 'mark', 'rainy days': 'rainy day', accidents: 'accident',
@@ -121,7 +168,7 @@
         };
     }
 
-    const helpers = { pairs, makeGraph, pairTable, samePoint, markPlot, plotWidget, quantity, markScaledPlot };
+    const helpers = { pairs, makeGraph, pairTable, barChart, samePoint, markPlot, plotWidget, quantity, markScaledPlot };
     if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
     else window.ScatterGraphs = helpers;
 })();
