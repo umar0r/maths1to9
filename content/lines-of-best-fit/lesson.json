@@ -1,0 +1,85 @@
+{
+    "slug": "lines-of-best-fit",
+    "title": "Lines of best fit",
+    "subtitle": "Draw a line of best fit and use it to estimate values.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "draw", "label": "Draw",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "ignore", "label": "Ignore",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "estimate", "label": "Estimate",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "trust", "label": "Trust",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            {
+                "type": "best-fit-meaning",
+                "prompt": "What is a line of best fit?",
+                "correct": "A straight line that follows the pattern, through the middle of the points.",
+                "feedback": "Yes. About as many points sit above it as below it.",
+                "wrong": [
+                    { "label": "A line that joins every point, dot to dot.",
+                      "feedback": "A line of best fit is one straight line. It doesn't join the dots." },
+                    { "label": "A line from the first point to the last point.",
+                      "feedback": "It doesn't have to go through any point. It goes through the middle of them all." },
+                    { "label": "A straight line that must start at 0.",
+                      "feedback": "It doesn't have to start at 0. It just follows the points." }
+                ]
+            }
+        ],
+        "summary": {
+            "title": "What you've learned",
+            "points": [
+                { "text": "A line of best fit is a straight line that follows the pattern, through the middle of the points." },
+                { "text": "About as many points sit above it as below it." },
+                { "text": "Ignore the outlier when you draw it." },
+                { "text": "To estimate, go from one axis to the line, then to the other axis. Read the line, not a point." },
+                { "text": "An estimate inside the data is reliable. Outside the data it may not be, because the pattern might not carry on." }
+            ]
+        }
+    },
+    "score_activities": [
+        { "id": "step:interactive--draw:0", "kind": "guided" },
+        { "id": "step:interactive--ignore:0", "kind": "guided" },
+        { "id": "step:interactive--estimate:0", "kind": "guided" },
+        { "id": "step:interactive--trust:0", "kind": "guided" }
+    ],
+    "assessment": { "question_types": {
+        "best-line": "line-of-best-fit",
+        "draw-best": "line-of-best-fit",
+        "outlier-line": "line-of-best-fit",
+        "read-up": "interpolate-extrapolate",
+        "read-across": "interpolate-extrapolate",
+        "trust-which": "interpolate-extrapolate",
+        "trust-sort": "interpolate-extrapolate",
+        "why-unreliable": "interpolate-extrapolate",
+        "best-fit-meaning": "line-of-best-fit",
+        "best-fit-graph": "line-of-best-fit",
+        "best-fit-estimate": "interpolate-extrapolate",
+        "best-fit-inside": "interpolate-extrapolate",
+        "best-fit-outside": "interpolate-extrapolate"
+    } }
+}

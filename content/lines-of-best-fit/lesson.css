@@ -1,0 +1,27 @@
+.best-fit-picture {
+    margin-top: 1rem;
+}
+
+.best-fit-graph {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 1rem auto;
+}
+
+/* The graph's spoken hint stays for screen readers, but no screen shows a
+   line of its own for it. */
+.best-fit-graph .maths-graph__description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.best-fit-note {
+    max-width: 30rem;
+    margin: 1rem auto 0.25rem;
+    text-align: center;
+}

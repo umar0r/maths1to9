@@ -137,6 +137,22 @@
     "question-bank",
     "comparison"
   ],
+  "lines-of-best-fit": [
+    "explanation--draw",
+    "interactive--draw",
+    "question-bank--draw",
+    "explanation--ignore",
+    "interactive--ignore",
+    "question-bank--ignore",
+    "explanation--estimate",
+    "interactive--estimate",
+    "question-bank--estimate",
+    "explanation--trust",
+    "interactive--trust",
+    "question-bank--trust",
+    "question-bank",
+    "comparison"
+  ],
   "lowest-common-multiple": [
     "explanation",
     "interactive",
