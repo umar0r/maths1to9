@@ -58,6 +58,49 @@ button.scatter-pair-table__column:focus-visible {
     margin: 1rem auto;
 }
 
+.scatter-bar-chart {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--border-dark);
+    background: var(--surface);
+}
+
+.scatter-bar-chart text {
+    font-family: "Nunito", sans-serif;
+}
+
+.scatter-bar-chart__grid {
+    stroke: var(--border);
+    stroke-width: 1;
+}
+
+.scatter-bar-chart__axis {
+    stroke: var(--text-soft);
+    stroke-width: 2;
+}
+
+.scatter-bar-chart__number {
+    fill: var(--text);
+    font-size: 11px;
+    text-anchor: end;
+    dominant-baseline: middle;
+}
+
+.scatter-bar-chart__name {
+    fill: var(--text);
+    font-size: 11px;
+}
+
+.scatter-bar-chart__label {
+    fill: var(--text);
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+.scatter-bar-chart__bar {
+    fill: var(--primary);
+}
+
 .scatter-mini-graphs {
     display: grid;
     grid-template-columns: repeat(4, minmax(150px, 1fr));
