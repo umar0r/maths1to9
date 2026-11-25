@@ -114,8 +114,9 @@
     }
 
     /* One full graph of a set the generator made: every point looks the
-       same, and some can carry a letter. */
-    function graphPoints(host, { set, context, labels = [], label = '' }) {
+       same, and some can carry a letter. A point in `blue` is the one the
+       screen talks about, so it is large and the others are grey. */
+    function graphPoints(host, { set, context, labels = [], label = '', blue = [] }) {
         const boardHost = element('div', '', 'outliers-graph');
         host.append(boardHost);
         const board = makeGraph(boardHost, {
@@ -123,7 +124,12 @@
         });
         [...set.main, set.outlier].forEach(point => {
             const text = labels.find(entry => samePoint(entry.point, point))?.text ?? null;
-            const options = { size: 'small', tone: 'neutral', coordinates: false };
+            const isBlue = blue.some(other => samePoint(other, point));
+            const options = {
+                size: isBlue ? 'large' : 'small',
+                tone: isBlue ? 'neutral' : blue.length ? 'muted' : 'neutral',
+                coordinates: false
+            };
             if (text) options.label = text;
             board.point(point, options);
         });
@@ -352,10 +358,366 @@
         };
     }
 
+    /* Why a point might not fit: something unusual happened, or the data was
+       written down wrong. No numbers, so the reasons suit any graph of that
+       context. */
+    const reasonSets = {
+        revision: {
+            unusual: ['The pupil was ill on the day of the test.', 'The pupil revised the wrong topic.'],
+            wrong: ['The mark was written down wrong.', "Another pupil's mark was written down."]
+        },
+        sunshine: {
+            unusual: ['The ice cream shop was shut for most of the day.', 'The ice cream freezer was broken.'],
+            wrong: ['The number of boxes was written down wrong.',
+                'The boxes sold on a different day were written down.']
+        },
+        heating: {
+            unusual: ['The windows were left open all day.', 'The heating was left on all night.'],
+            wrong: ['The heating used was written down wrong.',
+                'The temperature from a different day was written down.']
+        }
+    };
+
+    /* The four reason cards for one context: two unusual days, two mistakes
+       in the data. */
+    function reasonCards(contextId) {
+        const set = reasonSets[contextId];
+        return [
+            { id: `${contextId}-unusual-1`, label: set.unusual[0], bin: 'unusual' },
+            { id: `${contextId}-unusual-2`, label: set.unusual[1], bin: 'unusual' },
+            { id: `${contextId}-wrong-1`, label: set.wrong[0], bin: 'wrong' },
+            { id: `${contextId}-wrong-2`, label: set.wrong[1], bin: 'wrong' }
+        ];
+    }
+
+    function reasonSlots() {
+        return [
+            { id: 'unusual', title: 'Something unusual happened', capacity: 2 },
+            { id: 'wrong', title: 'The data was written down wrong', capacity: 2 }
+        ];
+    }
+
+    /* The hint a wrong reason card earns in Reason Try it. */
+    function reasonHint(cards) {
+        return (slotId, itemId) => {
+            const card = cards.find(entry => entry.id === itemId);
+            return card?.bin === 'unusual'
+                ? "That really could happen, so the numbers would be right. It's an unusual day."
+                : "That means the number on the graph is wrong, so it's a mistake in the data.";
+        };
+    }
+
+    /* The three names for a graph's correlation, one of them spare. */
+    const ignoreCards = [
+        { id: 'positive', label: 'Positive', bin: 'positive' },
+        { id: 'negative', label: 'Negative', bin: 'negative' },
+        { id: 'none', label: 'No correlation', bin: 'none' }
+    ];
+
+    /* The hint a wrong name earns in Ignore Try it. */
+    function ignoreHint(slotId, itemId) {
+        if (itemId === 'none') return "One outlier doesn't stop the pattern. Ignore it and look at the other points.";
+        return slotId === 'sunshine'
+            ? 'Ignore the outlier. The other points go up.'
+            : 'Ignore the outlier. The other points go down.';
+    }
+
+    /* A small graph for a box the pupil sorts into, with no axis names and a
+       number only every fifth place. */
+    function miniGraph(host, { points, label, caption = null }) {
+        const figure = element('figure', '', 'outliers-mini');
+        const boardHost = element('div', '', 'outliers-mini__board');
+        figure.append(boardHost);
+        if (caption) figure.append(element('figcaption', caption));
+        host.append(figure);
+        // Empty axis names reserve the room the numbers need, so nothing is
+        // clipped in a graph this small.
+        const board = makeGraph(boardHost, {
+            ...grids, labelEvery: 5, axisNames: { x: '', y: '' }, label: label || caption || 'Scatter graph'
+        });
+        points.forEach(point => board.point(point, { size: 'small', tone: 'neutral', coordinates: false }));
+        board.setEditable(false);
+        return board;
+    }
+
+    function smallGraphs(host, items) {
+        const row = element('div', '', items.length === 2
+            ? 'outliers-mini-graphs outliers-mini-graphs--pair'
+            : 'outliers-mini-graphs');
+        host.append(row);
+        return items.map(item => miniGraph(row, item));
+    }
+
+    function slotCapacity(slot, items, slots) {
+        return slot.capacity ?? Math.ceil(items.length / slots.length);
+    }
+
+    /* A row of word cards and the boxes they go in. Each box may carry a
+       small graph or a title, and holds its own number of cards, so the row
+       can have a spare card that never goes in a box. In 'try' mode a right
+       card locks in green and a wrong one goes back with a hint; in 'check'
+       mode cards move freely until the caller marks them. */
+    function sortCards(host, { items, slots, figure = null, accepts, hint = () => '',
+        mode = 'try', value = null, editable = true, onChange = () => {} }) {
+        const blank = () => ({
+            placed: Object.fromEntries(slots.map(slot => [slot.id, []])),
+            selected: null,
+            hint: '',
+            locked: []
+        });
+        const state = value && typeof value === 'object' ? JSON.parse(JSON.stringify(value)) : blank();
+        slots.forEach(slot => { state.placed[slot.id] ??= []; });
+        state.hint ??= '';
+        state.locked = Array.isArray(state.locked) ? state.locked : [];
+        let marked = false;
+        let canEdit = editable;
+
+        const root = element('div', '', 'outliers-sort');
+        const slotRow = element('div', '', slots.length === 2
+            ? 'outliers-sort__slots outliers-sort__slots--pair'
+            : 'outliers-sort__slots');
+        const tray = element('div', '', 'outliers-sort__tray');
+        tray.setAttribute('role', 'group');
+        tray.setAttribute('aria-label', 'Cards to sort');
+        root.append(slotRow, tray);
+        host.append(root);
+
+        const cards = new Map();
+        const drops = new Map();
+        items.forEach(item => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'outliers-card';
+            card.textContent = item.label;
+            let press = null;
+            let dragged = false;
+            card.addEventListener('click', () => {
+                if (!dragged) pick(item.id);
+                dragged = false;
+            });
+            card.addEventListener('pointerdown', event => {
+                if (!canEdit || marked || locked(item.id)) return;
+                press = { x: event.clientX, y: event.clientY };
+                dragged = false;
+                card.setPointerCapture(event.pointerId);
+            });
+            card.addEventListener('pointermove', event => {
+                if (!press) return;
+                if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) {
+                    dragged = true;
+                    state.selected = item.id;
+                    paint();
+                }
+            });
+            card.addEventListener('pointerup', event => {
+                if (!press) return;
+                press = null;
+                if (!dragged) return;
+                const target = document.elementFromPoint(event.clientX, event.clientY);
+                const slot = [...drops].find(([, drop]) => drop.contains(target));
+                if (slot) place(slot[0]);
+            });
+            card.addEventListener('pointercancel', () => { press = null; });
+            tray.append(card);
+            cards.set(item.id, card);
+        });
+        slots.forEach(slot => {
+            const box = element('div', '', 'outliers-sort__slot');
+            // The box goes in first: a graph needs its container on the page.
+            slotRow.append(box);
+            if (figure) {
+                const figureHost = element('div', '', 'outliers-sort__figure');
+                box.append(figureHost);
+                figure(figureHost, slot);
+            }
+            const drop = document.createElement('div');
+            drop.className = 'outliers-sort__drop';
+            drop.setAttribute('role', 'button');
+            drop.setAttribute('aria-label', slot.dropLabel || slot.label || 'Box');
+            drop.tabIndex = 0;
+            drop.addEventListener('click', () => place(slot.id));
+            drop.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    place(slot.id);
+                }
+            });
+            box.append(drop);
+            // Only a bin title shows; a slot's label is the graph's description.
+            if (slot.title) box.append(element('p', slot.title, 'outliers-sort__title'));
+            drops.set(slot.id, drop);
+        });
+
+        function placedIn(itemId) {
+            return slots.map(slot => slot.id)
+                .find(slotId => state.placed[slotId].includes(itemId)) ?? null;
+        }
+        function locked(itemId) {
+            if (state.locked.includes(itemId)) return true;
+            const slotId = placedIn(itemId);
+            return marked && Boolean(slotId) && accepts(slotId, itemId);
+        }
+        function takeBack(itemId) {
+            const slotId = placedIn(itemId);
+            if (!canEdit || marked || !slotId || locked(itemId)) return;
+            state.placed[slotId] = state.placed[slotId].filter(other => other !== itemId);
+            state.hint = '';
+            paint();
+            onChange({ ...state });
+        }
+        function pick(itemId) {
+            if (!canEdit || marked || locked(itemId)) return;
+            state.selected = state.selected === itemId ? null : itemId;
+            paint();
+        }
+        function place(slotId) {
+            if (!canEdit || marked) return;
+            const itemId = state.selected;
+            if (!itemId) return;
+            const from = placedIn(itemId);
+            if (from === slotId) return;
+            const slot = slots.find(entry => entry.id === slotId);
+            if (from) state.placed[from] = state.placed[from].filter(other => other !== itemId);
+            // A full box sends its cards back to the row, so a spare card has
+            // somewhere to wait.
+            if (state.placed[slotId].length >= slotCapacity(slot, items, slots)) state.placed[slotId] = [];
+            state.selected = null;
+            state.placed[slotId] = [...state.placed[slotId], itemId];
+            state.hint = '';
+            paint();
+            onChange({ ...state });
+            if (mode === 'try' && allFilled()) markAll();
+        }
+
+        // Try it marks every card at once, when the last empty box is filled:
+        // right cards lock green, wrong ones go back to the row and one hint
+        // tells the pupil about the first wrong card.
+        function markAll() {
+            const wrong = [];
+            slots.forEach(slot => state.placed[slot.id].forEach(itemId => {
+                if (!accepts(slot.id, itemId)) wrong.push({ slotId: slot.id, itemId });
+            }));
+            if (!wrong.length) {
+                state.hint = '';
+                state.locked = items.map(item => item.id);
+            } else {
+                state.hint = hint(wrong[0].slotId, wrong[0].itemId);
+                wrong.forEach(({ slotId, itemId }) => {
+                    state.placed[slotId] = state.placed[slotId].filter(other => other !== itemId);
+                });
+                state.locked = items
+                    .map(item => [item.id, placedIn(item.id)])
+                    .filter(([itemId, slotId]) => Boolean(slotId) && accepts(slotId, itemId))
+                    .map(([itemId]) => itemId);
+            }
+            paint();
+            onChange({ ...state });
+        }
+        function allFilled() {
+            return slots.every(slot => state.placed[slot.id].length >= slotCapacity(slot, items, slots));
+        }
+        function paint() {
+            cards.forEach((card, itemId) => {
+                const placed = Boolean(placedIn(itemId));
+                card.hidden = placed;
+                card.disabled = !canEdit || marked;
+                card.classList.toggle('is-selected', state.selected === itemId);
+                card.setAttribute('aria-pressed', String(state.selected === itemId));
+            });
+            drops.forEach((drop, slotId) => {
+                drop.replaceChildren();
+                drop.classList.toggle('is-ready', Boolean(state.selected));
+                state.placed[slotId].forEach(itemId => {
+                    const item = items.find(entry => entry.id === itemId);
+                    const right = accepts(slotId, itemId);
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'outliers-card outliers-card--placed';
+                    chip.textContent = item.label;
+                    chip.disabled = !canEdit || marked || state.locked.includes(itemId);
+                    chip.addEventListener('click', () => takeBack(itemId));
+                    if (state.locked.includes(itemId)) chip.classList.add('is-correct');
+                    if (marked) chip.classList.add(right ? 'is-correct' : 'is-incorrect');
+                    drop.append(chip);
+                });
+                drop.classList.toggle('is-empty', state.placed[slotId].length === 0);
+            });
+        }
+
+        paint();
+        return {
+            root,
+            state,
+            mark(next = true) {
+                marked = next;
+                canEdit = canEdit && !next;
+                paint();
+            },
+            update({ value: next, editable: nextEditable = canEdit, marked: nextMarked = marked }) {
+                if (next) Object.assign(state, JSON.parse(JSON.stringify(next)));
+                marked = nextMarked;
+                canEdit = nextEditable;
+                paint();
+            },
+            allCorrect() {
+                return slots.every(slot => {
+                    const placed = state.placed[slot.id];
+                    return placed.length === slotCapacity(slot, items, slots) &&
+                        placed.every(itemId => accepts(slot.id, itemId));
+                });
+            }
+        };
+    }
+
+    /* The Practice version of the word-card sort: the cards can be moved
+       between the boxes until Check, then every box is marked at once. */
+    function sortWidget({ cards, slots, figures = null, success, wrong }) {
+        let handle = null;
+        const binOf = itemId => cards.find(card => card.id === itemId)?.bin ?? null;
+        return {
+            isEmpty: value => !value || slots.every(slot => (value.placed?.[slot.id] || []).length === 0),
+            render(host, { value, editable, onChange }) {
+                handle = sortCards(host, {
+                    items: cards, slots, mode: 'check', value, editable,
+                    accepts: (slotId, itemId) => binOf(itemId) === slotId,
+                    figure: figures ? (figureHost, slot) => {
+                        const graph = figures.find(entry => entry.id === slot.id);
+                        if (graph) miniGraph(figureHost, { points: graph.points, label: graph.label });
+                    } : null,
+                    onChange(next) { onChange(next); }
+                });
+                return {
+                    update({ value: next, editable: nextEditable, phase = 'answer' }) {
+                        handle.update({
+                            value: next, editable: nextEditable === true && phase === 'answer',
+                            marked: phase !== 'answer'
+                        });
+                    },
+                    focus() { handle.root.querySelector('.outliers-card')?.focus(); }
+                };
+            },
+            mark(value) {
+                const correct = slots.every(slot => {
+                    const placed = value?.placed?.[slot.id] || [];
+                    return placed.length === slotCapacity(slot, cards, slots) &&
+                        placed.every(itemId => binOf(itemId) === slot.id);
+                });
+                return { correct, feedback: correct ? success : wrong };
+            },
+            answerText: value => slots.map(slot => {
+                const labels = (value.placed?.[slot.id] || [])
+                    .map(id => cards.find(card => card.id === id)?.label)
+                    .filter(Boolean);
+                return `${slot.title || slot.dropLabel}: ${labels.length ? labels.join('; ') : 'nothing'}.`;
+            }).join(' ')
+        };
+    }
+
     const helpers = {
-        sets, contexts, contextIds, makeGraph, fullGraph, graphPoints, samePoint,
+        sets, contexts, contextIds, reasonSets, makeGraph, fullGraph, graphPoints, samePoint,
         note, sentence, ask, reason, pearson, pointSet, outlierSet, keepsRule,
-        highestOf, lowestOf, tapOutlierWidget
+        highestOf, lowestOf, tapOutlierWidget, reasonCards, reasonSlots, reasonHint,
+        ignoreCards, ignoreHint, miniGraph, smallGraphs, sortCards, sortWidget
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = helpers;

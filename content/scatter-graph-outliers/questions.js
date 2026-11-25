@@ -302,6 +302,149 @@
         };
     }
 
+    /* A full graph of a generated set, with the outlier in blue and the rest
+       grey: the screens about why a point is odd, or what the rest of the
+       graph shows. */
+    function figureWithOutlier(host, { set, context, label }) {
+        O.graphPoints(host, { set, context, blue: [set.outlier], label });
+    }
+
+    /* The opposite of each pattern, in words a pupil might believe. */
+    const backwards = {
+        revision: 'Revising more makes your mark go down.',
+        sunshine: 'Sunny days make people buy fewer ice creams.',
+        heating: 'Warmer days make people use more heating.'
+    };
+
+    function reasonChoice(item, random, { shuffle }) {
+        const context = O.contexts[item.context];
+        const set = O.outlierSet(random, item.context);
+        const reasons = O.reasonCards(item.context).map(card => card.label);
+        const reason = reasons[Math.floor(random() * reasons.length)];
+        const goes = context.direction === 1 ? 'up' : 'down';
+        return {
+            input: 'choice', questionType: 'reason-choice',
+            prompt: 'Which could explain the outlier?',
+            options: shuffle([
+                { label: reason, correct: true, feedback: 'Yes. That could explain one point that doesn\'t fit.' },
+                { label: backwards[item.context],
+                    feedback: `One point can't change the pattern. The other points still go ${goes}.` },
+                { label: 'All the other points must be wrong.',
+                    feedback: 'It\'s only the outlier that doesn\'t fit. The other points agree with each other.' },
+                { label: 'There must be no correlation.',
+                    feedback: 'There\'s a clear pattern. The outlier just doesn\'t fit it.' }
+            ], random),
+            model: { context: item.context, set, reason },
+            figure(host) {
+                figureWithOutlier(host, { set, context, label: 'Scatter graph with the outlier in blue.' });
+            }
+        };
+    }
+
+    function reasonSort(item, random) {
+        const context = O.contexts[item.context];
+        const set = O.outlierSet(random, item.context);
+        const cards = O.reasonCards(item.context);
+        return {
+            input: 'custom', questionType: 'reason-sort',
+            prompt: 'Sort these reasons for the outlier.',
+            model: { context: item.context, set, cards },
+            widget: O.sortWidget({
+                cards, slots: O.reasonSlots(),
+                success: 'An outlier can be real but unusual, or just a mistake in the data.',
+                wrong: 'Two reasons mean something unusual really happened. The other two mean the data was written down wrong.'
+            })
+        };
+    }
+
+    function ignoreType(item, random, { shuffle }) {
+        const context = O.contexts[item.context];
+        const set = O.outlierSet(random, item.context);
+        const negative = context.direction === -1;
+        const word = negative ? 'negative' : 'positive';
+        const goes = negative ? 'down' : 'up';
+        return {
+            input: 'choice', questionType: 'ignore-type',
+            prompt: 'What kind of correlation does this graph show?',
+            options: shuffle([
+                { label: `${negative ? 'Negative' : 'Positive'} correlation`, correct: true,
+                    feedback: `Yes. Ignore the outlier: the other points go ${goes}.` },
+                { label: `${negative ? 'Positive' : 'Negative'} correlation`,
+                    feedback: `Ignore the outlier. The other points go ${goes}, so it's ${word}.` },
+                { label: 'No correlation',
+                    feedback: 'One outlier doesn\'t stop the pattern. Ignore it and look at the other points.' },
+                { label: 'You can\'t tell, because of the outlier.',
+                    feedback: 'You can. Ignore the outlier and look at the pattern of the other points.' }
+            ], random),
+            model: { context: item.context, set },
+            figure(host) {
+                O.graphPoints(host, { set, context, label: context.label });
+            }
+        };
+    }
+
+    /* Two small graphs from the generator, one positive and one heating, and
+       the three names from Ignore Try it. */
+    function ignoreSort(item, random) {
+        const positiveContext = O.contexts[item.context];
+        const heating = O.contexts.heating;
+        const positiveSet = O.outlierSet(random, item.context);
+        const heatingSet = O.outlierSet(random, 'heating');
+        const graphs = [
+            { bin: 'positive', set: positiveSet, context: positiveContext },
+            { bin: 'negative', set: heatingSet, context: heating }
+        ];
+        if (random() < 0.5) graphs.reverse();
+        const slots = graphs.map((graph, index) => ({
+            id: graph.bin,
+            dropLabel: `Name for graph ${index + 1}`,
+            capacity: 1
+        }));
+        const figures = graphs.map(graph => ({
+            id: graph.bin,
+            points: [...graph.set.main, graph.set.outlier],
+            label: graph.context.label
+        }));
+        return {
+            input: 'custom', questionType: 'ignore-sort',
+            prompt: 'Put the right name under each graph.',
+            model: { contexts: graphs.map(graph => graph.set === heatingSet ? 'heating' : item.context) },
+            widget: O.sortWidget({
+                cards: O.ignoreCards, slots, figures,
+                success: 'Ignore the outlier, and the pattern of the others tells you the correlation.',
+                wrong: 'Ignore each outlier. Do the other points go up or down?'
+            })
+        };
+    }
+
+    function ignoreReply(item, random, { shuffle }) {
+        const context = O.contexts[item.context];
+        const set = O.outlierSet(random, item.context);
+        const negative = context.direction === -1;
+        const word = negative ? 'negative' : 'positive';
+        const other = negative ? 'positive' : 'negative';
+        const goes = negative ? 'down' : 'up';
+        const otherGoes = negative ? 'up' : 'down';
+        return {
+            input: 'choice', questionType: 'ignore-reply',
+            prompt: 'Someone says, "This graph has an outlier, so there is no correlation." Which reply is right?',
+            options: shuffle([
+                { label: `Ignore the outlier. The other points still show ${word} correlation.`, correct: true,
+                    feedback: "Yes. One point that doesn't fit can't stop the pattern." },
+                { label: 'They\'re right. An outlier means there is no correlation.',
+                    feedback: `One point can't stop a pattern. The other points still go ${goes}.` },
+                { label: `Ignoring the outlier leaves ${other} correlation.`,
+                    feedback: `The other points go ${goes}, not ${otherGoes}.` },
+                { label: `${negative ? 'Negative' : 'Positive'} correlation means every point must sit on one straight line.`,
+                    feedback: `The points only need to go ${goes} overall. They don't have to sit on a line.` }
+            ], random),
+            model: { context: item.context, set },
+            figure(host) {
+                O.graphPoints(host, { set, context, label: context.label });
+            }
+        };
+    }
+
     function pickPractice(part, count, random, helpers) {
         const { randomInt, shuffle } = helpers;
         const seed = kind => ({ ...kind, seed: randomInt(0, 0xffffffff, random) });
@@ -323,6 +466,34 @@
                 seed({ type: 'read-value', context: order[2], axis: axes[1] })
             ];
         }
+        if (part === 'reason') {
+            // The two choice cards ask about two different graphs.
+            const order = shuffle([...O.contextIds], random);
+            return [
+                seed({ type: 'reason-choice', context: order[0] }),
+                seed({ type: 'reason-sort', context: order[1] }),
+                seed({ type: 'reason-choice', context: order[2] })
+            ];
+        }
+        if (part === 'ignore') {
+            const [first, second] = shuffle([...O.contextIds], random);
+            let type = first;
+            let reply = second;
+            // The sort always shows one positive graph and heating, so it
+            // needs a positive graph neither choice card uses.
+            let positive = ['revision', 'sunshine'].find(id => id !== type && id !== reply);
+            if (!positive) {
+                // The two choice cards took both positive graphs, so one of
+                // them shows heating and the sort takes that card's graph.
+                type = 'heating';
+                positive = reply === 'revision' ? 'sunshine' : 'revision';
+            }
+            return [
+                seed({ type: 'ignore-type', context: type }),
+                seed({ type: 'ignore-sort', context: positive }),
+                seed({ type: 'ignore-reply', context: reply })
+            ];
+        }
         throw new Error(`No practice generator for part ${part} yet.`);
     }
 
@@ -331,6 +502,11 @@
         if (item.type === 'tap-outlier') return tapOutlier(item, random, helpers);
         if (item.type === 'read-value') return readValue(item, random, helpers);
         if (item.type === 'which-pair') return whichPair(item, random, helpers);
+        if (item.type === 'reason-choice') return reasonChoice(item, random, helpers);
+        if (item.type === 'reason-sort') return reasonSort(item, random, helpers);
+        if (item.type === 'ignore-type') return ignoreType(item, random, helpers);
+        if (item.type === 'ignore-sort') return ignoreSort(item, random, helpers);
+        if (item.type === 'ignore-reply') return ignoreReply(item, random, helpers);
         throw new Error(`No practice card for ${item.type}.`);
     }
 
@@ -366,7 +542,8 @@
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             checkQuestion, checkPictures, drawPoints,
-            pickPractice, practiceQuestion, whichOutlier, tapOutlier, readValue, whichPair
+            pickPractice, practiceQuestion, whichOutlier, tapOutlier, readValue, whichPair,
+            reasonChoice, reasonSort, ignoreType, ignoreSort, ignoreReply
         };
         return;
     }
@@ -381,7 +558,7 @@
             const host = document.getElementById(helpers.questionSetContainerId(slug, id));
             if (!host) continue;
             if (kind === 'question-bank') {
-                if (part === 'spot' || part === 'read') {
+                if (part === 'spot' || part === 'read' || part === 'reason' || part === 'ignore') {
                     await api.runQuestionSet(id, {
                         version: 1, count: config.session_length, upgrade: () => null,
                         pick: random => pickPractice(part, config.session_length, random, helpers),

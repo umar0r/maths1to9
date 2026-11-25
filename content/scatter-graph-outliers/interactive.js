@@ -4,8 +4,6 @@
     const slug = document.body.dataset.lessonId;
     const C = window.Outliers;
 
-    const partNames = { spot: 'Spot', read: 'Read', reason: 'Reason', ignore: 'Ignore' };
-
     function element(tag, text = '', className = '') {
         const node = document.createElement(tag);
         node.textContent = text;
@@ -506,33 +504,150 @@
         render();
     }
 
-    /* Stage two: Reason and Ignore say so and move on, so the lesson loads
-       from the first Learn screen through to Check. Later stages fill them
-       in. */
-    function placeholder(host, section, text) {
-        host.replaceChildren();
-        const root = element('article');
-        host.append(root);
-        const heading = element('h2', 'Not built yet.');
-        heading.id = `lesson-section-title-${section.id}`;
-        heading.dataset.screenHeading = '';
-        root.append(heading, element('p', text, 'outliers-note'));
-    }
-
-    function mountTryItPlaceholder(api, root, section) {
+    /* A Try it screen that is one sort: a graph or small graphs, two boxes,
+       and cards the pupil puts in them. Nothing is marked until every box is
+       filled, then the boxes are marked together (section 4). */
+    async function mountSortTryIt(api, root, section, config) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
         const box = root.closest('.lesson-section');
         box?.removeAttribute('aria-labelledby');
-        box?.setAttribute('aria-label', `${partNames[section.part]} Try it`);
-        api.gateSection(section.id);
-        placeholder(root, section, `The ${partNames[section.part]} Try it screens are added in the next stage.`);
-        api.setSectionBack(section.id, null);
-        api.setSectionReset(section.id, null);
-        api.setSectionAction(section.id, {
-            label: 'Continue',
-            onClick() {
-                api.completeSection(section.id);
-                api.continueSection();
+        box?.setAttribute('aria-label', config.ariaLabel);
+        api.gateSection(id);
+        const sectionState = await api.useSectionState(`interactive:${config.part}`, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ sort: null, done: false, hint: '' })
+        });
+        const state = sectionState.state;
+        const cards = config.cards();
+        const slots = config.slots();
+        const figures = config.figures ? config.figures() : null;
+        let boards = [];
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) api.setSlideHash(config.hash, { replace: true });
+        }
+        function progress() {
+            api.setSectionProgress(id, Number(state.done), 1);
+            if (state.done) api.completeSection(id);
+        }
+        function render() {
+            boards.forEach(board => board.destroy());
+            boards = [];
+            root.replaceChildren();
+            const heading = element('h2', config.heading);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'outliers-picture');
+            root.append(picture);
+            if (config.graph) boards.push(C.fullGraph(picture, config.graph));
+            const feedback = E.createFeedback('interactive', { visible: false });
+            root.append(feedback);
+            C.sortCards(picture, {
+                items: cards, slots, mode: 'try', hint: config.hint(cards),
+                value: state.sort,
+                accepts: (slotId, itemId) => cards.find(card => card.id === itemId)?.bin === slotId,
+                figure: figures ? (figureHost, slot) => {
+                    const graph = figures.find(entry => entry.id === slot.id);
+                    if (graph) boards.push(C.miniGraph(figureHost, { points: graph.points, label: graph.label }));
+                } : null,
+                onChange(value) {
+                    const done = slots.every(slot => (value.placed[slot.id] || []).length >=
+                        (slot.capacity ?? Math.ceil(cards.length / slots.length)));
+                    sectionState.update(saved => {
+                        saved.sort = value;
+                        saved.done = done;
+                        saved.hint = done ? '' : (value.hint || '');
+                    });
+                    paint();
+                }
+            });
+
+            function paint() {
+                const message = state.done ? config.success : state.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName('interactive', {
+                    visible: Boolean(message), correct: state.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue', disabled: !state.done,
+                    onClick() {
+                        if (!state.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                progress();
+                syncHash();
             }
+
+            api.setSectionBack(id, null);
+            api.setSectionReset(id, state.sort ? () => {
+                sectionState.resetFields(['sort', 'done', 'hint']);
+                render();
+            } : null);
+            paint();
+        }
+
+        api.registerHashRoute(config.hash, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            render();
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    /* Reason Try it: four reasons for one graph, into two boxes. */
+    function mountReasonTryIt(api, root, section) {
+        const sunshine = C.contexts.sunshine;
+        return mountSortTryIt(api, root, section, {
+            part: 'reason',
+            ariaLabel: 'Reason Try it',
+            hash: 'reason-try-it-1',
+            heading: 'Sort these reasons for the outlier.',
+            graph: {
+                context: sunshine, blue: [sunshine.set.outlier],
+                label: 'Scatter graph of hours of sunshine and ice creams sold, with the outlier in blue.'
+            },
+            cards: () => C.reasonCards('sunshine'),
+            slots: () => C.reasonSlots(),
+            hint: cards => C.reasonHint(cards),
+            success: 'An outlier can be real but unusual, or just a mistake in the data.'
+        });
+    }
+
+    /* Ignore Try it: two small graphs, three names, one of them spare. */
+    function mountIgnoreTryIt(api, root, section) {
+        const sunshine = C.contexts.sunshine;
+        const heating = C.contexts.heating;
+        return mountSortTryIt(api, root, section, {
+            part: 'ignore',
+            ariaLabel: 'Ignore Try it',
+            hash: 'ignore-try-it-1',
+            heading: 'Put the right name under each graph.',
+            cards: () => [
+                { id: 'positive', label: 'Positive', bin: 'sunshine' },
+                { id: 'negative', label: 'Negative', bin: 'heating' },
+                { id: 'none', label: 'No correlation', bin: 'none' }
+            ],
+            slots: () => [
+                { id: 'sunshine', dropLabel: 'Name for the sunshine graph', capacity: 1 },
+                { id: 'heating', dropLabel: 'Name for the heating graph', capacity: 1 }
+            ],
+            figures: () => [
+                {
+                    id: 'sunshine', points: [...sunshine.set.main, sunshine.set.outlier],
+                    label: 'Scatter graph of hours of sunshine and ice creams sold.'
+                },
+                {
+                    id: 'heating', points: [...heating.set.main, heating.set.outlier],
+                    label: 'Scatter graph of outdoor temperature and heating used.'
+                }
+            ],
+            hint: () => C.ignoreHint,
+            success: 'Ignore the outlier, and the pattern of the others tells you the correlation.'
         });
     }
 
@@ -543,6 +658,7 @@
         await mountLearn(api, section.part);
         if (section.part === 'spot') return mountSpotTryIt(api, root, section);
         if (section.part === 'read') return mountReadTryIt(api, root, section);
-        return mountTryItPlaceholder(api, root, section);
+        if (section.part === 'reason') return mountReasonTryIt(api, root, section);
+        return mountIgnoreTryIt(api, root, section);
     };
 })();

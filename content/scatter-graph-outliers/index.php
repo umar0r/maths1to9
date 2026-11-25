@@ -30,7 +30,7 @@ $pageTitle = 'Outliers';
     <link rel="stylesheet" href="../../assets/css/app.css?v=64">
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
-    <link rel="stylesheet" href="./lesson.css?v=1">
+    <link rel="stylesheet" href="./lesson.css?v=2">
 </head>
 
 <body
@@ -70,9 +70,9 @@ $pageTitle = 'Outliers';
     <script src="../../assets/js/graph.js?v=11"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./outliers.js?v=2"></script>
-    <script src="./questions.js?v=2"></script>
-    <script src="./interactive.js?v=3"></script>
+    <script src="./outliers.js?v=3"></script>
+    <script src="./questions.js?v=3"></script>
+    <script src="./interactive.js?v=4"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=83"></script>
