@@ -48,6 +48,61 @@
                     { "label": "A straight line that must start at 0.",
                       "feedback": "It doesn't have to start at 0. It just follows the points." }
                 ]
+            },
+            {
+                "type": "best-fit-graph",
+                "picture": "revision-lines",
+                "prompt": "Which graph shows the line of best fit?",
+                "correct": "B",
+                "feedback": "Yes. It ignores the outlier and follows the other points.",
+                "wrong": [
+                    { "label": "A", "feedback": "That line has been pulled down towards the outlier. Ignore it." },
+                    { "label": "C", "feedback": "The points go up, but that line goes down." },
+                    { "label": "D", "feedback": "Most points are below that line. It should go through the middle." }
+                ]
+            },
+            {
+                "type": "best-fit-estimate",
+                "picture": "heating-line",
+                "prompt": "Someone says, \"The line of best fit says 3 kWh of heating at 7 °C.\" Are they right?",
+                "correct": "No. 3 kWh is a point. The line gives about 4 kWh.",
+                "feedback": "Yes. Estimates come from the line, not from one point.",
+                "wrong": [
+                    { "label": "Yes. There's a point at 7 °C and 3 kWh.",
+                      "feedback": "Estimates come from the line, not from one point. The line gives about 4 kWh." },
+                    { "label": "No. The line gives about 7 kWh.",
+                      "feedback": "7 is the temperature. Go up to the line, then across to the side axis." },
+                    { "label": "No. You can only estimate where the line goes through a point.",
+                      "feedback": "You can read the line anywhere. It doesn't need a point there." }
+                ]
+            },
+            {
+                "type": "best-fit-inside",
+                "prompt": "A scatter graph shows revision from 1 to 9 hours. Why can you trust an estimate for 6 hours?",
+                "correct": "6 hours is inside the data. There are points either side of it.",
+                "feedback": "Yes. The points around it show the pattern.",
+                "wrong": [
+                    { "label": "There's a point at exactly 6 hours.",
+                      "feedback": "You don't need a point there. What matters is that 6 hours is inside the data." },
+                    { "label": "Every estimate from a line of best fit is exact.",
+                      "feedback": "An estimate is never exact. Inside the data it's reliable." },
+                    { "label": "6 is in the middle of the bottom axis.",
+                      "feedback": "Where it sits on the axis doesn't matter. What matters is that it's inside the data." }
+                ]
+            },
+            {
+                "type": "best-fit-outside",
+                "prompt": "A scatter graph shows temperatures from 1 °C to 9 °C. Someone uses the line of best fit to estimate the heating used at 15 °C. Why might this be unreliable?",
+                "correct": "15 °C is outside the data. The pattern might not carry on.",
+                "feedback": "Yes. There are no points out there to show the pattern.",
+                "wrong": [
+                    { "label": "There's no point at 15 °C.",
+                      "feedback": "Inside the data there's often no point either. The problem is that 15 °C is outside the data." },
+                    { "label": "15 °C would be an outlier.",
+                      "feedback": "An outlier is a point that doesn't fit. This is about where the data stops." },
+                    { "label": "The line goes down, so you can't estimate from it.",
+                      "feedback": "You can estimate from a line that goes down. The problem is that 15 °C is outside the data." }
+                ]
             }
         ],
         "summary": {

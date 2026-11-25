@@ -219,7 +219,7 @@
                 feedback: "That's a point. Read from the line, not a point."
             });
         }
-        if (Math.abs(read.x - answer) >= 0.5) {
+        if (Math.abs(read.x - answer) >= 0.5 && !rules.some(rule => rule.value === String(read.x))) {
             rules.push({
                 value: String(read.x),
                 feedback: `That's the ${context.axisWords.x}, on the bottom axis. Go up to the line, then across.`
@@ -377,38 +377,212 @@
         };
     }
 
-    /* Placeholder Check: one card about what a line of best fit is, so the
-       Check section still loads and works. The real five come next stage. */
-    function scaffoldCard() {
-        return {
-            input: 'choice',
-            questionType: 'best-line',
-            prompt: 'What is a line of best fit?',
-            feedback: 'Yes. About as many points sit above it as below it.',
-            options: [
-                {
-                    label: 'A straight line that follows the pattern, through the middle of the points.',
-                    feedback: 'Yes. About as many points sit above it as below it.',
-                    correct: true
-                },
-                {
-                    label: 'A line that joins every point, dot to dot.',
-                    feedback: "A line of best fit is one straight line. It doesn't join the dots."
-                },
-                {
-                    label: 'A line from the first point to the last point.',
-                    feedback: "It doesn't have to go through any point. It goes through the middle of them all."
-                },
-                {
-                    label: 'A straight line that must start at 0.',
-                    feedback: "It doesn't have to start at 0. It just follows the points."
-                }
-            ]
+    /* The Check pictures: four small graphs of the revision points, and the
+       heating graph with its line of best fit. */
+    const checkPictures = {
+        'revision-lines': host => {
+            const points = [...B.sets.REVISION.main, B.sets.REVISION.outlier];
+            B.smallGraphs(host, [
+                { points, caption: 'A', line: { from: [0, 1], to: [10, 6] },
+                    label: 'Graph A, with one straight line.' },
+                { points, caption: 'B', line: B.lines.REVISION_LINE,
+                    label: 'Graph B, with one straight line.' },
+                { points, caption: 'C', line: { from: [0, 9], to: [10, 1] },
+                    label: 'Graph C, with one straight line.' },
+                { points, caption: 'D', line: { from: [0, 4], to: [10, 10] },
+                    label: 'Graph D, with one straight line.' }
+            ]);
+        },
+        'heating-line': host => B.scatterGraph(host, {
+            context: B.contexts.heating,
+            outlier: true,
+            line: B.lines.HEATING_LINE,
+            label: 'Scatter graph of outdoor temperature and heating used, with the line of best fit.'
+        })
+    };
+
+    /* A Check question from its lesson.json definition: one right answer and
+       three wrong ones, each with its own feedback. */
+    function checkQuestion(definition, random, { shuffle }) {
+        const question = {
+            input: 'choice', questionType: definition.type, prompt: definition.prompt, lockedReview: true,
+            options: shuffle([{ label: definition.correct, correct: true, feedback: definition.feedback },
+                ...definition.wrong], random)
         };
+        if (definition.picture) question.figure = host => checkPictures[definition.picture](host);
+        return question;
+    }
+
+    /* Check: the five fixed questions, then What you've learned. Each answer
+       is kept, so Back shows it marked. */
+    async function mountCheck(api, root) {
+        const id = 'comparison';
+        const { questions, summary } = api.getSection(id).config;
+        const E = window.Maths1to9LessonEngine;
+        const count = questions.length;
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Check');
+        api.gateSection(id);
+        const section = await api.useSectionState(id, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ index: 0, screen: 0, finished: false, cards: {}, seed: E.randomInt(0, 0xffffffff) })
+        });
+        const state = section.state;
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash(state.screen === count ? 'summary' : `check-${state.screen + 1}`, { replace: true });
+            }
+        }
+        function show(screen) {
+            section.update(saved => { saved.screen = screen; });
+            render();
+            const heading = root.querySelector('[data-screen-heading]');
+            if (heading) {
+                heading.tabIndex = -1;
+                heading.focus();
+            }
+        }
+        function progress() {
+            const current = state.cards[`final-check-${state.index + 1}`];
+            api.setSectionProgress(id, state.finished ? count : state.index + Number(current?.correct === true), count);
+        }
+        function render() {
+            root.replaceChildren();
+            api.setSectionBack(id, state.screen > 0 ? { onClick: () => show(state.screen - 1) } : null);
+            api.setSectionPosition(id, null);
+            if (state.finished) api.completeSection(id);
+            if (state.screen === count && state.finished) {
+                const heading = document.createElement('h3');
+                heading.dataset.screenHeading = '';
+                heading.textContent = summary.title;
+                const list = document.createElement('ul');
+                list.className = 'best-fit-learned';
+                summary.points.forEach(point => {
+                    const item = document.createElement('li');
+                    item.textContent = point.text;
+                    list.append(item);
+                });
+                root.append(heading, list);
+                api.setSectionReset(id, null);
+                api.setSectionAction(id, {
+                    label: 'All lessons',
+                    async onClick() {
+                        api.completeLesson();
+                        await window.Maths1to9Progress.saveCurrentLesson();
+                        window.location.assign(new URL('../../', window.location.href).href);
+                    }
+                });
+            } else {
+                const index = state.screen;
+                const readOnly = index < state.index;
+                api.createQuestion(root, {
+                    ...checkQuestion(questions[index], E.seededRandom((state.seed + index) >>> 0), E),
+                    sectionId: id, questionId: `final-check-${index + 1}`, scored: true, readOnly, lockedReview: true,
+                    onFeedback: progress,
+                    onContinue() {
+                        section.update(saved => {
+                            saved.index++;
+                            saved.screen = saved.index;
+                            saved.finished = saved.index === count;
+                        });
+                        progress();
+                        render();
+                    }
+                });
+                if (readOnly) api.setSectionAction(id, { label: 'Next', onClick: () => show(index + 1) });
+            }
+            syncHash();
+        }
+
+        for (let index = 0; index <= count; index++) {
+            api.registerHashRoute(index === count ? 'summary' : `check-${index + 1}`, () => {
+                if (!api.goToSection(id, { moveFocus: false })) return false;
+                show(Math.min(index, state.index));
+            });
+        }
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        progress();
+        render();
+    }
+
+    /* Mixed Practice: six questions, at least one from each part, at most two
+       of any one type, at most two widgets, at least one read-up, never two
+       widgets in a row and never three choice questions in a row. */
+    const mixedKinds = [
+        { part: 'draw', type: 'best-line' },
+        { part: 'draw', type: 'draw-best' },
+        { part: 'ignore', type: 'outlier-line' },
+        { part: 'ignore', type: 'draw-best' },
+        { part: 'estimate', type: 'read-up' },
+        { part: 'estimate', type: 'read-across' },
+        { part: 'trust', type: 'trust-which' },
+        { part: 'trust', type: 'trust-sort' },
+        { part: 'trust', type: 'why-unreliable' }
+    ];
+    const partIds = ['draw', 'ignore', 'estimate', 'trust'];
+    const widgetTypes = ['draw-best', 'trust-sort'];
+    const choiceTypes = ['best-line', 'outlier-line', 'read-across', 'trust-which', 'why-unreliable'];
+
+    function widgetsIn(kinds) {
+        return kinds.filter(kind => widgetTypes.includes(kind.type)).length;
+    }
+
+    /* The order rules: no two widgets next to each other, and no three choice
+       questions in a row. A typed question breaks a row of choices. */
+    function validMix(kinds) {
+        const steps = kinds.map(kind => (widgetTypes.includes(kind.type) ? 'widget'
+            : choiceTypes.includes(kind.type) ? 'choice' : 'typed'));
+        return !steps.some((step, index) => step === 'widget' && steps[index + 1] === 'widget') &&
+            !steps.some((step, index) => step === 'choice' && steps[index + 1] === 'choice' &&
+                steps[index + 2] === 'choice');
+    }
+
+    function mixedPractice(random, helpers) {
+        const { randomInt, shuffle } = helpers;
+        for (let attempt = 0; attempt < 2000; attempt++) {
+            const picks = partIds.map(part => {
+                const kinds = mixedKinds.filter(kind => kind.part === part);
+                return kinds[randomInt(0, kinds.length - 1, random)];
+            });
+            if (widgetsIn(picks) > 2) continue;
+            // At least one read-up: the Estimate part's question is the one.
+            const estimate = partIds.indexOf('estimate');
+            if (picks[estimate].type !== 'read-up') {
+                picks[estimate] = mixedKinds.find(kind => kind.type === 'read-up');
+            }
+            const chosen = [...picks];
+            for (const kind of shuffle(mixedKinds.filter(entry => !picks.includes(entry)), random)) {
+                if (chosen.length === 6) break;
+                if (chosen.filter(entry => entry.type === kind.type).length >= 2) continue;
+                if (widgetTypes.includes(kind.type) && widgetsIn(chosen) >= 2) continue;
+                chosen.push(kind);
+            }
+            if (chosen.length !== 6) continue;
+            let order = null;
+            for (let arrange = 0; arrange < 200 && !order; arrange++) {
+                const candidate = shuffle(chosen, random);
+                if (validMix(candidate)) order = candidate;
+            }
+            if (!order) continue;
+            return order.map(kind => {
+                const item = {
+                    part: kind.part,
+                    type: kind.type,
+                    context: B.contextIds[randomInt(0, B.contextIds.length - 1, random)],
+                    seed: randomInt(0, 0xffffffff, random)
+                };
+                if (kind.type === 'draw-best') item.outlier = kind.part === 'ignore';
+                return item;
+            });
+        }
+        throw new Error('Could not arrange Mixed Practice questions.');
     }
 
     function pickPractice(part, count, random, helpers) {
         const seed = () => helpers.randomInt(0, 0xffffffff, random);
+        if (part === null) return mixedPractice(random, helpers);
         if (part === 'draw') {
             const [first, second] = helpers.shuffle([...B.contextIds], random);
             return [
@@ -436,7 +610,7 @@
                 { type: types[2], context: third, seed: seed() }
             ].slice(0, count);
         }
-        return Array.from({ length: count }, () => ({ type: 'scaffold', part, seed: seed() }));
+        throw new Error(`No practice generator for ${part}.`);
     }
 
     function practiceQuestion(item, random, helpers) {
@@ -448,23 +622,15 @@
         if (item.type === 'trust-which') return trustWhich(item, random, helpers);
         if (item.type === 'trust-sort') return trustSort(item, random, helpers);
         if (item.type === 'why-unreliable') return whyUnreliable(item, random, helpers);
-        if (item.type === 'scaffold') {
-            const card = scaffoldCard();
-            return { ...card, options: helpers.shuffle(card.options, random) };
-        }
         throw new Error(`No practice card for ${item.type}.`);
-    }
-
-    function checkQuestion(random, { shuffle }) {
-        const card = scaffoldCard();
-        return { ...card, options: shuffle(card.options, random) };
     }
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             pickPractice, practiceQuestion, bestLine, outlierLine, drawBest,
             readUp, readAcross, trustWhich, trustSort, whyUnreliable,
-            scaffoldCard, smallGraphCard, fittedSet, unitWord
+            checkQuestion, checkPictures, mixedPractice, validMix, mixedKinds,
+            widgetTypes, choiceTypes, smallGraphCard, fittedSet, unitWord
         };
         return;
     }
@@ -486,12 +652,7 @@
                 });
                 continue;
             }
-            const { questions } = config;
-            await api.runQuestionSet(id, {
-                version: 1, count: questions.length, heading: 'Check results', upgrade: () => null,
-                pick: () => questions.map((_, index) => ({ type: String(index), seed: index })),
-                question: (item, random) => checkQuestion(random, helpers)
-            });
+            await mountCheck(api, host);
         }
     };
 })();

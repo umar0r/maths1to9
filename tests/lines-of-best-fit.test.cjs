@@ -5,6 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const Q = require('../content/lines-of-best-fit/questions.js');
 const B = require('../content/lines-of-best-fit/best-fit.js');
+const lesson = JSON.parse(fs.readFileSync(
+    path.join(__dirname, '../content/lines-of-best-fit/lesson.json'), 'utf8'));
 
 const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/lesson-engine.js'), 'utf8'), {
@@ -379,4 +381,213 @@ test('lines of best fit: the lesson scores both Estimate Try it screens', () => 
     assert.ok(ids.includes('step:interactive--estimate:0'));
     assert.ok(ids.includes('step:interactive--estimate:1'));
     assert.ok(ids.includes('step:interactive--trust:0'));
+});
+
+/* Every piece of text a pupil can read on one card. */
+function cardText(card) {
+    const texts = [card.prompt, card.feedback, card.fallback];
+    for (const rule of card.rules || []) texts.push(rule.feedback);
+    for (const option of card.options || []) texts.push(option.label, option.feedback);
+    return texts.filter(text => typeof text === 'string');
+}
+
+function allText(value) {
+    if (typeof value === 'string') return [value];
+    if (Array.isArray(value)) return value.flatMap(allText);
+    if (value && typeof value === 'object') return Object.values(value).flatMap(allText);
+    return [];
+}
+
+/* The words the lesson never shows: a bracket with a number, "cross" or
+   "trend". "Across" is fine. */
+function banned(text) {
+    if (/\(\s*\d/.test(text)) return `a bracket with a number: ${text}`;
+    if (/\bcross\b/i.test(text)) return `the word "cross": ${text}`;
+    if (/\btrend\b/i.test(text)) return `the word "trend": ${text}`;
+    return null;
+}
+
+/* The rules every Practice card must keep, whatever made it. */
+function checkCardShape(card) {
+    assert.equal(typeof card.prompt, 'string');
+    if (card.model?.points) assert.ok(pointsOnGrid(card.model.points), 'a point is off the graph');
+    if (card.model?.lines) assert.ok(card.model.lines.every(endsOnGrid), 'a line end is off the graph');
+    if (card.model?.right) assert.ok(endsOnGrid(card.model.right), 'the fitted line leaves the graph');
+    if (card.input === 'choice') {
+        assert.equal(card.options.length, 4, card.questionType);
+        assert.equal(new Set(card.options.map(option => option.label)).size, 4, card.questionType);
+        assert.equal(card.options.filter(option => option.correct).length, 1, card.questionType);
+        for (const option of card.options) {
+            assert.ok(option.feedback.length > 10, `${card.questionType}: ${option.label}`);
+            assert.notEqual(option.feedback, option.label);
+            if (!option.correct) assert.ok(!option.feedback.startsWith('Yes.'), option.feedback);
+        }
+        return;
+    }
+    if (card.input === 'number') {
+        assert.ok(card.answer !== undefined && card.feedback && card.fallback, card.questionType);
+        assert.equal(card.tolerance, 0.5);
+        for (const rule of card.rules) {
+            assert.ok(Math.abs(Number(rule.value) - Number(card.answer)) >= 0.5 - 1e-9,
+                `${card.questionType}: rule ${rule.value} would be marked right`);
+            assert.ok(rule.feedback.length > 10);
+        }
+        assert.equal(new Set(card.rules.map(rule => rule.value)).size, card.rules.length,
+            `${card.questionType}: two rules share a value`);
+        return;
+    }
+    assert.equal(card.input, 'custom');
+    assert.equal(typeof card.widget.render, 'function');
+    assert.equal(typeof card.widget.mark, 'function');
+    if (card.questionType === 'draw-best') {
+        assert.equal(card.widget.mark(card.model.right).correct, true);
+    }
+    if (card.questionType === 'trust-sort') {
+        assert.equal(card.widget.mark({ placed: {
+            inside: card.model.inside.map(value => `inside-${value}`),
+            outside: card.model.outside.map(value => `outside-${value}`)
+        } }).correct, true);
+    }
+}
+
+const mixedTypes = ['best-line', 'draw-best', 'outlier-line', 'read-up', 'read-across',
+    'trust-which', 'trust-sort', 'why-unreliable'];
+
+/* Section 10: six questions, at least one from each part, at most two of any
+   one type, at most two widgets, at least one read-up, and the order rules. */
+test('lines of best fit: Mixed Practice follows section 10 over 200 32-bit seeds', () => {
+    for (const seed of seeds) {
+        const items = Q.pickPractice(null, 6, E.seededRandom(seed), E);
+        assert.equal(items.length, 6);
+        assert.deepEqual(plain(items), plain(Q.pickPractice(null, 6, E.seededRandom(seed), E)));
+        const types = items.map(item => item.type);
+        assert.ok(types.every(type => mixedTypes.includes(type)), types.join(', '));
+        for (const type of mixedTypes) {
+            assert.ok(types.filter(other => other === type).length <= 2, `${type} is asked more than twice`);
+        }
+        assert.ok(types.filter(type => Q.widgetTypes.includes(type)).length <= 2, 'more than two widgets');
+        assert.ok(types.includes('read-up'), 'no read-up');
+        for (const part of ['draw', 'ignore', 'estimate', 'trust']) {
+            assert.ok(items.some(item => item.part === part), `no ${part} question`);
+        }
+        assert.ok(Q.validMix(items), 'two widgets in a row or three choices in a row');
+        for (const item of items) {
+            assert.ok(B.contextIds.includes(item.context), `${item.context} is not one of the three contexts`);
+            assert.ok(Number.isInteger(item.seed) && item.seed >= 0 && item.seed <= 0xffffffff);
+            if (item.type === 'draw-best') assert.equal(item.outlier, item.part === 'ignore');
+            else assert.ok(!Object.hasOwn(item, 'outlier'), 'only draw-best carries an outlier');
+        }
+    }
+});
+
+test('lines of best fit: every Mixed Practice card is made inside its graph', () => {
+    let widgets = 0;
+    for (const seed of seeds) {
+        for (const item of Q.pickPractice(null, 6, E.seededRandom(seed), E)) {
+            const card = build(item);
+            assert.ok(card.prompt.length > 3);
+            checkCardShape(card);
+            if (Q.widgetTypes.includes(item.type)) widgets++;
+        }
+    }
+    assert.ok(widgets > 0, 'no widget was ever asked in Mixed Practice');
+});
+
+test('lines of best fit: validMix rejects two widgets in a row and three choices in a row', () => {
+    const kind = type => ({ type });
+    assert.equal(Q.validMix([kind('best-line'), kind('outlier-line'), kind('read-across')]), false);
+    assert.equal(Q.validMix([kind('draw-best'), kind('trust-sort')]), false);
+    assert.equal(Q.validMix([kind('best-line'), kind('outlier-line'), kind('read-up')]), true);
+    assert.equal(Q.validMix([kind('draw-best'), kind('read-up'), kind('trust-sort')]), true);
+    assert.equal(Q.validMix([kind('best-line'), kind('best-line'), kind('best-line')]), false);
+});
+
+test('lines of best fit: no pupil-facing text has a bracketed number, "cross" or "trend"', () => {
+    const texts = [...allText(lesson), ...allText(B.tryIt)];
+    for (const result of ['ok', 'short', 'direction', 'high', 'low']) {
+        texts.push(B.drawFeedback(result, 'up'), B.ignoreFeedback(result, 'down'));
+    }
+    for (const seed of seeds.slice(0, 60)) {
+        for (const part of ['draw', 'ignore', 'estimate', 'trust']) {
+            for (const item of Q.pickPractice(part, 3, E.seededRandom(seed), E)) {
+                texts.push(...cardText(build(item)));
+            }
+        }
+        for (const item of Q.pickPractice(null, 6, E.seededRandom(seed), E)) {
+            texts.push(...cardText(build(item)));
+        }
+    }
+    for (const text of texts) assert.equal(banned(text), null, banned(text));
+});
+
+test('lines of best fit: Check is the five section 10 questions, each option with feedback', () => {
+    const { questions, summary } = lesson.comparison;
+    assert.equal(questions.length, 5);
+    assert.deepEqual(questions.map(question => question.type), ['best-fit-meaning', 'best-fit-graph',
+        'best-fit-estimate', 'best-fit-inside', 'best-fit-outside']);
+    assert.equal(questions[0].prompt, 'What is a line of best fit?');
+    assert.equal(questions[0].correct,
+        'A straight line that follows the pattern, through the middle of the points.');
+    assert.equal(questions[1].prompt, 'Which graph shows the line of best fit?');
+    assert.equal(questions[1].correct, 'B');
+    assert.equal(questions[1].picture, 'revision-lines');
+    assert.equal(questions[2].prompt,
+        'Someone says, "The line of best fit says 3 kWh of heating at 7 °C." Are they right?');
+    assert.equal(questions[2].correct, 'No. 3 kWh is a point. The line gives about 4 kWh.');
+    assert.equal(questions[2].picture, 'heating-line');
+    assert.equal(questions[3].prompt,
+        'A scatter graph shows revision from 1 to 9 hours. Why can you trust an estimate for 6 hours?');
+    assert.equal(questions[4].prompt,
+        'A scatter graph shows temperatures from 1 °C to 9 °C. Someone uses the line of best fit to estimate the heating used at 15 °C. Why might this be unreliable?');
+    for (const [index, definition] of questions.entries()) {
+        assert.ok(lesson.assessment.question_types[definition.type], `${definition.type} is not mapped to a skill`);
+        assert.equal(definition.wrong.length, 3, definition.type);
+        const labels = [definition.correct, ...definition.wrong.map(wrong => wrong.label)];
+        assert.equal(new Set(labels).size, 4, definition.type);
+        for (const wrong of definition.wrong) {
+            assert.ok(wrong.feedback.length > 10);
+            assert.notEqual(wrong.feedback, wrong.label);
+        }
+        const card = Q.checkQuestion(definition, E.seededRandom(index + 1), E);
+        assert.equal(card.input, 'choice');
+        assert.equal(card.questionType, definition.type);
+        assert.equal(card.lockedReview, true);
+        assert.equal(card.prompt, definition.prompt);
+        assert.equal(card.options.length, 4);
+        assert.equal(new Set(card.options.map(option => option.label)).size, 4);
+        assert.equal(card.options.filter(option => option.correct).length, 1);
+        assert.equal(card.options.find(option => option.correct).label, definition.correct);
+        assert.equal(card.options.find(option => option.correct).feedback, definition.feedback);
+        assert.equal(typeof card.figure === 'function', Boolean(definition.picture), definition.type);
+        for (const option of card.options) assert.ok(option.feedback.length > 10);
+    }
+    assert.deepEqual(summary.points.map(point => point.text), [
+        'A line of best fit is a straight line that follows the pattern, through the middle of the points.',
+        'About as many points sit above it as below it.',
+        'Ignore the outlier when you draw it.',
+        'To estimate, go from one axis to the line, then to the other axis. Read the line, not a point.',
+        'An estimate inside the data is reliable. Outside the data it may not be, because the pattern might not carry on.'
+    ]);
+});
+
+test('lines of best fit: read-up gives its named mistakes their own words', () => {
+    const seen = { point: 0, bottom: 0 };
+    for (const seed of seeds) {
+        for (const item of Q.pickPractice('estimate', 3, E.seededRandom(seed), E)
+            .filter(entry => entry.type === 'read-up')) {
+            const card = build(item);
+            assert.equal(card.feedback, `Yes. The line gives about ${card.answer}.`);
+            assert.ok(card.fallback.startsWith('Go straight up from'));
+            for (const rule of card.rules) {
+                if (rule.feedback === "That's a point. Read from the line, not a point.") seen.point++;
+                else {
+                    assert.match(rule.feedback,
+                        /^That's the .+, on the bottom axis\. Go up to the line, then across\.$/);
+                    seen.bottom++;
+                }
+            }
+        }
+    }
+    assert.ok(seen.point > 0, 'the point rule was never used');
+    assert.ok(seen.bottom > 0, 'the bottom-axis rule was never used');
 });

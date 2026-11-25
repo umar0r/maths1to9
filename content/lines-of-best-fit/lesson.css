@@ -161,3 +161,12 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* The five things the lesson taught, on the last screen. */
+.best-fit-learned {
+    display: grid;
+    gap: 0.6rem;
+    max-width: 34rem;
+    margin: 1rem auto 0;
+    padding-left: 1.25rem;
+}
