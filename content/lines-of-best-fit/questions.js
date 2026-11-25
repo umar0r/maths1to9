@@ -46,7 +46,7 @@
         return { ...card, options: shuffle(card.options, random) };
     }
 
-    function checkQuestion({ shuffle }) {
+    function checkQuestion(random, { shuffle }) {
         const card = scaffoldCard();
         return { ...card, options: shuffle(card.options, random) };
     }
@@ -77,7 +77,7 @@
             await api.runQuestionSet(id, {
                 version: 1, count: questions.length, heading: 'Check results', upgrade: () => null,
                 pick: () => questions.map((_, index) => ({ type: String(index), seed: index })),
-                question: (item, random) => checkQuestion(helpers, random)
+                question: (item, random) => checkQuestion(random, helpers)
             });
         }
     };
