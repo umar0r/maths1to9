@@ -1,0 +1,146 @@
+{
+    "slug": "scatter-graph-outliers",
+    "title": "Outliers",
+    "subtitle": "Spot a point that doesn't fit the pattern on a scatter graph.",
+    "layout": "parts",
+    "navigation": { "back_button": true },
+    "parts": [
+        {
+            "id": "spot", "label": "Spot",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "read", "label": "Read",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "reason", "label": "Reason",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        },
+        {
+            "id": "ignore", "label": "Ignore",
+            "explanation": { "hide_eyebrow": true, "hide_heading": true },
+            "interactive": { "hide_eyebrow": true, "hide_heading": true },
+            "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 3 }
+        }
+    ],
+    "question_bank": { "hide_eyebrow": true, "hide_heading": true, "session_length": 6 },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            {
+                "type": "outlier-meaning",
+                "prompt": "What is an outlier on a scatter graph?",
+                "correct": "A point that doesn't fit the pattern of the other points.",
+                "feedback": "Yes. It's the odd one out, away from the main group.",
+                "wrong": [
+                    { "label": "The highest point on the graph.",
+                      "feedback": "The highest point can fit the pattern. An outlier is the one that doesn't fit." },
+                    { "label": "The point furthest to the right.",
+                      "feedback": "Where it sits along the bottom doesn't matter. An outlier is the one that doesn't fit the pattern." },
+                    { "label": "A point that shows there is no correlation.",
+                      "feedback": "One outlier doesn't stop the pattern. It's just one point that doesn't fit." }
+                ]
+            },
+            {
+                "type": "spot-outlier",
+                "picture": "sunshine",
+                "prompt": "Which point is the outlier?",
+                "correct": "B",
+                "feedback": "Yes. B was a very sunny day, but hardly any ice creams were sold.",
+                "wrong": [
+                    { "label": "A",
+                      "feedback": "A sold the most ice creams, but it was the sunniest day, so it fits the pattern." },
+                    { "label": "C",
+                      "feedback": "C sold only 2 boxes, but it wasn't sunny, so it fits the pattern." },
+                    { "label": "D",
+                      "feedback": "D sits in the middle of the main group." }
+                ]
+            },
+            {
+                "type": "read-one-value",
+                "picture": "revision",
+                "prompt": "One pupil got a much lower mark than the pattern suggests. How many hours did that pupil revise?",
+                "correct": "6 hours",
+                "feedback": "Yes. Go straight down from the outlier to the bottom axis.",
+                "wrong": [
+                    { "label": "1 hour",
+                      "feedback": "1 is that pupil's mark, on the side axis. The question asks for the hours." },
+                    { "label": "9 hours",
+                      "feedback": "That pupil revised the most, but their mark fits the pattern." },
+                    { "label": "5 hours",
+                      "feedback": "That pupil's mark fits the pattern. Find the one far below the others." }
+                ]
+            },
+            {
+                "type": "outlier-cause",
+                "prompt": "On a scatter graph of revision and test marks, one pupil revised for 8 hours but got a mark of 2. Which could explain this?",
+                "correct": "The pupil was ill on the day of the test.",
+                "feedback": "Yes. Something unusual could explain one point that doesn't fit.",
+                "wrong": [
+                    { "label": "Revising more makes your mark go down.",
+                      "feedback": "One pupil can't change the pattern. The other points still go up." },
+                    { "label": "Revising doesn't change your mark at all.",
+                      "feedback": "The other points show that more revision tends to go with higher marks." },
+                    { "label": "All the other pupils' marks were written down wrong.",
+                      "feedback": "It's only this one point that doesn't fit. The others agree with each other." }
+                ]
+            },
+            {
+                "type": "ignore-outlier",
+                "picture": "heating",
+                "prompt": "Someone says, \"This graph has an outlier, so there is no correlation.\" Which reply is right?",
+                "correct": "Ignore the outlier. The other points still show negative correlation.",
+                "feedback": "Yes. One point that doesn't fit can't stop the pattern.",
+                "wrong": [
+                    { "label": "They're right. An outlier means there is no correlation.",
+                      "feedback": "One point can't stop a pattern. The other points still go down." },
+                    { "label": "Ignoring the outlier leaves positive correlation.",
+                      "feedback": "The other points go down, not up." },
+                    { "label": "Negative correlation means every point must sit on one straight line.",
+                      "feedback": "The points only need to go down overall. They don't have to sit on a line." }
+                ]
+            }
+        ],
+        "summary": {
+            "title": "What you've learned",
+            "points": [
+                { "text": "An outlier is a point that doesn't fit the pattern of the other points." },
+                { "text": "It isn't always the highest or lowest point. Look for the one away from the main group." },
+                { "text": "Read it like any point, and give only the value the question asks for." },
+                { "text": "An outlier might be an unusual case, or a mistake made when the data was written down." },
+                { "text": "Ignore the outlier when you describe the correlation." }
+            ]
+        }
+    },
+    "score_activities": [
+        { "id": "step:interactive--spot:0", "kind": "guided" },
+        { "id": "step:interactive--read:0", "kind": "guided" },
+        { "id": "step:interactive--read:1", "kind": "guided" },
+        { "id": "step:interactive--reason:0", "kind": "guided" },
+        { "id": "step:interactive--ignore:0", "kind": "guided" }
+    ],
+    "assessment": { "question_types": {
+        "which-outlier": "scatter-outliers",
+        "tap-outlier": "scatter-outliers",
+        "read-value": "scatter-outliers",
+        "which-pair": "scatter-outliers",
+        "reason-choice": "scatter-outliers",
+        "reason-sort": "scatter-outliers",
+        "ignore-type": "scatter-outliers",
+        "ignore-sort": "scatter-outliers",
+        "ignore-reply": "scatter-outliers",
+        "outlier-meaning": "scatter-outliers",
+        "spot-outlier": "scatter-outliers",
+        "read-one-value": "scatter-outliers",
+        "outlier-cause": "scatter-outliers",
+        "ignore-outlier": "scatter-outliers"
+    } }
+}

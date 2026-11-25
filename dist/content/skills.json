@@ -258,6 +258,7 @@
     {"id":"scatter-graphs","title":"Construct and interpret scatter graphs","content_references":["S6"]},
     {"id":"recognise-correlation","title":"Recognise the type and strength of correlation","content_references":["S6"]},
     {"id":"correlation-not-causation","title":"Understand that correlation does not imply causation","content_references":["S6"]},
+    {"id":"scatter-outliers","title":"Identify and interpret outliers on a scatter graph","content_references":["S6"]},
     {"id":"line-of-best-fit","title":"Draw and use a line of best fit","content_references":["S6"]},
     {"id":"interpolate-extrapolate","title":"Interpolate and extrapolate with awareness of limitations","content_references":["S6"]},
     {"id":"time-series-graphs","title":"Construct time-series graphs","content_references":["S2"]},
