@@ -197,6 +197,7 @@
         const points = [...context.set.main, context.set.outlier];
         let board = null;
         let items = [];
+        let flashTimer = null;
 
         function syncHash() {
             if (api.getCurrentSection().id === id) api.setSlideHash('spot-try-it-1', { replace: true });
@@ -207,6 +208,10 @@
         }
 
         function render() {
+            if (flashTimer) {
+                window.clearTimeout(flashTimer);
+                flashTimer = null;
+            }
             board?.destroy();
             board = null;
             root.replaceChildren();
@@ -257,12 +262,18 @@
                 syncHash();
             }
 
+            /* One timer for the red flash, so a quick second tap can't be
+               undone by an old timer. Repaint first, so any point that is
+               still red goes back to normal. */
             function flash(point) {
+                if (flashTimer) window.clearTimeout(flashTimer);
+                paint();
                 const item = items.find(([other]) => C.samePoint(other, point))?.[1];
                 if (!item) return;
                 item.update({ size: 'large', tone: 'incorrect' });
-                window.setTimeout(() => {
-                    if (!state.done) item.update({ size: 'small', tone: 'neutral' });
+                flashTimer = window.setTimeout(() => {
+                    flashTimer = null;
+                    paint();
                 }, 600);
             }
 
@@ -292,14 +303,18 @@
                         saved.hint = 'That point fits the pattern. Find the one away from the others.';
                     });
                     board.describe(`You tapped the point for ${context.words(match)}.`);
-                    flash(match);
                     paint();
+                    flash(match);
                 } });
             }
 
             api.setSectionBack(id, null);
             api.setSectionReset(id, state.done || state.hint || state.picked
                 ? () => {
+                    if (flashTimer) {
+                        window.clearTimeout(flashTimer);
+                        flashTimer = null;
+                    }
                     sectionState.resetFields(['picked', 'done', 'hint']);
                     render();
                 }
