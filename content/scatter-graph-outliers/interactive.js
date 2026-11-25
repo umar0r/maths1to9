@@ -213,7 +213,7 @@
             board?.destroy();
             board = null;
             root.replaceChildren();
-            const heading = element('h2', 'Tap the outlier.');
+            const heading = element('h2', C.tryIt.spot.heading);
             heading.id = `lesson-section-title-${id}`;
             heading.dataset.screenHeading = '';
             heading.tabIndex = -1;
@@ -240,9 +240,7 @@
                     else if (isPicked) item.update({ size: 'large', tone: 'neutral' });
                     else item.update({ size: 'small', tone: 'neutral' });
                 });
-                const message = state.done
-                    ? 'Yes. The other points go down, but this one sits far above them.'
-                    : state.hint;
+                const message = state.done ? C.tryIt.spot.right : state.hint;
                 feedback.textContent = message;
                 feedback.className = E.feedbackClassName('interactive', {
                     visible: Boolean(message), correct: state.done
@@ -281,7 +279,7 @@
                     const match = points.find(point => C.samePoint(point, position));
                     if (!match) {
                         sectionState.update(saved => {
-                            saved.hint = "There's no point there. Tap one of the points.";
+                            saved.hint = C.tryIt.spot.offPoint;
                         });
                         paint();
                         return;
@@ -298,7 +296,7 @@
                         return;
                     }
                     sectionState.update(saved => {
-                        saved.hint = 'That point fits the pattern. Find the one away from the others.';
+                        saved.hint = C.tryIt.spot.fitsPattern;
                     });
                     board.describe(`You tapped the point for ${context.words(match)}.`);
                     paint();
@@ -345,10 +343,7 @@
             })
         });
         const state = sectionState.state;
-        const headings = [
-            'Find the outlier. Tap the bottom axis right under it.',
-            'How much heating does the outlier show? Tap the number on the side axis.'
-        ];
+        const headings = C.tryIt.read.headings;
         const sunshine = C.contexts.sunshine;
         const heating = C.contexts.heating;
         let board = null;
@@ -404,10 +399,8 @@
 
             if (index === 0) {
                 const card = state.r1;
-                prompt.textContent = card.bottom === null ? '' : card.done ? '' : 'Now tap the side axis level with it.';
-                const message = card.done
-                    ? 'Yes. The outlier shows 7 hours of sunshine and 1 box sold.'
-                    : card.hint;
+                prompt.textContent = card.bottom === null || card.done ? '' : C.tryIt.read.secondPrompt;
+                const message = card.done ? C.tryIt.read.sunshine.right : card.hint;
                 feedback.textContent = message;
                 feedback.className = E.feedbackClassName('interactive', {
                     visible: Boolean(message), correct: card.done
@@ -422,21 +415,21 @@
                         sectionState.update(saved => {
                             if (stage === 'bottom') {
                                 if (y !== 0) {
-                                    saved.r1.hint = 'Tap on the bottom axis, the line along the bottom.';
-                                } else if (x === 7) {
-                                    saved.r1.bottom = 7;
+                                    saved.r1.hint = C.tryIt.read.hints.bottomAxis;
+                                } else if (x === C.tryIt.read.sunshine.bottom) {
+                                    saved.r1.bottom = C.tryIt.read.sunshine.bottom;
                                     saved.r1.hint = '';
                                 } else {
-                                    saved.r1.hint = "That's under a point that fits the pattern. Find the outlier first, then go straight down.";
+                                    saved.r1.hint = C.tryIt.read.hints.notOutlier;
                                 }
                             } else if (x !== 0) {
-                                saved.r1.hint = 'Tap on the side axis, the line up the left.';
-                            } else if (y === 1) {
-                                saved.r1.side = 1;
+                                saved.r1.hint = C.tryIt.read.hints.sideAxis;
+                            } else if (y === C.tryIt.read.sunshine.side) {
+                                saved.r1.side = C.tryIt.read.sunshine.side;
                                 saved.r1.done = true;
                                 saved.r1.hint = '';
                             } else {
-                                saved.r1.hint = 'Go straight across from the outlier to the side axis.';
+                                saved.r1.hint = C.tryIt.read.hints.notLevel;
                             }
                         });
                         board.describe(stage === 'bottom' && y === 0 ? `You tapped ${x} on the bottom axis.`
@@ -450,7 +443,7 @@
             } else {
                 const card = state.r2;
                 prompt.textContent = '';
-                const message = card.done ? 'Yes. The outlier shows 7 kWh of heating.' : card.hint;
+                const message = card.done ? C.tryIt.read.heating.right : card.hint;
                 feedback.textContent = message;
                 feedback.className = E.feedbackClassName('interactive', {
                     visible: Boolean(message), correct: card.done
@@ -467,15 +460,15 @@
                     board.pick({ label: headings[index], onPick([x, y]) {
                         sectionState.update(saved => {
                             if (x !== 0) {
-                                saved.r2.hint = 'Tap on the side axis, the line up the left.';
-                            } else if (y === 7) {
-                                saved.r2.side = 7;
+                                saved.r2.hint = C.tryIt.read.hints.sideAxis;
+                            } else if (y === C.tryIt.read.heating.side) {
+                                saved.r2.side = C.tryIt.read.heating.side;
                                 saved.r2.done = true;
                                 saved.r2.hint = '';
-                            } else if (y === 9) {
-                                saved.r2.hint = "9 is the outlier's temperature, on the bottom axis. This question asks for the heating.";
+                            } else if (y === C.tryIt.read.heating.wrongSide) {
+                                saved.r2.hint = C.tryIt.read.heating.otherAxis;
                             } else {
-                                saved.r2.hint = 'Go straight across from the outlier to the side axis.';
+                                saved.r2.hint = C.tryIt.read.hints.notLevel;
                             }
                         });
                         board.describe(x === 0 ? `You tapped ${y} on the side axis.` : 'You tapped the grid, not an axis.');
@@ -606,7 +599,7 @@
             part: 'reason',
             ariaLabel: 'Reason Try it',
             hash: 'reason-try-it-1',
-            heading: 'Sort these reasons for the outlier.',
+            heading: C.tryIt.reason.heading,
             graph: {
                 context: sunshine, blue: [sunshine.set.outlier],
                 label: 'Scatter graph of hours of sunshine and ice creams sold, with the outlier in blue.'
@@ -614,7 +607,7 @@
             cards: () => C.reasonCards('sunshine'),
             slots: () => C.reasonSlots(),
             hint: cards => C.reasonHint(cards),
-            success: 'An outlier can be real but unusual, or just a mistake in the data.'
+            success: C.tryIt.reason.success
         });
     }
 
@@ -626,7 +619,7 @@
             part: 'ignore',
             ariaLabel: 'Ignore Try it',
             hash: 'ignore-try-it-1',
-            heading: 'Put the right name under each graph.',
+            heading: C.tryIt.ignore.heading,
             cards: () => [
                 { id: 'positive', label: 'Positive', bin: 'sunshine' },
                 { id: 'negative', label: 'Negative', bin: 'heating' },
@@ -647,7 +640,7 @@
                 }
             ],
             hint: () => C.ignoreHint,
-            success: 'Ignore the outlier, and the pattern of the others tells you the correlation.'
+            success: C.tryIt.ignore.success
         });
     }
 

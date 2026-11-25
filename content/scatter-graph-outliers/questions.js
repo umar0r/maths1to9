@@ -4,8 +4,6 @@
     const slug = typeof document === 'undefined' ? 'scatter-graph-outliers' : document.body.dataset.lessonId;
     const O = typeof module !== 'undefined' && module.exports ? require('./outliers.js') : window.Outliers;
 
-    const partNames = { spot: 'Spot', read: 'Read', reason: 'Reason', ignore: 'Ignore' };
-
     function element(tag, text = '', className = '') {
         const node = document.createElement(tag);
         node.textContent = text;
@@ -445,8 +443,90 @@
         };
     }
 
+    /* What each card is: its part, whether it is hands-on, and whether it is
+       multiple choice. Mixed Practice picks from these. */
+    const typeInfo = {
+        'which-outlier': { part: 'spot', widget: false, choice: true },
+        'tap-outlier': { part: 'spot', widget: true, choice: false },
+        'read-value': { part: 'read', widget: false, choice: false },
+        'which-pair': { part: 'read', widget: false, choice: true },
+        'reason-choice': { part: 'reason', widget: false, choice: true },
+        'reason-sort': { part: 'reason', widget: true, choice: false },
+        'ignore-type': { part: 'ignore', widget: false, choice: true },
+        'ignore-sort': { part: 'ignore', widget: true, choice: false },
+        'ignore-reply': { part: 'ignore', widget: false, choice: true }
+    };
+    const partTypes = {
+        spot: ['which-outlier', 'tap-outlier'],
+        read: ['read-value', 'which-pair'],
+        reason: ['reason-choice', 'reason-sort'],
+        ignore: ['ignore-type', 'ignore-sort', 'ignore-reply']
+    };
+    const widgetTypes = Object.keys(typeInfo).filter(type => typeInfo[type].widget);
+    const partIds = Object.keys(partTypes);
+
+    /* No two hands-on cards in a row, and never three choice cards in a row. */
+    function orderIsSpread(order) {
+        let choiceRun = 0;
+        for (let index = 0; index < order.length; index++) {
+            const type = order[index];
+            if (index > 0 && typeInfo[type].widget && typeInfo[order[index - 1]].widget) return false;
+            choiceRun = typeInfo[type].choice ? choiceRun + 1 : 0;
+            if (choiceRun > 2) return false;
+        }
+        return true;
+    }
+
+    /* Six cards, at least one from each part, at most two of any one type,
+       exactly two hands-on cards and at least one typed one. */
+    function pickMixed(count, random, helpers) {
+        const { randomInt, shuffle } = helpers;
+        const all = Object.keys(typeInfo);
+        for (let attempt = 0; attempt < 500; attempt++) {
+            const picked = shuffle(widgetTypes, random).slice(0, 2);
+            const covered = new Set(picked.map(type => typeInfo[type].part));
+            partIds.filter(part => !covered.has(part)).forEach(part => {
+                const options = partTypes[part].filter(type => !typeInfo[type].widget);
+                picked.push(options[Math.floor(random() * options.length)]);
+            });
+            // The fill only adds cards that are not hands-on: the two
+            // hands-on cards are already chosen.
+            while (picked.length < count) {
+                const options = all.filter(type => !typeInfo[type].widget &&
+                    picked.filter(other => other === type).length < 2);
+                picked.push(options[Math.floor(random() * options.length)]);
+            }
+            if (picked.length !== count) continue;
+            const order = shuffle(picked, random);
+            if (!order.includes('read-value') || !orderIsSpread(order)) continue;
+
+            const items = [];
+            let previous = null;
+            let typed = null;
+            order.forEach(type => {
+                // The sort always shows one positive graph and heating.
+                const context = type === 'ignore-sort'
+                    ? ['revision', 'sunshine'][Math.floor(random() * 2)]
+                    : O.contextIds.filter(id => id !== previous)[Math.floor(random() * 2)];
+                const item = { type, context, seed: randomInt(0, 0xffffffff, random) };
+                if (type === 'read-value') {
+                    // Two typed cards on the same graph ask for different axes.
+                    item.axis = typed && typed.context === context
+                        ? (typed.axis === 'x' ? 'y' : 'x')
+                        : ['x', 'y'][Math.floor(random() * 2)];
+                    typed = item;
+                }
+                previous = context;
+                items.push(item);
+            });
+            return items;
+        }
+        throw new Error('No Mixed Practice set for that seed.');
+    }
+
     function pickPractice(part, count, random, helpers) {
         const { randomInt, shuffle } = helpers;
+        if (!part) return pickMixed(count, random, helpers);
         const seed = kind => ({ ...kind, seed: randomInt(0, 0xffffffff, random) });
         if (part === 'spot') {
             // The two letter cards ask about two different graphs.
@@ -510,40 +590,12 @@
         throw new Error(`No practice card for ${item.type}.`);
     }
 
-    /* Part Practice and Mixed Practice that are not built yet: one screen
-       that says so, and Continue. */
-    function mountPracticePlaceholder(api, host, section) {
-        const id = section.id;
-        const box = host.closest('.lesson-section');
-        box?.removeAttribute('aria-labelledby');
-        box?.setAttribute('aria-label', section.part ? `${partNames[section.part]} Practice` : 'Mixed Practice');
-        api.gateSection(id);
-        host.replaceChildren();
-        const root = element('article');
-        host.append(root);
-        const heading = element('h2', 'Not built yet.');
-        heading.id = `lesson-section-title-${id}`;
-        heading.dataset.screenHeading = '';
-        root.append(heading);
-        root.append(element('p', section.part
-            ? `The ${partNames[section.part]} Practice questions are added in a later stage.`
-            : 'Mixed Practice is added in a later stage.', 'outliers-note'));
-        api.setSectionBack(id, null);
-        api.setSectionReset(id, null);
-        api.setSectionAction(id, {
-            label: 'Continue',
-            onClick() {
-                api.completeSection(id);
-                api.continueSection();
-            }
-        });
-    }
-
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             checkQuestion, checkPictures, drawPoints,
             pickPractice, practiceQuestion, whichOutlier, tapOutlier, readValue, whichPair,
-            reasonChoice, reasonSort, ignoreType, ignoreSort, ignoreReply
+            reasonChoice, reasonSort, ignoreType, ignoreSort, ignoreReply,
+            typeInfo, partTypes, widgetTypes, pickMixed, orderIsSpread
         };
         return;
     }
@@ -558,15 +610,11 @@
             const host = document.getElementById(helpers.questionSetContainerId(slug, id));
             if (!host) continue;
             if (kind === 'question-bank') {
-                if (part === 'spot' || part === 'read' || part === 'reason' || part === 'ignore') {
-                    await api.runQuestionSet(id, {
-                        version: 1, count: config.session_length, upgrade: () => null,
-                        pick: random => pickPractice(part, config.session_length, random, helpers),
-                        question: (item, random) => practiceQuestion(item, random, helpers)
-                    });
-                } else {
-                    mountPracticePlaceholder(api, host, section);
-                }
+                await api.runQuestionSet(id, {
+                    version: 1, count: config.session_length, upgrade: () => null,
+                    pick: random => pickPractice(part, config.session_length, random, helpers),
+                    question: (item, random) => practiceQuestion(item, random, helpers)
+                });
                 continue;
             }
             await mountCheck(api, host);

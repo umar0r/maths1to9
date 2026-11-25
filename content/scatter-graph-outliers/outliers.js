@@ -713,8 +713,53 @@
         };
     }
 
+    /* The Try it answers and words, so the unit test can check them without
+       a browser. interactive.js draws them. */
+    const tryIt = {
+        spot: {
+            heading: 'Tap the outlier.',
+            answer: sets.HEATING.outlier,
+            wrong: [8, 3],
+            right: 'Yes. The other points go down, but this one sits far above them.',
+            fitsPattern: 'That point fits the pattern. Find the one away from the others.',
+            offPoint: "There's no point there. Tap one of the points."
+        },
+        read: {
+            headings: [
+                'Find the outlier. Tap the bottom axis right under it.',
+                'How much heating does the outlier show? Tap the number on the side axis.'
+            ],
+            secondPrompt: 'Now tap the side axis level with it.',
+            sunshine: {
+                bottom: 7,
+                side: 1,
+                right: 'Yes. The outlier shows 7 hours of sunshine and 1 box sold.'
+            },
+            heating: {
+                side: 7,
+                wrongSide: 9,
+                right: 'Yes. The outlier shows 7 kWh of heating.',
+                otherAxis: "9 is the outlier's temperature, on the bottom axis. This question asks for the heating."
+            },
+            hints: {
+                bottomAxis: 'Tap on the bottom axis, the line along the bottom.',
+                sideAxis: 'Tap on the side axis, the line up the left.',
+                notOutlier: "That's under a point that fits the pattern. Find the outlier first, then go straight down.",
+                notLevel: 'Go straight across from the outlier to the side axis.'
+            }
+        },
+        reason: {
+            heading: 'Sort these reasons for the outlier.',
+            success: 'An outlier can be real but unusual, or just a mistake in the data.'
+        },
+        ignore: {
+            heading: 'Put the right name under each graph.',
+            success: 'Ignore the outlier, and the pattern of the others tells you the correlation.'
+        }
+    };
+
     const helpers = {
-        sets, contexts, contextIds, reasonSets, makeGraph, fullGraph, graphPoints, samePoint,
+        sets, contexts, contextIds, reasonSets, tryIt, makeGraph, fullGraph, graphPoints, samePoint,
         note, sentence, ask, reason, pearson, pointSet, outlierSet, keepsRule,
         highestOf, lowestOf, tapOutlierWidget, reasonCards, reasonSlots, reasonHint,
         ignoreCards, ignoreHint, miniGraph, smallGraphs, sortCards, sortWidget
