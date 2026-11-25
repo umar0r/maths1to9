@@ -211,11 +211,119 @@
         render();
     }
 
-    /* The Try it headings the real screens will use. Until then each part
-       gets one plain screen, so the lesson loads and every section works. */
+    /* One Try it screen: the pupil draws a line and it is marked on release.
+       A right line locks in green; a wrong one stays neutral and can be drawn
+       again. `message` says what the part calls each mistake. */
+    async function mountLineTryIt(api, root, section, { context, withOutlier, message }) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        const part = section.part;
+        api.gateSection(id);
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Draw a line of best fit');
+        const sectionState = await api.useSectionState(`interactive:${part}`, {
+            version: 1, upgrade: () => null,
+            initial: () => ({ line: null, done: false })
+        });
+        const state = sectionState.state;
+        const points = context.set.main;
+        const fit = B.leastSquares(points);
+        const outlier = withOutlier ? context.set.outlier : null;
+        let board = null;
+        let feedback = null;
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) {
+                api.setSlideHash(`${part}-try-it-1`, { replace: true });
+            }
+        }
+        function action() {
+            api.setSectionAction(id, {
+                label: 'Continue',
+                disabled: !state.done,
+                onClick() {
+                    if (!state.done) return;
+                    api.completeSection(id);
+                    api.continueSection();
+                }
+            });
+        }
+        function show(line) {
+            if (!line) {
+                feedback.className = E.feedbackClassName(id, { visible: false });
+                feedback.textContent = '';
+                return;
+            }
+            const result = B.judgeLine(line, points, fit, outlier);
+            feedback.className = E.feedbackClassName(id, { correct: result === 'ok' });
+            feedback.textContent = message(result);
+        }
+        function mark(line) {
+            const done = line !== null && B.judgeLine(line, points, fit, outlier) === 'ok';
+            sectionState.update(saved => {
+                saved.line = line;
+                saved.done = done;
+            });
+            show(line);
+            if (done) {
+                board.setEditable(false);
+                api.setSectionProgress(id, 1, 1);
+                api.completeSection(id);
+            }
+            action();
+        }
+
+        function render() {
+            board?.destroy();
+            root.replaceChildren();
+            const heading = element('h2', 'Draw a line of best fit.');
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'best-fit-picture');
+            root.append(picture);
+            board = B.scatterGraph(picture, {
+                context,
+                outlier: withOutlier,
+                label: withOutlier
+                    ? 'Scatter graph of outdoor temperature and heating used, with every point looking the same.'
+                    : 'Scatter graph of hours of sunshine and ice creams sold, with every point looking the same.'
+            });
+            feedback = E.createFeedback(id, { visible: false });
+            root.append(feedback);
+            board.drawLine({
+                line: state.line,
+                minLength: 2,
+                tone: line => (B.judgeLine(line, points, fit, outlier) === 'ok' ? 'correct' : 'neutral'),
+                onChange: mark
+            });
+            board.setEditable(!state.done);
+            show(state.line);
+            api.setSectionProgress(id, state.done ? 1 : 0, 1);
+            if (state.done) api.completeSection(id);
+            api.setSectionBack(id, null);
+            api.setSectionReset(id, () => {
+                sectionState.resetFields([['line'], ['done']]);
+                api.setSectionProgress(id, 0, 1);
+                render();
+            });
+            action();
+            syncHash();
+        }
+
+        api.registerHashRoute(`${part}-try-it-1`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            render();
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    /* The Try it headings for the two parts that are still to come. Until
+       then each gets one plain screen, so the lesson loads and works. */
     const tryItPlaceholders = {
-        draw: 'Draw a line of best fit.',
-        ignore: 'Draw a line of best fit.',
         estimate: 'Estimate the heating used at 7 °C. Tap the number on the side axis.',
         trust: 'Can you trust these estimates? Sort them.'
     };
@@ -251,6 +359,20 @@
         const api = window.Maths1to9Lesson;
         if (!learn[section.part]) throw new Error(`Unknown lines of best fit part: ${section.part}`);
         await mountLearn(api, section.part);
+        if (section.part === 'draw') {
+            return mountLineTryIt(api, root, section, {
+                context: B.contexts.sunshine,
+                withOutlier: false,
+                message: result => B.drawFeedback(result, 'up')
+            });
+        }
+        if (section.part === 'ignore') {
+            return mountLineTryIt(api, root, section, {
+                context: B.contexts.heating,
+                withOutlier: true,
+                message: result => B.ignoreFeedback(result, 'down')
+            });
+        }
         return mountPlaceholderTryIt(api, root, section);
     };
 })();
