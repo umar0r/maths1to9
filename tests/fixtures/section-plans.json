@@ -255,6 +255,22 @@
     "question-bank",
     "comparison"
   ],
+  "scatter-graph-outliers": [
+    "explanation--spot",
+    "interactive--spot",
+    "question-bank--spot",
+    "explanation--read",
+    "interactive--read",
+    "question-bank--read",
+    "explanation--reason",
+    "interactive--reason",
+    "question-bank--reason",
+    "explanation--ignore",
+    "interactive--ignore",
+    "question-bank--ignore",
+    "question-bank",
+    "comparison"
+  ],
   "scatter-graphs": [
     "explanation--read",
     "interactive--read",

@@ -29,6 +29,7 @@
         "rate-of-change-graphs",
         "scatter-graphs",
         "scatter-graph-correlation",
+        "scatter-graph-outliers",
         "lines-of-best-fit",
         "time-series"
       ]
