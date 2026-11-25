@@ -50,8 +50,8 @@ module.exports = async function solve(page) {
         }
         return true;
     }
-    if (hash === 'read-learn-2') { await root.getByRole('button', { name: '4 Hours, 5 Mark', exact: true }).click(); return true; }
-    if (hash === 'read-learn-3' || hash === 'read-try-it-1') {
+    if (hash === 'read-learn-3') { await root.getByRole('button', { name: '4 Hours, 5 Mark', exact: true }).click(); return true; }
+    if (hash === 'read-learn-4' || hash === 'read-try-it-1') {
         const side = text.includes('Now tap the side axis');
         await pick(page, side ? [0, big.y] : [big.x, 0]);
         return true;
