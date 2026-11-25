@@ -177,8 +177,9 @@
         render();
     }
 
-    /* Spot Try it: one tap. The right point turns large and green and locks;
-       any other point shows red for a moment. */
+    /* Spot Try it: two screens. The right point turns large and green and
+       locks; any other point shows red for a moment. The second screen adds
+       a point that is far from the others but still fits the pattern. */
     async function mountSpotTryIt(api, root, section) {
         const E = window.Maths1to9LessonEngine;
         const id = section.id;
@@ -187,22 +188,48 @@
         box?.setAttribute('aria-label', 'Spot Try it');
         api.gateSection(id);
         const sectionState = await api.useSectionState('interactive:spot', {
-            version: 1, upgrade: () => null,
-            initial: () => ({ screen: 0, furthest: 0, picked: null, done: false, hint: '' })
+            version: 2, upgrade: () => null,
+            initial: () => ({
+                screen: 0, furthest: 0,
+                s1: { picked: null, done: false, hint: '' },
+                s2: { picked: null, done: false, hint: '' }
+            })
         });
         const state = sectionState.state;
-        const context = C.contexts.heating;
-        const points = [...context.set.main, context.set.outlier];
+        const spot = C.tryIt.spot;
+        const far = spot.second;
+        const contexts = [C.contexts.heating, C.contexts.revision];
         let board = null;
         let items = [];
         let flashTimer = null;
 
         function syncHash() {
-            if (api.getCurrentSection().id === id) api.setSlideHash('spot-try-it-1', { replace: true });
+            if (api.getCurrentSection().id === id) api.setSlideHash(`spot-try-it-${state.screen + 1}`, { replace: true });
+        }
+        function show(index) {
+            sectionState.update(saved => {
+                saved.screen = index;
+                saved.furthest = Math.max(saved.furthest, index);
+            });
+            render();
+            root.querySelector('[data-screen-heading]')?.focus();
+        }
+        function cardOf(saved, index) {
+            return index === 0 ? saved.s1 : saved.s2;
         }
         function progress() {
-            api.setSectionProgress(id, Number(state.done), 1);
-            if (state.done) api.completeSection(id);
+            const completed = Number(state.s1.done) + Number(state.s2.done);
+            api.setSectionProgress(id, completed, 2);
+            if (completed === 2) api.completeSection(id);
+        }
+        function pointsFor(index) {
+            const set = contexts[index].set;
+            const points = [...set.main, set.outlier];
+            if (index === 1) points.push(far.extra);
+            return points;
+        }
+        function answerFor(index) {
+            return index === 0 ? contexts[0].set.outlier : far.answer;
         }
 
         function render() {
@@ -213,7 +240,12 @@
             board?.destroy();
             board = null;
             root.replaceChildren();
-            const heading = element('h2', C.tryIt.spot.heading);
+            const index = state.screen;
+            const context = contexts[index];
+            const card = cardOf(state, index);
+            const wording = index === 0 ? spot : far;
+            const points = pointsFor(index);
+            const heading = element('h2', spot.heading);
             heading.id = `lesson-section-title-${id}`;
             heading.dataset.screenHeading = '';
             heading.tabIndex = -1;
@@ -224,7 +256,9 @@
             picture.append(graphHost);
             board = C.makeGraph(graphHost, {
                 axisNames: context.axisNames,
-                label: 'Scatter graph of outdoor temperature and heating used. Tap the outlier.'
+                label: index === 0
+                    ? 'Scatter graph of outdoor temperature and heating used. Tap the outlier.'
+                    : 'Scatter graph of hours of revision and test marks. Tap the outlier.'
             });
             items = points.map(point => [point, board.point(point, {
                 size: 'small', tone: 'neutral', coordinates: false
@@ -233,27 +267,36 @@
             root.append(feedback);
 
             function paint() {
+                const answer = answerFor(index);
                 items.forEach(([point, item]) => {
-                    const isOutlier = C.samePoint(point, context.set.outlier);
-                    const isPicked = Boolean(state.picked) && C.samePoint(state.picked, point);
-                    if (state.done && isOutlier) item.update({ size: 'large', tone: 'correct' });
+                    const isOutlier = C.samePoint(point, answer);
+                    const isPicked = Boolean(card.picked) && C.samePoint(card.picked, point);
+                    if (card.done && isOutlier) item.update({ size: 'large', tone: 'correct' });
                     else if (isPicked) item.update({ size: 'large', tone: 'neutral' });
                     else item.update({ size: 'small', tone: 'neutral' });
                 });
-                const message = state.done ? C.tryIt.spot.right : state.hint;
+                const message = card.done ? wording.right : card.hint;
                 feedback.textContent = message;
                 feedback.className = E.feedbackClassName('interactive', {
-                    visible: Boolean(message), correct: state.done
+                    visible: Boolean(message), correct: card.done
                 });
-                api.setSectionAction(id, {
-                    label: 'Continue', disabled: !state.done,
-                    onClick() {
-                        if (!state.done) return;
-                        api.completeSection(id);
-                        api.continueSection();
+                api.setSectionAction(id, index === 0
+                    ? {
+                        label: 'Continue', disabled: !state.s1.done,
+                        onClick() {
+                            if (!state.s1.done) return;
+                            show(1);
+                        }
                     }
-                });
-                if (state.done) board.setEditable(false);
+                    : {
+                        label: 'Continue', disabled: !state.s2.done,
+                        onClick() {
+                            if (!state.s2.done) return;
+                            api.completeSection(id);
+                            api.continueSection();
+                        }
+                    });
+                if (card.done) board.setEditable(false);
                 progress();
                 syncHash();
             }
@@ -273,22 +316,23 @@
                 }, 600);
             }
 
-            if (!state.done) {
-                const picker = board.pick({ label: 'Tap the outlier.', onPick(position) {
-                    if (state.done) return;
+            if (!card.done) {
+                const picker = board.pick({ label: spot.heading, onPick(position) {
+                    if (card.done) return;
                     const match = points.find(point => C.samePoint(point, position));
                     if (!match) {
                         sectionState.update(saved => {
-                            saved.hint = C.tryIt.spot.offPoint;
+                            cardOf(saved, index).hint = wording.offPoint;
                         });
                         paint();
                         return;
                     }
-                    if (C.samePoint(match, context.set.outlier)) {
+                    if (C.samePoint(match, answerFor(index))) {
                         sectionState.update(saved => {
-                            saved.picked = [...match];
-                            saved.done = true;
-                            saved.hint = '';
+                            const target = cardOf(saved, index);
+                            target.picked = [...match];
+                            target.done = true;
+                            target.hint = '';
                         });
                         picker.stop();
                         board.describe(`You tapped the point for ${context.words(match)}.`);
@@ -296,7 +340,9 @@
                         return;
                     }
                     sectionState.update(saved => {
-                        saved.hint = C.tryIt.spot.fitsPattern;
+                        cardOf(saved, index).hint = index === 1 && C.samePoint(match, far.extra)
+                            ? far.farPoint
+                            : wording.fitsPattern;
                     });
                     board.describe(`You tapped the point for ${context.words(match)}.`);
                     paint();
@@ -304,24 +350,25 @@
                 } });
             }
 
-            api.setSectionBack(id, null);
-            api.setSectionReset(id, state.done || state.hint || state.picked
+            const started = Boolean(card.picked || card.done || card.hint);
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, started
                 ? () => {
                     if (flashTimer) {
                         window.clearTimeout(flashTimer);
                         flashTimer = null;
                     }
-                    sectionState.resetFields(['picked', 'done', 'hint']);
+                    sectionState.resetFields([index === 0 ? 's1' : 's2']);
                     render();
                 }
                 : null);
             paint();
         }
 
-        api.registerHashRoute('spot-try-it-1', () => {
+        [0, 1].forEach(index => api.registerHashRoute(`spot-try-it-${index + 1}`, () => {
             if (!api.goToSection(id, { moveFocus: false })) return false;
-            render();
-        });
+            show(Math.min(index, state.furthest));
+        }));
         document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
         render();
     }

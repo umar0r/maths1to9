@@ -43,8 +43,8 @@
                 "wrong": [
                     { "label": "The highest point on the graph.",
                       "feedback": "The highest point can fit the pattern. An outlier is the one that doesn't fit." },
-                    { "label": "The point furthest to the right.",
-                      "feedback": "Where it sits along the bottom doesn't matter. An outlier is the one that doesn't fit the pattern." },
+                    {       "label": "A point far away from the other points.",
+      "feedback": "A point can be far from the others and still fit the pattern. An outlier is the one that doesn't fit." },
                     { "label": "A point that shows there is no correlation.",
                       "feedback": "One outlier doesn't stop the pattern. It's just one point that doesn't fit." }
                 ]
@@ -122,6 +122,7 @@
     },
     "score_activities": [
         { "id": "step:interactive--spot:0", "kind": "guided" },
+        { "id": "step:interactive--spot:1", "kind": "guided" },
         { "id": "step:interactive--read:0", "kind": "guided" },
         { "id": "step:interactive--read:1", "kind": "guided" },
         { "id": "step:interactive--reason:0", "kind": "guided" },

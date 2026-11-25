@@ -65,6 +65,10 @@ module.exports = async function solve(page) {
         await tap(page, O.tryIt.spot.answer);
         return true;
     }
+    if (hash === 'spot-try-it-2') {
+        await tap(page, O.tryIt.spot.second.answer);
+        return true;
+    }
     if (hash === 'read-try-it-1') {
         await tap(page, [O.tryIt.read.sunshine.bottom, 0]);
         await tap(page, [0, O.tryIt.read.sunshine.side]);

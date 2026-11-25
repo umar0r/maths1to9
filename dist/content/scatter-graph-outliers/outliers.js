@@ -722,7 +722,16 @@
             wrong: [8, 3],
             right: 'Yes. The other points go down, but this one sits far above them.',
             fitsPattern: 'That point fits the pattern. Find the one away from the others.',
-            offPoint: "There's no point there. Tap one of the points."
+            offPoint: "There's no point there. Tap one of the points.",
+            /* The second screen: a far point that still fits the pattern. */
+            second: {
+                extra: [10, 10],
+                answer: sets.REVISION.outlier,
+                right: 'Yes. This pupil revised for 8 hours but only got 2 marks. The pupil who revised for 10 hours is far away too, but fits the pattern.',
+                farPoint: "That point is far from the others, but it still fits the pattern. More revision, higher mark. Find the point that doesn't fit.",
+                fitsPattern: 'That point fits the pattern. Find the one away from the others.',
+                offPoint: "There's no point there. Tap one of the points."
+            }
         },
         read: {
             headings: [

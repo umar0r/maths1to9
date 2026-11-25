@@ -320,6 +320,19 @@ test('outliers: Try it answers and words match the spec', () => {
     assert.equal(O.tryIt.spot.fitsPattern, 'That point fits the pattern. Find the one away from the others.');
     assert.equal(O.tryIt.spot.offPoint, "There's no point there. Tap one of the points.");
 
+    // Try it 2: the far point is real but still fits the pattern.
+    assert.deepEqual(O.tryIt.spot.second.extra, [10, 10]);
+    assert.deepEqual(O.tryIt.spot.second.answer, [8, 2]);
+    assert.deepEqual(O.tryIt.spot.second.answer, O.sets.REVISION.outlier);
+    assert.ok(!O.sets.REVISION.main.some(point => key(point) === key(O.tryIt.spot.second.extra)),
+        'the extra point is not already in the revision set');
+    assert.equal(O.tryIt.spot.second.right,
+        'Yes. This pupil revised for 8 hours but only got 2 marks. The pupil who revised for 10 hours is far away too, but fits the pattern.');
+    assert.equal(O.tryIt.spot.second.farPoint,
+        "That point is far from the others, but it still fits the pattern. More revision, higher mark. Find the point that doesn't fit.");
+    assert.equal(O.tryIt.spot.second.fitsPattern, 'That point fits the pattern. Find the one away from the others.');
+    assert.equal(O.tryIt.spot.second.offPoint, "There's no point there. Tap one of the points.");
+
     assert.equal(O.tryIt.read.sunshine.bottom, 7);
     assert.equal(O.tryIt.read.sunshine.side, 1);
     assert.deepEqual([O.tryIt.read.sunshine.bottom, O.tryIt.read.sunshine.side], O.sets.SUNSHINE.outlier);
@@ -346,6 +359,14 @@ test('outliers: Check has five conceptual questions, locked review and the spec 
     assert.equal(lesson.comparison.questions.length, 5);
     assert.equal(lesson.comparison.summary.points.length, 5);
     assert.equal(lesson.comparison.summary.title, "What you've learned");
+    const meaning = lesson.comparison.questions[0];
+    assert.deepEqual(meaning.wrong.map(entry => entry.label), [
+        'The highest point on the graph.',
+        'A point far away from the other points.',
+        'A point that shows there is no correlation.'
+    ]);
+    assert.equal(meaning.wrong[1].feedback,
+        "A point can be far from the others and still fit the pattern. An outlier is the one that doesn't fit.");
     const pictures = ['', 'sunshine', 'revision', '', 'heating'];
     for (const [index, definition] of lesson.comparison.questions.entries()) {
         const question = Q.checkQuestion(definition, E.seededRandom(index), E);
@@ -360,7 +381,7 @@ test('outliers: Check has five conceptual questions, locked review and the spec 
         assert.equal(Boolean(question.figure), Boolean(pictures[index]), `question ${index + 1} picture`);
     }
     assert.deepEqual(lesson.score_activities.map(activity => activity.id), [
-        'step:interactive--spot:0',
+        'step:interactive--spot:0', 'step:interactive--spot:1',
         'step:interactive--read:0', 'step:interactive--read:1',
         'step:interactive--reason:0', 'step:interactive--ignore:0'
     ]);
