@@ -38,6 +38,15 @@
             axisNames: { x: 'Hours of revision', y: 'Test mark' },
             axisWords: { x: 'hours of revision', y: 'test mark' },
             label: 'Scatter graph of hours of revision and test marks.',
+            yWords: 'test mark',
+            xUnit: 'hours of revision',
+            unit: 'marks',
+            xPhrase(x) {
+                return `${x}${x === 1 ? ' hour' : ' hours'} of revision`;
+            },
+            yPhrase(y) {
+                return `a mark of ${y}`;
+            },
             words([x, y]) {
                 return `${x}${x === 1 ? ' hour' : ' hours'} of revision and a mark of ${y}`;
             }
@@ -49,6 +58,15 @@
             axisNames: { x: 'Hours of sunshine', y: 'Ice creams sold (boxes)' },
             axisWords: { x: 'hours of sunshine', y: 'boxes of ice cream' },
             label: 'Scatter graph of hours of sunshine and ice creams sold.',
+            yWords: 'boxes of ice cream',
+            xUnit: 'hours of sunshine',
+            unit: 'boxes',
+            xPhrase(x) {
+                return `${x}${x === 1 ? ' hour' : ' hours'} of sunshine`;
+            },
+            yPhrase(y) {
+                return `${y} ${y === 1 ? 'box' : 'boxes'} of ice cream`;
+            },
             words([x, y]) {
                 return `${x}${x === 1 ? ' hour' : ' hours'} of sunshine and ${y} ${y === 1 ? 'box' : 'boxes'} sold`;
             }
@@ -60,6 +78,15 @@
             axisNames: { x: 'Outdoor temperature (°C)', y: 'Heating used (kWh)' },
             axisWords: { x: 'temperature', y: 'heating' },
             label: 'Scatter graph of outdoor temperature and heating used.',
+            yWords: 'heating',
+            xUnit: 'temperature',
+            unit: 'kWh',
+            xPhrase(x) {
+                return `${x} °C`;
+            },
+            yPhrase(y) {
+                return `${y} kWh of heating`;
+            },
             words([x, y]) {
                 return `${x} °C and ${y} kWh of heating`;
             }
@@ -422,6 +449,395 @@
         };
     }
 
+    /* The points' smallest and largest x, the outlier included. */
+    function dataRange(set) {
+        const points = [...mainOf(set), ...(set.outlier ? [set.outlier] : [])];
+        const xs = points.map(point => point[0]);
+        return { smallest: Math.min(...xs), largest: Math.max(...xs) };
+    }
+
+    /* Not within 0.2 of a half, so the reading is clear which value the line
+       gives. Only 0.2 or more away counts: a value to 1 dp is a tenth, so
+       the gaps are 0, 0.1 or 0.2 from the nearest half. The tiny slack is
+       for how decimals add up. */
+    function clearOfHalf(value) {
+        return Math.abs(value - Math.round(value * 2) / 2) >= 0.2 - 1e-9;
+    }
+
+    /* The straight line's slope and where it crosses the side axis, read off
+       the two ends of the line that is actually drawn. */
+    function lineEquation(line) {
+        const m = (line.to[1] - line.from[1]) / (line.to[0] - line.from[0]);
+        return { m, c: line.from[1] - m * line.from[0] };
+    }
+
+    /* A reading inside the data: an x from 2 to 8 whose line value is clear
+       of a half. `line` is the line as drawn. Returns null when the set has
+       no such reading. */
+    function reading(set, line, random) {
+        const { smallest, largest } = dataRange(set);
+        const { m, c } = lineEquation(line);
+        const options = [];
+        for (let x = Math.max(2, smallest); x <= Math.min(8, largest); x++) {
+            const value = Math.round((m * x + c) * 10) / 10;
+            if (value < 0 || value > 10) continue;
+            if (!clearOfHalf(value)) continue;
+            options.push({ x, value });
+        }
+        if (!options.length) return null;
+        return options[Math.floor(random() * options.length)];
+    }
+
+    /* The other way round: a whole number on the side axis, and the x it
+       gives on the line. */
+    function acrossReading(set, line, random) {
+        const { m, c } = lineEquation(line);
+        if (m === 0) return null;
+        const { smallest, largest } = dataRange(set);
+        const options = [];
+        for (let y = 0; y <= 10; y++) {
+            const x = Math.round(((y - c) / m) * 10) / 10;
+            if (x < Math.max(2, smallest) || x > Math.min(8, largest)) continue;
+            if (!clearOfHalf(x)) continue;
+            options.push({ y, x });
+        }
+        if (!options.length) return null;
+        return options[Math.floor(random() * options.length)];
+    }
+
+    /* The values outside the data each context can be asked about. */
+    function outsideValues(contextId) {
+        return contextId === 'heating'
+            ? [13, 14, 15, 16, 17, 18, 19, 20]
+            : [12, 13, 14, 15, 16];
+    }
+
+    /* The Try it answers and words, so the unit test can check them without
+       a browser. interactive.js draws them. */
+    const tryIt = {
+        estimate: {
+            headings: [
+                'Estimate the heating used at 7 °C. Tap the number on the side axis.',
+                'About how many hours of sunshine sell 4 boxes of ice cream? Tap the number on the bottom axis.'
+            ],
+            heating: {
+                answer: 4,
+                point: 3,
+                temperature: 7,
+                right: 'Yes. The line gives about 4 kWh of heating.',
+                pointHint: "That's the point at 7 °C. Read from the line, not a point.",
+                temperatureHint: '7 is the temperature, on the bottom axis. Go up to the line, then across.',
+                otherHint: 'Go straight up from 7 °C to the line, then straight across to the side axis.',
+                offAxis: 'Tap on the side axis, the line up the left.'
+            },
+            sunshine: {
+                answer: 4,
+                point: 3,
+                right: 'Yes. The line gives about 4 hours of sunshine.',
+                pointHint: "That's a point. Go across to the line, then down.",
+                otherHint: 'Go straight across from 4 boxes to the line, then straight down to the bottom axis.',
+                offAxis: 'Tap on the bottom axis, the line along the bottom.'
+            }
+        },
+        trust: {
+            heading: 'Can you trust these estimates? Sort them.',
+            slots: [
+                { id: 'inside', title: 'Inside the data: reliable', dropLabel: 'Inside the data, reliable' },
+                { id: 'outside', title: 'Outside the data: may not be reliable', dropLabel: 'Outside the data, may not be reliable' }
+            ],
+            cards: [
+                { id: '3', label: '3 hours', bin: 'inside' },
+                { id: '7', label: '7 hours', bin: 'inside' },
+                { id: '15', label: '15 hours', bin: 'outside' },
+                { id: '20', label: '20 hours', bin: 'outside' }
+            ],
+            success: 'Yes. The points go from 1 to 9 hours, so estimates for 3 and 7 hours are reliable.',
+            hints: {
+                inside: 'The points go from 1 to 9 hours. This is between them.',
+                outside: 'The points stop at 9 hours. This is past them.'
+            }
+        }
+    };
+
+    /* What one tap on an axis means in Estimate Try it. `stage` is 'heating'
+       for Try it 1 (tap the side axis) or 'sunshine' for Try it 2 (tap the
+       bottom axis). */
+    function estimateTap(stage, [x, y]) {
+        const saying = tryIt.estimate[stage];
+        if (stage === 'heating') {
+            if (x !== 0) return { done: false, message: saying.offAxis };
+            if (y === saying.answer) return { done: true, message: saying.right };
+            if (y === saying.point) return { done: false, message: saying.pointHint };
+            if (y === saying.temperature) return { done: false, message: saying.temperatureHint };
+            return { done: false, message: saying.otherHint };
+        }
+        if (y !== 0) return { done: false, message: saying.offAxis };
+        if (x === saying.answer) return { done: true, message: saying.right };
+        if (x === saying.point) return { done: false, message: saying.pointHint };
+        return { done: false, message: saying.otherHint };
+    }
+
+    function slotCapacity(slot, items, slots) {
+        return slot.capacity ?? Math.ceil(items.length / slots.length);
+    }
+
+    /* A row of word cards and the boxes they go in, copied from Outliers.
+       Each box may carry a title. In 'try' mode a right card locks in green
+       and a wrong one goes back with a hint; in 'check' mode cards move
+       freely until the caller marks them. */
+    function sortCards(host, { items, slots, figure = null, accepts, hint = () => '',
+        mode = 'try', value = null, editable = true, onChange = () => {} }) {
+        const blank = () => ({
+            placed: Object.fromEntries(slots.map(slot => [slot.id, []])),
+            selected: null,
+            hint: '',
+            locked: []
+        });
+        const state = value && typeof value === 'object' ? JSON.parse(JSON.stringify(value)) : blank();
+        slots.forEach(slot => { state.placed[slot.id] ??= []; });
+        state.hint ??= '';
+        state.locked = Array.isArray(state.locked) ? state.locked : [];
+        let marked = false;
+        let canEdit = editable;
+
+        const root = element('div', '', 'best-fit-sort');
+        const slotRow = element('div', '', slots.length === 2
+            ? 'best-fit-sort__slots best-fit-sort__slots--pair'
+            : 'best-fit-sort__slots');
+        const tray = element('div', '', 'best-fit-sort__tray');
+        tray.setAttribute('role', 'group');
+        tray.setAttribute('aria-label', 'Cards to sort');
+        root.append(slotRow, tray);
+        host.append(root);
+
+        const cards = new Map();
+        const drops = new Map();
+        items.forEach(item => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'best-fit-card';
+            card.textContent = item.label;
+            let press = null;
+            let dragged = false;
+            card.addEventListener('click', () => {
+                if (!dragged) pick(item.id);
+                dragged = false;
+            });
+            card.addEventListener('pointerdown', event => {
+                if (!canEdit || marked || locked(item.id)) return;
+                press = { x: event.clientX, y: event.clientY };
+                dragged = false;
+                card.setPointerCapture(event.pointerId);
+            });
+            card.addEventListener('pointermove', event => {
+                if (!press) return;
+                if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) {
+                    dragged = true;
+                    state.selected = item.id;
+                    paint();
+                }
+            });
+            card.addEventListener('pointerup', event => {
+                if (!press) return;
+                press = null;
+                if (!dragged) return;
+                const target = document.elementFromPoint(event.clientX, event.clientY);
+                const slot = [...drops].find(([, drop]) => drop.contains(target));
+                if (slot) place(slot[0]);
+            });
+            card.addEventListener('pointercancel', () => { press = null; });
+            tray.append(card);
+            cards.set(item.id, card);
+        });
+        slots.forEach(slot => {
+            const box = element('div', '', 'best-fit-sort__slot');
+            // The box goes in first: a graph needs its container on the page.
+            slotRow.append(box);
+            if (figure) {
+                const figureHost = element('div', '', 'best-fit-sort__figure');
+                box.append(figureHost);
+                figure(figureHost, slot);
+            }
+            const drop = document.createElement('div');
+            drop.className = 'best-fit-sort__drop';
+            drop.setAttribute('role', 'button');
+            drop.setAttribute('aria-label', slot.dropLabel || slot.label || 'Box');
+            drop.tabIndex = 0;
+            drop.addEventListener('click', () => place(slot.id));
+            drop.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    place(slot.id);
+                }
+            });
+            box.append(drop);
+            // Only a bin title shows; a slot's label is the graph's description.
+            if (slot.title) box.append(element('p', slot.title, 'best-fit-sort__title'));
+            drops.set(slot.id, drop);
+        });
+
+        function placedIn(itemId) {
+            return slots.map(slot => slot.id)
+                .find(slotId => state.placed[slotId].includes(itemId)) ?? null;
+        }
+        function locked(itemId) {
+            if (state.locked.includes(itemId)) return true;
+            const slotId = placedIn(itemId);
+            return marked && Boolean(slotId) && accepts(slotId, itemId);
+        }
+        function takeBack(itemId) {
+            const slotId = placedIn(itemId);
+            if (!canEdit || marked || !slotId || locked(itemId)) return;
+            state.placed[slotId] = state.placed[slotId].filter(other => other !== itemId);
+            state.hint = '';
+            paint();
+            onChange({ ...state });
+        }
+        function pick(itemId) {
+            if (!canEdit || marked || locked(itemId)) return;
+            state.selected = state.selected === itemId ? null : itemId;
+            paint();
+        }
+        function place(slotId) {
+            if (!canEdit || marked) return;
+            const itemId = state.selected;
+            if (!itemId) return;
+            const from = placedIn(itemId);
+            if (from === slotId) return;
+            const slot = slots.find(entry => entry.id === slotId);
+            if (from) state.placed[from] = state.placed[from].filter(other => other !== itemId);
+            // A full box sends its cards back to the row, so a spare card has
+            // somewhere to wait.
+            if (state.placed[slotId].length >= slotCapacity(slot, items, slots)) state.placed[slotId] = [];
+            state.selected = null;
+            state.placed[slotId] = [...state.placed[slotId], itemId];
+            state.hint = '';
+            paint();
+            onChange({ ...state });
+            if (mode === 'try' && allFilled()) markAll();
+        }
+
+        // Try it marks every card at once, when the last empty box is filled:
+        // right cards lock green, wrong ones go back to the row and one hint
+        // tells the pupil about the first wrong card.
+        function markAll() {
+            const wrong = [];
+            slots.forEach(slot => state.placed[slot.id].forEach(itemId => {
+                if (!accepts(slot.id, itemId)) wrong.push({ slotId: slot.id, itemId });
+            }));
+            if (!wrong.length) {
+                state.hint = '';
+                state.locked = items.map(item => item.id);
+            } else {
+                state.hint = hint(wrong[0].slotId, wrong[0].itemId);
+                wrong.forEach(({ slotId, itemId }) => {
+                    state.placed[slotId] = state.placed[slotId].filter(other => other !== itemId);
+                });
+                state.locked = items
+                    .map(item => [item.id, placedIn(item.id)])
+                    .filter(([itemId, slotId]) => Boolean(slotId) && accepts(slotId, itemId))
+                    .map(([itemId]) => itemId);
+            }
+            paint();
+            onChange({ ...state });
+        }
+        function allFilled() {
+            return slots.every(slot => state.placed[slot.id].length >= slotCapacity(slot, items, slots));
+        }
+        function paint() {
+            cards.forEach((card, itemId) => {
+                const placed = Boolean(placedIn(itemId));
+                card.hidden = placed;
+                card.disabled = !canEdit || marked;
+                card.classList.toggle('is-selected', state.selected === itemId);
+                card.setAttribute('aria-pressed', String(state.selected === itemId));
+            });
+            drops.forEach((drop, slotId) => {
+                drop.replaceChildren();
+                drop.classList.toggle('is-ready', Boolean(state.selected));
+                state.placed[slotId].forEach(itemId => {
+                    const item = items.find(entry => entry.id === itemId);
+                    const right = accepts(slotId, itemId);
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'best-fit-card best-fit-card--placed';
+                    chip.textContent = item.label;
+                    chip.disabled = !canEdit || marked || state.locked.includes(itemId);
+                    chip.addEventListener('click', () => takeBack(itemId));
+                    if (state.locked.includes(itemId)) chip.classList.add('is-correct');
+                    if (marked) chip.classList.add(right ? 'is-correct' : 'is-incorrect');
+                    drop.append(chip);
+                });
+                drop.classList.toggle('is-empty', state.placed[slotId].length === 0);
+            });
+        }
+
+        paint();
+        return {
+            root,
+            state,
+            mark(next = true) {
+                marked = next;
+                canEdit = canEdit && !next;
+                paint();
+            },
+            update({ value: next, editable: nextEditable = canEdit, marked: nextMarked = marked }) {
+                if (next) Object.assign(state, JSON.parse(JSON.stringify(next)));
+                marked = nextMarked;
+                canEdit = nextEditable;
+                paint();
+            },
+            allCorrect() {
+                return slots.every(slot => {
+                    const placed = state.placed[slot.id];
+                    return placed.length === slotCapacity(slot, items, slots) &&
+                        placed.every(itemId => accepts(slot.id, itemId));
+                });
+            }
+        };
+    }
+
+    /* The Practice version of the word-card sort: the cards can be moved
+       between the boxes until Check, then every box is marked at once. */
+    function sortValuesWidget({ cards, slots, draw = null, success, wrong }) {
+        let handle = null;
+        const binOf = itemId => cards.find(card => card.id === itemId)?.bin ?? null;
+        return {
+            isEmpty: value => !value || slots.every(slot => (value.placed?.[slot.id] || []).length === 0),
+            render(host, { value, editable, onChange }) {
+                if (draw) draw(host);
+                handle = sortCards(host, {
+                    items: cards, slots, mode: 'check', value, editable,
+                    accepts: (slotId, itemId) => binOf(itemId) === slotId,
+                    onChange(next) { onChange(next); }
+                });
+                return {
+                    update({ value: next, editable: nextEditable, phase = 'answer' }) {
+                        handle.update({
+                            value: next, editable: nextEditable === true && phase === 'answer',
+                            marked: phase !== 'answer'
+                        });
+                    },
+                    focus() { handle.root.querySelector('.best-fit-card')?.focus(); }
+                };
+            },
+            mark(value) {
+                const correct = slots.every(slot => {
+                    const placed = value?.placed?.[slot.id] || [];
+                    return placed.length === slotCapacity(slot, cards, slots) &&
+                        placed.every(itemId => binOf(itemId) === slot.id);
+                });
+                return { correct, feedback: correct ? success : wrong };
+            },
+            answerText: value => slots.map(slot => {
+                const labels = (value.placed?.[slot.id] || [])
+                    .map(id => cards.find(card => card.id === id)?.label)
+                    .filter(Boolean);
+                return `${slot.title || slot.dropLabel}: ${labels.length ? labels.join('; ') : 'nothing'}.`;
+            }).join(' ')
+        };
+    }
+
     /* One line of plain text under a graph. */
     function note(text) {
         return element('p', text, 'best-fit-note');
@@ -433,6 +849,8 @@
         pointSet, outlierSet, highestOf, lowestOf, mainOf,
         leastSquares, fitValue, gridLine, fitLine, judgeLine,
         way, drawFeedback, ignoreFeedback,
+        dataRange, clearOfHalf, lineEquation, reading, acrossReading, tryIt, estimateTap, outsideValues,
+        slotCapacity, sortCards, sortValuesWidget,
         scatterGraph, miniGraph, smallGraphs, drawBestWidget, note
     };
 

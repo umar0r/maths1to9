@@ -65,6 +65,7 @@
         { "id": "step:interactive--draw:0", "kind": "guided" },
         { "id": "step:interactive--ignore:0", "kind": "guided" },
         { "id": "step:interactive--estimate:0", "kind": "guided" },
+        { "id": "step:interactive--estimate:1", "kind": "guided" },
         { "id": "step:interactive--trust:0", "kind": "guided" }
     ],
     "assessment": { "question_types": {

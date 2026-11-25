@@ -321,37 +321,243 @@
         render();
     }
 
-    /* The Try it headings for the two parts that are still to come. Until
-       then each gets one plain screen, so the lesson loads and works. */
-    const tryItPlaceholders = {
-        estimate: 'Estimate the heating used at 7 °C. Tap the number on the side axis.',
-        trust: 'Can you trust these estimates? Sort them.'
-    };
-
-    async function mountPlaceholderTryIt(api, root, section) {
+    /* Estimate Try it: one tap on an axis each. The right tap shows the two
+       dashed arrows and locks the screen. */
+    async function mountEstimateTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
         const id = section.id;
         api.gateSection(id);
         const box = root.closest('.lesson-section');
         box?.removeAttribute('aria-labelledby');
-        box?.setAttribute('aria-label', `${section.part} Try it`);
-        const article = element('article');
-        root.append(article);
-        const heading = element('h2', tryItPlaceholders[section.part]);
-        heading.id = `lesson-section-title-${id}`;
-        article.append(heading, B.note('Coming next.'));
-        api.setSectionProgress(id, 1, 1);
-        api.completeSection(id);
-        api.setSectionAction(id, {
-            label: 'Continue',
-            onClick() {
-                api.continueSection();
-            }
+        box?.setAttribute('aria-label', 'Estimate Try it');
+        const sectionState = await api.useSectionState('interactive:estimate', {
+            version: 1, upgrade: () => null,
+            initial: () => ({
+                screen: 0, furthest: 0,
+                s1: { done: false, hint: '' },
+                s2: { done: false, hint: '' }
+            })
         });
-        api.setSectionBack(id, null);
-        api.setSectionReset(id, null);
-        if (api.getCurrentSection().id === id) {
-            api.setSlideHash(`${section.part}-try-it-1`, { replace: true });
+        const state = sectionState.state;
+        const saying = B.tryIt.estimate;
+        let board = null;
+
+        function syncHash() {
+            if (api.getCurrentSection().id !== id) return;
+            api.setSlideHash(`estimate-try-it-${state.screen + 1}`, { replace: true });
         }
+        function show(index) {
+            sectionState.update(saved => {
+                saved.screen = index;
+                saved.furthest = Math.max(saved.furthest, index);
+            });
+            render();
+            root.querySelector('[data-screen-heading]')?.focus();
+        }
+        function progress() {
+            const completed = Number(state.s1.done) + Number(state.s2.done);
+            api.setSectionProgress(id, completed, 2);
+            if (completed === 2) api.completeSection(id);
+        }
+        function cardOf(saved) {
+            return saved.screen === 0 ? saved.s1 : saved.s2;
+        }
+
+        function render() {
+            board?.destroy();
+            board = null;
+            root.replaceChildren();
+            const index = state.screen;
+            const stage = index === 0 ? 'heating' : 'sunshine';
+            const context = B.contexts[stage];
+            const wording = saying[stage];
+            const card = index === 0 ? state.s1 : state.s2;
+            const heading = element('h2', saying.headings[index]);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'best-fit-picture');
+            root.append(picture);
+            board = B.scatterGraph(picture, {
+                context,
+                outlier: true,
+                line: context.line,
+                label: index === 0
+                    ? 'Scatter graph of outdoor temperature and heating used, with the line of best fit. Tap the side axis.'
+                    : 'Scatter graph of hours of sunshine and ice creams sold, with the line of best fit. Tap the bottom axis.'
+            });
+            if (card.done) {
+                if (index === 0) {
+                    board.arrow([7, 0], [7, 4], { dash: true, tone: 'ink' });
+                    board.arrow([7, 4], [0, 4], { dash: true, tone: 'ink' });
+                } else {
+                    board.arrow([0, 4], [4, 4], { dash: true, tone: 'ink' });
+                    board.arrow([4, 4], [4, 0], { dash: true, tone: 'ink' });
+                }
+            }
+            const feedback = E.createFeedback(id, { visible: false });
+            root.append(feedback);
+            const message = card.done ? wording.right : card.hint;
+            feedback.textContent = message;
+            feedback.className = E.feedbackClassName(id, {
+                visible: Boolean(message), correct: card.done
+            });
+            api.setSectionAction(id, {
+                label: 'Continue',
+                disabled: !card.done,
+                onClick() {
+                    if (!card.done) return;
+                    if (index === 0) {
+                        show(1);
+                        return;
+                    }
+                    api.completeSection(id);
+                    api.continueSection();
+                }
+            });
+            if (card.done) {
+                board.setEditable(false);
+            } else {
+                board.setEditable(true);
+                board.pick({
+                    label: saying.headings[index],
+                    onPick(position) {
+                        const result = B.estimateTap(stage, position);
+                        sectionState.update(saved => {
+                            const target = cardOf(saved);
+                            target.done = result.done;
+                            target.hint = result.done ? '' : result.message;
+                        });
+                        board.describe(position[0] === 0
+                            ? `You tapped ${position[1]} on the side axis.`
+                            : `You tapped ${position[0]} on the bottom axis.`);
+                        // Redraw after this tap has finished, so the board is
+                        // never destroyed inside its own event.
+                        window.setTimeout(render, 0);
+                    }
+                });
+            }
+            const started = Boolean(card.done || card.hint);
+            api.setSectionBack(id, index > 0 ? { onClick: () => show(index - 1) } : null);
+            api.setSectionReset(id, started
+                ? () => {
+                    sectionState.resetFields([index === 0 ? 's1' : 's2']);
+                    render();
+                }
+                : null);
+            progress();
+            syncHash();
+        }
+
+        [0, 1].forEach(index => api.registerHashRoute(`estimate-try-it-${index + 1}`, () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            show(Math.min(index, state.furthest));
+        }));
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
+    }
+
+    /* Trust Try it: one sort. A graph, two boxes and four value cards. The
+       cards are marked together once every box is filled. */
+    async function mountTrustTryIt(api, root, section) {
+        const E = window.Maths1to9LessonEngine;
+        const id = section.id;
+        api.gateSection(id);
+        const box = root.closest('.lesson-section');
+        box?.removeAttribute('aria-labelledby');
+        box?.setAttribute('aria-label', 'Trust Try it');
+        const sectionState = await api.useSectionState('interactive:trust', {
+            version: 1, upgrade: () => null,
+            initial: () => ({ sort: null, done: false, hint: '' })
+        });
+        const state = sectionState.state;
+        const saying = B.tryIt.trust;
+        let board = null;
+
+        function syncHash() {
+            if (api.getCurrentSection().id === id) api.setSlideHash('trust-try-it-1', { replace: true });
+        }
+        function progress() {
+            api.setSectionProgress(id, Number(state.done), 1);
+            if (state.done) api.completeSection(id);
+        }
+        function hintFor(itemId) {
+            const card = saying.cards.find(entry => entry.id === itemId);
+            return card?.bin === 'inside' ? saying.hints.inside : saying.hints.outside;
+        }
+
+        function render() {
+            board?.destroy();
+            root.replaceChildren();
+            const heading = element('h2', saying.heading);
+            heading.id = `lesson-section-title-${id}`;
+            heading.dataset.screenHeading = '';
+            heading.tabIndex = -1;
+            root.append(heading);
+            const picture = element('div', '', 'best-fit-picture');
+            root.append(picture);
+            const revision = B.contexts.revision;
+            board = B.scatterGraph(picture, {
+                context: revision,
+                outlier: true,
+                line: revision.line,
+                label: 'Scatter graph of hours of revision and test marks, with the line of best fit.'
+            });
+            B.sortCards(root, {
+                items: saying.cards,
+                slots: saying.slots,
+                mode: 'try',
+                value: state.sort,
+                hint: (slotId, itemId) => hintFor(itemId),
+                accepts: (slotId, itemId) => saying.cards.find(card => card.id === itemId)?.bin === slotId,
+                onChange(value) {
+                    const done = saying.slots.every(slot =>
+                        (value.placed[slot.id] || []).length >= B.slotCapacity(slot, saying.cards, saying.slots));
+                    sectionState.update(saved => {
+                        saved.sort = value;
+                        saved.done = done;
+                        saved.hint = done ? '' : (value.hint || '');
+                    });
+                    paint();
+                }
+            });
+            const feedback = E.createFeedback(id, { visible: false });
+            root.append(feedback);
+
+            function paint() {
+                const message = state.done ? saying.success : state.hint;
+                feedback.textContent = message;
+                feedback.className = E.feedbackClassName(id, {
+                    visible: Boolean(message), correct: state.done
+                });
+                api.setSectionAction(id, {
+                    label: 'Continue',
+                    disabled: !state.done,
+                    onClick() {
+                        if (!state.done) return;
+                        api.completeSection(id);
+                        api.continueSection();
+                    }
+                });
+                progress();
+                syncHash();
+            }
+
+            api.setSectionBack(id, null);
+            api.setSectionReset(id, state.sort ? () => {
+                sectionState.resetFields(['sort', 'done', 'hint']);
+                render();
+            } : null);
+            paint();
+        }
+
+        api.registerHashRoute('trust-try-it-1', () => {
+            if (!api.goToSection(id, { moveFocus: false })) return false;
+            render();
+        });
+        document.addEventListener('maths1to9:section-change', () => queueMicrotask(syncHash));
+        render();
     }
 
     window.Maths1to9Interactives ??= {};
@@ -373,6 +579,7 @@
                 message: result => B.ignoreFeedback(result, 'down')
             });
         }
-        return mountPlaceholderTryIt(api, root, section);
+        if (section.part === 'estimate') return mountEstimateTryIt(api, root, section);
+        return mountTrustTryIt(api, root, section);
     };
 })();

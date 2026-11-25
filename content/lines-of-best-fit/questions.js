@@ -20,6 +20,22 @@
         return [line.from, line.to].every(([x, y]) => x >= 0 && x <= 10 && y >= 0 && y <= 10);
     }
 
+    /* The word for a value on the bottom axis: hours, or degrees. */
+    function unitWord(contextId) {
+        return contextId === 'heating' ? '°C' : 'hours';
+    }
+
+    /* An outlierSet and its line of best fit, made until the line passes
+       judgeLine as ok. */
+    function fittedSet(contextId, random) {
+        for (let attempt = 0; attempt < 300; attempt++) {
+            const set = B.outlierSet(random, contextId);
+            const fitted = B.fitLine(random, set);
+            if (fitted.result === 'ok') return { set, fitted };
+        }
+        throw new Error(`No fitted set for ${contextId}.`);
+    }
+
     /* The choice card that shows four small graphs, A to D, with one line on
        each. `entries` are in A, B, C, D order. */
     function smallGraphCard(prompt, questionType, entries, points, extra = {}) {
@@ -172,8 +188,197 @@
         };
     }
 
-    /* Placeholder Practice and Check: one card about what a line of best fit
-       is, so the sections still to be built load and work. */
+    /* One graph of a set with its line, for a choice card or a typed card. */
+    function fittedFigure(context, set, line) {
+        return host => B.scatterGraph(host, {
+            context,
+            outlier: true,
+            line,
+            label: `${context.label.slice(0, -1)}, with the line of best fit.`
+        });
+    }
+
+    /* Estimate Practice, typed: read the line up at an x, then across. */
+    function readUp(item, random, helpers) {
+        const context = B.contexts[item.context];
+        let set;
+        let fitted;
+        let read;
+        for (let attempt = 0; attempt < 300; attempt++) {
+            ({ set, fitted } = fittedSet(item.context, random));
+            read = B.reading(set, fitted.line, random);
+            if (read) break;
+        }
+        if (!read) throw new Error(`No reading inside the data for ${item.context}.`);
+        const answer = read.value;
+        const rules = [];
+        const point = set.main.find(([x]) => x === read.x);
+        if (point && Math.abs(point[1] - answer) >= 0.5) {
+            rules.push({
+                value: String(point[1]),
+                feedback: "That's a point. Read from the line, not a point."
+            });
+        }
+        if (Math.abs(read.x - answer) >= 0.5) {
+            rules.push({
+                value: String(read.x),
+                feedback: `That's the ${context.axisWords.x}, on the bottom axis. Go up to the line, then across.`
+            });
+        }
+        return {
+            input: 'number',
+            questionType: 'read-up',
+            prompt: `Use the line of best fit to estimate the ${context.yWords} for ${context.xPhrase(read.x)}.`,
+            answer: String(answer),
+            tolerance: 0.5,
+            unit: context.unit,
+            feedback: `Yes. The line gives about ${answer}.`,
+            rules,
+            fallback: `Go straight up from ${read.x} to the line, then straight across to the side axis.`,
+            model: { context: item.context, x: read.x, answer, points: [...set.main, set.outlier], right: fitted.line },
+            figure: fittedFigure(context, set, fitted.line)
+        };
+    }
+
+    /* Estimate Practice, choice: read the line across at a y, then down. */
+    function readAcross(item, random, helpers) {
+        const context = B.contexts[item.context];
+        let set;
+        let fitted;
+        let read;
+        let options = null;
+        for (let attempt = 0; attempt < 300 && !options; attempt++) {
+            ({ set, fitted } = fittedSet(item.context, random));
+            read = B.acrossReading(set, fitted.line, random);
+            if (!read) continue;
+            const right = Math.round(read.x);
+            const alongTheBottom = Math.round(B.fitValue(B.lineEquation(fitted.line), read.y));
+            const choices = [];
+            const used = new Set();
+            const add = (value, feedback) => {
+                if (!Number.isInteger(value) || value < 0 || value > 10) return;
+                if (used.has(value)) return;
+                used.add(value);
+                choices.push({ label: String(value), feedback });
+            };
+            add(right, 'Yes. Across to the line, then down.');
+            add(read.y, "That's the number you started with. Go across to the line, then down to the bottom axis.");
+            add(alongTheBottom, 'You started on the bottom axis. Start on the side axis and go across.');
+            add(right + 2, 'Go straight across to the line, then straight down.');
+            add(right - 2, 'Go straight across to the line, then straight down.');
+            if (choices.length !== 4) continue;
+            options = choices.map(choice => ({
+                ...choice,
+                correct: choice.label === String(right)
+            }));
+        }
+        if (!options) throw new Error(`No four options for ${item.context}.`);
+        return {
+            input: 'choice',
+            questionType: 'read-across',
+            prompt: `Use the line of best fit to estimate the ${context.axisWords.x} for ${context.yPhrase(read.y)}.`,
+            options: helpers.shuffle(options, random),
+            model: { context: item.context, y: read.y, answer: Math.round(read.x), points: [...set.main, set.outlier], right: fitted.line },
+            figure: fittedFigure(context, set, fitted.line)
+        };
+    }
+
+    /* Trust Practice, choice: which estimate is inside the data? */
+    function trustWhich(item, random, helpers) {
+        const { set, fitted } = fittedSet(item.context, random);
+        const range = B.dataRange(set);
+        const word = unitWord(item.context);
+        const inside = Math.min(range.largest - 1, Math.max(range.smallest + 1,
+            Math.floor((range.smallest + range.largest) / 2)));
+        const outside = helpers.shuffle(B.outsideValues(item.context), random).slice(0, 3);
+        const options = [
+            { label: `An estimate for ${inside} ${word}`, correct: true,
+                feedback: `Yes. ${inside} ${word} is inside the data.` },
+            ...outside.map(value => ({
+                label: `An estimate for ${value} ${word}`,
+                feedback: `${value} ${word} is outside the data. The points stop at ${range.largest} ${word}.`
+            }))
+        ];
+        return {
+            input: 'choice',
+            questionType: 'trust-which',
+            prompt: 'Which estimate is the most reliable?',
+            options: helpers.shuffle(options, random),
+            model: {
+                context: item.context, inside, outside,
+                smallest: range.smallest, largest: range.largest,
+                points: [...set.main, set.outlier], right: fitted.line
+            },
+            figure: fittedFigure(B.contexts[item.context], set, fitted.line)
+        };
+    }
+
+    /* Trust Practice, widget: sort four new values into inside and outside. */
+    function trustSort(item, random, helpers) {
+        const context = B.contexts[item.context];
+        const { set, fitted } = fittedSet(item.context, random);
+        const range = B.dataRange(set);
+        const word = unitWord(item.context);
+        const inside = [];
+        for (let attempt = 0; attempt < 200 && inside.length < 2; attempt++) {
+            const value = helpers.randomInt(range.smallest, range.largest, random);
+            if (!inside.includes(value)) inside.push(value);
+        }
+        if (inside.length < 2) throw new Error(`No two values inside the data for ${item.context}.`);
+        const outside = helpers.shuffle(B.outsideValues(item.context), random).slice(0, 2);
+        const cards = helpers.shuffle([
+            ...inside.map(value => ({ id: `inside-${value}`, label: `${value} ${word}`, bin: 'inside' })),
+            ...outside.map(value => ({ id: `outside-${value}`, label: `${value} ${word}`, bin: 'outside' }))
+        ], random);
+        const slots = B.tryIt.trust.slots;
+        return {
+            input: 'custom',
+            questionType: 'trust-sort',
+            prompt: 'Can you trust these estimates? Sort them.',
+            model: { context: item.context, inside, outside, smallest: range.smallest, largest: range.largest },
+            widget: B.sortValuesWidget({
+                cards,
+                slots,
+                draw: host => B.scatterGraph(host, {
+                    context,
+                    outlier: true,
+                    line: fitted.line,
+                    label: `${context.label.slice(0, -1)}, with the line of best fit.`
+                }),
+                success: `Yes. The points go from ${range.smallest} to ${range.largest} ${word}, so values between them are inside the data.`,
+                wrong: `The points go from ${range.smallest} to ${range.largest}. Values between them are inside the data.`
+            })
+        };
+    }
+
+    /* Trust Practice, choice: why an estimate outside the data is unreliable. */
+    function whyUnreliable(item, random, helpers) {
+        const context = B.contexts[item.context];
+        const { set } = fittedSet(item.context, random);
+        const range = B.dataRange(set);
+        const word = unitWord(item.context);
+        const outside = helpers.shuffle(B.outsideValues(item.context), random)[0];
+        const options = [
+            { label: `${outside} ${word} is outside the data. The pattern might not carry on.`, correct: true,
+                feedback: 'Yes. There are no points out there to show the pattern.' },
+            { label: `There's no point at exactly ${outside} ${word}.`,
+                feedback: "Inside the data there's often no point either. The problem is that it's outside the data." },
+            { label: 'It would be an outlier.',
+                feedback: "An outlier is a point that doesn't fit. This is about where the data stops." },
+            { label: 'A line of best fit can never be used to estimate.',
+                feedback: 'It can. Inside the data, estimates are reliable.' }
+        ];
+        return {
+            input: 'choice',
+            questionType: 'why-unreliable',
+            prompt: `A scatter graph shows ${context.axisWords.x} from ${range.smallest} to ${range.largest} ${word}. Someone uses the line of best fit to estimate the ${context.yWords} for ${outside} ${word}. Why might this be unreliable?`,
+            options: helpers.shuffle(options, random),
+            model: { context: item.context, outside, smallest: range.smallest, largest: range.largest }
+        };
+    }
+
+    /* Placeholder Check: one card about what a line of best fit is, so the
+       Check section still loads and works. The real five come next stage. */
     function scaffoldCard() {
         return {
             input: 'choice',
@@ -220,6 +425,17 @@
                 { type: 'outlier-line', context: second === first ? B.contextIds[2] : second, seed: seed() }
             ].slice(0, count);
         }
+        if (part === 'estimate' || part === 'trust') {
+            const [first, second, third] = helpers.shuffle([...B.contextIds], random);
+            const types = part === 'estimate'
+                ? ['read-up', 'read-across', 'read-up']
+                : ['trust-which', 'trust-sort', 'why-unreliable'];
+            return [
+                { type: types[0], context: first, seed: seed() },
+                { type: types[1], context: second, seed: seed() },
+                { type: types[2], context: third, seed: seed() }
+            ].slice(0, count);
+        }
         return Array.from({ length: count }, () => ({ type: 'scaffold', part, seed: seed() }));
     }
 
@@ -227,6 +443,11 @@
         if (item.type === 'best-line') return bestLine(item, random, helpers);
         if (item.type === 'outlier-line') return outlierLine(item, random, helpers);
         if (item.type === 'draw-best') return drawBest(item, random, helpers);
+        if (item.type === 'read-up') return readUp(item, random, helpers);
+        if (item.type === 'read-across') return readAcross(item, random, helpers);
+        if (item.type === 'trust-which') return trustWhich(item, random, helpers);
+        if (item.type === 'trust-sort') return trustSort(item, random, helpers);
+        if (item.type === 'why-unreliable') return whyUnreliable(item, random, helpers);
         if (item.type === 'scaffold') {
             const card = scaffoldCard();
             return { ...card, options: helpers.shuffle(card.options, random) };
@@ -242,7 +463,8 @@
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             pickPractice, practiceQuestion, bestLine, outlierLine, drawBest,
-            scaffoldCard, smallGraphCard
+            readUp, readAcross, trustWhich, trustSort, whyUnreliable,
+            scaffoldCard, smallGraphCard, fittedSet, unitWord
         };
         return;
     }
