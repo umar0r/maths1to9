@@ -172,7 +172,7 @@
         {"folder":"scatter-graphs","title":"Plotting scatter graphs","subtitle":"Plot and read pairs of numbers on a scatter graph.","skills":["scatter-graphs"]},
         {"folder":"scatter-graph-correlation","title":"Correlation","subtitle":"Spot positive, negative and no correlation on a scatter graph.","skills":["recognise-correlation","correlation-not-causation"]},
         {"folder":"scatter-graph-outliers","title":"Outliers","subtitle":"Spot a point that doesn't fit the pattern on a scatter graph.","skills":["scatter-outliers"]},
-        {"folder":"lines-of-best-fit","title":"Lines of best fit","subtitle":"Draw a trend line and use it to estimate values carefully.","skills":["line-of-best-fit","interpolate-extrapolate"]},
+        {"folder":"lines-of-best-fit","title":"Lines of best fit","subtitle":"Draw a line that follows the pattern, and use it to estimate values.","skills":["line-of-best-fit","interpolate-extrapolate"]},
         {"folder":"time-series","title":"Time series","subtitle":"Display data over time and interpret trends and patterns.","skills":["time-series-graphs","interpret-time-series"]}
       ]
     }

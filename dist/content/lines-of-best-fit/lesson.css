@@ -1,0 +1,172 @@
+.best-fit-picture {
+    margin-top: 1rem;
+}
+
+.best-fit-graph {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 1rem auto;
+}
+
+/* The graph's spoken hint stays for screen readers, but no screen shows a
+   line of its own for it. */
+.best-fit-graph .maths-graph__description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.best-fit-note {
+    max-width: 30rem;
+    margin: 1rem auto 0.25rem;
+    text-align: center;
+}
+
+/* The four small graphs a choice answer shows: two to a row, even at 375 px,
+   so a pupil can compare them side by side. */
+.best-fit-mini-graphs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    max-width: 560px;
+    margin: 1rem auto;
+}
+
+.best-fit-mini {
+    min-width: 0;
+    margin: 0;
+}
+
+.best-fit-mini__board {
+    width: 100%;
+}
+
+/* Sit each name right under its graph: no bottom margin and no empty
+   screen-reader line between them. */
+.best-fit-mini .maths-graph {
+    margin-bottom: 0;
+}
+
+.best-fit-mini .maths-graph__description:empty {
+    display: none;
+}
+
+.best-fit-mini figcaption {
+    margin-top: 0.35rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    text-align: center;
+}
+
+/* Word cards and the boxes they go in. */
+.best-fit-sort {
+    margin: 1rem 0;
+}
+
+.best-fit-sort__slots {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.best-fit-sort__slot {
+    display: grid;
+    grid-template-rows: auto auto auto;
+    align-content: start;
+    gap: 0.5rem;
+}
+
+.best-fit-sort__drop {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 3rem;
+    padding: 0.35rem;
+    border: 2px dashed var(--border-dark);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.best-fit-sort__drop.is-ready {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.best-fit-sort__drop:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.best-fit-sort__title {
+    margin: 0;
+    font-weight: 800;
+    text-align: center;
+}
+
+.best-fit-sort__tray {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    margin-top: 1.25rem;
+}
+
+.best-fit-card {
+    touch-action: none;
+    padding: 0.6rem 0.9rem;
+    border: 0;
+    border-radius: 0.6rem;
+    background: var(--primary);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 800;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.best-fit-card.is-selected {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.best-fit-card.is-correct {
+    background: var(--success-dark);
+}
+
+.best-fit-card.is-incorrect {
+    background: var(--error-dark);
+}
+
+.best-fit-card:disabled {
+    cursor: default;
+}
+
+.best-fit-sort__drop .best-fit-card {
+    max-width: 100%;
+    text-align: center;
+}
+
+/* One box at a time on a phone, so a long card has room to read. */
+@media (max-width: 767px) {
+    .best-fit-sort__slots {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* The five things the lesson taught, on the last screen. */
+.best-fit-learned {
+    display: grid;
+    gap: 0.6rem;
+    max-width: 34rem;
+    margin: 1rem auto 0;
+    padding-left: 1.25rem;
+}
