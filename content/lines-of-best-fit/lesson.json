@@ -1,7 +1,7 @@
 {
     "slug": "lines-of-best-fit",
     "title": "Lines of best fit",
-    "subtitle": "Draw a line of best fit and use it to estimate values.",
+    "subtitle": "Draw a line that follows the pattern, and use it to estimate values.",
     "layout": "parts",
     "navigation": { "back_button": true },
     "parts": [
