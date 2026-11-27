@@ -22,6 +22,7 @@ test('375px named first-quadrant graph keeps every axis label inside and separat
         const labels = [...element.querySelectorAll('.maths-graph__label')].map(node => {
             const r = node.getBoundingClientRect();
             return { text: node.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+                writingMode: getComputedStyle(node).writingMode, transform: getComputedStyle(node).transform,
                 fontSize: parseFloat(getComputedStyle(node).fontSize), fontFamily: getComputedStyle(node).fontFamily };
         });
         return { labels, left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
@@ -42,5 +43,12 @@ test('375px named first-quadrant graph keeps every axis label inside and separat
             `${label.text} overlaps ${other.text}`).toBe(true);
         }
     }
+    const sideName = geometry.labels.find(label => label.text === 'Distance (m)');
+    expect(sideName.writingMode).toBe('vertical-rl');
+    expect(sideName.transform).toBe('matrix(-1, 0, 0, -1, 0, 0)');
+    expect(sideName.bottom - sideName.top).toBeGreaterThan(sideName.right - sideName.left);
+    const sideNumbers = geometry.labels.filter(label => /^\d+$/.test(label.text) && label.text !== '0' && label.right < geometry.left + 65);
+    expect(sideNumbers.length).toBeGreaterThan(0);
+    for (const number of sideNumbers) expect(sideName.right).toBeLessThan(number.left);
     expect(errors).toEqual([]);
 });

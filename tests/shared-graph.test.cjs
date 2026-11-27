@@ -134,7 +134,8 @@ test('default graph retains its bounding box, square shape and axis letters', ()
 
 function labelBoard(options = {}) {
     const texts = [];
-    const node = () => ({ style: { setProperty() {} }, append() {}, setAttribute() {}, addEventListener() {} });
+    const node = () => ({ style: { setProperty() {} }, classList: { add() {} },
+        append() {}, setAttribute() {}, addEventListener() {} });
     const document = { createElement: node, body: node() };
     const board = { unitX: 25, unitY: 25, origin: { scrCoords: [1, 170, 170] },
         create(kind, args, attributes) {
@@ -204,4 +205,48 @@ test('labelEvery rejects non-positive, fractional and malformed intervals', () =
         { x: 0 }, { y: -1 }, { x: 1.5 }, { y: Infinity }, { x: undefined }, { y: null }, { x: '2' }]) {
         assert.throws(() => labelBoard({ labelEvery: value }), { name: 'RangeError' });
     }
+});
+
+
+test('text bottom labels replace numeric ticks, are escaped and centred on their columns', () => {
+    const fixture = labelBoard({ x: [0, 7], y: [0, 16], step: { x: 1, y: 1 },
+        xLabels: { 1: 'Aug', 2: '<Sep>', 3: 'Oct' } });
+    const labels = fixture.texts.filter(text => ['Aug', '&lt;Sep&gt;', 'Oct'].includes(text.args[2]));
+    assert.equal(labels.length, 3);
+    labels.forEach((text, index) => {
+        const width = text.object.rendNode.getBoundingClientRect().width;
+        assert.equal(text.args[0](), index + 1 - width / 2 / 25);
+        assert.equal(text.args[1](), -10 / 25);
+    });
+    // Each non-zero number belongs to the side axis, never the bottom.
+    fixture.texts.filter(text => /^\d+$/.test(text.args[2]) && text.args[2] !== '0')
+        .forEach(text => assert.ok(text.args[0]() < 0));
+});
+
+test('year groups are centred under their quarters, above the bottom name', () => {
+    const fixture = labelBoard({ x: [0, 9], y: [0, 40], step: { x: 1, y: 2 },
+        axisNames: { x: 'Quarter', y: 'Games sold (thousands)' },
+        xLabels: { 1: 'Q1', 2: 'Q2', 3: 'Q3', 4: 'Q4', 5: 'Q1', 6: 'Q2', 7: 'Q3', 8: 'Q4' },
+        xGroups: [{ from: 1, to: 4, text: '2024' }, { from: 5, to: 8, text: '2025' }] });
+    const find = value => fixture.texts.find(text => text.args[2] === value);
+    ['2024', '2025'].forEach((year, index) => {
+        const text = find(year);
+        const width = text.object.rendNode.getBoundingClientRect().width;
+        assert.equal(text.args[0]() + width / 2 / 25, 2.5 + index * 4);
+        assert.equal(text.args[1](), -28 / 25);
+    });
+    assert.equal(find('Quarter').args[1](), -48 / 25);
+});
+
+test('every named side axis reads upwards, centred left of its numbers', () => {
+    const fixture = labelBoard({ x: [0, 8], y: [0, 40], step: { x: 1, y: 2 },
+        axisNames: { x: 'Week', y: 'Players (thousands)' } });
+    const name = fixture.texts.find(text => text.args[2] === 'Players (thousands)');
+    assert.match(name.attributes.cssStyle, /writing-mode: vertical-rl/);
+    assert.match(name.attributes.cssStyle, /rotate\(180deg\)/);
+    const bounds = name.object.rendNode.getBoundingClientRect();
+    assert.equal(name.args[1]() - bounds.height / 2 / 25, 20);
+    assert.equal(name.args[0]() + bounds.width / 2 / 25, -48 / 25);
+    const numbers = fixture.texts.filter(text => /^\d+$/.test(text.args[2]) && text.args[2] !== '0');
+    numbers.forEach(text => assert.ok(text.args[0]() > name.args[0]()));
 });

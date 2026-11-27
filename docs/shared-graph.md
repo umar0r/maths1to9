@@ -407,7 +407,7 @@ Snapped coordinates and labels remove floating-point noise.
 - `create(host, { step: { x: 1, y: 2 }, axisNames: { x: 'Time (s)',
   y: 'Distance (m)' }, aspect: 1 })` uses readable axis names instead of
   x and y. The x name is centred below the numbers; the y name reads
-  horizontally above the axis. Named boards reserve room for labels on
+  upwards beside the axis, to the left of its numbers. Named boards reserve room for labels on
   resize, with a separate origin label on first-quadrant graphs.
 - `aspect` is the grid area's width divided by its height. It requires
   `step` (otherwise a TypeError) and must be positive and finite. Without
@@ -418,3 +418,18 @@ Snapped coordinates and labels remove floating-point noise.
   at the segment midpoint. The label avoids points, lines and axis labels.
   `labelSide` accepts above, below, left or right; `labelTone` independently
   sets the text tone. Omitting these options keeps the existing layout.
+
+### Text labels on the bottom axis and an upright side name
+
+- `xLabels: { 1: 'Aug', 2: 'Sep' }` replaces all bottom-axis numbers
+  with escaped text, centred beneath the corresponding grid lines. The
+  side-axis numbers (including the origin) stay unchanged. Omit it to keep
+  the usual numeric labels.
+- `xGroups: [{ from: 1, to: 4, text: '2024' }]` places escaped group
+  names on a second row, centred between `from` and `to`. The bottom
+  axis name sits below that row. The graph reserves the extra space.
+- Every graph with `axisNames` now puts its side-axis name upright,
+  reading from bottom to top, centred beside the axis and left of the
+  numbers. Pixel margins keep it clear as the graph resizes. The bottom
+  name stays horizontal. Graphs without `axisNames` keep their x and y
+  letters and their existing layout.

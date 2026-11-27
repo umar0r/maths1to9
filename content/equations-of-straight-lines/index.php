@@ -64,7 +64,7 @@ $pageTitle = 'Using y = mx + c';
     <link rel="stylesheet" href="../../vendor/jsxgraph/jsxgraph.css">
     <link rel="stylesheet" href="../../assets/css/graph.css?v=6">
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=11"></script>
+    <script src="../../assets/js/graph.js?v=12"></script>
     <link rel="stylesheet" href="./lesson.css?v=1">
 
     <!-- Shared browser progress handling -->

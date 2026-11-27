@@ -69,7 +69,7 @@ $pageTitle = 'Recognising graph types';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=11"></script>
+    <script src="../../assets/js/graph.js?v=12"></script>
     <script src="./graphtypes.js?v=2"></script>
 
     <!-- Data and behaviour specific to this lesson -->
