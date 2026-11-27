@@ -106,7 +106,9 @@
             surface.style.setProperty('--maths-graph-aspect', String(columns / rows));
         }
         const namedAxes = options.axisNames !== undefined;
-        const fitted = namedAxes || options.aspect !== undefined;
+        const textLabels = options.xLabels !== undefined;
+        const groups = options.xGroups || [];
+        const fitted = namedAxes || textLabels || groups.length > 0 || options.aspect !== undefined;
         if (namedAxes) surface.classList.add('maths-graph__board--named');
         const live = document.createElement('p');
         live.className = 'maths-graph__description';
@@ -135,7 +137,8 @@
         function fitBoard() {
             if (!fitted) return;
             const width = surface.clientWidth || 440;
-            const margins = { left: 40, right: 20, top: 36, bottom: 48 };
+            const margins = { left: namedAxes ? 64 : 40, right: 20, top: 36,
+                bottom: groups.length ? 70 : 48 };
             const gridWidth = Math.max(1, width - margins.left - margins.right);
             const aspect = options.aspect ?? ((x[1] - x[0]) / step.x) / ((y[1] - y[0]) / step.y);
             const gridHeight = gridWidth / aspect;
@@ -208,7 +211,7 @@
         for (let tick = Math.ceil(x[0] / step.x); tick * step.x <= x[1]; tick++) {
             const value = tick * step.x;
             segment([value, y[0]], [value, y[1]], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && tick % every.x === 0) {
+            if (!textLabels && value !== 0 && tick % every.x === 0) {
                 axisText([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
             }
         }
@@ -219,6 +222,18 @@
                 axisText([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }
+        if (textLabels) {
+            for (const [value, label] of Object.entries(options.xLabels)) {
+                const position = Number(value);
+                if (!Number.isFinite(position) || position < x[0] || position > x[1]) continue;
+                axisText([position, 0], escapeHtml(label), {
+                    anchorX: 'middle', anchorY: 'top', offset: [0, -10]
+                });
+            }
+        }
+        groups.forEach(group => axisText([(group.from + group.to) / 2, 0], escapeHtml(group.text), {
+            anchorX: 'middle', anchorY: 'top', offset: [0, -28]
+        }));
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
         segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
@@ -228,10 +243,11 @@
             : { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
         if (namedAxes) {
             axisText([(x[0] + x[1]) / 2, 0], escapeHtml(options.axisNames.x ?? 'x'), {
-                anchorX: 'middle', anchorY: 'top', offset: [0, -28]
+                anchorX: 'middle', anchorY: 'top', offset: [0, groups.length ? -48 : -28]
             });
-            axisText([0, y[1]], escapeHtml(options.axisNames.y ?? 'y'), {
-                anchorX: 'left', anchorY: 'bottom', offset: [0, 20]
+            axisText([0, (y[0] + y[1]) / 2], escapeHtml(options.axisNames.y ?? 'y'), {
+                anchorX: 'middle', anchorY: 'middle', offset: [-48, 0],
+                cssStyle: 'writing-mode: vertical-rl; transform: rotate(180deg);'
             });
         } else {
             text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
