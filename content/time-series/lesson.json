@@ -1,0 +1,153 @@
+{
+    "slug": "time-series",
+    "title": "Time series",
+    "subtitle": "Draw time series graphs and read what they show.",
+    "layout": "parts",
+    "navigation": {
+        "back_button": true
+    },
+    "parts": [
+        {
+            "id": "draw",
+            "label": "Draw",
+            "explanation": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "interactive": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "question_bank": {
+                "hide_eyebrow": true,
+                "hide_heading": true,
+                "session_length": 3
+            }
+        },
+        {
+            "id": "read",
+            "label": "Read",
+            "explanation": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "interactive": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "question_bank": {
+                "hide_eyebrow": true,
+                "hide_heading": true,
+                "session_length": 3
+            }
+        },
+        {
+            "id": "trend",
+            "label": "Trend",
+            "explanation": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "interactive": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "question_bank": {
+                "hide_eyebrow": true,
+                "hide_heading": true,
+                "session_length": 3
+            }
+        },
+        {
+            "id": "seasons",
+            "label": "Seasons",
+            "explanation": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "interactive": {
+                "hide_eyebrow": true,
+                "hide_heading": true
+            },
+            "question_bank": {
+                "hide_eyebrow": true,
+                "hide_heading": true,
+                "session_length": 3
+            }
+        }
+    ],
+    "question_bank": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "session_length": 6
+    },
+    "comparison": {
+        "hide_eyebrow": true,
+        "hide_heading": true,
+        "questions": [
+            {
+                "type": "time-order",
+                "prompt": "Sales are recorded every quarter for two years. How should the quarters go on a time series graph?",
+                "correct": "Along the bottom, in order, evenly spaced.",
+                "feedback": "Yes. Each quarter is the same distance from the next, even when a new year starts.",
+                "wrong": [
+                    {
+                        "label": "Up the side axis, in order.",
+                        "feedback": "The side axis is for the values. Time goes along the bottom."
+                    },
+                    {
+                        "label": "Along the bottom, from the lowest sales to the highest.",
+                        "feedback": "Time stays in time order. Each value stays with its quarter."
+                    },
+                    {
+                        "label": "Along the bottom, with a bigger gap between Q4 and the next Q1.",
+                        "feedback": "Every quarter is the same distance apart, even when a new year starts."
+                    }
+                ]
+            }
+        ]
+    },
+    "score_activities": [
+        {
+            "id": "step:interactive--draw:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive--read:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive--read:1",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive--trend:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive--seasons:0",
+            "kind": "guided"
+        },
+        {
+            "id": "step:interactive--seasons:1",
+            "kind": "guided"
+        }
+    ],
+    "assessment": {
+        "question_types": {
+            "which-graph": "time-series-graphs",
+            "plot-points": "time-series-graphs",
+            "which-values": "time-series-graphs",
+            "time-order": "time-series-graphs",
+            "read-value": "interpret-time-series",
+            "most-value": "interpret-time-series",
+            "fewest-when": "interpret-time-series",
+            "trend-which": "interpret-time-series",
+            "sort-graphs": "interpret-time-series",
+            "trend-every": "interpret-time-series",
+            "season-compare": "interpret-time-series",
+            "same-quarter": "interpret-time-series",
+            "season-describe": "interpret-time-series"
+        }
+    }
+}

@@ -365,5 +365,21 @@
     "interactive",
     "question-bank",
     "comparison"
+  ],
+  "time-series": [
+    "explanation--draw",
+    "interactive--draw",
+    "question-bank--draw",
+    "explanation--read",
+    "interactive--read",
+    "question-bank--read",
+    "explanation--trend",
+    "interactive--trend",
+    "question-bank--trend",
+    "explanation--seasons",
+    "interactive--seasons",
+    "question-bank--seasons",
+    "question-bank",
+    "comparison"
   ]
 }
