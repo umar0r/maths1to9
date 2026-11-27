@@ -66,7 +66,8 @@ for (const part of ['read', 'plot', 'scales', null]) {
                 assert.deepEqual(plain(g.x), [0, 10]); assert.equal(g.step.x, 1);
             }
             if (g.axisNames?.x === 'Temperature (°C)') {
-                assert.deepEqual(plain(g.x), [0, 40]); assert.ok([2, 5, 10].includes(g.step.x));
+                assert.ok([2, 5, 10].includes(g.step.x));
+                assert.deepEqual(plain(g.x), [0, g.step.x * 10]);
             }
             if (q.input === 'choice') {
                 assert.equal(q.options.length, 4);
@@ -182,6 +183,31 @@ test('scatter graphs: Scales marking uses values, not square counts, and plot ta
         }
     }
     assert.equal(S.markScaledPlot([20, 10], { target: [10, 20], step: { x: 5, y: 10 } }).feedback, "That's back to front.");
+});
+
+test('scatter graphs: 500 seeds give every plot-scaled target a point a pupil can tap', () => {
+    // The browser run taps the target's pixel in a 1280 x 720 window on a graph
+    // that is at most 440 px wide. With ten squares on each axis the board is
+    // 440 x 464 px, so every grid point is on screen and the tap lands on it.
+    // A fixed 0 to 40 bottom axis was only 4 squares wide at step 10: that board
+    // was 1034 px tall and a target low on it sat below the window.
+    const many = Array.from({ length: 500 }, (_, index) => Math.imul(index + 1, 2654435761) >>> 0);
+    for (const seed of many) {
+        const q = build({ type: 'plot-scaled', seed }), m = q.model, g = m.graph;
+        const [a, b] = m.target;
+        assert.equal((g.x[1] - g.x[0]) / g.step.x, 10);
+        assert.equal((g.y[1] - g.y[0]) / g.step.y, 10);
+        assert.deepEqual(plain(g.x), [0, g.step.x * 10]);
+        assert.deepEqual(plain(g.y), [0, g.step.y * 10]);
+        // The target is a grid point strictly inside the axes, never on an edge.
+        assert.equal(a % g.step.x, 0);
+        assert.equal(b % g.step.y, 0);
+        assert.ok(a > g.x[0] && a < g.x[1], `${a} across`);
+        assert.ok(b > g.y[0] && b < g.y[1], `${b} up`);
+        // The solver reads the two numbers off the prompt and taps that point.
+        assert.deepEqual((q.prompt.match(/\d+/g) || []).map(Number), [a, b]);
+        assert.equal(q.widget.mark([a, b]).correct, true);
+    }
 });
 
 test('scatter graphs: the four which-graph diagrams show the table and the three specified mistakes', () => {

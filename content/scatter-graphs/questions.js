@@ -146,7 +146,10 @@
         const { randomInt, shuffle } = helpers;
         const xs = scales[randomInt(0, 2, random)];
         const ys = scales[randomInt(0, scales.length - 1, random)];
-        const graph = { x: [0, 40], y: [0, ys.step * 10],
+        // Ten squares on each axis: the same shape as the Learn graph, square
+        // cells and a board that fits the window. A fixed 0 to 40 bottom axis
+        // left only 4 squares at step 10, which made the graph 1034 px tall.
+        const graph = { x: [0, xs.step * 10], y: [0, ys.step * 10],
             step: { x: xs.step, y: ys.step }, labelEvery: { x: xs.labels, y: ys.labels },
             axisNames: { x: 'Temperature (°C)', y: 'Ice creams sold' }, label: 'Scatter graph with scaled axes.' };
         if (item.type === 'square-worth') {
@@ -175,7 +178,7 @@
         if (item.type === 'plot-scaled') {
             let across, up;
             do {
-                across = randomInt(1, Math.floor(40 / xs.step), random);
+                across = randomInt(1, 9, random);
                 up = randomInt(1, 9, random);
             } while (across % xs.labels === 0 && up % ys.labels === 0);
             const target = [across * xs.step, up * ys.step];
