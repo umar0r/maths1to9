@@ -3,28 +3,34 @@
     'use strict';
 
     const GAME = {
-        id: 'game', times: ['1', '2', '3', '4', '5', '6'],
+        id: 'game', times: Array.from({ length: 12 }, (_, index) => String(index + 1)),
         axisNames: { x: 'Week', y: 'Players (thousands)' },
-        values: [12, 20, 26, 22, 30, 34], y: [0, 40], step: 2, labelEvery: 5,
+        values: [10, 15, 25, 20, 30, 35, 30, 40, 45, 40, 50, 55],
+        y: [10, 60], step: 5, labelEvery: 2,
         label: "A new game's players each week."
     };
     const GOALS = {
-        id: 'goals', times: ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'],
+        id: 'goals', times: ['August', 'September', 'October', 'November', 'December',
+            'January', 'February', 'March', 'April', 'May'],
+        xLabels: { 1: 'A', 2: 'S', 3: 'O', 4: 'N', 5: 'D', 6: 'J', 7: 'F', 8: 'M', 9: 'A', 10: 'M' },
         axisNames: { x: 'Month', y: 'Goals' },
-        values: [6, 9, 4, 11, 14, 8], y: [0, 16], step: 1, labelEvery: 2,
+        values: [6, 10, 4, 12, 14, 8, 10, 6, 12, 8], y: [0, 16], step: 2, labelEvery: 1,
         label: "A football club's goals each month."
     };
     const STREAMS = {
-        id: 'streams', times: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+        id: 'streams', times: ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'],
+        xLabels: { 1: 'J', 2: 'F', 3: 'M', 4: 'A', 5: 'M', 6: 'J',
+            7: 'J', 8: 'A', 9: 'S', 10: 'O', 11: 'N', 12: 'D' },
         axisNames: { x: 'Month', y: 'Streams (millions)' },
-        values: [2, 4, 3, 6, 5, 8, 7, 10], y: [0, 12], step: 1, labelEvery: 2,
+        values: [2, 4, 3, 6, 5, 8, 7, 10, 9, 11, 10, 12], y: [0, 12], step: 1, labelEvery: 2,
         label: "A singer's streams each month."
     };
     const SALES = {
         id: 'sales', times: ['Q1', 'Q2', 'Q3', 'Q4', 'Q1', 'Q2', 'Q3', 'Q4'],
         xGroups: [{ from: 1, to: 4, text: '2024' }, { from: 5, to: 8, text: '2025' }],
         axisNames: { x: 'Quarter', y: 'Games sold (thousands)' },
-        values: [12, 10, 14, 30, 14, 12, 16, 34], y: [0, 40], step: 2, labelEvery: 5,
+        values: [15, 10, 20, 35, 20, 15, 25, 40], y: [10, 40], step: 5, labelEvery: 1,
         label: "A shop's game sales each quarter."
     };
 
@@ -46,7 +52,7 @@
             x: [0, context.times.length + 1], y: context.y,
             step: { x: 1, y: context.step },
             labelEvery: { x: 1, y: context.labelEvery },
-            xLabels: Object.fromEntries(context.times.map((time, index) => [index + 1, time])),
+            xLabels: context.xLabels || Object.fromEntries(context.times.map((time, index) => [index + 1, time])),
             xGroups: context.xGroups || [], axisNames: context.axisNames,
             label: context.label, ...options
         });

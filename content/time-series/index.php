@@ -70,9 +70,9 @@ $pageTitle = 'Time series';
     <script src="../../assets/js/graph.js?v=13"></script>
 
     <!-- Data and behaviour specific to this lesson -->
-    <script src="./time-series.js?v=1"></script>
+    <script src="./time-series.js?v=2"></script>
     <script src="./questions.js?v=1"></script>
-    <script src="./interactive.js?v=1"></script>
+    <script src="./interactive.js?v=2"></script>
 
     <!-- Shared lesson renderer; loaded last -->
     <script src="../../assets/js/lesson-engine.js?v=83"></script>
