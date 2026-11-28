@@ -303,3 +303,12 @@ test('a positive starting value is labelled even between regular grid lines', ()
     assert.equal(startingLabel.args[1]() - 12 / 2 / 25, 12);
     assert.ok(!fixture.texts.some(text => text.args[2] === '0'));
 });
+
+
+test('a fractional starting tick is labelled despite floating-point grid arithmetic', () => {
+    const fixture = labelBoard({ x: [0, 6], y: [0.6, 2], step: { x: 1, y: 0.2 }, labelEvery: 2 });
+    const startingLabel = fixture.texts.find(text => text.args[2] === '0.6' && text.args[0]() < 0);
+    assert.ok(startingLabel);
+    assert.ok(Math.abs(startingLabel.args[1]() - 12 / 2 / 25 - 0.6) < 1e-12);
+    assert.ok(!fixture.texts.some(text => text.args[2] === '0'));
+});

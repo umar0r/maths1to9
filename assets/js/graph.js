@@ -219,7 +219,7 @@
         for (let tick = Math.ceil(y[0] / step.y); tick * step.y <= y[1]; tick++) {
             const value = tick * step.y;
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && (tick % every.y === 0 || value === bottomAxis)) {
+            if (value !== 0 && (tick % every.y === 0 || tidyNumber(value) === bottomAxis)) {
                 axisText([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
         }

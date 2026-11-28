@@ -67,7 +67,7 @@ $pageTitle = 'Lines of best fit';
     <!-- Shared browser progress handling -->
     <script src="../../assets/js/progress.js?v=3"></script>
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=13"></script>
+    <script src="../../assets/js/graph.js?v=14"></script>
 
     <!-- Data and behaviour specific to this lesson -->
     <script src="./best-fit.js?v=3"></script>
