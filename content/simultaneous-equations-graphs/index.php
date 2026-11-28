@@ -69,7 +69,7 @@ $pageTitle = 'Solving simultaneous equations using graphs';
     <script src="../../assets/js/progress.js?v=3"></script>
 
     <script src="../../vendor/jsxgraph/jsxgraphcore.js"></script>
-    <script src="../../assets/js/graph.js?v=12"></script>
+    <script src="../../assets/js/graph.js?v=13"></script>
     <script src="./simultaneous.js?v=4"></script>
 
     <!-- Data and behaviour specific to this lesson -->

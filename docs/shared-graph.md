@@ -433,3 +433,11 @@ Snapped coordinates and labels remove floating-point noise.
   numbers. Pixel margins keep it clear as the graph resizes. The bottom
   name stays horizontal. Graphs without `axisNames` keep their x and y
   letters and their existing layout.
+
+### A side axis that does not start at zero
+
+When `y[0] > 0`, the bottom axis is drawn at `y[0]`, with its numeric
+labels or `xLabels`, `xGroups` and axis name positioned below that line.
+The side axis labels its starting value even when `labelEvery` would
+otherwise skip it. There is no corner zero or break mark. Graphs whose
+side axis starts at zero keep their existing axes and labels.

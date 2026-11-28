@@ -134,11 +134,13 @@ test('default graph retains its bounding box, square shape and axis letters', ()
 
 function labelBoard(options = {}) {
     const texts = [];
+    const primitives = [];
     const node = () => ({ style: { setProperty() {} }, classList: { add() {} },
         append() {}, setAttribute() {}, addEventListener() {} });
     const document = { createElement: node, body: node() };
     const board = { unitX: 25, unitY: 25, origin: { scrCoords: [1, 170, 170] },
         create(kind, args, attributes) {
+            primitives.push({ kind, args, attributes });
             const object = { rendNode: { getBoundingClientRect: () => ({ width: String(args[2] ?? '').length * 7, height: 12 }) } };
             if (kind === 'text') texts.push({ args, attributes, object });
             return object;
@@ -149,7 +151,7 @@ function labelBoard(options = {}) {
         ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} }
     });
     const graph = window.Maths1to9Graph.create({ isConnected: true, ownerDocument: document, append() {} }, options);
-    return { graph, texts, last: () => texts.at(-1), position: () => Array.from(texts.at(-1).args.slice(0, 2), fn => fn()) };
+    return { graph, texts, primitives, last: () => texts.at(-1), position: () => Array.from(texts.at(-1).args.slice(0, 2), fn => fn()) };
 }
 test('segment labels retain their original anchor and line tone without new options', () => {
     const fixture = labelBoard();
@@ -249,4 +251,55 @@ test('every named side axis reads upwards, centred left of its numbers', () => {
     assert.equal(name.args[0]() + bounds.width / 2 / 25, -48 / 25);
     const numbers = fixture.texts.filter(text => /^\d+$/.test(text.args[2]) && text.args[2] !== '0');
     numbers.forEach(text => assert.ok(text.args[0]() > name.args[0]()));
+});
+
+
+test('a positive side-axis start moves the bottom axis, numbers and letters without a corner zero', () => {
+    const fixture = labelBoard({ x: [0, 13], y: [10, 60],
+        step: { x: 1, y: 5 }, labelEvery: { x: 1, y: 3 } });
+    const axes = fixture.primitives.filter(item => item.kind === 'segment' && item.attributes.lastArrow);
+    assert.equal(axes.length, 2);
+    assert.deepEqual(plain(axes[0].args), [[0, 10], [13.4, 10]]);
+    assert.deepEqual(plain(axes[1].args), [[0, 10], [0, 62]]);
+    assert.ok(!fixture.texts.some(text => text.args[2] === '0'));
+    const lowest = fixture.texts.find(text => text.args[2] === '10' && text.args[0]() < 0);
+    assert.ok(lowest, 'the side-axis starting value must be labelled even between regular labels');
+    assert.equal(lowest.args[1]() - 12 / 2 / 25, 10);
+    const bottomNumber = fixture.texts.find(text => text.args[2] === '1');
+    assert.equal(bottomNumber.args[1](), 10 - 0.25 * 5);
+    const letter = fixture.texts.find(text => text.args[2] === 'x');
+    assert.equal(letter.args[1](), 11);
+});
+
+test('text labels, groups and the bottom name follow a positive side-axis start', () => {
+    const fixture = labelBoard({ x: [0, 9], y: [10, 40], step: { x: 1, y: 5 },
+        xLabels: { 1: 'Q1', 2: 'Q2' }, xGroups: [{ from: 1, to: 4, text: '2024' }],
+        axisNames: { x: 'Quarter', y: 'Games sold (thousands)' } });
+    const find = label => fixture.texts.find(text => text.args[2] === label);
+    assert.equal(find('Q1').args[1](), 10 - 10 / 25);
+    assert.equal(find('2024').args[1](), 10 - 28 / 25);
+    assert.equal(find('Quarter').args[1](), 10 - 48 / 25);
+    assert.equal(find('Games sold (thousands)').args[1]() - 12 / 2 / 25, 25);
+    assert.ok(!find('0'));
+});
+
+test('a side axis starting at zero keeps its bottom axis and origin unchanged', () => {
+    const fixture = labelBoard({ x: [0, 13], y: [0, 60], step: { x: 1, y: 5 }, labelEvery: 1,
+        axisNames: { x: 'Week', y: 'Players (thousands)' } });
+    const axes = fixture.primitives.filter(item => item.kind === 'segment' && item.attributes.lastArrow);
+    assert.deepEqual(plain(axes[0].args), [[0, 0], [13.4, 0]]);
+    const origin = fixture.texts.find(text => text.args[2] === '0');
+    assert.equal(origin.args[1](), -6 / 25);
+    const bottomNumber = fixture.texts.find(text => text.args[2] === '1');
+    assert.equal(bottomNumber.args[1](), -0.25 * 5);
+    assert.equal(fixture.texts.find(text => text.args[2] === 'Week').args[1](), -28 / 25);
+});
+
+
+test('a positive starting value is labelled even between regular grid lines', () => {
+    const fixture = labelBoard({ x: [0, 13], y: [12, 60], step: { x: 1, y: 5 }, labelEvery: 2 });
+    const startingLabel = fixture.texts.find(text => text.args[2] === '12' && text.args[0]() < 0);
+    assert.ok(startingLabel);
+    assert.equal(startingLabel.args[1]() - 12 / 2 / 25, 12);
+    assert.ok(!fixture.texts.some(text => text.args[2] === '0'));
 });
