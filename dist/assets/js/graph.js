@@ -88,6 +88,7 @@
         }
         const x = options.x || [-6, 6];
         const y = options.y || [-6, 6];
+        const bottomAxis = Math.max(0, y[0]);
         const step = { x: 1, y: 1, ...options.step };
         if (![step.x, step.y].every(value => Number.isFinite(value) && value > 0)) {
             throw new RangeError('Graph axis steps must be positive finite numbers.');
@@ -212,37 +213,44 @@
             const value = tick * step.x;
             segment([value, y[0]], [value, y[1]], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
             if (!textLabels && value !== 0 && tick % every.x === 0) {
-                axisText([value, -0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
+                axisText([value, bottomAxis - 0.25 * step.y], formatNumber(value), { anchorX: 'middle', anchorY: 'top' });
             }
         }
         for (let tick = Math.ceil(y[0] / step.y); tick * step.y <= y[1]; tick++) {
             const value = tick * step.y;
             segment([x[0], value], [x[1], value], { strokeColor: colour('--border'), strokeWidth: 1, layer: 0 });
-            if (value !== 0 && tick % every.y === 0) {
+            if (value !== 0 && (tick % every.y === 0 || value === bottomAxis)) {
                 axisText([0, value], formatNumber(value), { anchorX: 'right', anchorY: 'middle', offset: [-10, 0] });
             }
+        }
+        if (bottomAxis > 0 && !Number.isInteger(tidyNumber(bottomAxis / step.y))) {
+            axisText([0, bottomAxis], formatNumber(bottomAxis), {
+                anchorX: 'right', anchorY: 'middle', offset: [-10, 0]
+            });
         }
         if (textLabels) {
             for (const [value, label] of Object.entries(options.xLabels)) {
                 const position = Number(value);
                 if (!Number.isFinite(position) || position < x[0] || position > x[1]) continue;
-                axisText([position, 0], escapeHtml(label), {
+                axisText([position, bottomAxis], escapeHtml(label), {
                     anchorX: 'middle', anchorY: 'top', offset: [0, -10]
                 });
             }
         }
-        groups.forEach(group => axisText([(group.from + group.to) / 2, 0], escapeHtml(group.text), {
+        groups.forEach(group => axisText([(group.from + group.to) / 2, bottomAxis], escapeHtml(group.text), {
             anchorX: 'middle', anchorY: 'top', offset: [0, -28]
         }));
         const axisStyle = { strokeColor: colour('--text-soft'), strokeWidth: 2, lastArrow: true, layer: 2 };
-        segment([x[0], 0], [x[1] + 0.4 * step.x, 0], axisStyle);
+        segment([x[0], bottomAxis], [x[1] + 0.4 * step.x, bottomAxis], axisStyle);
         segment([0, y[0]], [0, y[1] + 0.4 * step.y], axisStyle);
         const firstQuadrantNames = namedAxes && x[0] === 0 && y[0] === 0;
-        axisText([0, 0], '0', firstQuadrantNames
-            ? { anchorX: 'right', anchorY: 'top', offset: [-26, -6] }
-            : { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
+        if (bottomAxis === 0) {
+            axisText([0, 0], '0', firstQuadrantNames
+                ? { anchorX: 'right', anchorY: 'top', offset: [-26, -6] }
+                : { anchorX: 'left', anchorY: 'top', offset: [6, -6] });
+        }
         if (namedAxes) {
-            axisText([(x[0] + x[1]) / 2, 0], escapeHtml(options.axisNames.x ?? 'x'), {
+            axisText([(x[0] + x[1]) / 2, bottomAxis], escapeHtml(options.axisNames.x ?? 'x'), {
                 anchorX: 'middle', anchorY: 'top', offset: [0, groups.length ? -48 : -28]
             });
             axisText([0, (y[0] + y[1]) / 2], escapeHtml(options.axisNames.y ?? 'y'), {
@@ -250,7 +258,7 @@
                 cssStyle: 'writing-mode: vertical-rl; transform: rotate(180deg);'
             });
         } else {
-            text([x[1] + 0.45 * step.x, 0.2 * step.y], 'x');
+            text([x[1] + 0.45 * step.x, bottomAxis + 0.2 * step.y], 'x');
             text([0.2 * step.x, y[1] + 0.4 * step.y], 'y');
         }
 
@@ -294,7 +302,7 @@
                 const [left, top] = pixels([x[0], y[1]]);
                 const [right, bottom] = pixels([x[1], y[0]]);
                 // Arrow labels on an axis also need clearance from its tick labels.
-                const gap = centred && (position[0] === 0 || position[1] === 0) ? 28 : 12;
+                const gap = centred && (position[0] === 0 || position[1] === bottomAxis) ? 28 : 12;
                 const positions = {
                     right: [px + gap, py - height / 2],
                     left: [px - gap - width, py - height / 2],
@@ -365,7 +373,7 @@
                         };
                     });
                     // Axis strokes are obstacles too, even between their numbered ticks.
-                    geometry.push({ from: [x[0], 0], to: [x[1], 0], full: true },
+                    geometry.push({ from: [x[0], bottomAxis], to: [x[1], bottomAxis], full: true },
                         { from: [0, y[0]], to: [0, y[1]], full: true });
                     const lines = geometry.map(({ from, to, full }) => {
                         from = pixels(from);

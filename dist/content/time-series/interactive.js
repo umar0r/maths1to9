@@ -12,8 +12,8 @@
         return graph;
     }
 
-    function readArrows(graph, x, y) {
-        graph.arrow([x, 0], [x, y], { dash: true, tone: 'ink' });
+    function readArrows(graph, x, y, bottom = 0) {
+        graph.arrow([x, bottom], [x, y], { dash: true, tone: 'ink' });
         graph.arrow([x, y], [0, y], { dash: true, tone: 'ink' });
     }
 
@@ -25,12 +25,12 @@
                 draw(host) { return [picture(host, T.GAME)]; }
             },
             {
-                heading: 'Time goes along the bottom, in order and evenly spaced. Plot each value above its time.',
+                heading: 'Time goes along the bottom of the graph. The amount goes up the side.',
                 draw(host) {
                     T.table(host, T.GAME, 3);
                     const graph = picture(host, T.GAME, { join: false });
-                    readArrows(graph, 3, 26);
-                    host.append(T.note('In week 3 there were 26 thousand players, so the point sits above week 3, level with 26.'));
+                    readArrows(graph, 3, 25, T.GAME.y[0]);
+                    host.append(T.note('In week 3 there were 25 thousand players. So the point for week 3 goes level with 25.'));
                     return [graph];
                 }
             },
@@ -38,7 +38,7 @@
                 heading: 'Join each point to the next one with a straight line.',
                 draw(host) {
                     const graph = picture(host, T.GAME);
-                    host.append(T.note("Go in time order, from week 1 to week 6. Don't draw a line of best fit."));
+                    host.append(T.note("Go in time order, from week 1 to week 12. Don't draw a line of best fit."));
                     return [graph];
                 }
             }
@@ -48,8 +48,8 @@
                 heading: 'To read a value, go up from the time to the point, then across to the side axis.',
                 draw(host) {
                     const graph = picture(host, T.GOALS);
-                    readArrows(graph, 4, 11);
-                    host.append(T.note('In November the club scored 11 goals.'));
+                    readArrows(graph, 4, 12);
+                    host.append(T.note('In November the club scored 12 goals.'));
                     return [graph];
                 }
             },
@@ -68,7 +68,7 @@
                 heading: 'The trend is the way the graph is heading overall.',
                 draw(host) {
                     const graph = picture(host, T.STREAMS);
-                    graph.arrow([1, 2], [8, 10], { dash: true, tone: 'ink' });
+                    graph.arrow([1, 2], [12, 12], { dash: true, tone: 'ink' });
                     host.append(T.note('The trend: the number of streams goes up over time.'));
                     return [graph];
                 }
@@ -77,9 +77,9 @@
                 heading: "A trend going up doesn't mean it goes up every time.",
                 draw(host) {
                     const graph = picture(host, T.STREAMS, {
-                        segmentTones: { 2: 'incorrect', 4: 'incorrect', 6: 'incorrect' }
+                        segmentTones: { 2: 'incorrect', 4: 'incorrect', 6: 'incorrect', 8: 'incorrect', 10: 'incorrect' }
                     });
-                    host.append(T.note('Streams fell in March, May and July, but the trend is still up. Compare the start with the end.'));
+                    host.append(T.note('Streams fell in some months, but the trend is still up. Compare the start with the end.'));
                     return [graph];
                 }
             }
@@ -98,8 +98,8 @@
                 heading: 'To see the trend, compare the same quarter in each year.',
                 draw(host) {
                     const graph = picture(host, T.SALES);
-                    graph.arrow([4, 30], [8, 34], { dash: true, tone: 'ink', label: '30 → 34' });
-                    host.append(T.note("Q4 went from 30 thousand to 34 thousand, so sales are going up. The drop from Q4 to Q1 happens every year, so don't compare those."));
+                    graph.arrow([4, 35], [8, 40], { dash: true, tone: 'ink', label: '35 → 40' });
+                    host.append(T.note("Q4 went from 35 thousand to 40 thousand, so sales are going up. The drop from Q4 to Q1 happens every year, so don't compare those."));
                     return [graph];
                 }
             }
@@ -115,7 +115,7 @@
         api.gateSection(id);
         const screens = learn[part];
         const section = await api.useSectionState(`learn:${part}`, {
-            version: 1, upgrade: () => null,
+            version: 2, upgrade: () => null,
             initial: () => ({ screen: 0, furthest: 0 })
         });
         const state = section.state;
